@@ -1,0 +1,91 @@
+/* die print-darstellung ....*/
+
+@page { 
+	margin: 1.4cm 1.4cm 1cm 1cm; 
+}
+
+/* -- Allgemeines -- */
+body {
+ 	background: url() white;  /*  #c0c0c0*/
+ 	color: black;
+ 	margin: 0;
+ 	padding: 1%; 
+ 	min-width: 763px; 
+ 	font-size: 0.8em; 
+	 font-family: verdana, arial, sans-serif ;
+	}
+
+h1 {
+display:none;
+ color:black;
+ font-size: 2em;
+ line-height: 0.8em;
+ padding: 0px 0 5px 5%;
+ margin: 0 0 1em 0;
+}
+
+
+/* - Logo bzw. Kopf - */
+#logo {
+	display:none;
+}
+
+/* das menu mit hover funktion  */
+#menu {
+display:none;
+}
+
+
+
+#content {
+ 	border-top: none;
+ 	padding: 20px 0px 0px 0px;
+
+}
+
+/* für die menüs */
+table.menu td {
+	border:none;
+}
+
+/* für die tabellen */
+table {
+	font-size: 0.95em;
+	border-collapse:collapse;
+	border:1px solid grey;
+	text-align:left;
+	background-color: white;
+	}
+table.info {
+	border-collapse:collapse;
+}
+th, td {
+	border:1px solid grey;	
+	padding:2px;
+}
+th {
+	font-weight:bold;
+	background-color:#DDDDDD;
+}
+
+table.info td, th {
+	border-top:1px solid grey;
+	padding: 4px 4px;
+	}
+
+	
+table.inner, table.inner td {
+	border:none;
+}
+th.menge, th.toleranz {
+	width: 60px;
+	}
+th.gebinde {
+	width: 170px;
+	}
+	
+tr.legende {
+	font-size: 0.8em;
+	color: grey;
+}
+tr.legende td { border: none}

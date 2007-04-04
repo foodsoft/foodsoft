@@ -1,0 +1,252 @@
+/* -- Allgemeines -- */
+body {
+ 	background: url() white;  /*  #c0c0c0*/
+ 	color: black;
+ 	margin: 0;
+ 	padding: 1%; 
+ 	min-width: 763px; 
+ 	font-size: 0.8em; 
+	 font-family: verdana, arial, sans-serif ;
+	}
+
+a {
+	color:#ED0606;
+	text-decoration: none;
+	border-bottom: 1px dotted #ED0606;
+	} 
+a:visited { color:#ED0606; }	
+
+h1, h2, h3 {
+ 
+ }
+ 
+ h1 {
+ color:#ED0606;
+ font-size: 2em;
+ line-height: 0.8em;
+ padding: 0px 0 5px 5%;
+ margin: 0 0 1em 0;
+ border-bottom: 1px dotted #ED0606;
+}
+
+input:hover, textarea:hover, select:hover {
+	background-color:#f5f5f5;
+}
+
+/* - Logo bzw. Kopf - */
+#logo {
+ background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
+ height: 55px;
+ padding: 0 20px;
+ text-align: left;
+ line-height: 54px;
+ font-size: 54px;
+ overflow: hidden; 
+ letter-spacing: -3px;
+ margin: 0;
+}
+#logo a, #logo a:hover {
+ color: white; 
+ text-decoration: none;
+}
+#logo a span { 
+ color: #ED0606;
+ background: white;
+ padding-right: 0.1em;
+ font-weight: bold;
+}
+
+/* das menu mit hover funktion  */
+#menu {
+ background: url() #ED0606;
+ padding: 5px 5px; /* Je kleiner das Fenster desto kleiner soll auch der Abstand des Menüs rechts und links sein. */
+ margin: 0 0 0 0;
+ text-align: right;
+ font-size:0.8em;
+}
+
+#menu a {
+	color: white;
+	text-decoration: none;
+}
+
+#menu ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  }
+
+#menu li {
+  font-size: 1.2em;
+  display: inline; /* Damit die Menüpunkte nebeneinander und nicht untereinander erscheinen. */
+  position: relative;
+  list-style-type: none; /* Die Bullets vor den Menüpunkten schalten wir ab. */
+  border-left: 1px dotted white; /* Ein optischer Trennungsstrich */
+  padding: 0 10px 0 15px;
+  font-weight: bold;
+  color: white;
+  }
+
+#menu li ul {
+  border-width: 0.25em;
+  margin: 0;
+  display: none;
+  position: absolute;
+  top: 1.2em;
+  right: 0px;
+  border-top: solid #ED0606 ;
+  background: url() #ED0606;
+  }
+
+#menu li ul li {
+  border-bottom: 1px dotted white;
+  border-left: none;
+  display: block;
+  text-align: right;
+  padding: 0px 10px 0px 15px;
+}
+
+#menu li ul li a {
+ display: block;
+ width: 10em;
+ w\idth: 6em;
+  font-size:0.6em;
+  width: 12em;
+  text-decoration: none;
+  padding: 0.5em 0 0.5em 0;
+}
+
+#menu li:hover {
+  background: white;
+  border-bottom: 1px dotted #ED0606;
+  color: #ED0606;
+}
+#menu li ul li:hover a, #menu li:hover a.first {
+  color: #ED0606;
+}
+
+#menu li:hover ul { display: block; }
+
+
+#content {
+ 	border-top: none;
+ 	padding: 20px 0px 0px 0px;
+
+
+}
+
+/* für die menüs */
+table.menu td {
+	border:none;
+}
+
+/* für die tabellen */
+table {
+	font-size: 0.95em;
+	border-collapse:collapse;
+	border:1px dotted grey;
+	text-align:left;
+	background-color: white;
+	}
+table.info {
+	border-collapse:collapse;
+}
+th, td {
+	border:1px dotted grey;	
+	padding:4px;
+}
+th {
+	font-weight:bold;
+	background-color:#DDDDDD;
+}
+
+table.info td, th {
+	border-top:1px dotted grey;
+	}
+	
+a.png { border:none; }
+
+table.inner, table.inner td {
+	border:none;
+}
+table.inner td {
+	padding:1px;
+}
+th.menge, th.toleranz {
+	width: 70px;
+	}
+th.gebinde {
+	width: 170px;
+	}
+	
+table input {
+	font-size: 0.9em;
+}
+
+/* für den hover effekt */
+table.liste tr:hover {
+	background-color: #efefef;
+}
+	
+a.tabelle {
+	color:#ED0606;
+}
+
+tr.legende {
+	font-size: 0.8em;
+	color: grey;
+}
+tr.legende td { border: none}
+
+.bigbutton		{
+	width:200px;
+	height:30px;
+	font-size:12px;
+	}
+	.bigbutton:hover 	{width:200px; height:30px; font-weight:bold;}
+
+
+/* alte stylesheets  */
+	.smalfont		{font-size:10pt; color:#777777;  text-decoration:none;}
+	
+	
+/* test für die notizanzeige in bestellen.php */
+
+#notiz a {
+/* display: block; */	
+text-decoration:none;
+font-weight:bold;
+width:5px;
+color: grey;
+border:none;
+}
+
+#notiz a .showcase {
+display: none;
+}
+
+#notiz a:hover .showcase {
+position: relative;
+top: 0px;
+left: 20px;
+display: block;
+font: normal 0.9em sans-serif;
+font-style:italic;
+background: #efefef;
+border: 1px dotted grey;
+color: #000;
+padding: 2px 2px 2px 5px;
+}
+
+/* für die "tip" elemente */
+#tip {
+	width: 250px;
+	background-color:#efefef;
+	border: 1px dotted grey;
+	color: #000;
+	padding: 6px;
+	font: normal 0.9em sans-serif;
+	font-style:italic;
+	 line-height: 1.3em;
+}
+
