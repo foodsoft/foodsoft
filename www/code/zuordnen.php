@@ -85,7 +85,7 @@ function kontostand($gruppen_id){
 	    //echo "<p>".$query."</p>";
 	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
 	    $row = mysql_fetch_array($result);
-	    $summe = $row['summe'];
+	    $summe = -$row['summe'];
 	    //Sonstige Transaktionen
 	    $query = "SELECT sum( summe ) as summe
 			FROM `gruppen_transaktion`
@@ -226,10 +226,11 @@ function sql_gruppen($bestell_id=FALSE){
         if($bestell_id==FALSE){
 		$query="SELECT * FROM bestellgruppen";
 	} else {
-	    $query="SELECT bestellgruppen.id, bestellgruppen.name 
+	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
 		FROM bestellgruppen INNER JOIN gruppenbestellungen 
 		ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
-		WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id); 
+		WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id).
+		" GROUP BY bestellgruppen.id, bestellgruppen.name"; 
 	}
 	//echo "<p>".$query."</p>";
 	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
@@ -278,7 +279,7 @@ function writeLiefermenge_sql($bestell_id){
 		        .$produkt_row['s'].", liefermenge = ".
 		        $produkt_row['s']." WHERE gesamtbestellung_id = ".
 			$bestell_id." AND produkt_id = ".$produkt_row['produkt_id'];
-		echo $sql2."<br>";
+		//echo $sql2."<br>";
 		mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB schreiben...",mysql_error());
 	}
 
@@ -325,7 +326,7 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
    //echo $sql."<br>";
    $result2 =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
    if (mysql_num_rows($result2) == 1){
-   	$sql = "UPDATE 	bestellvorschlaege set liefermenge = ".$menge." 
+   	$sql = "UPDATE 	bestellvorschlaege set liefermenge = liefermenge + ".$menge." 
 		WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
    		AND gesamtbestellung_id = ".mysql_escape_string($bestell_id) ;
    //echo $sql."<br>";
@@ -400,7 +401,7 @@ function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $
 			  VALUES (".$gruppenMengeInGebinde.
 			 ", ".$produkt_id.
 			 ", ".$gruppenbestellung_id.", 2);";
-		echo $query."<br>";
+		//echo $query."<br>";
 		mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB schreiben...",mysql_error());
 	}
 }
@@ -422,13 +423,26 @@ function changeLiefermengen_sql($menge, $produkt_id, $bestellung_id){
 	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB ändern...",mysql_error());
 }
 function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_id){
+	$where_clause = " WHERE art = 2 AND produkt_id = ".mysql_escape_string($produkt_id)."
+			 AND gruppenbestellung_id IN
+		  	(SELECT id FROM gruppenbestellungen
+				 WHERE bestellguppen_id = ".mysql_escape_string($gruppen_id)."
+				 AND gesamtbestellung_id =
+				 ".mysql_escape_string($bestellung_id).") ";
+
+	$query = "SELECT bestellzuordnung ".$where_clause;
+	echo $query."<br>";
+	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
+	$toDelete = mysql_num_rows($result) - 1 ;
+	if($toDelete > 0){
+		$query = "DELETE FROM bestellzuordnung
+			".$where_clause." LIMIT 0 ";
+		echo $query."<br>";
+		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
+	}
+
 	$query = "UPDATE bestellzuordnung 
-		  INNER JOIN gruppenbestellungen ON (gruppenbestellungen.id = gruppenbestellung_id) 
-		  SET menge = ".mysql_escape_string($menge)."
-		  WHERE art = 2 
-		  AND produkt_id = ".mysql_escape_string($produkt_id)."
-		  AND bestellguppen_id = ".mysql_escape_string($gruppen_id)."
-		  AND gesamtbestellung_id = ".mysql_escape_string($bestellung_id).";";
+		  SET menge = ".mysql_escape_string($menge).$where_clause;
 	//echo $query."<br>";
 	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
 }
@@ -465,6 +479,7 @@ function verteilmengenZuweisen($bestell_id){
      //und damit weiterrechnen. Dazu sind aber im Moment zuviele
      //Variablen da, die ich nicht verstehe.
      $gruppen_id = $gruppe_row['id'];
+     $gruppenbestellung_id = $gruppe_row['gruppenbestellungen_id'];
      //echo "Bearbeite Gruppe (".$gruppen_id.") ".$gruppe_row['name'];
      // Produkte auslesen & Tabelle erstellen...
      $result = sql_bestellprodukte($bestell_id);
@@ -504,12 +519,11 @@ function verteilmengenZuweisen($bestell_id){
 					
 					
 	    // Hier werden die aktuellen festen Bestellmengen ausgelesen...
-	    $bestellmengen = sql_bestellmengen($bestell_id,
-	    $produkt_row['produkt_id'],0);
+	    $bestellmengen = sql_bestellmengen($bestell_id, $produkt_row['produkt_id'],0);
 	    $intervallgrenzen_counter = 0;								
 	    while ($einzelbestellung_row = mysql_fetch_array($bestellmengen)) {
 		if ($einzelbestellung_row['bestellguppen_id'] == $gruppen_id) {
-		    $gruppenbestellung_id = $einzelbestellung_row['gruppenbest_id'];
+		    //$gruppenbestellung_id = $einzelbestellung_row['gruppenbest_id'];
 		    $ug = $gruppenBestellintervallUntereGrenze[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $gesamtBestellmengeFest[$produkt_row['produkt_id']] + 1;
 		    $og = $gruppenBestellintervallObereGrenze[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $gesamtBestellmengeFest[$produkt_row['produkt_id']] + $einzelbestellung_row['menge'];
 		    $bestellintervallId[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $einzelbestellung_row['bestellzuordnung_id'];
@@ -631,13 +645,12 @@ function verteilmengenZuweisen($bestell_id){
 		}
 	  }
 
-	$gruppenToleranzNichtInGebinde =
-	$gruppenBestellmengeToleranz[$produkt_row['produkt_id']] - $gruppenToleranzInGebinde;
-	$gruppeGesamtMengeNichtInGebinden =
-	$gruppenBestellmengeFest[$produkt_row['produkt_id']]  - $gruppeGesamtMengeInGebinden;
+	$gruppenToleranzNichtInGebinde = $gruppenBestellmengeToleranz[$produkt_row['produkt_id']] - $gruppenToleranzInGebinde;
+	$gruppeGesamtMengeNichtInGebinden = $gruppenBestellmengeFest[$produkt_row['produkt_id']]  - $gruppeGesamtMengeInGebinden;
+	$dr_bestellen = $gruppeGesamtMengeInGebinden +$gruppenToleranzInGebinde;
 	
 	//Hier können Verteilmengen geschrieben werden
-	writeVerteilmengen_sql($gruppeGesamtMengeInGebinden, $gruppenbestellung_id, $produkt_row['produkt_id']);
+	writeVerteilmengen_sql($dr_bestellen, $gruppenbestellung_id, $produkt_row['produkt_id']);
      }
   }
   	writeLiefermenge_sql($bestell_id);
