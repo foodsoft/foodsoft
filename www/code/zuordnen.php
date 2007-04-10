@@ -374,7 +374,7 @@ function getProduzentBestellID($bestell_id){
 		INNER JOIN produkte ON (produkt_id = produkte.id)
 		WHERE gesamtbestellung_id = ".$bestell_id;
     //echo $sql."<br>";
-    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nicht aus DB laden..",mysql_error());
     if (mysql_num_rows($result) > 1)
 	    echo error(__LINE__,__FILE__,"Mehr als ein Lieferant fuer Bestellung ".$bestell_id);
 	 else {
