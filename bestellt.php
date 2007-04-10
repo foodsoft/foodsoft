@@ -273,6 +273,18 @@ Werte für die Druckversion "2x2 Matrix"  ..
 									</td>
 									 </tr>
 								</table>
+					<table class="menu">
+						   <tr>
+							    <th
+							    colspan="1">oder zur Auswahl:</th>
+							 </tr>
+									 
+									 <tr>
+		          <td><input type="button" value="Auswahl" class="button" onClick="self.location.href='index.php?area=bestellt'"></td>
+				      
+					 </tr>
+									 
+								</table>
 
 								
 	<?PHP
@@ -798,7 +810,7 @@ Werte für die Druckversion "2x2 Matrix"  ..
 					 <td align="right" id="td_gesamt_preis">
 					    <b><span id="gesamt_preis"><?PHP echo sprintf("%.02f",$gesamt_preis); ?></span></b>
 					 </td>
-				</tr>		
+				</tr>	<tr>	<td colspan="6" align="right"><b>Alle Preise inclusive Pfand und Mehrwertsteuer!</b></td></tr>
 		<?PHP 
 		   if (!$mutli_group) {
 		?>

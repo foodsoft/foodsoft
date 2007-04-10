@@ -115,6 +115,7 @@
 				 
 				    $row_gesamtbestellung = mysql_fetch_array($result);
 				    $bestell_id = $row_gesamtbestellung['id'];
+				    $lieferant_idx = $row_gesamtbestellung['id'];
 						$gesamt_preis = 0;
 						$max_gesamt_preis = 0;
 						
@@ -122,6 +123,7 @@
 						// Lieferantenname zu den Lieferanten-Nummern auslesen
 						$result = mysql_query("SELECT name,id FROM lieferanten") or error(__LINE__,__FILE__,"Konnte Lieferantennamen nich aus DB laden..",mysql_error());
 						while ($row = mysql_fetch_array($result)) $lieferanten_id2name[$row['id']] = $row['name'];
+						
 						
 						// Produktgruppennamen zu den Produktgruppen-Nummern auslesen
 						$result = mysql_query("SELECT name,id FROM produktgruppen ORDER BY produktgruppen.id") or error(__LINE__,__FILE__,"Konnte Produktgruppen nich aus DB laden..",mysql_error());
@@ -992,7 +994,8 @@
 						 		}  ?>
 						 </td>
 						 <td valign="top"><?PHP echo $produktgruppen_id2name[$produkt_row['produktgruppen_id']]; ?></td>
-						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
+						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; 
+						 						$lieferant_idx=$lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
 						 <td valign="top">
 						     <table border="0" width="100%" class="inner">
 			<?PHP 
@@ -1123,6 +1126,12 @@
 					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
 				       <input type="button" class="bigbutton" value="bestellen" onClick="bestellungAktualisieren();">
 				       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+				       <input type="button" value="Produkt hinzu" class="bigbutton" onClick="window.open('windows/insertProductBest.php?bestell_id=<?PHP echo $bestell_id; ?>','insertProductBest','width=350,height=320,left=200,top=100').focus()">
+
+				      
+					 
+				       
+				       
 				   </th>
 				</tr>
 				</table>

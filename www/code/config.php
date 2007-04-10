@@ -9,9 +9,15 @@
 	 // $db_pwd        MySQL Passwort
 	 // $db_name      Name der MySQL-Datenbank
    $db_server  =  "localhost";
-   $db_name   = "nahrungskette";
-   $db_user     = "nahrungskette";
-   $db_pwd     = "leckerpotsdam"; 
+   $db_name   = "foodsoft";
+   $db_user     = "root";
+   $db_pwd     = ""; 
+   
+//    $db_server  =  "localhost";
+//    $db_name   = "nahrungskette";
+//    $db_user     = "nahrungskette";
+//    $db_pwd     = "leckerpotsdam"; 
+// 	 
 	 
 	 // Mailadresse an die Auftretende Fehler gemeldet werden. Wenn leer (="") dann keine Warnmails.
 	 $error_report_adress = "";
