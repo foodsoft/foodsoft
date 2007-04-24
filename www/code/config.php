@@ -17,13 +17,13 @@
 	 $error_report_adress = "dreusser@uni-potsdam.de";
 	 
 	 // Passwort fr die Gruppenadministration
-	 $real_gruppen_pwd = "secret123";
+	 $real_gruppen_pwd = "";
 	 
 	 // Passwort fr die LieferantInnenadministartion
-	 $real_lieferanten_pwd = "gustav_9";	 
+	 $real_lieferanten_pwd = "";	 
 	 
 	 // Passwort fr die Produktadministration
-	 $real_produkte_pwd = "angan_18";
+	 $real_produkte_pwd = "";
 
 	 
 	 // Passwort fr das ansehen der abgeschlossenen Gesamtbestellungen (Bestellgruppe)
