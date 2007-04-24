@@ -9,27 +9,21 @@
 	 // $db_pwd        MySQL Passwort
 	 // $db_name      Name der MySQL-Datenbank
    $db_server  =  "localhost";
-   $db_name   = "foodsoft";
-   $db_user     = "root";
-   $db_pwd     = ""; 
-   
-//    $db_server  =  "localhost";
-//    $db_name   = "nahrungskette";
-//    $db_user     = "nahrungskette";
-//    $db_pwd     = "leckerpotsdam"; 
-// 	 
+   $db_name   = "nahrungskette";
+   $db_user     = "nahrungskette";
+   $db_pwd     = "leckerpotsdam"; 
 	 
 	 // Mailadresse an die Auftretende Fehler gemeldet werden. Wenn leer (="") dann keine Warnmails.
-	 $error_report_adress = "";
+	 $error_report_adress = "dreusser@uni-potsdam.de";
 	 
 	 // Passwort fr die Gruppenadministration
-	 $real_gruppen_pwd = "";
+	 $real_gruppen_pwd = "secret123";
 	 
 	 // Passwort fr die LieferantInnenadministartion
-	 $real_lieferanten_pwd = "";	 
+	 $real_lieferanten_pwd = "gustav_9";	 
 	 
 	 // Passwort fr die Produktadministration
-	 $real_produkte_pwd = "";
+	 $real_produkte_pwd = "angan_18";
 
 	 
 	 // Passwort fr das ansehen der abgeschlossenen Gesamtbestellungen (Bestellgruppe)
