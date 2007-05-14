@@ -8,7 +8,7 @@
 	 // $db_user        MySQL Benutzername 
 	 // $db_pwd        MySQL Passwort
 	 // $db_name      Name der MySQL-Datenbank
-   $db_server  =  "localhost";
+   $db_server  =  "127.0.0.1";
    $db_name   = "nahrungskette";
    $db_user     = "nahrungskette";
    $db_pwd     = "leckerpotsdam"; 
