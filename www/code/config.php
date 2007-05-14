@@ -13,6 +13,10 @@
    $db_user     = "nahrungskette";
    $db_pwd     = "leckerpotsdam"; 
 	 
+   // Terra-Kataloge:
+   $ldapuri = 'ldap://fcnahrungskette.qipc.org:21';
+   $ldapbase = 'ou=terra,ou=fcnahrungskette,o=uni-potsdam,c=de';
+
 	 // Mailadresse an die Auftretende Fehler gemeldet werden. Wenn leer (="") dann keine Warnmails.
 	 $error_report_adress = "dreusser@uni-potsdam.de";
 	 

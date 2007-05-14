@@ -1,5 +1,6 @@
 
 <?php
+
   // Konfigurationsdatei einlesen
 	include('code/config.php');
 	
@@ -90,40 +91,35 @@
       </tr>
       </table>
    </form>
-   
+
 <?php
 
     if ( $filter != '' ) {
       $filter = '(&(objectclass=terraartikel)' . $filter . ')';
       echo '<br>filter: ' . $filter . '<br>';
-   
+
       echo "<br>connecting... ";
-      $ldaphandle = ldap_connect( 'ldap://terra.qipc.org:389' );
+      $ldaphandle = ldap_connect( $ldapuri );
       echo " result is: " . $ldaphandle  . " <br>";
-  
+
       echo "<br>setting protocol version 3...";
       $rv = ldap_set_option( $ldaphandle, LDAP_OPT_PROTOCOL_VERSION, 3 );
       echo " result is: " . $rv  . " <br>";
-  
+
       echo "<br>binding to server...";
       $rv = ldap_bind( $ldaphandle );
       echo " result is: " . $rv  . " <br>";
-  
+
       echo "<br>searching...";
-      $results = ldap_search(
-        $ldaphandle
-      , 'ou=terra,ou=fcnahrungskette,o=uni-potsdam,c=de'
-      , $filter
-      );
+      $results = ldap_search( $ldaphandle , $ldapbase , $filter );
       echo " result is: " . $results  . " <br>";
-  
+
       $entries = ldap_get_entries( $ldaphandle, $results );
       echo " hit count:  " . $entries["count"]  . " <br>";
       $count = $entries["count"];
       $max = $count;
       if( $max > 100 ) $max = 100;
-      
-  
+
       echo "<h2> " . $count . " Treffer (" . $max . " werden angezeigt)</h2>";
       ?>
         <table>
@@ -141,7 +137,7 @@
             <th>Katalog</th>
           </tr>
       <?php
-  
+
       for( $i=0; $i < $max; $i++ ) {
         echo "<tr>";
         echo "  <td>" . $entries[$i]["terraartikelnummer"][0] . "</td>";
