@@ -16,6 +16,8 @@
   // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
   if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
 
+   $ldapuri = 'ldap://fcnahrungskette.qipc.org:21';
+   $ldapbase = 'ou=terra,ou=fcnahrungskette,o=uni-potsdam,c=de';
 
 	//head einfügen
 		include ('head.php');
@@ -48,6 +50,11 @@
       if ( $terramaxpreis > 0 )
         $filter = $filter . '(terranettopreisincents<='.$terramaxpreis.')';
     }
+    if (isset($HTTP_GET_VARS['terrakatalog'])) {
+      $terrakatalog = $HTTP_GET_VARS['terrakatalog'];
+      if ( $terrakatalog )
+        $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
+    }
 ?>
     <form action="artikelsuche.php" method="post">
       <table>
@@ -64,6 +71,19 @@
           &nbsp;
           Artikelnummer:
           <input type="text" name="terraanummer" value="<?PHP echo $terraanummer; ?>" size=10>
+          &nbsp;
+          Katalog:
+          <select name="terrakatalog" size="1">
+<?php
+      $kataloge = array( '', 'OG', 'Fr', 'Tr' );
+      foreach ( $kataloge as $option ) {
+        echo '<option value="' . $option . '"';
+        if ( $terrakatalog == $option )
+          echo ' selected';
+        echo '>' . $option . '</option>';
+      }
+?>
+          </select>
         </td
       </tr>
       <tr>
@@ -90,6 +110,28 @@
         </td
       </tr>
       </table>
+   </form>
+
+   <br>
+   <form action="terrakatalog.upload.php" method="post" enctype="multipart/form-data">
+     <table>
+      <tr>
+        <th colspan="3">
+        Neuen Katalog einlesen:
+        </th>
+      <tr>
+     <tr>
+     <td>
+     Datei (Format: .xls): <input type="file" name="terrakatalog"></input>
+     </td>
+     <td>
+      &nbsp; gueltig ab (Format: JJJJkwWW): <input type="text" name="terrakw" size="8"></input>
+     </td>
+     <td>
+       <input type="submit" value="start">
+     </td
+     </tr>
+     </table>
    </form>
 
 <?php
