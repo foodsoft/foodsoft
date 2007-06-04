@@ -12,7 +12,7 @@ echo "upload: $1 $2"
       echo "unbekanntes format... Hilfe...\n" >&2
       exit 17
     fi
-    echo "line: $line<br>"
+    # echo "line: $line<br>"
     if printf "%s\n" "$line" | grep '^@Art.Nr. *@Bestell-Nr.@Milch *@Inhalt *@Einh. *@Land *@IK *@Verband *@ Netto-Preis *@/Einh. *@MwSt. % *@EAN-Code *@' &>/dev/null ; then
       echo 'input format: Terra frisch...' >&2
       fields="blubb anummer bnummer artikel gebinde einheit land ik verband netto preiseinheit mwst bla"
@@ -62,6 +62,6 @@ echo "upload: $1 $2"
   done | iconv -t utf-8 -f iso-8859-1 \
   | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w leckerpotsdam -c -H ldaps://fcnahrungskette.qipc.org
 
-  echo done.
+  echo "<br>done."
 } 2>&1
 

@@ -250,3 +250,40 @@ padding: 2px 2px 2px 5px;
 	 line-height: 1.3em;
 }
 
+th.warn, td.warn, div.warn, span.warn {
+  background-color:#ffaaaa;
+}
+
+th.ok, td.ok, div.ok, span.ok {
+  background-color:#ccffcc;
+}
+
+a.button {
+  font-size:12pt;
+  text-decoration:none;
+  color:000000;
+  background-color:dddde8;
+  padding:0.1ex; 1em; 0.1ex; 1em;
+  margin-left:1em;
+  margin-right:1em;
+/* display:block; */
+  border-style:solid;
+  border-width:2pt;
+  border-color:#000000;
+}
+a.button:hover {
+  font-weight:bold;
+  background-color:f8f8ff;
+}
+
+td.outer, th.outer {
+  border-style:solid;
+  border-color:#000000;
+  border-width:1px;
+}
+
+tr.modified td, tr.modified th, .modified {
+  background-image:url(modified.gif);
+  background-repeat:repeat;
+}
+

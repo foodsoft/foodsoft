@@ -55,6 +55,16 @@
       if ( $terrakatalog )
         $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
     }
+
+    // produktid: wenn gesetzt, erlaube update der artikelnummer!
+    if (isset($HTTP_GET_VARS['produktid']) && isset($HTTP_GET_VARS['produktname']) ) {
+      $produktid = $HTTP_GET_VARS['produktid'];
+      $produktname = $HTTP_GET_VARS['produktname'];
+    } else {
+      $produktid = -1;
+    }
+
+   if( $produktid < 0 ) {
 ?>
     <form action="artikelsuche.php" method="post">
       <table>
@@ -135,6 +145,12 @@
    </form>
 
 <?php
+  } else {    // produktid >= 0
+
+    echo '<h2>Katalogsuche nach Artikelnummer fuer <i>' . $produktname . '</i>:</h2>';
+    echo '<br>Suchbegriff: ' . $terracn . '<br>';
+    echo '<b>Zur Uebernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b>';
+  }
 
     if ( $filter != '' ) {
       $filter = '(&(objectclass=terraartikel)' . $filter . ')';
@@ -180,9 +196,20 @@
           </tr>
       <?php
 
+      if ( $produktid >= 0 ) {
+        echo '<form action="anummerupdate.php" method="get">';
+        echo '<input type="hidden" name="produktid" value="' . $produktid . '"></input>';
+      }
+
       for( $i=0; $i < $max; $i++ ) {
         echo "<tr>";
-        echo "  <td>" . $entries[$i]["terraartikelnummer"][0] . "</td>";
+        echo "  <td>";
+        if ( $produktid >= 0 ) {
+          echo '<input type="submit" name="anummer" value="' . $entries[$i]["terraartikelnummer"][0] . '"></input>';
+        } else {
+          echo $entries[$i]["terraartikelnummer"][0];
+        }
+        echo "</td>";
         echo "  <td>" . $entries[$i]["terrabestellnummer"][0] . "</td>";
         echo "  <td>" . $entries[$i]["cn"][0] . "</td>";
         echo "  <td>" . $entries[$i]["terraeinheit"][0] . "</td>";
@@ -197,6 +224,10 @@
         echo "  <td>" . $brutto . "</td>";
         echo "  <td>" . $entries[$i]["terradatum"][0] . "</td>";
         echo "</tr>";
+      }
+
+      if ( $produktid >= 0 ) {
+        echo '</form>';
       }
 
       echo "</table>";

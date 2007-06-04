@@ -252,7 +252,16 @@
 			 ?>
 				<table class="liste">
 				   <tr>
-					    <th colspan="9"><h3>Produktübersicht von <?php echo $lieferant_name?></h3></th>
+					    <th colspan="9"><h3>Produktübersicht von
+              <?php
+                echo $lieferant_name;
+                if ( $lieferant_name == "Terra" ) {
+                 echo '<a class="button" href="artikelsuche.php" target="_new">Katalogsuche</a>';
+                 echo '<a class="button" href="terraabgleich.php" target="_new">Datenbankabgleich <span class="warn">!Experimentell!</span></a>';
+                }
+              ?>
+
+              </h3></th>
 					 </tr>
 	        		<tr>
 						 <th></th>
