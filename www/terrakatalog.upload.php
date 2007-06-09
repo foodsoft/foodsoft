@@ -23,9 +23,9 @@
 		include ('head.php');
 
     echo 'Hallo, Welt!';
-    echo 'files: ' . $_FILES;
-    echo 'kat: ' . $_FILES['terrakatalog'];
-    echo 'tmp: ' . $_FILES['terrakatalog']['tmp_name'];
+    echo '<br>files: ' . $_FILES;
+    echo '<br>kat: ' . $_FILES['terrakatalog'];
+    echo '<br>tmp: ' . $_FILES['terrakatalog']['tmp_name'];
 
     if (isset($HTTP_GET_VARS['terrakw']))
       $terrakw = $HTTP_GET_VARS['terrakw'];

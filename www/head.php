@@ -9,7 +9,7 @@
 
 	 <script src="js/foodsoft.js" type="text/javascript" language="javascript"></script>	 
 </head>
-<body>
+<body onload="jsinit();">
 <div id="logo">
    	<a href="index.php"><span>FC</span> Nahrungskette</a> <span style="color:white; font-size:45%; letter-spacing: -1px; ">... Foodsoft</span>
   	</div>

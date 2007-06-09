@@ -252,6 +252,10 @@ padding: 2px 2px 2px 5px;
 
 th.warn, td.warn, div.warn, span.warn {
   background-color:#ffaaaa;
+  color:#000000;
+  font-weight:bold;
+  padding-top:2px;
+  padding-bottom:2px;
 }
 
 th.ok, td.ok, div.ok, span.ok {
@@ -262,20 +266,37 @@ a.button {
   font-size:12pt;
   text-decoration:none;
   color:000000;
-  background-color:dddde8;
+  background-color:dddddd;
   padding:0.1ex; 1em; 0.1ex; 1em;
   margin-left:1em;
   margin-right:1em;
 /* display:block; */
   border-style:solid;
-  border-width:2pt;
+  border-width:1pt;
   border-color:#000000;
 }
 a.button:hover {
   font-weight:bold;
-  background-color:f8f8ff;
+  background-color:f8f8f8;
 }
 
+a.blocklink {
+  font-size:12pt;
+  text-decoration:none;
+  color:000080;
+  padding:2px;
+  display:block;
+  border-style:solid;
+  border-width:1pt;
+  border-color:#000000;
+  color:000000;
+  background-color:dddddd;
+  text-decoration:none;
+}
+a.blocklink:hover {
+  background-color:f8f8f8;
+}
+  
 td.outer, th.outer {
   border-style:solid;
   border-color:#000000;
@@ -285,5 +306,22 @@ td.outer, th.outer {
 tr.modified td, tr.modified th, .modified {
   background-image:url(modified.gif);
   background-repeat:repeat;
+}
+
+div.untertabelle {
+  font-size:12p;
+  font-weight:bold;
+  padding:0.4ex;
+}
+
+kbd {
+  font-family:arial,sans-serif;
+  font-weight:bold;
+  color:#000000;
+}
+
+p.li {
+  padding:0em 1em 0em 2em;
+  margin:0em;
 }
 

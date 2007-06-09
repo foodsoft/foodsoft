@@ -20,21 +20,25 @@
 	 // Mailadresse an die Auftretende Fehler gemeldet werden. Wenn leer (="") dann keine Warnmails.
 	 $error_report_adress = "dreusser@uni-potsdam.de";
 	 
+
+	//Preis für Pfandglass
+	//$pfand_preis = 0.16; tut bisher nicht
+
 	 // Passwort fr die Gruppenadministration
-	 $real_gruppen_pwd = "";
+	 $real_gruppen_pwd = "foodi";
 	 
 	 // Passwort fr die LieferantInnenadministartion
-	 $real_lieferanten_pwd = "";	 
+	 $real_lieferanten_pwd = "foodi";	 
 	 
 	 // Passwort fr die Produktadministration
-	 $real_produkte_pwd = "";
+	 $real_produkte_pwd = "foodi";
 
 	 
 	 // Passwort fr das ansehen der abgeschlossenen Gesamtbestellungen (Bestellgruppe)
-	 $real_bestellt_pwd = "";
+	 $real_bestellt_pwd = "foodi";
 
 	 // Passwort fr den Internen Bereich
-	 $real_info_pwd = "";		 	 
+	 $real_info_pwd = "foodi";		 	 
 	 
 	 // Legt fest, Zeilenumbrche in Logfiles fr Windows genutzt werden.
 	 $log_win_format = true;	 

@@ -60,7 +60,7 @@ echo "upload: $1 $2"
     } | sed -e 's/ä/ae/' -e 's/ö/oe/' -e 's/ü/ue/' -e 's/Ä/AE/' -e 's/Ö/OE/' -e 's/Ü/UE/' -e 's/ß/sz/' 
     printf "\n"
   done | iconv -t utf-8 -f iso-8859-1 \
-  | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w leckerpotsdam -c -H ldaps://fcnahrungskette.qipc.org
+  | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w leckerpotsdam -c -H ldap://fcnahrungskette.qipc.org 2>&1 
 
   echo "<br>done."
 } 2>&1
