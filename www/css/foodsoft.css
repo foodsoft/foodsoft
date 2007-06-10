@@ -262,12 +262,12 @@ th.ok, td.ok, div.ok, span.ok {
   background-color:#ccffcc;
 }
 
-a.button {
-  font-size:12pt;
+a.button, span.button {
+  font-size:11pt;
   text-decoration:none;
   color:000000;
-  background-color:dddddd;
-  padding:0.1ex; 1em; 0.1ex; 1em;
+  background-color:#f0f0ff;
+  padding:0.1ex 1em 0.1ex 1em;
   margin-left:1em;
   margin-right:1em;
 /* display:block; */
@@ -275,9 +275,10 @@ a.button {
   border-width:1pt;
   border-color:#000000;
 }
-a.button:hover {
+a.button:hover, span.button:hover {
   font-weight:bold;
-  background-color:f8f8f8;
+  text-decoration:underline;
+  background-color:ffffd0;
 }
 
 a.blocklink {
@@ -290,13 +291,18 @@ a.blocklink {
   border-width:1pt;
   border-color:#000000;
   color:000000;
-  background-color:dddddd;
+  background-color:#f0f0ff;
   text-decoration:none;
 }
 a.blocklink:hover {
-  background-color:f8f8f8;
+  background-color:ffffd0;
 }
-  
+img.button {
+  background-color:#f0f0ff;
+}
+img.button:hover {
+  background-color:ffffd0;
+}  
 td.outer, th.outer {
   border-style:solid;
   border-color:#000000;
@@ -311,7 +317,7 @@ tr.modified td, tr.modified th, .modified {
 div.untertabelle {
   font-size:12p;
   font-weight:bold;
-  padding:0.4ex;
+  padding:1em 1ex 1ex 1ex;
 }
 
 kbd {
@@ -325,3 +331,30 @@ p.li {
   margin:0em;
 }
 
+.small_form fieldset {
+  background-color:#ffffd0;
+  margin:1ex;
+  border-style:solid;
+  border-color:#000000;
+  border-width:1px;
+}
+.small_form td, .small_form table {
+  background-color:#ffffd0;
+  border-style:none;
+  padding:0.5ex;
+  text-align:left;
+}
+  
+fieldset legend {
+  font-weight:bold;
+  background-color:#ffffff;
+  padding-top:0.3ex;
+  padding-bottom:0.3ex;
+  padding-left:2ex;
+  padding-right:2ex;
+  border-style:solid;
+  border-width:1px;
+  border-color:#000000;
+}
+
+  
