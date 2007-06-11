@@ -1,7 +1,10 @@
-
-
-
 <?php
+
+// terraabgleich.php
+//
+// sucht in produktliste und preishistorie nach inkonsistenzen,
+// und nach unterschieden zum Terra-katalog,
+// macht ggf. verbesserungsvorschlaege und erlaubt aenderungen
 
   // Konfigurationsdatei einlesen
 	include('code/config.php');
@@ -177,6 +180,10 @@
   echo '</table>';
 
 
+  // mysql_repair_link:
+  // erzeugt kleines formular, alle felder "hidden", nur submit-knopf sichtbar,
+  // das dieses Skript neu aufruft und dabei einen beliebigen SQL-befehl uebergibt
+  //
   function mysql_repair_link( $befehl, $kommentar, $domid = '' ) {
     global $produktid;
     echo '<div class="warn" style="padding-left:2em;">';
@@ -192,6 +199,9 @@
     echo '</div>';
   }
   
+  // do_artikel
+  // wird aus der hauptschleife aufgerufen, um einen artikel aus der Produktliste anzuzeigen
+  //
   function do_artikel() {
     global $outerrow, $ldaphandle, $ldapbase, $artikel, $detail, $mysqljetzt, $is_terra;
 
@@ -266,7 +276,7 @@
     //  - warnen, wenn kein aktuell gueltiger preis vorhanden
     //
     $pr0 = FALSE;
-    $prgueltig = FALSE;
+    $prgueltig = FALSE; // flag: wir haben einen akzeptablen preiseintrag fuer diesen artikel
     while( $pr1 = mysql_fetch_array($terrapreise) ) {
       if( $pr0 ) {
         if ( $pr0['zeitende'] == '' ) {
@@ -358,7 +368,7 @@
         break;
       default:
         $can_fceinheit = strtolower($fceinheit);
-        echo "<div class='warn'>Foodsoft Einheit unbekannt: $can_fceinheit </div>";
+        echo "<div class='warn'>Foodsoft-Einheit unbekannt: $can_fceinheit </div>";
         break;
     }
 
@@ -401,16 +411,17 @@
 
     echo '</tr></table>';
 
-    // flag: neuen preiseintrag vorschlagen:
+    // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
     //
     $neednewprice = FALSE;
 
+    // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
+    //
     $neednewarticlenumber = FALSE;
 
     //
     // Artikeldaten aus Katalog suchen und ggf anzeigen:
     //
-
     if( $is_terra ) {
 
       $brutto = NULL;
@@ -427,7 +438,7 @@
         <table>
           <tr>
             <td>
-              neue Artiken-Nr. setzen:
+              neue Artikel-Nr. setzen:
             </td>
             <td><form action='terraabgleich.php?produktid=$produktid' method='post'><input type='text' size='20' name='anummer' value='$anummer'></input>&nbsp;<input type='submit' name='Submit' value='OK'></input>
               </form>
@@ -584,12 +595,11 @@
             }
             if( abs( ($fcpreis - $fcpfand) * $terramult / $fcmult - $brutto ) > 0.01 ) {
               $neednewprice = TRUE;
-              echo "<div class='warn'>Problem: Preise stimmen nicht:
+              echo "<div class='warn'>Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
                         <p class='li'>Terra: <kbd>$brutto je $terramult $can_terraeinheit</kbd></p>
-                        <p class='li'>Foodsoft: <kbd>" . ($fcpreis-$fcpfand) * $terramult / $fcmult . " je $terramult $can_terraeinheit";
-              if( abs($fcpfand) > 0.01 ) 
-                echo "(ohne Pfand)";
-              echo "</kbd></p></div>";
+                        <p class='li'>Foodsoft: <kbd>"
+                          . ($fcpreis-$fcpfand) * $terramult / $fcmult
+                          . " je $terramult $can_terraeinheit </kbd></p></div>";
             }
           }
           if( $terrabnummer != $fcbnummer ) {
@@ -658,8 +668,8 @@
             <form method='post' action='terraabgleich.php?produktid=$produktid'>
             <fieldset>
               <legend>
-                <img class='button' src='img/close_black_trans.gif'
-                 onclick='preiseintrag_off();'></img>Neuer Preiseintrag:</legend>
+                <img class='button' title='Ausblenden' src='img/close_black_trans.gif'
+                 onclick='preiseintrag_off();'></img> Neuer Preiseintrag:</legend>
         ";
       }
 
@@ -677,9 +687,10 @@
                   <input type='text' size='4' name='newfcmult' value='$newfcmult'></input>
                   <input type='text' size='2' name='newfceinheit' value='$newfceinheit'></input>
                   &nbsp; Gebinde: <input type='text' size='6' name='newfcgebindegroesse' value='$newfcgebindegroesse'></input>
-                  &nbsp; Preis: <input type='text' size='8' name='newfcpreis' value='$newfcpreis'></input>
-                  &nbsp; Pfand: <input type='text' size='6' name='newfcpfand' value='$newfcpfand'></input>
                   &nbsp; B-Nr: <input type='text' size='8' name='newfcbnummer' value='$newfcbnummer'></input>
+                  &nbsp; Pfand: <input type='text' size='6' name='newfcpfand' value='$newfcpfand'></input>
+                  &nbsp; Endpreis:
+                    <input title='Preis incl. MWSt und Pfand' type='text' size='8' name='newfcpreis' value='$newfcpreis'></input>
                   &nbsp; ab: <input type='text' size='12' name='newfczeitstart' value='$mysqljetzt'></input>
                   &nbsp; <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
