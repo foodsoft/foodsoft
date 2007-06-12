@@ -42,7 +42,11 @@
 
  }
    // wichtige Variablen einlesen...
-   $gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+	 if($meinKonto){  
+   		$gruppen_pwd    = crypt($HTTP_GET_VARS['gruppen_pwd'],35464);
+	 } else {
+   		$gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+	 }
 	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
 	 
 	 // Variablen initialisieren
@@ -50,13 +54,18 @@
 	 
 	 
 	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-	 include('../code/zuordnen.php');
+	 if(!$meinKonto){
+	 include_once('../code/config.php');
+	 include_once('../code/err_functions.php');
+	 include_once('../code/connect_MySQL.php');
+	 include_once('../code/zuordnen.php');
+	 }
 	 
 	 // zur Sicherheit das Passwort prüfen..
-	 if ($gruppen_pwd != $real_gruppen_pwd) exit();
+	 if ($gruppen_pwd != $real_gruppen_pwd){
+		echo "<h2>Passwortfehler</h2>";
+	 	exit();
+	}
 	 
 
   // aktuelle Gruppendaten laden
@@ -81,6 +90,15 @@
 </head>
 <body onload="<?PHP echo $onload_str; ?>">
    <h3>Kontoauszüge von: <?PHP echo $bestellgruppen_row['name']; ?></h3>
+
+   <?php
+   if( ( $gesamtbestellung_id = $HTTP_GET_VARS['gesamtbestellung_id'] ) ) {
+     echo "details fuer bestellung: $gesamtbestellung_id";
+     echo "<div class='warn'>noch in arbeit!</div>";
+     exit(12);
+   }
+   ?>
+   
 	 <table style="width:430px;" class="liste">
 	    <tr>
 			   <th>type</th>
@@ -107,7 +125,11 @@
 					    echo "<tr>\n";
 					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
 					    echo "   <td>".$vert_row['datum']."</td>\n";
-					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
+					    // echo "   <td>Bestellung: ".$vert_row['name']." </td>";
+					    echo "
+                <td>
+                  <a href='index.php?area=meinkonto&gesamtbestellung_id={$vert_row['gesamtbestellung_id']}&bestellgruppen_id=$gruppen_id' target='_new'>Bestellung: "
+                  .$vert_row['name']." (". $vert_row['gesamtbestellung_id'] .")</a></td>";
 					    echo "   <td align='right' valign='bottom'> <b> ".$vert_row['gesamtpreis']."</b> </td>";
 				 	    $vert_row = mysql_fetch_array($vert_result);
 					    if(!$vert_row){
@@ -163,6 +185,9 @@
 				 if ($upButtonScript != "") echo "<input type=button value='>' onClick=\"".$upButtonScript.";document.forms['skip'].submit()\"";
 			?>
 	 </form>
+	 <? if(!$meinKonto){  ?>
 	 	 <a href="groupTransaktionMenu.php?gruppen_pwd=<?PHP echo $gruppen_pwd; ?>&gruppen_id=<?PHP echo $gruppen_id; ?>&gruppen_name=<?PHP echo $bestellgruppen_row['name']; ?>">Zurück</a>
+	 <? } ?>
+
 </body>
 </html>
