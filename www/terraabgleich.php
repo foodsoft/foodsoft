@@ -250,8 +250,8 @@
               <th>B-Nr</th>
               <th>von</th>
               <th>bis</th>
-              <th>Preis</th>
               <th>Pfand</th>
+              <th>Preis</th>
             </tr>
       ';
       while( $pr1 = mysql_fetch_array($terrapreise) ) {
@@ -260,8 +260,8 @@
         echo '  <td>' . $pr1['bestellnummer'] . '</td>';
         echo '  <td>' . $pr1['zeitstart'] . '</td>';
         echo '  <td>' . $pr1['zeitende'] . '</td>';
-        echo '  <td> ' . $pr1['preis'] . '</td>';
         echo '  <td> ' . $pr1['pfand'] . '</td>';
+        echo '  <td> ' . $pr1['preis'] . '</td>';
         echo '</tr>';
       }
      if( mysql_num_rows( $terrapreise ) > 0 ) {
@@ -385,8 +385,8 @@
           <th>Name</th>
           <th>Einheit</th>
           <th>Gebinde</th>
-          <th>Preis</th>
           <th>Pfand</th>
+          <th>Preis</th>
         </tr>
         <tr>
     ';
@@ -401,8 +401,8 @@
     echo "<td>$fcmult $can_fceinheit</td>";
     if( $prgueltig ) {
       echo "<td>$fcgebindegroesse</td>";
-      echo "<td>$fcpreis</td>";
       echo "<td>$fcpfand</td>";
+      echo "<td>$fcpreis</td>";
     } else {
       echo '<td><div class="warn" style="text-align:center;">-</div></td>';
       echo '<td><div class="warn" style="text-align:center;">-</div></td>';
@@ -677,21 +677,28 @@
             <table>
               <tr>
                 <td>Name:</td>
-                <td><input type='text' size='40' name='newfcname' value='$name'></input>
-                  &nbsp; Notiz: <input type='text' size='40' name='newfcnotiz' value='$fcnotiz'></input>
+                <td><input type='text' size='42' name='newfcname' value='$name'
+                 title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'></input>
+                  &nbsp; Notiz: <input type='text' size='42' name='newfcnotiz' value='$fcnotiz'></input>
                 </td>
               </tr>
               <tr>
                 <td>Einheit:</td>
                 <td>
-                  <input type='text' size='4' name='newfcmult' value='$newfcmult'></input>
-                  <input type='text' size='2' name='newfceinheit' value='$newfceinheit'></input>
-                  &nbsp; Gebinde: <input type='text' size='6' name='newfcgebindegroesse' value='$newfcgebindegroesse'></input>
-                  &nbsp; B-Nr: <input type='text' size='8' name='newfcbnummer' value='$newfcbnummer'></input>
-                  &nbsp; Pfand: <input type='text' size='6' name='newfcpfand' value='$newfcpfand'></input>
+                  <input type='text' size='4' name='newfcmult' value='$newfcmult'
+                   title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'></input>
+                  <input type='text' size='2' name='newfceinheit' value='$newfceinheit'
+                   title='Einheit, z.B. g, Be, Gl, Bd. Bei Terra moeglichst Vorschlag uebernehmen!'></input>
+                  &nbsp; Gebinde:
+                    <input type='text' size='4' name='newfcgebindegroesse' value='$newfcgebindegroesse'
+                     title='Gebindegroesse in ganzen Vielfachen der Einheit'></input>
+                  &nbsp; B-Nr: <input type='text' size='8' name='newfcbnummer' value='$newfcbnummer'
+                   title='Bestellnummer (die, die sich bei Terra staendig aendert!)'></input>
+                  &nbsp; Pfand: <input type='text' size='4' name='newfcpfand' value='$newfcpfand'
+                   title='Pfand pro Einheit, bei uns immer 0.00 oder 0.16'></input>
                   &nbsp; Endpreis:
                     <input title='Preis incl. MWSt und Pfand' type='text' size='8' name='newfcpreis' value='$newfcpreis'></input>
-                  &nbsp; ab: <input type='text' size='12' name='newfczeitstart' value='$mysqljetzt'></input>
+                  &nbsp; ab: <input type='text' size='14' name='newfczeitstart' value='$mysqljetzt'></input>
                   &nbsp; <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
                   ></input>
