@@ -1181,8 +1181,6 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 				</tr>
 				</table>
 		    </form>
-<<<<<<< bestellen.php
-
  
    <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
    <form>
@@ -1195,27 +1193,6 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 	     ?>
 	   <input type="submit" value="Produkt hinzufügen">
    </form>
-=======
-
- 
-   <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
-   <form>
-	   <input type="hidden" name="area" value="bestellen">			
-	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
-	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   Produkt: <select name="produkt_id">
-	     <?php
-	           $produkte=getProdukteVonLieferant(getProduzentBestellID($bestell_id), $bestell_id);
-		   while($prod = mysql_fetch_array($produkte)){
-		   	echo "<option value=\"".$prod['p_id']."\">".
-				$prod['name']." (".$prod['einheit'].") "."</option>\n";
-		   }
-	     ?>
-	   </select>
-	   <input type="submit" value="Produkt hinzufügen">
-   </form>
->>>>>>> 1.3
 				
 		<?PHP
 		

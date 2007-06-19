@@ -208,17 +208,6 @@ include_once("code/zuordnen.php");
             <br><br>
          
      <?PHP
-<<<<<<< produkte.php
-          if ($edit_all) {
-      ?>
-         <form action="index.php" name="editAllForm" method="POST">
-          <input type="hidden" name="area" value="produkte">
-          <input type="hidden" name="action" value="change_all">
-      <?PHP
-         } else {
-      ?>
-         <form action="windows/insertBestellung.php" target="insertBestellung" name="newBestellungForm">
-=======
 		    if ($edit_all) {
 		?>
 		   <form action="index.php" name="editAllForm" method="POST">
@@ -307,7 +296,6 @@ include_once("code/zuordnen.php");
 //					       AND pp.zeitende IS NULL
 //					       AND pp.zeitstart <= NOW()
 //					       ORDER BY p.name") or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
->>>>>>> 1.2
 
      <?PHP
          }
