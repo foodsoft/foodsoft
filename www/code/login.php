@@ -11,6 +11,7 @@
 // bei erfolgreicher anmeldung werden gesetzt:
 //  - $angemeldet == TRUE
 //  - $login_gruppen_id
+//  - $login_gruppen_name
 //  - $dienst (0, 1, 3, 4 oder 5)
 // falls $dienst > 0 ausserdem:
 //  - $coopie_name
