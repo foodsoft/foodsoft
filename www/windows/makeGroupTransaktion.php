@@ -1,7 +1,8 @@
 <?PHP
    include('../code/zuordnen.php');
    // wichtige Variablen einlesen...
-   $gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+   // $gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+   $gruppen_pwd = 'obsolet';
 	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
 	 
 	 // Variablen initialisieren
@@ -14,14 +15,16 @@
 	 $summe                     = "";
 	 $notiz                        = "";
 	 
-	 
 	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
+	 require_once('../code/config.php');
+	 require_once('../code/err_functions.php');
+	 require_once('../code/connect_MySQL.php');
+
+   require_once('code/login.php');
+   nur_fuer_dienst_IV();
 	 
 	 // zur Sicherheit das Passwort prüfen..
-	 if ($gruppen_pwd != $real_gruppen_pwd) exit();
+	 // if ($gruppen_pwd != $real_gruppen_pwd) exit();
 	 
 	 $eingang_tag       = date("j");
 	 $eingang_monat  = date("n");
@@ -79,7 +82,25 @@
 				if ($neuer_kontostand < 0) $onload_str .= "alert('ACHTUNG: Das Gruppenkonto weist einen negativen Kontostand auf. Dies sollte NICHT VORKOMMEN!! Bitte prüfen!'); ";
 			
 			   // Transaktion speichern...
-			   mysql_query("INSERT INTO gruppen_transaktion (type, gruppen_id, eingabe_zeit, summe, kontoauszugs_nr, notiz, kontobewegungs_datum) VALUES ('".mysql_escape_string($transaktionsart)."', '".mysql_escape_string($gruppen_id)."', NOW(), '".mysql_escape_string($summe)."', '".mysql_escape_string($auszug_nr)."', '".mysql_escape_string($notiz)."', '".mysql_escape_string($kontobewegungs_datum)."')") or error(__LINE__,__FILE__,"Konnte Transaktion nicht speichern.",mysql_error());
+			   mysql_query( "INSERT INTO gruppen_transaktion
+                  (type
+                  , gruppen_id
+                  , eingabe_zeit
+                  , summe
+                  , kontoauszugs_nr
+                  , notiz
+                  , kontobewegungs_datum
+                  , dienstkontrollblatt_id)
+           VALUES
+                ('".mysql_escape_string($transaktionsart)
+              . "', '".mysql_escape_string($gruppen_id)
+              . "', NOW(), '"
+              . mysql_escape_string($summe)
+              . "', '".mysql_escape_string($auszug_nr)
+              . "', '".mysql_escape_string($notiz)
+              . "', '".mysql_escape_string($kontobewegungs_datum)
+              . "',$dienstkontrollblatt_id) "
+         ) or error(__LINE__,__FILE__,"Konnte Transaktion nicht speichern.",mysql_error());
 				 
 				 // Gruppenkontostand anpassen...
 				 $onload_str .= "opener.document.forms['reload_form'].submit();";

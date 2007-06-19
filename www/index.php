@@ -1,22 +1,27 @@
 <?php
   // Konfigurationsdatei einlesen
-	include('code/config.php');
+	require_once('code/config.php');
 	
 	// Funktionen zur Fehlerbehandlung laden
-	include('code/err_functions.php');
+	require_once('code/err_functions.php');
 	
 	// Verbindung zur MySQL-Datenbank herstellen
-	include('code/connect_MySQL.php');
+	require_once('code/connect_MySQL.php');
+
+  require_once('code/login.php');
 	
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
 
-   // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
-   if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
-
+  get_http_var( 'area' );
 
 		//head einfügen
 		include ('head.php');
+
+  if( ! $angemeldet ) {
+    echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
+    exit();
+  }
 	 
 	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
 	    if (!isset($area))
@@ -64,10 +69,6 @@
 			else if ($area == 'meinkonto')
 			   include('meinkonto.php');				 
 	?>
-<!-- 	<br /><br />
-	<hr style="border:1px dotted grey;"/>
-	<div style="font-size: 0.9em; color: grey; ">Achtung Testumgebung. ALLE Passwörter sind leer....
-	<br />Fragen an admin ätt fcschinke09.de</div>
-	</div> -->
+
 </body>
 </html>

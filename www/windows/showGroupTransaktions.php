@@ -41,31 +41,39 @@
 	}
 
  }
-   // wichtige Variablen einlesen...
-	 if($meinKonto){  
-   		$gruppen_pwd    = crypt($HTTP_GET_VARS['gruppen_pwd'],35464);
-	 } else {
-   		$gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
-	 }
-	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
-	 
+/*   // wichtige Variablen einlesen...
+ *	 if($meinKonto){  
+ *  		$gruppen_pwd    = crypt($HTTP_GET_VARS['gruppen_pwd'],35464);
+ *	 } else {
+ *  		$gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+ *	 }
+ *	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
+ */
+  if($meinKonto) {
+    $gruppen_id = $login_gruppen_id;
+  } else {
+ 	 include_once('../code/config.php');
+ 	 include_once('../code/err_functions.php');
+ 	 include_once('../code/connect_MySQL.php');
+ 	 include_once('../code/zuordnen.php');
+   require_once('code/login.php');
+   nur_fuer_dienst_IV();
+   get_http_var( 'gruppen_id' ) or die();
+  }
+ 
 	 // Variablen initialisieren
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
 	 
-	 // Verbindung zur Datenbank herstellen
-	 if(!$meinKonto){
-	 include_once('../code/config.php');
-	 include_once('../code/err_functions.php');
-	 include_once('../code/connect_MySQL.php');
-	 include_once('../code/zuordnen.php');
-	 }
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($gruppen_pwd != $real_gruppen_pwd){
-		echo "<h2>Passwortfehler</h2>";
-	 	exit();
-	}
+// 	 // zur Sicherheit das Passwort prüfen..
+// 	 if ($gruppen_pwd != $real_gruppen_pwd){
+// 		echo "<h2>Passwortfehler</h2>";
+// 	 	exit();
+// 	}
+   if( ! $angemeldet ) {
+     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
+     exit();
+   }
 	 
 
   // aktuelle Gruppendaten laden

@@ -1,0 +1,160 @@
+#!/usr/bin/perl 
+#this software copyright 2004, provided as-is. The author takes no
+#liabilty or responsibility for use or misuse, functioning or
+#misfunctioning of this software.
+#
+# Timo: modified to use @ as cell separator (less common in the cell data!)
+
+use strict;
+use Getopt::Long;
+use Spreadsheet::ParseExcel;
+
+my $version="0.1";
+my $progname="antixls";
+my $long_progname="antixls";
+
+sub printHelp {
+    print "Usage: $progname [options...] excelfile1 [excelfile2 ...]\n";
+    print "General Options:\n";
+    print "--help\t\t\tThis help information\n";
+    print "--version\t\tShow version information\n";
+    print "--formatted\t\tDisplay sheets in ASCII-art table\n";
+    print "--linear\t\tDisplay sheets in \"linear\" (unformatted) mode\n";
+    print "--csv\t\t\tDisplay sheets in CSV mode\n";
+    print "--indexed\t\tDisplay sheets linearly with cell indices (default)\n";
+}
+
+sub printVersion {
+    print "$long_progname v$version\n";
+}
+
+my $format; 
+
+my $helpOption=0;
+my $versionOption=0;
+my $formattedOption=0;
+my $linearOption=0;
+my $csvOption=0;
+my $indexOption=0;
+
+GetOptions('help' => \$helpOption,
+           'version' => \$versionOption,
+	   'f|formatted' => \$formattedOption,
+	   'l|linear' => \$linearOption,
+	   'c|csv' => \$csvOption,
+	   'i|indexed'=> \$indexOption);
+
+if($helpOption){
+    printHelp();
+    exit(0);
+} elsif($versionOption){
+    printVersion();
+    exit(0);
+} elsif($formattedOption){
+    $format = 1;
+} elsif($linearOption){
+    $format = 2;
+} elsif($csvOption){
+    $format = 4;
+} else{
+    $format = 3;
+}
+
+while(my $f = shift){
+    do_convert($f);
+}
+
+sub do_convert {
+    my $oBook = Spreadsheet::ParseExcel::Workbook->Parse(shift);
+    my($iR, $iC, $oWkS, $oWkC);
+    foreach my $oWkS (@{$oBook->{Worksheet}}) {
+	if($format == 3){ ##indexed
+	    print "Sheet: ", $oWkS->{Name}, "\n";
+	    for(my $iR = $oWkS->{MinRow} ;
+		defined $oWkS->{MaxRow} && $iR <= $oWkS->{MaxRow} ; $iR++) {
+		for(my $iC = $oWkS->{MinCol} ;
+		    defined $oWkS->{MaxCol} && $iC <= $oWkS->{MaxCol} ; $iC++) {
+		    $oWkC = $oWkS->{Cells}[$iR][$iC];
+		    print "($iR, $iC)\t\t", $oWkC->Value, "\n" if($oWkC);
+		}
+	    }
+	}
+	elsif($format == 2){ ##linear
+	    print "Sheet: ", $oWkS->{Name}, "\n";
+	    for(my $iR = $oWkS->{MinRow} ;
+		defined $oWkS->{MaxRow} && $iR <= $oWkS->{MaxRow} ; $iR++) {
+		for(my $iC = $oWkS->{MinCol} ;
+		    defined $oWkS->{MaxCol} && $iC <= $oWkS->{MaxCol} ; $iC++) {
+		    $oWkC = $oWkS->{Cells}[$iR][$iC];
+		    print $oWkC->Value, "\t" if($oWkC);
+		}
+		print "\n";
+	    }
+	}
+	elsif($format == 4){ ##CSV
+	    for(my $iR = $oWkS->{MinRow} ;
+		defined $oWkS->{MaxRow} && $iR <= $oWkS->{MaxRow} ; $iR++) {
+		for(my $iC = $oWkS->{MinCol} ;
+		    defined $oWkS->{MaxCol} && $iC <= $oWkS->{MaxCol} ; $iC++) {
+		    $oWkC = $oWkS->{Cells}[$iR][$iC];
+		    if($oWkC){
+			if($oWkC->Value =~ /.*@.*/){ #if there are any other values here to be fixed, add them...
+			    print "{", $oWkC->Value, "}@";
+			}
+			else{
+			    print $oWkC->Value, "@";
+			}
+		    }
+			else {
+				print "@"; #empty cell
+			}
+		}
+		print "\n";
+	    }
+	}
+	else{ ##formatted 
+	    my $maxlen = 0; 
+	    for(my $iR = $oWkS->{MinRow} ;
+		defined $oWkS->{MaxRow} && $iR <= $oWkS->{MaxRow} ; $iR++) {
+		for(my $iC = $oWkS->{MinCol} ;
+		    defined $oWkS->{MaxCol} && $iC <= $oWkS->{MaxCol} ; $iC++) {
+		    $oWkC = $oWkS->{Cells}[$iR][$iC];
+		    if($oWkC){
+			if(length($oWkC->Value) > $maxlen){
+			    $maxlen = length($oWkC->Value);
+			}
+		    }
+		}
+	    }
+	    print "Sheet: ", $oWkS->{Name}, "\n", "="x80, "\n";
+	    for(my $iR = $oWkS->{MinRow} ;
+		defined $oWkS->{MaxRow} && $iR <= $oWkS->{MaxRow} ; $iR++) {
+		print "|";
+		for(my $iC = $oWkS->{MinCol} ;
+		    defined $oWkS->{MaxCol} && $iC <= $oWkS->{MaxCol} ; $iC++) {
+		    $oWkC = $oWkS->{Cells}[$iR][$iC];
+		    #print $oWkC->Value if($oWkC);
+		    if($oWkC){
+			print pad_to_len($oWkC->Value, $maxlen);
+		    }
+		    else{
+			print ' 'x$maxlen;
+		    }
+		    print "|";
+		}
+		print "\n";
+	    }
+        }	    
+    }
+}
+
+sub pad_to_len{
+    my $str = shift; 
+    my $goal = shift; 
+    my $cur = length($str);
+    while($cur < $goal){
+	$str .= ' ';
+	$cur++;
+    }
+    return $str;
+}

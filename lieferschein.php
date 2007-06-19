@@ -73,8 +73,8 @@ include("code/zuordnen.php");
                <td> Gebindegrösse </td>
                <td>Einheit </td>
                <td> Liefermenge </td>
-               <td> Preis je Einheit </td>
-               <td> Preis </td>
+               <td> Netto/Einheit (Brutto,MWSt,Pfand)</td>
+               <td> Bruttopreis </td>
             </tr>
                             
 <?php                               
@@ -122,8 +122,11 @@ include("code/zuordnen.php");
 					$sel = " selected=\"selected\"";
 					$preis =$pr['preis'];
 				}
-				echo "<option value=\"".$pr['id']."\"".$sel.">".
-					$pr['preis']."</option>\n";
+				echo "<option value='{$pr['id']}' $sel>";
+        // bruttopreis berechnen und ausgeben (wie auf papierlieferschein!):
+        printf( "%5.2lf", ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 ) );
+				echo "&nbsp;({$pr['preis']},{$pr['mwst']},{$pr['pfand']})";
+        echo "</option>\n";
 			   }
 	       
 	       		?>

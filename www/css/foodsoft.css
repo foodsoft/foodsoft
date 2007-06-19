@@ -34,8 +34,14 @@ input:hover, textarea:hover, select:hover {
 }
 
 /* - Logo bzw. Kopf - */
+.head, .head td {
+  background:#ed0606;
+  border:none;
+  color:#ffffff;
+  font-weight: bold;
+}
 #logo {
- background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
+ // background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
  height: 55px;
  padding: 0 20px;
  text-align: left;
@@ -154,6 +160,7 @@ table.info {
 th, td {
 	border:1px dotted grey;	
 	padding:4px;
+  vertical-align:top;
 }
 th {
 	font-weight:bold;
@@ -263,7 +270,7 @@ th.ok, td.ok, div.ok, span.ok {
 }
 
 a.button, span.button {
-  font-size:11pt;
+  // font-size:11pt;
   text-decoration:none;
   color:000000;
   background-color:#f0f0ff;
@@ -274,6 +281,7 @@ a.button, span.button {
   border-style:solid;
   border-width:1pt;
   border-color:#000000;
+  font-weight:bold;
 }
 a.button:hover, span.button:hover {
   font-weight:bold;
@@ -357,4 +365,20 @@ fieldset legend {
   border-color:#000000;
 }
 
-  
+.newfield {
+  padding-top:1em;
+}
+
+input.checkbox {
+  margin-left:2em;
+}
+
+div.kommentar {
+  padding-top:1em;
+  padding-bottom:1em;
+  padding-left:4em;
+  padding-right:4em;
+  color:4040a0;
+  font-size:10pt;
+}
+

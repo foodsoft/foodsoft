@@ -10,9 +10,31 @@
 	 <script src="js/foodsoft.js" type="text/javascript" language="javascript"></script>	 
 </head>
 <body onload="jsinit();">
-<div id="logo">
-   	<a href="index.php"><span>FC</span> Nahrungskette</a> <span style="color:white; font-size:45%; letter-spacing: -1px; ">... Foodsoft</span>
-  	</div>
+<table class="head" width="100%">
+  <tr>
+    <td id="logo">
+     	<a href="index.php"><span>FC</span> Nahrungskette</a> <span style="color:white; font-size:45%; letter-spacing: -1px; ">... Foodsoft</span>
+    </td>
+    <td style="padding-top:1em;">
+      <?php
+        global $angemeldet, $login_gruppen_name, $coopie_name, $dienst;
+        if( $angemeldet ) {
+          if( $dienst > 0 ) {
+            echo "Hallo $coopie_name ($login_gruppen_name) vom Dienst $dienst!";
+          } else {
+            echo "Hallo Gruppe $login_gruppen_name!";
+          }
+        }
+        echo '</td><td style="text-align:right;padding-top:1em;">';
+        if( $angemeldet ) {
+          echo "<a class='button' href='index.php?action=logout'>Abmelden</a>";
+        } else {
+          echo "(nicht angemeldet)";
+        }
+      ?>
+    </td>
+   </tr>
+ </table>
   
   <ul id="menu">
  <li><a href="index.php?area=meinkonto" class="first">Mein Konto</a>
@@ -24,7 +46,7 @@
 	</li>
 	<li><a href="index.php?area=bestellen" class="first">Bestellen</a>
 	</li>
-  <li><a href="index.php?area=bestellt" class="first">Bestellungen ansehen</a>
+  <li><a href="index.php?area=bestellt<?php if( $angemeldet && ( $dienst == 0 ) ) echo "&gruppen_id=$login_gruppen_id"; ?>" class="first">Bestellungen ansehen</a>
 	</li>
   <li><a href="index.php?area=produkte" class="first">Produktdatenbank</a>
   </li> 

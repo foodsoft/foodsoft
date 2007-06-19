@@ -7,21 +7,24 @@
 // macht ggf. verbesserungsvorschlaege und erlaubt aenderungen
 
   // Konfigurationsdatei einlesen
-	include('code/config.php');
+	require_once('code/config.php');
 	
 	// Funktionen zur Fehlerbehandlung laden
-	include('code/err_functions.php');
+	require_once('code/err_functions.php');
 	
 	// Verbindung zur MySQL-Datenbank herstellen
-	include('code/connect_MySQL.php');
+	require_once('code/connect_MySQL.php');
 	
+  require_once('code/login.php');
+  nur_fuer_dienst_IV();
+  
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
 
   // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
   if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
 
-  include ('head.php');
+  require_once('head.php');
 
   $mysqljetzt = date('Y') . '-' . date('m') . '-' . date('d') . ' ' . date('H') . ':' . date('i') . ':' . date('s');
   // echo "Hallo, Welt! in MySQL ist es jetzt: $mysqljetzt <br>";
@@ -66,6 +69,7 @@
       ( $newfcname = $HTTP_GET_VARS['newfcname'] ) || error( __LINE__, __FILE__, "newfcname nicht gesetzt!" );
       if( ! ( $newfcnotiz = $HTTP_GET_VARS['newfcnotiz'] ) )
         $newfcnotiz = '';
+      ( $newfcmwst = $HTTP_GET_VARS['newfcmwst'] ) || error( __LINE__, __FILE__, "newfcmwst nicht gesetzt!" );
       ( $newfcpfand = $HTTP_GET_VARS['newfcpfand'] ) || error( __LINE__, __FILE__, "newfcpfand nicht gesetzt!" );
       ( $newfcbnummer = $HTTP_GET_VARS['newfcbnummer'] ) || error( __LINE__, __FILE__, "newfcbnummer nicht gesetzt!" );
       ( $newfczeitstart = $HTTP_GET_VARS['newfczeitstart'] ) || error( __LINE__, __FILE__, "newfczeitstart nicht gesetzt!" );
@@ -105,8 +109,8 @@
       }
       if( mysql_query( "
             INSERT INTO produktpreise
-            (produkt_id, preis, zeitstart, zeitende, bestellnummer, gebindegroesse, pfand)
-            VALUES ($produktid,'$newfcpreis','$newfczeitstart', NULL, '$newfcbnummer', '$newfcgebindegroesse', '$newfcpfand')"
+            (produkt_id, preis, zeitstart, zeitende, bestellnummer, gebindegroesse, mwst, pfand)
+            VALUES ($produktid,'$newfcpreis','$newfczeitstart', NULL, '$newfcbnummer', '$newfcgebindegroesse', '$newfcmwst', '$newfcpfand')"
           )
        ) {
         // echo "<div class='ok'>neuer Preiseintrag gespreichert</div>";
@@ -250,6 +254,7 @@
               <th>B-Nr</th>
               <th>von</th>
               <th>bis</th>
+              <th>MWSt</th>
               <th>Pfand</th>
               <th>Preis</th>
             </tr>
@@ -260,6 +265,7 @@
         echo '  <td>' . $pr1['bestellnummer'] . '</td>';
         echo '  <td>' . $pr1['zeitstart'] . '</td>';
         echo '  <td>' . $pr1['zeitende'] . '</td>';
+        echo '  <td> ' . $pr1['mwst'] . '</td>';
         echo '  <td> ' . $pr1['pfand'] . '</td>';
         echo '  <td> ' . $pr1['preis'] . '</td>';
         echo '</tr>';
@@ -320,6 +326,7 @@
       $fcpreis = $prgueltig['preis'];
       $fcpfand = $prgueltig['pfand'];
       $fcbnummer = $prgueltig['bestellnummer'];
+      $fcmwst = $prgueltig['mwst'];
     }
 
     //
@@ -385,6 +392,7 @@
           <th>Name</th>
           <th>Einheit</th>
           <th>Gebinde</th>
+          <th>MWSt</th>
           <th>Pfand</th>
           <th>Preis</th>
         </tr>
@@ -401,9 +409,11 @@
     echo "<td>$fcmult $can_fceinheit</td>";
     if( $prgueltig ) {
       echo "<td>$fcgebindegroesse</td>";
+      echo "<td>$fcmwst</td>";
       echo "<td>$fcpfand</td>";
       echo "<td>$fcpreis</td>";
     } else {
+      echo '<td><div class="warn" style="text-align:center;">-</div></td>';
       echo '<td><div class="warn" style="text-align:center;">-</div></td>';
       echo '<td><div class="warn" style="text-align:center;">-</div></td>';
       echo '<td><div class="warn" style="text-align:center;">-</div></td>';
@@ -425,6 +435,7 @@
     if( $is_terra ) {
 
       $brutto = NULL;
+      $mwst = NULL;
       $terragebindegroesse = NULL;
       $terrabnummer = NULL;
       $can_terraeinheit = NULL;
@@ -601,6 +612,12 @@
                           . ($fcpreis-$fcpfand) * $terramult / $fcmult
                           . " je $terramult $can_terraeinheit </kbd></p></div>";
             }
+            if( abs( $fcmwst - $mwst ) > 0.005 ) {
+              $neednewprice = TRUE;
+              echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
+                        <p class='li'>Terra: <kbd>$mwst</kbd></p>
+                        <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
+            }
           }
           if( $terrabnummer != $fcbnummer ) {
             $neednewprice = TRUE;
@@ -617,37 +634,59 @@
     } // if( $is_terra ) { ... katalogvergleich ... }
 
     if( $detail ) {
-    
+
       //
       // vorlage fuer neuen preiseintrag berechnen:
       //
-    
-      if( ! $newfceinheit )
-        if( $is_terra && $can_terraeinheit )
+
+      if( ( ! $newfceinheit ) || ( ! $newfcmult ) ) {
+        if( $is_terra && $can_terraeinheit ) {
           $newfceinheit = $can_terraeinheit;
-        else
-          $newfceinheit = $fceinheit;
-          
-      if( ! $newfcmult )
-        if( $is_terra && $can_terraeinheit )
           $newfcmult = $terramult;
-        else
+        } elseif( $fceinheit && $fcmult ) {
+          $newfceinheit = $fceinheit;
+          $newfcmult = $fcmult;
+        } else {
+          $newfceinheit = 'ST';
           $newfcmult = 1;
+        }
+      }
 
       if( $is_terrra && $terragebindegroesse )
         $newfcgebindegroesse = $terragebindegroesse * $terramult / $newfcmult;
       else
         $newfcgebindegroesse = $fcgebindegroesse;
-        
+
+      if( $is_terra && $mwst ) {
+        $newfcmwst = $mwst;
+      } else {
+        $newfcmwst = $fcmwst;
+      }
+
       if( $fcpfand ) {
         $newfcpfand = $fcpfand;
       } else {
         $newfcpfand = 0.00;
       }
-      $newfcpreis = $brutto * $newfcmult / $terramult + $newfcpfand;
+
+      if( $is_terra && $brutto && $terramult )
+        $newfcpreis = $brutto * $newfcmult / $terramult + $newfcpfand;
+      else
+        $newfcpreis = $fcpreis;
+
+//       echo "newfcpreis: $newfcpreis <br>";
+//       echo "newfcbnummer: $newfcbnummer <br>";
+//       echo "fcmult: $fcmult <br>";
+//       echo "fceinheit: $fceinheit <br>";
+//       echo "newfceinheit: $newfceinheit <br>";
+//       echo "newfcmult: $newfcmult <br>";
+
       $newfcnotiz = $fcnotiz;
+
       if( $is_terra && $terrabnummer )
         $newfcbnummer = $terrabnummer;
+      else
+        $newfcbnummer = $fcbnummer;
 
       if( $neednewprice ) {
         echo "
@@ -694,11 +733,18 @@
                      title='Gebindegroesse in ganzen Vielfachen der Einheit'></input>
                   &nbsp; B-Nr: <input type='text' size='8' name='newfcbnummer' value='$newfcbnummer'
                    title='Bestellnummer (die, die sich bei Terra staendig aendert!)'></input>
+                </td>
+              </tr>
+              <tr>
+                <td>MWSt:</td>
+                <td>
+                  <input type='text' size='4' name='newfcmwst' value='$newfcmwst'
+                   title='MWSt-Satz in Prozent'></input>
                   &nbsp; Pfand: <input type='text' size='4' name='newfcpfand' value='$newfcpfand'
                    title='Pfand pro Einheit, bei uns immer 0.00 oder 0.16'></input>
                   &nbsp; Endpreis:
                     <input title='Preis incl. MWSt und Pfand' type='text' size='8' name='newfcpreis' value='$newfcpreis'></input>
-                  &nbsp; ab: <input type='text' size='14' name='newfczeitstart' value='$mysqljetzt'></input>
+                  &nbsp; ab: <input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'></input>
                   &nbsp; <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
                   ></input>

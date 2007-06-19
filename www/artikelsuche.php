@@ -2,22 +2,24 @@
 <?php
 
   // Konfigurationsdatei einlesen
-	include('code/config.php');
+	require_once('code/config.php');
 	
 	// Funktionen zur Fehlerbehandlung laden
-	include('code/err_functions.php');
+	require_once('code/err_functions.php');
 	
 	// Verbindung zur MySQL-Datenbank herstellen
-	include('code/connect_MySQL.php');
+	require_once('code/connect_MySQL.php');
 	
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
 
+  require_once( 'code/login.php' );
+ 
   // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
   if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
 
 	//head einfügen
-	include ('head.php');
+	require_once ('head.php');
 
   // echo 'Hallo, Welt!';
 
@@ -129,7 +131,7 @@
     </form>
   ";
   
-  if( $produktid < 0 ) {
+  if( ( $produktid < 0 ) && $hat_dienst_IV ) {
     echo "
       <br>
       <form class='small_form' action='terrakatalog.upload.php' method='post' enctype='multipart/form-data'>

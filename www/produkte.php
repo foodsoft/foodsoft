@@ -257,7 +257,9 @@
                 echo $lieferant_name;
                 if ( $lieferant_name == "Terra" ) {
                  echo '<a class="button" href="artikelsuche.php" target="_new">Katalogsuche</a>';
-                 echo '<a class="button" href="terraabgleich.php" target="_new">Datenbankabgleich <span class="warn">!Experimentell!</span></a>';
+                 if( $hat_dienst_IV ) {
+                   echo '<a class="button" href="terraabgleich.php" target="_new">Datenbankabgleich</a>';
+                 }
                 }
               ?>
 
