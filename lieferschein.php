@@ -1,6 +1,7 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
 include("code/zuordnen.php");
+include("code/views.php");
 // um die bestellungen nach produkten sortiert zu sehen ....
 
 
@@ -167,15 +168,17 @@ include("code/zuordnen.php");
 	   <input type="hidden" name="area" value="lieferschein">			
 	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
 	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   Produkt: <select name="produkt_id">
 	     <?php
-	           $produkte=getProdukteVonLieferant(getProduzentBestellID($bestell_id));
-		   while($prod = mysql_fetch_array($produkte)){
-		   	echo "<option value=\"".$prod['id']."\">".
-				$prod['name']."</option>\n";
-		   }
+	         select_products_not_in_list($bestell_id);
 	     ?>
-	   </select>
 	   Menge: <input type="text" name="liefermenge">
 	   <input type="submit" value="Zusätzliche Lieferung eintragen">
+   </form>
+
+
+   <form action="index.php" method="post">
+	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt">			
+	   <input type="submit" value="Zurück ">
    </form>

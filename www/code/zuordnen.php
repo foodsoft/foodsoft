@@ -1,7 +1,20 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
+//foodi als pwd: 35q3Za9.ZxrxYd
 
+function checkpassword($gruppen_id, $gruppen_pwd){
+if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
+	 {
+      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+	    $bestellgruppen_row = mysql_fetch_array($result);
+			
+			return ($bestellgruppen_row['passwort'] == crypt($gruppen_pwd,35464));
+			
+			
+	 }
+	 return false;
+}
 function drop_basar($bestellid){
 	$sql = "DELETE bestellzuordnung.* FROM bestellzuordnung inner
 	join gruppenbestellungen on (gruppenbestellungen.id =
@@ -21,14 +34,38 @@ function sql_basar_id(){
 
 
 }
+function sqlUpdateTransaction($transaction, $receipt){
+	    $sql="UPDATE gruppen_transaktion SET kontoauszugs_nr = ".$receipt." WHERE id = ".$transaction;
+	    //echo $sql."<br>";
+	    $result = mysql_query($sql) or
+	    error(__LINE__,__FILE__,"Konnte Transaktion in DB nicht aktualisieren.. ($sql)",mysql_error());
+}
 function sql_groupGlass($gruppe, $menge){
 	//include_once("config.php");  tut bisher nicht
 	$pfand_preis = 0.16; 
-	$sql="INSERT INTO gruppen_transaktion (type, gruppen_id, summe, notiz) VALUES (2, ".$gruppe.", -".($pfand_preis*$menge).", 'Glasrueckgabe')";
-	//    echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Glas-Rückgabe nicht in DB speichern.. ($sql)",mysql_error());
+	sqlGroupTransaction(2, $gruppe, -($pfand_preis*$menge),"NULL" ,'Glasrueckgabe');
 }
 
+function sqlGroupTransaction($transaktionsart,
+			         $gruppen_id,
+				 $summe, $auszug_nr = NULL,
+				 $notiz ="", 
+				 $kontobewegungs_datum ="NOW()"){
+
+	   $sql="INSERT INTO gruppen_transaktion 
+	                    (type, gruppen_id, eingabe_zeit,
+			      summe, kontoauszugs_nr, notiz, 
+			      kontobewegungs_datum) 
+	         VALUES ('".mysql_escape_string($transaktionsart).
+		          "', '".mysql_escape_string($gruppen_id).
+			  "', NOW(), '".mysql_escape_string($summe).
+			  "', '".mysql_escape_string($auszug_nr).
+			  "', '".mysql_escape_string($notiz).
+			  "', '".mysql_escape_string($kontobewegungs_datum).
+			  "')" ;
+	    //echo $sql."<br>";
+	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Glas-Rückgabe nicht in DB speichern.. ($sql)",mysql_error());
+}
 function getGlassID(){
 	    $sql = "SELECT id FROM produkte
 	    		WHERE name = \"glasrueckgabe\"";
@@ -387,8 +424,10 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
 
    $result2 =  sql_produktpreise($produkt_id, $bestell_id);
    if (mysql_num_rows($result2) > 1){
-	    echo error(__LINE__,__FILE__,"Mehr als ein Preis");
-	    return;
+	    error(__LINE__,__FILE__,"Mehr als ein Preis");
+   } else if (mysql_num_rows($result2) ==0){
+   	    error(__LINE__,__FILE__,"Kein gültiger Preis zum Zeitpunkt
+	    des Bestellendes? Produkt_ID $produkt_id, BestellID = $bestell_id");
 	 } else {
 	    $preis_row = mysql_fetch_array($result2);
 	    //var_dump($preis_row);
@@ -416,6 +455,7 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
 
 }
 function getProduzentBestellID($bestell_id){
+    if($bestell_id==0) {error(__LINE__,__FILE__,"Do not call getProduzentBestellID with bestell_id null)", "bla");}
     $sql="SELECT DISTINCT lieferanten_id FROM bestellvorschlaege 
 		INNER JOIN produkte ON (produkt_id = produkte.id)
 		WHERE gesamtbestellung_id = ".$bestell_id;

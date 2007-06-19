@@ -59,7 +59,7 @@ $bestgrup_view = false;
 //infos zur gesamtbestellung auslesen 
 $sql = "SELECT * FROM gesamtbestellungen WHERE id = ".$bestell_id."";
 
-$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden.. ($sql)",mysql_error());
 $row_gesamtbestellung = mysql_fetch_array($result);					
 
 //produkte und preise zur aktuellen bestellung auslesen
@@ -73,6 +73,7 @@ inner join produktgruppen on (produktgruppen_id = produktgruppen.id)
 WHERE gesamtbestellung_id = '".mysql_escape_string($bestell_id)."'
 AND produktpreise.id = bestellvorschlaege.produktpreise_id
 AND produktgruppen.id = produkte.produktgruppen_id
+AND bestellvorschlaege.bestellmenge > 0
 ORDER BY produkte.produktgruppen_id, produkte.name ASC";
 $result1 = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
 //$produkte_row = mysql_fetch_array($result1);

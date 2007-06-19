@@ -111,13 +111,11 @@
 	      </tr>
      <tr>
      	<td colspan=4 >
-		Glasrückgabe:	<input name="menge_glas" type="text" size="3" />
+		Glasrückgabe zu 16 Cent (Anzahl eintragen):	<input name="menge_glas" type="text" size="3" />
 		<?
 			if(isset($_REQUEST['menge_glas']) && $_REQUEST['menge_glas']!=0 && isset($gruppe)){
 	                $menge=$_REQUEST['menge_glas'];
-			sql_basar2group($gruppe,
-					getGlassID(), 
-				$menge, $bestell_id);
+			sql_groupGlass($gruppe, $menge);
 	       }
 
 		?>
@@ -134,9 +132,16 @@
 	   <input type="hidden" name="area" value="bestellt_produkte">			
 	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
 	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="submit" value=" Basareintrag übertragen ">
+	   <input type="submit" value=" Neu laden / Basareintrag übertragen ">
 	   <input type="reset" value=" Änderungen zurücknehmen">
 	</td>
    </tr>
    </table>                   
+   </form>
+
+   <form action="index.php" method="post">
+	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt">			
+	   <input type="submit" value="Zurück ">
    </form>

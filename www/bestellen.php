@@ -3,6 +3,7 @@
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
    include('code/zuordnen.php');
+   include('code/views.php');
 /*
  *   // Übergebene Variablen einlesen...
  *
@@ -1180,6 +1181,21 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 				</tr>
 				</table>
 		    </form>
+<<<<<<< bestellen.php
+
+ 
+   <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
+   <form>
+	   <input type="hidden" name="area" value="bestellen">			
+	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
+	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
+	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	     <?php
+	     	    select_products_not_in_list($bestell_id);
+	     ?>
+	   <input type="submit" value="Produkt hinzufügen">
+   </form>
+=======
 
  
    <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
@@ -1199,6 +1215,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 	   </select>
 	   <input type="submit" value="Produkt hinzufügen">
    </form>
+>>>>>>> 1.3
 				
 		<?PHP
 		
@@ -1227,7 +1244,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 
 							 
 							    // Bestellung in die Datenbank eintragen...
-									//echo "trage daten ein!<br>";
+							//		echo "trage daten ein!<br>";
 									
 									if (!isset($gruppenbestellung_id)) {
 									   //echo "-> INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id) VALUES (".$gruppen_id.",".$bestell_id.");<br>";
@@ -1269,6 +1286,14 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 										 }
 										 
 							 
+
+							    ?>
+							    <script type="text/javascript">
+							    <!-- 
+							    alert("Bestellung eingetragen"); 
+							    //-->
+							    </script>
+							    <?
 						}
 						
 						

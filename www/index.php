@@ -54,6 +54,8 @@
 					   //abgeschlossene bestellungen nach produkte sortiert				
 						else if ($area == 'bestellt_produkte')
 					   include('bestellt_produkte.php');
+						else if ($area == 'bestellt_gruppe')
+					   include('bestellt_gruppe.php');
 						else if ($area == 'lieferschein')
 					   include('lieferschein.php');
 
