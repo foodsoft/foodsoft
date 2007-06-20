@@ -1,22 +1,20 @@
 <?PHP
 
    // wichtige Variablen einlesen...
-   $gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
-	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
+   // $gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+   
+	 require_once('code/config.php');
+	 require_once('code/err_functions.php');
+	 require_once('code/connect_MySQL.php');
+	 require_once('code/login.php');
+	 need_http_var('gruppen_id');
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-	 
-	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($gruppen_pwd != $real_gruppen_pwd) exit();
-	 
-	 // ggf. die Gruppendaten ändern
+
+   if( $gruppen_id != $login_gruppen_id )
+     nur_fuer_dienst(4,5);   // nur dienst 4 und 5 ediert fremde gruppen
+     
 	 if (isset($HTTP_GET_VARS['newGroup_name'])) {
-	
 
 		$newName            = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newGroup_name']));
 		$newAnsprechpartner = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newGroup_ansprechpartner']));
@@ -32,9 +30,9 @@
 			   mysql_query("UPDATE bestellgruppen SET name='".mysql_escape_string($newName)."', ansprechpartner='".mysql_escape_string($newAnsprechpartner)."', email='".mysql_escape_string($newMail)."', telefon='".mysql_escape_string($newTelefon)."', mitgliederzahl='".mysql_escape_string($newMitgliederzahl)."' WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Benutzergruppe nicht ändern.",mysql_error());
 				 $onload_str = "opener.focus(); opener.document.forms['reload_form'].submit(); window.close();";
 			}
-	 }
+	
 	 //ggf. Aktionen durchführen
-	 else if (isset($HTTP_GET_VARS['action'])) {
+   } else if (isset($HTTP_GET_VARS['action'])) {
 	    $action = $HTTP_GET_VARS['action'];
 			
 			// neues Passwort anlegen...
@@ -45,10 +43,8 @@
 			}
 	 }
 
-
 	 $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Gruppendaten nicht lesen.",mysql_error());
 	 $row = mysql_fetch_array($result);
-	 
 	 
 ?>
 
@@ -60,7 +56,6 @@
 <body onload="<?PHP echo $onload_str; ?>">
    <h3>Bestellgruppe editieren</h3>
 	 <form action="editGroup.php">
-			<input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
 			<input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
 			<table style="width:340px;" class="menu">
 			   <tr>

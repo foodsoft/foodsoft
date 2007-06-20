@@ -34,8 +34,8 @@
    </tr>
  </table>
   
-  <ul id="menu">
- <li><a href="index.php?area=meinkonto" class="first">Mein Konto</a>
+<ul id="menu" style="margin-bottom:1em;">
+  <li><a href="index.php?area=meinkonto" class="first">Mein Konto</a>
 <!--      <ul>
       <li><a href="main.php?area=ModulStart&subarea=News">News</a></li>
       <li><a href="main.php?area=ModulStart&subarea=Termine">Termine</a></li>
@@ -55,4 +55,4 @@
   <li><a href="../../wiki/" class="first">Wiki</a>
   </li>
 </ul>
-<div id="content">
+<!-- wird nirgends geschlossen, besser gar nicht oeffnen: <div id="content"> -->

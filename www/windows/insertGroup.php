@@ -1,15 +1,12 @@
 <?PHP
-   $gruppen_pwd = $HTTP_GET_VARS['gruppen_pwd'];
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
-	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($gruppen_pwd != $real_gruppen_pwd) exit();
+	 require_once('code/config.php');
+	 require_once('code/err_functions.php');
+	 require_once('code/connect_MySQL.php');
+	 require_once('code/login.php');
+   nur_fuer_dienst(5);
 	 
 	 // ggf. die neue Gruppe hinzufügen
 	 if (isset($HTTP_GET_VARS['newGroup_name'])) {

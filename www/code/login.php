@@ -382,6 +382,16 @@
         break;
     }
   }
+  function nur_fuer_dienst() {
+    global $dienst;
+    for( $i = 0; $i < func_num_args(); $i++ ) {
+      if( $dienst == func_get_arg($i) )
+        return TRUE;
+    }
+    require_once( 'head.php' );
+    echo "<div class='warn'>Keine Berechtigung</div></body></html>";
+    exit();
+  }
   function nur_fuer_dienst_I() {
     global $hat_dienst_I;
     if( ! $hat_dienst_I ) {
@@ -414,6 +424,7 @@
       exit();
     }
   }
+    
 
   echo "
     </body>

@@ -8,7 +8,7 @@
 	 <script src="/foodsoft/js/foodsoft.js" type="text/javascript" language="javascript"></script>	 
 </head>
 <body onload="jsinit();">
-<div class="head">
+<div class="head" style="padding:1em;margin-bottom:1em;">
   FC Nahrungskette - Foodsoft -
   <?php
     global $angemeldet, $login_gruppen_name, $coopie_name, $dienst;

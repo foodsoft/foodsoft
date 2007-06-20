@@ -39,8 +39,14 @@
 			}
 		}
 	}
-
  }
+
+ require_once('code/config.php');
+ require_once('code/err_functions.php');
+ require_once('code/connect_MySQL.php');
+ require_once('code/zuordnen.php');
+ require_once('code/login.php');
+
 /*   // wichtige Variablen einlesen...
  *	 if($meinKonto){  
  *  		$gruppen_pwd    = crypt($HTTP_GET_VARS['gruppen_pwd'],35464);
@@ -49,16 +55,12 @@
  *	 }
  *	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
  */
+
   if($meinKonto) {
     $gruppen_id = $login_gruppen_id;
   } else {
- 	 require_once('code/config.php');
- 	 require_once('code/err_functions.php');
- 	 require_once('code/connect_MySQL.php');
- 	 require_once('code/zuordnen.php');
-   require_once('code/login.php');
-   nur_fuer_dienst_IV();
-   get_http_var( 'gruppen_id' ) or die();
+    nur_fuer_dienst_IV();
+    get_http_var( 'gruppen_id' ) or die();
   }
  
 	 // Variablen initialisieren
