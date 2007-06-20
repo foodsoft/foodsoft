@@ -70,6 +70,9 @@
 			// die Kontoverwaltung für die Gruppen ...  
 			else if ($area == 'meinkonto')
 			   include('meinkonto.php');				 
+			
+      else if ($area == 'dienstkontrollblatt')
+			   include('dienstkontrollblatt.php');				 
 	?>
 
 </body>

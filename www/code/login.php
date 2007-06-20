@@ -45,12 +45,26 @@
     }
   }
 
-  $problems = '';
-  $angemeldet=FALSE;
-  $dienst=0;
-  $login_gruppen_id=FALSE;
+  function init_login() {
+    global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $dienstkontrollblatt_id;
+    $angemeldet=FALSE;
+    $login_gruppen_id = FALSE;
+    $login_gruppen_name = FALSE;
+    $dienst = 0;
+    $dienstkontrollblatt_id = FALSE;
+  }
+  function logout() {
+    init_login();
+    unset( $_COOKIE['foodsoftkeks'] );
+    setcookie( 'foodsoftkeks', '0', 0, '/' );
+  }
+
+  init_login();
+
+  $telefon='';
   $name='';
   $notiz='';
+  $problems = '';
 
   // pruefen, ob neue login daten uebergeben werden:
   //
@@ -97,6 +111,9 @@
       $login_gruppen_name = $bestellgruppen_row['name'];
 			
     }
+ 
+
+    // $msg = "login:<br>";
 
     if ( ( ! $problems ) && ( $dienst != 0 ) ) {
       //
@@ -110,19 +127,34 @@
         $row = $r1;
       }
       if( $row && ( $row['dienst'] == $dienst ) && ( $row['gruppen_id'] == $login_gruppen_id ) ) {
-        // Eintrag existiert schon: ggf. notiz anfuegen:
+        // Eintrag existiert schon: ggf. aktualisieren:
         if( $notiz != '' ) {
           mysql_query(
-            "UPDATE dienstkontrollblatt SET notiz='{$row['notiz']} $notiz' WHERE id={$row['id']}"
+            "UPDATE dienstkontrollblatt SET notiz='" . mysql_escape_string( $row['notiz'] . $notiz )
+            . "' WHERE id={$row['id']}"
+          );
+        }
+        if( $telefon != '' ) {
+          mysql_query(
+            "UPDATE dienstkontrollblatt SET telefon='$telefon' WHERE id={$row['id']}"
+          );
+        }
+        if( $coopie_name != '' ) {
+          mysql_query(
+            "UPDATE dienstkontrollblatt SET name='" . mysql_escape_string($coopie_name)
+            . "' WHERE id={$row['id']}"
           );
         }
         $dienstkontrollblatt_id = $row['id'];
+//         $msg = $msg
+//           . "update:<br>coopie_name: $coopie_name<br>"
+//           . "<br>telefon: $telefon<br>"
+//           . "<br>notiz: $telefon<br>";
       } else {
-        mysql_query(
-          "INSERT INTO dienstkontrollblatt
+        $q = "INSERT INTO dienstkontrollblatt
           (zeit,dienst,gruppen_id,name,telefon,notiz)
-          VALUES ('$mysqljetzt',$dienst,$login_gruppen_id,'$coopie_name','$telefon','$notiz')"
-        ) or error( __LINE__, __FILE__, "eintrag im dienstkontrollblatt fehlgeschlagen" );
+          VALUES ('$mysqljetzt',$dienst,$login_gruppen_id,'$coopie_name','$telefon','$notiz')";
+        mysql_query( $q ) or error( __LINE__, __FILE__, "eintrag im dienstkontrollblatt fehlgeschlagen" );
         $result = mysql_query(
           "SELECT id FROM dienstkontrollblatt
            WHERE zeit='$mysqljetzt' and dienst=$dienst and gruppen_id=$login_gruppen_id"
@@ -132,6 +164,10 @@
         if( ! ( $row = mysql_fetch_array( $result ) ) )
           error( __LINE__, __FILE__, "eintrag im dienstkontrollblatt fehlgeschlagen" );
         $dienstkontrollblatt_id = $row['id'];
+//         $msg = $msg
+//           . "neueintrag: $q<br>id: {$row['id']} <br> coopie_name: $coopie_name / {$row['name']}<br>"
+//           . " telefon: $telefon / {$row['telefon']}<br>"
+//           . " notiz: $notiz / {$row['notiz']}<br>";
       }
     } else {
       $dienstkontrollblatt_id = 0;
@@ -172,7 +208,8 @@
       $keks = base64_encode( "$klarkeks" );
       setcookie( 'foodsoftkeks', $keks, 0, '/' ) 
         or error( __LINE__, __FILE__, "setcookie() fehlgeschlagen" );
-      // include ('head.php');
+      // require_once('head.php');
+      // echo "<div class='ok'>msg: $msg </div>";
       // echo "keks: $klarkeks, $keks";
       $angemeldet = TRUE;
       set_privileges();
@@ -182,53 +219,76 @@
   } elseif( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
 
     // echo "keks: {$_COOKIE['foodsoftkeks']} ";
-    if( ( $action == 'logout' ) ) {
-      unset( $_COOKIE['foodsoftkeks'] );
-      setcookie( 'foodsoftkeks', '0', 0, '/' );
-    } else {
 
-      $keks = base64_decode( $_COOKIE['foodsoftkeks'] );
-      sscanf( $keks, "%u-%u-%u-%s", &$login_gruppen_id, &$dienst, &$dienstkontrollblatt_id, &$passwort );
-  
-      if( ( ! $login_gruppen_id ) or ( $login_gruppen_id < 1 ) ) {
-        $problems = $problems .  "fehler im keks: ungueltige login_gruppen_id";
+    $keks = base64_decode( $_COOKIE['foodsoftkeks'] );
+    sscanf( $keks, "%u-%u-%u-%s", &$login_gruppen_id, &$dienst, &$dienstkontrollblatt_id, &$passwort );
+
+    if( ( ! $login_gruppen_id ) or ( $login_gruppen_id < 1 ) ) {
+      $problems = $problems .  "fehler im keks: ungueltige login_gruppen_id";
+    } else {
+      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($login_gruppen_id))
+        or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+      $bestellgruppen_row = mysql_fetch_array($result);
+      if( $bestellgruppen_row['passwort'] != crypt($passwort,35464) ) {
+        $problems = $problems .  "fehler im keks: ungueltiges passwort";
       } else {
-        $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($login_gruppen_id))
-          or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-        $bestellgruppen_row = mysql_fetch_array($result);
-        if( $bestellgruppen_row['passwort'] != crypt($passwort,35464) ) {
-          $problems = $problems .  "fehler im keks: ungueltiges passwort";
-        } else {
-          $login_gruppen_name = $bestellgruppen_row['name'];
+        $login_gruppen_name = $bestellgruppen_row['name'];
+      }
+    }
+    switch( $dienst ) {
+      case 0:
+      case 1:
+      case 3:
+      case 4:
+      case 5:
+        break;
+      default:
+        $problems = $problems .  "fehler im keks: ungueltiger dienst";
+    }
+    if( $dienst > 0 ) {
+      $result = mysql_query( "SELECT * FROM dienstkontrollblatt WHERE id='$dienstkontrollblatt_id'" )
+        or $problems = $problems . "fehler im keks: ungueltige dienstkontrollblatt_id";
+      $row = mysql_fetch_array($result);
+      $coopie_name = $row['name'];
+    }
+
+    if( ! $problems ) {  // login ok, weitermachen...
+
+      if( ( $action == 'logout' ) ) {
+        if( $dienst > 0 ) {
+          if( get_http_var('coopie_name') && get_http_var('telefon') && get_http_var('notiz') ) {
+            // ggf. noch  dienstkontrollblatt-Eintrag aktualisieren:
+            mysql_query(
+              " UPDATE dienstkontrollblatt
+                SET name='" . mysql_escape_string( $coopie_name ) . "' "
+              . ",  telefon='" . mysql_escape_string( $telefon ) . "' "
+              . ",  notiz='" . mysql_escape_string( $notiz ) . "' "
+              . "WHERE id=$dienstkontrollblatt_id"
+            ) or error( __LINE__, __FILE__, "Dienstkontrollblatt-Eintrag fehlgeschlagen", mysql_error() );
+            $problems = "<div class='ok'>Abgemeldet!</div>";
+          } else {
+            $problems = "<div class='warn'>Dienstkontrollblatt-Austrag fehlgeschlagen!</div>"
+             . get_http_var('coopie_name')
+             . " name: $coopie_name, "
+             . get_http_var('telefon')
+             . " telefon: $telefon, "
+             . get_http_var('notiz')
+             . " notiz: $notiz "
+            ;
+          }
         }
-      }
-      switch( $dienst ) {
-        case 0:
-        case 1:
-        case 3:
-        case 4:
-        case 5:
-          break;
-        default:
-          $problems = $problems .  "fehler im keks: ungueltiger dienst";
-      }
-      if( $dienst > 0 ) {
-        $result = mysql_query( "SELECT * FROM dienstkontrollblatt WHERE id='$dienstkontrollblatt_id'" )
-          or $problems = $problems . "fehler im keks: ungueltige dienstkontrollblatt_id";
-        $row = mysql_fetch_array($result);
-        $coopie_name = $row['name'];
-      }
-  
-      if( ! $problems ) {  // login ok, weitermachen...
+        logout();
+      } else {
         $angemeldet = TRUE;
         set_privileges();
         return;
-      } else {  // fehlerhafter keks, besser loeschen:
-        setcookie( 'foodsoftkeks', '0', 0, '/' );
       }
+    } else {  // fehlerhafter keks, besser loeschen:
+      logout();
     }
   }
 
+  logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 
   //
   // nutzer ist noch nicht angemeldet, also: formular ausgeben:
@@ -341,14 +401,14 @@
            </legend>
            <div class='newfield'>
              <label>Dein Name:</label>
-             <input class='text' size='20' name='coopie_name' value='$name'></input>
+             <input type='text' size='20' name='coopie_name' value='$coopie_name'></input>
              <label style='padding-left:4em;'>Telefon:</label>
-             <input class='text' size='20' name='telefon' value='$name'></input>
+             <input type='text' size='20' name='telefon' value='$telefon'></input>
            </div>
            <div class='newfield'>
              <label>Notiz fuers Dienstkontrollblatt:</label>
              <br>
-             <textarea cols='80' rows='4' name='notiz'>$notiz</textarea>
+             <textarea cols='80' rows='3' name='notiz'>$notiz</textarea>
            </div>
          </fieldset>
        </div>

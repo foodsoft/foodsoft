@@ -25,7 +25,12 @@
         }
         echo '</td><td style="text-align:right;padding-top:1em;">';
         if( $angemeldet ) {
-          echo "<a class='button' href='index.php?action=logout'>Abmelden</a>";
+          if( $dienst > 0 ) {
+            // fuer dienste: noch dienstkontrollblatteintrag aktualisieren:
+            echo "<a class='button' href='index.php?area=dienstkontrollblatt&action=abmelden'>Abmelden</a>";
+          } else {
+            echo "<a class='button' href='index.php?action=logout'>Abmelden</a>";
+          }
         } else {
           echo "(nicht angemeldet)";
         }
@@ -51,6 +56,8 @@
 	<li><a href="index.php?area=gruppen" class="first">Gruppenverwaltung</a>
   </li>
 	  <li><a href="index.php?area=lieferanten" class="first">LieferantInnen</a>
+  </li>
+	  <li><a href="index.php?area=dienstkontrollblatt" class="first">Dienste</a>
   </li>
   <li><a href="../../wiki/" class="first">Wiki</a>
   </li>
