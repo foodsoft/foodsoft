@@ -10,24 +10,7 @@
 
   get_http_var('action');
 
-//   if( ( $action == 'update' ) && ( $dienst > 0 ) )  {
-//     need_http_var('name');
-//     need_http_var('telefon');
-//     need_http_var('notiz');
-//     mysql_query(
-//       " UPDATE dienstkontrollblatt
-//         SET name='" . mysql_escape_string( $name )
-//       . ",  telefon='" . mysql_escape_string( $telefon )
-//       . ",  notiz='" . mysql_escape_string( $notiz )
-//       . "WHERE dienstkontrollblatt_id=$dienstkontrollblatt_id"
-//     ) or error( __LINE__, __FILE__, "Dienstkontrollblatt-Eintrag fehlgeschlagen" );
-// 
-//     echo "<div class='ok'>Abgemeldet!</div>";
-
   if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
-    $id_from = $dienstkontrollblatt_id;
-    $id_to = $dienstkontrollblatt_id;
-
     $result = mysql_query(
       " SELECT *
          , bestellgruppen.id as gruppen_id

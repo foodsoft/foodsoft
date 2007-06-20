@@ -7,7 +7,7 @@
   // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
   get_http_var('action');
   if( $action == 'delete' ) {
-    //nur_fuer_dienst(4,5);
+    nur_fuer_dienst(4,5);
     need_http_var('gruppen_id');
 
     ( $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'" ) )
