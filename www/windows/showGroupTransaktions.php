@@ -52,10 +52,10 @@
   if($meinKonto) {
     $gruppen_id = $login_gruppen_id;
   } else {
- 	 include_once('../code/config.php');
- 	 include_once('../code/err_functions.php');
- 	 include_once('../code/connect_MySQL.php');
- 	 include_once('../code/zuordnen.php');
+ 	 require_once('code/config.php');
+ 	 require_once('code/err_functions.php');
+ 	 require_once('code/connect_MySQL.php');
+ 	 require_once('code/zuordnen.php');
    require_once('code/login.php');
    nur_fuer_dienst_IV();
    get_http_var( 'gruppen_id' ) or die();

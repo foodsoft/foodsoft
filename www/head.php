@@ -2,12 +2,10 @@
 <head>
    <title>FC Potsdam  - Foodsoft</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-15" >
-	<link rel="stylesheet" type="text/css" media="screen" href="css/foodsoft.css" />
-   <link rel="stylesheet" type="text/css" media="print" href="css/print.css" />
-<!--    für die popups 
-   <script src="js/tooltip.js" type="text/javascript" language="javascript"></script>-->
-
-	 <script src="js/foodsoft.js" type="text/javascript" language="javascript"></script>	 
+	<link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css' />
+  <link rel='stylesheet' type='text/css' media='print' href=/foodsoft/css/print.css' />
+  <!--  für die popups:  -->
+	 <script src="/foodsoft/js/foodsoft.js" type="text/javascript" language="javascript"></script>	 
 </head>
 <body onload="jsinit();">
 <table class="head" width="100%">
