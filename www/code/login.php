@@ -111,7 +111,6 @@
       $login_gruppen_name = $bestellgruppen_row['name'];
 			
     }
- 
 
     // $msg = "login:<br>";
 

@@ -2,6 +2,10 @@
 	 
    <table class="menu">
 	   <tr>
+		    <td><input type="button" value="Mein Konto" class="bigbutton" onClick="self.location.href='index.php?area=meinkonto'"></td>
+				<td valign="middle" class="smalfont">Hier können die einzelnen Gruppen ihre Kontoauszüge einsehen....</td>
+		 </tr>
+	   <tr>
 		    <td><input type="button" value="Bestellen" class="bigbutton" onClick="self.location.href='index.php?area=bestellen'"></td>
 				<td valign="middle" class="smalfont">Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....</td>
 		 </tr>
@@ -20,6 +24,10 @@
 			<tr>
 		    <td><input type="button" value="LieferantInnen" class="bigbutton" onClick="self.location.href='index.php?area=lieferanten'"></td>
 				<td valign="middle" class="smalfont">Hier kann man die LieferantInnen verwalten...</td>
+		 </tr>		 
+			<tr>
+		    <td><input type="button" value="Dienstkontrollblatt" class="bigbutton" onClick="self.location.href='index.php?area=dienstkontrollblatt'"></td>
+				<td valign="middle" class="smalfont">Hier kann man das Dientkontrollblatt einsehen...</td>
 		 </tr>		 
 			<tr>
 		    <td><input type="button" value="Up/Download" class="bigbutton" onClick="self.location.href='index.php?area=updownload'"></td>

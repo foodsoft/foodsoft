@@ -46,7 +46,7 @@
       <form class='small_form' action='index.php?action=logout' method='post'>
         <fieldset>
           <legend>
-            Dienstkontrollblatt
+            Abmeldung im Dienstkontrollblatt
           </legend>
           <div class='newfield'>
             <label>Dein Name:</label>
