@@ -105,10 +105,11 @@
         </tr>
     ";
     if( $id_from > 1 ) {
+      $n = ( $id_from > 10 ) ? $id_from : 10;
       echo "
         <tr>
           <td colspan='7'>
-          <a href='index.php?area=dienstkontrollblatt&id_to=$id_from'> &lt; &lt; &lt;  Bl&auml;ttern &lt; &lt; &lt;  </a>
+          <a class='button' href='index.php?area=dienstkontrollblatt&id_to=$n'> &lt; &lt; &lt;  Bl&auml;ttern &lt; &lt; &lt;  </a>
           </td>
         </tr>
       ";
@@ -117,7 +118,7 @@
       echo "
         <tr>
           <td>
-            <a href='index.php?area=dienstkontrollblatt&id_to=" . ($row['id'] + 5) . "'> {$row['id']} </a>
+            <a title='Zentrieren' style='padding:0pt 1ex 0pt 1ex;' href='index.php?area=dienstkontrollblatt&id_to=" . ($row['id'] + 5) . "'> {$row['id']} </a>
           </td>
           <td>{$row['zeit']}</td>
           <td>{$row['dienst']}</td>
@@ -129,10 +130,13 @@
       ";
     }
     if( $id_to < $id_max ) {
+      $n = $id_to + 10;
+      if( $n > $id_max )
+        $n = $id_max;
       echo "
         <tr>
           <td colspan='7'>
-          <a href='index.php?area=dienstkontrollblatt&id_to=" . ($id_to + 10) . "'> &gt; &gt; &gt; Bl&auml;ttern &gt; &gt; &gt; </a>
+          <a class='button' href='index.php?area=dienstkontrollblatt&id_to=$n'> &gt; &gt; &gt; Bl&auml;ttern &gt; &gt; &gt; </a>
           </td>
         </tr>
       ";
