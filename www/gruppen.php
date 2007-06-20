@@ -26,40 +26,47 @@
     }
   }
 
-  ?>
-
-  <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
-    <form action="index.php" name="reload_form">
-      <input type="hidden" name="area" value="gruppen">
-      <input type="hidden" name="action" value="normal">
-      <input type="hidden" name="gruppen_id" value="">
+  echo "
+    <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
+    <form action='index.php' name='reload_form'>
+      <input type='hidden' name='area' value='gruppen'>
+      <input type='hidden' name='action' value='normal'>
+      <input type='hidden' name='gruppen_id' value=''>
     </form>
-    <table class="menu">
+    <table class='menu'>
+  "; 
+  if( $hat_dienst_IV || $hat_dienst_V ) {
+    echo "
       <tr>
-        <td><input type="button" value="Neue Gruppe" class="bigbutton" onClick="window.open('windows/insertGroup.php?gruppen_pwd=<?PHP echo $gruppen_pwd; ?>','insertGroup','width=350,height=320,left=200,top=100').focus()"></td>
-        <td valign="middle" class="smalfont">Eine neue Bestellgruppe hinzufügen...</td>
-           </tr><tr>
-              <td><input type="button" value="Reload" class="bigbutton" onClick="document.forms['reload_form'].submit();"></td>
-              <td valign="middle" class="smalfont">diese Seite aktualisieren...</td>
-           </tr><tr>
-              <td><input type="button" value="Beenden" class="bigbutton" onClick="self.location.href='index.php'"></td>
-              <td valign="middle" class="smalfont">diesen Bereich verlassen...</td>
-           </tr>
-        </table>
+        <td>
+          <input type='button' value='Neue Gruppe' class='bigbutton' onClick=\"window.open('windows/insertGroup.php','insertGroup','width=350,height=320,left=200,top=100').focus()\"></td>
+        <td valign='middle' class='smalfont'>Eine neue Bestellgruppe hinzufügen...</td>
+      </tr>
+    ";
+  }
+//            <tr>
+//               <td><input type="button" value="Reload" class="bigbutton" onClick="document.forms['reload_form'].submit();"></td>
+//               <td valign="middle" class="smalfont">diese Seite aktualisieren...</td>
+//            </tr><tr>
+//               <td><input type="button" value="Beenden" class="bigbutton" onClick="self.location.href='index.php'"></td>
+//               <td valign="middle" class="smalfont">diesen Bereich verlassen...</td>
+//            </tr>
+  echo "
+    </table>
 
-      <br><br>
+    <br><br>
 
-        <table class="liste">
-          <tr>
-             <th>Gruppenname</th>
-             <th>AnsprechpartnerIn</th>
-             <th>Mail</th>
-             <th>Telefon</th>
-             <th>Kontostand</th>
-             <th>Mitgliederzahl</th>
-             <th>Optionen</th>
-          </tr>
-  <?PHP
+    <table class='liste'>
+      <tr>
+         <th>Gruppenname</th>
+         <th>AnsprechpartnerIn</th>
+         <th>Mail</th>
+         <th>Telefon</th>
+         <th>Kontostand</th>
+         <th>Mitgliederzahl</th>
+         <th>Optionen</th>
+      </tr>
+  ";
 
   $result = mysql_query("SELECT * FROM bestellgruppen ORDER BY name")
     or error(__LINE__,__FILE__,"Konnte Bestellgruppen nicht lesen.",mysql_error());
