@@ -272,7 +272,6 @@ th.ok, td.ok, div.ok, span.ok {
 }
 
 a.button, span.button {
-  // font-size:11pt;
   text-decoration:none;
   color:000000;
   background-color:#f0f0ff;
@@ -347,6 +346,8 @@ p.li {
   border-style:solid;
   border-color:#000000;
   border-width:1px;
+  padding:1ex;
+  margin:1ex;
 }
 .small_form td, .small_form table {
   background-color:#ffffd0;

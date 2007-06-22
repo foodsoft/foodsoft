@@ -45,7 +45,7 @@
     echo "
       <tr>
         <td>
-          <input type='button' value='Neue Gruppe' class='bigbutton' onClick=\"window.open('windows/insertGroup.php','insertGroup','width=380,height=360,left=200,top=100').focus()\"></td>
+          <input type='button' value='Neue Gruppe' class='bigbutton' onClick=\"window.open('windows/insertGroup.php','insertGroup','width=390,height=360,left=200,top=100').focus()\"></td>
         <td valign='middle' class='smallfont'>Eine neue Bestellgruppe hinzufügen...</td>
       </tr>
     ";
@@ -69,7 +69,7 @@
       </tr>
   ";
 
-  $result = mysql_query("SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER BY id")
+  $result = mysql_query("SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER BY (id%1000)")
     or error(__LINE__,__FILE__,"Konnte Bestellgruppen nicht lesen.",mysql_error());
   while ($row = mysql_fetch_array($result)) {
     $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
@@ -100,7 +100,7 @@
       ";
     }
     if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
-      echo "<a class='png' style='padding:0pt 1ex 0pt 1ex;'  href=\"javascript:window.open('windows/editGroup.php?gruppen_id={$row['id']}','insertGroup','width=380,height=420,left=200,top=100').focus()\">
+      echo "<a class='png' style='padding:0pt 1ex 0pt 1ex;'  href=\"javascript:window.open('windows/editGroup.php?gruppen_id={$row['id']}','insertGroup','width=390,height=420,left=200,top=100').focus()\">
         <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' titel='Gruppendaten ändern'/></a>
       ";
     }

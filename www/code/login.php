@@ -316,7 +316,7 @@
          <select size='1' name='login_gruppen_id'>
            <option value='' selected>(bitte Gruppe waehlen)</option>
   ";
-  ( $gruppen = mysql_query( "SELECT * FROM bestellgruppen WHERE name like '% %'" ) )
+  ( $gruppen = mysql_query( "SELECT * FROM bestellgruppen WHERE (aktiv=1) and (name like '% %') ORDER by (id%1000)" ) )
     or error( __LINE__, __FILE__, "konne Bestellgruppen nicht aus Datenbank lesen!" );
   while( $gruppe = mysql_fetch_array( $gruppen ) ) {
     echo "<option value='{$gruppe['id']}'";
@@ -328,13 +328,13 @@
          </select>
          <label style='padding-left:4em;'>Passwort:</label>
          <input type='password' size='8' name='passwort' value=''></input>
-         <span class='button' id='pwneu_knopf' style='padding-left:2em;'
-          onclick='pwneu_on();'>Passwort aendern...</span>
+         <span class='button' id='pwneu_knopf' style='padding-left:2em;font-size:10pt;'
+          onclick='pwneu_on();'>Passwort &auml;ndern...</span>
        </div>
        <div class='newfield' style='display:none;' id='pwneu_form'>
          <fieldset class='small_form'>
          <legend>
-         <img src='img/close_black_trans.gif' class='button'
+         <img src='img/close_black_trans.gif' style='padding:0pt;margin:0pt;' class='button'
           onclick='pwneu_off()' title='Ausblenden...'></img>
           Passwort aendern
           </legend>

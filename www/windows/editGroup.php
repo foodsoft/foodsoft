@@ -29,9 +29,17 @@
     if ($newName == "")
       $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
-    if ( ! ( ( $newMitgliederzahl >= 1 ) && ( $newMitgliederzahl < 100 ) ) )
-      $problems = $problems . "<div class='warn'>Keine g&uuml;ltige Mitgliederzahl angegeben!</div>";
+    // bis auf weiteres: Gruppenname beginnt mit Gruppennummer:
+    //
+    sscanf( $newName, "%d %s", &$n, &$s );
+    if( ( ! $s ) || ( $n != $gruppen_id % 1000 ) ) {
+      $msg = $msg . "<div class='warn'>Gruppenname sollte mit Gruppennummer beginnen!</div>";
+    }
 
+    if ( ! (
+                 ( ( $newMitgliederzahl == '0' ) || ( $newMitgliederzahl >= 1 ) )
+              && ( $newMitgliederzahl < 100 ) ) )
+      $problems = $problems . "<div class='warn'>Keine g&uuml;ltige Mitgliederzahl angegeben!</div>";
 
     // Wenn keine Fehler, dann ändern...
     if( ! $problems ) {
@@ -107,34 +115,34 @@
   echo "
 	  <form action='editGroup.php' method='post' class='small_form'>
       <input type='hidden' name='gruppen_id' value='$gruppen_id'>
-      <fieldset style='width:340px;' class='small_form'>
-       <legend>Bestellgruppe edieren</legend>
+      <fieldset style='width:350px;' class='small_form'>
+       <legend>Stammdaten Gruppe " . $gruppen_id % 1000 . " </legend>
        $msg
        $problems
   		 <table>
 			   <tr>
 				   <td><label>Gruppenname:</label></td>
-					 <td><input type='input' size='20' name='newName' value='{$row['name']}'></td>
+					 <td><input type='input' size='24' name='newName' value='{$row['name']}'></td>
 				 </tr>
 			   <tr>
 				    <td><label>AnsprechpartnerIn:</label></td>
-						<td><input type='input' size='20' name='newAnsprechpartner' value='{$row['ansprechpartner']}'></td>
+						<td><input type='input' size='24' name='newAnsprechpartner' value='{$row['ansprechpartner']}'></td>
 				 </tr>				 
 			   <tr>
 				    <td><label>Email-Adresse:</label></td>
-						<td><input type='input' size='20' name='newMail' value='{$row['email']}'></td>
+						<td><input type='input' size='24' name='newMail' value='{$row['email']}'></td>
 				 </tr>				 
 			   <tr>
 				    <td><label>Telefonnummer:</label></td>
-						<td><input type='input' size='20' name='newTelefon' value='{$row['telefon']}'></td>
+						<td><input type='input' size='24' name='newTelefon' value='{$row['telefon']}'></td>
 				 </tr>
 			   <tr>
 				    <td><label>Mitgliederzahl:</b></td>
-						<td>
-              <input type='input' size='4' name='newMitgliederzahl' value='{$row['mitgliederzahl']}'
+						<td style='white-space:nowrap;'>
+              <input type='input' size='2' name='newMitgliederzahl' value='{$row['mitgliederzahl']}'
                 onfocus=\"document.getElementById('checksockelbuchen').style.display='inline';\">
              <span style='display:none;' id='checksockelbuchen'>
-               <label style='padding-left:2em;'>Sockelbetrag buchen:</label>
+               <label style='padding-left:2ex;'>Sockelbetrag buchen:</label>
                <input style='margin:0pt;padding:0pt;' type='checkbox' name='buchesockelbetrag' value='1' checked></input>
              </span>
             </td>
@@ -149,10 +157,10 @@
 	   <form action='editGroup.php' name='optionen' class='small_form'>
 			 <input type='hidden' name='gruppen_id' value='$gruppen_id'>	 
 			 <input type='hidden' name='action'>
-       <fieldset style='width:340px;' class='small_form'>
+       <fieldset style='width:350px;' class='small_form'>
 	  	   <legend>Optionen</legend>
          $pwmsg
-         <table style='width:340px;' class='menu'>
+         <table style='width:350px;' class='menu'>
 			     <tr>
 			        <td><input type='button' value='neues Passwort' onClick=\"document.forms['optionen'].action.value='new_pwd'; document.forms['optionen'].submit();\"></td>
 					    <td class='smalfont'>Gruppenpasswort zur&uuml;cksetzen...</td>

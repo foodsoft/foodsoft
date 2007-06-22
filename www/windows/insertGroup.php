@@ -27,6 +27,7 @@
   
     // suche $id = $newNummer + n * 1000
     // dabei pruefen, ob noch aktive gruppe derselben nummer existiert:
+    // ! noch nicht implementiert: gruppen werden echt geloescht
     $id = $newNummer;
     while( true ) {
       $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$id" );
@@ -43,14 +44,22 @@
     if ($newName == "")
       $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
     if ( ! ( $newMitgliederzahl >= 1 ) )
-      $problems = $problems . "<div class='warn'>Keine Mitgliederzahl angegeben!</div>";
+      $problems = $problems . "<div class='warn'>Keine g&uuml;ltige Mitgliederzahl angegeben!</div>";
+
+    // bis auf weiteres: Gruppenname beginnt mit Gruppennummer:
+    //
+    sscanf( $newName, "%d %s", &$n, &$s );
+    if( ( ! $s ) || ( $n != $newNummer ) ) {
+      $newName = "$newNummer $newName";
+      $msg = $msg . "<div class='warn'>Gruppennummer wurde in Namen eingef&uuml;gt</div>";
+    }
 
     // Wenn keine Fehler, dann einfügen...
     if( ! $problems ) {
-  
+
       // vorläufiges Passwort für die Bestellgruppe erzeugen...
       $pwd = strval(rand(1010,9999));
-  
+
       if( ! mysql_query(
         "INSERT INTO bestellgruppen 
          (id, aktiv, name, ansprechpartner, email, telefon, mitgliederzahl, passwort)
@@ -68,7 +77,7 @@
       } else {
         $msg = $msg . "
           <div class='ok'>Gruppe erfolgreich angelegt</div>
-          <div class='ok'>Vorl&auml;figes Passwort: $pwd (bitte notieren!)</div>
+          <div class='ok'>Vorl&auml;ufiges Passwort: <b>$pwd</b> (bitte notieren!)</div>
         ";
         $done = TRUE;
       }
@@ -113,7 +122,7 @@
 
   echo "
     <form action='insertGroup.php' method='post' class='small_form'>
-      <fieldset style='width:340px;' class='small_form'>
+      <fieldset style='width:350px;' class='small_form'>
       <legend>neue Bestellgruppe</legend>
         $msg
         $problems
@@ -121,37 +130,38 @@
           <tr>
              <td><label>Gruppennummer:</label></td>
              <td>
-               <input type='input' size='4' name='newNummer' value='$newNummer'></input>
+               <input type='input' size='3' name='newNummer' value='$newNummer'></input>
+               
              </td>
           </tr>
           <tr>
              <td><label>Gruppenname:</label></td>
              <td>
-               <input type='input' size='20' name='newName' value='$newName'></input>
+               <input type='input' size='24' name='newName' value='$newName'></input>
              </td>
           </tr>
           <tr>
              <td><label>AnsprechpartnerIn:</label></td>
              <td>
-               <input type='input' size='20' name='newAnsprechpartner' value='$newAnsprechpartner'></input>
+               <input type='input' size='24' name='newAnsprechpartner' value='$newAnsprechpartner'></input>
              </td>
           </tr>
           <tr>
              <td><label>Email-Adresse:</label></td>
              <td>
-               <input type='input' size='20' name='newMail' value='$newMail'></input>
+               <input type='input' size='24' name='newMail' value='$newMail'></input>
              </td>
           </tr>
           <tr>
              <td><label>Telefonnummer:</label></td>
              <td>
-               <input type='input' size='20' name='newTelefon' value='$newTelefon'></input>
+               <input type='input' size='24' name='newTelefon' value='$newTelefon'></input>
              </td>
           </tr>
           <tr>
              <td><label>Mitgliederzahl:</label></td>
              <td>
-               <input type='input' size='4' value='$newMitgliederzahl' name='newMitgliederzahl'></input>
+               <input type='input' size='2' value='$newMitgliederzahl' name='newMitgliederzahl'></input>
              </td>
           </tr>
           <tr>
