@@ -297,8 +297,6 @@ include_once("code/zuordnen.php");
 //					       AND pp.zeitstart <= NOW()
 //					       ORDER BY p.name") or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
 
-     <?PHP
-         }
       ?>
             <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
              <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">

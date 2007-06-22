@@ -67,7 +67,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
        return;
      } else	 {
         if( $hat_dienst_IV ) {
-          $gruppen_id = 99;                 // dienst IV bestellt fuer basar...
+          $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
           // echo "<div class='warn'>dienst IV: bestellt fuer $gruppen_id</div>";
           echo "<h1>Bestellen f&uuml;r den Basar</h1>";
         } else {
@@ -79,6 +79,9 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 						 if (isset($HTTP_GET_VARS['bestellungs_id'])) 
 						 {
 						    $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
+						    if($hat_dienst_IV){
+						    	verteilmengenLoeschen($bestell_id);
+						    }
 						    $query ="SELECT * FROM gesamtbestellungen WHERE id=".mysql_escape_string($bestell_id);
 						    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden.. ($query)",mysql_error());
 						 } else 

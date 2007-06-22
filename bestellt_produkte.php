@@ -29,6 +29,7 @@ include("code/views.php");
 ?>
 <h1>Bestellungen ansehen...</h1>
 	 <?bestellung_overview($row_gesamtbestellung);?>
+	 <?changeState($bestell_id, "Verteilt")?>
       <br>
       <br>
          <form action="index.php" method="post">

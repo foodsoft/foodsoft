@@ -3,6 +3,21 @@
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
 //foodi als pwd: 35q3Za9.ZxrxYd
 
+
+/*
+ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten', 'Verteilt', 'archiviert' ) NOT NULL DEFAULT 'bestellen';
+
+ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
+*/
+//Debug level
+ $levelAll = 4;
+ $levelMost = 3;
+ $levelImportant = 2;
+ $levelKey = 1;
+ $levelNone = 0;
+ $currentLevel = $levelAll;
+
+
 function checkpassword($gruppen_id, $gruppen_pwd){
 if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
 	 {
@@ -15,12 +30,59 @@ if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "")
 	 }
 	 return false;
 }
-function drop_basar($bestellid){
+
+function doSql($sql, $debug_level, $error_text){
+	echo "<p> debug_level: $debug_level currentLevel: $currentLevel</p>)";
+	if($debug_level <= $currentLevel) echo "<p>".$query."</p>";
+	$result = mysql_query($sql) or error(__LINE__,__FILE__,$error_text."(".$query.")",mysql_error());
+	return $result;
+
+}
+function changeState($bestell_id, $state){
+
+     $sql = "SELECT state FROM gesamtbestellungen WHERE id = $bestell_id";
+     $result = doSql($sql, $levelAll, "Konnte status  nicht von DB laden..");
+     $row = mysql_fetch_array($result);
+     $current = $row['state'];
+
+     switch($state){
+     case "bestellen":
+     break;
+     case "beimLieferanten":
+     break;
+     case "Verteilt":
+     break;
+     case "archiviert":
+     break;
+     default: error(__LINE__,__FILE__, "Ungültiger zu setzender Status");
+     }
+     $sql = "UPDATE gesamtbestellungen SET state = '$state' WHERE id = $bestell_id";
+    doSql($sql, $levelKey, "Konnte status  in DB nicht ändern..");
+}
+
+/**
+ *  Dient dazu, die Verteilmengen nochmal zu
+ *  löschen, wenn erneut als Basar angemeldet wird
+ *  oder sonst ein Fehler besteht
+ */
+function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
+    $query = "SELECT * FROM gesamtbestellungen WHERE state = 'bestellen' AND id = ".mysql_escape_string($bestell_id);
+	$result = doSql($query, $levelAll, "Konnte Bestellmengen nich aus DB laden.. ");
+	if(mysql_num_rows($result)==0) return false;
+
 	$sql = "DELETE bestellzuordnung.* FROM bestellzuordnung inner
 	join gruppenbestellungen on (gruppenbestellungen.id =
-	gruppenbestellung_id) WHERE art = 2 AND gesamtbestellung_id = ".$bestellid." AND bestellguppen_id = ".mysql_escape_string(sql_basar_id());
-	//echo $sql."<br>";
-	mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basarbestellungen nicht aus DB löschen..",mysql_error());
+	gruppenbestellung_id) WHERE art = 2 AND gesamtbestellung_id = ".$bestell_id;
+	if($nur_basar) {
+	    $sql.=" AND bestellguppen_id = ".mysql_escape_string(sql_basar_id());
+	}
+
+	doSql($sql, $levelAll, "Konnte bestellungen nicht aus DB löschen..");
+
+
+	$sql = "UPDATE bestellvorschlaege set bestellmenge = NULL where gesamtbestellung_id = ".$bestell_id;
+	doSql($sql, $levelAll, "Konnte bestellungen nicht aus DB löschen..");
+	return true;
 }
 function sql_basar_id(){
 	    $sql = "SELECT id FROM bestellgruppen
@@ -315,9 +377,9 @@ function sql_gruppen($bestell_id=FALSE){
 	
 }
 
-function sql_bestellungen($use_endDate = FALSE, $gruppen_id = FALSE){
+function sql_bestellungen($use_startDate = FALSE, $gruppen_id = FALSE){
 	 $query = "SELECT * FROM gesamtbestellungen WHERE ";
-	 if($use_endDate===FALSE){
+	 if($use_startDate===FALSE){
 	 	$query .="NOW() > bestellende ORDER BY bestellende DESC";
 	 } else {
 
@@ -571,7 +633,6 @@ function check_bereitsVerteilt($bestell_id){
 	if(mysql_num_rows($result)==0) return false;
 	return true;
 }
-
 function verteilmengenZuweisen($bestell_id){
   // nichts tun, wenn keine Bestellung ausgewählt
   if($bestell_id==""){
@@ -768,7 +829,9 @@ function verteilmengenZuweisen($bestell_id){
      }
   }
   	writeLiefermenge_sql($bestell_id);
-	drop_basar($bestell_id);
+	if(!verteilmengenLoeschen($bestell_id, TRUE))
+		error(__LINE__,__FILE__,"Konnte basareinträge  nicht löschen..","")	;
+	
 }
 
 ?>
