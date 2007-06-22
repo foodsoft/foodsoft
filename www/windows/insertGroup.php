@@ -1,77 +1,175 @@
 <?PHP
-	 
-	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-	 
-	 require_once('code/config.php');
-	 require_once('code/err_functions.php');
-	 require_once('code/connect_MySQL.php');
-	 require_once('code/login.php');
-   nur_fuer_dienst(5);
-	 
-	 // ggf. die neue Gruppe hinzufügen
-	 if (isset($HTTP_GET_VARS['newGroup_name'])) {
+   
+  // $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+   
+  require_once('code/config.php');
+  require_once('code/err_functions.php');
+  require_once('code/connect_MySQL.php');
+  require_once('code/login.php');
+  nur_fuer_dienst(5);
+   
+  $msg = '';
+  $problems = '';
+  $done = FALSE;
+  
+  // ggf. die neue Gruppe hinzufügen
 
-		$newName            = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newGroup_name']));
-		$newAnsprechpartner = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newGroup_ansprechpartner']));
-		$newMail            = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newGroup_mail']));
-		$newTelefon         = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newGroup_telefon']));
-		$newMitgliederzahl  = $HTTP_GET_VARS['newGroup_mitgliederzahl'];
-			
-		$errStr = "";
-		if ($newName == "") $errStr = "Die neue Bestellgruppe muß einen Name haben!";
-		
-		// Wenn keine Fehler, dann einfügen...
-		if ($errStr == "") {
-			
-			// vorläufiges Passwort für die Bestellgruppe erzeugen...
-			$pwd = strval(rand(1000,9999));
-			
-			mysql_query("INSERT INTO bestellgruppen 
-				     (name, ansprechpartner, email, telefon, mitgliederzahl, passwort)
-				     VALUES ('".mysql_escape_string($newName)."', '".mysql_escape_string($newAnsprechpartner)."', '".mysql_escape_string($newMail)."', '".mysql_escape_string($newTelefon)."', '".mysql_escape_string($newMitgliederzahl)."', '".crypt($pwd,35464)."')")
-				     or error(__LINE__,__FILE__,"Konnte neue Benutzergruppe nicht einfügen.",mysql_error());
-			
-			$onload_str = "alert('Bitte das vorläufige Passwort für die Gruppe notieren! Passwort: ".$pwd."');
-		       		       opener.focus(); opener.document.forms['reload_form'].submit(); window.close();";
-		}
-	 }
-	 
+  if( get_http_var('newName') ) {
+    get_http_var('newNummer');
+    get_http_var('newAnsprechpartner');
+    get_http_var('newMail');
+    get_http_var('newTelefon');
+    get_http_var('newMitgliederzahl');
+        
+    if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
+      $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
+    }
+  
+    // suche $id = $newNummer + n * 1000
+    // dabei pruefen, ob noch aktive gruppe derselben nummer existiert:
+    $id = $newNummer;
+    while( true ) {
+      $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$id" );
+      if( ! $result )
+        break;
+      $row = mysql_fetch_array( $result );
+      if( ! $row )
+        break;
+      if( $row['aktiv'] == '1' )
+        $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
+      $id = $id + 1000;
+    }
+
+    if ($newName == "")
+      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
+    if ( ! ( $newMitgliederzahl >= 1 ) )
+      $problems = $problems . "<div class='warn'>Keine Mitgliederzahl angegeben!</div>";
+
+    // Wenn keine Fehler, dann einfügen...
+    if( ! $problems ) {
+  
+      // vorläufiges Passwort für die Bestellgruppe erzeugen...
+      $pwd = strval(rand(1010,9999));
+  
+      if( ! mysql_query(
+        "INSERT INTO bestellgruppen 
+         (id, aktiv, name, ansprechpartner, email, telefon, mitgliederzahl, passwort)
+         VALUES ( $id
+                  , 1 
+                  , '".mysql_escape_string($newName)."'
+                  , '".mysql_escape_string($newAnsprechpartner)."'
+                  , '".mysql_escape_string($newMail)."'
+                  , '".mysql_escape_string($newTelefon)."'
+                  , '".mysql_escape_string($newMitgliederzahl)."'
+                  , '".crypt($pwd,35464)."')"
+      ) ) {
+        $problems = $problems . "<div class='warn'>Eintragen der Gruppe fehlgeschlagen:"
+                                 .  mysql_error() . "</div>";
+      } else {
+        $msg = $msg . "
+          <div class='ok'>Gruppe erfolgreich angelegt</div>
+          <div class='ok'>Vorl&auml;figes Passwort: $pwd (bitte notieren!)</div>
+        ";
+        $done = TRUE;
+      }
+  
+      if( ! $problems ) {
+        // gruppe ist angelegt: jetzt sockelbetrag verbuchen!
+        $sockelbetrag = -6.00 * $newMitgliederzahl;
+        if( ! mysql_query(
+          "INSERT INTO gruppen_transaktion (
+              type
+            , gruppen_id
+            , eingabe_zeit
+            , summe
+            , kontoauszugs_nr
+            , notiz
+            , kontobewegungs_datum
+            , dienstkontrollblatt_id
+          ) VALUES (
+            2
+          , $id
+          , NOW()
+          , $sockelbetrag
+          , ''
+          , 'Sockelbetrag neue Gruppe $newNummer'
+          , ''
+          , $dienstkontrollblatt_id
+          )"
+        ) ) {
+          $problems = $problems . "<div class='warn'>Verbuchen des Sockelbetrags fehlgeschlagen: "
+                                     . mysql_error() . "</div>";
+        } else {
+          $msg = $msg . "<div class='ok'>Sockelbetrag $sockelbetrag Euro wurde verbucht.</div>";
+        }
+      }
+
+    }
+  }
+ 
+  $title = "Neue Bestellgruppe eintragen";
+  $subtitle = "Neue Bestellgruppe eintragen";
+  require_once('head.php');
+
+  echo "
+    <form action='insertGroup.php' method='post' class='small_form'>
+      <fieldset style='width:340px;' class='small_form'>
+      <legend>neue Bestellgruppe</legend>
+        $msg
+        $problems
+        <table>
+          <tr>
+             <td><label>Gruppennummer:</label></td>
+             <td>
+               <input type='input' size='4' name='newNummer' value='$newNummer'></input>
+             </td>
+          </tr>
+          <tr>
+             <td><label>Gruppenname:</label></td>
+             <td>
+               <input type='input' size='20' name='newName' value='$newName'></input>
+             </td>
+          </tr>
+          <tr>
+             <td><label>AnsprechpartnerIn:</label></td>
+             <td>
+               <input type='input' size='20' name='newAnsprechpartner' value='$newAnsprechpartner'></input>
+             </td>
+          </tr>
+          <tr>
+             <td><label>Email-Adresse:</label></td>
+             <td>
+               <input type='input' size='20' name='newMail' value='$newMail'></input>
+             </td>
+          </tr>
+          <tr>
+             <td><label>Telefonnummer:</label></td>
+             <td>
+               <input type='input' size='20' name='newTelefon' value='$newTelefon'></input>
+             </td>
+          </tr>
+          <tr>
+             <td><label>Mitgliederzahl:</label></td>
+             <td>
+               <input type='input' size='4' value='$newMitgliederzahl' name='newMitgliederzahl'></input>
+             </td>
+          </tr>
+          <tr>
+             <td colspan='2' align='center'>
+  ";
+  if( ! $done ) {
+    echo "<input type='submit' value='Einf&uuml;gen'></input>";
+  } else {
+    echo "<input value='OK' type='button' onClick='opener.focus(); window.close();'></td>";
+  }
+  echo "
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  ";
+
 ?>
 
-<html>
-<head>
-   <title>neue Bestellgruppe einfügen</title>
-</head>
-<body onload="<?PHP echo $onload_str; ?>">
-   <h3>neue Bestelgruppe</h3>
-	 <form action="insertGroup.php">
-			<input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
-			<table border="2">
-			   <tr>
-				    <td><b>Gruppenname</b></td>
-						<td><input type="input" size="20" name="newGroup_name"></td>
-				 </tr>
-			   <tr>
-				    <td><b>AnsprechpartnerIn</b></td>
-						<td><input type="input" size="20" name="newGroup_ansprechpartner"></td>
-				 </tr>				 
-			   <tr>
-				    <td><b>Email-Adresse</b></td>
-						<td><input type="input" size="20" name="newGroup_mail"></td>
-				 </tr>				 
-			   <tr>
-				    <td><b>Telefonnummer</b></td>
-						<td><input type="input" size="20" name="newGroup_telefon"></td>
-				 </tr>
-			   <tr>
-				    <td><b>Mitgliederzahl</b></td>
-						<td><input type="input" size="20" value="0" name="newGroup_mitgliederzahl"></td>
-				 </tr>				 
-			   <tr>
-				    <td colspan="2" align="center"><input type="submit" value="Einfügen"><input type="button" value="Abbrechen" onClick="opener.focus(); window.close();"></td>
-				 </tr>
-			</table>
-	 </form>
-	 <b><font color="#FF0000"><?PHP echo $errStr ?></font></b>
 </body>
 </html>

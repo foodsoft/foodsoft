@@ -18,11 +18,16 @@
     $kontostand = kontostand( $row['id'] );
     if( abs($kontostand) > 0.005 ) {
       echo "
-        <div class='warn'>Kontostand: $kontostand ist nicht null: Loeschen nicht moeglich!</div>
+        <div class='warn'>Kontostand: $kontostand ist nicht null: L&ouml;schen nicht m&ouml;glich!</div>
+      ";
+    } elseif( $row['mitgliederzahl'] != 0 ) {
+      echo "
+        <div class='warn'>Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich (Sockelbetrag noch nicht verbucht!)</div>
       ";
     } else {
-      mysql_query( "DELETE FROM bestellgruppen WHERE id=".mysql_escape_string($HTTP_GET_VARS['gruppen_id']))
-        or error(__LINE__,__FILE__,"Konnte Bestellgruppe nicht löschen.",mysql_error());
+      if( ! mysql_query(
+        "UPDATE bestellgruppen SET aktiv=0 WHERE id=".mysql_escape_string($HTTP_GET_VARS['gruppen_id'])
+      ) ) echo "<div class='warn'>Konnte Bestellgruppe nicht l&ouml;schen: " . mysql_error() . "</div>";
     }
   }
 
@@ -35,22 +40,17 @@
     </form>
     <table class='menu'>
   "; 
+
   if( $hat_dienst_IV || $hat_dienst_V ) {
     echo "
       <tr>
         <td>
-          <input type='button' value='Neue Gruppe' class='bigbutton' onClick=\"window.open('windows/insertGroup.php','insertGroup','width=350,height=320,left=200,top=100').focus()\"></td>
-        <td valign='middle' class='smalfont'>Eine neue Bestellgruppe hinzufügen...</td>
+          <input type='button' value='Neue Gruppe' class='bigbutton' onClick=\"window.open('windows/insertGroup.php','insertGroup','width=380,height=360,left=200,top=100').focus()\"></td>
+        <td valign='middle' class='smallfont'>Eine neue Bestellgruppe hinzufügen...</td>
       </tr>
     ";
   }
-//            <tr>
-//               <td><input type="button" value="Reload" class="bigbutton" onClick="document.forms['reload_form'].submit();"></td>
-//               <td valign="middle" class="smalfont">diese Seite aktualisieren...</td>
-//            </tr><tr>
-//               <td><input type="button" value="Beenden" class="bigbutton" onClick="self.location.href='index.php'"></td>
-//               <td valign="middle" class="smalfont">diesen Bereich verlassen...</td>
-//            </tr>
+
   echo "
     </table>
 
@@ -58,6 +58,7 @@
 
     <table class='liste'>
       <tr>
+         <th>Nr</th>
          <th>Gruppenname</th>
          <th>AnsprechpartnerIn</th>
          <th>Mail</th>
@@ -68,39 +69,45 @@
       </tr>
   ";
 
-  $result = mysql_query("SELECT * FROM bestellgruppen ORDER BY name")
+  $result = mysql_query("SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER BY id")
     or error(__LINE__,__FILE__,"Konnte Bestellgruppen nicht lesen.",mysql_error());
   while ($row = mysql_fetch_array($result)) {
-    $kontostand = kontostand($row['id']);
+    $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
+    $nr = $row['id'] % 1000;
     echo "
       <tr>
+        <td>$nr</td>
         <td>{$row['name']}</td>
         <td>{$row['ansprechpartner']}</td>
         <td>{$row['email']}</td>
         <td>{$row['telefon']}</td>
         <td align='right'>$kontostand</td>
-         <td>{$row['mitgliederzahl']}</td>
+        <td>{$row['mitgliederzahl']}</td>
         <td>
     ";
     if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
       echo "
-        <a class='png' href=\"javascript:window.open('windows/groupTransaktionMenu.php?gruppen_id={$row['id']}','groupTransaktion','width=500,height=300,left=200,top=100').focus()\">
+        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+          href=\"javascript:window.open('windows/groupTransaktionMenu.php?gruppen_id={$row['id']}','groupTransaktion','width=500,height=300,left=200,top=100').focus()\">
          <img src='img/b_browse.png' border='0' titel='Kontotransaktionen' alt='Kontotransaktionen'/>
         </a>
       ";
     } elseif( $login_gruppen_id == $row['id'] ) {
       echo "
-        <a class='png' href='index.php?area=meinkonto'>
+        <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
          <img src='img/b_browse.png' border='0' titel='Mein Konto' alt='Mein Konto'/>
         </a>
       ";
     }
     if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
-      echo "<a class='png' href=\"javascript:window.open('windows/editGroup.php?gruppen_id={$row['id']}','insertGroup','width=350,height=340,left=200,top=100').focus()\">
+      echo "<a class='png' style='padding:0pt 1ex 0pt 1ex;'  href=\"javascript:window.open('windows/editGroup.php?gruppen_id={$row['id']}','insertGroup','width=380,height=420,left=200,top=100').focus()\">
         <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' titel='Gruppendaten ändern'/></a>
       ";
     }
-    if( ( $dienst == 5 ) && ( abs($kontostand) < 0.005 ) ) {
+    // loeschen nur wenn
+    // - kontostand 0
+    // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
+    if( ( $dienst == 5 ) && ( abs($kontostand) < 0.005 ) && ( $row['mitgliederzahl'] == 0 ) ) {
       echo "<a class='png' href=\"javascript:deleteGroup({$row['id']});\">
         <img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
       ";

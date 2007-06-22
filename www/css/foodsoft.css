@@ -34,11 +34,13 @@ input:hover, textarea:hover, select:hover {
 }
 
 /* - Logo bzw. Kopf - */
-.head, .head td {
+.head, .head td, .head table {
   background:#ed0606;
   border:none;
   color:#ffffff;
   font-weight: bold;
+  font-size: 12pt;
+  padding:0pt;
 }
 #logo {
  // background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;

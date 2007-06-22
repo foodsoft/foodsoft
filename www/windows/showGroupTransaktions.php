@@ -59,7 +59,7 @@
   if($meinKonto) {
     $gruppen_id = $login_gruppen_id;
   } else {
-    nur_fuer_dienst_IV();
+    nur_fuer_dienst(4,5);
     get_http_var( 'gruppen_id' ) or die();
   }
  
