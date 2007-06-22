@@ -22,7 +22,8 @@
       ";
     } elseif( $row['mitgliederzahl'] != 0 ) {
       echo "
-        <div class='warn'>Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich (Sockelbetrag noch nicht verbucht!)</div>
+        <div class='warn'>Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich (Sockelbetrag!)</div>
+        <div class='warn'>(bitte erst auf null setzen, um Sockelbetrag zu verbuchen!)</div>
       ";
     } else {
       if( ! mysql_query(
@@ -33,7 +34,7 @@
 
   echo "
     <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
-    <form action='index.php' name='reload_form'>
+    <form action='index.php' name='reload_form' method='post'>
       <input type='hidden' name='area' value='gruppen'>
       <input type='hidden' name='action' value='normal'>
       <input type='hidden' name='gruppen_id' value=''>

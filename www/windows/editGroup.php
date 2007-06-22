@@ -36,10 +36,15 @@
       $msg = $msg . "<div class='warn'>Gruppenname sollte mit Gruppennummer beginnen!</div>";
     }
 
-    if ( ! (
-                 ( ( $newMitgliederzahl == '0' ) || ( $newMitgliederzahl >= 1 ) )
-              && ( $newMitgliederzahl < 100 ) ) )
-      $problems = $problems . "<div class='warn'>Keine g&uuml;ltige Mitgliederzahl angegeben!</div>";
+    // nur dienst 4 und 5 buchen sockelbetraege:
+    //
+    if( $dienst != 4 and $dienst != 5 )
+      $newMitgliederzahl = $row['mitgliederzahl'];
+    else
+      if ( ! (
+                   ( ( $newMitgliederzahl == '0' ) || ( $newMitgliederzahl >= 1 ) )
+                && ( $newMitgliederzahl < 100 ) ) )
+        $problems = $problems . "<div class='warn'>Keine g&uuml;ltige Mitgliederzahl angegeben!</div>";
 
     // Wenn keine Fehler, dann ändern...
     if( ! $problems ) {
@@ -56,8 +61,8 @@
                                  .  mysql_error() . "</div>";
       } else {
         $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
-			}
-	
+      }
+
       if( ( ! $problems ) && ( $newMitgliederzahl != $row['mitgliederzahl'] ) ) {
         if( $buchesockelbetrag ) {
           $sockeldiff = 6.0 * ($row['mitgliederzahl'] - $newMitgliederzahl);
@@ -136,6 +141,9 @@
 				    <td><label>Telefonnummer:</label></td>
 						<td><input type='input' size='24' name='newTelefon' value='{$row['telefon']}'></td>
 				 </tr>
+  ";
+  if( $hat_dienst_IV or $hat_dienst_V ) {
+    echo "
 			   <tr>
 				    <td><label>Mitgliederzahl:</b></td>
 						<td style='white-space:nowrap;'>
@@ -147,13 +155,19 @@
              </span>
             </td>
 				 </tr>				 
+    ";
+  }
+  echo "
 				 <tr>
 				    <td colspan='2' align='center'><input type='submit' value='&Auml;ndern'></td>
 				 </tr>
 			 </table>
       </fieldset>
 	   </form>
+  ";
 	 
+  if( $hat_dienst_IV or $hat_dienst_V ) {
+    echo "
 	   <form action='editGroup.php' name='optionen' class='small_form'>
 			 <input type='hidden' name='gruppen_id' value='$gruppen_id'>	 
 			 <input type='hidden' name='action'>
@@ -168,7 +182,8 @@
 	        </table>
        </fieldset>
 	  </form>
-  ";
+    ";
+  }
 ?>
 
 </body>
