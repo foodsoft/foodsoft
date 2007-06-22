@@ -103,7 +103,10 @@
       //
       // passwort pruefen:
       //
-      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($login_gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+      $result = mysql_query(
+        "SELECT * FROM bestellgruppen
+         WHERE (id=".mysql_escape_string($login_gruppen_id).") and (aktiv=1)"
+      ) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
 	    $bestellgruppen_row = mysql_fetch_array($result);
 			if( $bestellgruppen_row['passwort'] != crypt($passwort,35464) ) {
         $problems = $problems . "<div class='warn'>FEHLER: Passwort leider falsch</div>";
@@ -225,8 +228,10 @@
     if( ( ! $login_gruppen_id ) or ( $login_gruppen_id < 1 ) ) {
       $problems = $problems .  "fehler im keks: ungueltige login_gruppen_id";
     } else {
-      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($login_gruppen_id))
-        or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+      $result = mysql_query(
+        "SELECT * FROM bestellgruppen
+         WHERE (id=" . mysql_escape_string($login_gruppen_id) . ") and (aktiv=1)"
+      ) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
       $bestellgruppen_row = mysql_fetch_array($result);
       if( $bestellgruppen_row['passwort'] != crypt($passwort,35464) ) {
         $problems = $problems .  "fehler im keks: ungueltiges passwort";

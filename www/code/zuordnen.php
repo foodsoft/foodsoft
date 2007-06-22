@@ -363,7 +363,7 @@ function sql_gruppenname($gruppen_id){
 }
 function sql_gruppen($bestell_id=FALSE){
         if($bestell_id==FALSE){
-		$query="SELECT * FROM bestellgruppen";
+		$query="SELECT * FROM bestellgruppen WHERE aktiv=1";
 	} else {
 	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
 		FROM bestellgruppen INNER JOIN gruppenbestellungen 

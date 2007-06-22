@@ -93,7 +93,7 @@ include("code/zuordnen.php");
                               <select name="gruppen_id">
                                   <option value="">[auswählen]</option>
 <?PHP
-                                 $result = mysql_query("SELECT id,name FROM bestellgruppen ORDER BY name") or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+                                 $result = mysql_query("SELECT id,name FROM bestellgruppen WHERE aktiv=1 ORDER BY (id%1000)") or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
                                   while ($row = mysql_fetch_array($result))
                                   { 
                                    echo "
@@ -189,7 +189,7 @@ include("code/zuordnen.php");
                               <select name="gruppen_id">
                                   <option value="">[auswählen]</option>
                                   <?PHP
-			   $sql = "SELECT bestellgruppen.id, bestellgruppen.name FROM bestellgruppen inner join gruppenbestellungen ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id) WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id)."  ORDER  BY  bestellgruppen.name  ASC ";
+			   $sql = "SELECT bestellgruppen.id, bestellgruppen.name FROM bestellgruppen inner join gruppenbestellungen ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id) WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id)."  ORDER  BY (bestellgruppen.id % 1000)  ASC ";
                            $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden.. ($sql) ",mysql_error());
                             while ($row = mysql_fetch_array($result)) echo "<option value='".$row['id']."'>".$row['name']."</option>\n";
                                     ?>
@@ -231,7 +231,7 @@ Werte für die Druckversion "2x2 Matrix"  ..
                                                       FROM bestellgruppen, gruppenbestellungen 
                                                       WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id)." 
                                                       AND gruppenbestellungen.bestellguppen_id = bestellgruppen.id 
-                                                      ORDER  BY  bestellgruppen.name  ASC ") 
+                                                      ORDER  BY  (bestellgruppen.id % 1000)  ASC ") 
                                                       or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
                                                       
             while ($row = mysql_fetch_array($result)) 
