@@ -8,6 +8,11 @@
   global $angemeldet, $login_gruppen_name, $coopie_name, $dienst, $title, $subtitle, $onload_str;
   if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
   if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
+  if( is_file( '../img/close_black_trans.gif' ) )
+    $img = '../img/close_black_trans.gif';
+  else
+    $img = 'img/close_black_trans.gif';
+
   echo "
     <html>
     <head>
@@ -23,7 +28,7 @@
     <table>
     <tr>
       <td style='padding-right:1ex;'>
-        <img src='../img/close_black_trans.gif' class='button' title='Schlie&szlig;en' onClick='opener.focus(); window.close();'></img>
+        <img src='$img' class='button' title='Schlie&szlig;en' onClick='opener.focus(); window.close();'></img>
       </td>
       <td>Foodsoft: $subtitle</td>
     </tr>

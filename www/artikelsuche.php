@@ -19,7 +19,9 @@
   if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
 
 	//head einfügen
-	require_once ('head.php');
+  $title="Artikelsuche im Terra-Katalog";
+  $subtitle="Artikelsuche im Terra-Katalog";
+	require_once ('windows/head.php');
 
   // echo 'Hallo, Welt!';
 
@@ -131,7 +133,7 @@
     </form>
   ";
   
-  if( ( $produktid < 0 ) && $hat_dienst_IV ) {
+  if( ( $produktid < 0 ) && ( $hat_dienst_IV or $hat_dienst_V ) ) {
     echo "
       <br>
       <form class='small_form' action='terrakatalog.upload.php' method='post' enctype='multipart/form-data'>

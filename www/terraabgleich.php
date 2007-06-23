@@ -16,7 +16,7 @@
 	require_once('code/connect_MySQL.php');
 	
   require_once('code/login.php');
-  nur_fuer_dienst_IV();
+  nur_fuer_dienst(4,5);
   
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
@@ -24,7 +24,6 @@
   // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
   if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
 
-  require_once('head.php');
 
   $mysqljetzt = date('Y') . '-' . date('m') . '-' . date('d') . ' ' . date('H') . ':' . date('i') . ':' . date('s');
   // echo "Hallo, Welt! in MySQL ist es jetzt: $mysqljetzt <br>";
@@ -35,6 +34,12 @@
   } else {
     $detail = FALSE;
   }
+
+  $title = 'Datenbankabgleich: Foodsoft / Terrakatalog';
+  $subtitle = 'Datenbankabgleich: Foodsoft / Terrakatalog';
+  if( $detail )
+    $subtitle = $subtitle . " - Detailanzeige";
+  require_once('windows/head.php');
 
   if( $detail ) {
 

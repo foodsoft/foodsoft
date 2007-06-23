@@ -37,6 +37,7 @@
     echo '<br>terrakatalog: ' . $terrakatalog . '<br>';
     // system( 'cat ' . $_FILES['terrakatalog']['tmp_name'] );
     system( './terra2ldap.sh ' . $terrakw . ' ' . $_FILES['terrakatalog']['tmp_name'] );
+    echo '<br>finis.<br>';
 
 ?>
 
