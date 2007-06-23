@@ -27,7 +27,7 @@
 	
 				<table class=menu'>
 				   <tr>
-		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick=\"window.open('windows/insertLieferant.php','insertLieferant','width=510,height=500,left=200,top=100').focus()\"></td>
+		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick=\"window.open('windows/insertLieferant.php','lieferant','width=510,height=500,left=200,top=100').focus()\"></td>
 				      <td valign=middle' class='smalfont'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
 					 </tr><tr>
 		          <td><input type='button' value='Reload' class='bigbutton' onClick=\"document.forms['reload_form'].submit();\"></td>
@@ -71,14 +71,14 @@
     echo "   </td>
 						 <td>
 						 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-               href=\"javascript:window.open('windows/detailsLieferant.php?lieferanten_id={$row['id']}','lieferantenDetails','width=510,height=500,left=200,top=100').focus()\">
+               href=\"javascript:window.open('windows/detailsLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
                <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' titel='Details zum Lieferanten' />
              </a>
     ";
     if( $dienst == 4 or $dienst == 5 ) {
       echo "
         <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-          href=\"javascript:window.open('windows/editLieferant.php?lieferanten_id={$row['id']}','editDetails','width=510,height=500,left=200,top=100').focus()\">
+          href=\"javascript:window.open('windows/editLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
           <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' titel='Lieferanten editieren' />
         </a>
         <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
