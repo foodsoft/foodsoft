@@ -4,6 +4,7 @@
 
   // Konfigurationsdatei einlesen
 	include('code/config.php');
+	include('code/zuordnen.php');
 	
 	// Funktionen zur Fehlerbehandlung laden
 	include('code/err_functions.php');
@@ -50,6 +51,7 @@ class PDF extends FPDF //die klassen und funtionen für die pdf erzeugung
 if (isset($_POST['bestgr_pwd'])) $bestgr_pwd = $_POST['bestgr_pwd'];       // Passwort für den Bereich
 if (isset($_POST['bestellungs_id'])) $bestell_id = $_POST['bestellungs_id'];
 	
+verteilmengenZuweisen($bestell_id);
 	
 $pwd_ok = false;
 $bestgrup_view = false;
@@ -57,19 +59,24 @@ $bestgrup_view = false;
 //infos zur gesamtbestellung auslesen 
 $sql = "SELECT * FROM gesamtbestellungen WHERE id = ".$bestell_id."";
 
-$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden.. ($sql)",mysql_error());
 $row_gesamtbestellung = mysql_fetch_array($result);					
 
 //produkte und preise zur aktuellen bestellung auslesen
-$sql = "SELECT bestellvorschlaege.produkt_id as produkt_id, bestellvorschlaege.produktpreise_id as preis_id,produkte.name, produkte.einheit,produktpreise.preis, produktpreise.gebindegroesse, produktpreise.bestellnummer, produktgruppen.name as produktgruppe
-FROM bestellvorschlaege, produkte, produktpreise, produktgruppen
+$sql = "SELECT bestellvorschlaege.produkt_id as produkt_id,
+bestellvorschlaege.produktpreise_id as preis_id,
+bestellvorschlaege.bestellmenge,produkte.name, produkte.einheit,produktpreise.preis, produktpreise.gebindegroesse, produktpreise.bestellnummer, produktgruppen.name as produktgruppe
+FROM bestellvorschlaege 
+inner join produkte on (produkte.id = bestellvorschlaege.produkt_id)
+inner join produktpreise on (produktpreise.produkt_id = produkte.id)
+inner join produktgruppen on (produktgruppen_id = produktgruppen.id)
 WHERE gesamtbestellung_id = '".mysql_escape_string($bestell_id)."'
-AND produkte.id = bestellvorschlaege.produkt_id
 AND produktpreise.id = bestellvorschlaege.produktpreise_id
 AND produktgruppen.id = produkte.produktgruppen_id
+AND bestellvorschlaege.bestellmenge > 0
 ORDER BY produkte.produktgruppen_id, produkte.name ASC";
 $result1 = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-$produkte_row = mysql_fetch_array($result1);
+//$produkte_row = mysql_fetch_array($result1);
 
 //Lieferant bestimmen
 $sql = "SELECT lieferanten.name as name, lieferanten.adresse as adresse, lieferanten.fax as fax
@@ -82,7 +89,7 @@ $lieferant_row = mysql_fetch_array($result);
 //********************  wir starten mit der pdf ausgabe ***********************
 
 $pdf=new PDF();  //pdf-objekt erzeugen
-$pdf->SetAuthor('FC Schinke09'); 
+$pdf->SetAuthor('FC Nahrungskette'); 
 //$title = "Faxbestellung der FC Schinke09"; //titel für die seiten setzen ...
 //$pdf->SetTitle($title); 
 $pdf->AliasNbPages();
@@ -91,7 +98,7 @@ $pdf->AddPage();
 // hier die allgemeinen Infos anzeigen
 $pdf->SetY(15);
 $pdf->SetFont('Arial','',10);
-$pdf->MultiCell(0,5,"FC Schinke09\r\nManteufellstr. 103 \r\n10997 Berlin \r\n \r\nwww.fcschinke09.de\r\ninfo@fcschinke09.de\r\n \r\nBerlin, den ".date("d.m.Y"),0,'R');
+$pdf->MultiCell(0,5,"FC Nahrungskette\r\nBreitestrasse \r\n14471 Potsdam \r\n \r\nnahrungskette.fcschinke09.de\r\n \r\nPotsdam, den ".date("d.m.Y"),0,'R');
 $pdf->Ln();
 $pdf->SetFont('Arial','B',10);
 $pdf->SetXY(10,30);
@@ -124,44 +131,8 @@ $pdf->SetFont('Arial','',9);
 //jetzt die namen und preis zu den produkten auslesen
 while  ($produkte_row = mysql_fetch_array($result1))
 {
-	  //variablen für bertschs algorithmus setzen										
-	  unset($gebindegroessen);
-	  unset($gebindepreis);
-							   			
-	  $i = 0;
-	  $gebindegroessen[$i]=$produkte_row['gebindegroesse'];
-	  $gebindepreis[$i]=$produkte_row['preis'];
-					
-					
-	  //--------------------- jetzt überprüfen, ob das produkt bestellt wurde
-	  $sql = "SELECT bestellzuordnung.id, bestellzuordnung.menge, bestellzuordnung.art
-														FROM bestellzuordnung, gruppenbestellungen
-														WHERE produkt_id = ".$produkte_row['produkt_id']."
-														AND bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-	
-	      AND gruppenbestellungen.gesamtbestellung_id = ".$bestell_id.";";
-	
-	  $result3 = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-			 								
-	  //produktmenge pro produkt werden ausgelesen...
-	  $produktmenge = 0;
-	  while ($produktmenge_row = mysql_fetch_array($result3))
-	    {
-		      $produktmenge += $produktmenge_row['menge'];
-	    }
-			 								
-	  //reichen die bestellten mengen? dann weiter im text
-	  if ($produktmenge >= $produkte_row['gebindegroesse'])
-	    {
-	    
-	      $total_num_produkte++;
-			      
-			 // zur berechnung der bestellten menge
-			$menge = $produktmenge/$produkte_row['gebindegroesse'];
-			$menge = (int)$menge; 
-			     			      
 			$pdf->Cell(16,5,$produkte_row['bestellnummer'],1);
-			$pdf->Cell(12,5,$menge,1);
+			$pdf->Cell(12,5,$produkte_row['bestellmenge']/$produkte_row['gebindegroesse'],1);
 			$pdf->Cell(70,5,substr($produkte_row['name'],0,45),1);
 			$pdf->Cell(30,5,$produkte_row['produktgruppe'],1);	
 			$pdf->Cell(15,5,$produkte_row['gebindegroesse'],1);
@@ -170,9 +141,7 @@ while  ($produkte_row = mysql_fetch_array($result1))
 	    	$pdf->Ln();
 
 			
-			      $index++;
 			
-	    } //end if
 	    
 } //end while (namen und preis zu den produkten auslesen)
 

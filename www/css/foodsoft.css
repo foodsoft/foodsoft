@@ -34,8 +34,16 @@ input:hover, textarea:hover, select:hover {
 }
 
 /* - Logo bzw. Kopf - */
+.head, .head td, .head table {
+  background:#ed0606;
+  border:none;
+  color:#ffffff;
+  font-weight: bold;
+  font-size: 12pt;
+  padding:0pt;
+}
 #logo {
- background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
+ // background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
  height: 55px;
  padding: 0 20px;
  text-align: left;
@@ -154,6 +162,7 @@ table.info {
 th, td {
 	border:1px dotted grey;	
 	padding:4px;
+  vertical-align:top;
 }
 th {
 	font-weight:bold;
@@ -248,5 +257,131 @@ padding: 2px 2px 2px 5px;
 	font: normal 0.9em sans-serif;
 	font-style:italic;
 	 line-height: 1.3em;
+}
+
+th.warn, td.warn, div.warn, span.warn {
+  background-color:#ffaaaa;
+  color:#000000;
+  font-weight:bold;
+  padding-top:2px;
+  padding-bottom:2px;
+}
+
+th.ok, td.ok, div.ok, span.ok {
+  background-color:#ccffcc;
+}
+
+a.button, span.button {
+  text-decoration:none;
+  color:000000;
+  background-color:#f0f0ff;
+  padding:0.1ex 1em 0.1ex 1em;
+  margin-left:1em;
+  margin-right:1em;
+/* display:block; */
+  border-style:solid;
+  border-width:1pt;
+  border-color:#000000;
+  font-weight:bold;
+}
+a.button:hover, span.button:hover {
+  font-weight:bold;
+  text-decoration:underline;
+  background-color:ffffd0;
+}
+
+a.blocklink {
+  font-size:12pt;
+  text-decoration:none;
+  color:000080;
+  padding:2px;
+  display:block;
+  border-style:solid;
+  border-width:1pt;
+  border-color:#000000;
+  color:000000;
+  background-color:#f0f0ff;
+  text-decoration:none;
+}
+a.blocklink:hover {
+  background-color:ffffd0;
+}
+img.button {
+  background-color:#f0f0ff;
+}
+img.button:hover {
+  background-color:ffffd0;
+}  
+td.outer, th.outer {
+  border-style:solid;
+  border-color:#000000;
+  border-width:1px;
+}
+
+tr.modified td, tr.modified th, .modified {
+  background-image:url(modified.gif);
+  background-repeat:repeat;
+}
+
+div.untertabelle {
+  font-size:12p;
+  font-weight:bold;
+  padding:1em 1ex 1ex 1ex;
+}
+
+kbd {
+  font-family:arial,sans-serif;
+  font-weight:bold;
+  color:#000000;
+}
+
+p.li {
+  padding:0em 1em 0em 2em;
+  margin:0em;
+}
+
+.small_form fieldset {
+  background-color:#ffffd0;
+  margin:1ex;
+  border-style:solid;
+  border-color:#000000;
+  border-width:1px;
+  padding:1ex;
+  margin:1ex;
+}
+.small_form td, .small_form table {
+  background-color:#ffffd0;
+  border-style:none;
+  padding:0.5ex;
+  text-align:left;
+}
+  
+fieldset legend {
+  font-weight:bold;
+  background-color:#ffffff;
+  padding-top:0.3ex;
+  padding-bottom:0.3ex;
+  padding-left:2ex;
+  padding-right:2ex;
+  border-style:solid;
+  border-width:1px;
+  border-color:#000000;
+}
+
+.newfield {
+  padding-top:1em;
+}
+
+input.checkbox {
+  margin-left:2em;
+}
+
+div.kommentar {
+  padding-top:1em;
+  padding-bottom:1em;
+  padding-left:4em;
+  padding-right:4em;
+  color:4040a0;
+  font-size:10pt;
 }
 

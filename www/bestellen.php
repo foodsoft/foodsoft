@@ -1,77 +1,92 @@
 
-<h1>Bestellen ...</h1>
 
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
    include('code/zuordnen.php');
-   // Übergebene Variablen einlesen...
-   if (isset($HTTP_GET_VARS['gruppen_id'])) $gruppen_id = $HTTP_GET_VARS['gruppen_id'];       // Passwort für den Bereich
-	 if (isset($HTTP_GET_VARS['gruppen_pwd'])) $gruppen_pwd = $HTTP_GET_VARS['gruppen_pwd'];       // Passwort für den Bereich
-		 
-	 
-	 // Passwort prüfen, Bestellgrupendaten einlesen...
-	 if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
-	 {
-      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-	    $bestellgruppen_row = mysql_fetch_array($result);
-			
-			$pwd_ok = ($bestellgruppen_row['passwort'] == crypt($gruppen_pwd,35464));
-			
-			
-	 }
-	 
+   include('code/views.php');
+/*
+ *   // Übergebene Variablen einlesen...
+ *
+ *   // if (isset($HTTP_GET_VARS['gruppen_id'])) $gruppen_id = $HTTP_GET_VARS['gruppen_id'];       // Passwort für den Bereich
+ *	 // if (isset($HTTP_GET_VARS['gruppen_pwd'])) $gruppen_pwd = $HTTP_GET_VARS['gruppen_pwd'];       // Passwort für den Bereich
+ *		 
+ *	 
+ *	 // Passwort prüfen, Bestellgrupendaten einlesen...
+ * 	 if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
+ * 	 {
+ *       $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+ * 	    $bestellgruppen_row = mysql_fetch_array($result);
+ * 			
+ * 			$pwd_ok = ($bestellgruppen_row['passwort'] == crypt($gruppen_pwd,35464));
+ * 			
+ * 			
+ * 	 }
+ *
+ *
+ * ?>
+ *	    // Wenn kein Passwort für die Bestellgruppen-Admin angegeben wurde, dann abfragen...
+ * 			if (!isset($gruppen_pwd) || !$pwd_ok) {
+ * 	
+ * 				 <form action="index.php">
+ * 				    <input type="hidden" name="area" value="bestellen">
+ * 						
+ * 						<table class="menu">
+ * 						   <tr class="tableHeader1">
+ * 							    <th colspan="2" >Bitte zum bestellen einloggen</th>
+ * 							 </tr>
+ * 						   <tr>
+ * 						      <td>Bestellgruppenname:</td>
+ * 						      <td>
+ * 									   <select name="gruppen_id">
+ * 										    <option value="">[auswählen]</option>
+ * 										    <?PHP
+ *                            $result = mysql_query("SELECT id,name FROM bestellgruppen ORDER BY name") or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+ * 	                         while ($row = mysql_fetch_array($result)) echo "<option value='".$row['id']."'>".$row['name']."</option>\n";
+ * 												?>
+ * 						         </select>
+ * 									</td>
+ * 							 </tr>
+ * 							 <tr>
+ * 							    <td>Bitte Zugangspasswort angeben:</td>
+ * 									<td><input type="password" size="12" name="gruppen_pwd"></td>
+ * 							 </tr>
+ * 							 <tr>
+ * 							    <td colspan="2" align="middle"><input type="submit" value="einloggen"><input type="button" value="abbrechen" onClick="self.location.href='index.php'"></td>
+ * 							 </tr>
+ * 						</table>
+ * 						
+ * 				 </form>
+ * 	<?php
+ * 			} 
+*/
+$gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 
-	 
-	    // Wenn kein Passwort für die Bestellgruppen-Admin angegeben wurde, dann abfragen...
-			if (!isset($gruppen_pwd) || !$pwd_ok) {
-	?>
-				 <form action="index.php">
-				    <input type="hidden" name="area" value="bestellen">
-						
-						<table class="menu">
-						   <tr class="tableHeader1">
-							    <th colspan="2" >Bitte zum bestellen einloggen</th>
-							 </tr>
-						   <tr>
-						      <td>Bestellgruppenname:</td>
-						      <td>
-									   <select name="gruppen_id">
-										    <option value="">[auswählen]</option>
-										    <?PHP
-                           $result = mysql_query("SELECT id,name FROM bestellgruppen ORDER BY name") or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-	                         while ($row = mysql_fetch_array($result)) echo "<option value='".$row['id']."'>".$row['name']."</option>\n";
-												?>
-						         </select>
-									</td>
-							 </tr>
-							 <tr>
-							    <td>Bitte Zugangspasswort angeben:</td>
-									<td><input type="password" size="12" name="gruppen_pwd"></td>
-							 </tr>
-							 <tr>
-							    <td colspan="2" align="middle"><input type="submit" value="einloggen"><input type="button" value="abbrechen" onClick="self.location.href='index.php'"></td>
-							 </tr>
-						</table>
-						
-				 </form>
-	<?PHP
-			} 
-				else	
-			{
+
+     if( ! $angemeldet ) {
+       echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
+       return;
+     } else	 {
+        if( $hat_dienst_IV ) {
+          $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
+          // echo "<div class='warn'>dienst IV: bestellt fuer $gruppen_id</div>";
+          echo "<h1>Bestellen f&uuml;r den Basar</h1>";
+        } else {
+          $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
+          echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
+        }
 			
 					   // Aktuelle Bestellung ermitteln...
 						 if (isset($HTTP_GET_VARS['bestellungs_id'])) 
 						 {
 						    $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
-						    $result = mysql_query("SELECT * FROM gesamtbestellungen WHERE id=".mysql_escape_string($bestell_id)) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden..",mysql_error());
+						    if($hat_dienst_IV){
+						    	verteilmengenLoeschen($bestell_id);
+						    }
+						    $query ="SELECT * FROM gesamtbestellungen WHERE id=".mysql_escape_string($bestell_id);
+						    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden.. ($query)",mysql_error());
 						 } else 
 						 {
-						    if($gruppen_id == sql_basar_id()){
-							$mysql_date = "(DATE_ADD(bestellende, INTERVAL -3 DAY))";
-						    } else {
-							$mysql_date = "bestellende";
-						    }
-						    $result = mysql_query("SELECT * FROM gesamtbestellungen WHERE NOW() BETWEEN bestellstart AND ".$mysql_date) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden..",mysql_error());
+						 	$result = sql_bestellungen(TRUE, $gruppen_id);
 						 }
 				
 						if (mysql_num_rows($result) > 1) 
@@ -106,7 +121,7 @@
 												}
 							echo "</table> ";
 							exit;  //hier ist dann zu ende ...
-												?>
+              ?>
 											
 				
 							 		
@@ -115,6 +130,7 @@
 				 
 				    $row_gesamtbestellung = mysql_fetch_array($result);
 				    $bestell_id = $row_gesamtbestellung['id'];
+				    $lieferant_idx = $row_gesamtbestellung['id'];
 						$gesamt_preis = 0;
 						$max_gesamt_preis = 0;
 						
@@ -122,6 +138,7 @@
 						// Lieferantenname zu den Lieferanten-Nummern auslesen
 						$result = mysql_query("SELECT name,id FROM lieferanten") or error(__LINE__,__FILE__,"Konnte Lieferantennamen nich aus DB laden..",mysql_error());
 						while ($row = mysql_fetch_array($result)) $lieferanten_id2name[$row['id']] = $row['name'];
+						
 						
 						// Produktgruppennamen zu den Produktgruppen-Nummern auslesen
 						$result = mysql_query("SELECT name,id FROM produktgruppen ORDER BY produktgruppen.id") or error(__LINE__,__FILE__,"Konnte Produktgruppen nich aus DB laden..",mysql_error());
@@ -516,11 +533,18 @@
 					 </tr>
 				   <tr>
 					    <th> Bestellende: </th>
-							<td><?PHP echo $row_gesamtbestellung['bestellende']; ?></td>
+							<td><?PHP $bestellende = $row_gesamtbestellung['bestellende']; echo $bestellende?></td>
 					 </tr>					 
 					<tr>
 					    <th> Gruppe: </th>
-							<td><?PHP echo $bestellgruppen_row['name']; ?></td>
+							<td>
+                <?PHP
+                  if( $gruppen_id == 99 )
+                    echo "<span class='warn'> BASAR </span>";
+                  else
+                    echo "$login_gruppen_name";
+                ?>
+              </td>
 					 </tr>	
 					 <tr>
 					    <th> Kontostand: </th>
@@ -540,15 +564,43 @@
 						 </tr>	
 					 </table>
 					 
-					 <?php // jetzt werden die anderen bestellungen angezeigt...
+					 <?   if (isset($HTTP_GET_VARS['produkt_id'])) {
+						//Produkt in Liste aufnehmen
+						 
+							
+						$newproduct = $HTTP_GET_VARS['produkt_id'];
+						$errStr = "";
+						//echo $newproduct;
+						//echo $bestell_id;
+
+						//echo $query;
+						$result= sql_produktpreise($newproduct, $bestell_id, $bestellende, $bestellende);
+						$row = mysql_fetch_array($result);
+						$preis_id = $row['id'];
+
+						
+						if ($newproduct == "") $errStr = "Kein Produkt ausgesucht?!";
+						if ($bestell_id == "") $errStr = "Bestellung nicht zugeordnet?!";
+						if ($preis_id == "") $errStr = "Kein Preis zugeordnet!";
+						
+						// Wenn keine Fehler, dann einfügen...
+						if ($errStr == "") {
+							
+							
+							mysql_query("INSERT INTO bestellvorschlaege 
+								     (produkt_id, gesamtbestellung_id, produktpreise_id, liefermenge)
+								     VALUES ('".$newproduct."', '".$bestell_id."','".$preis_id."','NULL')")
+								     or error(__LINE__,__FILE__,"Konnte neues Produkt nicht einfügen.",mysql_error());
+							
+						} else {
+							echo "<p> Fehler beim Einfügen des zusätzlichen Produkts: ".$errStr." (Produkt_ID = $newproduct, Preis_ID = $preis_id)";
+						}
+					   }
+					  // jetzt werden die anderen bestellungen angezeigt...
 					 				// aber nur wenn es mehrere gibt ...
 					 				
 					 				// die aktuellen bestellungen werden ausgelesen ...
-					$sql ="SELECT * 
-										FROM gesamtbestellungen 
-										WHERE NOW() BETWEEN bestellstart 
-										AND bestellende";
-					$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden..",mysql_error());
+					$result = sql_bestellungen(TRUE, $gruppen_id);
 					
 		 ?>
 					 <table style="width:auto; position:absolute; top:160px; right:10px; font-size:0.9em;" class="menu">
@@ -992,7 +1044,8 @@
 						 		}  ?>
 						 </td>
 						 <td valign="top"><?PHP echo $produktgruppen_id2name[$produkt_row['produktgruppen_id']]; ?></td>
-						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
+						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; 
+						 						$lieferant_idx=$lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
 						 <td valign="top">
 						     <table border="0" width="100%" class="inner">
 			<?PHP 
@@ -1123,10 +1176,26 @@
 					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
 				       <input type="button" class="bigbutton" value="bestellen" onClick="bestellungAktualisieren();">
 				       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+				      
+					 
+				       
+				       
 				   </th>
 				</tr>
 				</table>
 		    </form>
+ 
+   <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
+   <form>
+	   <input type="hidden" name="area" value="bestellen">			
+	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
+	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
+	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	     <?php
+	     	    select_products_not_in_list($bestell_id);
+	     ?>
+	   <input type="submit" value="Produkt hinzufügen">
+   </form>
 				
 		<?PHP
 		
@@ -1155,7 +1224,7 @@
 
 							 
 							    // Bestellung in die Datenbank eintragen...
-									//echo "trage daten ein!<br>";
+							//		echo "trage daten ein!<br>";
 									
 									if (!isset($gruppenbestellung_id)) {
 									   //echo "-> INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id) VALUES (".$gruppen_id.",".$bestell_id.");<br>";
@@ -1197,6 +1266,14 @@
 										 }
 										 
 							 
+
+							    ?>
+							    <script type="text/javascript">
+							    <!-- 
+							    alert("Bestellung eingetragen"); 
+							    //-->
+							    </script>
+							    <?
 						}
 						
 						

@@ -1,6 +1,8 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
 include("code/zuordnen.php");
+include("code/views.php");
+
 // um die bestellungen nach produkten sortiert zu sehen ....
 
 
@@ -26,20 +28,8 @@ include("code/zuordnen.php");
          $row_gesamtbestellung = mysql_fetch_array($result);               
 ?>
 <h1>Bestellungen ansehen...</h1>
-         <table class="info">
-               <tr>
-                   <th> Bestellung: </th>
-                     <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row_gesamtbestellung['name']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellbeginn: </th>
-                     <td><?PHP echo $row_gesamtbestellung['bestellstart']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellende: </th>
-                     <td><?PHP echo $row_gesamtbestellung['bestellende']; ?></td>
-                </tr>                
-            </table>
+	 <?bestellung_overview($row_gesamtbestellung);?>
+	 <?changeState($bestell_id, "Verteilt")?>
       <br>
       <br>
          <form action="index.php" method="post">
@@ -47,13 +37,7 @@ include("code/zuordnen.php");
             <tr class="legende">
                <td colspan="5">Produkt (Einheit | Gebindegrösse | Preis | Produktgruppe)</td>
             </tr>
-            <tr class="legende">
-               <td>Gruppe</td>
-               <td>bestellt (toleranz)</td>
-               <td>geliefert</td>
-               <td>Preis</td>
-            </tr>
-                            
+	    <?distribution_tabellenkopf("Gruppe");?>
 <?php                               
       //produkte und preise zur aktuellen bestellung auslesen
       $result1 = sql_bestellprodukte($bestell_id);
@@ -76,7 +60,7 @@ include("code/zuordnen.php");
 	 			     false, //gruppen_id
 				     false); //sortByDate
 	 	
-		  echo " <tr> <th colspan='3'><span
+		  echo " <tr> <th colspan='4'><span
 		  style='font-size:1.2em; margin:5px;'> ".$produkte_row['produkt_name']."</span>
 					 <span style='font-size:0.8em'>(".$produkte_row['einheit']." | 
 					 ".$produkte_row['gebindegroesse']." | 
@@ -91,24 +75,35 @@ include("code/zuordnen.php");
 			$gruppenID=$entry_row['bestellguppen_id'];
 		  	$gruppenname=sql_gruppenname($gruppenID);
 		  	if($entry_row['art']==0){
-				//Festbestellmenge einlesen
-				$festmenge = $entry_row['menge'];
-				//Nächsten Datensatz
-				$entry_row = mysql_fetch_array($result);
+				$festmenge = 0;
+				while($entry_row['art']==0 and $entry_row['bestellguppen_id']==$gruppenID){
+					//Festbestellmenge einlesen
+					$festmenge += $entry_row['menge'];
+					//Nächsten Datensatz
+					$entry_row = mysql_fetch_array($result);
+				}
 			} else {
 				$festmenge = 0;
 			}
-		  	if($entry_row['art']==1){
-				//Toleranzmenge einlesen
-				$toleranz = $entry_row['menge'];
-				//Nächsten Datensatz
-				$entry_row = mysql_fetch_array($result);
+		  	if($entry_row['art']==1 and $entry_row['bestellguppen_id']==$gruppenID ){
+				$toleranz = 0;
+				while($entry_row['art']==1 and $entry_row['bestellguppen_id']==$gruppenID){
+					//Toleranzmenge einlesen
+					$toleranz += $entry_row['menge'];
+					//Nächsten Datensatz
+					$entry_row = mysql_fetch_array($result);
+				}
 			} else {
 				$toleranz = 0;
 			}
-		  	if($entry_row['art']==2){
-				//Verteilmenge einlesen
-				$verteil = $entry_row['menge'];
+		  	if($entry_row['art']==2 and $entry_row['bestellguppen_id']==$gruppenID ){
+				$verteil = 0;
+				while($entry_row['art']==2 and $entry_row['bestellguppen_id']==$gruppenID){
+					//Verteilmenge einlesen
+					$verteil += $entry_row['menge'];
+					//Nächsten Datensatz 
+					$entry_row = mysql_fetch_array($result);
+				}
 				if(isset($HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID])){
 					$verteil_form =$HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID];
 					if($verteil!=$verteil_form){
@@ -116,22 +111,12 @@ include("code/zuordnen.php");
 						$verteil=$verteil_form;
 					}
 				}
-				//Nächsten Datensatz nicht einlesen
-				$entry_row = mysql_fetch_array($result);
 			} else {
 				$verteil = 0;
 			}
 			
 
-		       echo "
-	      <tr>
-		 <td>".$gruppenname."</td>
-		 <td><b>".$festmenge."</b> (".$toleranz.")</td>
-		 <td><input name=\"verteil_".$produkt_id."_".$gruppenID."\" type=\"text\" size=\"3\" value=".$verteil." /></td>
-		 <td>".$verteil."x".$produkte_row['preis']."=".($verteil* $produkte_row['preis'])."</td>
-	      </tr>";
-
-	       
+		       distribution_view($gruppenname, $festmenge, $toleranz, $verteil, $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
 		     
 	 } //end while gruppen array
 	 
@@ -145,12 +130,18 @@ include("code/zuordnen.php");
 ?>
    <tr style='border:none'>
 	<td colspan='4' style='border:none'>
-	   <input type="hidden" name="area" value="bestellt_produkte">			
 	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
 	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt_produkte">			
 	   <input type="submit" value=" Verteilung ändern ">
 	   <input type="reset" value=" Änderungen zurücknehmen">
 	</td>
    </tr>
    </table>                   
+   </form>
+   <form action="index.php" method="post">
+	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt">			
+	   <input type="submit" value="Zurück ">
    </form>

@@ -8,12 +8,15 @@
 	// Verbindung zur MySQL-Datenbank herstellen
 	include('code/connect_MySQL.php');
 	include("code/zuordnen.php");
+
+  require_once( 'code/login.php' );
+ 
 		include ('head.php');
 // um die bestellungen nach produkten sortiert zu sehen ....
 
 
 // Übergebene Variablen einlesen...
-   if (isset($_REQUEST['gruppen_id'])) $gruppen_id = $_REQUEST['gruppen_id'];       // Passwort für den Bereich
+//   if (isset($_REQUEST['gruppen_id'])) $gruppen_id = $_REQUEST['gruppen_id'];       // Passwort für den Bereich
     if (isset($_REQUEST['gruppen_pwd'])) $gruppen_pwd = $_REQUEST['gruppen_pwd'];       // Passwort für den Bereich
     if (isset($_REQUEST['bestgr_pwd'])) $bestgr_pwd = $_REQUEST['bestgr_pwd'];       // Passwort für den Bereich
     if (isset($_REQUEST['bestellungs_id'])) $bestell_id = $_REQUEST['bestellungs_id'];
@@ -108,13 +111,11 @@
 	      </tr>
      <tr>
      	<td colspan=4 >
-		Glasrückgabe:	<input name="menge_glas" type="text" size="3" />
+		Glasrückgabe zu 16 Cent (Anzahl eintragen):	<input name="menge_glas" type="text" size="3" />
 		<?
 			if(isset($_REQUEST['menge_glas']) && $_REQUEST['menge_glas']!=0 && isset($gruppe)){
 	                $menge=$_REQUEST['menge_glas'];
-			sql_basar2group($gruppe,
-					getGlassID(), 
-				$menge, $bestell_id);
+			sql_groupGlass($gruppe, $menge);
 	       }
 
 		?>
@@ -131,9 +132,16 @@
 	   <input type="hidden" name="area" value="bestellt_produkte">			
 	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
 	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="submit" value=" Basareintrag übertragen ">
+	   <input type="submit" value=" Neu laden / Basareintrag übertragen ">
 	   <input type="reset" value=" Änderungen zurücknehmen">
 	</td>
    </tr>
    </table>                   
+   </form>
+
+   <form action="index.php" method="post">
+	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt">			
+	   <input type="submit" value="Zurück ">
    </form>

@@ -39,24 +39,43 @@
 			}
 		}
 	}
-
  }
-   // wichtige Variablen einlesen...
-   $gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
-	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
-	 
+
+ require_once('code/config.php');
+ require_once('code/err_functions.php');
+ require_once('code/connect_MySQL.php');
+ require_once('code/zuordnen.php');
+ require_once('code/login.php');
+
+/*   // wichtige Variablen einlesen...
+ *	 if($meinKonto){  
+ *  		$gruppen_pwd    = crypt($HTTP_GET_VARS['gruppen_pwd'],35464);
+ *	 } else {
+ *  		$gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
+ *	 }
+ *	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
+ */
+
+  if($meinKonto) {
+    $gruppen_id = $login_gruppen_id;
+  } else {
+    nur_fuer_dienst(4,5);
+    get_http_var( 'gruppen_id' ) or die();
+  }
+ 
 	 // Variablen initialisieren
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
 	 
-	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-	 include('../code/zuordnen.php');
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($gruppen_pwd != $real_gruppen_pwd) exit();
+// 	 // zur Sicherheit das Passwort prüfen..
+// 	 if ($gruppen_pwd != $real_gruppen_pwd){
+// 		echo "<h2>Passwortfehler</h2>";
+// 	 	exit();
+// 	}
+   if( ! $angemeldet ) {
+     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
+     exit();
+   }
 	 
 
   // aktuelle Gruppendaten laden
@@ -81,6 +100,15 @@
 </head>
 <body onload="<?PHP echo $onload_str; ?>">
    <h3>Kontoauszüge von: <?PHP echo $bestellgruppen_row['name']; ?></h3>
+
+   <?php
+   if( ( $gesamtbestellung_id = $HTTP_GET_VARS['gesamtbestellung_id'] ) ) {
+     echo "details fuer bestellung: $gesamtbestellung_id";
+     echo "<div class='warn'>noch in arbeit!</div>";
+     exit(12);
+   }
+   ?>
+   
 	 <table style="width:430px;" class="liste">
 	    <tr>
 			   <th>type</th>
@@ -89,7 +117,13 @@
 				 <th>summe</th>
 			</tr>
 			<?PHP
-			   $result = mysql_query("SELECT type, summe, kontobewegungs_datum, kontoauszugs_nr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
+			   if(isset($_POST['trans_nr']) && isset($_POST['auszug'])){
+			          if($_POST['auszug'] > 0){
+				  	sqlUpdateTransaction($_POST['trans_nr'], $_POST['auszug']);
+				  }
+			   }
+
+			   $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
 				 $num_rows = mysql_num_rows($result);
 				 $vert_result = sql_gesamtpreise($gruppen_id);
 				 $no_more_vert = false;
@@ -108,7 +142,22 @@
 					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
 					    echo "   <td>".$vert_row['datum']."</td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
-					    echo "   <td align='right' valign='bottom'> <b> ".$vert_row['gesamtpreis']."</b> </td>";
+					    echo "   <td align='right' valign='bottom'> <b> ".$vert_row['gesamtpreis']."</b> <br>";
+					    ?>
+						<form action=<?if($meinKonto) echo "index.php"; else echo "../index.php";?> method="post">
+							   <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
+							   <input type="hidden" name="gruppen_pwd" value="<?PHP echo $HTTP_GET_VARS['gruppen_pwd']; ?>">
+							   <input
+							   type="hidden"
+							   name="bestell_id"
+							   value="<?PHP
+							   echo
+							   $vert_row['gesamtbestellung_id'] ?>">
+							   <input type="hidden" name="area" value="bestellt_gruppe">			
+							   <input type="submit" value="Details ">
+						   </form>
+					    <?
+					    echo "   </td>";
 				 	    $vert_row = mysql_fetch_array($vert_result);
 					    if(!$vert_row){
 					    	$no_more_vert = true;
@@ -121,9 +170,30 @@
 							echo "   <td>".$konto_row['date']."</td>\n";
 							
 							if ($konto_row['type'] == 0) {
-							   echo "   <td>\n";
-								 echo "     <table style='font-size:10pt' class='inner'><tr><td>Einzahldatum:</td><td>".$konto_row['kontobewegungs_datum']."</td></tr><tr><td>AuszugsNr:</td><td>".$konto_row['kontoauszugs_nr']."</td></tr></table>\n";
-								 echo "   </td>\n";
+                     ?>
+                          <td> <table style='font-size:10pt' class='inner'>
+                           <tr><td>Einzahldatum:</td>
+                           <td><?echo $konto_row['kontobewegungs_datum']?></td>
+                           </tr>
+                           <tr><td>AuszugsNr:</td><td>
+                             <?
+                        if($meinKonto or $konto_row['kontoauszugs_nr']>0){
+			   echo $konto_row['kontoauszugs_nr'] ;
+                        } else {
+			   ?>
+						<form
+						action=showGroupTransaktions.php method="post">
+							   <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
+							   <input type="hidden" name="gruppen_pwd" value="<?PHP echo $_REQUEST['gruppen_pwd']; ?>">
+							   <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
+							   <input type="text" size=12 name=auszug />
+							   <input type="submit" value="Bestätigen ">
+						   </form>
+			   <?
+                        }
+                        ?></td></tr>
+                           </table> </td>
+                     <?
 							} else if ($konto_row['type'] == 1) {
 							   echo "<td>[noch nicht unterstützt]</td>";
 		    } else {
@@ -163,6 +233,9 @@
 				 if ($upButtonScript != "") echo "<input type=button value='>' onClick=\"".$upButtonScript.";document.forms['skip'].submit()\"";
 			?>
 	 </form>
+	 <? if(!$meinKonto){  ?>
 	 	 <a href="groupTransaktionMenu.php?gruppen_pwd=<?PHP echo $gruppen_pwd; ?>&gruppen_id=<?PHP echo $gruppen_id; ?>&gruppen_name=<?PHP echo $bestellgruppen_row['name']; ?>">Zurück</a>
+	 <? } ?>
+
 </body>
 </html>

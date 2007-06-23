@@ -1,13 +1,88 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
+//foodi als pwd: 35q3Za9.ZxrxYd
 
-function drop_basar($bestellid){
+
+/*
+ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten', 'Verteilt', 'archiviert' ) NOT NULL DEFAULT 'bestellen';
+
+ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
+*/
+//Debug level
+ $levelAll = 4;
+ $levelMost = 3;
+ $levelImportant = 2;
+ $levelKey = 1;
+ $levelNone = 0;
+ $currentLevel = $levelAll;
+
+
+function checkpassword($gruppen_id, $gruppen_pwd){
+if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
+	 {
+      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+	    $bestellgruppen_row = mysql_fetch_array($result);
+			
+			return ($bestellgruppen_row['passwort'] == crypt($gruppen_pwd,35464));
+			
+			
+	 }
+	 return false;
+}
+
+function doSql($sql, $debug_level, $error_text){
+	echo "<p> debug_level: $debug_level currentLevel: $currentLevel</p>)";
+	if($debug_level <= $currentLevel) echo "<p>".$query."</p>";
+	$result = mysql_query($sql) or error(__LINE__,__FILE__,$error_text."(".$query.")",mysql_error());
+	return $result;
+
+}
+function changeState($bestell_id, $state){
+
+     $sql = "SELECT state FROM gesamtbestellungen WHERE id = $bestell_id";
+     $result = doSql($sql, $levelAll, "Konnte status  nicht von DB laden..");
+     $row = mysql_fetch_array($result);
+     $current = $row['state'];
+
+     switch($state){
+     case "bestellen":
+     break;
+     case "beimLieferanten":
+     break;
+     case "Verteilt":
+     break;
+     case "archiviert":
+     break;
+     default: error(__LINE__,__FILE__, "Ungültiger zu setzender Status");
+     }
+     $sql = "UPDATE gesamtbestellungen SET state = '$state' WHERE id = $bestell_id";
+    doSql($sql, $levelKey, "Konnte status  in DB nicht ändern..");
+}
+
+/**
+ *  Dient dazu, die Verteilmengen nochmal zu
+ *  löschen, wenn erneut als Basar angemeldet wird
+ *  oder sonst ein Fehler besteht
+ */
+function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
+    $query = "SELECT * FROM gesamtbestellungen WHERE state = 'bestellen' AND id = ".mysql_escape_string($bestell_id);
+	$result = doSql($query, $levelAll, "Konnte Bestellmengen nich aus DB laden.. ");
+	if(mysql_num_rows($result)==0) return false;
+
 	$sql = "DELETE bestellzuordnung.* FROM bestellzuordnung inner
 	join gruppenbestellungen on (gruppenbestellungen.id =
-	gruppenbestellung_id) WHERE art = 2 AND gesamtbestellung_id = ".$bestellid." AND bestellguppen_id = ".mysql_escape_string(sql_basar_id());
-	//echo $sql."<br>";
-	mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basarbestellungen nicht aus DB löschen..",mysql_error());
+	gruppenbestellung_id) WHERE art = 2 AND gesamtbestellung_id = ".$bestell_id;
+	if($nur_basar) {
+	    $sql.=" AND bestellguppen_id = ".mysql_escape_string(sql_basar_id());
+	}
+
+	doSql($sql, $levelAll, "Konnte bestellungen nicht aus DB löschen..");
+
+
+	$sql = "UPDATE bestellvorschlaege set bestellmenge = NULL where gesamtbestellung_id = ".$bestell_id;
+	doSql($sql, $levelAll, "Konnte bestellungen nicht aus DB löschen..");
+	return true;
 }
 function sql_basar_id(){
 	    $sql = "SELECT id FROM bestellgruppen
@@ -21,7 +96,38 @@ function sql_basar_id(){
 
 
 }
+function sqlUpdateTransaction($transaction, $receipt){
+	    $sql="UPDATE gruppen_transaktion SET kontoauszugs_nr = ".$receipt." WHERE id = ".$transaction;
+	    //echo $sql."<br>";
+	    $result = mysql_query($sql) or
+	    error(__LINE__,__FILE__,"Konnte Transaktion in DB nicht aktualisieren.. ($sql)",mysql_error());
+}
+function sql_groupGlass($gruppe, $menge){
+	//include_once("config.php");  tut bisher nicht
+	$pfand_preis = 0.16; 
+	sqlGroupTransaction(2, $gruppe, -($pfand_preis*$menge),"NULL" ,'Glasrueckgabe');
+}
 
+function sqlGroupTransaction($transaktionsart,
+			         $gruppen_id,
+				 $summe, $auszug_nr = NULL,
+				 $notiz ="", 
+				 $kontobewegungs_datum ="NOW()"){
+
+	   $sql="INSERT INTO gruppen_transaktion 
+	                    (type, gruppen_id, eingabe_zeit,
+			      summe, kontoauszugs_nr, notiz, 
+			      kontobewegungs_datum) 
+	         VALUES ('".mysql_escape_string($transaktionsart).
+		          "', '".mysql_escape_string($gruppen_id).
+			  "', NOW(), '".mysql_escape_string($summe).
+			  "', '".mysql_escape_string($auszug_nr).
+			  "', '".mysql_escape_string($notiz).
+			  "', '".mysql_escape_string($kontobewegungs_datum).
+			  "')" ;
+	    //echo $sql."<br>";
+	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Glas-Rückgabe nicht in DB speichern.. ($sql)",mysql_error());
+}
 function getGlassID(){
 	    $sql = "SELECT id FROM produkte
 	    		WHERE name = \"glasrueckgabe\"";
@@ -85,7 +191,7 @@ function kontostand($gruppen_id){
 	    //echo "<p>".$query."</p>";
 	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
 	    $row = mysql_fetch_array($result);
-	    $summe = $row['summe'];
+	    $summe = -$row['summe'];
 	    //Sonstige Transaktionen
 	    $query = "SELECT sum( summe ) as summe
 			FROM `gruppen_transaktion`
@@ -130,12 +236,17 @@ function select_bestellsumme(){
 	*/
 }
 function sql_gesamtpreise($gruppe_id){
-            $query = "SELECT gesamtbestellungen.name, sum(menge * preis) AS gesamtpreis, 
+            $query = "SELECT gesamtbestellungen.id as gesamtbestellung_id, gesamtbestellungen.name, sum(menge * preis) AS gesamtpreis, 
 	    				DATE_FORMAT(bestellende,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as datum
 				FROM  bestellzuordnung 
 				INNER JOIN gruppenbestellungen ON ( gruppenbestellung_id = gruppenbestellungen.id )
 				INNER JOIN bestellvorschlaege
-				USING ( gesamtbestellung_id, produkt_id )
+				on (
+				bestellvorschlaege.gesamtbestellung_id
+				=
+				gruppenbestellungen.gesamtbestellung_id
+				and bestellvorschlaege.produkt_id =
+				bestellzuordnung.produkt_id  )
 				INNER JOIN produktpreise ON ( produktpreise_id = produktpreise.id ) 
 				INNER JOIN gesamtbestellungen ON (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
 				WHERE art =2 and bestellguppen_id = '".mysql_escape_string($gruppe_id)."'
@@ -173,22 +284,50 @@ function sql_produktpreise2($produkt_id){
 	//echo "<p>".$query."</p>";
 	return $result;
 }
-function sql_produktpreise($produkt_id, $bestellstart, $bestellende){
-	$query = "SELECT gebindegroesse,preis FROM produktpreise 
+function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestellende=NULL){
+	
+	if($produkt_id=="") error(__LINE__,__FILE__, "Produkt_ID must not be empty");
+	//Read start and ende from Database
+	if($bestellende===NULL){
+		$query = "SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id;
+		//echo "<p>".$query."</p>";
+		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellung nicht aus DB laden ($query)..",mysql_error());
+		$row = mysql_fetch_array($result);
+		$bestellende=$row["bestellende"];
+	}
+	if($bestellstart===NULL){
+		$bestellstart = $bestellende;
+	}
+	$query = "SELECT gebindegroesse,preis,bestellnummer, id FROM produktpreise 
 		  WHERE zeitstart <= '".mysql_escape_string($bestellstart)."' 
 		        AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($bestellende)."')
-			AND produkt_id=".mysql_escape_string($produkt_id)."
+			AND produkt_id= ".mysql_escape_string($produkt_id)."
 			ORDER BY gebindegroesse DESC;";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gebindegroessen nich aus DB laden..",mysql_error());
 	//echo "<p>".$query."</p>";
+	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gebindegroessen nich aus DB laden..",mysql_error());
+       if(mysql_num_rows($result)==0) {
+		$query = "SELECT gebindegroesse, preis FROM produktpreise 
+		          WHERE id IN 
+			  	(SELECT produktpreise_id 
+				 FROM bestellvorschlaege WHERE 
+				 produkt_id = ".mysql_escape_string($produkt_id)."  
+				 AND gesamtbestellung_id = ".mysql_escape_string($bestell_id)." 
+				)";
+		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gebindegroessen nich aus DB laden.. ($query)",mysql_error());
+       }
+
 	return $result;
 }
 function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
 	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
-	if(mysql_num_rows($result)!=1) 
-		error(__LINE__,__FILE__,"Nicht genau ein Eintrag für Verteilmenge" );
-	$row = mysql_fetch_array($result);
-	return $row['menge'];
+	if(mysql_num_rows($result)==0) $return = 0;
+	else if(mysql_num_rows($result)>1) 
+		error(__LINE__,__FILE__,"Nicht genau ein Eintrag (".mysql_num_rows($result).") für Verteilmenge: bestell_id = $bestell_id, produkt_id = $produkt_id, gruppen_id = $gruppen_id" );
+	else{
+		$row = mysql_fetch_array($result);
+		$return = $row['menge'];
+	}
+	return $return;
 	
 }
 function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
@@ -224,12 +363,13 @@ function sql_gruppenname($gruppen_id){
 }
 function sql_gruppen($bestell_id=FALSE){
         if($bestell_id==FALSE){
-		$query="SELECT * FROM bestellgruppen";
+		$query="SELECT * FROM bestellgruppen WHERE aktiv=1";
 	} else {
-	    $query="SELECT bestellgruppen.id, bestellgruppen.name 
+	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
 		FROM bestellgruppen INNER JOIN gruppenbestellungen 
 		ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
-		WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id); 
+		WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id).
+		" GROUP BY bestellgruppen.id, bestellgruppen.name"; 
 	}
 	//echo "<p>".$query."</p>";
 	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
@@ -237,9 +377,20 @@ function sql_gruppen($bestell_id=FALSE){
 	
 }
 
-function sql_bestellungen(){
-	 $query = "SELECT * FROM gesamtbestellungen WHERE NOW() > bestellende ORDER BY bestellende DESC";
-         $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+function sql_bestellungen($use_startDate = FALSE, $gruppen_id = FALSE){
+	 $query = "SELECT * FROM gesamtbestellungen WHERE ";
+	 if($use_startDate===FALSE){
+	 	$query .="NOW() > bestellende ORDER BY bestellende DESC";
+	 } else {
+
+	    if($gruppen_id == sql_basar_id()){
+		$mysql_date = "(DATE_ADD(bestellende, INTERVAL +3 DAY))";
+	    } else {
+		$mysql_date = "bestellende";
+	    }
+	    $query .= "NOW() BETWEEN bestellstart AND ".$mysql_date;
+	 }
+         $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden.. ($query)",mysql_error());
 	 return $result;
 }
 
@@ -278,7 +429,7 @@ function writeLiefermenge_sql($bestell_id){
 		        .$produkt_row['s'].", liefermenge = ".
 		        $produkt_row['s']." WHERE gesamtbestellung_id = ".
 			$bestell_id." AND produkt_id = ".$produkt_row['produkt_id'];
-		echo $sql2."<br>";
+		//echo $sql2."<br>";
 		mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB schreiben...",mysql_error());
 	}
 
@@ -325,7 +476,7 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
    //echo $sql."<br>";
    $result2 =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
    if (mysql_num_rows($result2) == 1){
-   	$sql = "UPDATE 	bestellvorschlaege set liefermenge = ".$menge." 
+   	$sql = "UPDATE 	bestellvorschlaege set liefermenge = liefermenge + ".$menge." 
 		WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
    		AND gesamtbestellung_id = ".mysql_escape_string($bestell_id) ;
    //echo $sql."<br>";
@@ -333,47 +484,45 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
 
    }else {
 
-   $sql ="SELECT *, produktpreise.id as preis_id FROM produktpreise, gesamtbestellungen 
-   				WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
-   				AND gesamtbestellungen.id = ".mysql_escape_string($bestell_id)." 
-				AND (zeitende >= bestellende OR ISNULL(zeitende))
-				AND zeitstart <= bestellstart;" ;
-   //echo $sql."<br>";
-   $result2 =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+   $result2 =  sql_produktpreise($produkt_id, $bestell_id);
    if (mysql_num_rows($result2) > 1){
-	    echo error(__LINE__,__FILE__,"Mehr als ein Preis");
-	    return;
+	    error(__LINE__,__FILE__,"Mehr als ein Preis");
+   } else if (mysql_num_rows($result2) ==0){
+   	    error(__LINE__,__FILE__,"Kein gültiger Preis zum Zeitpunkt
+	    des Bestellendes? Produkt_ID $produkt_id, BestellID = $bestell_id");
 	 } else {
 	    $preis_row = mysql_fetch_array($result2);
+	    //var_dump($preis_row);
 	    $sql = "INSERT INTO bestellvorschlaege 
 	              (produkt_id, gesamtbestellung_id, produktpreise_id, liefermenge)
 	            VALUES (".$produkt_id.",".
 		    $bestell_id.",".
-		    $preis_row['preis_id'].",".
+		    $preis_row['id'].",".
 		    $menge.")";
 	    //echo $sql."<br>";
-	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden.. ($sql)",mysql_error());
 	}
 	}
 	    //Dummy Eintrag in bestellzuordnung
 	    $sql = "SELECT id FROM gruppenbestellungen
 	    		WHERE gesamtbestellung_id = ".$bestell_id;
 	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte nicht aus DB laden.. ($sql)",mysql_error());
 	    $row = mysql_fetch_array($result);
 	    $sql2 = "INSERT INTO bestellzuordnung
 	    		(produkt_id, gruppenbestellung_id, menge, art)
 			VALUES (".$produkt_id.", ".$row['id'].", 0, 2)";
 	    //echo $sql2."<br>";
-	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte nicht in DB schreiben.. ($sql2)",mysql_error());
 
 }
 function getProduzentBestellID($bestell_id){
+    if($bestell_id==0) {error(__LINE__,__FILE__,"Do not call getProduzentBestellID with bestell_id null)", "bla");}
     $sql="SELECT DISTINCT lieferanten_id FROM bestellvorschlaege 
 		INNER JOIN produkte ON (produkt_id = produkte.id)
 		WHERE gesamtbestellung_id = ".$bestell_id;
     //echo $sql."<br>";
-    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nicht aus DB laden.. ($sql)",mysql_error());
     if (mysql_num_rows($result) > 1)
 	    echo error(__LINE__,__FILE__,"Mehr als ein Lieferant fuer Bestellung ".$bestell_id);
 	 else {
@@ -388,8 +537,35 @@ function getProdukt($produkt_id){
     $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
     return mysql_fetch_array($result);
 }
-function getProdukteVonLieferant($lieferant_id){
-   $sql = "SELECT * FROM produkte WHERE lieferanten_id = ".$lieferant_id;
+/**
+ *   Produkte von einem Bestimmten Lieferanten abfragen
+ *
+ *   Es werden nur Proukte mit gültigen Preis zurückgegeben.
+ *   
+ *   Wenn eine Bestellung angegeben wird, werden nur
+ *   die Produkte zurückgegeben, die noch nicht in der
+ *   Bestellung drin sind.
+ */
+function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
+   if($bestell_id === Null){
+	$zeitpunkt="NOW()";
+   	$sql = "SELECT *, produkte.id as p_id FROM produkte inner join produktpreise ON
+	(produkte.id = produktpreise.produkt_id) WHERE lieferanten_id =
+	".$lieferant_id;
+   } else {
+   	$zeitpunkt = " (SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id.") ";
+   	$sql = "SELECT *, produkte.id as p_id FROM produkte inner join produktpreise ON
+	(produkte.id = produktpreise.produkt_id) left join (SELECT * FROM
+	bestellvorschlaege WHERE gesamtbestellung_id = ". $bestell_id.
+	") as vorschlaege ON
+	(produkte.id = vorschlaege.produkt_id) WHERE
+	lieferanten_id =  ".$lieferant_id."  and
+	isnull(gesamtbestellung_id)";
+	
+   }
+   $sql .= " AND zeitstart <= ".
+	$zeitpunkt." AND (ISNULL(zeitende) OR
+	zeitende >= ".$zeitpunkt.") ";
     //echo $sql."<br>";
     $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
     return $result;
@@ -400,7 +576,7 @@ function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $
 			  VALUES (".$gruppenMengeInGebinde.
 			 ", ".$produkt_id.
 			 ", ".$gruppenbestellung_id.", 2);";
-		echo $query."<br>";
+		//echo $query."<br>";
 		mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB schreiben...",mysql_error());
 	}
 }
@@ -422,13 +598,26 @@ function changeLiefermengen_sql($menge, $produkt_id, $bestellung_id){
 	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB ändern...",mysql_error());
 }
 function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_id){
+	$where_clause = " WHERE art = 2 AND produkt_id = ".mysql_escape_string($produkt_id)."
+			 AND gruppenbestellung_id IN
+		  	(SELECT id FROM gruppenbestellungen
+				 WHERE bestellguppen_id = ".mysql_escape_string($gruppen_id)."
+				 AND gesamtbestellung_id =
+				 ".mysql_escape_string($bestellung_id).") ";
+
+	$query = "SELECT * FROM bestellzuordnung ".$where_clause;
+	//echo $query."<br>";
+	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht von DB landen... ($sql)",mysql_error());
+	$toDelete = mysql_num_rows($result) - 1 ;
+	if($toDelete > 0){
+		$query = "DELETE FROM bestellzuordnung
+			".$where_clause." LIMIT ".$toDelete;
+		echo $query."<br>";
+		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
+	}
+
 	$query = "UPDATE bestellzuordnung 
-		  INNER JOIN gruppenbestellungen ON (gruppenbestellungen.id = gruppenbestellung_id) 
-		  SET menge = ".mysql_escape_string($menge)."
-		  WHERE art = 2 
-		  AND produkt_id = ".mysql_escape_string($produkt_id)."
-		  AND bestellguppen_id = ".mysql_escape_string($gruppen_id)."
-		  AND gesamtbestellung_id = ".mysql_escape_string($bestellung_id).";";
+		  SET menge = ".mysql_escape_string($menge).$where_clause;
 	//echo $query."<br>";
 	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
 }
@@ -444,7 +633,6 @@ function check_bereitsVerteilt($bestell_id){
 	if(mysql_num_rows($result)==0) return false;
 	return true;
 }
-
 function verteilmengenZuweisen($bestell_id){
   // nichts tun, wenn keine Bestellung ausgewählt
   if($bestell_id==""){
@@ -465,6 +653,7 @@ function verteilmengenZuweisen($bestell_id){
      //und damit weiterrechnen. Dazu sind aber im Moment zuviele
      //Variablen da, die ich nicht verstehe.
      $gruppen_id = $gruppe_row['id'];
+     $gruppenbestellung_id = $gruppe_row['gruppenbestellungen_id'];
      //echo "Bearbeite Gruppe (".$gruppen_id.") ".$gruppe_row['name'];
      // Produkte auslesen & Tabelle erstellen...
      $result = sql_bestellprodukte($bestell_id);
@@ -479,7 +668,7 @@ function verteilmengenZuweisen($bestell_id){
 	   unset($gebindepreis);
 			 
 	    // Gebindegroessen und Preise des Produktes auslesen...
-	    $preise = sql_produktpreise($produkt_row['produkt_id'],
+	    $preise = sql_produktpreise($produkt_row['produkt_id'],$bestell_id,
 	    				$row_gesamtbestellung['bestellstart'],
 	    				$row_gesamtbestellung['bestellende']);
 	    $i = 0;
@@ -490,6 +679,7 @@ function verteilmengenZuweisen($bestell_id){
 
 	    }			 
 
+	    if($i == 0) error(__FILE__,__LINE__,"Kein Preis für Produkt ".$produkt_row['produkt_name']." (".$produkt_row['produkt_id'].") gefunden! Überprüfe gültigkeit");
 
 	    // Bestellmengenzähler setzen
 	    $gesamtBestellmengeFest[$produkt_row['produkt_id']] = 0;
@@ -504,12 +694,11 @@ function verteilmengenZuweisen($bestell_id){
 					
 					
 	    // Hier werden die aktuellen festen Bestellmengen ausgelesen...
-	    $bestellmengen = sql_bestellmengen($bestell_id,
-	    $produkt_row['produkt_id'],0);
+	    $bestellmengen = sql_bestellmengen($bestell_id, $produkt_row['produkt_id'],0);
 	    $intervallgrenzen_counter = 0;								
 	    while ($einzelbestellung_row = mysql_fetch_array($bestellmengen)) {
 		if ($einzelbestellung_row['bestellguppen_id'] == $gruppen_id) {
-		    $gruppenbestellung_id = $einzelbestellung_row['gruppenbest_id'];
+		    //$gruppenbestellung_id = $einzelbestellung_row['gruppenbest_id'];
 		    $ug = $gruppenBestellintervallUntereGrenze[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $gesamtBestellmengeFest[$produkt_row['produkt_id']] + 1;
 		    $og = $gruppenBestellintervallObereGrenze[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $gesamtBestellmengeFest[$produkt_row['produkt_id']] + $einzelbestellung_row['menge'];
 		    $bestellintervallId[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $einzelbestellung_row['bestellzuordnung_id'];
@@ -631,17 +820,18 @@ function verteilmengenZuweisen($bestell_id){
 		}
 	  }
 
-	$gruppenToleranzNichtInGebinde =
-	$gruppenBestellmengeToleranz[$produkt_row['produkt_id']] - $gruppenToleranzInGebinde;
-	$gruppeGesamtMengeNichtInGebinden =
-	$gruppenBestellmengeFest[$produkt_row['produkt_id']]  - $gruppeGesamtMengeInGebinden;
+	$gruppenToleranzNichtInGebinde = $gruppenBestellmengeToleranz[$produkt_row['produkt_id']] - $gruppenToleranzInGebinde;
+	$gruppeGesamtMengeNichtInGebinden = $gruppenBestellmengeFest[$produkt_row['produkt_id']]  - $gruppeGesamtMengeInGebinden;
+	$dr_bestellen = $gruppeGesamtMengeInGebinden +$gruppenToleranzInGebinde;
 	
 	//Hier können Verteilmengen geschrieben werden
-	writeVerteilmengen_sql($gruppeGesamtMengeInGebinden, $gruppenbestellung_id, $produkt_row['produkt_id']);
+	writeVerteilmengen_sql($dr_bestellen, $gruppenbestellung_id, $produkt_row['produkt_id']);
      }
   }
   	writeLiefermenge_sql($bestell_id);
-	drop_basar($bestell_id);
+	if(!verteilmengenLoeschen($bestell_id, TRUE))
+		error(__LINE__,__FILE__,"Konnte basareinträge  nicht löschen..","")	;
+	
 }
 
 ?>
