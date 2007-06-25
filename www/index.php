@@ -51,18 +51,20 @@
 			else if ($area == 'bestellt')
 			   include('bestellt.php');
 			   
-					   //abgeschlossene bestellungen nach produkte sortiert				
-						else if ($area == 'bestellt_produkte')
-					   include('bestellt_produkte.php');
-						else if ($area == 'bestellt_gruppe')
-					   include('bestellt_gruppe.php');
-						else if ($area == 'lieferschein')
-					   include('lieferschein.php');
+			else if ($area == 'bestellschein')
+			   include('bestellschein.php');
+			   //abgeschlossene bestellungen nach produkte sortiert				
+				else if ($area == 'bestellt_produkte')
+			   include('bestellt_produkte.php');
+				else if ($area == 'bestellt_gruppe')
+			   include('bestellt_gruppe.php');
+				else if ($area == 'lieferschein')
+			   include('lieferschein.php');
 
-					   //2 x2 matrix				
-						else if ($area == 'bestellt_matrix')
-					   include('bestellt_matrix.php');
-			   
+			   //2 x2 matrix				
+				else if ($area == 'bestellt_matrix')
+			   include('bestellt_matrix.php');
+	   
 			// interna  
 			else if ($area == 'info')
 			   include('info.php');				

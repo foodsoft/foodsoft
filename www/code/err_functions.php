@@ -3,7 +3,7 @@
    // DATEI: Diese Datei enthält Funktionen zur Fehlerbehandlung und zum Erstellen von Log-Files
 
 
-	 function log_error($line,$file,$string,$error="") {
+	 function log_error($line,$file,$string,$error="",$stack) {
 	 
 	    global $logfile_errs, $log_win_format;
 			
@@ -17,7 +17,7 @@
 			if (!$exists) fputs($fp, "line file err_msg mysql_err_msg".$new_line);
 			
 			// Fehler rausschreiben und dabei Leerzeichen maskieren (" " => %20)
-			fputs($fp, $line." ".str_replace(" ", "_", $file)." ".str_replace(" ", "_", $string)." ".str_replace(" ", "_", $error).$new_line);
+			fputs($fp, $line." ".str_replace(" ", "_", $file)." ".str_replace(" ", "_", $string)." ".str_replace(" ", "_", $error)." ".var_export($stack, TRUE).$new_line);
 			
 			fclose($fp);
 	 
@@ -25,14 +25,15 @@
 	 
 	 
 
-   function error($line,$file,$string,$error=""){
+   function error($line,$file,$string,$error="",$stack=""){
 	   global $error_report_adress, $test_title;
 		 
-		 log_error($line,$file,$string,$error);
+		 log_error($line,$file,$string,$error,$stack);
 	 
       $fehler = "<b>Fehler in Zeile ".$line." in ".$file."</b> ";
       $fehler .= "<br>" . $string . "<br>";
       if($error) $fehler .= "<b>MySQL-Error:</b> ". $error;
+      if($stack) $fehler .= "<br><b>Stack:</b><br><code>".var_export($stack, TRUE)."</code>";
 			
 			if ($error_report_adress != "") mail($error_report_adress,$test_title." - Error mail!!",$fehler);
 			

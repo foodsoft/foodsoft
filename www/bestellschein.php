@@ -1,5 +1,4 @@
 <?php
-//error_reporting(E_ALL); // alle Fehler anzeigen
 include("code/zuordnen.php");
 include("code/views.php");
 // um die bestellungen nach produkten sortiert zu sehen ....
@@ -8,79 +7,34 @@ include("code/views.php");
        exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
      } 
 
-     if(!nur_fuer_dienst(1,4)){exit();}
+     if(!nur_fuer_dienst(4)){exit();}
 
-// Übergebene Variablen einlesen...
+// Ãœbergebene Variablen einlesen...
     if (isset($HTTP_GET_VARS['bestellungs_id'])) {
     		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
 	} else {
-	 	$result = sql_bestellungen(STATUS_LIEFERANT);
-		select_bestellung_view($result, "lieferschein");
+	 	$result = sql_bestellungen(array(STATUS_BESTELLEN, STATUS_LIEFERANT));
+		select_bestellung_view($result, array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" ));
 		exit();
 	 }
 										
-				
-							 		
-    if (isset($HTTP_GET_VARS['nichtGeliefert'])) $nichtGeliefert = $HTTP_GET_VARS['nichtGeliefert'];
-
-    $pwd_ok = false;
-    $bestgrup_view = false;
-
-	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
-	//Tabelle überprüft und eingetragen
-
-	//nicht gelieferte Produkte auf 0 setzen
-	if (isset($nichtGeliefert) && isset($bestell_id) && isset($bestgr_pwd) && $bestgr_pwd == $real_bestellt_pwd) {
-	    //Hier tut's noch nicht mit der Mehrfachauswahl der checkboxen...
-	    //Im internet suchen wie machen
-	    //echo "nichtGeliefert: ".$nichtGeliefert."<br>";
-	    //echo "HTTP_GET_VARS['nichtGeliefert']: ".$HTTP_GET_VARS['nichtGeliefert']."<br>";
-	    nichtGeliefert($bestell_id, $nichtGeliefert);
-	}
-
-
+	 if(getState($bestell_id)==STATUS_BESTELLEN){
+	 	verteilmengenZuweisen($bestell_id);
+	 }
          //infos zur gesamtbestellung auslesen 
-         $sql = "SELECT *
-                  FROM gesamtbestellungen
-                  WHERE id = ".$bestell_id."";
-         $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-         $row_gesamtbestellung = mysql_fetch_array($result);               
+	 $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
 ?>
-<h1>Bestellungen ansehen...</h1>
-         <table class="info">
-               <tr>
-                   <th> Bestellung: </th>
-                     <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row_gesamtbestellung['name']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellbeginn: </th>
-                     <td><?PHP echo $row_gesamtbestellung['bestellstart']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellende: </th>
-                     <td><?PHP echo $row_gesamtbestellung['bestellende']; ?></td>
-                </tr>                
-            </table>
-      <br>
-      <br>
-   <?
-    	//zusätzlich gelieferte Produkte
-	if (isset($HTTP_GET_VARS['liefermenge'])){
-		$liefermenge = $HTTP_GET_VARS['liefermenge'];
-		$produkt_id = $HTTP_GET_VARS['produkt_id'];
-		if($liefermenge>0){
-			zusaetzlicheBestellung($produkt_id,$bestell_id,  $liefermenge);
-			$prod = getProdukt($produkt_id);
-			$prod_name = $prod['name'];
-		}
-		
-	}
+<h1>Bestellungen an Lieferanten...</h1>
+
+	 <?bestellung_overview(mysql_fetch_array($result));
+	 next_view_fuer_Produkte_kombiniert_mit_lieferschein();
   ?>
+         
          <form action="index.php" method="post">
          <table style="width: 600px;" >
             <tr class="legende">
                <td>Produkt </td>
-               <td> Gebindegrösse </td>
+               <td> GebindegrÃ¶sse </td>
                <td>Einheit </td>
                <td> Liefermenge </td>
                <td> Netto/Einheit (Brutto,MWSt,Pfand)</td>
@@ -165,29 +119,15 @@ include("code/views.php");
 	   <input type="hidden" name="area" value="lieferschein">			
 	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
 	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="submit" value=" Lieferschein ändern ">
-	   <input type="reset" value=" Änderungen zurücknehmen">
+	   <input type="submit" value=" Lieferschein Ã¤ndern ">
+	   <input type="reset" value=" Ã„nderungen zurÃ¼cknehmen">
 	</td>
    </tr>
    </table>                   
    </form>
       
-   <h3> Zusätzlich geliefertes Produkt </h3>
-   <form>
-	   <input type="hidden" name="area" value="lieferschein">			
-	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	     <?php
-	         select_products_not_in_list($bestell_id);
-	     ?>
-	   Menge: <input type="text" name="liefermenge">
-	   <input type="submit" value="Zusätzliche Lieferung eintragen">
-   </form>
-
 
    <form action="index.php" method="post">
-	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="hidden" name="area" value="bestellt">			
-	   <input type="submit" value="Zurück ">
+	   <input type="hidden" name="area" value="bestellschein">			
+	   <input type="submit" value="ZurÃ¼ck zur Auswahl ">
    </form>

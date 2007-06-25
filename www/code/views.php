@@ -1,5 +1,51 @@
 <?php
 //This file defines views for foodsoft data
+/**
+ * Liste zur Auswahl einer Bestellung via Link
+ */
+function select_bestellung_view($result, $area, $label=array("zeigen"), $head="Bitte eine Bestellung wählen:" ){
+
+      echo $head;
+      ?>
+      <br /> <br />
+	     <table style="width:600px;" class="liste">
+		  <tr>
+		    <th>Name</th>
+		    <th>Beginn</th>
+		    <th>Ende</th>
+		 </tr>
+		 <?php
+		 while ($row = mysql_fetch_array($result)) {
+		 ?>
+		 <tr>                                 
+		    <td><a class="tabelle" href="index.php?area=<?echo $area;?>&bestellungs_id=<?echo $row['id'];?>"><?echo $row['name']?></a></td>
+		    <td><? echo $row['bestellstart']; ?></td>
+		    <td><? echo $row['bestellende']; ?></td>
+		    <?
+			while($area_name = current($area)){
+			    $label=key($area);
+				   ?>
+				   <td>
+				      <form action="index.php" method="POST">         
+				      <input type="hidden" name="bestellungs_id" value=<? echo($row['id'])?> >
+				      <input type="hidden" name="area" value=<? echo($area_name)?> >
+					  <input type="submit" value="<?echo($label)?>">
+				       </form>
+				   </td>
+		      <?
+		            next($area);
+
+			}
+			reset($area);
+		    ?>
+		 </tr>   
+		  <?  }?>
+
+            </table> 
+
+<?
+  
+}
 
 function select_products_not_in_list($bestell_id){
 	   echo "Produkt: <select name=\"produkt_id\"> ";

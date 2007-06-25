@@ -66,27 +66,31 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
        echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
        return;
      } else	 {
+	//$status und $useDate definieren, welche Bestellungen angezeigt werden
+	$status = array(STATUS_BESTELLEN);
+	$useDate = FALSE;
         if( $hat_dienst_IV ) {
+	  //Alle Bestellungen mit Status Bestellen oder LIEFERANT
+	  $status[] = STATUS_LIEFERANT;
           $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
           // echo "<div class='warn'>dienst IV: bestellt fuer $gruppen_id</div>";
           echo "<h1>Bestellen f&uuml;r den Basar</h1>";
         } else {
+	  //Nur aktuell gültige Bestellungen
+	  $useDate = TRUE;
           $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
           echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
         }
 			
 					   // Aktuelle Bestellung ermitteln...
-						 if (isset($HTTP_GET_VARS['bestellungs_id'])) 
-						 {
+						 if (isset($HTTP_GET_VARS['bestellungs_id'])) {
 						    $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
 						    if($hat_dienst_IV){
 						    	verteilmengenLoeschen($bestell_id);
 						    }
-						    $query ="SELECT * FROM gesamtbestellungen WHERE id=".mysql_escape_string($bestell_id);
-						    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden.. ($query)",mysql_error());
-						 } else 
-						 {
-						 	$result = sql_bestellungen(TRUE, $gruppen_id);
+						    sql_bestellungen(FALSE,FALSE,$bestell_id);
+						 } else {
+						 	$result = sql_bestellungen($status, $useDate);
 						 }
 				
 						if (mysql_num_rows($result) > 1) 
@@ -600,7 +604,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 				// aber nur wenn es mehrere gibt ...
 					 				
 					 				// die aktuellen bestellungen werden ausgelesen ...
-					$result = sql_bestellungen(TRUE, $gruppen_id);
+					$result = sql_bestellungen($status, $useDate);
 					
 		 ?>
 					 <table style="width:auto; position:absolute; top:160px; right:10px; font-size:0.9em;" class="menu">
@@ -609,6 +613,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 			</tr>
 								<?php
 								//nur bei anderen bestellugnen soll das angezeigt werden andernfalls Meldung ...
+								//TODO: mit code/views:select_bestellung_view zusammenführen
 						if (mysql_num_rows($result) > 1) 
 						{										
 								while ($row = mysql_fetch_array($result)) 
