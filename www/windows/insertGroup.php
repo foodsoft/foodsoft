@@ -1,6 +1,6 @@
 <?PHP
    
-  // $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+  $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
    
   require_once('code/config.php');
   require_once('code/err_functions.php');
@@ -27,16 +27,18 @@
   
     // suche $id = $newNummer + n * 1000
     // dabei pruefen, ob noch aktive gruppe derselben nummer existiert:
-    // ! noch nicht implementiert: gruppen werden echt geloescht
     $id = $newNummer;
     while( true ) {
       $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$id" );
-      if( ! $result )
+      if( ! $result ) {
+        $problems = $problems . "<div class='warn'>Suche in bestellgruppen fehlgeschlagen: "
+                    . mysql_error() . </div>";
         break;
+      }
       $row = mysql_fetch_array( $result );
       if( ! $row )
         break;
-      if( $row['aktiv'] == '1' )
+      if( $row['aktiv'] > '0' )
         $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
       $id = $id + 1000;
     }
@@ -124,8 +126,8 @@
     <form action='insertGroup.php' method='post' class='small_form'>
       <fieldset style='width:350px;' class='small_form'>
       <legend>neue Bestellgruppe</legend>
-        $msg
         $problems
+        $msg
         <table>
           <tr>
              <td><label>Gruppennummer:</label></td>
