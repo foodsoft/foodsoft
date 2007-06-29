@@ -32,7 +32,7 @@
       $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$id" );
       if( ! $result ) {
         $problems = $problems . "<div class='warn'>Suche in bestellgruppen fehlgeschlagen: "
-                    . mysql_error() . </div>";
+                    . mysql_error() . "</div>";
         break;
       }
       $row = mysql_fetch_array( $result );
