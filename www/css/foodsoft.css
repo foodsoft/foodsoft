@@ -41,6 +41,7 @@ input:hover, textarea:hover, select:hover {
   font-weight: bold;
   font-size: 12pt;
   padding:0pt;
+  margin:0pt;
 }
 #logo {
  // background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
