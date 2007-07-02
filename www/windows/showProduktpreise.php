@@ -1,4 +1,5 @@
 <?PHP
+//	error_reporting(E_ALL);
    $produkt_id       = $HTTP_GET_VARS['produkt_id'];
    $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];
 	 
@@ -63,7 +64,9 @@
 			    <th>gültig von</th>
 					<th>gültig bis</th>
 					<th>gebinde</th>
-					<th>preis</th>
+					<th>preis(total)</th>
+					<th>mwst</th>
+					<th>pfand</th>
 					<th>bestellnr.</th>
 					<th>optionen</th>
 			 </tr>
@@ -78,9 +81,11 @@
 					     <td><?PHP echo $row['zeitende']; ?></td>
 					     <td><?PHP echo $row['gebindegroesse']; ?></td>
 					     <td><?PHP echo $row['preis']; ?></td>
+					     <td><?PHP echo $row['mwst']; ?></td>
+					     <td><?PHP echo $row['pfand']; ?></td>
 					     <td><?PHP echo $row['bestellnummer']; ?></td>		
 							 <td>
-							    <input type="button" value="ändern" onClick="window.open('editProduktpreis.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>&produkt_id=<?PHP echo $produkt_id; ?>&preis_id=<?PHP echo $row['id']; ?>&zeitstart=<?PHP echo $row['zeitstart']; ?>&zeitende=<?PHP echo $row['zeitende']; ?>&bestellnummer=<?PHP echo $row['bestellnummer']; ?>&gebindegroesse=<?PHP echo $row['gebindegroesse']; ?>&preis=<?PHP echo $row['preis']; ?>','editProduktpreis','width=400,height=350,left=100,top=100').focus()">
+							    <input type="button" value="ändern" onClick="window.open('editProduktpreis.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>&produkt_id=<?PHP echo $produkt_id; ?>&preis_id=<?PHP echo $row['id']; ?>&zeitstart=<?PHP echo $row['zeitstart']; ?>&zeitende=<?PHP echo $row['zeitende']; ?>&bestellnummer=<?PHP echo $row['bestellnummer']; ?>&gebindegroesse=<?PHP echo $row['gebindegroesse']; ?>&pfand=<?PHP echo $row['pfand']; ?>&mwst=<?PHP echo $row['mwst']; ?>&preis=<?PHP echo $row['preis']; ?>','editProduktpreis','width=400,height=350,left=100,top=100').focus()">
 						<?PHP 
 				   // Prüfe ob der Preis noch gültig ist
 					 $gueltig = mysql_query("SELECT id FROM produktpreise WHERE id=".$row['id']." AND (ISNULL(zeitende) OR zeitende >= NOW());") or error(__LINE__,__FILE__,"Konnte Preisdaten nich aus DB laden..",mysql_error());
@@ -101,6 +106,5 @@
 					<input type="button" value="Schließen" onClick="window.close();"></td>
 			 </tr>
 		</table>
-	 <b><font color="#FF0000"><?PHP echo $errStr ?></font></b>
 </body>
 </html>
