@@ -24,10 +24,10 @@
       <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
     </head>
     <body onload='$onload_str'>
-    <div class='head' style='padding:0.5ex 1em 0.5ex 1em;margin-bottom:1em;'>
-    <table>
+    <div class='head' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;'>
+    <table width='100%'>
     <tr>
-      <td style='padding-right:1ex;'>
+      <td style='padding-right:0.5ex;'>
         <img src='$img' class='button' title='Schlie&szlig;en' onClick='opener.focus(); window.close();'></img>
       </td>
       <td>Foodsoft: $subtitle</td>

@@ -8,8 +8,6 @@
   require_once('code/login.php');
   need_http_var('lieferanten_id');
 
-  nur_fuer_dienst(4,5);   // nur dienst 4 und 5 ediert fremde gruppen
-
   $msg = '';
   $problems = '';
 
