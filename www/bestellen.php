@@ -1191,8 +1191,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 		    </form>
  
    <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
-   <form>
-	   <input type="hidden" name="area" value="bestellen">			
+   <form method='post' action='index.php?area=bestellen'>
 	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
 	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
 	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
