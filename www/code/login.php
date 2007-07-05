@@ -173,6 +173,18 @@
       }
     } else {
       $dienstkontrollblatt_id = 0;
+
+      if( ! $problems ) {
+        get_http_var( 'quiz_name' ) && get_http_var( 'quiz_datum' )
+          && ( $quiz_name ) && ( $quiz_datum )
+          or $problems = $problems . "<div class='warn'>Bitte das Quiz ausf&uuml;llen!</div>";
+      }
+      if( ! $problems ) {
+        mysql_query(
+          "INSERT INTO dienstquiz
+            (gruppen_id,name,datum)
+            VALUES ( $login_gruppen_id, '$quiz_name', '$quiz_datum' ) " );
+      }
     }
 
     // ggf. passwort aendern:
@@ -314,7 +326,6 @@
          (das funktioniert aber noch nicht richtig: Ihr werdet also trotzdem noch zwischendurch
          immer mal nach einem passwort gefragt werden, bitte nicht wundern!)
          <br>
-         (aber: Gruppenpasswoerter aendern geht jetzt schon!)
        </div>
        <div class='newfield'>
          <label>Gruppe:</label>
@@ -333,8 +344,8 @@
          </select>
          <label style='padding-left:4em;'>Passwort:</label>
          <input type='password' size='8' name='passwort' value=''></input>
-         <span class='button' id='pwneu_knopf' style='padding-left:2em;font-size:10pt;'
-          onclick='pwneu_on();'>Passwort &auml;ndern...</span>
+         <a id='pwneu_knopf' style='margin-left:2em;font-size:10pt;'
+          onclick='pwneu_on();'>Passwort &auml;ndern...</a>
        </div>
        <div class='newfield' style='display:none;' id='pwneu_form'>
          <fieldset class='small_form'>
@@ -416,10 +427,34 @@
            </div>
          </fieldset>
        </div>
+       <div id='quiz' style='display:";
+       echo $dienst ? 'none' : 'block';
+echo ";'>
+         <fieldset class='small_form' style='padding:1em'>
+           <legend>
+             Quiz
+           </legend>
+           <div class='kommentar'>
+             Aus aktuellem Anlass: ein kleines Quiz:
+           </div>
+           <div class='newfield'>
+             Den n&auml;chsten Dienst meiner Gruppe macht...
+           </div>
+           <div class='newfield'>
+             <label>Name:</label>
+             <input type='text' size='20' name='quiz_name' value='$quiz_name'></input>
+             <label style='padding-left:4em;'>am:</label>
+             <input type='text' size='20' name='quiz_datum' value='$quiz_datum'></input>
+           </div>
+           <div class='kommentar' style='padding-top:2em;'>
+             Keine Ahnung? Kein Problem! Hier geht's zum
+             <a href='http://nahrungskette.fcschinke09.de/wiki/doku.php?id=start&do=login' target='_new'>Dienstplan</a>!
+           </div>
+         </fieldset>
+       </div>
        <div class='newfield'>
          <input type='submit' name='submit' value='OK'></input>
        </div>
-     </fieldset>
    </form>
   ";
 
@@ -495,9 +530,11 @@
     <script type='text/javascript'>
       function dienstform_on() {
         document.getElementById('dienstform').style.display = 'block';
+        document.getElementById('quiz').style.display = 'none';
       }
       function dienstform_off() {
         document.getElementById('dienstform').style.display = 'none';
+        document.getElementById('quiz').style.display = 'block';
       }
       function pwneu_on() {
         document.getElementById('pwneu_knopf').style.display = 'none';
