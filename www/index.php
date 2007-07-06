@@ -76,14 +76,14 @@
       else if ($area == 'dienstkontrollblatt')
 			   include('dienstkontrollblatt.php');				 
 			
-    if ($area == 'wiki') {
-      echo "
-        <form action='/wiki/doku.php' name='gotowiki_form' method='get'>
-          <input type='hidden' name='do' value='show'>
-        </form>
-        <script type='text/javascript'>document.forms['gotowiki_form'].submit();</script>
-      ";
-    }
+      else if ($area == 'wiki') {
+        echo "
+          <form action='/wiki/doku.php' name='gotowiki_form' method='get'>
+            <input type='hidden' name='do' value='show'>
+          </form>
+          <script type='text/javascript'>document.forms['gotowiki_form'].submit();</script>
+        ";
+      }
 	?>
 
 </body>
