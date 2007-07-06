@@ -7,6 +7,7 @@
 //  - andernfalls: prueft, ob benutzer schon angemeldet (per cookie)
 //  - falls auch nicht: anmeldeformular ausgeben
 //  - per "action=logout" wird ein logout (loeschen des cookie) erzwungen
+//  - falls $from_dokuwiki==true wird index.php?area=wiki aufgerufen
 //
 // bei erfolgreicher anmeldung werden gesetzt:
 //  - $angemeldet == TRUE
@@ -16,6 +17,13 @@
 // falls $dienst > 0 ausserdem:
 //  - $coopie_name
 //  - $dienstkontrollblatt_id
+  
+  global $angemeldet,
+         $login_gruppen_id,
+         $login_gruppen_name,
+         $dienst,
+         $coopie_name,
+         $dienstkontrollblatt_id;
 
   $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
   $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
@@ -69,6 +77,7 @@
   // pruefen, ob neue login daten uebergeben werden:
   //
   get_http_var( 'action' );
+
   if( $action == 'login' ) {
     get_http_var( 'login_gruppen_id' );
     if( ( ! isset( $login_gruppen_id ) ) || ( strlen( $login_gruppen_id ) < 1 ) ) {
@@ -174,17 +183,17 @@
     } else {
       $dienstkontrollblatt_id = 0;
 
-      if( ! $problems ) {
-        get_http_var( 'quiz_name' ) && get_http_var( 'quiz_datum' )
-          && ( $quiz_name ) && ( $quiz_datum )
-          or $problems = $problems . "<div class='warn'>Bitte das Quiz ausf&uuml;llen!</div>";
-      }
-      if( ! $problems ) {
-        mysql_query(
-          "INSERT INTO dienstquiz
-            (gruppen_id,name,datum)
-            VALUES ( $login_gruppen_id, '$quiz_name', '$quiz_datum' ) " );
-      }
+//       if( ! $problems ) {
+//         get_http_var( 'quiz_name' ) && get_http_var( 'quiz_datum' )
+//           && ( $quiz_name ) && ( $quiz_datum )
+//           or $problems = $problems . "<div class='warn'>Bitte das Quiz ausf&uuml;llen!</div>";
+//       }
+//       if( ! $problems ) {
+//         mysql_query(
+//           "INSERT INTO dienstquiz
+//             (gruppen_id,name,datum,eingabezeit)
+//             VALUES ( $login_gruppen_id, '$quiz_name', '$quiz_datum', '$mysqljetzt' ) " );
+//       }
     }
 
     // ggf. passwort aendern:
@@ -311,8 +320,14 @@
   //
   set_privileges(); // im moment: keine...
   require_once('head.php');
+
+  if( $from_dokuwiki ) {
+    $form_action='/foodsoft/index.php?area=wiki';
+  } else {
+    $form_action='index.php';
+  }
   echo "
-    <form action='index.php' method='post' class='small_form'>
+    <form action='$form_action' method='post' class='small_form'>
       <input type='hidden' name='action' value='login'>
       <fieldset class='small_form' style='padding:2em;'>
         <legend>
@@ -427,31 +442,33 @@
            </div>
          </fieldset>
        </div>
-       <div id='quiz' style='display:";
-       echo $dienst ? 'none' : 'block';
-echo ";'>
-         <fieldset class='small_form' style='padding:1em'>
-           <legend>
-             Quiz
-           </legend>
-           <div class='kommentar'>
-             Aus aktuellem Anlass: ein kleines Quiz:
-           </div>
-           <div class='newfield'>
-             Den n&auml;chsten Dienst meiner Gruppe macht...
-           </div>
-           <div class='newfield'>
-             <label>Name:</label>
-             <input type='text' size='20' name='quiz_name' value='$quiz_name'></input>
-             <label style='padding-left:4em;'>am:</label>
-             <input type='text' size='20' name='quiz_datum' value='$quiz_datum'></input>
-           </div>
-           <div class='kommentar' style='padding-top:2em;'>
-             Keine Ahnung? Kein Problem! Hier geht's zum
-             <a href='http://nahrungskette.fcschinke09.de/wiki/doku.php?id=start&do=login' target='_new'>Dienstplan</a>!
-           </div>
-         </fieldset>
-       </div>
+       ";
+//        <div id='quiz' style='display:";
+//        echo $dienst ? 'none' : 'block';
+// echo ";'>
+//          <fieldset class='small_form' style='padding:1em'>
+//            <legend>
+//              Quiz
+//            </legend>
+//            <div class='kommentar'>
+//              Aus aktuellem Anlass: ein kleines Quiz:
+//            </div>
+//            <div class='newfield'>
+//              Den n&auml;chsten Dienst meiner Gruppe macht...
+//            </div>
+//            <div class='newfield'>
+//              <label>Name:</label>
+//              <input type='text' size='20' name='quiz_name' value='$quiz_name'></input>
+//              <label style='padding-left:4em;'>am:</label>
+//              <input type='text' size='20' name='quiz_datum' value='$quiz_datum'></input>
+//            </div>
+//            <div class='kommentar' style='padding-top:2em;'>
+//              Keine Ahnung? Kein Problem! Hier geht's zum
+//              <a href='http://nahrungskette.fcschinke09.de/wiki/doku.php?id=start&do=login' target='_new'>Dienstplan</a>!
+//            </div>
+//          </fieldset>
+//        </div>
+  echo "
        <div class='newfield'>
          <input type='submit' name='submit' value='OK'></input>
        </div>
