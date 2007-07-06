@@ -321,7 +321,8 @@
   set_privileges(); // im moment: keine...
   require_once('head.php');
 
-  if( $from_dokuwiki ) {
+  get_http_var( 'area' );
+  if( $from_dokuwiki || ( $area == 'wiki' ) ) {
     $form_action='/foodsoft/index.php?area=wiki';
   } else {
     $form_action='index.php';
@@ -338,8 +339,9 @@
   echo "
        <div class='kommentar'>
          In Zukunft braucht Ihr Euch nur noch einmal pro Sitzung bei der Foodsoft anmelden.
-         (das funktioniert aber noch nicht richtig: Ihr werdet also trotzdem noch zwischendurch
-         immer mal nach einem passwort gefragt werden, bitte nicht wundern!)
+         <br>
+         <br>
+         Und: die gleiche Anmeldung gilt jetzt auch fuers Wiki!
          <br>
        </div>
        <div class='newfield'>
