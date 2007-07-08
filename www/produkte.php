@@ -1,7 +1,9 @@
 <h1>Produktdatenbank ....</h1>
 
 <?PHP
-include_once("code/zuordnen.php");
+  require_once("code/zuordnen.php");
+  require_once("code/login.php");
+
 /* wie das skript funktioniert:
 
    1. variablen einlesen, passwort prüfen
@@ -15,8 +17,7 @@ include_once("code/zuordnen.php");
    if (isset($HTTP_GET_VARS['produkte_pwd'])) $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];       // Passwort für den Bereich
     
           // Passwort prüfen...
-          $pwd_ok = ($produkte_pwd == $real_produkte_pwd);
-          
+          $pwd_ok = $angemeldet;
           
           // ggf. Aktionen durchführen (z.B. Produkt löschen... oder neue preise einfügen)
           $edit_all = false;
@@ -157,7 +158,7 @@ include_once("code/zuordnen.php");
                      <td colspan="2">Und hier bitte das Schinkepasswort eingeben:</td>
                   </tr>                
                    <tr>
-                      <td></td>
+             ($produkte_pwd == $real_produkte_pwd);         <td></td>
                       <td><input type="password" size="12" name="produkte_pwd"> <input type="submit" value="ok"></td>
                    </tr>
                 </table>               
@@ -250,10 +251,10 @@ include_once("code/zuordnen.php");
                 echo $lieferant_name;
                 if ( $lieferant_name == "Terra" ) {
                  echo '<a class="button" href="artikelsuche.php" target="_new">Katalogsuche</a>';
-                 if( $hat_dienst_IV ) {
-                   echo '<a class="button" href="terraabgleich.php" target="_new">Datenbankabgleich</a>';
-                 }
                 }
+                 // if( $hat_dienst_IV ) {
+                   echo "<a class='button' href='terraabgleich.php?lieferanten_id=$lieferanten_id' target='_new'>Datenbankabgleich</a>";
+                 // }
               ?>
 
               </h3></th>

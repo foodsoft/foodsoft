@@ -25,8 +25,8 @@ echo "upload: $1 $2"
       tag="OG"
     elif printf "%s\n" "$line" | grep 'Artikelnr.@Bestellnr.@ Beschreibung@VPE *@Liefera *@Land@IK@Netto-Preis@Rabatt@MwSt.%@EAN- Code@' &>/dev/null ; then
       echo 'input format: Terra trocken...' >&2
-      fields="anummer bnummer artikel gebinde lieferant land ik netto rabatt mwst bla"
-      einheit=ST    # trockenprodukte = fest verpackt, also: immer(?) in stueck!
+      fields="anummer bnummer artikel einheit lieferant land ik netto rabatt mwst bla"
+      # einheit=ST    # trockenprodukte = fest verpackt, also: immer(?) in stueck!
       pattern='^[[:digit:] ]\+@[[:digit:] ]\+@'
       tag="Tr"
     else
@@ -34,13 +34,21 @@ echo "upload: $1 $2"
     fi
     break
   done
-  
+
   n=0
   grep "$pattern" | while IFS=@ read  $fields ; do
+    if [ $tag = Tr ] ; then
+      if [[ "$einheit" =~ ^[[:digit:]] ]] ; then
+        gebinde="${einheit%% *}"
+        einheit="${einheit##* }"
+      else
+        gebinde=1
+      fi
+    fi
     cents=`printf "%s\n" "$netto" | sed 's/^ *\([[:digit:].]*\).*$/0\1 100*1\/pq/' | dc`
     anummer=`printf "%s\n" "$anummer" | tr -d ' '`
     bnummer=`printf "%s\n" "$bnummer" | tr -d ' '`
-    printf "%5d %8d %s\n" "$n" "$bnummer" ":$netto: $cents" >&2
+    printf "%5d %8d %s $einheit/$gebinde<br>\n" "$n" "$bnummer" ":$netto: $cents" >&2
     printf "\n# %s\n" "$((++n))"
     printf "dn: terraArtikelnummer=%s,%s\nchangetype: delete\n\n" "$anummer" "$base"
     printf "dn: terraArtikelnummer=%s,%s\nchangetype: add\n" "$anummer" "$base"
@@ -57,10 +65,10 @@ echo "upload: $1 $2"
       printf "terraHerkunft: %s\n" "${land:--}"
       printf "terraVerband: %s\n" "${verband:--}"
       printf "terraDatum: %s.%s\n" "$1" "$tag"
-    } | sed -e 's/ä/ae/' -e 's/ö/oe/' -e 's/ü/ue/' -e 's/Ä/AE/' -e 's/Ö/OE/' -e 's/Ü/UE/' -e 's/ß/sz/' 
-    printf "\n"
-  done | iconv -t utf-8 -f iso-8859-1 \
-  | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w leckerpotsdam -c -H ldap://fcnahrungskette.qipc.org 2>&1 
+    } | sed -e 's/ä/ae/' -e 's/ö/oe/' -e 's/ü/ue/' -e 's/Ä/AE/' -e 's/Ö/OE/' -e 's/Ü/UE/' -e 's/ß/sz/'
+    printf "\n#<br>\n"
+  done | iconv -t utf-8 -f iso-8859-1 | tee /tmp/ldif \
+  | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w leckerpotsdam -c -H ldap://fcnahrungskette.qipc.org 2>&1
 
   echo "<br>done."
 } 2>&1
