@@ -7,9 +7,8 @@
 	 include('../code/config.php');
 	 include('../code/err_functions.php');
 	 include('../code/connect_MySQL.php');
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($produkte_pwd != $real_produkte_pwd) exit();
+  require_once(../code/login.php');
+  nur_fuer_dienst_IV();
 	 
 	 // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {

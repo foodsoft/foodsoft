@@ -368,8 +368,8 @@
               <th>bis</th>
               <th title="Liefer-Einheit: fuers Bestellen beim Lieferanten">L-Einheit</th>
               <th>MWSt</th>
-              <th>Pfand</th>
-              <th>Preis</th>
+              <th title="Pfand je V-Einheit">Pfand</th>
+              <th title="Endpreis je V-Einheit">Preis</th>
             </tr>
       ';
       while( $pr1 = mysql_fetch_array($terrapreise) ) {
@@ -659,19 +659,23 @@
             $newliefereinheit = $can_terraeinheit;
           }
           if( $can_liefereinheit != $can_fceinheit ) {
-            $neednewprice = TRUE;
-            echo "<div class='warn'>Problem: Einheit inkompatibel:
-                        <p class='li'>Lieferant: <kbd>$can_liefereinheit</kbd></p>
-                        <p class='li'>Verteilung: <kbd>$can_fceinheit</kbd></p></div>";
-            if( $newliefereinheit ) {
-              $newfcmult = $newliefermult;
-              $newfceinheit = $newliefereinheit;
+            if( $can_liefereinheit == 'KI' && $can_terraeinheit='ST' ) {
+              // spezialfall: KIste mit vielen STueck inhalt ist ok!
             } else {
-              $newfcmult = $can_liefermult;
-              $newfceinheit = $can_liefereinheit;
-            }
-            if( $fcgebindegroesse > 1 ) {
-              $newfcmult = $newfcmult / $fcgebindegroesse;
+              $neednewprice = TRUE;
+              echo "<div class='warn'>Problem: Einheit inkompatibel:
+                          <p class='li'>Lieferant: <kbd>$can_liefereinheit</kbd></p>
+                          <p class='li'>Verteilung: <kbd>$can_fceinheit</kbd></p></div>";
+              if( $newliefereinheit ) {
+                $newfcmult = $newliefermult;
+                $newfceinheit = $newliefereinheit;
+              } else {
+                $newfcmult = $can_liefermult;
+                $newfceinheit = $can_liefereinheit;
+              }
+              if( $fcgebindegroesse > 1 ) {
+                $newfcmult = $newfcmult / $fcgebindegroesse;
+              }
             }
           } else {
             if( abs( $can_terramult * $terragebindegroesse - $can_fcmult * $fcgebindegroesse ) > 0.01 ) {

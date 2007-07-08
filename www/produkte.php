@@ -158,7 +158,7 @@
                      <td colspan="2">Und hier bitte das Schinkepasswort eingeben:</td>
                   </tr>                
                    <tr>
-             ($produkte_pwd == $real_produkte_pwd);         <td></td>
+           ;         <td></td>
                       <td><input type="password" size="12" name="produkte_pwd"> <input type="submit" value="ok"></td>
                    </tr>
                 </table>               
