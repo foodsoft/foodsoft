@@ -105,7 +105,7 @@ function sqlUpdateTransaction($transaction, $receipt){
 function sql_groupGlass($gruppe, $menge){
 	//include_once("config.php");  tut bisher nicht
 	$pfand_preis = 0.16; 
-	sqlGroupTransaction(2, $gruppe, -($pfand_preis*$menge),"NULL" ,'Glasrueckgabe');
+	sqlGroupTransaction(2, $gruppe, ($pfand_preis*$menge),"NULL" ,'Glasrueckgabe');
 }
 
 function sqlGroupTransaction($transaktionsart,
