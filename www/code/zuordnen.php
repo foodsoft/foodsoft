@@ -269,7 +269,10 @@ function sql_gesamtpreise($gruppe_id){
 
 
 function sql_bestellprodukte($bestell_id){
-            $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name FROM produkte INNER JOIN
+            $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
+                              , produktpreise.liefereinheit as liefereinheit
+                              , produktpreise.verteileinheit as verteileinheit
+            FROM produkte INNER JOIN
 	                            bestellvorschlaege ON (produkte.id=bestellvorschlaege.produkt_id)
 				    INNER JOIN produktpreise 
 				    ON (bestellvorschlaege.produktpreise_id=produktpreise.id)
@@ -864,6 +867,88 @@ function verteilmengenZuweisen($bestell_id){
 		error(__LINE__,__FILE__,"Konnte basareinträge  nicht löschen..","")	;
 	
 	changeState($bestell_id, STATUS_LIEFERANT);
+}
+
+
+// kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
+// 
+function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
+  $kan_einheit = NULL;
+  $kan_mult = NULL;
+  sscanf( $einheit, "%f", &$kan_mult );
+  if( $kan_mult ) {
+    // masszahl vorhanden, also abspalten:
+    sscanf( $einheit, "%f%s", &$kan_mult, &$einheit );
+  } else {
+    // keine masszahl, also eine einheit:
+    $kan_mult = 1;
+  }
+  $einheit = substr( str_replace( ' ', '', strtolower($einheit) ), 0, 2);
+  switch( $einheit ) {
+    //
+    // gewicht immer in gramm:
+    //
+    case 'kg':
+      $kan_einheit = 'g';
+      $kan_mult *= 1000;
+      break;
+    case 'g':
+    case 'gr':
+      $kan_einheit = 'g';
+      break;
+    //
+    // volumen immer in ml:
+    //
+    case 'l':
+    case 'lt':
+    case 'li':
+      $kan_einheit = 'ml';
+      $kan_mult *= 1000;
+      break;
+    case 'ml':
+      $kan_einheit = 'ml';
+      break;
+    //
+    // PAckung und KIste: wenn liefer-einheit:
+    // - die verteileinheit darf dann STueck sein; dann bedeutet die
+    //    gebindegroesse STueck pro KIste oder PAckung
+    //    (annahme: wir koennen einzelne KI oder PA bestellen)
+    // - andernfalls muss die verteileinheit ebenfalls KI oder PA sein
+    //
+    case 'pa':
+      $kan_einheit = 'PA';
+      break;
+    case 'ki':
+      $kan_einheit = 'KI';
+      break;
+    //
+    // der rest sind zaehleinheiten (STueck und aequivalent):
+    //
+    case 'gl':
+      $kan_einheit = 'GL';
+      break;
+    case 'fl':
+      $kan_einheit = 'FL';
+      break;
+    case 'be':
+      $kan_einheit = 'BE';
+      break;
+    case 'bd':
+      $kan_einheit = 'BD';
+      break;
+    case 'bt':
+      $kan_einheit = 'BT';
+      break;
+    case 'ea':
+    case 'st':
+      $kan_einheit = 'ST';
+      break;
+    default:
+      $kan_einheit = strtolower($einheit);
+      echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
+      break;
+  }
+  return true;
 }
 
 ?>

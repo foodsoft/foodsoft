@@ -15,6 +15,9 @@
 	// Verbindung zur MySQL-Datenbank herstellen
 	require_once('code/connect_MySQL.php');
 	
+  // Verbindung zur MySQL-Datenbank herstellen
+	require_once('code/zuordnen.php');
+	
   require_once('code/login.php');
   //nur_fuer_dienst(4,5);
   
@@ -76,8 +79,8 @@
       ( $newfcname = $HTTP_GET_VARS['newfcname'] ) || error( __LINE__, __FILE__, "newfcname nicht gesetzt!" );
       if( ! ( $newfcnotiz = $HTTP_GET_VARS['newfcnotiz'] ) )
         $newfcnotiz = '';
-      ( $newfcmwst = $HTTP_GET_VARS['newfcmwst'] ) || error( __LINE__, __FILE__, "newfcmwst nicht gesetzt!" );
-      ( $newfcpfand = $HTTP_GET_VARS['newfcpfand'] ) || error( __LINE__, __FILE__, "newfcpfand nicht gesetzt!" );
+      need_http_var('newfcmwst');
+      need_http_var('newfcpfand');
       need_http_var('newfcbnummer');
       ( $newfczeitstart = $HTTP_GET_VARS['newfczeitstart'] ) || error( __LINE__, __FILE__, "newfczeitstart nicht gesetzt!" );
     
@@ -103,7 +106,7 @@
         echo "<div class='ok'>FEHLGESCHLAGEN: neue Notiz: $newfcnotiz</div>";
       }
     
-      $pr0 = TRUE;
+      $pr0 = false;
       while( $pr1 = mysql_fetch_array($terrapreise) ) {
         $pr0 = $pr1;
       }
@@ -124,7 +127,8 @@
             , gebindegroesse
             , mwst
             , pfand
-            , liefereinheit )
+            , liefereinheit,
+            , verteileinheit )
             VALUES (
               $produktid
             , '$newfcpreis'
@@ -135,6 +139,7 @@
             , '$newfcmwst'
             , '$newfcpfand'
             , '$newliefermult $newliefereinheit'
+            , '$newfcmult $newfceinheit'
             )"
           )
        ) {
@@ -167,6 +172,9 @@
     $lieferanten_id = $row['lieferanten_id'];
   } else {
     need_http_var( 'lieferanten_id' );
+    get_http_var( 'order_by' );
+    if( $order_by )
+      $order_by = ' ORDER BY ' . $order_by;
   }
     
 
@@ -183,7 +191,7 @@
     $filter = $filter . ' AND id=' . $produktid;
   }
   // echo 'filter: ' . $filter;
-  ( $produkte = mysql_query( 'SELECT * FROM produkte WHERE ' . $filter ) )
+  ( $produkte = mysql_query( 'SELECT * FROM produkte WHERE ' . $filter . $order_by ) )
     || error ( __LINE__, __FILE__, "Suche nach Produkten fehlgeschlagen" );
   
   // echo "<br>connecting... ";
@@ -234,87 +242,6 @@
     echo '    ></input>';
     echo '  </form>';
     echo '</div>';
-  }
-
-  // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
-  // 
-  function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
-    $kan_einheit = NULL;
-    $kan_mult = NULL;
-    sscanf( $einheit, "%f", &$kan_mult );
-    if( $kan_mult ) {
-      // masszahl vorhanden, also abspalten:
-      sscanf( $einheit, "%f%s", &$kan_mult, &$einheit );
-    } else {
-      // keine masszahl, also eine einheit:
-      $kan_mult = 1;
-    }
-    $einheit = substr( str_replace( ' ', '', strtolower($einheit) ), 0, 2);
-    switch( $einheit ) {
-      //
-      // gewicht immer in gramm:
-      //
-      case 'kg':
-        $kan_einheit = 'g';
-        $kan_mult *= 1000;
-        break;
-      case 'g':
-      case 'gr':
-        $kan_einheit = 'g';
-        break;
-      //
-      // volumen immer in ml:
-      //
-      case 'l':
-      case 'lt':
-      case 'li':
-        $kan_einheit = 'ml';
-        $kan_mult *= 1000;
-        break;
-      case 'ml':
-        $kan_einheit = 'ml';
-        break;
-      //
-      // PAckung und KIste: wenn bestell-einheit:
-      // - die verteileinheit darf dann STueck sein; dann bedeutet die
-      //    gebindegroesse STueck pro KIste oder PAckung
-      //    (annahme: wir koennen einzelne KI oder PA bestellen)
-      // - andernfalls muss die verteileinheit ebenfalls KI oder PA sein
-      //
-      case 'pa':
-        $kan_einheit = 'PA';
-        break;
-      case 'ki':
-        $kan_einheit = 'KI';
-        break;
-      //
-      // der rest sind zaehleinheiten (STueck und aequivalent):
-      //
-      case 'gl':
-        $kan_einheit = 'GL';
-        break;
-      case 'fl':
-        $kan_einheit = 'FL';
-        break;
-      case 'be':
-        $kan_einheit = 'BE';
-        break;
-      case 'bd':
-        $kan_einheit = 'BD';
-        break;
-      case 'bt':
-        $kan_einheit = 'BT';
-        break;
-      case 'ea':
-      case 'st':
-        $kan_einheit = 'ST';
-        break;
-      default:
-        $kan_einheit = strtolower($einheit);
-        echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
-        break;
-    }
-    return true;
   }
 
 
@@ -438,7 +365,15 @@
         echo "<div class='warn'>FEHLER: keine gueltige Liefereinheit</div>";
         $detail && mysql_repair_link(
           "UPDATE produktpreise SET liefereinheit='$fceinheit' WHERE id={$prgueltig['id']}" 
-        , "Liefereinheit in {$prgueltig['id']} auf $fceinheit setzen"
+        , "L-Einheit in {$prgueltig['id']} auf $fceinheit setzen"
+        , "row$outerrow"
+        );
+      }
+      if( $prgueltig['verteileinheit'] != "fceinheit" ) {
+        echo "<div class='warn'>FEHLER: V-Einheit in Preishistorie anders als in Produktdatenbank</div>";
+        $detail && mysql_repair_link(
+          "UPDATE produktpreise SET verteileinheit='$fceinheit' WHERE id={$prgueltig['id']}" 
+        , "V-Einheit in {$prgueltig['id']} auf $fceinheit setzen"
         , "row$outerrow"
         );
       }
@@ -718,6 +653,7 @@
           $newfcpreis = $brutto / $can_terramult * $can_fcmult + $fcpfand;
           $newfcmwst = $mwst;
           $newfcbnummer = $terrabnummer;
+          $newfcgebindegroesse = $terragebindegroesse;
         }
 
       }
