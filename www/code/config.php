@@ -31,6 +31,12 @@
   while( $row = mysql_fetch_array( $leitvariable ) ) {
     $$row['name'] = "{$row['value']}";
   }
+  $foodsoftserver or $foodsoftserver = "unbekannt";
+
+  $foodsoftpath = realpath( dirname( __FILE__ ) . '/../' ) . '/';
+
+  $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
+  $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
 
   // die generalpasswoerter (nur noch voruebergehend noetig):
   //

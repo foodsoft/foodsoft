@@ -5,9 +5,6 @@
 	// Funktionen zur Fehlerbehandlung laden
 	require_once('code/err_functions.php');
 	
-	// Verbindung zur MySQL-Datenbank herstellen
-	require_once('code/connect_MySQL.php');
-
   require_once('code/login.php');
 	
 	// egal ob get oder post verwendet wird...
@@ -16,7 +13,8 @@
   get_http_var( 'area' );
 
 		//head einfügen
-		include ('head.php');
+	get_http_var( 'nohead' );
+  if( ! $nohead ) include ( "$foodsoftpath/head.php" );
 
   if( ! $angemeldet ) {
     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
@@ -75,7 +73,7 @@
 			
       else if ($area == 'dienstkontrollblatt')
 			   include('dienstkontrollblatt.php');				 
-			
+
       else if ($area == 'wiki') {
         echo "
           <form action='/wiki/doku.php' name='gotowiki_form' method='get'>
@@ -84,7 +82,21 @@
           <script type='text/javascript'>document.forms['gotowiki_form'].submit();</script>
         ";
       }
-	?>
 
-</body>
-</html>
+  echo "
+    <table width='100%' class='footer'>
+      <tr>
+        <td style='padding-left:1em;text-align:left;'>aktueller Server: $foodsoftserver</td>
+        <td style='padding-right:1em;text-align:right;'>
+        $mysqljetzt
+  ";
+  if( $readonly ) {
+    echo "<span style='font-weight:bold;color:440000;'> --- !!! Datenbank ist schreibgeschuetzt !!!</span>";
+  }
+  echo "
+      </td>
+    </tr>
+    </table>
+    $print_on_exit
+  ";
+?>

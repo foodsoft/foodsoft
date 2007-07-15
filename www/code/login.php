@@ -25,9 +25,6 @@
          $coopie_name,
          $dienstkontrollblatt_id;
 
-  $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
-  $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
-
   function get_http_var( $name ) {
     global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
     if( isset( $HTTP_GET_VARS[$name] ) ) {
