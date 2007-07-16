@@ -86,7 +86,7 @@
   echo "
     <table width='100%' class='footer'>
       <tr>
-        <td style='padding-left:1em;text-align:left;'>aktueller Server: $foodsoftserver</td>
+        <td style='padding-left:1em;text-align:left;'>aktueller Server: <kbd>$foodsoftserver</kbd></td>
         <td style='padding-right:1em;text-align:right;'>
         $mysqljetzt
   ";

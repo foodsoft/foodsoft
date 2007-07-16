@@ -1,8 +1,6 @@
 <?php
 
-   // skript kann ueber index.php, aber auch direkt (fuer download!) aufgerufen werden:
-   //
-   require_once( dirname(__FILE__) . '/code/config.php' );
+   require_once( "$foodsoftpath/code/config.php" );
    require_once( "$foodsoftpath/code/err_functions.php" );
    require_once( "$foodsoftpath/code/zuordnen.php" );
    require_once( "$foodsoftpath/code/login.php" );
@@ -15,38 +13,47 @@
    );
    $mysqldump = false;
    foreach( $path as $d ) {
-     if( is_executable( $d . '/mysqldump' ) ) {
+     // if( is_executable( $d . '/mysqldump' ) ) {
+     system( "test -x $d/mysqldump", &$rv );
+     if( $rv == 0 ) {
        $mysqldump = $d . '/mysqldump';
        break;
      }
    }
    $mysql = false;
    foreach( $path as $d ) {
-     if( is_executable( $d . '/mysql' ) ) {
+     // if( is_executable( $d . '/mysql' ) ) {
+     system( "test -x $d/mysql", &$rv );
+     if( $rv == 0 ) {
        $mysql = $d . '/mysql';
        break;
      }
    }
    $gzip = false;
    foreach( $path as $d ) {
-     if( is_executable( $d . '/gzip' ) ) {
-       $mysqldump = $d . '/gzip';
+     // if( is_executable( $d . '/gzip' ) ) {
+     system( "test -x $d/gzip", &$rv );
+     if( $rv == 0 ) {
+       $gzip = $d . '/gzip';
        break;
      }
    }
+   // echo "<pre>mysqldump: $mysqldump</pre>";
+   // echo "<pre>mysql: $mysql</pre>";
+   // echo "<pre>gzip: $gzip</pre>";
 
-//    if( ! $mysqldump ) {
-//      echo "<div class='warn'>FEHLER: Programm mysqldump nicht gefunden!</div>";
-//      exit();
-//    }
-//    if( ! $mysql ) {
-//      echo "<div class='warn'>FEHLER: Programm mysql nicht gefunden!</div>";
-//      exit();
-//    }
-//    if( ! $gzip ) {
-//      echo "<div class='warn'>FEHLER: Programm gzip nicht gefunden!</div>";
-//      exit();
-//    }
+   if( ! $mysqldump ) {
+     echo "<div class='warn'>FEHLER: Programm mysqldump nicht gefunden!</div>";
+     exit();
+   }
+   if( ! $mysql ) {
+     echo "<div class='warn'>FEHLER: Programm mysql nicht gefunden!</div>";
+     exit();
+   }
+   if( ! $gzip ) {
+     echo "<div class='warn'>FEHLER: Programm gzip nicht gefunden!</div>";
+     exit();
+   }
 
    $result = mysql_query( 'show tables' );
    if( ! $result ) {
@@ -72,7 +79,6 @@
 
    function datenbank_sperren() {
      if( mysql_query( 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
-       echo "<div class='ok'>Datenbank wurde gesperrt! <a href='index.php'>Weiter...</a></div>";
        return true;
      } else {
        echo "<div class='warn'>Sperrung der Datenbank fehlgeschlagen!</div>";
@@ -82,7 +88,6 @@
 
    function datenbank_freigeben() {
      if( mysql_query( 'UPDATE leitvariable SET value="0" WHERE name="readonly"' ) ) {
-       echo "<div class='ok'>Datenbank wurde freigegeben! <a href='index.php'>Weiter...</a></div>";
        return true;
      } else {
        echo "<div class='warn'>Freigabe fehlgeschlagen!</div>";
@@ -91,25 +96,32 @@
    }
 
    if( $action == 'release' ) {
-     datenbank_freigeben();
+     if( datenbank_freigeben() ) {
+       echo "<div class='ok'>Datenbank wurde freigegeben! <a href='index.php'>Weiter...</a></div>";
+     }
      exit();
    }
    if( $action == 'lock' ) {
-     datenbank_sperren();
+     if( datenbank_sperren() ) {
+       echo "<div class='ok'>Datenbank wurde gesperrt! <a href='index.php'>Weiter...</a></div>";
+     }
      exit();
    }
+
    if( $action == 'upload' ) {
      $tmpfile = $_FILES['userfile']['tmp_name'];
      if(!$tmpfile) {
        echo "<div class='warn'>Keine Datei uebergeben!</div>";
        exit();
      }
-     $command = "$gzip -dc $tmpfile | $mysql -h $db_server -u $db_user -p $db_pwd $db_name";
+     $command = "
+       $gzip -dc $tmpfile | $mysql -h $db_server -u $db_user -p$db_pwd $db_name ;
+     " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
      system( $command, &$return );
      if( $return != 0 ) {
        echo "<div class='warn'>Hochladen fehlgeschlagen!</div>";
      } else {
-       echo "<div class='warn'>Datenbank erfolgreich hochgeladen! <a href='index.php'>Weiter...</a></div>";
+       echo "<div class='ok'>Datenbank erfolgreich hochgeladen! <a href='index.php'>Weiter...</a></div>";
        datenbank_freigeben();
      }
      exit();
@@ -123,53 +135,55 @@
        echo "<div class='warn'>Hochladen fehlgeschlagen!</div>";
        exit();
      }
-     header("Content-Type: application/gzip");
-     header("Content-Disposition: filename=$downloadname");
      $leit_sql="
-        CREATE TABLE leitvariable (
+        CREATE TABLE IF NOT EXISTS leitvariable (
           name varchar(20) NOT NULL,
           value text,
-          local tinyint(1) NOT NULL default '0',
+          local tinyint(1) NOT NULL default 0,
           comment text NOT NULL,
-          PRIMARY KEY  ('name')
+          PRIMARY KEY  (name)
         ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
      ";
      $leit = mysql_query( "SELECT * FROM leitvariable WHERE local=0" );
      while( $leit && ( $row = mysql_fetch_array($leit) ) ) {
        $leit_sql = $leit_sql . "
          INSERT INTO leitvariable
-            ( name, value, local, comment )
-         VALUES
-            ( {$row['name']}, `{$row['value']}`, 0, `{$row['comment']}` )
-           WHERE name={$row['name']}
-           ON DUPLICATE KEY UPDATE;
+            ( `name`, `value`, `local`, `comment` )
+           VALUES
+            ( \"{$row['name']}\", \"{$row['value']}\", 0, \"{$row['comment']}\" )
+           ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
        ";
      }
      $leit_sql = $leit_sql . "
        INSERT INTO leitvariable
-          ( name, value, local, comment )
-       VALUES
-          ( upload_stand, `$mysqljetzt`, 1, `Zeit der Erzeugung des letzten hochgeladenen Dumps` )
-         WHERE name=upload_stand
-         ON DUPLICATE KEY UPDATE;
+          ( `name`, `value`, `local`, `comment` )
+         VALUES
+          ( \"upload_stand\", \"$mysqljetzt\", 1, \"Zeit der Erzeugung des zuletzt hochgeladenen Dumps\" )
+         ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
      ";
      $leit_sql = $leit_sql . "
        INSERT INTO leitvariable
-          ( name, value, local, comment )
-       VALUES
-          ( upload_von, `$foodsoftserver`, 1, `Server auf dem das letzte hochgeladene Dump erzeugt wurde` )
-         WHERE name=upload_von
-         ON DUPLICATE KEY UPDATE;
+          ( `name`, `value`, `local`, `comment` )
+         VALUES
+          ( \"upload_ursprung\", \"$foodsoftserver\", 1, \"Server auf dem das zuletzt hochgeladene Dump erzeugt wurde\" )
+         ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
      ";
      $command = "
        {
-         $mysqldump --opt $tables ;
+         $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 &&
          echo '
            $leit_sql
          ';
-       } | $gzip
-     ";
+       } | $gzip ;
+     " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
+     // echo "command: <pre>$command</pre>";
+     header("Content-Type: application/gzip");
+     header("Content-Disposition: filename=$downloadname");
      system( $command, &$return );
+     if( $return != 0 ) {
+       echo "<div class='warn'>Abspeichern fehlgeschlagen!</div>";
+       // FIXME: ^ ^ ^ ist jetzt vermutlich sinnlos; wie koennen wir das besser machen?
+     }
 
      exit();
    }
@@ -210,10 +224,10 @@
        <table>
        <tr>
          <td>
-           <label>Datenbank speichern als <kbd>$downloadname</kbd> und anschliessend sperren:</label>
+           <label>Datenbank sperren und anschliessend speichern als <kbd>$downloadname</kbd>:</label>
          </td>
          <td>
-           <form action='/updownload.php?action=download&nohead=1' method='post'>
+           <form action='index.php?nohead=1&area=updownload&action=download' method='post'>
              <input type='submit' value='Speichern'>
            </form>
          </td>
