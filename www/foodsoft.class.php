@@ -12,9 +12,9 @@
  */
 
 define('DOKU_AUTH', dirname(__FILE__));
-require_once(DOKU_AUTH.'/basic.class.php');
+define('FOODSOFT_DIR', realpath( DOKU_AUTH . '/../../../foodsoft' ) );
 
-define('AUTH_USERFILE',DOKU_CONF.'users.auth.php');
+require_once(DOKU_AUTH.'/basic.class.php');
 
 // we only accept page ids for auth_plain
 if(isset($_REQUEST['u']))
@@ -41,13 +41,13 @@ class auth_foodsoft extends auth_basic {
       // echo "<!-- ACT: $ACT -->";
 
       if( $_REQUEST['do'] == 'login' ) {
-        chdir( '../foodsoft' );
-        require_once( getcwd() . '/code/config.php' );
-        require_once( getcwd() . '/code/err_functions.php' );
-        require_once( getcwd() . '/code/connect_MySQL.php' );
+        $dir = getcwd();
+        chdir( FOODSOFT_DIR );
+        require_once( FOODSOFT_DIR . '/code/config.php' );
+        require_once( FOODSOFT_DIR . '/code/err_functions.php' );
         $from_dokuwiki=true;
-        require_once( getcwd() . '/code/login.php' );
-        chdir( '../wiki' );
+        require_once( FOODSOFT_DIR . '/code/login.php' );
+        chdir( $dir );
         $_REQUEST['do'] = 'show';
       }
       if( $_REQUEST['do'] == 'logout' ) {
@@ -65,7 +65,7 @@ class auth_foodsoft extends auth_basic {
       $this->cando['modGroups']    = false;
       $this->cando['getUsers']     = false;
       $this->cando['getUserCount'] = false;
-      $this->cando['external'] = true;
+      $this->cando['external']     = true;
       // echo "<!-- auth_foodsoft: $angemeldet, $login_gruppen_name -->";
       $this->success = true;
       return true;
@@ -74,35 +74,21 @@ class auth_foodsoft extends auth_basic {
     /**
      * Check user+password [required auth function]
      *
-     * Checks if the given user exists and the given
-     * plaintext password is correct
-     *
-     * @author  Andreas Gohr <andi@splitbrain.org>
-     * @return  bool
+     * (required yes, but obsolete with cando['external']! (Timo))
      */
     function checkPass($user,$pass){
-      global $angemeldet, $login_gruppen_name, $login_gruppen_id;
-      if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
-        chdir( '../foodsoft' );
-        require_once( getcwd() . '/code/config.php' );
-        require_once( getcwd() . '/code/err_functions.php' );
-        require_once( getcwd() . '/code/connect_MySQL.php' );
-        require_once( getcwd() . '/code/login.php' );
-        chdir( '../wiki' );
-      }
-      return $angemeldet && ( $user == 'gruppe' . ( $login_gruppen_id % 1000 ) );
+      return false;
     }
 
     function trustExternal($user,$pass,$sticky=false){
       global $USERINFO, $angemeldet, $login_gruppen_name;
-      // echo "<!-- trustExternal: $angemeldet, $login_gruppen_name -->";
       if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
-        chdir( '../foodsoft' );
-        require_once( getcwd() . '/code/config.php' );
-        require_once( getcwd() . '/code/err_functions.php' );
-        require_once( getcwd() . '/code/connect_MySQL.php' );
-        require_once( getcwd() . '/code/login.php' );
-        chdir( '../wiki' );
+        $dir = getcwd();
+        chdir( FOODSOFT_DIR );
+        require_once( FOODSOFT_DIR . '/code/config.php' );
+        require_once( FOODSOFT_DIR . '/code/err_functions.php' );
+        require_once( FOODSOFT_DIR . '/code/login.php' );
+        chdir( $dir );
         if( $angemeldet ) {
           $USERINFO['pass'] = 'XXX';
           $USERINFO['name'] = $login_gruppen_name;
@@ -139,7 +125,6 @@ class auth_foodsoft extends auth_basic {
         $info['grps'] = array();
         $info['grps'][0] = 'user';
       }
-
       return $info;
     }
 
