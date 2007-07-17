@@ -1,13 +1,20 @@
 /* -- Allgemeines -- */
 body {
- 	background: url() white;  /*  #c0c0c0*/
+ 	background:#ffffff;
  	color: black;
- 	margin: 0;
- 	padding: 1%; 
+ 	margin:0pt;
+ 	padding:0pt; 
  	min-width: 763px; 
  	font-size: 0.8em; 
 	 font-family: verdana, arial, sans-serif ;
 	}
+body.ro, body.ro table.footer td {
+  background:#ffeedd;
+}
+
+div.payload {
+  padding:1ex;
+}
 
 a {
 	color:#ED0606;
@@ -16,9 +23,6 @@ a {
 	} 
 a:visited { color:#ED0606; }	
 
-h1, h2, h3 {
- 
- }
  
  h1 {
  color:#ED0606;
@@ -34,6 +38,7 @@ input:hover, textarea:hover, select:hover {
 }
 
 /* - Logo bzw. Kopf - */
+
 .head, .head td, .head table {
   background:#ed0606;
   border:none;
@@ -43,6 +48,13 @@ input:hover, textarea:hover, select:hover {
   padding:0pt;
   margin:0pt;
 }
+.head#ro, .head#ro td, .head#ro table {
+  background:url(readonly.gif);
+  background-repeat:repeat;
+}
+
+
+
 #logo {
  // background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
  height: 55px;
@@ -386,3 +398,13 @@ div.kommentar {
   font-size:10pt;
 }
 
+table.footer {
+  margin-top:2em;
+  padding:2em 1em 1ex 1em;
+  border-style:solid none none none;
+  border-width:1px;
+  border-color:#000000;
+}
+table.footer tr, table.footer td {
+  border-style:none;
+}
