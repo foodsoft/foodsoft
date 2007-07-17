@@ -50,7 +50,7 @@
 				<td valign="middle" class="smalfont">Hier kann man das Dientkontrollblatt einsehen...</td>
 		 </tr>		 
 		 <?
-			if($$hat_dienst_IV or $$hat_dienst_III or $$hat_dienst_I){
+			if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 		 ?>
 			<tr>
 		    <td><input type="button" value="Up/Download" class="bigbutton" onClick="self.location.href='index.php?area=updownload'"></td>
