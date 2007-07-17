@@ -6,40 +6,17 @@
 // und nach unterschieden zum Terra-katalog,
 // macht ggf. verbesserungsvorschlaege und erlaubt aenderungen
 
-  // Konfigurationsdatei einlesen
-	require_once('code/config.php');
-	
-	// Funktionen zur Fehlerbehandlung laden
-	require_once('code/err_functions.php');
-	
-	// Verbindung zur MySQL-Datenbank herstellen
-	require_once('code/connect_MySQL.php');
-	
-  // Verbindung zur MySQL-Datenbank herstellen
-	require_once('code/zuordnen.php');
-	
+  require_once('code/config.php');
+  require_once('code/err_functions.php');
+  require_once('code/zuordnen.php');
   require_once('code/login.php');
+
   //nur_fuer_dienst(4,5);
   
-	// egal ob get oder post verwendet wird...
-	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
-
-  // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
-  if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
-
-
-  $mysqljetzt = date('Y') . '-' . date('m') . '-' . date('d') . ' ' . date('H') . ':' . date('i') . ':' . date('s');
-  // echo "Hallo, Welt! in MySQL ist es jetzt: $mysqljetzt <br>";
-
-  if (isset($HTTP_GET_VARS['produktid'])) {
-    $produktid = $HTTP_GET_VARS['produktid'];
-    $detail = TRUE;
-  } else {
-    $detail = FALSE;
-  }
+  $detail = get_http_var('produktid');
 
   $title = 'Produktdaten';
-  $title = 'Produktdaten';
+  $subtitle = 'Produktdaten';
   if( $detail )
     $subtitle = $subtitle . " - Detailanzeige";
   require_once('windows/head.php');
@@ -49,18 +26,17 @@
     // eventuell uebergebene SQL-befehle befehl0, befehl1, ... abarbeiten:
     //
     $n=0;
-    while( $b = $HTTP_GET_VARS[ 'befehl' . $n ] ) {
-      // echo 'b: ' . $b . '<br>';
-      $befehl = base64_decode( $b );
+    while( get_http_var( 'befehl' . $n ) ) {
+      $befehl = base64_decode( ${"befehl$n"} );
       // $befehl = "UPDATE produktpreise SET zeitende='2007-05-16 11:22:33' WHERE id=4707";
-      ( $kommentar = $HTTP_GET_VARS[ 'kommentar' . $n ] ) || $kommentar = 'SQL-Befehl: ' . $befehl;
-      ( $doit = $HTTP_GET_VARS[ 'doit' . $n ] ) || $doit = TRUE;
-      if( $doit ) {
+      get_http_var( 'kommentar' . $n ) or ${"kommentar$n"} = 'SQL-Befehl: ' . $befehl;
+      get_http_var( 'doit' . $n ) or ${"doit$n"} = TRUE;
+      if( ${"doit$n"} ) {
         // printf( ":%s:\n", "$kommentar");
         if( mysql_query( $befehl ) ) {
-          // echo '<span class="ok"> OK </span><br>';
+          echo "<div class='ok'>OK: $befehl </div>";
         } else {
-          // echo ' <span class="warn"> FEHLGESCHLAGEN </span><br>';
+          // echo "<div class='warn'>FEHLGESCHLAGEN: $befehl </div>";
         }
       }
       $n++;
@@ -69,41 +45,40 @@
     // eventuell neuen preiseintrag vornehmen:
     //
   
-    if( $HTTP_GET_VARS['neuerpreiseintrag'] ) {
-      ( $newfcmult = $HTTP_GET_VARS['newfcmult'] ) || error( __LINE__, __FILE__, "newfcmult nicht gesetzt!" );
-      ( $newfceinheit = $HTTP_GET_VARS['newfceinheit'] ) || error( __LINE__, __FILE__, "newfceinheit nicht gesetzt!" );
-      ( $newliefermult = $HTTP_GET_VARS['newliefermult'] ) || error( __LINE__, __FILE__, "newliefermult nicht gesetzt!" );
-      ( $newliefereinheit = $HTTP_GET_VARS['newliefereinheit'] ) || error( __LINE__, __FILE__, "newliefereinheit nicht gesetzt!" );
-      ( $newfcgebindegroesse = $HTTP_GET_VARS['newfcgebindegroesse'] ) || error( __LINE__, __FILE__, "newfcgebindegroesse nicht gesetzt!" );
-      ( $newfcpreis = $HTTP_GET_VARS['newfcpreis'] ) || error( __LINE__, __FILE__, "newfcpreis nicht gesetzt!" );
-      ( $newfcname = $HTTP_GET_VARS['newfcname'] ) || error( __LINE__, __FILE__, "newfcname nicht gesetzt!" );
-      if( ! ( $newfcnotiz = $HTTP_GET_VARS['newfcnotiz'] ) )
-        $newfcnotiz = '';
+    if( get_http_var('neuerpreiseintrag' ) ) {
+      need_http_var('newfcmult');
+      need_http_var('newfceinheit');
+      need_http_var('newfcgebindegroesse');
       need_http_var('newfcmwst');
       need_http_var('newfcpfand');
+      need_http_var('newfcpreis');
+      need_http_var('newfcname');
       need_http_var('newfcbnummer');
-      ( $newfczeitstart = $HTTP_GET_VARS['newfczeitstart'] ) || error( __LINE__, __FILE__, "newfczeitstart nicht gesetzt!" );
-    
+      need_http_var('newfczeitstart');
+      need_http_var('newliefermult');
+      need_http_var('newliefereinheit');
+      gethttp_var('newfcnotiz') or $newfcnotiz = '';
+
       ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produktid" ) )
         || error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-    
+
       ( $terrapreise = mysql_query( "SELECT * FROM produktpreise WHERE produkt_id=$produktid ORDER BY zeitstart" ) )
         || error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
-      
+
       if( mysql_query( "UPDATE produkte SET einheit='$newfcmult $newfceinheit' WHERE id=$produktid" ) ) {
         // echo "<div class='ok'>neue Einheit: $newfcmult $newfceinheit</div>";
       } else {
-        echo "<div class='ok'>FEHLGESCHLAGEN: neue Einheit: $newfcmult $newfceinheit</div>";
+        echo "<div class='warn'>FEHLGESCHLAGEN: neue Einheit: $newfcmult $newfceinheit</div>";
       }
       if( mysql_query( "UPDATE produkte SET name='$newfcname' WHERE id=$produktid" ) ) {
         // echo "<div class='ok'>neue Bezeichnung: $newfcname</div>";
       } else {
-        echo "<div class='ok'>FEHLGESCHLAGEN: neue Bezeichnung: $newfcname</div>";
+        echo "<div class='warn'>FEHLGESCHLAGEN: neue Bezeichnung: $newfcname</div>";
       }
       if( mysql_query( "UPDATE produkte SET notiz='$newfcnotiz' WHERE id=$produktid" ) ) {
         // echo "<div class='ok'>neue Notiz: $newfcnotiz</div>";
       } else {
-        echo "<div class='ok'>FEHLGESCHLAGEN: neue Notiz: $newfcnotiz</div>";
+        echo "<div class='warn'>FEHLGESCHLAGEN: neue Notiz: $newfcnotiz</div>";
       }
     
       $pr0 = false;
@@ -114,7 +89,7 @@
         if( mysql_query( "UPDATE produktpreise SET zeitende='$newfczeitstart' WHERE id=" . $pr0['id'] ) ) {
           // echo "<div class='ok'>letzter Preiseintrag ausgelaufen ab: $newfczeitstart</div>";
         } else {
-          echo "<div class='ok'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
+          echo "<div class='warn'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
         }
       }
       if( mysql_query( "
@@ -145,24 +120,26 @@
        ) {
         // echo "<div class='ok'>neuer Preiseintrag gespreichert</div>";
       } else {
-        echo "<div class='ok'>neuer Preiseintrag FEHLGESCHLAGEN</div>";
+        echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN</div>";
       }
     }
 
     // eventuell neue Artikelnummer setzen:
     //
-    
-    if( ( $anummer = $HTTP_GET_VARS['anummer'] ) ) {
+    if( get_http_var( 'anummer' ) ) {
       // echo 'Update:<br>';
       // echo 'produktid: ' . $produktid . '<br>';
       // echo 'neue Artikelnummer: ' . $anummer . '<br>';
       if ( mysql_query( 'UPDATE produkte SET artikelnummer=' . $anummer . ' WHERE id=' . $produktid ) ) {
         // echo "OK!<br>";
       } else {
+        echo "<div class='warn'>Setzen der neuen Artikelnummer FEHLGESCHLAGEN</div>";
         // echo "fehlgeschlagen!<br>";
       }
     }
   }
+
+  get_http_var( 'order_by' ) or $order_by = 'name';
 
   if( $detail ) {
     $result = mysql_query( "SELECT * FROM produkte WHERE id='$produktid'" )
@@ -172,11 +149,7 @@
     $lieferanten_id = $row['lieferanten_id'];
   } else {
     need_http_var( 'lieferanten_id' );
-    get_http_var( 'order_by' );
-    if( $order_by )
-      $order_by = ' ORDER BY ' . $order_by;
   }
-    
 
   $result = mysql_query( "SELECT * FROM lieferanten WHERE id='$lieferanten_id'" )
     or error ( __LINE__, __FILE__, "Suche nach Lieferant fehlgeschlagen" );
@@ -191,8 +164,8 @@
     $filter = $filter . ' AND id=' . $produktid;
   }
   // echo 'filter: ' . $filter;
-  ( $produkte = mysql_query( 'SELECT * FROM produkte WHERE ' . $filter . $order_by ) )
-    || error ( __LINE__, __FILE__, "Suche nach Produkten fehlgeschlagen" );
+  $produkte = mysql_query( 'SELECT * FROM produkte WHERE ' . $filter . ' ORDER BY ' . $order_by )
+    or error ( __LINE__, __FILE__, "Suche nach Produkten fehlgeschlagen" );
   
   // echo "<br>connecting... ";
   $ldaphandle = ldap_connect( $ldapuri );
@@ -294,6 +267,7 @@
               <th>von</th>
               <th>bis</th>
               <th title="Liefer-Einheit: fuers Bestellen beim Lieferanten">L-Einheit</th>
+              <th title="Verteil-Einheit: fuers Bestellen und Verteilen bei uns">V-Einheit</th>
               <th>MWSt</th>
               <th title="Pfand je V-Einheit">Pfand</th>
               <th title="Endpreis je V-Einheit">Preis</th>
@@ -307,6 +281,7 @@
             <td>{$pr1['zeitstart']}</td>
             <td>{$pr1['zeitende']}</td>
             <td>{$pr1['liefereinheit']}</td>
+            <td>{$pr1['verteileinheit']}</td>
             <td>{$pr1['mwst']}</td>
             <td>{$pr1['pfand']}</td>
             <td>{$pr1['preis']}</td>
@@ -369,7 +344,7 @@
         , "row$outerrow"
         );
       }
-      if( $prgueltig['verteileinheit'] != "fceinheit" ) {
+      if( $prgueltig['verteileinheit'] != "$fceinheit" ) {
         echo "<div class='warn'>FEHLER: V-Einheit in Preishistorie anders als in Produktdatenbank</div>";
         $detail && mysql_repair_link(
           "UPDATE produktpreise SET verteileinheit='$fceinheit' WHERE id={$prgueltig['id']}" 
@@ -445,6 +420,17 @@
     //
     $neednewprice = FALSE;
 
+    // werte fuer neuen preiseintrag:
+    //
+    $newfceinheit = FALSE;
+    $newfcmult = FALSE;
+    $newfcgebindegroesse = FALSE;
+    $newfcpreis = FALSE;
+    $newfcbnummer = FALSE;
+    $newliefereinheit = FALSE;
+    $newliefermult = FALSE;
+    $newfcmwst = FALSE;
+        
     // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
     //
     $neednewarticlenumber = FALSE;
@@ -569,16 +555,6 @@
         echo "</table>";
         
         kanonische_einheit( $terraeinheit, &$can_terraeinheit, &$can_terramult );
-        
-        $neednewprice = FALSE;
-        $newfceinheit = FALSE;
-        $newfcmult = FALSE;
-        $newfcgebindegroesse = FALSE;
-        $newfcpreis = FALSE;
-        $newfcbnummer = FALSE;
-        $newliefereinheit = FALSE;
-        $newliefermult = FALSE;
-        $newfcmwst = FALSE;
         
         if( $prgueltig ) {
           // echo "<br>Foodsoft: Einheit: $can_fcmult * $can_fceinheit Gebinde: $fcgebindegroesse";
