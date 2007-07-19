@@ -6,7 +6,7 @@
 // - ein "Close" Knopf wird automatisch erzeugt
 
   global $angemeldet, $login_gruppen_name, $coopie_name
-       , $dienst, $title, $subtitle, $onload_str, $readonly
+       , $dienst, $title, $subtitle, $wikitopic, $onload_str, $readonly
        , $kopf_schon_ausgegeben, $print_on_exit
        , $foodsoftpath;
 
@@ -42,6 +42,13 @@
           <img src='$img' class='button' title='Schlie&szlig;en' onClick='opener.focus(); window.close();'></img>
         </td>
         <td>Foodsoft: $subtitle</td>
+        <td>
+    ";
+    if( $wikitopic ) {
+      wikiLink( $wikitopic, "Wiki..." );
+    }
+    echo "
+        </td>
       </tr>
       <tr>
       <td>&nbsp;</td>

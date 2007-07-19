@@ -939,6 +939,9 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
     case 'bt':
       $kan_einheit = 'BT';
       break;
+    case 'kt':
+      $kan_einheit = 'KT';
+      break;
     case 'ea':
     case 'st':
       $kan_einheit = 'ST';
@@ -946,9 +949,61 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
     default:
       $kan_einheit = strtolower($einheit);
       echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
-      break;
+      return false;
   }
   return true;
+}
+
+
+function get_http_var( $name ) {
+  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+  if( isset( $HTTP_GET_VARS[$name] ) ) {
+    $$name = $HTTP_GET_VARS[$name];
+    return TRUE;
+  } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
+    $$name = $HTTP_POST_VARS[$name];
+    return TRUE;
+  } else {
+    unset( $$name );
+    return FALSE;
+  }
+}
+function need_http_var( $name ) {
+  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+  if( isset( $HTTP_GET_VARS[$name] ) ) {
+    $$name = $HTTP_GET_VARS[$name];
+  } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
+    $$name = $HTTP_POST_VARS[$name];
+  } else {
+    error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
+    exit();
+  }
+}
+
+
+function getAktuellerPreiseintrag( $produkt_id ) {
+  $row = false;
+  $result = mysql_query( "
+    SELECT * FROM produktpreise WHERE produkt_id=$produkt_id AND 
+    ( ISNULL(zeitende) OR ( zeitende >= '$mysqljetzt' ) ) 
+  " );
+  if( $result and mysql_num_rows($result) == 1 and ( $row = mysql_fetch_array($result) ) ) {
+    return $row;
+  } else {
+    $result = mysql_query( "SELECT * FROM produkte WHERE id=$produkt_id " );
+    echo "
+      <div class='warn'>
+        Problem mit Preiseintrag fuer Produkt $produkt_id
+        <a href='/terraabgleich.php?produkt_id=$product_id' target='_new'>Korrigieren...</a>
+      </div>
+    ";
+  }
+  return false;
+}
+
+function wikiLink( $topic, $text ) {
+  global $foodsoftpath;
+  echo "<a class='wikilink' target='wiki' href='/wiki/doku.php?id=$topic'>$text</a>";
 }
 
 ?>

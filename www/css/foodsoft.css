@@ -408,3 +408,19 @@ table.footer {
 table.footer tr, table.footer td {
   border-style:none;
 }
+
+a.wikilink {
+  padding:2px 1ex 2px 2em;
+  font-size:10pt;
+  background-color:white;
+  background-image:url(../img/gluehbirne_15x16.png);
+  background-repeat:no-repeat;
+  text-decoration:none;
+}
+
+a.wikilink:hover {
+  background-image:url(../img/birne_rot.png);
+  text-decoration:underline;
+}
+  
+  

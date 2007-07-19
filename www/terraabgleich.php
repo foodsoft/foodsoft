@@ -17,6 +17,7 @@
 
   $title = 'Produktdaten';
   $subtitle = 'Produktdaten';
+  $wikitopic = "foodsoft:datenbankabgleich";
   if( $detail )
     $subtitle = $subtitle . " - Detailanzeige";
   require_once('windows/head.php');
@@ -34,9 +35,9 @@
       if( ${"doit$n"} ) {
         // printf( ":%s:\n", "$kommentar");
         if( mysql_query( $befehl ) ) {
-          echo "<div class='ok'>OK: $befehl </div>";
+          // echo "<div class='ok'>OK: $befehl </div>";
         } else {
-          // echo "<div class='warn'>FEHLGESCHLAGEN: $befehl </div>";
+          // echo "<div class='warn'>FEHLGESCHLAGEN: $kommentar </div>";
         }
       }
       $n++;
@@ -57,7 +58,7 @@
       need_http_var('newfczeitstart');
       need_http_var('newliefermult');
       need_http_var('newliefereinheit');
-      gethttp_var('newfcnotiz') or $newfcnotiz = '';
+      get_http_var('newfcnotiz') or $newfcnotiz = '';
 
       ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produktid" ) )
         || error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
@@ -102,7 +103,7 @@
             , gebindegroesse
             , mwst
             , pfand
-            , liefereinheit,
+            , liefereinheit
             , verteileinheit )
             VALUES (
               $produktid
@@ -120,7 +121,7 @@
        ) {
         // echo "<div class='ok'>neuer Preiseintrag gespreichert</div>";
       } else {
-        echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN</div>";
+        echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN: " . mysql_error() . "</div>";
       }
     }
 
@@ -324,7 +325,7 @@
     if( ! $pr0 ) {
       echo '<div class="warn">WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div><br>';
     } else if ( $pr0['zeitende'] != '' ) {
-      if ( $pr0['zeitende'] < mysqljetzt ) {
+      if ( $pr0['zeitende'] < $mysqljetzt ) {
         echo '<div class="warn">WARNUNG: kein aktuell gueltiger Preiseintrag fuer diesen Artikel vorhanden!</div><br>';
         // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
       } else {
@@ -560,58 +561,61 @@
           // echo "<br>Foodsoft: Einheit: $can_fcmult * $can_fceinheit Gebinde: $fcgebindegroesse";
           // echo "<br>Terra: Einheit: $can_terramult * $can_terraeinheit Gebinde: $terragebindegroesse";
   
-          if( ( $can_terraeinheit != $can_liefereinheit ) || ( $can_terramult * $terragebindegroesse != $can_liefermult) ) {
+          $newliefermult = $can_terramult * $terragebindegroesse;
+          $newliefereinheit = $can_terraeinheit;
+
+          if( ( $newliefereinheit != $can_liefereinheit ) || ( $newliefermult != $can_liefermult ) ) {
             $neednewprice = TRUE;
             echo "<div class='warn'>Problem: L-Einheit stimmt nicht:
                         <p class='li'>Terra: <kbd>$terragebindegroesse * $can_terramult $can_terraeinheit</kbd></p>
                         <p class='li'>Foodsoft: <kbd>$can_liefermult $can_liefereinheit</kbd></p></div>";
-            // vorschlag fuer aenderung:
-            $newliefermult = $can_terramult * $terragebindegroesse;
-            $newliefereinheit = $can_terraeinheit;
           }
-          if( $can_liefereinheit != $can_fceinheit ) {
-            if( $can_liefereinheit == 'KI' && $can_terraeinheit='ST' ) {
-              // spezialfall: KIste mit vielen STueck inhalt ist ok!
-            } else {
+          if( $newliefereinheit == 'KI' && $can_fceinheit='ST' ) {
+            // spezialfall: KIste mit vielen STueck inhalt ist ok!
+            $newfceinheit = 'ST';
+            $newfcmult = $can_fcmult;
+          } else {
+            $newfceinheit = $newliefereinheit;
+            if( $newliefereinheit != $can_fceinheit ) {
               $neednewprice = TRUE;
               echo "<div class='warn'>Problem: Einheit inkompatibel:
-                          <p class='li'>Lieferant: <kbd>$can_liefereinheit</kbd></p>
+                          <p class='li'>Lieferant: <kbd>$newliefereinheit</kbd></p>
                           <p class='li'>Verteilung: <kbd>$can_fceinheit</kbd></p></div>";
-              if( $newliefereinheit ) {
-                $newfcmult = $newliefermult;
-                $newfceinheit = $newliefereinheit;
+              if( $fcgebindegroesse > 0.0001 ) {
+                $newfcmult = $newliefermult / $fcgebindegroesse;
+                $newfcgebindegroesse = $fcgebindegroesse;
               } else {
-                $newfcmult = $can_liefermult;
-                $newfceinheit = $can_liefereinheit;
+                $newfcmult = $newliefermult;
+                $newfcgebindegroesse = $terragebindegroesse;
               }
-              if( $fcgebindegroesse > 1 ) {
-                $newfcmult = $newfcmult / $fcgebindegroesse;
+              $newfcpreis = $brutto + $fcpfand;
+            } else {
+              $newfcmult = $can_fcmult;
+              $newfcgebindegroesse = $fcgebindegroesse;
+              if( abs( $can_terramult * $terragebindegroesse - $can_fcmult * $fcgebindegroesse ) > 0.01 ) {
+                $neednewprice = TRUE;
+                echo "<div class='warn'>Problem: Gebindegroessen stimmen nicht: 
+                          <p class='li'>Terra: <kbd>$terragebindegroesse * $can_terramult $can_terraeinheit</kbd></p>
+                          <p class='li'>Foodsoft: <kbd>$fcgebindegroesse * $can_fcmult $can_fceinheit</kbd></p></div>";
+                $newfcgebindegroesse = $terragebindegroesse * $can_terramult / $can_fcmult;
+              }
+              if( abs( ($fcpreis - $fcpfand) * $can_terramult / $can_fcmult - $brutto ) > 0.01 ) {
+                $neednewprice = TRUE;
+                echo "<div class='warn'>Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
+                          <p class='li'>Terra: <kbd>$brutto je $can_terramult $can_terraeinheit</kbd></p>
+                          <p class='li'>Foodsoft: <kbd>"
+                            . ($fcpreis-$fcpfand) * $can_terramult / $can_fcmult
+                            . " je $can_terramult $can_terraeinheit </kbd></p></div>";
+                $newfcpreis = $brutto / $can_terramult * $can_fcmult + $fcpfand;
               }
             }
-          } else {
-            if( abs( $can_terramult * $terragebindegroesse - $can_fcmult * $fcgebindegroesse ) > 0.01 ) {
-              $neednewprice = TRUE;
-              echo "<div class='warn'>Problem: Gebindegroessen stimmen nicht: 
-                        <p class='li'>Terra: <kbd>$terragebindegroesse * $can_terramult $can_terraeinheit</kbd></p>
-                        <p class='li'>Foodsoft: <kbd>$fcgebindegroesse * $can_fcmult $can_fceinheit</kbd></p></div>";
-              $newfcgebindegroesse = $terragebindegroesse * $can_terramult / $can_fcmult;
-            }
-            if( abs( ($fcpreis - $fcpfand) * $can_terramult / $can_fcmult - $brutto ) > 0.01 ) {
-              $neednewprice = TRUE;
-              echo "<div class='warn'>Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
-                        <p class='li'>Terra: <kbd>$brutto je $terramult $can_terraeinheit</kbd></p>
-                        <p class='li'>Foodsoft: <kbd>"
-                          . ($fcpreis-$fcpfand) * $terramult / $can_fcmult
-                          . " je $terramult $can_terraeinheit </kbd></p></div>";
-              $newfcpreis = $brutto / $can_terramult * $can_fcmult + $fcpfand;
-            }
-            if( abs( $fcmwst - $mwst ) > 0.005 ) {
-              $neednewprice = TRUE;
-              echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
-                        <p class='li'>Terra: <kbd>$mwst</kbd></p>
-                        <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
-              $newfcmwst = $mwst;
-            }
+          }
+          if( abs( $fcmwst - $mwst ) > 0.005 ) {
+            $neednewprice = TRUE;
+            echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
+                      <p class='li'>Terra: <kbd>$mwst</kbd></p>
+                      <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
+            $newfcmwst = $mwst;
           }
           if( $terrabnummer != $fcbnummer ) {
             $neednewprice = TRUE;
@@ -624,7 +628,7 @@
           // echo "<br>Liefer: new: Einheit: $newliefermult * $newliefereinheit";
         } else {
           $neednewprice = TRUE;
-          $newliefermult = $can_terramult;
+          $newliefermult = $can_terramult * $terragebindegroesse;
           $newliefereinheit = $can_terraeinheit;
           $newfcpreis = $brutto / $can_terramult * $can_fcmult + $fcpfand;
           $newfcmwst = $mwst;
