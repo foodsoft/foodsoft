@@ -834,4 +834,120 @@ function verteilmengenZuweisen($bestell_id){
 	
 }
 
+
+// kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
+// 
+function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
+  $kan_einheit = NULL;
+  $kan_mult = NULL;
+  sscanf( $einheit, "%f", &$kan_mult );
+  if( $kan_mult ) {
+    // masszahl vorhanden, also abspalten:
+    sscanf( $einheit, "%f%s", &$kan_mult, &$einheit );
+  } else {
+    // keine masszahl, also eine einheit:
+    $kan_mult = 1;
+  }
+  $einheit = substr( str_replace( ' ', '', strtolower($einheit) ), 0, 2);
+  switch( $einheit ) {
+    //
+    // gewicht immer in gramm:
+    //
+    case 'kg':
+      $kan_einheit = 'g';
+      $kan_mult *= 1000;
+      break;
+    case 'g':
+    case 'gr':
+      $kan_einheit = 'g';
+      break;
+    //
+    // volumen immer in ml:
+    //
+    case 'l':
+    case 'lt':
+    case 'li':
+      $kan_einheit = 'ml';
+      $kan_mult *= 1000;
+      break;
+    case 'ml':
+      $kan_einheit = 'ml';
+      break;
+    //
+    // PAckung und KIste: wenn liefer-einheit:
+    // - die verteileinheit darf dann STueck sein; dann bedeutet die
+    //    gebindegroesse STueck pro KIste oder PAckung
+    //    (annahme: wir koennen einzelne KI oder PA bestellen)
+    // - andernfalls muss die verteileinheit ebenfalls KI oder PA sein
+    //
+    case 'pa':
+      $kan_einheit = 'PA';
+      break;
+    case 'ki':
+      $kan_einheit = 'KI';
+      break;
+    //
+    // der rest sind zaehleinheiten (STueck und aequivalent):
+    //
+    case 'gl':
+      $kan_einheit = 'GL';
+      break;
+    case 'fl':
+      $kan_einheit = 'FL';
+      break;
+    case 'be':
+      $kan_einheit = 'BE';
+      break;
+    case 'bd':
+      $kan_einheit = 'BD';
+      break;
+    case 'bt':
+      $kan_einheit = 'BT';
+      break;
+    case 'kt':
+      $kan_einheit = 'KT';
+      break;
+    case 'ea':
+    case 'st':
+      $kan_einheit = 'ST';
+      break;
+    default:
+      $kan_einheit = strtolower($einheit);
+      echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
+      return false;
+  }
+  return true;
+}
+
+
+function get_http_var( $name ) {
+  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+  if( isset( $HTTP_GET_VARS[$name] ) ) {
+    $$name = $HTTP_GET_VARS[$name];
+    return TRUE;
+  } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
+    $$name = $HTTP_POST_VARS[$name];
+    return TRUE;
+  } else {
+    unset( $$name );
+    return FALSE;
+  }
+}
+function need_http_var( $name ) {
+  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+  if( isset( $HTTP_GET_VARS[$name] ) ) {
+    $$name = $HTTP_GET_VARS[$name];
+  } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
+    $$name = $HTTP_POST_VARS[$name];
+  } else {
+    error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
+    exit();
+  }
+}
+
+function wikiLink( $topic, $text ) {
+  global $foodsoftpath;
+  echo "<a class='wikilink' target='wiki' href='/wiki/doku.php?id=$topic'>$text</a>";
+}
+
 ?>
