@@ -2,7 +2,7 @@
 <h1>Mein Konto</h1>
 <?PHP
    //error_reporting(E_ALL); // alle Fehler anzeigen
-   include('code/zuordnen.php');
+   require_once('code/zuordnen.php');
    
 /*   // Übergebene Variablen einlesen...
  *   if (isset($HTTP_GET_VARS['gruppen_id'])) $gruppen_id = $HTTP_GET_VARS['gruppen_id'];       // Passwort für den Bereich

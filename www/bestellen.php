@@ -2,8 +2,8 @@
 
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
-   include('code/zuordnen.php');
-   include('code/views.php');
+   require_once('code/zuordnen.php');
+   require_once('code/views.php');
 /*
  *   // Übergebene Variablen einlesen...
  *
@@ -1185,9 +1185,8 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 				</table>
 		    </form>
  
-   <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
-   <form>
-	   <input type="hidden" name="area" value="bestellen">			
+   <h3> Zusätzlich Produkt in Bestellvorlage aufnehmen </h3>
+   <form method='post' target='index.php?area=bestellen'>
 	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
 	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
 	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
@@ -1196,8 +1195,8 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 	     ?>
 	   <input type="submit" value="Produkt hinzufügen">
    </form>
+<?php
 				
-		<?PHP
 		
 						 // prüfe ob sich durch zwischenzeitliche Bestellungen der anderen Bestellgruppen etwas geändert hatt und bereite den Hinweistext vor...
 						 if (isset($action) && $action == "bestellen") {
