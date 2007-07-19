@@ -25,31 +25,6 @@
          $coopie_name,
          $dienstkontrollblatt_id;
 
-  function get_http_var( $name ) {
-    global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
-    if( isset( $HTTP_GET_VARS[$name] ) ) {
-      $$name = $HTTP_GET_VARS[$name];
-      return TRUE;
-    } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-      $$name = $HTTP_POST_VARS[$name];
-      return TRUE;
-    } else {
-      unset( $$name );
-      return FALSE;
-    }
-  }
-  function need_http_var( $name ) {
-    global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
-    if( isset( $HTTP_GET_VARS[$name] ) ) {
-      $$name = $HTTP_GET_VARS[$name];
-    } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-      $$name = $HTTP_POST_VARS[$name];
-    } else {
-      error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
-      exit();
-    }
-  }
-
   function init_login() {
     global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $dienstkontrollblatt_id;
     $angemeldet=FALSE;
@@ -64,6 +39,9 @@
     setcookie( 'foodsoftkeks', '0', 0, '/' );
   }
 
+  require_once( "$foodsoftpath/code/err_functions.php" );
+  require_once( "$foodsoftpath/code/zuordnen.php" );
+  
   init_login();
 
   $telefon='';
@@ -319,7 +297,7 @@
   require_once('head.php');
 
   get_http_var( 'area' );
-  if( $from_dokuwiki || ( $area == 'wiki' ) ) {
+  if( isset( $from_dokuwiki ) && $from_dokuwiki or ( $area == 'wiki' ) ) {
     $form_action='/foodsoft/index.php?area=wiki';
   } else {
     $form_action='index.php';
