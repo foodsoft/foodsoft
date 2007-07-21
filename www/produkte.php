@@ -1,8 +1,9 @@
 <h1>Produktdatenbank ....</h1>
 
 <?PHP
-  require_once("code/zuordnen.php");
-  require_once("code/login.php");
+  require_once("$foodsoftpath/code/zuordnen.php");
+  require_once("$foodsoftpath/code/login.php");
+  $pwd_ok = $angemeldet;
 
 /* wie das skript funktioniert:
 
@@ -13,30 +14,20 @@
       2.3. action = change_all -> die preise werden ggf. aktualisiert .. 
 
 */
-   // Übergebene Variablen einlesen...
-   if (isset($HTTP_GET_VARS['produkte_pwd'])) $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];       // Passwort für den Bereich
     
-          // Passwort prüfen...
-          $pwd_ok = $angemeldet;
-          
           // ggf. Aktionen durchführen (z.B. Produkt löschen... oder neue preise einfügen)
-          $edit_all = false;
-           if ($pwd_ok && isset($HTTP_GET_VARS['action'])) 
-           {
-               $action = $HTTP_GET_VARS['action'];
-                
-                      // Produkt löschen..
-                      if ($action == "delete") 
-                      {
-                         //mysql_query("DELETE FROM produkte WHERE id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt nicht löschen.",mysql_error());
-                           //mysql_query("DELETE FROM kategoriezuordnung WHERE produkt_id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt-Kategorienzuordnung nicht löschen.",mysql_error());
+  $edit_all = false;
+  get_http_var('action');
+  // loeschen ist keine gute idee (produkte werden fuer berechnung der kontostaende gebraucht!)
+  // if ($action == "delete") 
+  //  {
+  //    mysql_query("DELETE FROM produkte WHERE id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt nicht löschen.",mysql_error());
+  //    mysql_query("DELETE FROM kategoriezuordnung WHERE produkt_id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt-Kategorienzuordnung nicht löschen.",mysql_error());
+  //  }
                       
-                      }
-                      
-                      else if ($action == "edit_all")
-                      { 
-                             $edit_all = true;
-                      }
+  if ($action == "edit_all") { 
+         $edit_all = true;
+  }
                       
                       
                       // jetzt wurde er änderung speichern button gedrückt und alle produkte aktualisiert
@@ -64,7 +55,6 @@
                                      $preis  = str_replace(",",".",$HTTP_GET_VARS['preis_'.$prodIds[$i]]);
                                      
                                     //aber erst wird geprüft, ob es aktuelle preise für das produkt gibt
-				    //echo "line 66, prodID=".$prodIds[$i];
               			    $result2 =  sql_produktpreise($prodIds[$i],0, "NOW()","NOW()");
                                     
                                        if (mysql_num_rows($result2) == 1) // wenn eine zeile mit gültigem preis existiert ...
@@ -111,65 +101,11 @@
                          
                       } // end else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
                       
-            }//end if ($pwd_ok && isset($HTTP_GET_VARS['action'])) 
       
       // Lieferanten Array aufbauen (ordnet jeder ID einen Namen zu)
          $result = mysql_query("SELECT id,name FROM lieferanten") or error(__LINE__,__FILE__,"Konnte Lieferantennamen nich aus DB laden..",mysql_error());
 
     
-       // Wenn kein Passwort für die Bestellgruppen-Admin angegeben wurde, dann abfragen...
-         if (!isset($produkte_pwd) || !$pwd_ok) {
-   ?>
-             <form action="index.php">
-                                <input type="hidden" name="area" value="produkte">
-                <table class="menu">
-                   <tr>
-                      <th colspan="2">Hier könnt ihr den Lieferanten auswählen</th>
-                   </tr>
-                  <tr>
-                     <td>Lieferanten auswählen</td>
-                     <td>
-                           <select name="lieferanten_id">
-                              <option value="">[auswählen]</option>
-                                  <?PHP
-                                  //lieferanten ausspucken
-                                    $sql = "SELECT id, name
-                                                   FROM lieferanten
-                                                   ORDER BY name";            
-                                    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-                                                                  
-                                    while ($row = mysql_fetch_array($result)) 
-                                    {
-                                       //jetzt die anzahl der produkte zählen
-                                       $sql = "SELECT id
-                                                   FROM produkte
-                                                   WHERE lieferanten_id=".$row['id']."";
-                                       $res = mysql_query($sql);
-                                       $num = mysql_num_rows($res);
-                                       
-                                       echo "<option value='".$row['id']."'>".$row['name']." (".$num.")</option>\n";
-                                    } //end while
-                                    ?>
-                                 <option value="0">- Alle Lieferanten -</option>
-                           </select>
-                     </td>                  
-                  </tr>
-                  <tr>
-                     <td colspan="2">Und hier bitte das Schinkepasswort eingeben:</td>
-                  </tr>                
-                   <tr>
-           ;         <td></td>
-                      <td><input type="password" size="12" name="produkte_pwd"> <input type="submit" value="ok"></td>
-                   </tr>
-                </table>               
-             </form>
-
-            <div id="tip"><b>Tip:</b> 
-                                    Einen neuen Lieferanten kannst Du bei <a href="index.php?area=lieferanten">Lieferanten</a> eintragen</div> 
-             
-   <?PHP
-         } else   {               
-               
   
             //überprüfen ob ein lieferant schon ausgewählt wurde, ansonsten asuwahlfenster anzeigen:
             
@@ -440,6 +376,7 @@
 			//	    echo "line 362, prodID=".$row['prodId'];
               $result2 =  sql_produktpreise($row['prodId'],0, "NOW()","NOW()");
                                 //wenn mehere preise aktuell sind dann die Meldung
+                                // (TF: was soll das ^^^ eigentlich? das waere doch eine klare inkonsistenz!)
                 if (mysql_num_rows($result2) > 1)
                 {
                    echo "-multi-";
@@ -447,17 +384,18 @@
                    $preis_row = mysql_fetch_array($result2);
                    echo $preis_row['preis'];
                   }
-         ?>
-                   </td>
-                   <td valign="top">
-                         <a class="png" href="javascript:window.open('windows/showProduktpreise.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>&produkt_id=<?PHP echo $row['id']; ?>','produkteDetails','width=650,height=600,left=200,top=100,scrollbars=1').focus()"><img src="img/euro.png" border="0" alt="Preise" titel="Preise"></a>
-                        <a class="png" href="javascript:window.open('windows/editProdukt.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>&produkt_id=<?PHP echo $row['id']; ?>','editProdukt','width=400,height=450,left=200,top=100').focus()"><img src="img/b_edit.png" border="0" alt="Gruppendaten ändern"  titel="Gruppendaten ändern"/></a>
+                  echo "
+                    </td>
+                    <td valign='top'>
+                        <a class='png' href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$row['id']}','foodsoftdetail');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
+                        <a class='png' href=\"javascript:f=window.open('windows/editProdukt.php?produkt_id={$row['id']}','editProdukt','width=400,height=450,left=200,top=100'); f.focus();\"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
                         <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
-                        <a class="png" href="javascript:deleteProdukt(<?PHP echo $row['id']; ?>);"><img src="img/b_drop.png" border="0" alt="Gruppe löschen" titel="Gruppe löschen"/></a>
+                        <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
                         -->
-                   </td>
-               </tr>
-               <?PHP } else { 
+                    </td>
+                    </tr>
+                  ";
+                } else { 
                                           //  alle bearbeiten ansicht ...               
                ?>
            <tr>
@@ -573,5 +511,15 @@
              </form>
             <?php
       } //end if
-   } //end if      
-    ?>
+
+echo "$print_on_exit";
+
+?>
+
+<script type="text/javascript">
+  function neuesfenster(url,name) {
+    f=window.open(url,name);
+    f.focus();
+  }
+</script>
+

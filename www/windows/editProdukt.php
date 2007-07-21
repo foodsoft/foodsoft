@@ -1,15 +1,15 @@
 <?PHP
-   $produkt_id       = $HTTP_GET_VARS['produkt_id'];
-   $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];
+
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
 	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-   require_once('../code/login.php');
-   nur_fuer_dienst_IV();
+   require_once("code/config.php");
+   require_once("$foodsoftpath/code/err_functions.php");
+   require_once("$foodsoftpath/code/login.php");
+   //nur_fuer_dienst_IV();
+
+   need_http_var('produkt_id');
 	 
 	 // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
@@ -52,27 +52,19 @@
 	$result = mysql_query("SELECT * FROM produkte WHERE id=".mysql_escape_string($produkt_id)) or error(__LINE__,__FILE__,"Konnte Produkt nich aus DB laden..",mysql_error());
 	$produkt_row = mysql_fetch_array($result);	 
 	 
-?>
 
-<html>
-<head>
-   <title>Produkt bearbeiten</title>
-      <link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
-</head>
-<body onload="<?PHP echo $onload_str; ?>">
-   
+$title = "Produkt bearbeiten";
+$subtitle = "Produkt bearbeiten";
+$wikitopic = "foodsoft:datenbankabgleich";
+require_once('head.php');
 
-<?PHP
 $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name") 
 		      or error(__LINE__,__FILE__,"Konnte Kategorien nich aus DB laden..",mysql_error());
 										 
 ?>
 
 
-
-<h3>Produkt bearbeiten</h3>
 	 <form name="reload_form" action="editProdukt.php">
-		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
 		<input type="hidden" name="produkt_id" value="<?PHP echo $produkt_id; ?>">
 		<input type="hidden" name="action" value="">
 		<table class="menu" width="390px">
@@ -81,7 +73,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					<td><input type="input" size="30" name="newProdukt_name" value="<?PHP echo $produkt_row['name']; ?>"></td>
 			 </tr>
 		   <tr>
-			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 						<select name="newProdukt_produktgruppe">
                <?PHP
@@ -117,7 +109,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>				
 		   <tr>
-			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 					
 			    	<select name="newProduk_kategorien[]" size="5" multiple="multiple">

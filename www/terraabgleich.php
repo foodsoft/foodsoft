@@ -235,7 +235,7 @@
 
     echo '<th class="outer" style="vertical-align:top;">';
     if( ! $detail ) {
-      echo "<a class='blocklink' href='terraabgleich.php?produktid=$produktid' target='_new' title='Details...'";
+      echo "<a class='blocklink' href='terraabgleich.php?produktid=$produktid' target='foodsoftdetail' title='Details...'";
       echo "onclick=\"document.getElementById('row$outerrow').className='modified';\">";
     }
     echo "$anummer<br>id:&nbsp;$produktid";
@@ -655,10 +655,15 @@
         $newfcmult = $can_fcmult;
       }
       if( ! $newliefereinheit ) {
-        $newliefereinheit = $can_fceinheit;
-        $newliefermult = $can_fcmult;
-        if( $is_terra ) {
-          $newliefermult *= $newfcgebindegroesse;
+        if( $can_liefereinheit ) {
+          $newliefereinheit = $can_liefereinheit;
+          $newliefermult = $can_liefermult;
+        } else {
+          $newliefereinheit = $can_fceinheit;
+          $newliefermult = $can_fcmult;
+          if( $is_terra ) {
+            $newliefermult *= $newfcgebindegroesse;
+          }
         }
       }
 
