@@ -373,7 +373,7 @@ function sql_gruppenname($gruppen_id){
 }
 function sql_gruppen($bestell_id=FALSE){
         if($bestell_id==FALSE){
-		$query="SELECT * FROM bestellgruppen WHERE aktiv=1";
+		$query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
 	} else {
 	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
 		FROM bestellgruppen INNER JOIN gruppenbestellungen 
@@ -426,8 +426,8 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	 if($where != "") {
 	 	$query .= " WHERE ".$where;
 	}
-	$result = doSql(  $query, LEVEL_ALL,"Konnte Bestellgruppendaten nich aus DB laden.. ");
-	 return $result;
+	$result = doSql(  $query, LEVEL_ALL,"Konnte Gesamtbestellungen nich aus DB laden.. ");
+	return $result;
 }
 
 function nichtGeliefert($bestell_id, $produkt_id){
@@ -932,6 +932,9 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
       break;
     case 'be':
       $kan_einheit = 'BE';
+      break;
+    case 'do':
+      $kan_einheit = 'DO';
       break;
     case 'bd':
       $kan_einheit = 'BD';
