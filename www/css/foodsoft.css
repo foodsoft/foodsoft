@@ -330,6 +330,10 @@ td.outer, th.outer {
   border-color:#000000;
   border-width:1px;
 }
+td.number {
+  white-space:nowrap;
+  text-align:right;
+}
 
 tr.modified td, tr.modified th, .modified {
   background-image:url(modified.gif);
