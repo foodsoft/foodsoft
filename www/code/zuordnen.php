@@ -272,6 +272,7 @@ function sql_bestellprodukte($bestell_id){
             $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
                               , produktpreise.liefereinheit as liefereinheit
                               , produktpreise.verteileinheit as verteileinheit
+                              , produktpreise.gebindegroesse as gebindegroesse
             FROM produkte INNER JOIN
 	                            bestellvorschlaege ON (produkte.id=bestellvorschlaege.produkt_id)
 				    INNER JOIN produktpreise 
@@ -950,13 +951,48 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
       $kan_einheit = 'ST';
       break;
     default:
-      $kan_einheit = strtolower($einheit);
       echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
+      $kan_einheit = false;
       return false;
   }
   return true;
 }
 
+// preisdaten setzen:
+// berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
+//
+function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
+  kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
+  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
+
+  if( $pr['kan_liefereinheit'] and $pr['kan_verteileinheit'] ) {
+    if( $pr['kan_liefereinheit'] != $pr['kan_verteileinheit'] ) {
+      $pr['preiseinheit'] = "{$pr['kan_liefermult']} {$pr['kan_liefereinheit']} (". $pr['gebindegroesse'] * $pr['kan_verteilmult'] . " {$pr['kan_verteileinheit']})";
+      $pr['mengenfaktor'] = $pr['gebindegroesse'];
+    } else {
+      switch( $pr['kan_liefereinheit'] ) {
+        case 'g':
+          $pr['preiseinheit'] = 'kg';
+          $pr['mengenfaktor'] = 1000.0 / $pr['kan_verteilmult'];
+          break;
+        case 'ml':
+          $pr['preiseinheit'] = 'L';
+          $pr['mengenfaktor'] = 1000 / $pr['kan_verteilmult'];
+          break;
+        default:
+          $pr['preiseinheit'] = $pr['kan_liefereinheit'];
+          $pr['mengenfaktor'] = 1.0 / $pr['kan_verteilmult'];
+          break;
+      }
+    }
+  } else {
+    $pr['preiseinheit'] = false;
+    $pr['mengenfaktor'] = 1.0;
+  }
+  $pr['preis_rund'] = sprintf( "%8.2lf", $pr['preis'] );
+  $pr['nettopreis'] = ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 );
+  $pr['lieferpreis'] = sprintf( "%8.2lf", $pr['nettopreis'] * $pr['mengenfaktor'] );
+}
 
 function get_http_var( $name ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
@@ -984,25 +1020,25 @@ function need_http_var( $name ) {
 }
 
 
-function getAktuellerPreiseintrag( $produkt_id ) {
-  $row = false;
-  $result = mysql_query( "
-    SELECT * FROM produktpreise WHERE produkt_id=$produkt_id AND 
-    ( ISNULL(zeitende) OR ( zeitende >= '$mysqljetzt' ) ) 
-  " );
-  if( $result and mysql_num_rows($result) == 1 and ( $row = mysql_fetch_array($result) ) ) {
-    return $row;
-  } else {
-    $result = mysql_query( "SELECT * FROM produkte WHERE id=$produkt_id " );
-    echo "
-      <div class='warn'>
-        Problem mit Preiseintrag fuer Produkt $produkt_id
-        <a href='/terraabgleich.php?produkt_id=$product_id' target='_new'>Korrigieren...</a>
-      </div>
-    ";
-  }
-  return false;
-}
+// function getAktuellerPreiseintrag( $produkt_id ) {
+//   $row = false;
+//   $result = mysql_query( "
+//     SELECT * FROM produktpreise WHERE produkt_id=$produkt_id AND 
+//     ( ISNULL(zeitende) OR ( zeitende >= '$mysqljetzt' ) ) 
+//   " );
+//   if( $result and mysql_num_rows($result) == 1 and ( $row = mysql_fetch_array($result) ) ) {
+//     return $row;
+//   } else {
+//     $result = mysql_query( "SELECT * FROM produkte WHERE id=$produkt_id " );
+//     echo "
+//       <div class='warn'>
+//         Problem mit Preiseintrag fuer Produkt $produkt_id
+//         <a href='/terraabgleich.php?produkt_id=$product_id' target='_new'>Korrigieren...</a>
+//       </div>
+//     ";
+//   }
+//   return false;
+// }
 
 function wikiLink( $topic, $text ) {
   global $foodsoftpath;

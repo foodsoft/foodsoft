@@ -84,13 +84,13 @@
            <input type='hidden' name='area' value='lieferschein'>			
            <input type='hidden' name='bestellungs_id' value='$bestell_id'>
            <input type='hidden' name='action' value='aktualisiere_lieferschein'>
-         <table>
+         <table class='numbers'>
            <tr class='legende'>
              <th>Produkt</th>
-             <th>Bruttopreis</th>
+             <th title='Endpreis pro V-Einheit' colspan='2'>V-Preis</th>
              <th>MWSt</th>
              <th>Pfand</th>
-             <th>Nettopreis</th>
+             <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
              <th>Liefermenge</th>
              <th>Gesamtpreis</th>
            </tr>
@@ -104,50 +104,14 @@
   while  ($produkte_row = mysql_fetch_array($produkte)) {
     $produkt_id =$produkte_row['produkt_id'];
 
-    echo "
-      <tr id='row$produkt_id'>
-      <td>$produkt_id
-    ";
+    echo "<tr id='row$produkt_id'><td>$produkt_id";
 
-    kanonische_einheit( $produkte_row['liefereinheit'], &$kan_liefereinheit, &$kan_liefermult );
-    kanonische_einheit( $produkte_row['verteileinheit'], &$kan_verteileinheit, &$kan_verteilmult );
-    $gebindegroesse = $produkte_row['gebindegroesse'];
-    $mwst = $produkte_row['mwst'];
-    $pfand = $produkte_row['pfand'];
-    $preis = $produkte_row['preis'];
+    preisdatenSetzen( & $produkte_row );
 
-    if( $kan_liefereinheit != $kan_verteileinheit ) {
-      // typischer fall: liefereinheit=KIste, verteileinheit: STueck
-      // hier sollte die liefereinheit einem gebinde entsprechen, und der preis pro gebinde
-      // in der lieferantenrechnung stehen!
-      $kan_liefereinheit = $kan_verteileinheit;
-      $kan_liefermult = $kan_verteilmult * $gebindegroesse;
-    }
-
-    // nettopreis pro verteileinheit berechnen:
-    $nettopreis = ( $preis - $pfand ) / ( 1.0 + $mwst / 100.0 );
-
-    // einheit waehlen, die vermutlich in der lieferantenrechnung aufgefuehrt ist:
-    switch( $kan_liefereinheit ) {
-      case 'g':
-        // ausgewogene waren: lieferanten sollten preis pro 1 kg berechnen:
-        $preiseeinheit = 'kg';
-        $mengenfaktor = 1000.0 / $kan_verteilmult;
-        break;
-      case 'ml':
-        // pro volumen: lieferanten sollten preis pro 1 liter berechnen:
-        $preiseinheit = 'L';
-        $mengenfaktor = 1000.0 / $kan_verteilmult;
-        break;
-      default:
-        // sachen sollten stueckweise verteilt werden:
-        assert( $kan_verteilmult == 1 );
-        $preiseinheit = $kan_liefereinheit;
-        $mengenfaktor = 1.0;
-    }
-    $lieferpreis = $nettopreis * $mengenfaktor;
-
+    $lieferpreis = $produkte_row['lieferpreis'];
+    $mengenfaktor = $produkte_row['mengenfaktor'];
     $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
+
     if( get_http_var( 'liefermenge'.$produkt_id ) ) {
       if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
         $liefermenge = ${"liefermenge$produkt_id"};
@@ -161,77 +125,38 @@
     // if($produkte_row['liefermenge']!=0){	
     echo "
       {$produkte_row['produkt_name']}</td>
-      <td class='number'>$preis / $kan_verteilmult $kan_verteileinheit</td>
-      <td class='number'>$mwst</td>
-      <td class='number'>$pfand</td>
-      <td class='number'><a
+      <td class='mult'>{$produkte_row['preis_rund']}</td>
+      <td class='unit'>/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
+      <td class='number'>{$produkte_row['mwst']}</td>
+      <td class='number'>{$produkte_row['pfand']}</td>
+      <td class='mult'><a
         href='terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id'
         target='foodsoftdetail'
         onclick=\"
           document.getElementById('row$produkt_id').className='modified';
           document.getElementById('row_total').className='modified';\"
         >
-        $lieferpreis / $preiseinheit</a></td>
-      <td class='number' style='text-align:left;'><input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></innput> $preiseinheit</td>
+        $lieferpreis</a></td>
+      <td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>
+      <td class='number'>
+        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></innput>
+        {$produkte_row['preiseinheit']}</td>
       <td class='number'>$gesamtpreis</td>
     </tr>";
 
     $preis_summe += $gesamtpreis;
 
-//         $fieldname = "liefermenge".$produkt_id;
-// 			$selectpreis = "preis".$produkt_id;
-// 	       		if(isset($HTTP_GET_VARS[$fieldname])){
-// 				$liefer_form =$HTTP_GET_VARS[$fieldname];
-// 				if($liefer!=$liefer_form){
-// 					changeLiefermengen_sql($liefer_form, $produkt_id, $bestell_id );
-// 					$liefer=$liefer_form;
-// 				}
-// 			
-// 			}
-// 	       
-// 	      
-// 			   $current_preis_id = $produkte_row['produktpreise_id'];
-// 				if(isset($HTTP_GET_VARS[$selectpreis])){
-// 					$preis_form =$HTTP_GET_VARS[$selectpreis];
-// 					if($current_preis_id!=$preis_form){
-// 						changeLieferpreis_sql($preis_form, $produkt_id, $bestell_id );
-// 						$current_preis_id=$preis_form;
-// 					}
-// 				
-// 				}
-// 			   $preise=sql_produktpreise2($produkt_id);
-// 			   while($pr = mysql_fetch_array($preise)){
-// 				$sel = "";
-// 			   	if($pr['id']==$current_preis_id ){
-// 					$sel = " selected=\"selected\"";
-// 					$preis =$pr['preis'];
-// 				}
-// 				echo "<option value='{$pr['id']}' $sel>";
-//         // bruttopreis berechnen und ausgeben (wie auf papierlieferschein!):
-//         printf( "%5.2lf", ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 ) );
-// 				echo "&nbsp;({$pr['preis']},{$pr['mwst']},{$pr['pfand']})";
-//         echo "</option>\n";
-// 			   }
-// 	       
-// 	     
-// 	   	     </select>
-// 		     </td>
-// 		     <td>
-// 	       		<?echo($preis*$liefer );
-//			$preis_summe+=$preis*$liefer
-//			
-   
-   //// } //end if ... reichen die bestellten mengen? dann weiter im text
+    // } //end if ... reichen die bestellten mengen? dann weiter im text
    
       } //end while produkte array            
 
       echo "
         <tr id='row_total'>
-          <td colspan='6'>&nbsp;</td>
+          <td colspan='8'>&nbsp;</td>
           <td>$preis_summe</td>
         </tr>
         <tr>
-          <td colspan='7'>
+          <td colspan='9'>
             <input type='submit' value=' Lieferschein Aktualisieren '>
             <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen '>
           </td>
