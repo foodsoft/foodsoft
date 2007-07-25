@@ -331,6 +331,38 @@ td.outer, th.outer {
   border-width:1px;
 }
 
+table.numbers td, table.numbers th {
+  padding:0.5ex;
+}
+table.numbers th {
+  text-align:center;
+}
+
+table.numbers td.number {
+  white-space:nowrap;
+  text-align:right;
+}
+
+table.numbers td.mult {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:1ex;
+}
+table.numbers td.unit {
+  white-space:nowrap;
+  text-align:left;
+  border-left:none;
+  margin-left:0pt;
+  padding-left:0pt;
+}
+
+table#preisform label {
+  padding-left:2em;
+  padding-right:1ex;
+}
+
 tr.modified td, tr.modified th, .modified {
   background-image:url(modified.gif);
   background-repeat:repeat;

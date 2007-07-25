@@ -834,10 +834,13 @@ function verteilmengenZuweisen($bestell_id){
 	
 }
 
+global $masseinheiten;
+$masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
 function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
+  global $masseinheiten;
   $kan_einheit = NULL;
   $kan_mult = NULL;
   sscanf( $einheit, "%f", &$kan_mult );
@@ -886,39 +889,72 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
     case 'ki':
       $kan_einheit = 'KI';
       break;
-    //
-    // der rest sind zaehleinheiten (STueck und aequivalent):
-    //
-    case 'gl':
-      $kan_einheit = 'GL';
-      break;
-    case 'fl':
-      $kan_einheit = 'FL';
-      break;
-    case 'be':
-      $kan_einheit = 'BE';
-      break;
-    case 'bd':
-      $kan_einheit = 'BD';
-      break;
-    case 'bt':
-      $kan_einheit = 'BT';
-      break;
-    case 'kt':
-      $kan_einheit = 'KT';
-      break;
-    case 'ea':
-    case 'st':
-      $kan_einheit = 'ST';
-      break;
     default:
-      $kan_einheit = strtolower($einheit);
-      echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
+      //
+      // der rest sind zaehleinheiten (STueck und aequivalent):
+      //
+      foreach( $masseinheiten as $e ) {
+        if( strtolower( $e ) == $einheit ) {
+          $kan_einheit = $e;
+          break 2;
+        }
+      }
+      $kan_einheit = $einheit;
+      //  echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
+      $kan_einheit = false;
       return false;
   }
   return true;
 }
 
+function selector_einheit( $selected ) {
+  global $masseinheiten;
+  foreach( $masseinheiten as $e ) {
+    echo "<option value='$e'";
+    if( $e == $selected )
+      echo " selected";
+    echo ">$e</option>";
+  }
+}
+
+// preisdaten setzen:
+// berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
+//
+function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
+  kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
+  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
+
+  if( $pr['kan_liefereinheit'] and $pr['kan_verteileinheit'] ) {
+    if( $pr['kan_liefereinheit'] != $pr['kan_verteileinheit'] ) {
+      $pr['preiseinheit'] = "{$pr['kan_liefereinheit']} (". $pr['gebindegroesse'] * $pr['kan_verteilmult'] . " {$pr['kan_verteileinheit']})";
+      if( $pr['kan_liefermult'] != 1 ) {
+        $pr['preiseinheit'] = $pr['kan_liefermult'] . " " . $pr['preiseinheit'];
+      }
+      $pr['mengenfaktor'] = $pr['gebindegroesse'];
+    } else {
+      switch( $pr['kan_liefereinheit'] ) {
+        case 'g':
+          $pr['preiseinheit'] = 'kg';
+          $pr['mengenfaktor'] = 1000.0 / $pr['kan_verteilmult'];
+          break;
+        case 'ml':
+          $pr['preiseinheit'] = 'L';
+          $pr['mengenfaktor'] = 1000 / $pr['kan_verteilmult'];
+          break;
+        default:
+          $pr['preiseinheit'] = $pr['kan_liefereinheit'];
+          $pr['mengenfaktor'] = 1.0 / $pr['kan_verteilmult'];
+          break;
+      }
+    }
+  } else {
+    $pr['preiseinheit'] = false;
+    $pr['mengenfaktor'] = 1.0;
+  }
+  $pr['preis_rund'] = sprintf( "%8.2lf", $pr['preis'] );
+  $pr['nettopreis'] = ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 );
+  $pr['lieferpreis'] = sprintf( "%8.2lf", $pr['nettopreis'] * $pr['mengenfaktor'] );
+}
 
 function get_http_var( $name ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
