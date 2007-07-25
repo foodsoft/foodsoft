@@ -185,6 +185,7 @@
     $lieferanten_id = $row['lieferanten_id'];
   } else {
     need_http_var( 'lieferanten_id' );
+    $self = $self . "&lieferanten_id=$lieferanten_id";
   }
 
   $result = mysql_query( "SELECT * FROM lieferanten WHERE id='$lieferanten_id'" )
@@ -277,8 +278,12 @@
 
     echo '<th class="outer" style="vertical-align:top;">';
     if( ! $detail ) {
-      echo "<a class='blocklink' href='$self' target='foodsoftdetail' title='Details...'";
-      echo "onclick=\"document.getElementById('row$outerrow').className='modified';\">";
+      echo "
+        <a class='blocklink'
+        href=\"javascript:neuesfenster('$self&produktid=$produktid','foodsoftdetails')\"
+        title='Details...'
+        onclick=\"document.getElementById('row$outerrow').className='modified';\">
+      ";
     }
     echo "$anummer<br>id:&nbsp;$produktid";
     if( ! $detail ) {
@@ -887,9 +892,19 @@
               <tr>
                 <td><label>ab:</label></td>
                   <td><input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'></input>
-                  &nbsp; <input type='submit' name='submit' value='OK'
+
+
+                  <label>&nbsp;</label>
+                  <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
                   ></input>
+
+                  <label>&nbsp;</label>
+                  <label>Dynamische Neuberechnung:</label>
+                  <input name='dynamischberechnen' type='checkbox' value='yes'
+                  title='Automatische Neuberechnung anderer Werte bei Aenderung eines Eintrags'
+                  checked></input>
+
                 </td>
               </tr>
             </table>
@@ -1003,16 +1018,22 @@
   function preisberechnung_vorwaerts() {
     vorwaerts = 1;
     preiseintrag_auslesen();
-    lieferpreis = 
-      parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * mengenfaktor ) / 100.0;
+    berechnen = document.Preisform.dynamischberechnen.checked;
+    if( berechnen ) {
+      lieferpreis = 
+        parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * mengenfaktor ) / 100.0;
+    }
     preiseintrag_update();
   }
 
   function preisberechnung_rueckwaerts() {
     vorwaerts = 0;
     preiseintrag_auslesen();
-    preis = 
-      parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / mengenfaktor + pfand ) ) / 10000.0;
+    berechnen = document.Preisform.dynamischberechnen.checked;
+    if( berechnen ) {
+      preis = 
+        parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / mengenfaktor + pfand ) ) / 10000.0;
+    }
     preiseintrag_update();
   }
 
@@ -1024,19 +1045,25 @@
   }
   function preisberechnung_fcmult() {
     alt = verteilmult;
-    verteilmult = parseInt( document.Preisform.newfcmult.value );
-    if( (verteilmult > 0) && (alt > 0) ) {
-      gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
-      document.Preisform.newfcgebindegroesse.value = gebindegroesse;
+    berechnen = document.Preisform.dynamischberechnen.checked;
+    if( berechnen ) {
+      verteilmult = parseInt( document.Preisform.newfcmult.value );
+      if( (verteilmult > 0) && (alt > 0) ) {
+        gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
+        document.Preisform.newfcgebindegroesse.value = gebindegroesse;
+      }
     }
     preisberechnung_default();
   }
   function preisberechnung_gebinde() {
     alt = gebindegroesse;
-    gebindegroesse = parseInt( document.Preisform.newfcgebindegroesse.value );
-    if( (gebindegroesse > 0) && (alt > 0) ) {
-      verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
-      document.Preisform.newfcmult.value = verteilmult;
+    berechnen = document.Preisform.dynamischberechnen.checked;
+    if( berechnen ) {
+      gebindegroesse = parseInt( document.Preisform.newfcgebindegroesse.value );
+      if( (gebindegroesse > 0) && (alt > 0) ) {
+        verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
+        document.Preisform.newfcmult.value = verteilmult;
+      }
     }
     preisberechnung_default();
   }
