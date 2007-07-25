@@ -13,7 +13,10 @@
 
   //nur_fuer_dienst(4,5);
   
+  $self = 'terraabgleich.php?';
   $detail = get_http_var('produktid');
+  if( $detail )
+    $self = $self . "&produktid=$produktid";
 
   $title = 'Produktdaten';
   $subtitle = 'Produktdaten';
@@ -21,6 +24,11 @@
   if( $detail )
     $subtitle = $subtitle . " - Detailanzeige";
   require_once('windows/head.php');
+
+  $bestell_id = false;
+  get_http_var('bestell_id') and $self = $self . "&bestell_id=$bestell_id";
+
+  // echo "bestell_id: $bestell_id<br>";
 
   if( $detail ) {
 
@@ -43,6 +51,33 @@
       $n++;
     }
   
+    if( $bestell_id ) {
+
+      // eventuell preiseintrag fuer bestellvorschlag aendern:
+      //
+      if( get_http_var( 'new_preisid' ) ) {
+        $result = mysql_query(
+          "UPDATE bestellvorschlaege
+           SET produktpreise_id=$new_preisid
+           WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produktid"
+        ) or error ( __LINE__, __FILE__, "Setzen des neuen Preiseintrags fehlgeschlagen" );
+      }
+
+      $result = mysql_query(
+        "SELECT * FROM bestellvorschlaege
+         WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produktid"
+      ) or error ( __LINE__, __FILE__, "Suche nach Bestellvorschlag fehlgeschlagen" );
+      $row = mysql_fetch_array( $result )
+        or error ( __LINE__, __FILE__, "Bestellvorschlag nicht gefunden" );
+      $preisid_in_bestellvorschlag = $row['produktpreise_id'];
+
+      $result = mysql_query( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" )
+        or error ( __LINE__, __FILE__, "Suche nach Gesamtbestellung fehlgeschlagen" );
+      $row = mysql_fetch_array( $result )
+        or error ( __LINE__, __FILE__, "Gesamtbestellung nicht gefunden" );
+      $bestellung_name = $row['name'];
+    }
+
     // eventuell neuen preiseintrag vornehmen:
     //
   
@@ -209,17 +244,20 @@
   //
   function mysql_repair_link( $befehl, $kommentar, $domid = '' ) {
     global $produktid;
-    echo '<div class="warn" style="padding-left:2em;">';
-    echo "  <form method='post' action='terraabgleich.php?produktid=$produktid'>";
-    echo "    <input type='hidden' name='produktid' value='$produktid'></input>";
-    echo '    <input type="hidden" name="befehl0" value="' . base64_encode( $befehl ) . '"></input>';
-    echo '    <input type="submit" name="submit" value="' . $kommentar . '"';
+    echo "
+      <div class='warn' style='padding-left:2em;'>
+        <form method='post' action='$self'>
+          <input type='hidden' name='befehl0' value='" . base64_encode( $befehl ) . "'></input>
+          <input type='submit' name='submit' value='$kommentar'
+    ";
     if( $domid != '' ) {
       echo "    onclick=\"document.getElementById('$domid').className='modified';\"";
     }
-    echo '    ></input>';
-    echo '  </form>';
-    echo '</div>';
+    echo "
+        ></input>
+        </form>
+       </div>
+    ";
   }
 
 
@@ -228,7 +266,8 @@
   // wird aus der hauptschleife aufgerufen, um einen artikel aus der Produktliste anzuzeigen
   //
   function do_artikel() {
-    global $outerrow, $ldaphandle, $ldapbase, $artikel, $detail, $mysqljetzt, $is_terra;
+    global $outerrow, $ldaphandle, $ldapbase, $artikel, $detail, $mysqljetzt, $is_terra
+         , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag, $self;
 
     echo "\n<tr id='row$outerrow'>";
     $anummer = $artikel['artikelnummer'];
@@ -238,7 +277,7 @@
 
     echo '<th class="outer" style="vertical-align:top;">';
     if( ! $detail ) {
-      echo "<a class='blocklink' href='terraabgleich.php?produktid=$produktid' target='foodsoftdetail' title='Details...'";
+      echo "<a class='blocklink' href='$self' target='foodsoftdetail' title='Details...'";
       echo "onclick=\"document.getElementById('row$outerrow').className='modified';\">";
     }
     echo "$anummer<br>id:&nbsp;$produktid";
@@ -261,7 +300,13 @@
           <img id='preishistorie_knopf' class='button' src='img/close_black_trans.gif'
             onclick='preishistorie_toggle();' title='Ausblenden'>
           </img>
-          Preis-Historie:
+      ";
+      if( $bestell_id ) {
+        echo "Preiseintrag waehlen fuer Bestellung $bestellung_name:";
+      } else {
+        echo "Preis-Historie:";
+      }
+      echo "
         </div>
         <div id='preishistorie'>
           <table width='100%' class='numbers'>
@@ -272,13 +317,16 @@
               <th>bis</th>
               <th title='Liefer-Einheit: fuers Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
               <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-              <th title='Gebindegroesse in V-Einheiten'>Gebinde</th>
               <th title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
+              <th title='Gebindegroesse in V-Einheiten'>Gebinde</th>
               <th>MWSt</th>
               <th title='Pfand je V-Einheit'>Pfand</th>
               <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
-            </tr>
       ";
+      if( $bestell_id ) {
+        echo "<th title='Preiseintrag fuer Bestellung $bestellung_name'>Aktiv</th>";
+      }
+      echo "</tr>";
       while( $pr1 = mysql_fetch_array($terrapreise) ) {
         preisdatenSetzen( &$pr1 );
         echo "
@@ -291,15 +339,31 @@
             <td class='unit'>{$pr1['kan_liefereinheit']}</td>
             <td class='mult'>{$pr1['lieferpreis']}</td>
             <td class='unit'>/ {$pr1['preiseinheit']}</td>
-            <td class='number'>{$pr1['gebindegroesse']}</td>
             <td class='mult'>{$pr1['kan_verteilmult']}</td>
             <td class='unit'>{$pr1['kan_verteileinheit']}</td>
+            <td class='number'>{$pr1['gebindegroesse']}</td>
             <td class='number'>{$pr1['mwst']}</td>
             <td class='number'>{$pr1['pfand']}</td>
             <td class='mult'>{$pr1['preis_rund']}</td>
             <td class='unit'> / {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}</td>
-          </tr>
         ";
+        if( $bestell_id ) {
+          echo "<td>";
+          if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
+            echo "<span class='ok' style='padding:0.2ex;'><b>&nbsp;aktiv&nbsp;</b></span>";
+          } else {
+            echo "
+              <form action='$self' method='post'>
+                <input type='hidden' name='new_preisid' value='{$pr1['id']}'></input>
+                <input type='submit' name='setzen' value='setzen'
+                title='Preiseintrag fuer Bestellung $bestellung_name waehlen'
+                >
+              </form>
+            ";
+          }
+          echo "</td>";
+        }
+        echo "</tr>";
       }
       if( mysql_num_rows( $terrapreise ) > 0 ) {
         mysql_data_seek( $terrapreise, 0 );
@@ -353,7 +417,7 @@
       preisdatenSetzen( &$prgueltig );
       $fcbnummer = $prgueltig['bestellnummer'];
       $fcgebindegroesse = $prgueltig['gebindegroesse'];
-      $fcpreis = $prgueltig['preis_rund'];
+      $fcpreis = $prgueltig['preis'];
       $fcpfand = $prgueltig['pfand'];
       $fcmwst = $prgueltig['mwst'];
       $fclieferpreis = $prgueltig['lieferpreis'];
@@ -411,8 +475,8 @@
           <th>Name</th>
           <th title='Liefer-Einheit: fuers Bestellen beim Lieferanten'>L-Einheit</th>
           <th title='Nettopreis beim Lieferanten'>L-Preis</th>
-          <th title='V-Einheiten pro Gebinde'>Gebinde</th>
           <th title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns'>V-Einheit</th>
+          <th title='V-Einheiten pro Gebinde'>Gebinde</th>
           <th title='MWSt in Prozent'>MWSt</th>
           <th title='Pfand je V-Einheit'>Pfand</th>
           <th title='Endpreis je V-Einheit'>V-Preis</th>
@@ -431,8 +495,8 @@
       echo "
         <td class='number'>$kan_liefermult $kan_liefereinheit</td>
         <td class='number'>$fclieferpreis / $fcpreiseinheit</td>
-        <td class='number'>$fcgebindegroesse</td>
         <td class='number'>$kan_fcmult $kan_fceinheit</td>
+        <td class='number'>$fcgebindegroesse</td>
         <td class='number'>$fcmwst</td>
         <td class='number'>$fcpfand</td>
         <td class='number'>$fcpreis / $kan_fcmult $kan_fceinheit</td>
@@ -456,16 +520,14 @@
 
     // werte fuer neuen preiseintrag:
     //
-    $newfcmult = FALSE;
-    $newfceinheit = FALSE;
-    $newliefermult = FALSE;
-    $newliefereinheit = FALSE;
-    $newfcgebindegroesse = FALSE;
-    $newfcpreis = FALSE;
-    $newlieferpreis = FALSE;
-    $newfcbnummer = FALSE;
-    $newfcmwst = FALSE;
-    $newfcpfand = FALSE;
+    unset( $newfc );
+    $newfc['verteileinheit'] = FALSE;
+    $newfc['liefereinheit'] = FALSE;
+    $newfc['gebindegroesse'] = FALSE;
+    $newfc['preis'] = FALSE;
+    $newfc['bnummer'] = FALSE;
+    $newfc['mwst'] = FALSE;
+    $newfc['pfand'] = FALSE;
 
     // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
     //
@@ -492,7 +554,7 @@
             <td>
               neue Artikel-Nr. setzen:
             </td>
-            <td><form action='terraabgleich.php?produktid=$produktid' method='post'><input type='text' size='20' name='anummer' value='$anummer'></input>&nbsp;<input type='submit' name='Submit' value='OK'></input>
+            <td><form action='$self' method='post'><input type='text' size='20' name='anummer' value='$anummer'></input>&nbsp;<input type='submit' name='Submit' value='OK'></input>
               </form>
             </td>
           </tr>
@@ -589,50 +651,53 @@
         echo "  <td>" . $brutto . "</td>";
         echo "</tr>";
         echo "</table>";
-        
+
         kanonische_einheit( $terraeinheit, &$kan_terraeinheit, &$kan_terramult );
-        
+
         if( $prgueltig ) {
           // echo "<br>Foodsoft: Einheit: $kan_fcmult * $kan_fceinheit Gebinde: $fcgebindegroesse";
           // echo "<br>Terra: Einheit: $kan_terramult * $kan_terraeinheit Gebinde: $terragebindegroesse";
   
-          $newliefermult = $kan_terramult * $terragebindegroesse;
-          $newliefereinheit = $kan_terraeinheit;
-
-          if( ( $newliefereinheit != $kan_liefereinheit ) || ( $newliefermult != $kan_liefermult ) ) {
+          $newfc['liefereinheit'] = $terragebindegroesse * $kan_terramult . " $kan_terraeinheit";
+          if( $newfc['liefereinheit'] != "$kan_liefermult $kan_liefereinheit" ) {
             $neednewprice = TRUE;
             echo "<div class='warn'>Problem: L-Einheit stimmt nicht:
-                        <p class='li'>Terra: <kbd>$terragebindegroesse * $kan_terramult $kan_terraeinheit</kbd></p>
-                        <p class='li'>Foodsoft: <kbd>$kan_liefermult $kan_liefereinheit</kbd></p></div>";
+                   <p class='li'>Terra: <kbd>" . $terragebindegroesse * $kan_terramult . " $kan_terraeinheit</kbd></p>
+                   <p class='li'>Foodsoft: <kbd>$kan_liefermult $kan_liefereinheit</kbd></p></div>";
           }
-          if( $newliefereinheit == 'KI' && $kan_fceinheit='ST' ) {
+
+          $newfc['mwst'] = $mwst;
+          if( abs( $fcmwst - $mwst ) > 0.005 ) {
+            $neednewprice = TRUE;
+            echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
+                      <p class='li'>Terra: <kbd>$mwst</kbd></p>
+                      <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
+          }
+
+          if( $kan_terraeinheit == 'KI' and $kan_fceinheit == 'ST' ) {
             // spezialfall: KIste mit vielen STueck inhalt ist ok!
-            $newfceinheit = 'ST';
-            $newfcmult = $kan_fcmult;
+            $newfc['verteileinheit'] = "$kan_fcmult ST";
+            $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
+            $newfc['preis'] = $brutto * $terragebindegroesse / $newfc['gebindegroesse'] + $fcpfand;
           } else {
-            $newfceinheit = $newliefereinheit;
-            if( $newliefereinheit != $kan_fceinheit ) {
+            if( $kan_terraeinheit != $kan_fceinheit ) {
               $neednewprice = TRUE;
+              $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
               echo "<div class='warn'>Problem: Einheit inkompatibel:
-                          <p class='li'>Lieferant: <kbd>$newliefereinheit</kbd></p>
-                          <p class='li'>Verteilung: <kbd>$kan_fceinheit</kbd></p></div>";
-              if( $fcgebindegroesse > 0.0001 ) {
-                $newfcmult = $newliefermult / $fcgebindegroesse;
-                $newfcgebindegroesse = $fcgebindegroesse;
-              } else {
-                $newfcmult = $newliefermult;
-                $newfcgebindegroesse = $terragebindegroesse;
-              }
-              $newfcpreis = $brutto + $fcpfand;
+                      <p class='li'>Lieferant: <kbd>$kan_terraeinheit</kbd></p>
+                      <p class='li'>Verteilung: <kbd>$kan_fceinheit</kbd></p></div>";
+              $newfc['verteileinheit']
+                = $terragebindegroesse * $kan_terramult / $newfc['gebindegroesse'] . " $kan_terraeinheit";
+              $newfc['preis'] = $brutto * $terragebindegroesse / $newfc['gebindegroesse'] + $fcpfand;
             } else {
-              $newfcmult = $kan_fcmult;
-              $newfcgebindegroesse = $fcgebindegroesse;
-              if( abs( $kan_terramult * $terragebindegroesse - $kan_fcmult * $fcgebindegroesse ) > 0.01 ) {
+              $newfc['verteileinheit'] = "$kan_fcmult $kan_fceinheit";
+              $newfc['gebindegroesse'] = $terragebindegroesse * $kan_terramult / $kan_fcmult;
+              $newfc['preis'] = $brutto / $kan_terramult * $kan_fcmult + $fcpfand;
+              if( abs( $kan_terramult * $terragebindegroesse - $kan_fcmult * $fcgebindegroesse ) > 0.001 ) {
                 $neednewprice = TRUE;
                 echo "<div class='warn'>Problem: Gebindegroessen stimmen nicht: 
                           <p class='li'>Terra: <kbd>$terragebindegroesse * $kan_terramult $kan_terraeinheit</kbd></p>
                           <p class='li'>Foodsoft: <kbd>$fcgebindegroesse * $kan_fcmult $kan_fceinheit</kbd></p></div>";
-                $newfcgebindegroesse = $terragebindegroesse * $kan_terramult / $kan_fcmult;
               }
               if( abs( ($fcpreis - $fcpfand) * $kan_terramult / $kan_fcmult - $brutto ) > 0.01 ) {
                 $neednewprice = TRUE;
@@ -641,34 +706,29 @@
                           <p class='li'>Foodsoft: <kbd>"
                             . ($fcpreis-$fcpfand) * $kan_terramult / $kan_fcmult
                             . " je $kan_terramult $kan_terraeinheit </kbd></p></div>";
-                $newfcpreis = $brutto / $kan_terramult * $kan_fcmult + $fcpfand;
               }
             }
           }
-          if( abs( $fcmwst - $mwst ) > 0.005 ) {
-            $neednewprice = TRUE;
-            echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
-                      <p class='li'>Terra: <kbd>$mwst</kbd></p>
-                      <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
-            $newfcmwst = $mwst;
-          }
+
+          $newfc['bnummer'] = $terrabnummer;
           if( $terrabnummer != $fcbnummer ) {
             $neednewprice = TRUE;
             echo "<div class='warn'>Problem: Bestellnummern stimmen nicht:
                       <p class='li'>Terra: <kbd>$terrabnummer</kbd></p>
                       <p class='li'>Foodsoft: <kbd>$fcbnummer</kbd></p></div>";
-            $newfcbnummer = $terrabnummer;
           }
+
           // echo "<br>Verteil: new: Einheit: $newfcmult * $newfceinheit Gebinde: $newfcgebindegroesse";
           // echo "<br>Liefer: new: Einheit: $newliefermult * $newliefereinheit";
         } else {
           $neednewprice = TRUE;
-          $newliefermult = $kan_terramult * $terragebindegroesse;
-          $newliefereinheit = $kan_terraeinheit;
-          $newfcpreis = $brutto / $kan_terramult * $kan_fcmult + $fcpfand;
-          $newfcmwst = $mwst;
-          $newfcbnummer = $terrabnummer;
-          $newfcgebindegroesse = $terragebindegroesse;
+          $newfc['liefereinheit'] = $kan_terramult * $terragebindegroesse . " $kan_terraeinheit";
+          $newfc['verteileinheit'] = $kan_terramult . " $kan_terraeinheit";
+          $newfc['gebindegroesse'] = $terragebindegroesse;
+          $newfc['mwst'] = $mwst;
+          $newfc['pfand'] = $fcpfand;
+          $newfc['bnummer'] = $terrabnummer;
+          $newfc['preis'] = $brutto / $terragebindegroesse + $fcpfand;
         }
 
       }
@@ -681,52 +741,50 @@
       // vorlage fuer neuen preiseintrag berechnen:
       //
 
-      if( ! $newfcgebindegroesse ) {
-        $newfcgebindegroesse = $fcgebindegroesse;
+      if( ! $newfc['gebindegroesse'] ) {
+        $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
       }
 
-      if( ! $newfceinheit ) {
-        $newfceinheit = $kan_fceinheit;
-        $newfcmult = $kan_fcmult;
-      }
-      if( ! $newliefereinheit ) {
-        if( $kan_liefereinheit ) {
-          $newliefereinheit = $kan_liefereinheit;
-          $newliefermult = $kan_liefermult;
-        } else {
-          $newliefereinheit = $kan_fceinheit;
-          $newliefermult = $kan_fcmult;
-          if( $is_terra ) {
-            $newliefermult *= $newfcgebindegroesse;
-          }
-        }
+      if( ! $newfc['verteileinheit'] ) {
+        $newfc['verteileinheit'] =
+          ( ( $kan_fcmult > 0.0001 ) ? $kan_fcmult : 1 )
+          . ( $kan_fceinheit ? " $kan_fceinheit" : ' ST' );
       }
 
-
-      if( ! $newfcmwst ) {
-        $newfcmwst = $fcmwst;
+      if( ! $newfc['liefereinheit'] ) {
+        if( $kan_liefereinheit and ( $kan_liefermult > 0.0001 ) )
+          $newfc['liefereinheit'] = "$kan_liefermult $kan_liefereinheit";
+        else
+          $newfc['liefereinheit'] = $newfc['verteileinheit'];
       }
 
-      if( $fcpfand ) {
-        $newfcpfand = $fcpfand;
-      } else {
-        $newfcpfand = 0.00;
+      if( ! $newfc['mwst'] ) {
+        $newfc['mwst'] = ( $fcmwst ? $fcmwst : 7.0 );
       }
 
-      if( ! $newfcpreis ) {
-        $newfcpreis = $fcpreis;
+      if( ! $newfc['pfand'] ) {
+         $newfc['pfand'] = ( $fcpfand ? $fcpfand : 0.00 );
       }
 
-      $newnotiz = $notiz;
-
-      if( ! $newfcbnummer ) {
-        $newfcbnummer = $fcbnummer;
+      if( ! $newfc['preis'] ) {
+        $newfc['preis'] = ( $fcpreis ? $fcpreis : 0.00 );
       }
+
+      if( ! $newfc['bnummer'] ) {
+        $newfc['bnummer'] = $fcbnummer;
+      }
+
+      // echo "newverteileinheit: {$newfc['verteileinheit']}";
+      // echo "newliefereinheit: {$newfc['liefereinheit']}";
+      
+      // restliche felder automatisch berechnen:
+      //
+      preisdatenSetzen( & $newfc );
 
       if( $neednewprice ) {
         echo "
           <div style='padding:1ex;' id='preiseintrag_form' class='small_form'>
-            <form method='post' action='terraabgleich.php?produktid=$produktid'>
+            <form name='Preisform' method='post' action='$self'>
             <fieldset>
               <legend>Vorschlag neuer Preiseintrag:</legend>
         ";
@@ -739,7 +797,7 @@
             </div>
           </div>
           <div style='display:none;' id='preiseintrag_form' class='small_form'>
-            <form method='post' action='terraabgleich.php?produktid=$produktid'>
+            <form name='Preisform' method='post' action='$self'>
             <fieldset>
               <legend>
                 <img class='button' title='Ausblenden' src='img/close_black_trans.gif'
@@ -748,47 +806,87 @@
       }
 
       echo "
-            <table>
-              <tr>
-                <td>Name:</td>
-                <td><input type='text' size='42' name='newfcname' value='$name'
-                 title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'></input>
-                  &nbsp; Notiz: <input type='text' size='42' name='newnotiz' value='$notiz'></input>
+        <table id='preisform'>
+          <tr>
+            <td><label>Name:</label></td>
+            <td><input type='text' size='42' name='newfcname' value='$name'
+             title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'></input>
+              <label>Notiz:</label> <input type='text' size='42' name='newnotiz' value='$notiz'></input>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Bestell-Nr:</label></td>
+            <td>
+              <input type='text' size='8' name='newfcbnummer' value='{$newfc['bnummer']}'
+                title='Bestellnummer (die, die sich bei Terra staendig aendert!)'></input>
+
+              <label>MWSt:</label>
+                <input type='text' size='4' name='newfcmwst' id='newfcmwst' value='${newfc['mwst']}'
+                   title='MWSt-Satz in Prozent'
+                   onchange='preisberechnung_rueckwaerts();'
+                   ></input>
+
+              <label>Pfand:</label> <input type='text' size='4' name='newfcpfand' id='newfcpfand' value='{$newfc['pfand']}'
+                title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
+                onchange='preisberechnung_rueckwaerts();'
+                ></input>
+            </td>
+          </tr>
+            <td><label>Verteil-Einheit:</label></td>
+            <td>
+              <input type='text' size='4' name='newfcmult' id='newfcmult' value='${newfc['kan_verteilmult']}'
+               title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+               onchange='preisberechnung_fcmult();'
+               ></input>
+              <select size='1' name='newfceinheit' id='newfceinheit'
+               onchange='preisberechnung_default();'
+              >
+      ";
+      selector_einheit( $newfc['kan_verteileinheit'] );
+      echo "
+              </select>
+              <label>Endpreis:</label>
+                <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='newfcpreis'
+                value='${newfc['preis']}' onchange='preisberechnung_vorwaerts();'
+                ></input>
+                / <span id='newfcendpreiseinheit'>{$newfc['kan_verteilmult']}
+                    {$newfc['kan_verteileinheit']}</span>
+
+              <label>Gebinde:</label>
+                <input type='text' size='4' name='newfcgebindegroesse' id='newfcgebindegroesse' value='${newfc['gebindegroesse']}'
+                 title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
+                 onchange='preisberechnung_gebinde();'
+                 ></input>
+                * <span id='newfcgebindeeinheit']>{$newfc['kan_verteilmult']}
+                    {$newfc['kan_verteileinheit']}</span>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Liefer-Einheit:</label></td>
+            <td>
+              <input type='text' size='4' name='newliefermult' id='newliefermult' value='${newfc['kan_liefermult']}'
+               title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+               onchange='preisberechnung_default();'
+               ></input>
+              <select size='1' name='newliefereinheit' id='newliefereinheit'
+               onchange='preisberechnung_default();'
+              >
+      ";
+      selector_einheit( $newfc['kan_liefereinheit'] );
+      echo "
+              </select>
+
+                 <label>Lieferpreis:</label>
+                    <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='newfclieferpreis'
+                    value='${newfc['lieferpreis']}'
+                    onchange='preisberechnung_rueckwaerts();'
+                    ></input>
+                    / <span id='newfcpreiseinheit'>{$newfc['preiseinheit']}</span>
                 </td>
               </tr>
               <tr>
-                <td>Verteil-Einheit:</td>
-                <td>
-                  <input type='text' size='4' name='newfcmult' value='$newfcmult'
-                   title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'></input>
-                  <input type='text' size='2' name='newfceinheit' value='$newfceinheit'
-                   title='Einheit, z.B. g, Be, Gl, Bd. Bei Terra moeglichst Vorschlag uebernehmen!'></input>
-                  &nbsp; Gebinde:
-                    <input type='text' size='4' name='newfcgebindegroesse' value='$newfcgebindegroesse'
-                     title='Gebindegroesse in ganzen Vielfachen der V-Einheit'></input>
-                </td>
-              </tr>
-              <tr>
-                <td>Liefer-Einheit:</td>
-                <td>
-                  <input type='text' size='4' name='newliefermult' value='$newliefermult'
-                   title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'></input>
-                  <input type='text' size='2' name='newliefereinheit' value='$newliefereinheit'
-                   title='Einheit, z.B. g, Be, Gl, Bd. Bei Terra moeglichst Vorschlag uebernehmen!'></input>
-                  &nbsp; Bestell-Nr: <input type='text' size='8' name='newfcbnummer' value='$newfcbnummer'
-                   title='Bestellnummer (die, die sich bei Terra staendig aendert!)'></input>
-                </td>
-              </tr>
-              <tr>
-                <td>MWSt:</td>
-                <td>
-                  <input type='text' size='4' name='newfcmwst' value='$newfcmwst'
-                   title='MWSt-Satz in Prozent'></input>
-                  &nbsp; Pfand: <input type='text' size='4' name='newfcpfand' value='$newfcpfand'
-                   title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'></input>
-                  &nbsp; Endpreis:
-                    <input title='Preis incl. MWSt und Pfand' type='text' size='8' name='newfcpreis' value='$newfcpreis'></input>
-                  &nbsp; ab: <input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'></input>
+                <td><label>ab:</label></td>
+                  <td><input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'></input>
                   &nbsp; <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
                   ></input>
@@ -840,7 +938,114 @@
     document.getElementById("preiseintrag_an_knopf").style.display = "inline";
     document.getElementById("preiseintrag_form").style.display = "none";
   }
-  
+
+  var mwst, pfand, verteilmult, verteileinheit, preis, gebindegroesse,
+    liefermult, liefereinheit, lieferpreis, preiseinheit, mengenfaktor;
+
+  // vorwaerts: lieferpreis berechnen
+  //
+  var vorwaerts = 0;
+
+  function preiseinheit_setzen() {
+    if( liefereinheit != verteileinheit ) {
+      mengenfaktor = gebindegroesse;
+      preiseinheit = liefereinheit + ' (' + gebindegroesse * verteilmult + ' ' + verteileinheit + ')';
+      if( liefermult != '1' )
+        preiseinheit = liefermult + ' ' + preiseinheit;
+    } else {
+      switch( liefereinheit ) {
+        case 'g':
+          preiseinheit = 'kg';
+          mengenfaktor = 1000 / verteilmult;
+          break;
+        case 'ml':
+          preiseinheit = 'L';
+          mengenfaktor = 1000 / verteilmult;
+          break;
+        default:
+          preiseinheit = liefereinheit;
+          mengenfaktor = 1.0 / verteilmult;
+          break;
+      }
+    }
+  }
+
+  function preiseintrag_auslesen() {
+    mwst = parseFloat( document.Preisform.newfcmwst.value );
+    pfand = parseFloat( document.Preisform.newfcpfand.value );
+    verteilmult = parseInt( document.Preisform.newfcmult.value );
+    verteileinheit = document.Preisform.newfceinheit.value;
+    preis = parseFloat( document.Preisform.newfcpreis.value );
+    gebindegroesse = parseInt( document.Preisform.newfcgebindegroesse.value );
+    liefermult = parseInt( document.Preisform.newliefermult.value );
+    liefereinheit = document.Preisform.newliefereinheit.value;
+    lieferpreis = parseFloat( document.Preisform.newfclieferpreis.value );
+    preiseinheit_setzen();
+  }
+
+  preiseintrag_auslesen();
+
+  function preiseintrag_update() {
+    document.Preisform.newfcmwst.value = mwst;
+    document.Preisform.newfcmwst.pfand = pfand;
+    document.Preisform.newfcmult.value = verteilmult;
+    document.Preisform.newfceinheit.value = verteileinheit;
+    document.Preisform.newfcpreis.value = preis;
+    document.Preisform.newfcgebindegroesse.value = gebindegroesse;
+    document.Preisform.newliefermult.value = liefermult;
+    document.Preisform.newliefereinheit.value = liefereinheit;
+    document.Preisform.newfclieferpreis.value = lieferpreis;
+    document.getElementById("newfcendpreiseinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
+    document.getElementById("newfcgebindeeinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
+    document.getElementById("newfcpreiseinheit").firstChild.nodeValue = preiseinheit;
+  }
+
+  function preisberechnung_vorwaerts() {
+    vorwaerts = 1;
+    preiseintrag_auslesen();
+    lieferpreis = 
+      parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * mengenfaktor ) / 100.0;
+    preiseintrag_update();
+  }
+
+  function preisberechnung_rueckwaerts() {
+    vorwaerts = 0;
+    preiseintrag_auslesen();
+    preis = 
+      parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / mengenfaktor + pfand ) ) / 10000.0;
+    preiseintrag_update();
+  }
+
+  function preisberechnung_default() {
+    if( vorwaerts )
+      preisberechnung_vorwaerts();
+    else
+      preisberechnung_rueckwaerts();
+  }
+  function preisberechnung_fcmult() {
+    alt = verteilmult;
+    verteilmult = parseInt( document.Preisform.newfcmult.value );
+    if( (verteilmult > 0) && (alt > 0) ) {
+      gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
+      document.Preisform.newfcgebindegroesse.value = gebindegroesse;
+    }
+    preisberechnung_default();
+  }
+  function preisberechnung_gebinde() {
+    alt = gebindegroesse;
+    gebindegroesse = parseInt( document.Preisform.newfcgebindegroesse.value );
+    if( (gebindegroesse > 0) && (alt > 0) ) {
+      verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
+      document.Preisform.newfcmult.value = verteilmult;
+    }
+    preisberechnung_default();
+  }
+
+  function neuesfenster(url,name) {
+    f=window.open(url,name);
+    f.focus();
+  }
+
 </script>
 
 

@@ -91,7 +91,7 @@
              <th>MWSt</th>
              <th>Pfand</th>
              <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-             <th>Liefermenge</th>
+             <th colspan='2'>Liefermenge</th>
              <th>Gesamtpreis</th>
            </tr>
   ";
@@ -120,7 +120,7 @@
       }
     }
 
-    $gesamtpreis = $lieferpreis * $liefermenge;
+    $gesamtpreis = sprintf( "%8.2lf", $lieferpreis * $liefermenge );
 
     // if($produkte_row['liefermenge']!=0){	
     echo "
@@ -130,17 +130,17 @@
       <td class='number'>{$produkte_row['mwst']}</td>
       <td class='number'>{$produkte_row['pfand']}</td>
       <td class='mult'><a
-        href='terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id'
-        target='foodsoftdetail'
+        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
         onclick=\"
           document.getElementById('row$produkt_id').className='modified';
           document.getElementById('row_total').className='modified';\"
         >
         $lieferpreis</a></td>
       <td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>
-      <td class='number'>
-        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></innput>
-        {$produkte_row['preiseinheit']}</td>
+      <td class='mult'>
+        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></input>
+      </td>
+      <td class='unit'>{$produkte_row['preiseinheit']}</td>
       <td class='number'>$gesamtpreis</td>
     </tr>";
 
@@ -152,11 +152,15 @@
 
       echo "
         <tr id='row_total'>
-          <td colspan='8'>&nbsp;</td>
-          <td>$preis_summe</td>
+          <td colspan='9'>&nbsp;</td>
+          <td class='number'>
+      ";
+      printf( "%8.2lf", $preis_summe );
+      echo "
+        </td>
         </tr>
         <tr>
-          <td colspan='9'>
+          <td colspan='10'>
             <input type='submit' value=' Lieferschein Aktualisieren '>
             <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen '>
           </td>
@@ -188,3 +192,11 @@
 <?php
   echo "$print_on_exit";
 ?>
+
+<script type="text/javascript">
+  function neuesfenster(url,name) {
+    f=window.open(url,name);
+    f.focus();
+  }
+</script>
+
