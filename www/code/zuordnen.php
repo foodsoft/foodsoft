@@ -262,14 +262,18 @@ function sql_gesamtpreise($gruppe_id){
 
 
 function sql_bestellprodukte($bestell_id){
-            $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name FROM produkte INNER JOIN
+            $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
+                              , produktpreise.liefereinheit as liefereinheit
+                              , produktpreise.verteileinheit as verteileinheit
+                              , produktpreise.gebindegroesse as gebindegroesse
+            FROM produkte INNER JOIN
 	                            bestellvorschlaege ON (produkte.id=bestellvorschlaege.produkt_id)
 				    INNER JOIN produktpreise 
 				    ON (bestellvorschlaege.produktpreise_id=produktpreise.id)
 				    INNER JOIN produktgruppen
 				    ON (produktgruppen.id=produkte.produktgruppen_id)
 				    WHERE bestellvorschlaege.gesamtbestellung_id='".mysql_escape_string($bestell_id)."'
-				    ORDER BY produktgruppen_id, produkte.name;";
+				    ORDER BY IF(liefermenge>0,0,1), produktgruppen_id, produkte.name;";
 
 	    //echo "<p>".$query."</p>";
 	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
@@ -363,7 +367,7 @@ function sql_gruppenname($gruppen_id){
 }
 function sql_gruppen($bestell_id=FALSE){
         if($bestell_id==FALSE){
-		$query="SELECT * FROM bestellgruppen WHERE aktiv=1";
+		$query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
 	} else {
 	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
 		FROM bestellgruppen INNER JOIN gruppenbestellungen 
