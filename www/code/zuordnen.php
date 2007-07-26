@@ -280,7 +280,7 @@ function sql_bestellprodukte($bestell_id){
 				    INNER JOIN produktgruppen
 				    ON (produktgruppen.id=produkte.produktgruppen_id)
 				    WHERE bestellvorschlaege.gesamtbestellung_id='".mysql_escape_string($bestell_id)."'
-				    ORDER BY produktgruppen_id, produkte.name;";
+				    ORDER BY IF(liefermenge>0,0,1), produktgruppen_id, produkte.name;";
 
 	    //echo "<p>".$query."</p>";
 	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());

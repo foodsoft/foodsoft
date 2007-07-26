@@ -12,7 +12,7 @@
   // um die bestellungen nach produkten sortiert zu sehen ....
 
 
-     // if(!nur_fuer_dienst(1,4)){exit();}
+  //if(!nur_fuer_dienst(1,3,4)){exit();}
 
 // Übergebene Variablen einlesen...
     if (isset($HTTP_GET_VARS['bestellungs_id'])) {
@@ -72,11 +72,11 @@
 	if (isset($HTTP_GET_VARS['liefermenge'])){
 		$liefermenge = $HTTP_GET_VARS['liefermenge'];
 		$produkt_id = $HTTP_GET_VARS['produkt_id'];
-		if($liefermenge>0){
+		// if($liefermenge>0){
 			zusaetzlicheBestellung($produkt_id,$bestell_id,  $liefermenge);
-			$prod = getProdukt($produkt_id);
-			$prod_name = $prod['name'];
-		}
+			// $prod = getProdukt($produkt_id);
+			// $prod_name = $prod['name'];
+		// }
 		
 	}
   echo "
@@ -84,7 +84,7 @@
            <input type='hidden' name='area' value='lieferschein'>			
            <input type='hidden' name='bestellungs_id' value='$bestell_id'>
            <input type='hidden' name='action' value='aktualisiere_lieferschein'>
-         <table class='numbers'>
+         <table class='numbers' width='100%'>
            <tr class='legende'>
              <th>Produkt</th>
              <th title='Endpreis pro V-Einheit' colspan='2'>V-Preis</th>
@@ -96,15 +96,61 @@
            </tr>
   ";
 
-  //produkte und preise zur aktuellen bestellung auslesen
+  // liefermengen aktualisieren:
+  //
+  $produkte = sql_bestellprodukte($bestell_id);
+  while  ($produkte_row = mysql_fetch_array($produkte)) {
+    $produkt_id =$produkte_row['produkt_id'];
+    if( get_http_var( 'liefermenge'.$produkt_id ) ) {
+      preisdatenSetzen( & $produkte_row );
+      $mengenfaktor = $produkte_row['mengenfaktor'];
+      $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
+      if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
+        $liefermenge = ${"liefermenge$produkt_id"};
+        // echo "<div class='ok'>neue liefermenge fuer $produkt_id: $liefermenge</div>";
+        changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
+      }
+    }
+  }
+
+  // produkte und preise zur aktuellen bestellung nochmal auslesen
+  // (reihenfolge kann nun anders sein!)
   $produkte = sql_bestellprodukte($bestell_id);
   $preis_summe = 0;
+
+  $nichtgeliefert_header_ausgeben = true;
 
   //jetzt die namen und preis zu den produkten auslesen
   while  ($produkte_row = mysql_fetch_array($produkte)) {
     $produkt_id =$produkte_row['produkt_id'];
+    if( $produkte_row['liefermenge'] == 0 ) {
+      if( $nichtgeliefert_header_ausgeben ) {
+        echo "
+          <tr id='row_total'>
+            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
+            <td class='number'><b>
+        ";
+        printf( "%8.2lf", $preis_summe );
+        echo "
+          </b></td>
+          </tr>
+          <tr>
+            <th colspan='10'>
+              <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
+                onclick='nichtgeliefert_toggle();' title='Ausblenden'>
+              </img>
+              Nicht bestellte oder nicht gelieferte Produkte:
+            </th>
+          </tr>
+        ";
+        $nichtgeliefert_header_ausgeben = false;
+      }
+      echo "<tr name='trnichtgeliefert'";
+    } else {
+      echo "<tr name='geliefert'";
+    }
 
-    echo "<tr id='row$produkt_id'><td>$produkt_id";
+    echo " id='row$produkt_id'><td>$produkt_id";
 
     preisdatenSetzen( & $produkte_row );
 
@@ -112,17 +158,8 @@
     $mengenfaktor = $produkte_row['mengenfaktor'];
     $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
 
-    if( get_http_var( 'liefermenge'.$produkt_id ) ) {
-      if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
-        $liefermenge = ${"liefermenge$produkt_id"};
-        // echo "<div class='ok'>neue liefermenge fuer $produkt_id: $liefermenge</div>";
-        changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
-      }
-    }
-
     $gesamtpreis = sprintf( "%8.2lf", $lieferpreis * $liefermenge );
 
-    // if($produkte_row['liefermenge']!=0){	
     echo "
       {$produkte_row['produkt_name']}</td>
       <td class='mult'>{$produkte_row['preis_rund']}</td>
@@ -150,35 +187,44 @@
    
       } //end while produkte array            
 
+      if( $nichtgeliefert_header_ausgeben ) {
+        // summe muss noch angezeigt werden:
+        echo "
+          <tr id='row_total'>
+            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
+            <td class='number'><b>
+        ";
+        printf( "%8.2lf", $preis_summe );
+        echo "
+          </b></td>
+          </tr>
+        ";
+      }
       echo "
-        <tr id='row_total'>
-          <td colspan='9'>&nbsp;</td>
-          <td class='number'>
-      ";
-      printf( "%8.2lf", $preis_summe );
-      echo "
-        </td>
-        </tr>
         <tr>
           <td colspan='10'>
             <input type='submit' value=' Lieferschein Aktualisieren '>
             <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen '>
           </td>
         </tr>
+      ";
+      echo "
         </table>
         </form>
       ";
 ?>
 
-   <h3> Zusätzlich geliefertes Produkt </h3>
+   <h3> Zus&auml;tzlich geliefertes Produkt </h3>
    <form>
 	   <input type="hidden" name="area" value="lieferschein">			
 	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
 	     <?php
 	         select_products_not_in_list($bestell_id);
 	     ?>
-	   Menge: <input type="text" name="liefermenge">
-	   <input type="submit" value="Zusätzliche Lieferung eintragen">
+     <!-- hier muesste erst noch die richtige einheit berechnet werden,
+       deshalb erstmal mit menge 0 eintragen, dann spaeter setzen!
+	   Menge: --> <input type="hidden" name="liefermenge" value="0">
+	   <input type="submit" value="Zus&auml;tzliche Lieferung eintragen">
    </form>
 
 
@@ -194,6 +240,31 @@
 ?>
 
 <script type="text/javascript">
+  nichtgeliefert_zeigen = 1;
+  function nichtgeliefert_toggle() {
+    nichtgeliefert_zeigen = !  nichtgeliefert_zeigen;
+    if( nichtgeliefert_zeigen ) {
+      // document.getElementById("table_nichtgeliefert").style.display = "run-in";
+        rows = document.getElementsByName('trnichtgeliefert');
+        i=0;
+        while( rows[i] ) {
+          rows[i].style.display = "";
+          i++;
+        }
+      document.getElementById("nichtgeliefert_knopf").src = "img/close_black_trans.gif";
+      document.getElementById("nichtgeliefert_knopf").title = "Ausblenden";
+    } else {
+       // document.getElementById("table_nichtgeliefert").style.display = "none";
+        rows = document.getElementsByName('trnichtgeliefert');
+        i=0;
+        while( rows[i] ) {
+          rows[i].style.display = "none";
+          i++;
+        }
+      document.getElementById("nichtgeliefert_knopf").src = "img/open_black_trans.gif";
+      document.getElementById("nichtgeliefert_knopf").title = "Einblenden";
+    }
+  }
   function neuesfenster(url,name) {
     f=window.open(url,name);
     f.focus();
