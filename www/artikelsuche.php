@@ -1,69 +1,37 @@
-
 <?php
 
-  // Konfigurationsdatei einlesen
 	require_once('code/config.php');
-	
-	// Funktionen zur Fehlerbehandlung laden
 	require_once('code/err_functions.php');
-	
-	// Verbindung zur MySQL-Datenbank herstellen
-	require_once('code/connect_MySQL.php');
-	
-	// egal ob get oder post verwendet wird...
-	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
-
-  require_once( 'code/login.php' );
+  require_once('code/login.php');
  
-  // ggf. die area Variable einlesen, die festlegt in welchem Bereich man sich befindet
-  if (isset($HTTP_GET_VARS['area'])) $area = $HTTP_GET_VARS['area'];
+  get_http_var('area');
 
 	//head einfügen
   $title="Artikelsuche im Terra-Katalog";
   $subtitle="Artikelsuche im Terra-Katalog";
 	require_once ('windows/head.php');
 
-  // echo 'Hallo, Welt!';
-
   $filter = '';
-  if (isset($HTTP_GET_VARS['terrabnummer'])) {
-    $terrabnummer = $HTTP_GET_VARS['terrabnummer'];
-    if ( $terrabnummer > 0 )
-      $filter = $filter . '(terrabestellnummer='.$terrabnummer.')';
-  }
-  if (isset($HTTP_GET_VARS['terraanummer'])) {
-    $terraanummer = $HTTP_GET_VARS['terraanummer'];
-    if ( $terraanummer > 0 )
-      $filter = $filter . '(terraartikelnummer='.$terraanummer.')';
-  }
-  if (isset($HTTP_GET_VARS['terracn'])) {
-    $terracn = $HTTP_GET_VARS['terracn'];
-    if ( $terracn )
-      $filter = $filter . '(cn=*'.$terracn.'*)';
-  }
-  if (isset($HTTP_GET_VARS['terraminpreis'])) {
-    $terraminpreis = $HTTP_GET_VARS['terraminpreis'];
-    if ( $terraminpreis > 0 )
-      $filter = $filter . '(terranettopreisincents>='.$terraminpreis.')';
-  }
-  if (isset($HTTP_GET_VARS['terramaxpreis'])) {
-    $terramaxpreis = $HTTP_GET_VARS['terramaxpreis'];
-    if ( $terramaxpreis > 0 )
-      $filter = $filter . '(terranettopreisincents<='.$terramaxpreis.')';
-  }
-  if (isset($HTTP_GET_VARS['terrakatalog'])) {
-    $terrakatalog = $HTTP_GET_VARS['terrakatalog'];
-    if ( $terrakatalog )
-      $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
-  }
+  get_http_var( 'terrabnummer' ) or $terrabnummer='';
+  $terrabnummer and $filter = $filter . '(terrabestellnummer='.$terrabnummer.')';
+
+  get_http_var( 'terraanummer' ) or $terraanummer='';
+  $terraanummer and $filter = $filter . '(terraartikelnummer='.$terraanummer.')';
+
+  get_http_var( 'terracn' ) or $terracn='';
+  $terracn and $filter = $filter . '(cn=*'.$terracn.'*)';
+
+  get_http_var( 'terraminpreis' ) or $terraminpreis='';
+  $terraminpreis and $filter = $filter . '(terranettopreisincents>='.$terraminpreis.')';
+
+  get_http_var( 'terramaxpreis' ) or $terramaxpreis='';
+  $terramaxpreis and $filter = $filter . '(terranettopreisincents<='.$terramaxpreis.')';
+
+  get_http_var( 'terrakatalog' ) or $terrakatalog='';
+  $terrakatalog and $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
 
   // produktid: wenn gesetzt, erlaube update der artikelnummer!
-  if (isset($HTTP_GET_VARS['produktid']) && isset($HTTP_GET_VARS['produktname']) ) {
-    $produktid = $HTTP_GET_VARS['produktid'];
-    $produktname = $HTTP_GET_VARS['produktname'];
-  } else {
-    $produktid = -1;
-  }
+  get_http_var( 'produktid' ) and get_http_var( 'produktname' ) or $produktid = -1;
 
   echo "
     <form action='artikelsuche.php' method='post' class='small_form'>
@@ -77,8 +45,8 @@
   }
   echo "</legend>";
   if( $produktid >= 0 ) {
-    echo "<input type='hidden' name='produktid' value='$produktid'>";
-    echo "<input type='hidden' name='produktname' value='$produktname'>";
+    echo "<input type='hidden' name='produktid' value='$produktid'>
+          <input type='hidden' name='produktname' value='$produktname'>";
   }
   echo "
      <table>
@@ -166,7 +134,7 @@
 
   if ( $filter != '' ) {
     $filter = '(&(objectclass=terraartikel)' . $filter . ')';
-    //echo '<br>filter: ' . $filter . '<br>';
+    echo '<br>filter: ' . $filter . '<br>';
 
     //echo "<br>connecting... ";
     $ldaphandle = ldap_connect( $ldapuri );
@@ -243,7 +211,7 @@
 
     echo "</table>";
   }
+
+  echo "$print_on_exit";
 ?>
 
-</body>
-</html>
