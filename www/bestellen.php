@@ -2,8 +2,8 @@
 
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
-   include('code/zuordnen.php');
-   include('code/views.php');
+   require_once("$foodsoftpath/code/zuordnen.php");
+   require_once("$foodsoftpath/code/views.php");
 
 $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 
