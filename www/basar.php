@@ -1,147 +1,138 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
-	include('code/config.php');
+	require_once('code/config.php');
 	
-	// Funktionen zur Fehlerbehandlung laden
-	include('code/err_functions.php');
-	
-	// Verbindung zur MySQL-Datenbank herstellen
-	include('code/connect_MySQL.php');
-	include("code/zuordnen.php");
+	require_once("$foodsoftpath/code/err_functions.php");
+	require_once("$foodsoftpath/code/zuordnen.php");
+  require_once("$foodsoftpath/code/login.php" );
+  if( $angemeldet )
+     $pwd_ok = true;
 
-  require_once( 'code/login.php' );
- 
-		include ('head.php');
-// um die bestellungen nach produkten sortiert zu sehen ....
+  require_once ("$foodsoftpath/head.php");
 
 
 // Übergebene Variablen einlesen...
-//   if (isset($_REQUEST['gruppen_id'])) $gruppen_id = $_REQUEST['gruppen_id'];       // Passwort für den Bereich
-    if (isset($_REQUEST['gruppen_pwd'])) $gruppen_pwd = $_REQUEST['gruppen_pwd'];       // Passwort für den Bereich
-    if (isset($_REQUEST['bestgr_pwd'])) $bestgr_pwd = $_REQUEST['bestgr_pwd'];       // Passwort für den Bereich
-    if (isset($_REQUEST['bestellungs_id'])) $bestell_id = $_REQUEST['bestellungs_id'];
-    if (isset($_REQUEST['allGroupsArray'])) $allGroupsArray = $_REQUEST['allGroupsArray'];
-    if (isset($_REQUEST['sortierfolge'])) $sortierfolge = $_REQUEST['sortierfolge'];
-    if (isset($_REQUEST['nichtGeliefert'])) $nichtGeliefert = $_REQUEST['nichtGeliefert'];
+  get_http_var('bestell_id');
+  get_http_var('allGroupsArray');
+  get_http_var('sortierfolge');
+  get_http_var('nichtGeliefert');
 
-    $pwd_ok = false;
-    $bestgrup_view = false;
+  // glassrueckgabe bearbeiten:
+  //
+  get_http_var('menge_glas');
+  get_http_var('gruppe');
+  if( $menge_glas > 0 and $gruppe > 0 ) {
+    sql_groupGlass( $gruppe, $menge_glas );
+  }
 
-	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
-	//Tabelle überprüft und eingetragen
 
-         //infos zur gesamtbestellung auslesen 
-         $sql = "SELECT *
-                  FROM gesamtbestellungen
-                  WHERE id = ".$bestell_id."";
-         $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-         $row_gesamtbestellung = mysql_fetch_array($result);               
-?>
-<h1>Basar</h1>
-         <table class="info">
-               <tr>
-                   <th> Bestellung: </th>
-                     <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row_gesamtbestellung['name']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellbeginn: </th>
-                     <td><?PHP echo $row_gesamtbestellung['bestellstart']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellende: </th>
-                     <td><?PHP echo $row_gesamtbestellung['bestellende']; ?></td>
-                </tr>                
-            </table>
+/*       //infos zur gesamtbestellung auslesen 
+ *
+ *  basaranzeige ist jetzt fuer _alle_ bestellungen; bestellung anzeigen waere da eher verwirrend:
+ *
+ *          $sql = "SELECT *
+ *                   FROM gesamtbestellungen
+ *                   WHERE id = ".$bestell_id."";
+ *          $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+ *          $row_gesamtbestellung = mysql_fetch_array($result);               
+ *          <table class='info'>
+ *                <tr>
+ *                    <th> Bestellung: </th>
+ *                      <td style='font-size:1.2em;font-weight:bold'><?PHP echo $row_gesamtbestellung['name']; ?></td>
+ *                 </tr>
+ *                <tr>
+ *                    <th> Bestellbeginn: </th>
+ *                      <td><?PHP echo $row_gesamtbestellung['bestellstart']; ?></td>
+ *                 </tr>
+ *                <tr>
+ *                    <th> Bestellende: </th>
+ *                      <td><?PHP echo $row_gesamtbestellung['bestellende']; ?></td>
+ *                 </tr>                
+ *             </table>
+ */
+
+  echo "
+    <h1>Basar</h1>
       <br>
       <br>
-         <form action="basar.php" method="post">
-         <table style="width: 600px;" >
-	      <tr>
-		 <td colspan=3> Gruppe: 
-		 <select name="gruppe">
-		 <?
-		 //Auswahl der Gruppennamen
-	           $gruppen=sql_gruppen();
-		   while($gruppe = mysql_fetch_array($gruppen)){
-		   	echo "<option value=\"".$gruppe['id']."\">".
-				$gruppe['name']."</option>\n";
-		   }
-		   ?>
-	   	</select> </td>
-	      </tr>
-            <tr class="legende">
-               <td>Produkt</td>
-               <td>Menge in Basar</td>
-               <td>Menge</td>
+         <form action='basar.php' method='post'>
+         <table style='width: 600px;' class='numbers'>
+    <tr>
+      <td colspan=3> Gruppe: 
+        <select name='gruppe'>
+  ";
+  optionen_gruppen();
+  echo "
+        </select>
+      </td>
     </tr>
-                            
-<?php          
-      if(isset($_REQUEST['gruppe'])){
-      	  $gruppe = $_REQUEST['gruppe'];
-	  //echo "Gruppe gesetzt: ".$gruppe."<br>\n";
-      }
-      //Den Basar erstellen
-      $result1 = sql_basar();
+    <tr class='legende'>
+      <th>Produkt</th>
+      <th colspan='2'>Menge im Basar</th>
+      <th>Menge</th>
+    </tr>
+  ";
 
-      while  ($basar_row = mysql_fetch_array($result1)) {
-	       $fieldName = "menge_".$basar_row['produkt_id'];
-	       $menge=$basar_row['basar'];
-	       if(isset($_REQUEST[$fieldName]) && $_REQUEST[$fieldName]!=0 && isset($gruppe)){
-	                $gruppen_menge=$_REQUEST[$fieldName];
-	       		$menge-=$gruppen_menge;
-			sql_basar2group($gruppe,
-				$basar_row['produkt_id'], 
-				$gruppen_menge);
-		        if($menge==0) continue;
-	       }
-	       echo "
-	      <tr>
-		 <td>".$basar_row['name']."</td>
-		 <td><b>".$menge."</b> </td>
-		 <td><input name=\"".$fieldName."\" type=\"text\" size=\"3\" /></td>
-	      </tr>";
+  //Den Basar erstellen
+  $result1 = sql_basar();
 
-	       
-		     
-	 } //end while gruppen array
-?>
-	 
+  while  ($basar_row = mysql_fetch_array($result1)) {
+     kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
+     $fieldName = "menge_".$basar_row['produkt_id'];
+     $menge=$basar_row['basar'];
+     if( get_http_var($fieldName) ) {
+       if( ${$fieldName} != 0 && $gruppe > 0 ) {
+         $gruppen_menge = ${$fieldName} / $kan_verteilmult;
+         $menge -= $gruppen_menge;
+         sql_basar2group($gruppe, $basar_row['produkt_id'], $basar_row['gesamtbestellung_id'], $gruppen_menge);
+         if($menge==0) continue;
+       }
+     }
+     // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
+     $menge *= $kan_verteilmult;
+     echo "
+       <tr>
+         <td>{$basar_row['name']}</td>
+         <td class='mult'><b>$menge</b></td>
+         <td class='unit'>$kan_verteileinheit</td>
+         <td><input name='{$fieldName}' type='text' size='3' /> $kan_verteileinheit</td>
+       </tr>
+     ";
+  }
+
+   echo "
      <tr style='border:none'>
-		 <td colspan='4' style='border:none'></td>
-	      </tr>
-     <tr>
-     	<td colspan=4 >
-		Glasrückgabe zu 16 Cent (Anzahl eintragen):	<input name="menge_glas" type="text" size="3" />
-		<?
-			if(isset($_REQUEST['menge_glas']) && $_REQUEST['menge_glas']!=0 && isset($gruppe)){
-	                $menge=$_REQUEST['menge_glas'];
-			sql_groupGlass($gruppe, $menge);
-	       }
-
-		?>
-	</td>
+       <td colspan='4' style='border:none'></td>
      </tr>
-   
+     <tr>
+      <td colspan='4' >
+        Glasr&uuml;ckgabe zu 16 Cent (Anzahl eintragen):	<input name='menge_glas' type='text' size='3' />
+      </td>
+     </tr>
 
-	<tr style='border:none'>
-		 <td colspan='4' style='border:none'></td>
-	      </tr>
+  <tr style='border:none'>
+     <td colspan='4' style='border:none'></td>
+  </tr>
    
    <tr style='border:none'>
-	<td colspan='4' style='border:none'>
-	   <input type="hidden" name="area" value="bestellt_produkte">			
-	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="submit" value=" Neu laden / Basareintrag übertragen ">
-	   <input type="reset" value=" Änderungen zurücknehmen">
-	</td>
+  <td colspan='4' style='border:none'>
+     <input type='hidden' name='area' value='bestellt_produkte'>			
+     <input type='hidden' name='bestgr_pwd' value='obsolet'>
+     <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+     <input type='submit' value=' Neu laden / Basareintrag &uuml;bertragen '>
+     <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
+  </td>
    </tr>
    </table>                   
    </form>
 
-   <form action="index.php" method="post">
-	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="hidden" name="area" value="bestellt">			
-	   <input type="submit" value="Zurück ">
+   <form action='index.php' method='post'>
+     <input type='hidden' name='bestgr_pwd' value='obsolet'>
+     <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+     <input type='hidden' name='area' value='bestellt'>			
+     <input type='submit' value='Zur&uuml;ck '>
    </form>
+
+   $print_on_exit
+ ";
+?>
