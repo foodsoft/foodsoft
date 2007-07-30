@@ -2,102 +2,48 @@
 
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
-   require_once('code/zuordnen.php');
-   require_once('code/views.php');
-/*
- *   // Übergebene Variablen einlesen...
- *
- *   // if (isset($HTTP_GET_VARS['gruppen_id'])) $gruppen_id = $HTTP_GET_VARS['gruppen_id'];       // Passwort für den Bereich
- *	 // if (isset($HTTP_GET_VARS['gruppen_pwd'])) $gruppen_pwd = $HTTP_GET_VARS['gruppen_pwd'];       // Passwort für den Bereich
- *		 
- *	 
- *	 // Passwort prüfen, Bestellgrupendaten einlesen...
- * 	 if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
- * 	 {
- *       $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
- * 	    $bestellgruppen_row = mysql_fetch_array($result);
- * 			
- * 			$pwd_ok = ($bestellgruppen_row['passwort'] == crypt($gruppen_pwd,35464));
- * 			
- * 			
- * 	 }
- *
- *
- * ?>
- *	    // Wenn kein Passwort für die Bestellgruppen-Admin angegeben wurde, dann abfragen...
- * 			if (!isset($gruppen_pwd) || !$pwd_ok) {
- * 	
- * 				 <form action="index.php">
- * 				    <input type="hidden" name="area" value="bestellen">
- * 						
- * 						<table class="menu">
- * 						   <tr class="tableHeader1">
- * 							    <th colspan="2" >Bitte zum bestellen einloggen</th>
- * 							 </tr>
- * 						   <tr>
- * 						      <td>Bestellgruppenname:</td>
- * 						      <td>
- * 									   <select name="gruppen_id">
- * 										    <option value="">[auswählen]</option>
- * 										    <?PHP
- *                            $result = mysql_query("SELECT id,name FROM bestellgruppen ORDER BY name") or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
- * 	                         while ($row = mysql_fetch_array($result)) echo "<option value='".$row['id']."'>".$row['name']."</option>\n";
- * 												?>
- * 						         </select>
- * 									</td>
- * 							 </tr>
- * 							 <tr>
- * 							    <td>Bitte Zugangspasswort angeben:</td>
- * 									<td><input type="password" size="12" name="gruppen_pwd"></td>
- * 							 </tr>
- * 							 <tr>
- * 							    <td colspan="2" align="middle"><input type="submit" value="einloggen"><input type="button" value="abbrechen" onClick="self.location.href='index.php'"></td>
- * 							 </tr>
- * 						</table>
- * 						
- * 				 </form>
- * 	<?php
- * 			} 
-*/
+ require_once('code/zuordnen.php');
+ require_once('code/views.php');
+
 $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 
 
-     if( ! $angemeldet ) {
-       echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
-       return;
-     } else	 {
-        if( $hat_dienst_IV ) {
-          $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
-          // echo "<div class='warn'>dienst IV: bestellt fuer $gruppen_id</div>";
-          echo "<h1>Bestellen f&uuml;r den Basar</h1>";
-        } else {
-          $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
-          echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
-        }
-			
-					   // Aktuelle Bestellung ermitteln...
-						 if (isset($HTTP_GET_VARS['bestellungs_id'])) 
-						 {
-						    $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
-						    if($hat_dienst_IV){
-						    	verteilmengenLoeschen($bestell_id);
-						    }
-						    $query ="SELECT * FROM gesamtbestellungen WHERE id=".mysql_escape_string($bestell_id);
-						    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden.. ($query)",mysql_error());
-						 } else 
-						 {
-						 	$result = sql_bestellungen(TRUE, $gruppen_id);
-						 }
-				
-						if (mysql_num_rows($result) > 1) 
-						{
-					?>
-					
-					       Es laufen im Moment mehrere Bestellungen. Bitte eine wählen:<br />
-								 <br />
-					    			 <table style="width:600px;" class="liste">
-										 	<tr>
-												<th>Name</th>
+   if( ! $angemeldet ) {
+     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
+     return;
+   } else	 {
+      if( $hat_dienst_IV ) {
+        $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
+      // echo "<div class='warn'>dienst IV: bestellt fuer $gruppen_id</div>";
+      echo "<h1>Bestellen f&uuml;r den Basar</h1>";
+    } else {
+      $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
+      echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
+    }
+  
+         // Aktuelle Bestellung ermitteln...
+         if (isset($HTTP_GET_VARS['bestellungs_id'])) 
+         {
+            $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
+            if($hat_dienst_IV){
+              verteilmengenLoeschen($bestell_id);
+            }
+            $query ="SELECT * FROM gesamtbestellungen WHERE id=".mysql_escape_string($bestell_id);
+            $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungen nich aus DB laden.. ($query)",mysql_error());
+         } else 
+         {
+          $result = sql_bestellungen(TRUE, $gruppen_id);
+         }
+    
+        if (mysql_num_rows($result) > 1) 
+        {
+      ?>
+      
+             Es laufen im Moment mehrere Bestellungen. Bitte eine wählen:<br />
+             <br />
+                 <table style="width:600px;" class="liste">
+                    <tr>
+                      <th>Name</th>
 												<th>Beginn</th>
 												<th>Ende</th>
 												<th>Produkte</th>
@@ -641,12 +587,14 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
 					 <input type="hidden" name="isChanged">
 					 <input type="hidden" name="action">
-				<table border="2" style="margin:40px 0 0 0;">
+				<table class='numbers' style="margin:40px 0 0 0;">
 	        <tr>
 						 <th>Bezeichnung</th>
 						 <th>Produktgruppe</th>
 						 <th>Lieferant</th>
-						 <th class="gebinde" coldpan="4">Gebinde, Preis, Einheit</th>
+						 <th>Gebinde</th>
+             <th>Anzahl</th>
+             <th colspan='2'>Preis</th>
 						 <th class="menge">Menge</th>
 						 <th class="toleranz">Toleranz</th>
 						 <th>Kosten</th>
@@ -1046,15 +994,24 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 						 <td valign="top"><?PHP echo $produktgruppen_id2name[$produkt_row['produktgruppen_id']]; ?></td>
 						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; 
 						 						$lieferant_idx=$lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
-						 <td valign="top">
-						     <table border="0" width="100%" class="inner">
+						 <!-- <td valign="top">
+						     <table border="0" width="100%" class="inner"> -->
 			<?PHP 
 										
 											  // Preise zum aktuellen Produkt auslesen..
-											  $result2 = mysql_query("SELECT  id, gebindegroesse, bestellnummer, preis FROM  produktpreise WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;") or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
+                        // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen???
+                        // das ist doch der preis, der auch im lieferschein angezeigt, und vom konto abgebucht werden wird!
+											  $result2 = mysql_query(
+                          "SELECT id, gebindegroesse, bestellnummer, preis
+                                , mwst, pfand, verteileinheit, liefereinheit
+                           FROM  produktpreise
+                           WHERE id={$produkt_row['produktpreise_id']}"
+                        ) or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
+                        // WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;")
 												for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
 												{
 												   $preise_row = mysql_fetch_array($result2);
+                           preisdatenSetzen( $preise_row );
 													 
 															 if ($toleranzGebNr == $i) { 
 															    $toleranz_color_str = "style='color:#999999'";
@@ -1063,16 +1020,17 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 															 }	
 															 
 													 echo "
-											<tr> 
-												<td><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span> - </b></td>
-												<td>".$preise_row['gebindegroesse']." * ".$produkt_row['einheit']."</td>
-												<td align='right'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span> x </td>
-												<td align='right'>".sprintf("%.02f",$preise_row['preis'])."</td>
-											</tr>";
+											<!-- <tr>  -->
+												<td class='number'><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span></b>
+                          ({$preise_row['gebindegroesse']}*{$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']})</td>
+												<td class='number'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span></td>
+												<td class='mult'>".sprintf("%.02f",$preise_row['preis'])."</td>
+												<td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
+											<!-- </tr> -->";
 													}
 											 
 						?>
-						    	</table> 
+						    <!--	</table>  -->
 						 </td>
 						 <td valign="top" <?PHP if ($markiereMengenRow) echo "bgcolor='".$darkMarkerColor."'"; ?>>
 						 
@@ -1153,7 +1111,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 						 }
 		?>
 		    <tr>
-				   <td colspan="6" align="right"><b>Gesamtpreis:</b></td>
+				   <td colspan="9" align="right"><b>Gesamtpreis:</b></td>
 					 <td align="right" id="td_gesamt_preis">
 					    <span id="gesamt_preis" style="font-weight:bold;"><?PHP echo sprintf("%.02f",$gesamt_preis); ?></span><br />
 							<span style="font-size:0.8em;">(<span id="gesamt_preis_max"><?PHP echo  sprintf("%.02f",$max_gesamt_preis); ?></span>)</span>
@@ -1161,11 +1119,11 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 <input type="hidden" name="gesamt_preis">
 				</tr>
 		    <tr>
-				   <td colspan="6" align="right"><b>Gruppenkontostand:</b></td>
+				   <td colspan="9" align="right"><b>Gruppenkontostand:</b></td>
 					 <td align="right" id="td_kontostand"><span style="font-weight:bold;" id="alt_konto"><?PHP echo sprintf("%.02f",$kontostand); ?></span</td>
 				</tr>							
 		    <tr>
-				   <td colspan="6" align="right"><b>neuer Kontostand:</b></td>
+				   <td colspan="9" align="right"><b>neuer Kontostand:</b></td>
 					 <td align="right" id="td_neuer_kontostand">
 					    <span style="font-weight:bold;" id="neu_konto"><?PHP echo sprintf("%.02f",($kontostand - $gesamt_preis)); ?></span><br />
 							<span  style="font-size:0.8em;">(<span id="neu_konto_min"><?PHP echo  sprintf("%.02f",($kontostand - $max_gesamt_preis)); ?></span>)</span>
