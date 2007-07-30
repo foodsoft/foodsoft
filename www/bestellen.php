@@ -468,6 +468,11 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 							//document.forms['bestellForm'].dummy.value=(new Date()).getTime();
 					    document.forms['bestellForm'].submit();
 					 }
+
+           function neuesfenster(url,name) {
+             f=window.open(url,name);
+             f.focus();
+           }
 				-->
 				</script>		
 				
@@ -1004,18 +1009,20 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 			<?PHP 
 										
 											  // Preise zum aktuellen Produkt auslesen..
-                        // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen???
+                        // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen?
                         // das ist doch der preis, der auch im lieferschein angezeigt, und vom konto abgebucht werden wird!
 											  $result2 = mysql_query(
                           "SELECT id, gebindegroesse, bestellnummer, preis
-                                , mwst, pfand, verteileinheit, liefereinheit
+                                , mwst, pfand, verteileinheit, liefereinheit, zeitende
                            FROM  produktpreise
                            WHERE id={$produkt_row['produktpreise_id']}"
                         ) or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
                         // WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;")
-												for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
-												{
-												   $preise_row = mysql_fetch_array($result2);
+												// for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
+												// {
+												if( $preise_row = mysql_fetch_array($result2) ) {
+                           // vorlaeufig(?) nur ein gueltiger preiseintrag je produkt mit nummer i=0:
+                           $i = 0;
                            preisdatenSetzen( $preise_row );
 													 
 															 if ($toleranzGebNr == $i) { 
@@ -1029,10 +1036,27 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 												<td class='number'><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span></b>
                           ({$preise_row['gebindegroesse']}*{$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']})</td>
 												<td class='number'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span></td>
-												<td class='mult'>".sprintf("%.02f",$preise_row['preis'])."</td>
+												<td 
+                      ";
+                      if( $preise_row['zeitende'] and ( $preise_row['zeitende'] < $row_gesamtbestellung['bestellende'] ) ) {
+                        echo " class='mult_outdated' title='Preis nicht mehr aktuell!'";
+                      } else {
+                        echo " class='mult'";
+                      }
+                      echo ">
+                          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','foodsoftdetail');\">
+                        ".sprintf("%.02f",$preise_row['preis'])."
+                        </a>
+                        </td>
 												<td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
 											<!-- </tr> -->";
-													}
+													} else {
+                            echo "
+                              <td colspan='4'>
+                                <div class='warn'>Kein aktueller Preiseintrag</div>
+                              </td>
+                            ";
+                          }
 											 
 						?>
 						    <!--	</table>  -->

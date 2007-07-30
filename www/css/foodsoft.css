@@ -350,6 +350,14 @@ table.numbers td.mult {
   margin-right:0pt;
   padding-right:1ex;
 }
+table.numbers td.mult_outdated {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:1ex;
+  background-color:#ffffaa;
+}
 table.numbers td.unit {
   white-space:nowrap;
   text-align:left;
