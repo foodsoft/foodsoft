@@ -468,7 +468,7 @@ JOIN `produktpreise` ON ( `bestellvorschlaege`.`produktpreise_id` = `produktprei
 JOIN `gesamtbestellungen` ON ( `gesamtbestellungen`.`id` = `gruppenbestellungen`.`gesamtbestellung_id` ) 
 JOIN `produkte` ON ( bestellzuordnung.`produkt_id` = `produkte`.`id` ) 
 WHERE `bestellzuordnung`.`art` =2 
-GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`, verteileinheit
+GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`, produktpreise_id
 HAVING ( `basar` <>0) " ;
 
 
