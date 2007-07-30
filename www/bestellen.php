@@ -8,10 +8,10 @@
 $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 
 
-     if( ! $angemeldet ) {
-       echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
-       return;
-     } else	 {
+   if( ! $angemeldet ) {
+     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
+     return;
+   } else	 {
 	//$status und $useDate definieren, welche Bestellungen angezeigt werden
 	$status = array(STATUS_BESTELLEN);
 	$useDate = FALSE;
@@ -24,9 +24,9 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
         } else {
 	  //Nur aktuell gültige Bestellungen
 	  $useDate = TRUE;
-          $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
-          echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
-        }
+      $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
+      echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
+    }
 			
 					   // Aktuelle Bestellung ermitteln...
 						 if (isset($HTTP_GET_VARS['bestellungs_id'])) {
@@ -592,12 +592,14 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
 					 <input type="hidden" name="isChanged">
 					 <input type="hidden" name="action">
-				<table border="2" style="margin:40px 0 0 0;">
+				<table class='numbers' style="margin:40px 0 0 0;">
 	        <tr>
 						 <th>Bezeichnung</th>
 						 <th>Produktgruppe</th>
 						 <th>Lieferant</th>
-						 <th class="gebinde" coldpan="4">Gebinde, Preis, Einheit</th>
+						 <th>Gebinde</th>
+             <th>Anzahl</th>
+             <th colspan='2'>Preis</th>
 						 <th class="menge">Menge</th>
 						 <th class="toleranz">Toleranz</th>
 						 <th>Kosten</th>
@@ -997,15 +999,24 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 						 <td valign="top"><?PHP echo $produktgruppen_id2name[$produkt_row['produktgruppen_id']]; ?></td>
 						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; 
 						 						$lieferant_idx=$lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
-						 <td valign="top">
-						     <table border="0" width="100%" class="inner">
+						 <!-- <td valign="top">
+						     <table border="0" width="100%" class="inner"> -->
 			<?PHP 
 										
 											  // Preise zum aktuellen Produkt auslesen..
-											  $result2 = mysql_query("SELECT  id, gebindegroesse, bestellnummer, preis FROM  produktpreise WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;") or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
+                        // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen???
+                        // das ist doch der preis, der auch im lieferschein angezeigt, und vom konto abgebucht werden wird!
+											  $result2 = mysql_query(
+                          "SELECT id, gebindegroesse, bestellnummer, preis
+                                , mwst, pfand, verteileinheit, liefereinheit
+                           FROM  produktpreise
+                           WHERE id={$produkt_row['produktpreise_id']}"
+                        ) or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
+                        // WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;")
 												for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
 												{
 												   $preise_row = mysql_fetch_array($result2);
+                           preisdatenSetzen( $preise_row );
 													 
 															 if ($toleranzGebNr == $i) { 
 															    $toleranz_color_str = "style='color:#999999'";
@@ -1014,16 +1025,17 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 															 }	
 															 
 													 echo "
-											<tr> 
-												<td><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span> - </b></td>
-												<td>".$preise_row['gebindegroesse']." * ".$produkt_row['einheit']."</td>
-												<td align='right'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span> x </td>
-												<td align='right'>".sprintf("%.02f",$preise_row['preis'])."</td>
-											</tr>";
+											<!-- <tr>  -->
+												<td class='number'><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span></b>
+                          ({$preise_row['gebindegroesse']}*{$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']})</td>
+												<td class='number'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span></td>
+												<td class='mult'>".sprintf("%.02f",$preise_row['preis'])."</td>
+												<td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
+											<!-- </tr> -->";
 													}
 											 
 						?>
-						    	</table> 
+						    <!--	</table>  -->
 						 </td>
 						 <td valign="top" <?PHP if ($markiereMengenRow) echo "bgcolor='".$darkMarkerColor."'"; ?>>
 						 
@@ -1104,7 +1116,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 						 }
 		?>
 		    <tr>
-				   <td colspan="6" align="right"><b>Gesamtpreis:</b></td>
+				   <td colspan="9" align="right"><b>Gesamtpreis:</b></td>
 					 <td align="right" id="td_gesamt_preis">
 					    <span id="gesamt_preis" style="font-weight:bold;"><?PHP echo sprintf("%.02f",$gesamt_preis); ?></span><br />
 							<span style="font-size:0.8em;">(<span id="gesamt_preis_max"><?PHP echo  sprintf("%.02f",$max_gesamt_preis); ?></span>)</span>
@@ -1112,18 +1124,18 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 <input type="hidden" name="gesamt_preis">
 				</tr>
 		    <tr>
-				   <td colspan="6" align="right"><b>Gruppenkontostand:</b></td>
+				   <td colspan="9" align="right"><b>Gruppenkontostand:</b></td>
 					 <td align="right" id="td_kontostand"><span style="font-weight:bold;" id="alt_konto"><?PHP echo sprintf("%.02f",$kontostand); ?></span</td>
 				</tr>							
 		    <tr>
-				   <td colspan="6" align="right"><b>neuer Kontostand:</b></td>
+				   <td colspan="9" align="right"><b>neuer Kontostand:</b></td>
 					 <td align="right" id="td_neuer_kontostand">
 					    <span style="font-weight:bold;" id="neu_konto"><?PHP echo sprintf("%.02f",($kontostand - $gesamt_preis)); ?></span><br />
 							<span  style="font-size:0.8em;">(<span id="neu_konto_min"><?PHP echo  sprintf("%.02f",($kontostand - $max_gesamt_preis)); ?></span>)</span>
 					 </td>
 				</tr>				
 	      <tr>
-				   <th colspan="7">
+				   <th colspan="10">
 					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
                <?php
                  if( ! $readonly ) {
@@ -1149,8 +1161,8 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 	   <input type="submit" value="Produkt hinzufügen">
    </form>
 <?php } ?>
-				
-		<?PHP
+
+   <?PHP
 		
 						 // prüfe ob sich durch zwischenzeitliche Bestellungen der anderen Bestellgruppen etwas geändert hatt und bereite den Hinweistext vor...
 						 if (isset($action) && $action == "bestellen") {
