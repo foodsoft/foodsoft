@@ -75,7 +75,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 				 } else 	{		// jetzt wird die gewählte bestellung angezeigt
 				 
 				    $row_gesamtbestellung = mysql_fetch_array($result);
-				    $bestell_id = $row_gesamtbestellung['id'];
+			    $bestell_id = $row_gesamtbestellung['id'];
 				    $lieferant_idx = $row_gesamtbestellung['id'];
 						$gesamt_preis = 0;
 						$max_gesamt_preis = 0;
@@ -464,6 +464,11 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 							//document.forms['bestellForm'].dummy.value=(new Date()).getTime();
 					    document.forms['bestellForm'].submit();
 					 }
+
+           function neuesfenster(url,name) {
+             f=window.open(url,name);
+             f.focus();
+           }
 				-->
 				</script>		
 				
@@ -999,18 +1004,19 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 			<?PHP 
 										
 											  // Preise zum aktuellen Produkt auslesen..
-                        // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen???
+                        // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen?
                         // das ist doch der preis, der auch im lieferschein angezeigt, und vom konto abgebucht werden wird!
 											  $result2 = mysql_query(
                           "SELECT id, gebindegroesse, bestellnummer, preis
-                                , mwst, pfand, verteileinheit, liefereinheit
+                                , mwst, pfand, verteileinheit, liefereinheit, zeitende
                            FROM  produktpreise
                            WHERE id={$produkt_row['produktpreise_id']}"
                         ) or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
                         // WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;")
-												for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
-												{
-												   $preise_row = mysql_fetch_array($result2);
+												// for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
+												// {
+												if( $preise_row = mysql_fetch_array($result2) ) {
+                           $i = 0;
                            preisdatenSetzen( $preise_row );
 													 
 															 if ($toleranzGebNr == $i) { 
@@ -1024,10 +1030,27 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 												<td class='number'><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span></b>
                           ({$preise_row['gebindegroesse']}*{$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']})</td>
 												<td class='number'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span></td>
-												<td class='mult'>".sprintf("%.02f",$preise_row['preis'])."</td>
+												<td 
+                      ";
+                      if( $preise_row['zeitende'] and ( $preise_row['zeitende'] < $row_gesamtbestellung['bestellende'] ) ) {
+                        echo " class='mult_outdated' title='Preis nicht mehr aktuell!'";
+                      } else {
+                        echo " class='mult'";
+                      }
+                      echo ">
+                          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','foodsoftdetail');\">
+                        ".sprintf("%.02f",$preise_row['preis'])."
+                        </a>
+                        </td>
 												<td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
 											<!-- </tr> -->";
-													}
+													} else {
+                            echo "
+                              <td colspan='4'>
+                                <div class='warn'>Kein aktueller Preiseintrag</div>
+                              </td>
+                            ";
+                          }
 											 
 						?>
 						    <!--	</table>  -->
@@ -1130,9 +1153,13 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 					 </td>
 				</tr>				
 	      <tr>
-				   <th colspan="7">
+				   <th colspan="10">
 					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
-				       <input type="button" class="bigbutton" value="bestellen" onClick="bestellungAktualisieren();">
+               <?php
+                 if( ! $readonly ) {
+                   echo "<input type='button' class='bigbutton' value='bestellen' onClick='bestellungAktualisieren();'>";
+                 }
+               ?>
 				       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
 				      
 					 
@@ -1143,8 +1170,9 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 				</table>
 		    </form>
  
+<?php if( ! $readonly ) {  ?>
    <h3> Zusätzlich Produkt in Bestellvorlage aufnehmen </h3>
-   <form method='post' target='index.php?area=bestellen'>
+   <form method='post' action='index.php?area=bestellen'>
 	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
 	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
 	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
@@ -1153,7 +1181,9 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 	     ?>
 	   <input type="submit" value="Produkt hinzufügen">
    </form>
-<?php
+<?php } ?>
+
+   <?PHP
 				
 		
 						 // prüfe ob sich durch zwischenzeitliche Bestellungen der anderen Bestellgruppen etwas geändert hatt und bereite den Hinweistext vor...
