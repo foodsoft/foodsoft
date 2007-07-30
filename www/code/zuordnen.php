@@ -497,7 +497,9 @@ JOIN `gesamtbestellungen` ON ( `gesamtbestellungen`.`id` = `gruppenbestellungen`
 JOIN `produkte` ON ( bestellzuordnung.`produkt_id` = `produkte`.`id` ) 
 WHERE `bestellzuordnung`.`art` =2 
 GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`, produktpreise_id
-HAVING ( `basar` <>0) " ;
+HAVING ( `basar` <>0)
+ORDER BY produkte.name
+" ;
 
 
  /*  
