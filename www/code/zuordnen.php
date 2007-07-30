@@ -161,14 +161,16 @@ function sql_create_gruppenbestellung($gruppe, $bestell_id){
 	    return($id['id']);
 	
 }
-function sql_basar2group($gruppe, $produkt, $menge){
+function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
 
 	    //Bestell-ID bestimmen
-	    $sql = "SELECT * FROM (".select_basar().") as basar WHERE produkt_id = ".mysql_escape_string($produkt);
+      // wird jetzt uebergeben: da sich die masseinheiten aendern koennen, muessen wir
+      // dieselbe nehmen wie in der basaranzeige, nicht irgendeine zum produkt!
+	    // $sql = "SELECT * FROM (".select_basar().") as basar WHERE produkt_id = ".mysql_escape_string($produkt);
 	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basar nich aus DB laden..",mysql_error());
-	    $row = mysql_fetch_array($result);
-	    $bestell_id = $row['gesamtbestellung_id'];
+	    // $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basar nich aus DB laden..",mysql_error());
+	    // $row = mysql_fetch_array($result);
+	    // $bestell_id = $row['gesamtbestellung_id'];
 
 	    //Gruppenbestellung ID raussuchen
 	    $sql = "SELECT id FROM gruppenbestellungen
@@ -176,12 +178,12 @@ function sql_basar2group($gruppe, $produkt, $menge){
 			" AND bestellguppen_id = ".$gruppe;
 
 	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gruppenbestellungen nich aus DB laden..",mysql_error());
 
 	    //Evtl. fehlende Gruppenbestellung erzeugen
 	    if(mysql_num_rows($result)==0){
 	    	sql_create_gruppenbestellung($gruppe, $bestell_id);
-	    	$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    	$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gruppenbestellungen nich aus DB laden..",mysql_error());
 	    }
 	    
 	    $row = mysql_fetch_array($result);
@@ -190,7 +192,7 @@ function sql_basar2group($gruppe, $produkt, $menge){
 	    		(produkt_id, gruppenbestellung_id, menge, art)
 			VALUES (".$produkt.", ".$row['id'].", $menge, 2)";
 	    //echo $sql2."<br>";
-	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Basarkauf nicht eintragen",mysql_error());
 }
 function kontostand($gruppen_id){
 	    //Bestellt
@@ -387,6 +389,12 @@ function sql_gruppen($bestell_id=FALSE){
 	return $result;
 	
 }
+function optionen_gruppen() {
+  $gruppen = sql_gruppen();
+  while($gruppe = mysql_fetch_array($gruppen)){
+    echo "<option value='{$gruppe['id']}'>{$gruppe['name']}</option>\n";
+  }
+}
 
 function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	 $query = "SELECT * FROM gesamtbestellungen ";
@@ -469,14 +477,18 @@ function writeLiefermenge_sql($bestell_id){
 function sql_basar(){
    $sql = "SELECT * FROM (".select_basar().") as basar";
    //echo $sql."<br>";
-   $result =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+   $result =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basardaten nich aus DB laden..",mysql_error());
    return $result;
 
 }
 function select_basar(){
-   return "SELECT produkte.name, bestellvorschlaege.produkt_id,
-bestellvorschlaege.gesamtbestellung_id,
-bestellvorschlaege.produktpreise_id,  (bestellvorschlaege.liefermenge - sum(bestellzuordnung.menge)) as basar FROM 
+   return "
+     SELECT produkte.name, bestellvorschlaege.produkt_id,
+     bestellvorschlaege.gesamtbestellung_id,
+     bestellvorschlaege.produktpreise_id,
+     (bestellvorschlaege.liefermenge - sum(bestellzuordnung.menge)) as basar,
+     produktpreise.verteileinheit
+     FROM 
 `bestellzuordnung` 
 JOIN `gruppenbestellungen` ON ( `bestellzuordnung`.`gruppenbestellung_id` = `gruppenbestellungen`.`id` ) 
 JOIN `bestellvorschlaege` ON (  `bestellzuordnung`.`produkt_id` = `bestellvorschlaege`.`produkt_id` AND `gruppenbestellungen`.`gesamtbestellung_id` = `bestellvorschlaege`.`gesamtbestellung_id` )
@@ -484,7 +496,7 @@ JOIN `produktpreise` ON ( `bestellvorschlaege`.`produktpreise_id` = `produktprei
 JOIN `gesamtbestellungen` ON ( `gesamtbestellungen`.`id` = `gruppenbestellungen`.`gesamtbestellung_id` ) 
 JOIN `produkte` ON ( bestellzuordnung.`produkt_id` = `produkte`.`id` ) 
 WHERE `bestellzuordnung`.`art` =2 
-GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`
+GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`, produktpreise_id
 HAVING ( `basar` <>0) " ;
 
 
@@ -495,6 +507,7 @@ HAVING ( `basar` <>0) " ;
    from (((".select_verteilmengen().") as `verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`))) having (`basar` <> 0) ";
    */
 }
+
 function from_basar(){
    return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
    /*
@@ -943,7 +956,7 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
   return true;
 }
 
-function selector_einheit( $selected ) {
+function optionen_einheiten( $selected ) {
   global $masseinheiten;
   foreach( $masseinheiten as $e ) {
     echo "<option value='$e'";
