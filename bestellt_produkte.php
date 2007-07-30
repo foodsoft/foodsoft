@@ -1,30 +1,28 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
-include("code/zuordnen.php");
-include("code/views.php");
+require_once("code/config.php");
+require_once("$foodsoftpath/code/zuordnen.php");
+require_once("$foodsoftpath/code/views.php");
+require_once("$foodsoftpath/code/login.php");
+$pwd_ok = $angemeldet;
+require_once("$foodsoftpath/head.php");
 
 // um die bestellungen nach produkten sortiert zu sehen ....
 
 
 // Übergebene Variablen einlesen...
-   if (isset($HTTP_GET_VARS['gruppen_id'])) $gruppen_id = $HTTP_GET_VARS['gruppen_id'];       // Passwort für den Bereich
-    if (isset($HTTP_GET_VARS['gruppen_pwd'])) $gruppen_pwd = $HTTP_GET_VARS['gruppen_pwd'];       // Passwort für den Bereich
-    if (isset($HTTP_GET_VARS['bestgr_pwd'])) $bestgr_pwd = $HTTP_GET_VARS['bestgr_pwd'];       // Passwort für den Bereich
-    if (isset($HTTP_GET_VARS['bestellungs_id'])) $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
-    if (isset($HTTP_GET_VARS['allGroupsArray'])) $allGroupsArray = $HTTP_GET_VARS['allGroupsArray'];
-    if (isset($HTTP_GET_VARS['sortierfolge'])) $sortierfolge = $HTTP_GET_VARS['sortierfolge'];
-
-    $pwd_ok = false;
-    $bestgrup_view = false;
-
-	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
-	//Tabelle überprüft und eingetragen
+  get_http_var('bestellungs_id')
+    and $bestell_id = $bestellungs_id
+    or need_http_var('bestell_id');
+  get_http_var('gruppen_id');
+  get_http_var('allGroupsArray');
+  get_http_var('sortierfolge');
 
          //infos zur gesamtbestellung auslesen 
          $sql = "SELECT *
                   FROM gesamtbestellungen
                   WHERE id = ".$bestell_id."";
-         $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+         $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungsdaten nich aus DB laden..",mysql_error());
          $row_gesamtbestellung = mysql_fetch_array($result);               
 ?>
 <h1>Bestellungen ansehen...</h1>
@@ -33,9 +31,9 @@ include("code/views.php");
       <br>
       <br>
          <form action="index.php" method="post">
-         <table style="width: 600px;" >
+         <table style="width: 600px;" class='numbers'>
             <tr class="legende">
-               <td colspan="5">Produkt (Einheit | Gebindegrösse | Preis | Produktgruppe)</td>
+               <td colspan="5">Produkt (Verteil-Einheit | Gebindegrösse | Endpreis | Produktgruppe)</td>
             </tr>
 	    <?distribution_tabellenkopf("Gruppe");?>
 <?php                               
@@ -44,6 +42,8 @@ include("code/views.php");
 
       //jetzt die namen und preis zu den produkten auslesen
       while  ($produkte_row = mysql_fetch_array($result1)) {
+         // nettopreis, Masseinheiten, ... ausrechnen:
+         preisdatenSetzen( $produkte_row );
       	 $produkt_id =$produkte_row['produkt_id'];
 	 
 	 //Wenn genügend bestellt wurde, gibt es mindestens einen
@@ -60,9 +60,9 @@ include("code/views.php");
 	 			     false, //gruppen_id
 				     false); //sortByDate
 	 	
-		  echo " <tr> <th colspan='4'><span
+		  echo " <tr> <th colspan='8'><span
 		  style='font-size:1.2em; margin:5px;'> ".$produkte_row['produkt_name']."</span>
-					 <span style='font-size:0.8em'>(".$produkte_row['einheit']." | 
+					 <span style='font-size:0.8em'>(".$produkte_row['verteileinheit']." | 
 					 ".$produkte_row['gebindegroesse']." | 
 					 ".$produkte_row['preis']." | 
 					 ".$produkte_row['produktgruppen_name'].")";
@@ -105,7 +105,7 @@ include("code/views.php");
 					$entry_row = mysql_fetch_array($result);
 				}
 				if(isset($HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID])){
-					$verteil_form =$HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID];
+					$verteil_form =$HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID] / $produkte_row['kan_verteilmult'];
 					if($verteil!=$verteil_form){
 						changeVerteilmengen_sql($verteil_form, $gruppenID, $produkt_id, $bestell_id );
 						$verteil=$verteil_form;
@@ -116,7 +116,9 @@ include("code/views.php");
 			}
 			
 
-		       distribution_view($gruppenname, $festmenge, $toleranz, $verteil, $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
+		       distribution_view($gruppenname, $festmenge, $toleranz, $verteil,
+             $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit'],
+             $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
 		     
 	 } //end while gruppen array
 	 
@@ -127,21 +129,22 @@ include("code/views.php");
    } //end if ... reichen die bestellten mengen? dann weiter im text
    
 } //end while produkte array            
+
+  echo "
+     <tr style='border:none'>
+  	<td colspan='4' style='border:none;'>
+  	   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+  	   <input type='hidden' name='area' value='bestellt_produkte'>			
+  	   <input type='submit' value=' Verteilung &auml;ndern '>
+  	   <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
+  	</td>
+     </tr>
+     </table>                   
+     </form>
+     <form action='index.php' method='get'>
+  	   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+  	   <input type='hidden' name='area' value='bestellt'>			
+  	   <input type='submit' value='Zur&uuml;ck '>
+     </form>
+  ";
 ?>
-   <tr style='border:none'>
-	<td colspan='4' style='border:none'>
-	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="hidden" name="area" value="bestellt_produkte">			
-	   <input type="submit" value=" Verteilung ändern ">
-	   <input type="reset" value=" Änderungen zurücknehmen">
-	</td>
-   </tr>
-   </table>                   
-   </form>
-   <form action="index.php" method="post">
-	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-	   <input type="hidden" name="area" value="bestellt">			
-	   <input type="submit" value="Zurück ">
-   </form>

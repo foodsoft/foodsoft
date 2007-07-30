@@ -1,16 +1,18 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
-include("code/zuordnen.php");
-include("code/views.php");
+require_once("code/config.php");
+require_once("$foodsoftpath/code/zuordnen.php");
+require_once("$foodsoftpath/code/views.php");
+require_once("$foodsoftpath/code/login.php");
+$pwd_ok = $angemeldet;
+require_once("$foodsoftpath/head.php");
 
 // um die bestellung für eine bestimmte gruppe zu sehen ....
 
 
 // Übergebene Variablen einlesen...
-    if (isset($_REQUEST['bestell_id'])) $bestell_id = $_REQUEST['bestell_id'];
-
-    
-    if($angemeldet){
+  need_http_var('bestell_id');
+  get_http_var('gruppen_id') or $gruppen_id = $login_gruppen_id;
 
 
 	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
@@ -21,15 +23,14 @@ include("code/views.php");
                   FROM gesamtbestellungen
                   WHERE id = ".$bestell_id;
          $result = mysql_query($sql) or
-	 error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus
-	 DB laden.. ($sql)",mysql_error());
+	 error(__LINE__,__FILE__,"Konnte Gesamtbestellungsdaten nich aus DB laden.. ($sql)",mysql_error());
          $row_gesamtbestellung = mysql_fetch_array($result);               
 ?>
-<h1>Bestellungen ansehen für Gruppe <? echo sql_gruppenname($login_gruppen_id)?></h1>
+<h1>Bestellungen ansehen f&uuml;r Gruppe <? echo sql_gruppenname($gruppen_id)?></h1>
 	 <?bestellung_overview($row_gesamtbestellung);?>
       <br>
       <br>
-         <table style="width: 600px;" >
+         <table style="width: 600px;" class='numbers'>
 	    <?distribution_tabellenkopf("Produkt");?>
                            
 <?php                               
@@ -39,12 +40,14 @@ include("code/views.php");
 
       //jetzt die namen und preis zu den produkten auslesen
       while  ($produkte_row = mysql_fetch_array($result1)) {
+         // nettopreis, Masseinheiten, ... ausrechnen:
+         preisdatenSetzen( $produkte_row );
       	 $produkt_id =$produkte_row['produkt_id'];
 	 
 	 $result = sql_bestellmengen($bestell_id,
 	 			     $produkt_id, 
 				     false, //art
-	 			     $login_gruppen_id, //gruppen_id
+	 			     $gruppen_id,
 				     false); //sortByDate
 	 if(mysql_num_rows($result)>0){
 	 	 
@@ -94,7 +97,10 @@ include("code/views.php");
 			}
 			
 
-		       distribution_view($produkte_row['produkt_name'], $festmenge, $toleranz, $verteil, $produkte_row['preis']);
+		       distribution_view($produkte_row['produkt_name'], $festmenge, $toleranz, $verteil,
+             $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit'],
+             $produkte_row['preis']
+           );
 		       $sum += $verteil*$produkte_row['preis'];
 		     
 	 } //end while gruppen array
@@ -104,8 +110,5 @@ include("code/views.php");
    
 } //end while produkte array            
    sum_row($sum);
-   } else {
-   ?><h2>Falsches Passwort?</h2><?
 
-  }
 ?>

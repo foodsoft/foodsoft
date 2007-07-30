@@ -62,35 +62,45 @@ function select_products_not_in_list($bestell_id){
 function distribution_tabellenkopf($name){
   ?>
             <tr class="legende">
-               <td><?echo $name?></td>
-               <td>bestellt (toleranz)</td>
-               <td>geliefert</td>
-               <td>Preis</td>
+               <th><?echo $name?></th>
+               <th colspan='2'>bestellt (toleranz)</th>
+               <th colspan='2'>geliefert</th>
+               <th colspan='2'>Einzelpreis</th>
+               <th>Gesamtpreis</th>
             </tr>
  
   <?
 }
-function distribution_view($name, $festmenge, $toleranz, $verteilmenge, $preis, $inputbox_name = false){
-  ?>
-      <tr>
-	 <td> <?echo $name?></td>
-	 <td><b><?echo $festmenge?></b> (<?echo $toleranz?>)</td>
-	 <td>
-	     <?if($inputbox_name===false){
-	     	   echo $verteilmenge ;
-	     }else{?>
-	            <input name="<?echo $inputbox_name?>" type="text" size="3" value="<?echo $verteilmenge ?>" />
-	     <?}?>
-	 </td>
-	 <td><?echo $verteilmenge."x".$preis."=".($verteilmenge* $preis)?></td>
-      </tr>
-   <?
+function distribution_view($name, $festmenge, $toleranz, $verteilmenge, $verteilmult, $verteileinheit, $preis, $inputbox_name = false){
+  echo "
+    <tr>
+      <td>$name</td>
+      <td class='mult'><b>" . $festmenge * $verteilmult . " </b> (" . $toleranz * $verteilmult . ")</td>
+      <td class='unit'>$verteileinheit</td>
+      <td class='mult'>
+  ";
+  if($inputbox_name===false){
+      echo $verteilmenge * $verteilmult;
+  }else{
+      echo "<input name='$inputbox_name' type='text' size='5'
+            value='" . $verteilmenge * $verteilmult . "' />";
+  }
+  echo "
+      </td>
+      <td class='unit'>$verteileinheit</td> 
+      <td class='mult'>$preis</td>
+      <td class='unit'>/ $verteilmult $verteileinheit</td>
+      <td class='number'>" . sprintf( "%8.2lf", $verteilmenge * $preis ) . " </td>
+    </tr>
+  ";
 }
 
 function sum_row($sum){
 ?>
 <tr style='border:none'>
-		 <td colspan='5' style='border:none' align=right><b>Summe = <?echo $sum?></b></td>
+		 <td colspan='7' style='border:none' align=right><b>Summe:</b></td>
+     <td class='number'><b><?echo
+     sprintf( "%8.2lf", $sum); ?></b></td>
 	      </tr>
 <?
 }
