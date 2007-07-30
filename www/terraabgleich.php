@@ -847,7 +847,7 @@
                onchange='preisberechnung_default();'
               >
       ";
-      selector_einheit( $newfc['kan_verteileinheit'] );
+      optionen_einheiten( $newfc['kan_verteileinheit'] );
       echo "
               </select>
               <label>Endpreis:</label>
@@ -877,7 +877,7 @@
                onchange='preisberechnung_default();'
               >
       ";
-      selector_einheit( $newfc['kan_liefereinheit'] );
+      optionen_einheiten( $newfc['kan_liefereinheit'] );
       echo "
               </select>
 
