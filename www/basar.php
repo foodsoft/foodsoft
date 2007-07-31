@@ -22,6 +22,8 @@
   get_http_var('menge_glas');
   get_http_var('gruppe');
   if( $menge_glas > 0 and $gruppe > 0 ) {
+    fail_if_readonly();
+    nur_fuer_dienst(4);
     sql_groupGlass( $gruppe, $menge_glas );
   }
 
@@ -52,10 +54,12 @@
 
   while  ($basar_row = mysql_fetch_array($result1)) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
-     $fieldName = "menge_".$basar_row['produkt_id']_$basar_row['gesamtbestellung_id'];
+     $fieldName = "menge_{$basar_row['produkt_id']}_{$basar_row['gesamtbestellung_id']}";
      $menge=$basar_row['basar'];
      if( get_http_var($fieldName) ) {
        if( ${$fieldName} != 0 && $gruppe > 0 ) {
+         fail_if_readonly();
+         nur_fuer_dienst(4);
          $gruppen_menge = ${$fieldName} / $kan_verteilmult;
          $menge -= $gruppen_menge;
          sql_basar2group($gruppe, $basar_row['produkt_id'], $basar_row['gesamtbestellung_id'], $gruppen_menge);
