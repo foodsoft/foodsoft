@@ -18,31 +18,6 @@
 //  - $coopie_name
 //  - $dienstkontrollblatt_id
 
-  $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
-  $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
-
-  function get_http_var( $name ) {
-    global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
-    if( isset( $HTTP_GET_VARS[$name] ) ) {
-      $$name = $HTTP_GET_VARS[$name];
-      return TRUE;
-    } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-      $$name = $HTTP_POST_VARS[$name];
-      return TRUE;
-    } else {
-      unset( $$name );
-      return FALSE;
-    }
-  }
-  function need_http_var( $name ) {
-    global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
-
-    if( ! get_http_var($name) ) {
-      error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
-      exit();
-    }
-  }
-  
   global $angemeldet,
          $login_gruppen_id,
          $login_gruppen_name,
