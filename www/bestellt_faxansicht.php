@@ -1,16 +1,17 @@
 <?php
+//error_reporting(0);
+$_SESSION['LEVEL_CURRENT']= LEVEL_NONE;
 
 // um die bestellungen nach produkten sortiert zu sehen ....
 
   // Konfigurationsdatei einlesen
-	include('code/config.php');
-	include('code/zuordnen.php');
+	require_once('code/config.php');
 	
 	// Funktionen zur Fehlerbehandlung laden
-	include('code/err_functions.php');
+	require_once('code/err_functions.php');
 	
 	// Verbindung zur MySQL-Datenbank herstellen
-	include('code/connect_MySQL.php');
+	require_once('code/connect_MySQL.php');
 	
 	//----------------------------------------------------beginn der pdf funktion
 
@@ -41,15 +42,14 @@ class PDF extends FPDF //die klassen und funtionen für die pdf erzeugung
 		    $this->SetY(-20);
 		    $this->SetTextColor(128,128,128);
 		    $this->SetFont('Arial','I',8);
-		    $this->MultiCell(0,4,"Bankverbindung: Anton Pieper, Nr. 882299806, BLZ 70010080, Postbank München \r\nSeite ".$this->PageNo()."/{nb}",0,'C');
+		    $this->MultiCell(0,4,"Bankverbindung:  \r\nSeite ".$this->PageNo()."/{nb}",0,'C');
 		}
 	
 } //end class
 // ----------------------------------------------php klassen und funktionen enden ...
 
 // Übergebene Variablen einlesen...
-if (isset($_POST['bestgr_pwd'])) $bestgr_pwd = $_POST['bestgr_pwd'];       // Passwort für den Bereich
-if (isset($_POST['bestellungs_id'])) $bestell_id = $_POST['bestellungs_id'];
+if (isset($_REQUEST['bestellungs_id'])) $bestell_id = $_REQUEST['bestellungs_id'];
 	
 verteilmengenZuweisen($bestell_id);
 	
@@ -57,34 +57,15 @@ $pwd_ok = false;
 $bestgrup_view = false;
 
 //infos zur gesamtbestellung auslesen 
-$sql = "SELECT * FROM gesamtbestellungen WHERE id = ".$bestell_id."";
 
-$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden.. ($sql)",mysql_error());
+
+$result = sql_bestellungen(FALSE, FALSE, $bestell_id);
 $row_gesamtbestellung = mysql_fetch_array($result);					
 
-//produkte und preise zur aktuellen bestellung auslesen
-$sql = "SELECT bestellvorschlaege.produkt_id as produkt_id,
-bestellvorschlaege.produktpreise_id as preis_id,
-bestellvorschlaege.bestellmenge,produkte.name, produkte.einheit,produktpreise.preis, produktpreise.gebindegroesse, produktpreise.bestellnummer, produktgruppen.name as produktgruppe
-FROM bestellvorschlaege 
-inner join produkte on (produkte.id = bestellvorschlaege.produkt_id)
-inner join produktpreise on (produktpreise.produkt_id = produkte.id)
-inner join produktgruppen on (produktgruppen_id = produktgruppen.id)
-WHERE gesamtbestellung_id = '".mysql_escape_string($bestell_id)."'
-AND produktpreise.id = bestellvorschlaege.produktpreise_id
-AND produktgruppen.id = produkte.produktgruppen_id
-AND bestellvorschlaege.bestellmenge > 0
-ORDER BY produkte.produktgruppen_id, produkte.name ASC";
-$result1 = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-//$produkte_row = mysql_fetch_array($result1);
 
 //Lieferant bestimmen
-$sql = "SELECT lieferanten.name as name, lieferanten.adresse as adresse, lieferanten.fax as fax
-					FROM lieferanten, produkte
-					WHERE produkte.id = '".$produkte_row['produkt_id']."'
-					AND lieferanten.id = produkte.lieferanten_id";
-$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-$lieferant_row = mysql_fetch_array($result);
+
+$lieferant_row = sql_getLieferant(getProduzentBestellID($bestell_id));
 
 //********************  wir starten mit der pdf ausgabe ***********************
 
@@ -129,12 +110,14 @@ $index=1;
 $pdf->SetFont('Arial','',9);	
 
 //jetzt die namen und preis zu den produkten auslesen
+//produkte und preise zur aktuellen bestellung auslesen
+$result1 = sql_bestellprodukte($bestell_id);
 while  ($produkte_row = mysql_fetch_array($result1))
-{
+     if($produkte_row['bestellmenge']!=0) {
 			$pdf->Cell(16,5,$produkte_row['bestellnummer'],1);
 			$pdf->Cell(12,5,$produkte_row['bestellmenge']/$produkte_row['gebindegroesse'],1);
-			$pdf->Cell(70,5,substr($produkte_row['name'],0,45),1);
-			$pdf->Cell(30,5,$produkte_row['produktgruppe'],1);	
+			$pdf->Cell(70,5,substr($produkte_row['produkt_name'],0,45),1);
+			$pdf->Cell(30,5,$produkte_row['produktgruppen_name'],1);	
 			$pdf->Cell(15,5,$produkte_row['gebindegroesse'],1);
 			$pdf->Cell(20,5,$produkte_row['einheit'],1);
 			$pdf->Cell(22,5,$produkte_row['preis'],1);
@@ -143,7 +126,7 @@ while  ($produkte_row = mysql_fetch_array($result1))
 			
 			
 	    
-} //end while (namen und preis zu den produkten auslesen)
+    } //end while (namen und preis zu den produkten auslesen)
 
 $pdf->Ln();
 $pdf->Ln();
@@ -151,7 +134,7 @@ $pdf->SetFont('Arial','I',8);
 $pdf->MultiCell(0,4,"Hinweise:
 Gebinde und Einheit in der Tabelle beziehen sich auf interne Größen der Foodcoop und können von Ihren Gebinden bzw. Einheiten abweichen.
 Die Preis sind inklusive Mehrwertsteuer und ggf. Pfand."); 
-$pdf->Output('Faxansicht_' . $lieferant_row['name'] . '_' . date("d.m.Y") . '.pdf',I);
+$pdf->Output('Faxansicht_' . $lieferant_row['name'] . '_' .  date("d.m.Y") . '.pdf',"I");
 
 
 

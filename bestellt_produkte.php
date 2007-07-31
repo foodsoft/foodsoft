@@ -1,4 +1,28 @@
 <?php
+<<<<<<< bestellt_produkte.php
+
+
+     if( ! $angemeldet ) {
+       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
+     } 
+
+     if(!nur_fuer_dienst(1,4)){exit();}
+
+    if (isset($HTTP_GET_VARS['bestellungs_id'])) {
+    		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
+	} else {
+	 	$result = sql_bestellungen(array(STATUS_LIEFERANT, STATUS_VERTEILT));
+		select_bestellung_view($result, array("zeigen" => "bestellt_produkte") , "Veteilung der Bestellung");
+		exit();
+	 }
+
+	 $basar= sql_basar_id();
+	
+
+
+	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
+	//Tabelle überprüft und eingetragen
+=======
 //error_reporting(E_ALL); // alle Fehler anzeigen
 require_once("code/config.php");
 require_once("$foodsoftpath/code/zuordnen.php");
@@ -17,6 +41,7 @@ require_once("$foodsoftpath/head.php");
   get_http_var('gruppen_id');
   get_http_var('allGroupsArray');
   get_http_var('sortierfolge');
+>>>>>>> 1.4
 
          //infos zur gesamtbestellung auslesen 
          $sql = "SELECT *
@@ -116,9 +141,15 @@ require_once("$foodsoftpath/head.php");
 			}
 			
 
+<<<<<<< bestellt_produkte.php
+		       if($gruppenID != $basar){
+		          distribution_view($gruppenname, $festmenge, $toleranz, $verteil, $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
+		       }
+=======
 		       distribution_view($gruppenname, $festmenge, $toleranz, $verteil,
              $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit'],
              $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
+>>>>>>> 1.4
 		     
 	 } //end while gruppen array
 	 
@@ -148,3 +179,23 @@ require_once("$foodsoftpath/head.php");
      </form>
   ";
 ?>
+<<<<<<< bestellt_produkte.php
+   <tr style='border:none'>
+	<td colspan='4' style='border:none'>
+	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt_produkte">			
+	   <input type="submit" value=" Speichern ">
+	   <input type="reset" value=" Änderungen zurücknehmen">
+	</td>
+   </tr>
+   </table>                   
+   </form>
+   <form action="index.php" method="post">
+	   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+	   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	   <input type="hidden" name="area" value="bestellt">			
+	   <input type="submit" value="Zurück ">
+   </form>
+=======
+>>>>>>> 1.4

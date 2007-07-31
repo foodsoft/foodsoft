@@ -6,11 +6,19 @@
 	require_once('code/err_functions.php');
 	
   require_once('code/login.php');
+  require_once('code/zuordnen.php');
+  require_once('code/views.php');
 	
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
 
   get_http_var( 'area' );
+
+  if($area == 'bestellt_faxansicht'){
+  	include("bestellt_faxansicht.php");
+	exit();
+  }
+
 
 		//head einfügen
 	get_http_var( 'nohead' );
@@ -57,7 +65,7 @@
 				else if ($area == 'bestellt_gruppe')
 			   include('bestellt_gruppe.php');
 				else if ($area == 'lieferschein')
-			   include('lieferschein.php');
+			   include('bestellschein.php');
 
 			   //2 x2 matrix				
 				else if ($area == 'bestellt_matrix')

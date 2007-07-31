@@ -140,7 +140,8 @@
 				    		//Eintrag in Konto ist Älter -> Verteil ausgeben
 					    echo "<tr>\n";
 					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
-					    echo "   <td>".$vert_row['datum']."</td>\n";
+					    //echo "   <td>".$vert_row['datum']."</td>\n";
+					    echo "   <td></td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
 					    echo "   <td align='right' valign='bottom'> <b> ".$vert_row['gesamtpreis']."</b> <br>";
 					    ?>

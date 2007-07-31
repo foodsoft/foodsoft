@@ -15,11 +15,16 @@
 					sqlGroupTransaction(0, $_REQUEST['gruppen_id'],$_REQUEST['amount']);
 				}
 				 $meinKonto = True;
+?>
+<h2>Aktueller Kontostand 
+<?
+   echo round(kontostand($login_gruppen_id),2)." Euro </h2>";
+
 				 include('windows/showGroupTransaktions.php') ?>
 <h2>Überweisung eintragen</h2>
 <form action="index.php" method="post">
 <input type="hidden" name="area" value="meinkonto">
-<input type="hidden" name="gruppen_id" value="<?echo $gruppen_id?>"/>
+<input type="hidden" name="gruppen_id" value="<?echo $login_gruppen_id?>"/>
 <input type="hidden" name="gruppen_pwd" value="<?echo $_REQUEST['gruppen_pwd']?>"/>
 Ich habe heute 
 <input type="text" size="12" name="amount"/>

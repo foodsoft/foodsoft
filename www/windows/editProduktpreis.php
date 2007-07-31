@@ -1,20 +1,27 @@
 <?PHP
-   $produkt_id       = $HTTP_GET_VARS['produkt_id'];
-   $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];
-   $preis_id = $HTTP_GET_VARS['preis_id'];
-	$bestellnummer = $HTTP_GET_VARS['bestellnummer'];   
-	$gebindegroesse = $HTTP_GET_VARS['gebindegroesse'];
-	$preis = $HTTP_GET_VARS['preis'];
-	 
-	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-	 
+//   error_reporting(E_ALL);
 	 // Verbindung zur Datenbank herstellen
 	 include('../code/config.php');
 	 include('../code/err_functions.php');
 	 include('../code/connect_MySQL.php');
-   require_once('../code/login.php');
+  require_once('../code/login.php');
+      if( ! $angemeldet ) {
+       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
+     } 
+
    nur_fuer_dienst_IV();
+   $produkt_id       = $HTTP_GET_VARS['produkt_id'];
+   $preis_id = $HTTP_GET_VARS['preis_id'];
+	$bestellnummer = $HTTP_GET_VARS['bestellnummer'];   
+	$gebindegroesse = $HTTP_GET_VARS['gebindegroesse'];
+	$preis = $HTTP_GET_VARS['preis'];
+	$pfand = $HTTP_GET_VARS['pfand'];
+	$mwst = $HTTP_GET_VARS['mwst'];
 	 
+	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+	 
+	 
+	$errStr = "";
 	 //ggf,  preisinfos auslesen... wenn der edit button gedrückt wurde
 		if (isset($HTTP_GET_VARS['zeitstart'])) 
 	 {	 
@@ -79,9 +86,10 @@
 			
 			$gebindegroesse                                     = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['gebindegroesse']));
 			$preis                                                     = str_replace(",",".",$HTTP_GET_VARS['preis']);
+			$pfand = str_replace(",",".",$HTTP_GET_VARS['pfand']);
+			$mwst = str_replace(",",".",$HTTP_GET_VARS['mwst']);
 			$bestellnummer                                       = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['bestellnummer']));
 
-			$errStr = "";
 			if ($gebindegroesse == "") $errStr.= "Der neue Preis muß eine Gebindegröße haben!<br>";
 			if ($preis == "") $errStr .= "Der neue Preis muß einen Preis haben!<br>";
 			// if ($bestellnummer == "") $errStr .= "Der neue Preis muß eine Bestellnummer haben!<br>";
@@ -93,6 +101,9 @@
 															
 							$sql = "UPDATE produktpreise
 												SET preis ='".mysql_escape_string($preis)."', 
+												mwst = '".mysql_escape_string($mwst)."',
+												pfand = '".mysql_escape_string($pfand)."',
+												bestellnummer = '".mysql_escape_string($bestellnummer)."',
 												bestellnummer = '".mysql_escape_string($bestellnummer)."',
 												gebindegroesse ='".mysql_escape_string($gebindegroesse)."'
 												WHERE id = '".$preis_id."'" ;
@@ -114,11 +125,10 @@
 </head>
 <body onload="<?PHP echo $onload_str; ?>">
 
-<small>(bisher kann mensch nur preis, bestellnummer <br />und gebindegröße ändern)</small>
+<small>(bisher kann mensch nur  bestellnummer, mwst, pfand und gebindegröße ändern) <br/> Der Preis lässt sich nicht ändern, da eine Änderung vorherige Abrechnungen verändern könnte. Stattdessen den Preis als abgelaufen definieren und einen neuen Preis einfügen</small>
 
 <h3>Produktpreis ändern</h3>
 	 <form name="reload_form" action="editProduktpreis.php">
-		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
 		<input type="hidden" name="produkt_id" value="<?PHP echo $produkt_id; ?>">
 		<input type="hidden" name="preis_id" value="<?PHP echo $preis_id; ?>">		
 		<input type="hidden" name="action" value="">
@@ -165,7 +175,17 @@
 			 </tr>
 			 <tr>
 					<th>Preis</th>
-					<td><input type="text" name="preis" value="<?php echo $preis ?>"></td>
+					<td><input type="hidden" name="preis" value="<?php echo $preis ?>"><?php echo $preis ?> </td>
+			 </tr>
+
+			 <tr>
+					<th>MWST</th>
+					<td><input type="input" name="mwst" value="<?php echo $mwst ?>"> </td>
+			 </tr>
+
+			 <tr>
+					<th>Pfand</th>
+					<td><input type="input" name="Pfand" value="<?php echo $pfand ?>"> </td>
 			 </tr>
 			 <tr>
 					<th>Bestellnummer</th>

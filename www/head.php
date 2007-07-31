@@ -51,34 +51,13 @@
       </tr>
      </table>
   
-     <ul id='menu' style='margin-bottom:1em;'>
-     <li><a href='index.php?area=meinkonto' class='first'>Mein Konto</a>
-<!--      <ul>
-      <li><a href='main.php?area=ModulStart&subarea=News'>News</a></li>
-      <li><a href='main.php?area=ModulStart&subarea=Termine'>Termine</a></li>
-      <li><a href='main.php?area=ModulStart&subarea=OwnEntries'>Selbst eingetragene News/Termine bearbeiten</a></li>    
-	</ul>  -->
-	</li>
-	<li><a href='index.php?area=bestellen' class='first'>Bestellen</a>
-	</li>
-  <li><a href='index.php?area=bestellt";
-  if( $angemeldet && ( $dienst == 0 ) ) echo "&gruppen_id=$login_gruppen_id";
-  echo "' class='first'>Bestellungen ansehen</a>
-	</li>
-  <li><a href='index.php?area=produkte' class='first'>Produkte</a>
-  </li> 
-	<li><a href='index.php?area=gruppen' class='first'>Gruppen</a>
-  </li>
-	  <li><a href='index.php?area=lieferanten' class='first'>LieferantInnen</a>
-  </li>
-	  <li><a href='index.php?area=dienstkontrollblatt' class='first'>Dienste</a>
-  </li>
-	  <li><a href='index.php?area=updownload' class='first'>UpDownload</a>
-  </li>
-  <li><a href='../../wiki/' class='first'>Wiki</a>
-  </li>
-</ul>
-<div class='payload'>
+     <ul id='menu' style='margin-bottom:1em;'>";
+      foreach(possible_areas() as $menu_area){
+        areas_in_head($menu_area);
+      }
+     echo "
+     </ul>
+     <div class='payload'>
     ";
     $print_on_exit='</div></body></html>';
 

@@ -2,10 +2,20 @@
 
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
+<<<<<<< bestellen.php
+<<<<<<< bestellen.php
+   //include('code/zuordnen.php');
+   //include('code/views.php');
+=======
+   include('code/zuordnen.php');
+   include('code/views.php');
+=======
    require_once("$foodsoftpath/code/zuordnen.php");
    require_once("$foodsoftpath/code/views.php");
+>>>>>>> 1.12
 
 $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
+>>>>>>> 1.9
 
 
    if( ! $angemeldet ) {
@@ -34,7 +44,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 						    if($hat_dienst_IV){
 						    	verteilmengenLoeschen($bestell_id);
 						    }
-						    sql_bestellungen(FALSE,FALSE,$bestell_id);
+						    $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
 						 } else {
 						 	$result = sql_bestellungen($status, $useDate);
 						 }
@@ -56,7 +66,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 											while ($row = mysql_fetch_array($result)) 
 											{ echo "
 											<tr>											
-												<td><a class=\"tabelle\" href=\"index.php?area=bestellen&gruppen_id=".$gruppen_id."&gruppen_pwd=".$gruppen_pwd."&bestellungs_id=".$row['id']."\">".$row['name']."</a></td>
+												<td><a class=\"tabelle\" href=\"index.php?area=bestellen&gruppen_id=".$gruppen_id."&bestellungs_id=".$row['id']."\">".$row['name']."</a></td>
 												<td>".$row['bestellstart']."</td>
 												<td>".$row['bestellende']."</td>";
 												//jetzt die anzahl der produkte bestimmen ...
@@ -573,7 +583,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 										{
 											echo "
 											<tr>											
-												<td><a class=\"tabelle\" href=\"index.php?area=bestellen&gruppen_id=".$gruppen_id."&gruppen_pwd=".$gruppen_pwd."&bestellungs_id=".$row['id']."\">".$row['name']."</a></td>
+												<td><a class=\"tabelle\" href=\"index.php?area=bestellen&gruppen_id=".$gruppen_id."&bestellungs_id=".$row['id']."\">".$row['name']."</a></td>
 												<td> | Ende: ".$row['bestellende']."</td>
 											</tr>	";
 										}
@@ -593,7 +603,6 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 	      <form name="bestellForm" action="index.php" method="POST">
 				   <input type="hidden" name="area" value="bestellen">
 					 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-					 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
 					 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
 					 <input type="hidden" name="isChanged">
 					 <input type="hidden" name="action">
@@ -1177,7 +1186,6 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
    <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
    <form method='post' action='index.php?area=bestellen'>
 	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-	 <input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
 	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
 	     <?php
 	     	    select_products_not_in_list($bestell_id);

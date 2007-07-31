@@ -12,14 +12,64 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
 //Debug LEVEL_
  define('LEVEL_ALL',  4);
  define('LEVEL_MOST',  3);
- define('LEVEL_IMPORTANT',  2);
+ define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
  define('LEVEL_KEY',  1);
  define('LEVEL_NONE',  0);
- define('LEVEL_CURRENT',  LEVEL_ALL);
+ $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
  define('STATUS_BESTELLEN', "bestellen");
  define('STATUS_LIEFERANT', "beimLieferanten");
  define('STATUS_VERTEILT', "Verteilt");
  define('STATUS_ARCHIVIERT', "archiviert");
+
+function possible_areas(){
+  global $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV;
+   $areas = array(
+           array("area" => "index.php?area=meinkonto", 
+	        "hint"  => "Hier können die einzelnen Gruppen ihre Kontoauszüge einsehen....", 
+		"title" => "Mein Konto"
+	   )
+   );
+$areas[] = array("area" => "index.php?area=bestellen",
+	"hint" => "Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....",
+	"title" => "Bestellen");
+if($hat_dienst_I or $hat_dienst_IV){
+	$areas[] = array("area" => "index.php?area=lieferschein",
+	"hint" => "Hier kann der Lieferschein abgeglichen werden...",
+	"title" => "Lieferschein");
+	$areas[] = array("area" => "index.php?area=bestellt_produkte",
+	"hint" => "Hier kann die Verteilung eingesehen und angepasst werden...",
+	"title" => "Verteilung");
+ }
+if($hat_dienst_IV){
+	$areas[] = array("area" => "index.php?area=bestellschein",
+	"hint" => "FAX mit Bestellung, Gesamtbestellung ansehen",
+	"title" => "Bestellschein");
+	$areas[] = array("area" => "index.php?area=produkte",
+	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
+} 
+	$areas[] = array("area" => "index.php?area=gruppen",
+	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
+	"title" => "Gruppenverwaltung");		
+if($hat_dienst_IV){
+	$areas[] = array("area" => "index.php?area=lieferanten",
+	"hint" => "Hier kann man die LieferantInnen verwalten...",
+	"title" => "LieferantInnen");
+} 
+	$areas[] = array("area" => "index.php?area=dienstkontrollblatt",
+	"hint" => "Hier kann man das Dientkontrollblatt einsehen...",
+	"title" => "Dienstkontrollblatt");		
+if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
+	$areas[] = array("area" => "index.php?area=updownload",
+	"hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
+	"title" => "Up/Download");
+} 
+
+   $areas[] = array("area" => "../wiki", 
+	        "hint"  => "Infos zur Foodcoop und Foodsoft", 
+		"title" => "Wiki"
+	   );
+   return $areas;
+}
 
 function checkpassword($gruppen_id, $gruppen_pwd){
 if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
@@ -35,7 +85,7 @@ if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "")
 }
 
 function doSql($sql, $debug_level, $error_text){
-	if($debug_level <= LEVEL_CURRENT) echo "<p>".$sql."</p>";
+	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
 	$result = mysql_query($sql) or
 	error(__LINE__,__FILE__,$error_text."(".$sql.")",mysql_error(), debug_backtrace());
 	return $result;
@@ -87,8 +137,13 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 	doSql($sql, LEVEL_ALL, "Konnte bestellungen nicht aus DB löschen..");
 
 
-	$sql = "UPDATE bestellvorschlaege set bestellmenge = NULL where gesamtbestellung_id = ".$bestell_id;
-	doSql($sql, LEVEL_ALL, "Konnte bestellungen nicht aus DB löschen..");
+	if(! $nur_basar){
+		$sql = "UPDATE bestellvorschlaege set bestellmenge = NULL where gesamtbestellung_id = ".$bestell_id;
+		doSql($sql, LEVEL_ALL, "Konnte bestellungen nicht aus DB löschen..");
+	}
+
+	changeState($bestell_id, STATUS_BESTELLEN);
+
 	return true;
 }
 function sql_basar_id(){
@@ -260,7 +315,7 @@ function sql_gesamtpreise($gruppe_id){
 				INNER JOIN gesamtbestellungen ON (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
 				WHERE art =2 and bestellguppen_id = '".mysql_escape_string($gruppe_id)."'
 				GROUP BY gesamtbestellungen.name
-				    ORDER BY bestellende;";
+				    ORDER BY bestellende DESC;";
 
 //	    echo "<p>".$query."</p>";
 	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
@@ -304,7 +359,7 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 	if($bestellende===NULL){
 		$query = "SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id;
 		//echo "<p>".$query."</p>";
-		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellung nicht aus DB laden ($query)..",mysql_error());
+		$result = doSql($query, LEVEL_ALL,"Konnte Bestellung nicht aus DB laden ..");
 		$row = mysql_fetch_array($result);
 		$bestellende=$row["bestellende"];
 	}
@@ -317,7 +372,7 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 			AND produkt_id= ".mysql_escape_string($produkt_id)."
 			ORDER BY gebindegroesse DESC;";
 	//echo "<p>".$query."</p>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gebindegroessen nich aus DB laden..",mysql_error());
+	$result = doSql($query, LEVEL_ALL, "Konnte Gebindegroessen nich aus DB laden..");
        if(mysql_num_rows($result)==0) {
 		$query = "SELECT gebindegroesse, preis FROM produktpreise 
 		          WHERE id IN 
@@ -326,7 +381,7 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 				 produkt_id = ".mysql_escape_string($produkt_id)."  
 				 AND gesamtbestellung_id = ".mysql_escape_string($bestell_id)." 
 				)";
-		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gebindegroessen nich aus DB laden.. ($query)",mysql_error());
+		$result = doSql($query, LEVEL_ALL,"Konnte Gebindegroessen nich aus DB laden.. ");
        }
 
 	return $result;
@@ -563,6 +618,11 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
 	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte nicht in DB schreiben.. ($sql2)",mysql_error());
 
 }
+function sql_getLieferant($lieferant_id){
+    $sql="SELECT * FROM lieferanten WHERE id = ".$lieferant_id;
+    $result=doSql($sql, LEVEL_ALL, "Error while retrieving Lieferanteninfos");
+    return mysql_fetch_array($result);
+}
 function getProduzentBestellID($bestell_id){
     if($bestell_id==0) {error(__LINE__,__FILE__,"Do not call getProduzentBestellID with bestell_id null)", "bla");}
     $sql="SELECT DISTINCT lieferanten_id FROM bestellvorschlaege 
@@ -627,6 +687,22 @@ function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $
 		mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB schreiben...",mysql_error());
 	}
 }
+function sql_bestellvorschlag($bestell_id, $produkt_id){
+	$query="SELECT produktpreis_id FROM bestellvorschlaege 
+	  	WHERE gesamtbestellung_id = ".$bestell_id.
+		"AND produkt_Id = ".$produkt_id;
+	$result = doSql($query, LEVEL_ALL, "Konnte Bestellpreis nicht laden");
+	$row = mysql_fetch_array($result);
+	return $row;
+}
+function sql_bestellpreis($bestell_id, $produkt_id){
+	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
+	return $row['produktpreis_id'];
+}
+function sql_liefermenge($bestell_id,$produkt_id){
+	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
+	return $row['liefermenge'];
+}
 
 function changeLieferpreis_sql($preis_id, $produkt_id, $bestellung_id){
 	$query = "UPDATE bestellvorschlaege 
@@ -634,7 +710,7 @@ function changeLieferpreis_sql($preis_id, $produkt_id, $bestellung_id){
 		  WHERE produkt_id = ".mysql_escape_string($produkt_id)."
 		  AND gesamtbestellung_id = ".mysql_escape_string($bestellung_id).";";
 	//echo $query."<br>";
-	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB ändern...",mysql_error());
+	doSql($query, LEVEL_IMPORTANT,"Konnte Lieferpreis nicht in DB ändern...");
 }
 function changeLiefermengen_sql($menge, $produkt_id, $bestellung_id){
 	$query = "UPDATE bestellvorschlaege 

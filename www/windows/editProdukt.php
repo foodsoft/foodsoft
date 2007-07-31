@@ -1,15 +1,21 @@
 <?PHP
+	 // Verbindung zur Datenbank herstellen
+	 include('../code/config.php');
+	 include('../code/err_functions.php');
+	 include('../code/connect_MySQL.php');
+  require_once('../code/login.php');
+      if( ! $angemeldet ) {
+       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
+     } 
 
+if(!nur_fuer_dienst(4)){exit();}
+
+
+   need_http_var('produkt_id');
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
-	 // Verbindung zur Datenbank herstellen
-   require_once("code/config.php");
-   require_once("$foodsoftpath/code/err_functions.php");
-   require_once("$foodsoftpath/code/login.php");
-   //nur_fuer_dienst_IV();
-
-   need_http_var('produkt_id');
+	 
 	 
 	 // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
@@ -73,7 +79,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					<td><input type="input" size="30" name="newProdukt_name" value="<?PHP echo $produkt_row['name']; ?>"></td>
 			 </tr>
 		   <tr>
-			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php?produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 						<select name="newProdukt_produktgruppe">
                <?PHP
@@ -109,7 +115,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>				
 		   <tr>
-			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php?produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 					
 			    	<select name="newProduk_kategorien[]" size="5" multiple="multiple">
