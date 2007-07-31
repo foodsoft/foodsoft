@@ -8,6 +8,7 @@
 	 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)
   get_http_var('action');
   if( $action == 'delete' ) {
+    fail_if_readonly();
     nur_fuer_dienst(4,5);
     need_http_var('lieferanten_id');
     

@@ -25,6 +25,7 @@
   //  }
                       
   if ($action == "edit_all" and !$readonly ) { 
+    nur_fuer_dienst(4);
          $edit_all = true;
   }
                       
@@ -32,6 +33,7 @@
                       // jetzt wurde er änderung speichern button gedrückt und alle produkte aktualisiert
                       else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
                       {
+                        nur_fuer_dienst(4);
 
                             $prodIds = $HTTP_GET_VARS['prodIds'];
                            
