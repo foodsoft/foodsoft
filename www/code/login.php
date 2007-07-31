@@ -349,18 +349,7 @@
          <select size='1' name='login_gruppen_id'>
            <option value='' selected>(bitte Gruppe waehlen)</option>
   ";
-<<<<<<< login.php
-  ( $gruppen = mysql_query( "SELECT * FROM bestellgruppen WHERE (aktiv=1) and (name like '% %') ORDER by (id%1000)" ) )
-    or error( __LINE__, __FILE__, "konne Bestellgruppen nicht aus Datenbank lesen!", mysql_error() );
-=======
-  $gruppen = sql_gruppen();
->>>>>>> 1.13
-  while( $gruppe = mysql_fetch_array( $gruppen ) ) {
-    echo "<option value='{$gruppe['id']}'";
-    if( $login_gruppen_id == $gruppe['id'] )
-      echo " selected";
-    echo ">{$gruppe['name']}</option>";
-  }
+  optionen_gruppen();
   echo "
          </select>
          <label style='padding-left:4em;'>Passwort:</label>

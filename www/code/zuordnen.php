@@ -1647,26 +1647,13 @@ function need_http_var( $name ) {
   }
 }
 
-
-// function getAktuellerPreiseintrag( $produkt_id ) {
-//   $row = false;
-//   $result = mysql_query( "
-//     SELECT * FROM produktpreise WHERE produkt_id=$produkt_id AND 
-//     ( ISNULL(zeitende) OR ( zeitende >= '$mysqljetzt' ) ) 
-//   " );
-//   if( $result and mysql_num_rows($result) == 1 and ( $row = mysql_fetch_array($result) ) ) {
-//     return $row;
-//   } else {
-//     $result = mysql_query( "SELECT * FROM produkte WHERE id=$produkt_id " );
-//     echo "
-//       <div class='warn'>
-//         Problem mit Preiseintrag fuer Produkt $produkt_id
-//         <a href='/terraabgleich.php?produkt_id=$product_id' target='_new'>Korrigieren...</a>
-//       </div>
-//     ";
-//   }
-//   return false;
-// }
+function fail_if_readonly() {
+  global $readonly;
+  if( $readonly ) {
+    echo "<div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div></body></html>";
+    exit();
+  }
+}
 
 function wikiLink( $topic, $text ) {
   global $foodsoftpath;
