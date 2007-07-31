@@ -4,7 +4,6 @@
   // Verbindung zur Datenbank herstellen
   require_once('../code/config.php');
   require_once('../code/err_functions.php');
-  require_once('../code/connect_MySQL.php');
   require_once('../code/login.php');
   need_http_var('lieferanten_id');
 
