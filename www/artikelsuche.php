@@ -134,7 +134,7 @@
 
   if ( $filter != '' ) {
     $filter = '(&(objectclass=terraartikel)' . $filter . ')';
-    echo '<br>filter: ' . $filter . '<br>';
+    // echo '<br>filter: ' . $filter . '<br>';
 
     //echo "<br>connecting... ";
     $ldaphandle = ldap_connect( $ldapuri );

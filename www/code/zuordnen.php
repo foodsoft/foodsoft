@@ -997,6 +997,14 @@ function need_http_var( $name ) {
   }
 }
 
+function fail_if_readonly() {
+  global $readonly;
+  if( $readonly ) {
+    echo "<div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div></body></html>";
+    exit();
+  }
+}
+
 function wikiLink( $topic, $text ) {
   global $foodsoftpath;
   echo "<a class='wikilink' target='wiki' href='/wiki/doku.php?id=$topic'>$text</a>";

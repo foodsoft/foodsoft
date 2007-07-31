@@ -1,7 +1,9 @@
 <h1>Produktdatenbank ....</h1>
 
 <?PHP
-include_once("code/zuordnen.php");
+  require_once("$foodsoftpath/code/zuordnen.php");
+  require_once("$foodsoftpath/code/login.php");
+
 /* wie das skript funktioniert:
 
    1. variablen einlesen, passwort prüfen
@@ -11,36 +13,27 @@ include_once("code/zuordnen.php");
       2.3. action = change_all -> die preise werden ggf. aktualisiert .. 
 
 */
-   // Übergebene Variablen einlesen...
-   if (isset($HTTP_GET_VARS['produkte_pwd'])) $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];       // Passwort für den Bereich
     
-          // Passwort prüfen...
-          $pwd_ok = ($produkte_pwd == $real_produkte_pwd);
-          
-          
           // ggf. Aktionen durchführen (z.B. Produkt löschen... oder neue preise einfügen)
-          $edit_all = false;
-           if ($pwd_ok && isset($HTTP_GET_VARS['action'])) 
-           {
-               $action = $HTTP_GET_VARS['action'];
-                
-                      // Produkt löschen..
-                      if ($action == "delete") 
-                      {
-                         //mysql_query("DELETE FROM produkte WHERE id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt nicht löschen.",mysql_error());
-                           //mysql_query("DELETE FROM kategoriezuordnung WHERE produkt_id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt-Kategorienzuordnung nicht löschen.",mysql_error());
+  $edit_all = false;
+  get_http_var('action');
+  // loeschen ist keine gute idee (produkte werden fuer berechnung der kontostaende gebraucht!)
+  // if ($action == "delete") 
+  //  {
+  //    mysql_query("DELETE FROM produkte WHERE id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt nicht löschen.",mysql_error());
+  //    mysql_query("DELETE FROM kategoriezuordnung WHERE produkt_id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt-Kategorienzuordnung nicht löschen.",mysql_error());
+  //  }
                       
-                      }
-                      
-                      else if ($action == "edit_all")
-                      { 
-                             $edit_all = true;
-                      }
+  if ($action == "edit_all" and !$readonly ) { 
+    nur_fuer_dienst(4);
+         $edit_all = true;
+  }
                       
                       
                       // jetzt wurde er änderung speichern button gedrückt und alle produkte aktualisiert
                       else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
                       {
+                        nur_fuer_dienst(4);
 
                             $prodIds = $HTTP_GET_VARS['prodIds'];
                            
@@ -63,7 +56,6 @@ include_once("code/zuordnen.php");
                                      $preis  = str_replace(",",".",$HTTP_GET_VARS['preis_'.$prodIds[$i]]);
                                      
                                     //aber erst wird geprüft, ob es aktuelle preise für das produkt gibt
-				    //echo "line 66, prodID=".$prodIds[$i];
               			    $result2 =  sql_produktpreise($prodIds[$i],0, "NOW()","NOW()");
                                     
                                        if (mysql_num_rows($result2) == 1) // wenn eine zeile mit gültigem preis existiert ...
@@ -110,104 +102,57 @@ include_once("code/zuordnen.php");
                          
                       } // end else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
                       
-            }//end if ($pwd_ok && isset($HTTP_GET_VARS['action'])) 
       
       // Lieferanten Array aufbauen (ordnet jeder ID einen Namen zu)
          $result = mysql_query("SELECT id,name FROM lieferanten") or error(__LINE__,__FILE__,"Konnte Lieferantennamen nich aus DB laden..",mysql_error());
 
     
-       // Wenn kein Passwort für die Bestellgruppen-Admin angegeben wurde, dann abfragen...
-         if (!isset($produkte_pwd) || !$pwd_ok) {
-   ?>
-             <form action="index.php">
-                                <input type="hidden" name="area" value="produkte">
-                <table class="menu">
-                   <tr>
-                      <th colspan="2">Hier könnt ihr den Lieferanten auswählen</th>
-                   </tr>
-                  <tr>
-                     <td>Lieferanten auswählen</td>
-                     <td>
-                           <select name="lieferanten_id">
-                              <option value="">[auswählen]</option>
-                                  <?PHP
-                                  //lieferanten ausspucken
-                                    $sql = "SELECT id, name
-                                                   FROM lieferanten
-                                                   ORDER BY name";            
-                                    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-                                                                  
-                                    while ($row = mysql_fetch_array($result)) 
-                                    {
-                                       //jetzt die anzahl der produkte zählen
-                                       $sql = "SELECT id
-                                                   FROM produkte
-                                                   WHERE lieferanten_id=".$row['id']."";
-                                       $res = mysql_query($sql);
-                                       $num = mysql_num_rows($res);
-                                       
-                                       echo "<option value='".$row['id']."'>".$row['name']." (".$num.")</option>\n";
-                                    } //end while
-                                    ?>
-                                 <option value="0">- Alle Lieferanten -</option>
-                           </select>
-                     </td>                  
-                  </tr>
-                  <tr>
-                     <td colspan="2">Und hier bitte das Schinkepasswort eingeben:</td>
-                  </tr>                
-                   <tr>
-                      <td></td>
-                      <td><input type="password" size="12" name="produkte_pwd"> <input type="submit" value="ok"></td>
-                   </tr>
-                </table>               
-             </form>
-
-            <div id="tip"><b>Tip:</b> 
-                                    Einen neuen Lieferanten kannst Du bei <a href="index.php?area=lieferanten">Lieferanten</a> eintragen</div> 
-             
-   <?PHP
-         } else   {               
-               
   
-            //überprüfen ob ein lieferant schon ausgewählt wurde, ansonsten asuwahlfenster anzeigen:
-            
-            //gewählte lieferanten_id auslesen          
+      //überprüfen ob ein lieferant schon ausgewählt wurde, ansonsten asuwahlfenster anzeigen:
+           
+      //gewählte lieferanten_id auslesen          
       $lieferanten_id = $HTTP_GET_VARS['lieferanten_id'];
             
-         if ($lieferanten_id !="") {
-   ?>
-        <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
-          <form action="index.php" name="reload_form">
-             <input type="hidden" name="area" value="produkte">
-               <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
-               <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">
-               <input type="hidden" name="action" value="normal">
-               <input type="hidden" name="produkt_id">
+      if ($lieferanten_id !="") {
+        echo "
+          <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
+          <form action='index.php' name='reload_form'>
+             <input type='hidden' name='area' value='produkte'>
+               <input type='hidden' name='lieferanten_id' value='$lieferanten_id'>
+               <input type='hidden' name='action' value='normal'>
+               <input type='hidden' name='produkt_id'>
           </form>
    
-            <table class="menu">
+            <table class='menu'>
+        ";
+        if( !$readonly ) {
+          echo "
                <tr>
-                <td><input type="button" value="Neues Produkt" class="bigbutton" onClick="window.open('windows/insertProdukt.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>','insertProdukt','width=420,height=500,left=100,top=100').focus()"></td>
-                  <td valign="middle" class="smalfont">Einen neues Produkt hinzufügen...</td>
+               <td><input type='button' value='Neues Produkt' class='bigbutton' onClick=\"window.open('windows/insertProdukt.php','insertProdukt','width=420,height=500,left=100,top=100').focus()\"></td>
+                  <td valign='middle' class='smalfont'>Einen neues Produkt hinzufügen...</td>
                 </tr><tr>
-                <td><input type="button" value="alle Bearbeiten" class="bigbutton" onClick="document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();"></td>
-                  <td valign="middle" class="smalfont">die gesamte Produktliste bearbeiten...</td>
-                </tr><tr>                
-                <td><input type="button" value="Reload" class="bigbutton" onClick="document.forms['reload_form'].submit();"></td>
-                  <td valign="middle" class="smalfont">diese Seite aktualisieren...</td>
+                <td><input type='button' value='alle Bearbeiten' class='bigbutton' onClick=\"document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();\"></td>
+                  <td valign='middle' class='smalfont'>die gesamte Produktliste bearbeiten...</td>
+                </tr>
+          ";
+        }
+        echo "
+                <tr>                
+                <td><input type='button' value='Reload' class='bigbutton' onClick=\"document.forms['reload_form'].submit();\"></td>
+                  <td valign='middle' class='smalfont'>diese Seite aktualisieren...</td>
                 </tr><tr>
-                <td><input type="button" value="Lieferant wechseln" class="bigbutton" onClick="document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].lieferanten_id.value = ''; document.forms['reload_form'].submit();"></td>
-                  <td valign="middle" class="smalfont">anderen Lieferanten auswählen</td>
+                <td><input type='button' value='Lieferant wechseln' class='bigbutton' onClick=\"document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].lieferanten_id.value = ''; document.forms['reload_form'].submit();\"></td>
+                  <td valign='middle' class='smalfont'>anderen Lieferanten auswählen</td>
                 </tr><tr>
-                <td><input type="button" value="Beenden" class="bigbutton" onClick="self.location.href='index.php'"></td>
-                  <td valign="middle" class="smalfont">diesen Bereich verlassen...</td>
+                <td><input type='button' value='Beenden' class='bigbutton' onClick=\"self.location.href='index.php';\"></td>
+                  <td valign='middle' class='smalfont'>diesen Bereich verlassen...</td>
                 </tr>
             </table>
             
             <br><br>
+        ";
          
-     <?PHP
+     
 		    if ($edit_all) {
 		?>
 		   <form action="index.php" name="editAllForm" method="POST">
@@ -221,7 +166,6 @@ include_once("code/zuordnen.php");
 	  <?PHP
 		   }
 		?>
-			   <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
 				 <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">
 				 <input type="hidden" name="area" value="produkte">
 
@@ -250,10 +194,10 @@ include_once("code/zuordnen.php");
                 echo $lieferant_name;
                 if ( $lieferant_name == "Terra" ) {
                  echo '<a class="button" href="artikelsuche.php" target="_new">Katalogsuche</a>';
-                 if( $hat_dienst_IV ) {
-                   echo '<a class="button" href="terraabgleich.php" target="_new">Datenbankabgleich</a>';
-                 }
                 }
+                 // if( $hat_dienst_IV ) {
+                   echo "<a class='button' href='terraabgleich.php?lieferanten_id=$lieferanten_id' target='_new'>Datenbankabgleich</a>";
+                 // }
               ?>
 
               </h3></th>
@@ -298,7 +242,6 @@ include_once("code/zuordnen.php");
 //					       ORDER BY p.name") or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
 
       ?>
-            <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
              <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">
              <input type="hidden" name="area" value="produkte">
 
@@ -439,24 +382,32 @@ include_once("code/zuordnen.php");
 			//	    echo "line 362, prodID=".$row['prodId'];
               $result2 =  sql_produktpreise($row['prodId'],0, "NOW()","NOW()");
                                 //wenn mehere preise aktuell sind dann die Meldung
+                                // (TF: was soll das ^^^ eigentlich? das waere doch eine klare inkonsistenz!)
                 if (mysql_num_rows($result2) > 1)
                 {
-                   echo "-multi-";
+                   echo "<span class='warn'>Inkonsistenz!</a>";
                 } else {
                    $preis_row = mysql_fetch_array($result2);
                    echo $preis_row['preis'];
                   }
-         ?>
-                   </td>
-                   <td valign="top">
-                         <a class="png" href="javascript:window.open('windows/showProduktpreise.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>&produkt_id=<?PHP echo $row['id']; ?>','produkteDetails','width=650,height=600,left=200,top=100,scrollbars=1').focus()"><img src="img/euro.png" border="0" alt="Preise" titel="Preise"></a>
-                        <a class="png" href="javascript:window.open('windows/editProdukt.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>&produkt_id=<?PHP echo $row['id']; ?>','editProdukt','width=400,height=450,left=200,top=100').focus()"><img src="img/b_edit.png" border="0" alt="Gruppendaten ändern"  titel="Gruppendaten ändern"/></a>
-                        <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
-                        <a class="png" href="javascript:deleteProdukt(<?PHP echo $row['id']; ?>);"><img src="img/b_drop.png" border="0" alt="Gruppe löschen" titel="Gruppe löschen"/></a>
-                        -->
-                   </td>
-               </tr>
-               <?PHP } else { 
+                  echo "
+                    </td>
+                    <td valign='top'>
+                  ";
+                  if( !$readonly ) {
+                    echo "
+                      <a class='png' href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$row['id']}','foodsoftdetail');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
+                      <a class='png' href=\"javascript:f=window.open('windows/editProdukt.php?produkt_id={$row['id']}','editProdukt','width=400,height=450,left=200,top=100'); f.focus();\"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
+                      <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
+                      <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
+                      -->
+                    ";
+                  }
+                  echo "
+                    </td>
+                    </tr>
+                  ";
+                } else { 
                                           //  alle bearbeiten ansicht ...               
                ?>
            <tr>
@@ -514,12 +465,15 @@ include_once("code/zuordnen.php");
                <?PHP } else { 
                         
                                  //für die normalansicht   
-                        ?>   
-                        <th colspan="9">               
-                        <input type="button" value="neue Bestellung" onClick="window.open('','insertBestellung','width=400,height=450,left=200,top=100').focus() ; document.forms['newBestellungForm'].submit();">
-                        &nbsp;| <a href="javascript:checkAll('newBestellungForm','',true)" class="tabelle">alle Produkte Auswählen</a>
-                        &nbsp;| <a href="#" class="tabelle">nach oben</a>
-                        <?PHP } ?>
+                        if( !$readonly ) {
+                          ?>   
+                          <th colspan="9">               
+                          <input type="button" value="neue Bestellung" onClick="window.open('','insertBestellung','width=400,height=450,left=200,top=100').focus() ; document.forms['newBestellungForm'].submit();">
+                          &nbsp;| <a href="javascript:checkAll('newBestellungForm','',true)" class="tabelle">alle Produkte Auswählen</a>
+                          &nbsp;| <a href="#" class="tabelle">nach oben</a>
+                          <?PHP
+                        }
+                     } ?>
                    </th>
                 </tr>
            </form>
@@ -532,7 +486,6 @@ include_once("code/zuordnen.php");
       ?>
       <form action="index.php">
                                 <input type="hidden" name="area" value="produkte">
-                                <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
                 <table class="menu">
                    <tr>
                       <th colspan="2">Anderen Lieferanten auswählen</th>
@@ -572,5 +525,15 @@ include_once("code/zuordnen.php");
              </form>
             <?php
       } //end if
-   } //end if      
-    ?>
+
+  echo "$print_on_exit";
+
+?>
+
+<script type="text/javascript">
+  function neuesfenster(url,name) {
+    f=window.open(url,name);
+    f.focus();
+  }
+</script>
+

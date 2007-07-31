@@ -8,6 +8,7 @@
 	 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)
   get_http_var('action');
   if( $action == 'delete' ) {
+    fail_if_readonly();
     nur_fuer_dienst(4,5);
     need_http_var('lieferanten_id');
     
@@ -26,10 +27,17 @@
 			 </form>
 	
 				<table class=menu'>
+  ";
+  if( ! $readonly ) {
+    echo "
 				   <tr>
 		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick=\"window.open('windows/insertLieferant.php','lieferant','width=510,height=500,left=200,top=100').focus()\"></td>
 				      <td valign=middle' class='smalfont'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
-					 </tr><tr>
+					 </tr>
+    ";
+  }
+  echo "
+           <tr>
 		          <td><input type='button' value='Reload' class='bigbutton' onClick=\"document.forms['reload_form'].submit();\"></td>
 				      <td valign=middle' class='smalfont'>diese Seite aktualisieren...</td>
 					 </tr><tr>
@@ -75,16 +83,18 @@
                <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' titel='Details zum Lieferanten' />
              </a>
     ";
-    if( $dienst == 4 or $dienst == 5 ) {
-      echo "
-        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-          href=\"javascript:window.open('windows/editLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-          <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' titel='Lieferanten editieren' />
-        </a>
-        <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
-          <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' titel='Lieferanten l&ouml;schen' />
-        </a>
-      ";
+    if( ! $readonly ) {
+      if( $dienst == 4 or $dienst == 5 ) {
+        echo "
+          <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+            href=\"javascript:window.open('windows/editLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
+            <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' titel='Lieferanten editieren' />
+          </a>
+          <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
+            <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' titel='Lieferanten l&ouml;schen' />
+          </a>
+        ";
+      }
     }
     echo "</td></tr>";
   }

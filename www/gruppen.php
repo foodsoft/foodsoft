@@ -7,6 +7,7 @@
   // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
   get_http_var('action');
   if( $action == 'delete' ) {
+    fail_if_readonly();
     nur_fuer_dienst(4,5);
     need_http_var('gruppen_id');
 
@@ -42,7 +43,7 @@
     <table class='menu'>
   "; 
 
-  if( $hat_dienst_IV || $hat_dienst_V ) {
+  if( $hat_dienst_IV || $hat_dienst_V and ! $readonly ) {
     echo "
       <tr>
         <td>
@@ -86,32 +87,34 @@
         <td>{$row['mitgliederzahl']}</td>
         <td>
     ";
-    if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
-      echo "
-        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-          href=\"javascript:window.open('windows/groupTransaktionMenu.php?gruppen_id={$row['id']}','groupTransaktion','width=500,height=300,left=200,top=100').focus()\">
-         <img src='img/b_browse.png' border='0' titel='Kontotransaktionen' alt='Kontotransaktionen'/>
-        </a>
-      ";
-    } elseif( $login_gruppen_id == $row['id'] ) {
-      echo "
-        <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
-         <img src='img/b_browse.png' border='0' titel='Mein Konto' alt='Mein Konto'/>
-        </a>
-      ";
-    }
-    if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
-      echo "<a class='png' style='padding:0pt 1ex 0pt 1ex;'  href=\"javascript:window.open('windows/editGroup.php?gruppen_id={$row['id']}','insertGroup','width=390,height=420,left=200,top=100').focus()\">
-        <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' titel='Gruppendaten ändern'/></a>
-      ";
-    }
-    // loeschen nur wenn
-    // - kontostand 0
-    // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
-    if( ( $dienst == 5 ) && ( abs($kontostand) < 0.005 ) && ( $row['mitgliederzahl'] == 0 ) ) {
-      echo "<a class='png' href=\"javascript:deleteGroup({$row['id']});\">
-        <img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
-      ";
+    if( ! $readonly ) {
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
+        echo "
+          <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+            href=\"javascript:window.open('windows/groupTransaktionMenu.php?gruppen_id={$row['id']}','groupTransaktion','width=500,height=300,left=200,top=100').focus()\">
+           <img src='img/b_browse.png' border='0' titel='Kontotransaktionen' alt='Kontotransaktionen'/>
+          </a>
+        ";
+      } elseif( $login_gruppen_id == $row['id'] ) {
+        echo "
+          <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
+           <img src='img/b_browse.png' border='0' titel='Mein Konto' alt='Mein Konto'/>
+          </a>
+        ";
+      }
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
+        echo "<a class='png' style='padding:0pt 1ex 0pt 1ex;'  href=\"javascript:window.open('windows/editGroup.php?gruppen_id={$row['id']}','insertGroup','width=390,height=420,left=200,top=100').focus()\">
+          <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' titel='Gruppendaten ändern'/></a>
+        ";
+      }
+      // loeschen nur wenn
+      // - kontostand 0
+      // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
+      if( ( $dienst == 5 ) && ( abs($kontostand) < 0.005 ) && ( $row['mitgliederzahl'] == 0 ) ) {
+        echo "<a class='png' href=\"javascript:deleteGroup({$row['id']});\">
+          <img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
+        ";
+      }
     }
     echo " </td> </tr>";
   }

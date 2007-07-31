@@ -22,34 +22,10 @@
   get_http_var('menge_glas');
   get_http_var('gruppe');
   if( $menge_glas > 0 and $gruppe > 0 ) {
+    fail_if_readonly();
+    nur_fuer_dienst(4);
     sql_groupGlass( $gruppe, $menge_glas );
   }
-
-
-/*       //infos zur gesamtbestellung auslesen 
- *
- *  basaranzeige ist jetzt fuer _alle_ bestellungen; bestellung anzeigen waere da eher verwirrend:
- *
- *          $sql = "SELECT *
- *                   FROM gesamtbestellungen
- *                   WHERE id = ".$bestell_id."";
- *          $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
- *          $row_gesamtbestellung = mysql_fetch_array($result);               
- *          <table class='info'>
- *                <tr>
- *                    <th> Bestellung: </th>
- *                      <td style='font-size:1.2em;font-weight:bold'><?PHP echo $row_gesamtbestellung['name']; ?></td>
- *                 </tr>
- *                <tr>
- *                    <th> Bestellbeginn: </th>
- *                      <td><?PHP echo $row_gesamtbestellung['bestellstart']; ?></td>
- *                 </tr>
- *                <tr>
- *                    <th> Bestellende: </th>
- *                      <td><?PHP echo $row_gesamtbestellung['bestellende']; ?></td>
- *                 </tr>                
- *             </table>
- */
 
   echo "
     <h1>Basar</h1>
@@ -78,10 +54,12 @@
 
   while  ($basar_row = mysql_fetch_array($result1)) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
-     $fieldName = "menge_".$basar_row['produkt_id'];
+     $fieldName = "menge_{$basar_row['produkt_id']}_{$basar_row['gesamtbestellung_id']}";
      $menge=$basar_row['basar'];
      if( get_http_var($fieldName) ) {
        if( ${$fieldName} != 0 && $gruppe > 0 ) {
+         fail_if_readonly();
+         nur_fuer_dienst(4);
          $gruppen_menge = ${$fieldName} / $kan_verteilmult;
          $menge -= $gruppen_menge;
          sql_basar2group($gruppe, $basar_row['produkt_id'], $basar_row['gesamtbestellung_id'], $gruppen_menge);
@@ -116,9 +94,7 @@
    
    <tr style='border:none'>
   <td colspan='4' style='border:none'>
-     <input type='hidden' name='area' value='bestellt_produkte'>			
-     <input type='hidden' name='bestgr_pwd' value='obsolet'>
-     <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+     <input type='hidden' name='bestell_id' value='$bestell_id'>
      <input type='submit' value=' Neu laden / Basareintrag &uuml;bertragen '>
      <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
   </td>
@@ -127,7 +103,6 @@
    </form>
 
    <form action='index.php' method='post'>
-     <input type='hidden' name='bestgr_pwd' value='obsolet'>
      <input type='hidden' name='bestellungs_id' value='$bestell_id'>
      <input type='hidden' name='area' value='bestellt'>			
      <input type='submit' value='Zur&uuml;ck '>
