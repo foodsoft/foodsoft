@@ -475,49 +475,8 @@
 				</script>		
 				
 				
-				<table class="info">
-				   <tr>
-					    <th> Bestellung: </th>
-							<td><?PHP echo $row_gesamtbestellung['name']; ?></td>
-					 </tr>
-				   <tr>
-					    <th> Bestellbeginn: </th>
-							<td><?PHP echo $row_gesamtbestellung['bestellstart']; ?></td>
-					 </tr>
-				   <tr>
-					    <th> Bestellende: </th>
-							<td><?PHP $bestellende = $row_gesamtbestellung['bestellende']; echo $bestellende?></td>
-					 </tr>					 
-					<tr>
-					    <th> Gruppe: </th>
-							<td>
-                <?PHP
-                  if( $gruppen_id == 99 )
-                    echo "<span class='warn'> BASAR </span>";
-                  else
-                    echo "$login_gruppen_name";
-                ?>
-              </td>
-					 </tr>	
-					 <tr>
-					    <th> Kontostand: </th>
-							<td><?PHP 
-													// überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
-									$kontostand = kontostand($gruppen_id);
-									if
-									($kontostand < "0")
-									{ 
-										echo "<span style=\"color:red; font-weight:bold\">".sprintf("%.02f",$kontostand)."</span>"; 
-									} else
-									{
-										echo "<span style=\"color:green; font-weight:normal\">".sprintf("%.02f",$kontostand)."</span>"; 
-									}	
-										?>
-								</td>
-						 </tr>	
-					 </table>
-					 
-					 <?   if (isset($HTTP_GET_VARS['produkt_id'])) {
+				<?bestellung_overview($row_gesamtbestellung, TRUE, $gruppen_id);
+				   if (isset($HTTP_GET_VARS['produkt_id'])) {
 						//Produkt in Liste aufnehmen
 						 
 							

@@ -1,5 +1,298 @@
 <?php
 //This file defines views for foodsoft data
+
+function number_selector($name, $min, $max, $selected, $format){
+ ?>
+    <select name="<?echo $name?>">
+          <?PHP 
+	  for ($i=$min; $i <= $max; $i++) { 
+	       if ($i == $selected) $select_str="selected";
+     	       else $select_str = ""; 
+	       echo "<option value='".$i."' ".$select_str.">".sprintf($format,$i)."</option>\n"; } ?>
+    </select>
+  <?
+}
+function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr){
+    number_selector($tag_feld, 1, 31, $tag,"%02d");
+    echo ".";
+    number_selector($monat_feld,1, 12, $monat,"%02d");
+    echo ".";
+    number_selector($jahr_feld, 2004, 2011, $jahr,"%04d");
+}
+function time_selector($stunde_feld, $stunde, $minute_feld, $minute){
+    number_selector($stunde_feld, 0, 24, $stunde,"%02d");
+    echo ":";
+    number_selector($minute_feld,0, 59, $minute,"%02d");
+}
+
+
+/**
+ *  Zeigt einen Dienst und die möglichen Aktionen
+ */
+function dienst_view($row, $gruppe, $show_buttons = TRUE){
+       $critical_date = in_two_weeks();
+       if(compare_date2($row["Lieferdatum"], $critical_date)){
+	  //soon
+	  $color_norm="#00FF00";
+	  $color_not_confirmed="#FFC800";
+	  $color_not_accepted="#FF0000";
+	  $soon=TRUE;
+       } else {
+	  $color_norm="#00FF00";
+	  $color_not_confirmed="#00FF00";
+	  $color_not_accepted="#000000";
+	  $soon=FALSE;
+       }
+       switch($row["Status"]){
+       case "Vorgeschlagen":
+	    if($gruppe == $row["GruppenID"]){
+	    ?>
+	       <font color="<?echo $color_not_accepted?>"> Dieser Dienst ist euch zugeteilt <br>
+	       <?if($show_buttons){?>
+	       <form action="index.php">
+	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="aktion" value="akzeptieren_<?echo $row["ID"]?>">
+	       <input type="submit" value="akzeptieren">  
+	       </form>
+	       <?}?>
+	       <?if($show_buttons){?>
+	       <form action="index.php" >
+	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="aktion" value="abtauschen_<?echo $row["ID"]?>">
+	       <input type="submit" value="geht nicht">  
+	       </form>
+	       <?}?>
+	       </font>
+	    <?
+	    } else {
+		    ?>
+		    <font color="<?echo $color_not_accepted?>">
+		    Noch nicht akzeptiert
+		    
+		    <?
+                    echo "(".$row["name"].")</font>";
+	            if( $soon){
+
+		       ?>
+	               <?if($show_buttons){?>
+		       <form action="index.php">
+		       <input type="hidden" name="area" value="dienste">
+		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
+		       <input  type="submit" value="übernehmen">  
+		       </form>
+		       <?
+		       }
+	           }
+
+	    }
+       	    break;
+       case "Nicht geleistet":
+       	    break;
+       case "Offen":
+	    ?>
+	       <font color=<?echo $color_not_accepted?>>Offener Dienst </font>
+	       <?if($show_buttons){?>
+	       <form action="index.php">
+	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
+	       <input  type="submit" value="übernehmen">  
+	       </form>
+	    <?
+	       }
+       	    break;
+       case "Geleistet":
+            echo "<font color=".$color_norm.">".$row["name"]." ".$row["telefon"]."</font>";
+       	    break;
+       case "Akzeptiert":
+            $color_use = $color_not_confirmed;
+
+       case "Bestaetigt":
+            if(!isset($color_use)){
+	    	$color_use = $color_norm;
+	    }
+            echo "<font color=".$color_use.">".$row["name"]." ".$row["telefon"]."</font>";
+       	    if($gruppe == $row["GruppenID"]){
+	    ?>
+	       <?if($show_buttons){?>
+	       <form action="index.php" >
+	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="aktion" value="wirdoffen_<?echo $row["ID"]?>">
+	       <input type="submit" value="kann doch nicht">  
+	       </form>
+	    <?
+	       }
+	    } else if($row["Status"]=="Akzeptiert" & $soon){
+
+	       ?>
+	       <?if($show_buttons){?>
+	       <form action="index.php">
+	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
+	       <input  type="submit" value="übernehmen">  
+	       </form>
+	       <?
+	       }
+	    }
+	    
+	    break;
+       }
+}
+/**
+ *  Zeigt ein Produkt als Bestellungsübersicht
+ */
+function areas_in_menu($area){
+ ?>
+   <tr>
+       <td><input type="button" value="<? echo $area['title']?>" class="bigbutton" onClick="self.location.href='<? echo $area['area']?>'"></td>
+	<td valign="middle" class="smalfont"><? echo $area['hint']?></td>
+    </tr> 		 
+  <?
+}
+
+function rotationsplanView($row){
+ ?>
+   <tr>
+       <td>
+       <b>
+       <?echo $row['rotationsplanposition']?>
+       </b>
+       </td><td>
+       <?echo $row['name']?>
+       </td><td>
+       <?if($row['rotationsplanposition']>1){?>
+	<input type="submit" width="80" value="UP" name="up_<? echo $row['id']?>" > 
+	<?}?>
+       </td><td>
+       <?if($row['rotationsplanposition']<sql_rotationsplan_extrem($row['diensteinteilung'])){?>
+	<input type="submit" width="80" value="DOWN" name="down_<? echo $row['id']?>"  onClick="self.location.href='<? echo $_SERVER['PHP_SELF']?>'">
+	<?}?>
+	</td>
+    </tr> 		 
+  <?
+    
+}
+
+function areas_in_head($area){
+
+?>
+  <li>
+  <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
+<?
+}
+function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE){
+      $result1 = sql_bestellprodukte($bestell_id);
+      $preis_summe = 0;
+     ?>
+      <form action="index.php" method="post">
+      <table>
+               <tr>
+                   <th>Bezeichnung</th>
+                   <th>Produktgruppe</th>
+                   <th>Bestellnummer</th>
+                   <th>Gebinde Einheit</th>
+                   <th>Menge</th>
+                   <th>Einheitspreis: <small>Netto (Brutto, MWST, Pfand)</small> </th>
+                   <th>Gesamtpreis</th>
+               </tr>
+
+     <?
+
+      while  ($produkte_row = mysql_fetch_array($result1)) {
+      	 $produkt_id =$produkte_row['produkt_id'];
+	 if($produkte_row['liefermenge']!=0){	
+		  ?>
+	       <tr>
+	       <td valign="top"><b><?echo( $produkte_row['produkt_name']);?></b></td>
+               <td valign="top"><?PHP echo $produkte_row['produktgruppen_name']; ?></td>
+               <td><? echo($produkte_row['gebindegroesse'])?></td>
+               <td><? echo($produkte_row['gebindegroesse']." * ".$produkte_row['einheit'])?></td>
+	       <?
+			$liefer = $produkte_row['liefermenge'];
+			$fieldname = "verteilmenge".$produkt_id;
+	       
+	       if($editAmounts){ ?>
+               		<td> <input name="<? echo($fieldname) ?>" type="text" size="3" value="<? echo($liefer) ?>"/></td>
+	       <?  } else { ?>
+               		<td> <? echo($liefer) ?></td>
+	       <?  } 
+	       if($editPrice){ ?>
+	       		<td> <?  $preis= preis_selection($produkt_id, $produkte_row['produktpreise_id']); ?> </td>
+	       <?  } else { ?>
+	       		<td> <?  $preis=  $produkte_row['preis'];
+				preis_view($produkte_row);
+			?> </td>
+	       <?  } ?>
+		     <td> <?echo($preis*$liefer ); $preis_summe+=$preis*$liefer ?> </td>
+		  </tr>
+
+     		<tr style='border:none'>
+		 <td colspan='4' style='border:none'></td>
+	      </tr>
+   
+   <?
+   } //end if ... reichen die bestellten mengen? dann weiter im text
+   
+} //end while produkte array            
+?>
+   <tr>
+   <td align=right colspan="7" td>Summe <?echo($preis_summe)?></td></tr>
+   <? if($editAmounts or $editPrice){?>
+	   <tr style='border:none'>
+		<td colspan='4' style='border:none'>
+		   <input type="hidden" name="area" value="lieferschein">			
+		   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
+		   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+		   <input type="submit" value=" Lieferschein ändern ">
+		   <input type="reset" value=" Änderungen zurücknehmen">
+		</td>
+	   </tr>
+   <?}?>
+   </table>                   
+   </form>
+      
+<?
+
+}
+/**
+ * Gibt einen einzelnen Preis mit Pfand und Mehrwertsteuer aus
+ * Argument: mysql_fetch_array(sql_produktpreise2())
+ */
+
+function preis_view($pr){
+        printf( "%5.2lf", ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 ) );
+				echo "&nbsp;({$pr['preis']},{$pr['mwst']},{$pr['pfand']})";
+
+}
+
+/**
+ * Erzeugt eine Auswahl für alle Preise eines Produktes
+ */
+function preis_selection($produkt_id, $current_preis_id){
+	$selectpreis = "preis".$produkt_id;
+
+		?>
+                <select name="<? echo($selectpreis)?>"> 
+	       		<?
+			   $preise=sql_produktpreise2($produkt_id);
+			   while($pr = mysql_fetch_array($preise)){
+				$sel = "";
+			   	if($pr['id']==$current_preis_id ){
+					$sel = " selected=\"selected\"";
+					$preis =$pr['preis'];
+				}
+				echo "<option value='{$pr['id']}' $sel>";
+				preis_view($pr);
+        			echo "</option>\n";
+
+			   }
+	       
+	       		?>
+	   	     </select>
+		     <?
+		     return $preis;
+}
+
+
 /**
  *  Zeigt ein Produkt als Bestellungsübersicht
  */
@@ -238,12 +531,17 @@ function sum_row($sum){
 	      </tr>
 <?
 }
-function bestellung_overview($row){
+function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 	 ?>
          <table class="info">
                <tr>
                    <th> Bestellung: </th>
-                     <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row['name']; ?></td>
+                     <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row['name']; 
+		     if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
+		     	  ?><br> <b>Vorsicht:</b> <a href=index.php?area=dienste>Dienstegruppen abwesend?</a>
+		     <? } ?>
+
+		     </td>
                 </tr>
                <tr>
                    <th> Bestellbeginn: </th>
@@ -253,6 +551,37 @@ function bestellung_overview($row){
                    <th> Bestellende: </th>
                      <td><?PHP echo $row['bestellende']; ?></td>
                 </tr>                
+		<?
+		if($showGroup){
+		?>
+		<tr>
+		    <th> Gruppe: </th>
+		  <td>
+                <?PHP
+                  if( $gruppen_id == 99 )
+                    echo "<span class='warn'> BASAR </span>";
+                  else
+                    echo "$login_gruppen_name";
+                ?>
+                </td>
+	      </tr>	
+	      <tr>
+	          <th> Kontostand: </th>
+	          <td><?PHP 
+			// überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
+			$kontostand = kontostand($gruppen_id);
+			if ($kontostand < "0") { 
+				echo "<span style=\"color:red; font-weight:bold\">".sprintf("%.02f",$kontostand)."</span>"; 
+			} else {
+				echo "<span style=\"color:green; font-weight:normal\">".sprintf("%.02f",$kontostand)."</span>"; 
+			}	
+	      	      ?>
+		 </td>
+	     </tr>	
+
+		<?
+		}
+		?>
             </table>
 	    <br/>
 	    <?

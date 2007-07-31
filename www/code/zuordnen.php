@@ -21,8 +21,537 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
  define('STATUS_VERTEILT', "Verteilt");
  define('STATUS_ARCHIVIERT', "archiviert");
 
+/**
+ *  Bestellvorschläge einfügen
+ */
+function sql_insert_bestellvorschlaege($produkt_id,$gesamtbestellung_id, $preis_id ){
+  $sql = "INSERT INTO bestellvorschlaege (produkt_id, gesamtbestellung_id, produktpreise_id)
+          VALUES ('".mysql_escape_string($produkt_id)."', 
+                  '".mysql_escape_string($gesamtbestellung_id)."',
+                  '".mysql_escape_string($preis_id)."')";
+  doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellungs-Produktliste nicht aufnehmen.");
+}
+/**
+ *  Gesamtbestellung einfügen
+ */
+function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
+   $sql = "INSERT INTO gesamtbestellungen (name, bestellstart, bestellende, lieferung) 
+           VALUES ('".mysql_escape_string($name)."', '".
+	              mysql_escape_string($startzeit)."', '".
+	              mysql_escape_string($endzeit)."', '".
+		      mysql_escape_string($lieferung)."')";
+  doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellung nicht aufnehmen.");
+
+}
+
+/**
+ *  Dienst bestaetigen 
+ */ 
+function sql_dienst_bestaetigen($datum){
+  global $login_gruppen_id;
+  $sql = "UPDATE Dienste SET Status = 'Bestaetigt'
+          WHERE GruppenID = ".$login_gruppen_id."
+	  AND Lieferdatum = '".$datum."'";
+  doSql($sql, LEVEL_IMPORTANT, "Error while confirming Dienstplan");
+
+}
+
+/**
+ *  Dienst Akzeptieren 
+ */ 
+function sql_dienst_akzeptieren($dienst){
+  global $login_gruppen_id;
+  $row = sql_get_dienst_by_id($dienst);
+  if($row["GruppenID"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
+       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["GruppenID"].") oder falscher Status ".$row["Status"]);
+  }
+  //OK, wir dürfen den Dienst ändern
+  $sql = "UPDATE Dienste SET Status = 'Akzeptiert' WHERE ID = ".$dienst;
+  doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
+
+}
+
+/**
+ *  Dienst ablehnen, nachdem die Gruppe ihn schon akzeptiert hat (offen)
+ */
+function sql_dienst_wird_offen($dienst){
+  global $login_gruppen_id;
+  $row = sql_get_dienst_by_id($dienst);
+  if($row["GruppenID"]!=$login_gruppen_id || 
+         ($row["Status"]!="Vorgeschlagen" && $row["Status"]!="Bestaetigt" && $row["Status"]!="Akzeptiert")){
+       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["GruppenID"].") oder falscher Status ".$row["Status"]);
+  }
+  //OK, wir dürfen den Dienst ändern
+  $sql = "UPDATE Dienste SET Status = 'Offen' WHERE ID = ".$dienst;
+  doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
+
+}
+/**
+ *  Dienst ablehnen und alternative suchen
+ */
+function sql_dienst_abtauschen($dienst, $bevorzugt){
+  global $login_gruppen_id;
+  $row = sql_get_dienst_by_id($dienst);
+  if($row["GruppenID"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
+       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["GruppenID"].") oder falscher Status ".$row["Status"]);
+  }
+  $sql = "SELECT * from Dienste 
+          WHERE Lieferdatum = '".$bevorzugt.
+	  "' AND Status = 'Vorgeschlagen'
+	  AND Dienst = '".$row["Dienst"]."'";
+  $result = doSql($sql, LEVEL_ALL, "Error while reading Dienste");
+  if(mysql_num_rows($result)==0){
+       error(__LINE__,__FILE__,"Kein ausweichsdienst an diesem Datum ".$bevorzugt." für Dienst ".$row["Dienst"]);
+  }
+  
+  //OK, wir dürfen den Dienst ändern
+  $sql = "UPDATE Dienste SET Lieferdatum = '".$bevorzugt."', Status = 'Akzeptiert' WHERE ID = ".$dienst;
+  doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
+  $sql = "UPDATE Dienste SET Lieferdatum = '".$row["Lieferdatum"]."' WHERE Lieferdatum = '".$bevorzugt.
+	  "' AND Status = 'Vorgeschlagen'
+	  AND Dienst = '".$row["Dienst"]."' LIMIT 1";
+  doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
+}
+/**
+ *  Offenen oder nicht angenommnen Dienst übernehmen
+ */
+function sql_dienst_uebernehmen($dienst){
+  global $login_gruppen_id;
+  echo "uebernehmen $dienst";
+  $row = sql_get_dienst_by_id($dienst);
+  if( ($row["Status"]!="Offen" && $row["Status"]!="Akzeptiert"&& $row["Status"]!="Vorgeschlagen")){
+       error(__LINE__,__FILE__,"Falscher Status ".$row["Status"]);
+  }
+  //OK, wir dürfen den Dienst ändern
+  $sql = "UPDATE Dienste SET Status = 'Nicht geleistet' WHERE ID = ".$dienst;
+  doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
+
+  if(compare_date2($row["Lieferdatum"], in_two_weeks())){
+       $status = "Bestaetigt";
+  } else {
+       $status = "Akzeptiert";
+  }
+
+  sql_create_dienst2($login_gruppen_id,$row["Dienst"], "'".$row["Lieferdatum"]."'", $status);
+
+}
+
+/**
+ *  Fragt einen einzelnen Dienst basierend
+ *  auf der ID ab
+ */
+function sql_get_dienst_by_id($dienst){
+  $sql = "SELECT * FROM Dienste WHERE ID = ".$dienst;
+  $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+  return mysql_fetch_array($result);
+}
+/**
+ * Gibt es an einem Datum Dienste,
+ * Die noch offen, vorgeschlagen oder akzeptiert sind
+ * (so dass nicht sicher ist, ob der Dienst geleistet wird)
+ */
+
+function sql_dienste_nicht_bestaetigt($datum){
+   $sql = "SELECT * FROM Dienste 
+           WHERE Lieferdatum = '".$datum."' 
+	   AND (Status != 'Bestaetigt' OR
+	        Status != 'Nicht geleistet')";
+   $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+   return mysql_num_rows($result) > 0;
+}
+
+/**
+ *  Macht eine Abfrage für den Dienstplan 
+ *  Zurückgegeben wird ein mysql-set
+ */
+
+function sql_get_dienste($datum = FALSE){
+   $sql = "SELECT * FROM Dienste 
+              INNER JOIN bestellgruppen 
+	         ON (Dienste.gruppenID = bestellgruppen.id)";
+   if($datum !==FALSE){
+   $sql .= " WHERE Lieferdatum = '".$datum."'";
+   }
+   $sql .= " ORDER BY Lieferdatum DESC, Dienst ASC";
+   $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+   return $result;
+}
+
+/**
+ *  Gibt die nächste Gruppe für einen Dienst aus
+ *  dem Rotationsplan zurück
+ */
+
+function sql_rotationsplan_next($dienst, $current){
+     $sql = "SELECT min(rotationsplanposition) as mynext
+		    FROM bestellgruppen  
+		    WHERE rotationsplanposition > ".$current."
+		    AND diensteinteilung = '".$dienst."'";
+     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+     $row = mysql_fetch_array($result);
+     $next = $row["mynext"];
+     if($next==NULL){
+         $next = sql_rotationsplan_extrem($dienst, FALSE);
+     }
+     return $next;
+}
+/** Fügt einen Dienst mit beliebigem Status in die Diensttabelle 
+ *  Achtung, das Datum muss in Anführungszeichen sein.
+ */
+
+function sql_create_dienst2($gruppe, $dienst, $sql_datum, $status){
+    $sql = "INSERT INTO Dienste (GruppenID, Dienst, Lieferdatum, Status)
+            VALUES (".$gruppe.", '".$dienst."', ".$sql_datum.", '".$status."')";
+    doSql($sql, LEVEL_IMPORTANT, "Error while adding Dienst");
+}
+
+/** Fügt einen neuen Dienst als Vorschlag in die Diensttabelle
+ */
+function sql_create_dienst($datum, $dienst, $rotationsposition){
+    sql_create_dienst2(sql_rotationsplangruppe($dienst, $rotationsposition),
+                         $dienst,
+			 date_intern2sql($datum),
+			 "Vorgeschlagen");
+}
+
+/** 
+ *  Erzeugt Dienste für einen Zeitraum
+ */
+
+function create_dienste($start, $end, $spacing) {
+   $dates = sql_date_list($start, $end, $spacing);
+   //mit negativer Position in Reihenfolge intialisieren
+   // wird beim ersten Durchlauf auf erste Position gesetzt
+   $dienste = array("1/2" => array("position" => -999, "anzahl" => 2), 
+                      "3" => array("position" => -999, "anzahl" => 1), 
+		      "4" => array("position" => -999, "anzahl" => 2)
+		   );
+   foreach($dates as $current){
+       if(compare_date2(get_latest_dienst(), $current )){
+	       foreach(array_keys($dienste) as $dienst){
+	          for($i=1; $i<=$dienste[$dienst]["anzahl"]; $i++){
+		   $plan_position = sql_rotationsplan_next($dienst, $dienste[$dienst]["position"]);
+		   sql_create_dienst($current, $dienst, $plan_position);
+		   $dienste[$dienst]["position"]=$plan_position;
+		  }
+	       }
+       }
+   }
+   //Wenn ein Dienst erzeugt wurde, rotationsplan umstellen
+   if($dienste["1/2"]["position"]!=-999){
+   foreach(array_keys($dienste) as $dienst){
+        sql_rotate_rotationsplan($dienste[$dienst]["position"],$dienst);
+   }
+   }
+}
+
+/** 
+ *  Erzeugt Array mit Daten in einem Zeitraum
+ */
+function sql_date_list($start, $end, $spacing) {
+   if(compare_date2($end,$start)){
+   	error(__LINE__,__FILE__,"Enddatum muss später sein als Anfangsdatum", "");
+   }
+	$list = array();
+	$newer=$start;
+	do{
+	     $list[]=$newer;
+	     $sql = "SELECT ADDDATE(".date_intern2sql($newer).", INTERVAL ".$spacing." DAY) as datum";
+	     $result = doSql($sql, LEVEL_ALL, "Error while making datelist");
+	     $row = mysql_fetch_array($result);
+	     $newer = date_sql2intern($row["datum"]);
+
+	} while(compare_date2($newer,$end));
+	return($list);
+}
+
+/**
+ * Vergleicht zwei Datumswerte bezüglich Reihenfolge
+ * True, wenn das erste Datum früher ist
+ */ 
+function compare_date2($first, $second){
+   return strtotime($first) < strtotime($second);
+}
+function in_two_weeks(){
+     //Now
+     $date = date_sql2intern(strftime("%D"));
+     //Correct format
+    $toreturn = sql_add_days_to_date($date, 19);
+    return $toreturn;
+}
+/** Converts a date string from mysql
+ *  to a date of the form
+ *   $date["day"].".".$date["month"].".".$date["year"]
+ */
+function date_sql2intern($date_in){
+     $date = date_parse($date_in);
+     return $date["day"].".".$date["month"].".".$date["year"];
+}
+/** Adds convertion commands in mysql to
+ *  converts a date string 
+ *  from  a date of the form
+ *   $date["day"].".".$date["month"].".".$date["year"]
+ */
+function date_intern2sql($date){
+   return "STR_TO_DATE('".$date."', '%e.%c.%Y')";
+}
+/**
+ *  Tage zu Datum hinzufügen, da
+ *  php-Funktionen nicht gut
+ *  Date Format: $date["day"].".".$date["month"].".".$date["year"]
+ */
+function sql_add_days_to_date($date, $add_days=0){
+     $sql = "SELECT ADDDATE(".date_intern2sql($date).", INTERVAL ".$add_days." DAY) as datum";
+     $result = doSql($sql, LEVEL_ALL, "Error while doing date function");
+     $row = mysql_fetch_array($result);
+     $toreturn=  date_sql2intern($row["datum"]);
+     return $toreturn;
+}
+
+/** Gibt das Datum für den letzten
+ *  Dienst im Dienstplan zurück.
+ *  Add days wird auf das Datum draufgeschlagen
+ *
+ *  Heute (ohne aufschlag), wenn kein Eintrag.
+ */
+function get_latest_dienst($add_days=0){
+     $sql = "SELECT ADDDATE(max(Lieferdatum), INTERVAL ".$add_days." DAY) as datum
+		    FROM Dienste  ";
+     $result = doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
+     $row = mysql_fetch_array($result);
+     $date = date_parse($row["datum"]);
+     if($date["year"]==false){
+        $date = date_parse(strftime("%D"));
+     }
+     $date_formated = $date["day"].".".$date["month"].".".$date["year"];
+     return $date_formated;
+
+}
+
+
+/**
+ *  Wählt alle Dienste einer Gruppe mit bestimmtem Status
+ */
+function sql_get_dienst_group($group, $status){
+    $sql = "SELECT *
+            FROM Dienste
+	    WHERE Status = '".$status.
+	    "' AND GruppenID = ".$group."
+	    ORDER BY Lieferdatum ASC";
+    return doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
+}
+/**
+ *  Wählt Datum aus, mit bestimmtem Dienst und Status
+ *  verwendet für Dienstabtausch
+ */
+function sql_get_dienst_date($dienst, $status){
+    $sql = "SELECT DISTINCT Lieferdatum as datum 
+            FROM Dienste
+	    WHERE Dienst = '".$dienst.
+	    "' AND Status = '".$status."'";
+    return doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
+}
+/**
+ *  This function allows to rotate the
+ *  rotation system. This is used after
+ *  assigning new tasks. The rotation is
+ *  performed in a way that the group with
+ *  the latest assignment will the the last
+ *  in the rotation system.
+ */
+function sql_rotate_rotationsplan($latest_position, $dienst){
+    /*move all before and including the latest assigned
+     *group to the back of the rotation system.
+     *Mark the changed entries with negative numbers.
+     */
+    var_dump(sql_rotationsplan_extrem($dienst));
+    var_dump($latest_position);
+    $shift =sql_rotationsplan_extrem($dienst) - $latest_position ;
+    $sql = "UPDATE bestellgruppen 
+            SET rotationsplanposition = -1 * (rotationsplanposition +".$shift.") 
+	    WHERE rotationsplanposition <= ".$latest_position." AND diensteinteilung = '".$dienst."'";
+    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+    /* Move all remaining groups (the ones not assigned a
+     * task during the last round) to the front.
+     * They haven't been moved in the previous round,
+     * so they remain positive
+     */
+    $sql = "UPDATE bestellgruppen 
+    	    SET rotationsplanposition 
+	        = (rotationsplanposition -".$latest_position.
+	   ") WHERE rotationsplanposition > 0 
+	    AND diensteinteilung = '".$dienst."'";
+    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+    // Remove mark (negative numbers)
+    $sql = "UPDATE bestellgruppen 
+    	    SET rotationsplanposition = -1*rotationsplanposition 
+	    WHERE rotationsplanposition < 0 
+	    AND diensteinteilung = '".$dienst."'";
+    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+   
+}
+/**
+ *  This function allows to move a group up or down
+ *  within the rotation system
+ */
+function sql_change_rotationsplan($gruppe, $dienst, $move_down){
+    $position = sql_rotationsplanposition($gruppe);
+    if($move_down){
+    	$position_new = $position+1;
+    } else {
+    	$position_new = $position-1;
+    }
+    $sql = "UPDATE bestellgruppen 
+    	    SET rotationsplanposition = ".$position.
+	   " WHERE rotationsplanposition = ".$position_new.
+	   " AND diensteinteilung = '".$dienst."'";
+    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+    $sql = "UPDATE bestellgruppen 
+    	    SET rotationsplanposition = ".$position_new.
+	   " WHERE id = ".$gruppe;
+    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+
+}
+
+/**
+ *  This function returns the highest
+ *  position number in the rotation system.
+ *  Usally, this corresponds to the number of
+ *  groups
+ */
+
+function sql_rotationsplan_extrem($dienst, $getMax=TRUE){
+     $max="min";
+     if($getMax){
+         $max="max";
+     }
+     $sql = "SELECT ".$max."(rotationsplanposition) as theMax
+		    FROM bestellgruppen  
+		    WHERE diensteinteilung = '". $dienst.
+		  "' AND aktiv = 1 ";
+     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+     $row = mysql_fetch_array($result);
+     return $row["theMax"];
+}
+/**
+ *  Queries the group id for a
+ *  given position in the
+ *  rotation plan 
+ */
+function sql_rotationsplangruppe($dienst, $position){
+     $sql = "SELECT id
+		    FROM bestellgruppen  
+		    WHERE rotationsplanposition = ".$position."
+		    AND diensteinteilung = '".$dienst."'";
+     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+     $row = mysql_fetch_array($result);
+     return $row["id"];
+
+}
+/**
+ *  Queries the position in the
+ *  rotation plan for a group
+ */
+function sql_rotationsplanposition($gruppe){
+     $sql = "SELECT rotationsplanposition
+		    FROM bestellgruppen  
+		    WHERE id = ".$gruppe;
+     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+     $row = mysql_fetch_array($result);
+     return $row["rotationsplanposition"];
+
+}
+
+/**
+ *  Checks the validity of a rotation system.
+ *  If there are any groups with position 0
+ *  or negative, they will be pushed to the
+ *  end of the plan.
+ *  One of multiple groups with duplicate positions will be
+ *  moved to the end.
+ */
+function sql_check_rotationsplan($dienst){
+     $theMax  = sql_rotationsplan_extrem($dienst);
+     while(sql_rotationsplan_has0($dienst)){
+	$theMax +=1;
+	$sql = "UPDATE bestellgruppen  
+	        SET rotationsplanposition = ".$theMax.
+		" WHERE diensteinteilung = '". $dienst.
+		"' AND aktiv = 1 and rotationsplanposition <= 0 
+		LIMIT 1";
+	doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+
+    }
+    $position = sql_rotationsplan_hasDuplicates($dienst);
+     while($position !=0){
+          
+	$theMax +=1;
+	$sql = "UPDATE bestellgruppen  
+	        SET rotationsplanposition = ".$theMax.
+		" WHERE diensteinteilung = '". $dienst.
+		"' AND aktiv = 1 and rotationsplanposition = ".$position." 
+		LIMIT 1";
+	doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
+        $position = sql_rotationsplan_hasDuplicates($dienst);
+     }
+
+}
+/** 
+ *  Checks whether there are groups 
+ *  which share position in the rotation system,
+ */
+function sql_rotationsplan_hasDuplicates($dienst){
+
+        $sql = "SELECT rotationsplanposition FROM
+	            (SELECT rotationsplanposition, count(id) as anzahl
+			FROM bestellgruppen  
+			WHERE diensteinteilung = '". $dienst.
+			"' AND aktiv = 1  
+			GROUP BY rotationsplanposition) as c
+		      WHERE anzahl > 1";
+	$result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+	$answer = 0;
+        if(mysql_num_rows($result)!=0){
+	   $row = mysql_fetch_array($result);
+	   $answer = $row["rotationsplanposition"];
+	}
+        return($answer);
+}
+/** 
+ *  Checks whether there are groups 
+ *  which are not in the rotation system,
+ *  i.e. their position is 0
+ */
+function sql_rotationsplan_has0($dienst){
+
+        $sql = "SELECT id 
+		FROM bestellgruppen  
+		WHERE diensteinteilung = '". $dienst.
+		"' AND aktiv = 1 and rotationsplanposition <= 0 ";
+	$result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+        return(mysql_num_rows($result)!=0);
+
+}
+/** Queries the rotation plan for a
+ *  given task. Before querying it, a
+ *  check is performed to fix problems.
+ */
+function sql_rotationsplan($dienst){
+        sql_check_rotationsplan($dienst);
+	$sql = "SELECT id, name, rotationsplanposition, diensteinteilung
+		FROM bestellgruppen 
+		WHERE diensteinteilung = '". $dienst.
+		"' AND aktiv = 1
+		ORDER BY rotationsplanposition ASC";
+	return doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
+}
+/**
+ * Returns an array of functions (i.e. forms) a
+ * group is allowed to access based on the task
+ * they are performing
+ */
 function possible_areas(){
-  global $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV;
+  global $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
    $areas = array(
            array("area" => "index.php?area=meinkonto", 
 	        "hint"  => "Hier können die einzelnen Gruppen ihre Kontoauszüge einsehen....", 
@@ -64,6 +593,10 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 	"title" => "Up/Download");
 } 
 
+   $areas[] = array("area" => "index.php?area=dienste", 
+	        "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...", 
+		"title" => "Dienstplan"
+	   );
    $areas[] = array("area" => "../wiki", 
 	        "hint"  => "Infos zur Foodcoop und Foodsoft", 
 		"title" => "Wiki"
@@ -344,13 +877,19 @@ function sql_bestellprodukte($bestell_id){
 
 	    return $result;
 }
+function sql_aktuelle_produktpreise($produkt_id){
+   $sql = "SELECT id
+           FROM produktpreise 
+           WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
+           AND (zeitende >= NOW() OR ISNULL(zeitende))";                     
+
+	return doSql($sql, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
+}
 
 function sql_produktpreise2($produkt_id){
 	$query = "SELECT * FROM produktpreise 
 		  WHERE produkt_id=".mysql_escape_string($produkt_id);
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Gebindegroessen nich aus DB laden..",mysql_error());
-	//echo "<p>".$query."</p>";
-	return $result;
+	return doSql($query, LEVEL_ALL, "Konnte Gebindegroessen nich aus DB laden..");
 }
 function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestellende=NULL){
 	

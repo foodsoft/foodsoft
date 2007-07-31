@@ -1,6 +1,7 @@
 
 <h1>Mein Konto</h1>
 <?PHP
+
   //error_reporting(E_ALL); // alle Fehler anzeigen
   require_once("$foodsoftpath/code/zuordnen.php");
   require_once("$foodsoftpath/code/login.php");

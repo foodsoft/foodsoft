@@ -28,6 +28,9 @@
     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
     exit();
   }
+  global $login_gruppen_id;
+
+  include('dienst_info.php');
 	 
 	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
 	    if (!isset($area))
@@ -36,6 +39,13 @@
 			// zur Bestellgruppen-Administration verzweigen	 
 			else if ($area == 'gruppen')
 			   include('gruppen.php');
+				 
+			else if ($area == 'rotationsplan')
+			   include('rotationsplan.php');
+			else if ($area == 'dienstverteilung')
+			   include('dienstverteilung.php');
+			else if ($area == 'dienste')
+			   include('dienste.php');
 				 
 			// zur LieferantInnen-Administration verzweigen	 
 			else if ($area == 'lieferanten')
@@ -50,8 +60,15 @@
 			   include('produkte.php');					
 				 
 			// zur Produkte-Administration verzweigen	 
-			else if ($area == 'bestellen')
-			   include('bestellen.php');		
+			else if ($area == 'bestellen'){
+			   //darf nur bestellen, wenn Dienste akzeptiert
+			   if (mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0){
+			       echo "<h2> Vor dem Bestellen bitte Dienstvorschläge akzeptieren </h2>";
+			       include('dienste.php');
+			   } else {
+			       include('bestellen.php');		
+			   }
+			}
 				 
 			// zur den abgeschlossenen Bestellungen verzweigen	 
 			else if ($area == 'bestellt')

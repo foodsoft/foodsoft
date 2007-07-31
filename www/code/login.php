@@ -17,6 +17,31 @@
 // falls $dienst > 0 ausserdem:
 //  - $coopie_name
 //  - $dienstkontrollblatt_id
+
+  $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
+  $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
+
+  function get_http_var( $name ) {
+    global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+    if( isset( $HTTP_GET_VARS[$name] ) ) {
+      $$name = $HTTP_GET_VARS[$name];
+      return TRUE;
+    } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
+      $$name = $HTTP_POST_VARS[$name];
+      return TRUE;
+    } else {
+      unset( $$name );
+      return FALSE;
+    }
+  }
+  function need_http_var( $name ) {
+    global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+
+    if( ! get_http_var($name) ) {
+      error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
+      exit();
+    }
+  }
   
   global $angemeldet,
          $login_gruppen_id,
@@ -324,7 +349,12 @@
          <select size='1' name='login_gruppen_id'>
            <option value='' selected>(bitte Gruppe waehlen)</option>
   ";
+<<<<<<< login.php
+  ( $gruppen = mysql_query( "SELECT * FROM bestellgruppen WHERE (aktiv=1) and (name like '% %') ORDER by (id%1000)" ) )
+    or error( __LINE__, __FILE__, "konne Bestellgruppen nicht aus Datenbank lesen!", mysql_error() );
+=======
   $gruppen = sql_gruppen();
+>>>>>>> 1.13
   while( $gruppe = mysql_fetch_array( $gruppen ) ) {
     echo "<option value='{$gruppe['id']}'";
     if( $login_gruppen_id == $gruppe['id'] )

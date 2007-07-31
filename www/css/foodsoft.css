@@ -438,6 +438,14 @@ div.kommentar {
   font-size:10pt;
 }
 
+div#Zusatz {
+font-size: 0.9em;
+float: right; width: 30em;
+margin-left:  1em; 
+padding: 1em;
+border-style:solid;
+border-color:#FF0000;
+background-color: #eee; }
 table.footer {
   margin-top:2em;
   padding:2em 1em 1ex 1em;
