@@ -4,7 +4,8 @@
    require_once("code/config.php");
    require_once("$foodsoftpath/code/err_functions.php");
    require_once("$foodsoftpath/code/login.php");
-   //nur_fuer_dienst_IV();
+   fail_if_readonly();
+   nur_fuer_dienst_IV();
 	 
 	 // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
@@ -90,7 +91,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 			    <td><b>Verteil-Einheit (z.B. 100 gr)</b></td>
 					<td><input type="input" size="20" name="newProdukt_einheit"></td>
 			 </tr>		 
-		   <!-- <tr>
+		   <!-- TODO: liefereinheit ebenfalls setzen lassen! <tr>
 			    <td><b>Liefer-Einheit (z.B. 200 gr)</b></td>
 					<td><input type="input" size="20" name="newProdukt_liefereinheit"></td>
 			 </tr>		 
