@@ -3,12 +3,9 @@
 	 
   // Verbindung zur Datenbank herstellen
   require_once('../code/config.php');
-  require_once('../code/err_functions.php');
-  require_once('../code/connect_MySQL.php');
-  require_once('code/login.php');
+  require_once("$foodsoftpath/code/err_functions.php");
+  require_once("$foodsoftpath/code/login.php");
   need_http_var('lieferanten_id');
-
-  nur_fuer_dienst(4,5);   // nur dienst 4 und 5 ediert fremde gruppen
 
   $msg = '';
   $problems = '';
@@ -22,7 +19,7 @@
 	 
   $title = "Lieferantendetails";
   $subtitle = "Lieferantendetails";
-  require_once('head.php');
+  require_once("$foodsoftpath/windows/head.php");
 
   echo "
 			<table border='2' style='width:580px;'>

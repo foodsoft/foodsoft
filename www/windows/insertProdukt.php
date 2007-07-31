@@ -1,15 +1,11 @@
 <?PHP
-   $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];
-	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
-	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($produkte_pwd != $real_produkte_pwd) exit();
+   require_once("code/config.php");
+   require_once("$foodsoftpath/code/err_functions.php");
+   require_once("$foodsoftpath/code/login.php");
+   fail_if_readonly();
+   nur_fuer_dienst_IV();
 	 
 	 // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
@@ -54,17 +50,12 @@
 			}
 	 };
 	 
-?>
 
-<html>
-<head>
-   <title>neues Produkt einfügen</title>
-   <link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
-</head>
-<body onload="<?PHP echo $onload_str; ?>">
-   
+$title = "Neues Produkt eintragen";
+$subtitle = "Neues Produkt eintragen";
+$wikitopic = "foodsoft:datenbankabgleich";
+require_once('head.php');
 
-<?PHP
 $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name") 
 		      or error(__LINE__,__FILE__,"Konnte Kategorien nich aus DB laden..",mysql_error());
 										 
@@ -75,7 +66,6 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 </form>
 
 
-<h3>neues Produkt einfügen</h3>
 	 <form action="insertProdukt.php">
 		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
 		<table class="menu" width="400px">
@@ -98,9 +88,14 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>
 		   <tr>
-			    <td><b>Einheit (z.B. 200 gr)</b></td>
+			    <td><b>Verteil-Einheit (z.B. 100 gr)</b></td>
 					<td><input type="input" size="20" name="newProdukt_einheit"></td>
 			 </tr>		 
+		   <!-- TODO: liefereinheit ebenfalls setzen lassen! <tr>
+			    <td><b>Liefer-Einheit (z.B. 200 gr)</b></td>
+					<td><input type="input" size="20" name="newProdukt_liefereinheit"></td>
+			 </tr>		 
+       -->
 		   <tr>
 			    <td><b>Lieferant</b></td>
 					<td>
