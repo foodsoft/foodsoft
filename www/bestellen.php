@@ -2,20 +2,8 @@
 
 <?PHP
 //   error_reporting(E_ALL); // alle Fehler anzeigen
-<<<<<<< bestellen.php
-<<<<<<< bestellen.php
-   //include('code/zuordnen.php');
-   //include('code/views.php');
-=======
-   include('code/zuordnen.php');
-   include('code/views.php');
-=======
    require_once("$foodsoftpath/code/zuordnen.php");
    require_once("$foodsoftpath/code/views.php");
->>>>>>> 1.12
-
-$gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
->>>>>>> 1.9
 
 
    if( ! $angemeldet ) {
