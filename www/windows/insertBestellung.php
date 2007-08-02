@@ -10,12 +10,12 @@
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
 	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
+	 require_once('../code/config.php');
+	 require_once('../code/err_functions.php');
+	 require_once('../code/login.php');
+   nur_fuer_dienst_IV();
 	 
 	 // zur Sicherheit das Passwort prüfen..
-	 if ($produkte_pwd != $real_produkte_pwd) exit();
 	 
 	 
 	 $startzeit_tag       = date("j");
