@@ -67,6 +67,11 @@
 					sqlGroupTransaction(0, $_REQUEST['gruppen_id'],$_REQUEST['amount']);
 				}
 				 $meinKonto = True;
+?>
+<h2>Aktueller Kontostand 
+<?
+   echo round(kontostand($login_gruppen_id),2)." Euro </h2>";
+
 				 include('windows/showGroupTransaktions.php') ?>
 <h2>Überweisung eintragen</h2>
 <form action="index.php" method="post">

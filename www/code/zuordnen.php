@@ -253,7 +253,7 @@ function sql_gesamtpreise($gruppe_id){
 				INNER JOIN gesamtbestellungen ON (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
 				WHERE art =2 and bestellguppen_id = '".mysql_escape_string($gruppe_id)."'
 				GROUP BY gesamtbestellungen.name
-				    ORDER BY bestellende;";
+				    ORDER BY bestellende DESC;";
 
 //	    echo "<p>".$query."</p>";
 	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
