@@ -37,7 +37,7 @@
     $n=0;
     while( get_http_var( 'befehl' . $n ) ) {
       fail_if_readonly();
-      nur_fuer_dienst_IV():
+      nur_fuer_dienst_IV();
       $befehl = base64_decode( ${"befehl$n"} );
       // $befehl = "UPDATE produktpreise SET zeitende='2007-05-16 11:22:33' WHERE id=4707";
       get_http_var( 'kommentar' . $n ) or ${"kommentar$n"} = 'SQL-Befehl: ' . $befehl;
@@ -59,7 +59,7 @@
       //
       if( get_http_var( 'new_preisid' ) ) {
         fail_if_readonly();
-        nur_fuer_dienst_IV():
+        nur_fuer_dienst_IV();
         $result = mysql_query(
           "UPDATE bestellvorschlaege
            SET produktpreise_id=$new_preisid
@@ -87,7 +87,7 @@
   
     if( get_http_var('neuerpreiseintrag' ) ) {
       fail_if_readonly();
-      nur_fuer_dienst_IV():
+      nur_fuer_dienst_IV();
 
       need_http_var('newfcmult');
       need_http_var('newfceinheit');
@@ -171,7 +171,7 @@
     //
     if( get_http_var( 'anummer' ) ) {
       fail_if_readonly();
-      nur_fuer_dienst_IV():
+      nur_fuer_dienst_IV();
       if ( mysql_query( 'UPDATE produkte SET artikelnummer=' . $anummer . ' WHERE id=' . $produktid ) ) {
         // echo "OK!<br>";
       } else {
