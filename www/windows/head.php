@@ -15,14 +15,14 @@
     if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
     $img = "/foodsoft/img/close_black_trans.gif";
   
-    echo "
+    echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
       <html>
       <head>
         <title>$title</title>
-        <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-15' >
+        <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
         <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css' />
-        <link rel='stylesheet' type='text/css' media='print' href=/foodsoft/css/print.css' />
-        <!--  für die popups:  -->
+        <link rel='stylesheet' type='text/css' media='print' href='/foodsoft/css/print.css' />
+        <!--  fuer die popups:  -->
         <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
       </head>
       <body onload='$onload_str'
@@ -65,7 +65,12 @@
       echo "<span style='padding-left:3em;'>schreibgeschuetzt!</span>";
     }
     echo "</td></tr>";
-    echo "</table></div><div class='payload'";
+    echo "</table></div><div id='payload'";
+    if( $readonly ) {
+      echo " class='ro'";
+    } else {
+      echo " class=''";
+    }
     $print_on_exit='</div></body></html>';
     $kopf_schon_ausgegeben = true;
   }
