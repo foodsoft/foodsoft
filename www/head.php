@@ -2,14 +2,14 @@
   global $angemeldet, $login_gruppen_name, $coopie_name, $dienst
        , $readonly, $kopf_schon_ausgegeben, $print_on_exit;
   if( ! $kopf_schon_ausgegeben ) {
-    echo "
+    echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
       <html>
       <head>
         <title>FC Potsdam  - Foodsoft</title>
-        <meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-15' >
-        <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css' />
-        <link rel='stylesheet' type='text/css' media='print' href=/foodsoft/css/print.css' />
-        <!--  für die popups:  -->
+        <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
+        <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css'>
+        <link rel='stylesheet' type='text/css' media='print' href='/foodsoft/css/print.css'>
+        <!--  fuer die popups:  -->
         <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
       </head>
       <body onload='jsinit();'
@@ -63,7 +63,7 @@
 	</li>
   <li><a href='index.php?area=bestellt";
   if( $angemeldet && ( $dienst == 0 ) ) echo "&gruppen_id=$login_gruppen_id";
-  echo "' class='first'>Bestellungen ansehen</a>
+    echo "' class='first'>Bestellungen ansehen</a>
 	</li>
   <li><a href='index.php?area=produkte' class='first'>Produkte</a>
   </li> 
@@ -78,8 +78,13 @@
   <li><a href='../../wiki/' class='first'>Wiki</a>
   </li>
 </ul>
-<div class='payload'>
+<div id='payload'
     ";
+    if($readonly) {
+      echo " class='ro'>";
+    } else {
+      echo " class=''>";
+    }
     $print_on_exit='</div></body></html>';
 
     $kopf_schon_ausgegeben = true;

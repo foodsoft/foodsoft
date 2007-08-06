@@ -17,7 +17,7 @@
 // falls $dienst > 0 ausserdem:
 //  - $coopie_name
 //  - $dienstkontrollblatt_id
-  
+
   global $angemeldet,
          $login_gruppen_id,
          $login_gruppen_name,
@@ -41,6 +41,7 @@
 
   require_once( "$foodsoftpath/code/err_functions.php" );
   require_once( "$foodsoftpath/code/zuordnen.php" );
+  require_once( "$foodsoftpath/code/views.php" );
   
   init_login();
 
@@ -328,7 +329,7 @@
   echo "
          </select>
          <label style='padding-left:4em;'>Passwort:</label>
-         <input type='password' size='8' name='passwort' value=''></input>
+         <input type='password' size='8' name='passwort' value=''>
          <a id='pwneu_knopf' style='margin-left:2em;font-size:10pt;'
           onclick='pwneu_on();'>Passwort &auml;ndern...</a>
        </div>
@@ -336,13 +337,13 @@
          <fieldset class='small_form'>
          <legend>
          <img src='img/close_black_trans.gif' style='padding:0pt;margin:0pt;' class='button'
-          onclick='pwneu_off()' title='Ausblenden...'></img>
-          Passwort aendern
+          onclick='pwneu_off()' title='Ausblenden...' alt='Ausblenden...'>
+          Passwort &auml;ndern
           </legend>
          <label style='padding-left:2em;'>neues Passwort:</label>
-         <input type='password' size='8' name='pwneu1' value=''></input>
+         <input type='password' size='8' name='pwneu1' value=''>
          <label style='padding-left:4em;'>nochmal das neue Passwort:</label>
-         <input type='password' size='8' name='pwneu2' value=''></input>
+         <input type='password' size='8' name='pwneu2' value=''>
          </fieldset>
        </div>
        <div class='newfield'>
@@ -401,9 +402,9 @@
            </legend>
            <div class='newfield'>
              <label>Dein Name:</label>
-             <input type='text' size='20' name='coopie_name' value='$coopie_name'></input>
+             <input type='text' size='20' name='coopie_name' value='$coopie_name'>
              <label style='padding-left:4em;'>Telefon:</label>
-             <input type='text' size='20' name='telefon' value='$telefon'></input>
+             <input type='text' size='20' name='telefon' value='$telefon'>
            </div>
            <div class='newfield'>
              <label>Notiz fuers Dienstkontrollblatt:</label>
@@ -428,9 +429,9 @@
 //            </div>
 //            <div class='newfield'>
 //              <label>Name:</label>
-//              <input type='text' size='20' name='quiz_name' value='$quiz_name'></input>
+//              <input type='text' size='20' name='quiz_name' value='$quiz_name'>
 //              <label style='padding-left:4em;'>am:</label>
-//              <input type='text' size='20' name='quiz_datum' value='$quiz_datum'></input>
+//              <input type='text' size='20' name='quiz_datum' value='$quiz_datum'>
 //            </div>
 //            <div class='kommentar' style='padding-top:2em;'>
 //              Keine Ahnung? Kein Problem! Hier geht's zum
@@ -440,8 +441,9 @@
 //        </div>
   echo "
        <div class='newfield'>
-         <input type='submit' name='submit' value='OK'></input>
+         <input type='submit' name='submit' value='OK'>
        </div>
+     </fieldset>
    </form>
   ";
 
@@ -513,7 +515,6 @@
     
 
   echo "
-    </body>
     <script type='text/javascript'>
       function dienstform_on() {
         document.getElementById('dienstform').style.display = 'block';
@@ -532,10 +533,9 @@
         document.getElementById('pwneu_form').style.display = 'none';
       }
     </script>
-    </html>
+    $print_on_exit
   ";
 
 exit();
 
 ?>
-

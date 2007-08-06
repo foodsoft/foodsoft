@@ -1,36 +1,51 @@
 /* -- Allgemeines -- */
+
 body {
- 	background:#ffffff;
- 	color: black;
- 	margin:0pt;
- 	padding:0pt; 
- 	min-width: 763px; 
- 	font-size: 0.8em; 
-	 font-family: verdana, arial, sans-serif ;
-	}
-body.ro, body.ro table.footer td {
+  background:#ffffff;
+  color:#000000;
+  margin:0pt;
+  padding:0pt; 
+  /* min-width: 763px;  <-- kann der exploder nicht! */
+  font-size:10pt;
+  font-family: verdana, arial, sans-serif;
+}
+
+body.ro, div#payload.ro body.ro table.footer td {
+  /* bei "readonly" Hintergrundfarbe aendern */
   background:#ffeedd;
 }
 
-div.payload {
+div#payload {
   padding:1ex;
+  background:#ffffff;
+  color:#000000;
+  margin:0pt;
+  padding:0pt; 
+  /* min-width: 763px;  <-- kann der exploder nicht! */
+  font-size:10pt;
+  font-family: verdana, arial, sans-serif;
 }
 
 a {
-	color:#ED0606;
-	text-decoration: none;
-	border-bottom: 1px dotted #ED0606;
-	} 
-a:visited { color:#ED0606; }	
+  color:#ED0606;
+  text-decoration: none;
+}
+a:visited {
+  color:#ED0606;
+}
+a:hover {
+  text-decoration: underline;
+} 
 
  
- h1 {
+h1 {
  color:#ED0606;
- font-size: 2em;
+ /* font-size: 2em; <-- macht keinen sinn: em ist _relativ_ zum fontsize! */
+ font-size:16pt;
  line-height: 0.8em;
- padding: 0px 0 5px 5%;
+ padding: 5px;
  margin: 0 0 1em 0;
- border-bottom: 1px dotted #ED0606;
+ /* border-bottom: 1px dotted #ED0606; */
 }
 
 input:hover, textarea:hover, select:hover {
@@ -56,7 +71,6 @@ input:hover, textarea:hover, select:hover {
 
 
 #logo {
- // background: url(../../wiki/skins/monobook/orange.png) 95% 0 no-repeat #ED0606;
  height: 55px;
  padding: 0 20px;
  text-align: left;
@@ -79,11 +93,11 @@ input:hover, textarea:hover, select:hover {
 
 /* das menu mit hover funktion  */
 #menu {
- background: url() #ED0606;
+ background:#ED0606;
  padding: 5px 5px; /* Je kleiner das Fenster desto kleiner soll auch der Abstand des Menüs rechts und links sein. */
- margin: 0 0 0 0;
+ margin: 0pt 0pt 0pt 0pt;
  text-align: right;
- font-size:0.8em;
+ font-size:12pt;
 }
 
 #menu a {
@@ -92,13 +106,13 @@ input:hover, textarea:hover, select:hover {
 }
 
 #menu ul {
-  padding: 0;
-  margin: 0;
+  padding: 0pt;
+  margin: 0pt;
   list-style: none;
-  }
+}
 
 #menu li {
-  font-size: 1.2em;
+  font-size:11pt;
   display: inline; /* Damit die Menüpunkte nebeneinander und nicht untereinander erscheinen. */
   position: relative;
   list-style-type: none; /* Die Bullets vor den Menüpunkten schalten wir ab. */
@@ -106,7 +120,7 @@ input:hover, textarea:hover, select:hover {
   padding: 0 10px 0 15px;
   font-weight: bold;
   color: white;
-  }
+}
 
 #menu li ul {
   border-width: 0.25em;
@@ -116,7 +130,7 @@ input:hover, textarea:hover, select:hover {
   top: 1.2em;
   right: 0px;
   border-top: solid #ED0606 ;
-  background: url() #ED0606;
+  background:#ED0606;
   }
 
 #menu li ul li {
@@ -128,9 +142,8 @@ input:hover, textarea:hover, select:hover {
 }
 
 #menu li ul li a {
- display: block;
- width: 10em;
- w\idth: 6em;
+  display: block;
+  width: 10em;
   font-size:0.6em;
   width: 12em;
   text-decoration: none;
@@ -152,8 +165,6 @@ input:hover, textarea:hover, select:hover {
 #content {
  	border-top: none;
  	padding: 20px 0px 0px 0px;
-
-
 }
 
 /* für die menüs */
@@ -163,17 +174,14 @@ table.menu td {
 
 /* für die tabellen */
 table {
-	font-size: 0.95em;
+	font-size:11pt;
 	border-collapse:collapse;
-	border:1px dotted grey;
+	border:1px dotted gray;
 	text-align:left;
 	background-color: white;
-	}
-table.info {
-	border-collapse:collapse;
 }
 th, td {
-	border:1px dotted grey;	
+	border:1px dotted gray;	
 	padding:4px;
   vertical-align:top;
 }
@@ -182,9 +190,12 @@ th {
 	background-color:#DDDDDD;
 }
 
+table.info {
+	border-collapse:collapse;
+}
 table.info td, th {
-	border-top:1px dotted grey;
-	}
+	border-top:1px dotted gray;
+}
 	
 a.png { border:none; }
 
@@ -196,13 +207,13 @@ table.inner td {
 }
 th.menge, th.toleranz {
 	width: 70px;
-	}
+}
 th.gebinde {
 	width: 170px;
-	}
+}
 	
 table input {
-	font-size: 0.9em;
+	font-size:11pt;
 }
 
 /* für den hover effekt */
@@ -215,8 +226,8 @@ a.tabelle {
 }
 
 tr.legende {
-	font-size: 0.8em;
-	color: grey;
+	font-size: 11pt;
+	color: gray;
 }
 tr.legende td { border: none}
 
@@ -225,12 +236,9 @@ tr.legende td { border: none}
 	height:30px;
 	font-size:12px;
 	}
-	.bigbutton:hover 	{width:200px; height:30px; font-weight:bold;}
+.bigbutton:hover 	{font-weight:bold;}
 
 
-/* alte stylesheets  */
-	.smalfont		{font-size:10pt; color:#777777;  text-decoration:none;}
-	
 	
 /* test für die notizanzeige in bestellen.php */
 
@@ -239,7 +247,7 @@ tr.legende td { border: none}
 text-decoration:none;
 font-weight:bold;
 width:5px;
-color: grey;
+color: gray;
 border:none;
 }
 
@@ -255,8 +263,8 @@ display: block;
 font: normal 0.9em sans-serif;
 font-style:italic;
 background: #efefef;
-border: 1px dotted grey;
-color: #000;
+border: 1px dotted gray;
+color:#000000;
 padding: 2px 2px 2px 5px;
 }
 
@@ -264,7 +272,7 @@ padding: 2px 2px 2px 5px;
 #tip {
 	width: 250px;
 	background-color:#efefef;
-	border: 1px dotted grey;
+	border: 1px dotted gray;
 	color: #000;
 	padding: 6px;
 	font: normal 0.9em sans-serif;
@@ -282,16 +290,16 @@ th.warn, td.warn, div.warn, span.warn {
 
 th.ok, td.ok, div.ok, span.ok {
   background-color:#ccffcc;
+  color:#000000;
 }
 
 a.button, span.button {
   text-decoration:none;
-  color:000000;
+  color:#000000;
   background-color:#f0f0ff;
   padding:0.1ex 1em 0.1ex 1em;
   margin-left:1em;
   margin-right:1em;
-/* display:block; */
   border-style:solid;
   border-width:1pt;
   border-color:#000000;
@@ -300,30 +308,30 @@ a.button, span.button {
 a.button:hover, span.button:hover {
   font-weight:bold;
   text-decoration:underline;
-  background-color:ffffd0;
+  background-color:#ffffd0;
 }
 
 a.blocklink {
   font-size:12pt;
   text-decoration:none;
-  color:000080;
+  color:#000080;
   padding:2px;
   display:block;
   border-style:solid;
   border-width:1pt;
   border-color:#000000;
-  color:000000;
+  color:#000000;
   background-color:#f0f0ff;
   text-decoration:none;
 }
 a.blocklink:hover {
-  background-color:ffffd0;
+  background-color:#ffffd0;
 }
 img.button {
   background-color:#f0f0ff;
 }
 img.button:hover {
-  background-color:ffffd0;
+  background-color:#ffffd0;
 }  
 td.outer, th.outer {
   border-style:solid;
@@ -377,7 +385,7 @@ tr.modified td, tr.modified th, .modified {
 }
 
 div.untertabelle {
-  font-size:12p;
+  font-size:12pt;
   font-weight:bold;
   padding:1em 1ex 1ex 1ex;
 }
@@ -408,10 +416,11 @@ p.li {
   padding:0.5ex;
   text-align:left;
 }
-  
+
 fieldset legend {
   font-weight:bold;
   background-color:#ffffff;
+  color:#000000;
   padding-top:0.3ex;
   padding-bottom:0.3ex;
   padding-left:2ex;
@@ -434,10 +443,19 @@ div.kommentar {
   padding-bottom:1em;
   padding-left:4em;
   padding-right:4em;
-  color:4040a0;
-  font-size:10pt;
+  color:#4040a0;
+  font-size:11pt;
 }
 
+div#Zusatz {
+font-size: 0.9em;
+float: right; width: 30em;
+margin-left:  1em; 
+padding: 1em;
+border-style:solid;
+border-color:#FF0000;
+background-color: #eee;
+}
 table.footer {
   margin-top:2em;
   padding:2em 1em 1ex 1em;
@@ -451,13 +469,13 @@ table.footer tr, table.footer td {
 
 a.wikilink {
   padding:2px 1ex 2px 2em;
-  font-size:10pt;
+  font-size:11pt;
   background-color:white;
   background-image:url(../img/gluehbirne_15x16.png);
   background-repeat:no-repeat;
+  background-position:5px;
   text-decoration:none;
 }
-
 a.wikilink:hover {
   background-image:url(../img/birne_rot.png);
   text-decoration:underline;
