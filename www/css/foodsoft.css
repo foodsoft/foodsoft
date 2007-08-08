@@ -57,7 +57,7 @@ input:hover, textarea:hover, select:hover {
 
 /* - Logo bzw. Kopf - */
 
-table.head, table.head td, table.headro, table.headro td {
+table.head, table.head td, table.headro, table.headro td, div.head {
   border:none;
   color:#ffffff;
   font-weight: bold;
@@ -65,10 +65,10 @@ table.head, table.head td, table.headro, table.headro td {
   padding:0pt;
   margin:0pt;
 }
-table.head, table.head td {
+table.head, table.head td, div.head {
   background:#ed0606;
 }
-table.headro, table.headro td {
+table.headro, table.headro td, div.headro {
   background:url(readonly.gif);
   background-repeat:repeat;
 }
