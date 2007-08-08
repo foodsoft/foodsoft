@@ -10,20 +10,20 @@ body {
   font-family: verdana, arial, sans-serif;
 }
 
-div#payload, div.payload, div.payloadro {
+div.payload, div.payloadro {
   padding:1ex;
+  margin:1ex;
   color:#000000;
-  margin:0pt;
   padding:0pt;
   /* min-width: 763px;  <-- kann der exploder nicht! */
   font-size:11pt;
   font-family: verdana, arial, sans-serif;
 }
 
-div#payload, div.payload, table.footer td {
+div.payload, table.footer td {
   background:#ffffff;
 }
-body.ro, div#payload.ro, div.payloadro, body.ro table.footer td {
+body.ro, div.payloadro, body.ro table.footer td {
   /* bei "readonly" Hintergrundfarbe aendern */
   background:#ffeedd;
 }
