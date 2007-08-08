@@ -114,12 +114,13 @@
        echo "<div class='warn'>Keine Datei uebergeben!</div>";
        exit();
      }
+     // exitcode 2 ist bei gzip auch erfolgreich!
      $command = "
        $gzip -dc $tmpfile | $mysql -h $db_server -u $db_user -p$db_pwd $db_name ;
-     " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
+     " . 'a="${PIPESTATUS[*]}"; [ "$a" == "0 0" -o "$a" == "2 0" ]';
      system( $command, &$return );
      if( $return != 0 ) {
-       echo "<div class='warn'>Hochladen fehlgeschlagen!</div>";
+       echo "<div class='warn'>Hochladen fehlgeschlagen: $return $mysql $gzip</div>";
      } else {
        echo "<div class='ok'>Datenbank erfolgreich hochgeladen! <a href='index.php'>Weiter...</a></div>";
        datenbank_freigeben();
@@ -132,7 +133,7 @@
 
      $result = mysql_query( "SELECT * FROM leitvariable WHERE local=0" );
      if( ! $result ) {
-       echo "<div class='warn'>Hochladen fehlgeschlagen!</div>";
+       echo "<div class='warn'>Runterladen fehlgeschlagen!</div>";
        exit();
      }
      $leit_sql="
