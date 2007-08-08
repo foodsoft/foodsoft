@@ -195,10 +195,8 @@
           <div class='ok'>
            Passwort erfolgreich geaendert!  &nbsp; <a href='index.php'>weiter...</a>
           </div>
-          </body>
-          </html>
         ";
-        exit();
+        exit( $print_on_exit );
       }
     }
 
@@ -477,39 +475,39 @@
         return TRUE;
     }
     require_once( 'head.php' );
-    echo "<div class='warn'>Keine Berechtigung</div></body></html>";
-    exit();
+    echo "<div class='warn'>Keine Berechtigung</div>";
+    exit($print_on_exit);
   }
   function nur_fuer_dienst_I() {
     global $hat_dienst_I;
     if( ! $hat_dienst_I ) {
       require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst I</div></body></html>";
-      exit();
+      echo "<div class='warn'>Nur fuer Dienst I</div>";
+      exit($print_on_exit);
     }
   }
   function nur_fuer_dienst_III() {
     global $hat_dienst_III;
     if( ! $hat_dienst_III ) {
       require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst II</div></body></html>";
-      exit();
+      echo "<div class='warn'>Nur fuer Dienst II</div>";
+      exit($print_on_exit);
     }
   }
   function nur_fuer_dienst_IV() {
     global $hat_dienst_IV;
     if( ! $hat_dienst_IV ) {
       require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst IV</div></body></html>";
-      exit();
+      echo "<div class='warn'>Nur fuer Dienst IV</div>";
+      exit($print_on_exit);
     }
   }
   function nur_fuer_dienst_V() {
     global $hat_dienst_V;
     if( ! $hat_dienst_V ) {
       require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst V</div></body></html>";
-      exit();
+      echo "<div class='warn'>Nur fuer Dienst V</div>";
+      exit($print_on_exit);
     }
   }
     
@@ -533,9 +531,8 @@
         document.getElementById('pwneu_form').style.display = 'none';
       }
     </script>
-    $print_on_exit
   ";
 
-exit();
+exit($print_on_exit);
 
 ?>
