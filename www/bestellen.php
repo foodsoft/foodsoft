@@ -66,7 +66,7 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 											</tr>	";
 												}
 							echo "</table> ";
-							exit;  //hier ist dann zu ende ...
+							return;
               ?>
 											
 				
