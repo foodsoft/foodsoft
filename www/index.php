@@ -18,7 +18,7 @@
 
   if( ! $angemeldet ) {
     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
-    exit();
+    exit( $print_on_exit );
   }
 	 
 	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
@@ -95,6 +95,6 @@
       </td>
     </tr>
     </table>
-    $print_on_exit
   ";
+  exit( $print_on_exit );
 ?>
