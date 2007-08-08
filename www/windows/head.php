@@ -15,6 +15,11 @@
     if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
     $img = "/foodsoft/img/close_black_trans.gif";
   
+    if( $readonly ) {
+      $ro='ro';
+    } else {
+      $ro='';
+    }
     echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
       <html>
       <head>
@@ -25,20 +30,11 @@
         <!--  fuer die popups:  -->
         <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
       </head>
-      <body onload='$onload_str'
-    ";
-    if( $readonly ) {
-      echo " class='ro'";
-    }
-    echo "><div class='head' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;'";
-    if( $readonly ) {
-      echo " id='ro'";
-    }
-    echo "
-      >
-      <table width='100%'>
+      <body onload='$onload_str' class='$ro'>
+      <div style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;' class='head$ro'>
+      <table width='100%' class='head$ro'>
       <tr>
-        <td style='padding-right:0.5ex;'>
+        <td style='padding-right:0.5ex;' class='head$ro'>
           <img src='$img' class='button' title='Schlie&szlig;en' onClick='opener.focus(); window.close();'></img>
         </td>
         <td>Foodsoft: $subtitle</td>
@@ -64,13 +60,10 @@
     if( $readonly ) {
       echo "<span style='padding-left:3em;'>schreibgeschuetzt!</span>";
     }
-    echo "</td></tr>";
-    echo "</table></div><div id='payload'";
-    if( $readonly ) {
-      echo " class='ro'";
-    } else {
-      echo " class=''";
-    }
+    echo "
+      </td></tr>
+      </table></div><div id='payload$ro'
+    ";
     $print_on_exit='</div></body></html>';
     $kopf_schon_ausgegeben = true;
   }
