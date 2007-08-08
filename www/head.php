@@ -7,8 +7,7 @@
       <head>
         <title>FC Potsdam  - Foodsoft</title>
         <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-        <!-- TF: zum schnelleren test mal auf meine lokale kopie leiten: -->
-        <link rel='stylesheet' type='text/css' href='http://fcnahrungskette.qipc.org/foodsoft/css/foodsoft.css'>
+        <link rel='stylesheet' type='text/css' href='/foodsoft/css/foodsoft.css'>
         <!--  fuer die popups:  -->
         <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
       </head>

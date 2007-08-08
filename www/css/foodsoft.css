@@ -6,25 +6,28 @@ body {
   margin:0pt;
   padding:0pt; 
   /* min-width: 763px;  <-- kann der exploder nicht! */
-  font-size:10pt;
+  font-size:11pt;
   font-family: verdana, arial, sans-serif;
 }
 
-body.ro, div#payload.ro body.ro table.footer td {
+div#payload, div.payload, div.payloadro {
+  padding:1ex;
+  color:#000000;
+  margin:0pt;
+  padding:0pt;
+  /* min-width: 763px;  <-- kann der exploder nicht! */
+  font-size:11pt;
+  font-family: verdana, arial, sans-serif;
+}
+
+div#payload, div.payload, table.footer td {
+  background:#ffffff;
+}
+body.ro, div#payload.ro, div.payloadro, body.ro table.footer td {
   /* bei "readonly" Hintergrundfarbe aendern */
   background:#ffeedd;
 }
 
-div#payload {
-  padding:1ex;
-  background:#ffffff;
-  color:#000000;
-  margin:0pt;
-  padding:0pt; 
-  /* min-width: 763px;  <-- kann der exploder nicht! */
-  font-size:10pt;
-  font-family: verdana, arial, sans-serif;
-}
 
 a {
   color:#ED0606;
@@ -54,8 +57,7 @@ input:hover, textarea:hover, select:hover {
 
 /* - Logo bzw. Kopf - */
 
-.head, .head td, .head table {
-  background:#ed0606;
+table.head, table.head td, table.headro, table.headro td {
   border:none;
   color:#ffffff;
   font-weight: bold;
@@ -63,37 +65,44 @@ input:hover, textarea:hover, select:hover {
   padding:0pt;
   margin:0pt;
 }
-.head#ro, .head#ro td, .head#ro table {
+table.head, table.head td {
+  background:#ed0606;
+}
+table.headro, table.headro td {
   background:url(readonly.gif);
   background-repeat:repeat;
 }
 
-
-
-#logo {
- height: 55px;
- padding: 0 20px;
- text-align: left;
- line-height: 54px;
- font-size: 54px;
- overflow: hidden; 
- letter-spacing: -3px;
- margin: 0;
+td.logo {
+  text-align:left;
+  vertical-align:top;
 }
-#logo a, #logo a:hover {
- color: white; 
+span.logo, span.logoinvers, a.logo, a.logo:visited, a.logo:link {
+ height:56px;
+ line-height:54px;
+ overflow:hidden; 
+ letter-spacing:-1px;
+ font-size:24pt;
+ margin:0pt;
+ padding:0pt;
  text-decoration: none;
 }
-#logo a span { 
- color: #ED0606;
- background: white;
- padding-right: 0.1em;
- font-weight: bold;
+span.logo, a.logo, a.logo:visited, a.logo:link {
+  color: white; 
+  background:#ed0606;
 }
+a.logo:hover {
+  text-decoration:underline;
+}
+span.logoinvers {
+  background:white;
+  color:#ed0606;
+}
+
 
 /* das menu mit hover funktion  */
 #menu {
- background:#ED0606;
+ background:#ed0606;
  padding: 5px 5px; /* Je kleiner das Fenster desto kleiner soll auch der Abstand des Menüs rechts und links sein. */
  margin: 0pt 0pt 0pt 0pt;
  text-align: right;
@@ -112,6 +121,7 @@ input:hover, textarea:hover, select:hover {
 }
 
 #menu li {
+  color: white;
   font-size:11pt;
   display: inline; /* Damit die Menüpunkte nebeneinander und nicht untereinander erscheinen. */
   position: relative;
@@ -119,7 +129,6 @@ input:hover, textarea:hover, select:hover {
   border-left: 1px dotted white; /* Ein optischer Trennungsstrich */
   padding: 0 10px 0 15px;
   font-weight: bold;
-  color: white;
 }
 
 #menu li ul {
@@ -169,6 +178,7 @@ input:hover, textarea:hover, select:hover {
 
 /* für die menüs */
 table.menu td {
+	font-size:11pt;
 	border:none;
 }
 
