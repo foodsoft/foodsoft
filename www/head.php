@@ -7,26 +7,31 @@
       <head>
         <title>FC Potsdam  - Foodsoft</title>
         <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-        <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css'>
-        <link rel='stylesheet' type='text/css' media='print' href='/foodsoft/css/print.css'>
+        <!-- TF: zum schnelleren test mal auf meine lokale kopie leiten: -->
+        <link rel='stylesheet' type='text/css' href='http://fcnahrungskette.qipc.org/foodsoft/css/foodsoft.css'>
         <!--  fuer die popups:  -->
         <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
       </head>
-      <body onload='jsinit();'
+      <body
     ";
+    // TF: test:  mal probieren ohne separate stylesheets fuer screen und print
+    //     (vielleicht verwirrt das den exploder??)
+    //    <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css'>
+    //    <link rel='stylesheet' type='text/css' media='print' href='/foodsoft/css/print.css'>
+    //
     if( $readonly ) {
       echo " class='ro'";
     }
-    echo "<table class='head' width='100%'";
+    echo "><table width='100%'";
     if( $readonly ) {
-      echo " id='ro'";
+      echo " class='headro'";
+    } else {
+      echo " class='head'";
     }
     echo "
       <tr>
-      <td id='logo'>
-        <a href='index.php'><span>FC</span>Nahrungskette</a> <span style='color:white; font-size:45%; letter-spacing: -1px;'>... Foodsoft</span>
-      </td>
-      <td style='padding-top:1em;'>
+      <td class='logo'><a class='logo' href='index.php'><span class='logoinvers'>FC</span>Nahrungskette... Foodsoft</a></td>
+      <td class='head' style='padding-top:1em;'>
     ";
     if( $angemeldet ) {
       if( $dienst > 0 ) {
@@ -35,7 +40,7 @@
         echo "Hallo Gruppe $login_gruppen_name!";
       }
     }
-    echo '</td><td style="text-align:right;padding-top:1em;">';
+    echo "</td><td class='head' style='text-align:right;padding-top:1em;'>";
     if( $angemeldet ) {
       if( $dienst > 0 ) {
         // fuer dienste: noch dienstkontrollblatteintrag aktualisieren:
@@ -81,9 +86,9 @@
 <div id='payload'
     ";
     if($readonly) {
-      echo " class='ro'>";
+      echo " class='payloadro'>";
     } else {
-      echo " class=''>";
+      echo " class='payload'>";
     }
     $print_on_exit='</div></body></html>';
 
