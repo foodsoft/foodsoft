@@ -1,10 +1,10 @@
 
 <h1>Mein Konto</h1>
 <?PHP
-   //error_reporting(E_ALL); // alle Fehler anzeigen
-   require_once('code/zuordnen.php');
+  //error_reporting(E_ALL); // alle Fehler anzeigen
+  require_once("$foodsoftpath/code/zuordnen.php");
+  require_once("$foodsoftpath/code/login.php");
    
- $gruppen_pwd = 'obsolet';
      if( ! $angemeldet ) {
        echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
        return;
@@ -23,7 +23,7 @@
 <h2>&Uuml;berweisung eintragen</h2>
 <form action="index.php" method="post">
 <input type="hidden" name="area" value="meinkonto">
-<input type="hidden" name="gruppen_id" value="<?echo $gruppen_id?>"/>
+<input type="hidden" name="gruppen_id" value="<?echo $login_gruppen_id?>"/>
 <input type="hidden" name="gruppen_pwd" value="<?echo $_REQUEST['gruppen_pwd']?>"/>
 Ich habe heute 
 <input type="text" size="12" name="amount"/>

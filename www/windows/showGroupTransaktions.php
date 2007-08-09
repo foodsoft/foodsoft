@@ -60,6 +60,7 @@
     // aus index.php aufgerufen: kopf ist schon ausgegeben!
   } else {
     nur_fuer_dienst(4,5);
+    // kontoanzeige fuer dienst 4: kopf muss noch ausgegeben werden!
     require_once( "$foodsoftpath/head.php" );
     need_http_var( 'gruppen_id' );
   }
@@ -236,4 +237,3 @@
      exit( $print_on_exit );
 	 }
 ?>
-
