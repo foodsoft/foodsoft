@@ -43,7 +43,6 @@
 
  require_once('code/config.php');
  require_once('code/err_functions.php');
- require_once('code/connect_MySQL.php');
  require_once('code/zuordnen.php');
  require_once('code/login.php');
 
@@ -58,20 +57,17 @@
 
   if($meinKonto) {
     $gruppen_id = $login_gruppen_id;
+    // aus index.php aufgerufen: kopf ist schon ausgegeben!
   } else {
     nur_fuer_dienst(4,5);
-    get_http_var( 'gruppen_id' ) or die();
+    require_once( "$foodsoftpath/head.php" );
+    need_http_var( 'gruppen_id' );
   }
  
 	 // Variablen initialisieren
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
 	 
-// 	 // zur Sicherheit das Passwort prüfen..
-// 	 if ($gruppen_pwd != $real_gruppen_pwd){
-// 		echo "<h2>Passwortfehler</h2>";
-// 	 	exit();
-// 	}
    if( ! $angemeldet ) {
      echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
      exit();
@@ -91,17 +87,18 @@
 	$type2str[1] = "Bestellung";
 	$type2str[2] = "Sonstiges";
 	
-?>
 
-<html>
-<head>
-   <title>Kontotransaktionen - Kontoauszüge</title>
-<link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
-</head>
-<body onload="<?PHP echo $onload_str; ?>">
-   <h3>Kontoauszüge von: <?PHP echo $bestellgruppen_row['name']; ?></h3>
+/* kopf darf nicht bei $meinKonto ausgegeben werden!
+ * <html>
+ * <head>
+ *    <title>Kontotransaktionen - Kontoauszüge</title>
+ * <link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
+ * </head>
+ * <body onload="<?PHP echo $onload_str; ?>">
+ */
 
-   <?php
+   echo "<h3>Kontoausz&uuml;ge von: {$bestellgruppen_row['name']}</h3>";
+
    if( ( $gesamtbestellung_id = $HTTP_GET_VARS['gesamtbestellung_id'] ) ) {
      echo "details fuer bestellung: $gesamtbestellung_id";
      echo "<div class='warn'>noch in arbeit!</div>";
@@ -109,7 +106,7 @@
    }
    ?>
    
-	 <table style="width:430px;" class="liste">
+	 <table class="numbers">
 	    <tr>
 			   <th>type</th>
 				 <th>eingabezeit</th>
@@ -142,7 +139,7 @@
 					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
 					    echo "   <td>".$vert_row['datum']."</td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
-					    echo "   <td align='right' valign='bottom'> <b> ".$vert_row['gesamtpreis']."</b> <br>";
+					    echo "   <td align='right' valign='bottom'> <b> ".sprintf("%.2lf",$vert_row['gesamtpreis'])."</b> <br>";
 					    ?>
 						<form action=<?if($meinKonto) echo "index.php"; else echo "../index.php";?> method="post">
 							   <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
@@ -200,7 +197,7 @@
 							   echo "<td>".$konto_row['notiz']."</td>";
 							}
 							
-							echo "   <td align='right' valign='bottom'><b>".$konto_row['summe']."</b></td>\n";
+							echo "   <td align='right' valign='bottom'><b>".sprintf("%.2lf",$konto_row['summe'])."</b></td>\n";
 							echo "</tr>\n";
 				 	    $konto_row = mysql_fetch_array($result);
 					    if(!$konto_row){
@@ -233,9 +230,10 @@
 				 if ($upButtonScript != "") echo "<input type=button value='>' onClick=\"".$upButtonScript.";document.forms['skip'].submit()\"";
 			?>
 	 </form>
-	 <? if(!$meinKonto){  ?>
-	 	 <a href="groupTransaktionMenu.php?gruppen_pwd=<?PHP echo $gruppen_pwd; ?>&gruppen_id=<?PHP echo $gruppen_id; ?>&gruppen_name=<?PHP echo $bestellgruppen_row['name']; ?>">Zurück</a>
-	 <? } ?>
+<?php
+   if( !$meinKonto ) {
+	 	 echo "<a href='groupTransaktionMenu.php?gruppen_id={$bestellgruppen_row['id']}'>Zur&uuml;ck</a>";
+     exit( $print_on_exit );
+	 }
+?>
 
-</body>
-</html>
