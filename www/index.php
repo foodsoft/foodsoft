@@ -3,11 +3,11 @@
 	require_once('code/config.php');
 	
 	// Funktionen zur Fehlerbehandlung laden
+  require_once('code/views.php');
+  require_once('code/zuordnen.php');
 	require_once('code/err_functions.php');
 	
   require_once('code/login.php');
-  require_once('code/zuordnen.php');
-  require_once('code/views.php');
 	
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);

@@ -1,6 +1,7 @@
 <?php
 //This file defines views for foodsoft data
 
+
 function number_selector($name, $min, $max, $selected, $format){
  ?>
     <select name="<?echo $name?>">
@@ -172,73 +173,127 @@ function rotationsplanView($row){
     
 }
 
-function areas_in_head($area){
-
-?>
-  <li>
-  <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
-<?
-}
 function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE){
       $result1 = sql_bestellprodukte($bestell_id);
       $preis_summe = 0;
      ?>
       <form action="index.php" method="post">
       <table>
-               <tr>
-                   <th>Bezeichnung</th>
-                   <th>Produktgruppe</th>
-                   <th>Bestellnummer</th>
-                   <th>Gebinde Einheit</th>
-                   <th>Menge</th>
-                   <th>Einheitspreis: <small>Netto (Brutto, MWST, Pfand)</small> </th>
-                   <th>Gesamtpreis</th>
-               </tr>
+           <tr>
+             <th>Produkt</th>
+             <th title='Endpreis pro V-Einheit' colspan='2'>V-Preis</th>
+             <th>MWSt</th>
+             <th>Pfand</th>
+             <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
+             <th colspan='2'>Gesamtmenge</th>
+             <th>Gesamtpreis</th>
+           </tr>
 
      <?
+  $preis_summe = 0;
+  $nichtgeliefert_header_ausgeben = true;
 
-      while  ($produkte_row = mysql_fetch_array($result1)) {
-      	 $produkt_id =$produkte_row['produkt_id'];
-	 if($produkte_row['liefermenge']!=0){	
-		  ?>
-	       <tr>
-	       <td valign="top"><b><?echo( $produkte_row['produkt_name']);?></b></td>
-               <td valign="top"><?PHP echo $produkte_row['produktgruppen_name']; ?></td>
-               <td><? echo($produkte_row['gebindegroesse'])?></td>
-               <td><? echo($produkte_row['gebindegroesse']." * ".$produkte_row['einheit'])?></td>
-	       <?
-			$liefer = $produkte_row['liefermenge'];
-			$fieldname = "verteilmenge".$produkt_id;
-	       
-	       if($editAmounts){ ?>
-               		<td> <input name="<? echo($fieldname) ?>" type="text" size="3" value="<? echo($liefer) ?>"/></td>
-	       <?  } else { ?>
-               		<td> <? echo($liefer) ?></td>
-	       <?  } 
-	       if($editPrice){ ?>
-	       		<td> <?  $preis= preis_selection($produkt_id, $produkte_row['produktpreise_id']); ?> </td>
-	       <?  } else { ?>
-	       		<td> <?  $preis=  $produkte_row['preis'];
-				preis_view($produkte_row);
-			?> </td>
-	       <?  } ?>
-		     <td> <?echo($preis*$liefer ); $preis_summe+=$preis*$liefer ?> </td>
-		  </tr>
+  while  ($produkte_row = mysql_fetch_array($result1)) {
+    $produkt_id =$produkte_row['produkt_id'];
+    if( $produkte_row['liefermenge'] == 0 ) {
+      if( $nichtgeliefert_header_ausgeben ) {
+        ?>
+          <tr id='row_total'>
+            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
+            <td class='number'><b>
+	<?
+        printf( "%8.2lf", $preis_summe );
+        ?>
+          </b></td>
+          </tr>
+	<? if($editAmounts){ ?>
+          <tr>
+            <th colspan='10'>
+              <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
+                onclick='nichtgeliefert_toggle();' title='Ausblenden'>
+              </img>
+              Nicht bestellte oder nicht gelieferte Produkte:
+            </th>
+          </tr>
+	<?
+	  } //if($editAmounts)
+        $nichtgeliefert_header_ausgeben = false;
+      }
+      if($editAmounts){
+          echo "<tr name='trnichtgeliefert'";
+      }
+    } else {
+      echo "<tr name='geliefert'";
+    }
 
-     		<tr style='border:none'>
-		 <td colspan='4' style='border:none'></td>
-	      </tr>
-   
-   <?
-   } //end if ... reichen die bestellten mengen? dann weiter im text
-   
-} //end while produkte array            
+    if($editAmounts ||  $produkte_row['liefermenge'] != 0 ){
+
+    echo " id='row$produkt_id'><td>$produkt_id";
+
+    preisdatenSetzen( & $produkte_row );
+
+    $lieferpreis = $produkte_row['lieferpreis'];
+    $mengenfaktor = $produkte_row['mengenfaktor'];
+    $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
+
+    $gesamtpreis = sprintf( "%8.2lf", $lieferpreis * $liefermenge );
+
+    echo "
+      {$produkte_row['produkt_name']}</td>
+      <td class='mult'>{$produkte_row['preis_rund']}</td>
+      <td class='unit'>/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
+      <td class='number'>{$produkte_row['mwst']}</td>
+      <td class='number'>{$produkte_row['pfand']}</td>
+      <td class='mult'>";
+      if($editAmounts){
+      echo "<a
+        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
+        onclick=\"
+          document.getElementById('row$produkt_id').className='modified';
+          document.getElementById('row_total').className='modified';\"
+        >
+	$lieferpreis</a>";
+      } else {
+	 echo $lieferpreis;
+      }
+      echo "</td>
+      <td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>
+      <td class='mult'>";
+      if($editPrice){
+         echo " <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></input>";
+      } else {
+	 echo $liefermenge;
+      }
+      echo "
+      </td>
+      <td class='unit'>{$produkte_row['preiseinheit']}</td>
+      <td class='number'>$gesamtpreis</td>
+    </tr>";
+
+    $preis_summe += $gesamtpreis;
+    }
+
+
+  } //end while produkte array            
+
+  if( $nichtgeliefert_header_ausgeben ) {
+        // summe muss noch angezeigt werden:
+	?>
+          <tr id='row_total'>
+            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
+            <td class='number'><b>
+        <?
+        printf( "%8.2lf", $preis_summe );
+	?>
+          </b></td>
+          </tr>
+        <?
+  }
+
 ?>
-   <tr>
-   <td align=right colspan="7" td>Summe <?echo($preis_summe)?></td></tr>
    <? if($editAmounts or $editPrice){?>
 	   <tr style='border:none'>
-		<td colspan='4' style='border:none'>
+		<td colspan='12' style='border:none'>
 		   <input type="hidden" name="area" value="lieferschein">			
 		   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
 		   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
@@ -296,14 +351,6 @@ function preis_selection($produkt_id, $current_preis_id){
 /**
  *  Zeigt ein Produkt als Bestellungsübersicht
  */
-function areas_in_menu($area){
- ?>
-   <tr>
-       <td><input type="button" value="<? echo $area['title']?>" class="bigbutton" onClick="self.location.href='<? echo $area['area']?>'"></td>
-	<td valign="middle" class="smalfont"><? echo $area['hint']?></td>
-    </tr> 		 
-  <?
-}
 function areas_in_head($area){
 
 ?>
@@ -311,120 +358,6 @@ function areas_in_head($area){
   <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
 <?
 }
-function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE){
-      $result1 = sql_bestellprodukte($bestell_id);
-      $preis_summe = 0;
-     ?>
-      <form action="index.php" method="post">
-      <table>
-               <tr>
-                   <th>Bezeichnung</th>
-                   <th>Produktgruppe</th>
-                   <th>Bestellnummer</th>
-                   <th>Gebinde Einheit</th>
-                   <th>Menge</th>
-                   <th>Einheitspreis: <small>Netto (Brutto, MWST, Pfand)</small> </th>
-                   <th>Gesamtpreis</th>
-               </tr>
-
-     <?
-
-      while  ($produkte_row = mysql_fetch_array($result1)) {
-      	 $produkt_id =$produkte_row['produkt_id'];
-	 if($produkte_row['liefermenge']!=0){	
-		  ?>
-	       <tr>
-	       <td valign="top"><b><?echo( $produkte_row['produkt_name']);?></b></td>
-               <td valign="top"><?PHP echo $produkte_row['produktgruppen_name']; ?></td>
-               <td><? echo($produkte_row['gebindegroesse'])?></td>
-               <td><? echo($produkte_row['gebindegroesse']." * ".$produkte_row['einheit'])?></td>
-	       <?
-			$liefer = $produkte_row['liefermenge'];
-			$fieldname = "verteilmenge".$produkt_id;
-	       
-	       if($editAmounts){ ?>
-               		<td> <input name="<? echo($fieldname) ?>" type="text" size="3" value="<? echo($liefer) ?>"/></td>
-	       <?  } else { ?>
-               		<td> <? echo($liefer) ?></td>
-	       <?  } 
-	       if($editPrice){ ?>
-	       		<td> <?  $preis= preis_selection($produkt_id, $produkte_row['produktpreise_id']); ?> </td>
-	       <?  } else { ?>
-	       		<td> <?  $preis=  $produkte_row['preis'];
-				preis_view($produkte_row);
-			?> </td>
-	       <?  } ?>
-		     <td> <?echo($preis*$liefer ); $preis_summe+=$preis*$liefer ?> </td>
-		  </tr>
-
-     		<tr style='border:none'>
-		 <td colspan='4' style='border:none'></td>
-	      </tr>
-   
-   <?
-   } //end if ... reichen die bestellten mengen? dann weiter im text
-   
-} //end while produkte array            
-?>
-   <tr>
-   <td align=right colspan="7" td>Summe <?echo($preis_summe)?></td></tr>
-   <? if($editAmounts or $editPrice){?>
-	   <tr style='border:none'>
-		<td colspan='4' style='border:none'>
-		   <input type="hidden" name="area" value="lieferschein">			
-		   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-		   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-		   <input type="submit" value=" Lieferschein ändern ">
-		   <input type="reset" value=" Änderungen zurücknehmen">
-		</td>
-	   </tr>
-   <?}?>
-   </table>                   
-   </form>
-      
-<?
-
-}
-/**
- * Gibt einen einzelnen Preis mit Pfand und Mehrwertsteuer aus
- * Argument: mysql_fetch_array(sql_produktpreise2())
- */
-
-function preis_view($pr){
-        printf( "%5.2lf", ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 ) );
-				echo "&nbsp;({$pr['preis']},{$pr['mwst']},{$pr['pfand']})";
-
-}
-
-/**
- * Erzeugt eine Auswahl für alle Preise eines Produktes
- */
-function preis_selection($produkt_id, $current_preis_id){
-	$selectpreis = "preis".$produkt_id;
-
-		?>
-                <select name="<? echo($selectpreis)?>"> 
-	       		<?
-			   $preise=sql_produktpreise2($produkt_id);
-			   while($pr = mysql_fetch_array($preise)){
-				$sel = "";
-			   	if($pr['id']==$current_preis_id ){
-					$sel = " selected=\"selected\"";
-					$preis =$pr['preis'];
-				}
-				echo "<option value='{$pr['id']}' $sel>";
-				preis_view($pr);
-        			echo "</option>\n";
-
-			   }
-	       
-	       		?>
-	   	     </select>
-		     <?
-		     return $preis;
-}
-
-
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */

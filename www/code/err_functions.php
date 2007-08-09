@@ -7,19 +7,23 @@
 	 
 	    global $logfile_errs, $log_win_format;
 			
-			$new_line = $log_win_format ? "\r\n" : "\n";
-			$filename = $logfile_errs;
-			$exists     = file_exists($filename);
-			
-			$fp = fopen($filename,"a");
-			
-			// Wenn Log-Datei neu erstellt wurde, dann erstmal "Kopzeile" schreiben
-			if (!$exists) fputs($fp, "line file err_msg mysql_err_msg".$new_line);
-			
-			// Fehler rausschreiben und dabei Leerzeichen maskieren (" " => %20)
-			fputs($fp, $line." ".str_replace(" ", "_", $file)." ".str_replace(" ", "_", $string)." ".str_replace(" ", "_", $error)." ".var_export($stack, TRUE).$new_line);
-			
-			fclose($fp);
+	                if($logfile_errs == NULL){
+				echo "<p> <b> Warning</b> \$logfile_errs not set, not writing to logfile </p>";
+			} else {
+				$new_line = $log_win_format ? "\r\n" : "\n";
+				$filename = $logfile_errs;
+				$exists     = file_exists($filename);
+				
+				$fp = fopen($filename,"a");
+				
+				// Wenn Log-Datei neu erstellt wurde, dann erstmal "Kopzeile" schreiben
+				if (!$exists) fputs($fp, "line file err_msg mysql_err_msg".$new_line);
+				
+				// Fehler rausschreiben und dabei Leerzeichen maskieren (" " => %20)
+				fputs($fp, $line." ".str_replace(" ", "_", $file)." ".str_replace(" ", "_", $string)." ".str_replace(" ", "_", $error)." ".var_export($stack, TRUE).$new_line);
+				
+				fclose($fp);
+			}
 	 
 	 }
 	 

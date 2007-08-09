@@ -1,5 +1,5 @@
 <?php
-error_reporting(E_ALL); // alle Fehler anzeigen
+//error_reporting(E_ALL); // alle Fehler anzeigen
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
 //foodi als pwd: 35q3Za9.ZxrxYd
 

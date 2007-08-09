@@ -11,9 +11,13 @@ require_once("$foodsoftpath/head.php");
 
 
 // Übergebene Variablen einlesen...
-  get_http_var('bestellungs_id')
-    and $bestell_id = $bestellungs_id
-    or need_http_var('bestell_id');
+    if (isset($HTTP_GET_VARS['bestellungs_id'])) {
+    		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
+	} else {
+	 	$result = sql_bestellungen( array(STATUS_LIEFERANT,STATUS_VERTEILT) );
+		select_bestellung_view($result, array("Verteiltabelle" => "bestellt_produkte"));
+		exit();
+	 }
   get_http_var('gruppen_id');
   get_http_var('allGroupsArray');
   get_http_var('sortierfolge');
@@ -52,9 +56,6 @@ require_once("$foodsoftpath/head.php");
       <br>
          <form action="index.php" method="post">
          <table style="width: 600px;" class='numbers'>
-            <tr class="legende">
-               <td colspan="5">Produkt (Verteil-Einheit | Gebindegrösse | Endpreis | Produktgruppe)</td>
-            </tr>
 	    <?distribution_tabellenkopf("Gruppe");?>
 <?php                               
       //produkte und preise zur aktuellen bestellung auslesen
@@ -157,7 +158,7 @@ require_once("$foodsoftpath/head.php");
   	<td colspan='4' style='border:none;'>
   	   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
   	   <input type='hidden' name='area' value='bestellt_produkte'>			
-  	   <input type='submit' value=' Verteilung &auml;ndern '>
+  	   <input type='submit' value=' speichern '>
   	   <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
   	</td>
      </tr>

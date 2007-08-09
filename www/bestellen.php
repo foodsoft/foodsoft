@@ -22,8 +22,8 @@
         } else {
 	  //Nur aktuell gültige Bestellungen
 	  $useDate = TRUE;
-      $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
-      echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
+          $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
+          echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
     }
 			
 					   // Aktuelle Bestellung ermitteln...
@@ -1226,6 +1226,8 @@
 				 }
 				 
 		}
+   }
+} 
 			
   ?>
 	
