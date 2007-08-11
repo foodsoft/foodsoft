@@ -5,6 +5,11 @@
 // sucht in produktliste und preishistorie nach inkonsistenzen,
 // und nach unterschieden zum Terra-katalog,
 // macht ggf. verbesserungsvorschlaege und erlaubt aenderungen
+//
+// ausgabe wird durch folgende variable bestimmt:
+// - produktid: fuer detailanzeige ein produkt
+// - bestell_id: erlaubt auswahl preiseintrag fuer diese bestellung (nur mit produktid)
+// - lieferanten_id: anzeige aller produkte eines lieferanten
 
   require_once('code/config.php');
   require_once('code/err_functions.php');
@@ -14,57 +19,70 @@
   //nur_fuer_dienst(4,5);
   
   $self = 'terraabgleich.php?';
+  $self_fields = '';
+
   $detail = get_http_var('produktid');
-  if( $detail )
-    $self = $self . "&produktid=$produktid";
+  if( $detail ) {
+    // $self: um diese seite nochmal aufzurufen:
+    $self = "$self&produktid=$produktid";
+    // fuer POST-formulare: auch als hidden-eingabefeld:
+    $self_fields = "<input type='hidden' name='produktid' value='$produktid'>";
+  }
+
+  $bestell_id = false;
+  if( get_http_var('bestell_id') ) {
+    $self = "$self&bestell_id=$bestell_id";
+    $self_fields = $self_fields . "<input type='hidden' name='bestell_id' value='$bestell_id'>";
+  }
 
   $title = 'Produktdaten';
   $subtitle = 'Produktdaten';
   $wikitopic = "foodsoft:datenbankabgleich";
-  if( $detail )
-    $subtitle = $subtitle . " - Detailanzeige";
+  if( $detail ) {
+    if( $bestell_id )
+      $subtitle = $subtitle . " - Auswahl Preiseintrag";
+    else
+      $subtitle = $subtitle . " - Detailanzeige";
+  }
   require_once('windows/head.php');
 
-  $bestell_id = false;
-  get_http_var('bestell_id') and $self = $self . "&bestell_id=$bestell_id";
+  if( $detail ) {
+    $result = mysql_query( "SELECT * FROM produkte WHERE id='$produktid'" )
+      or error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
+    $row = mysql_fetch_array($result)
+      or error ( __LINE__, __FILE__, "Produkt nicht gefunden" );
+    $lieferanten_id = $row['lieferanten_id'];
+  } else {
+    need_http_var( 'lieferanten_id' );
+  }
+  $self = "$self&lieferanten_id=$lieferanten_id";
+  $self_fields = $self_fields . "<input type='hidden' name='lieferanten_id' value='$lieferanten_id'>";
 
-  // echo "bestell_id: $bestell_id<br>";
 
   if( $detail ) {
 
-    // eventuell uebergebene SQL-befehle befehl0, befehl1, ... abarbeiten:
-    //
-    $n=0;
-    while( get_http_var( 'befehl' . $n ) ) {
+    get_http_var( 'action' );
+
+    if( $action == 'zeitende_setzen' ) {
       fail_if_readonly();
       nur_fuer_dienst_IV();
-      $befehl = base64_decode( ${"befehl$n"} );
-      // $befehl = "UPDATE produktpreise SET zeitende='2007-05-16 11:22:33' WHERE id=4707";
-      get_http_var( 'kommentar' . $n ) or ${"kommentar$n"} = 'SQL-Befehl: ' . $befehl;
-      get_http_var( 'doit' . $n ) or ${"doit$n"} = TRUE;
-      if( ${"doit$n"} ) {
-        // printf( ":%s:\n", "$kommentar");
-        if( mysql_query( $befehl ) ) {
-          // echo "<div class='ok'>OK: $befehl </div>";
-        } else {
-          // echo "<div class='warn'>FEHLGESCHLAGEN: $kommentar </div>";
-        }
-      }
-      $n++;
+      need_http_var('preis_id');
+      need_http_var('zeitende');
+      $result = mysql_query( "UPDATE  produktpreise SET zeitende='$zeitende' WHERE id='$preis_id'" )
+        or error( __LINE__, __FILE__, "Setzen Zeitende in Preishistorie fehlgeschlagen" );
     }
-  
+
     if( $bestell_id ) {
 
-      // eventuell preiseintrag fuer bestellvorschlag aendern:
-      //
-      if( get_http_var( 'new_preisid' ) ) {
+      if( $action == 'preiseintrag_waehlen' ) {
         fail_if_readonly();
         nur_fuer_dienst_IV();
+        need_http_var( 'preis_id' );
         $result = mysql_query(
           "UPDATE bestellvorschlaege
-           SET produktpreise_id=$new_preisid
-           WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produktid"
-        ) or error ( __LINE__, __FILE__, "Setzen des neuen Preiseintrags fehlgeschlagen" );
+           SET produktpreise_id='$preis_id'
+           WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produktid' " )
+          or error ( __LINE__, __FILE__, "Setzen des neuen Preiseintrags fehlgeschlagen" );
       }
 
       $result = mysql_query(
@@ -80,12 +98,13 @@
       $row = mysql_fetch_array( $result )
         or error ( __LINE__, __FILE__, "Gesamtbestellung nicht gefunden" );
       $bestellung_name = $row['name'];
+
     }
 
     // eventuell neuen preiseintrag vornehmen:
     //
   
-    if( get_http_var('neuerpreiseintrag' ) ) {
+    if( $action == 'neuer_preiseintrag' ) {
       fail_if_readonly();
       nur_fuer_dienst_IV();
 
@@ -169,45 +188,30 @@
 
     // eventuell neue Artikelnummer setzen:
     //
-    if( get_http_var( 'anummer' ) ) {
+    if( $action == 'artikelnummer_setzen' ) {
       fail_if_readonly();
       nur_fuer_dienst_IV();
-      if ( mysql_query( 'UPDATE produkte SET artikelnummer=' . $anummer . ' WHERE id=' . $produktid ) ) {
-        // echo "OK!<br>";
-      } else {
+      need_http_var( 'anummer' );
+      if( ! mysql_query( "UPDATE produkte SET artikelnummer='$anummer' WHERE id='$produktid' " ) )
         echo "<div class='warn'>Setzen der neuen Artikelnummer FEHLGESCHLAGEN</div>";
-        // echo "fehlgeschlagen!<br>";
-      }
     }
+
   }
 
   get_http_var( 'order_by' ) or $order_by = 'name';
 
-  if( $detail ) {
-    $result = mysql_query( "SELECT * FROM produkte WHERE id='$produktid'" )
-      or error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-    $row = mysql_fetch_array($result)
-      or error ( __LINE__, __FILE__, "Produkt nicht gefunden" );
-    $lieferanten_id = $row['lieferanten_id'];
-  } else {
-    need_http_var( 'lieferanten_id' );
-    $self = $self . "&lieferanten_id=$lieferanten_id";
-  }
-
   $result = mysql_query( "SELECT * FROM lieferanten WHERE id='$lieferanten_id'" )
     or error ( __LINE__, __FILE__, "Suche nach Lieferant fehlgeschlagen" );
-
   $row = mysql_fetch_array($result)
     or error ( __LINE__, __FILE__, "Lieferant nicht gefunden" );
-
   $is_terra = ( $row['name'] == 'Terra' );
 
-  $filter = 'lieferanten_id=' . $lieferanten_id;
+  $filter = "lieferanten_id='$lieferanten_id'";
   if( $detail ) {
-    $filter = $filter . ' AND id=' . $produktid;
+    $filter = "$filter AND id='$produktid'";
   }
   // echo 'filter: ' . $filter;
-  $produkte = mysql_query( 'SELECT * FROM produkte WHERE ' . $filter . ' ORDER BY ' . $order_by )
+  $produkte = mysql_query( "SELECT * FROM produkte WHERE $filter ORDER BY $order_by" )
     or error ( __LINE__, __FILE__, "Suche nach Produkten fehlgeschlagen" );
   
   if( $is_terra and $ldapuri != '' ) {
@@ -249,32 +253,30 @@
   // erzeugt kleines formular, alle felder "hidden", nur submit-knopf sichtbar,
   // das dieses Skript neu aufruft und dabei einen beliebigen SQL-befehl uebergibt
   //
-  function mysql_repair_link( $befehl, $kommentar, $domid = '' ) {
-    global $produktid;
+  function mysql_repair_link( $fields, $kommentar, $domid = '' ) {
+    global $produktid, $self, $self_fields;
     echo "
-      <div class='warn' style='padding-left:2em;'>
+      <div class='warn' style='padding:0.1ex 1em 0.1ex 2em;'>
         <form method='post' action='$self'>
-          <input type='hidden' name='befehl0' value='" . base64_encode( $befehl ) . "'></input>
+          $self_fields
+          $fields
           <input type='submit' name='submit' value='$kommentar'
     ";
     if( $domid != '' ) {
       echo "    onclick=\"document.getElementById('$domid').className='modified';\"";
     }
     echo "
-        ></input>
-        </form>
+        ></form>
        </div>
     ";
   }
-
-
 
   // do_artikel
   // wird aus der hauptschleife aufgerufen, um einen artikel aus der Produktliste anzuzeigen
   //
   function do_artikel() {
     global $outerrow, $ldaphandle, $ldapbase, $artikel, $detail, $mysqljetzt, $is_terra
-         , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag, $self;
+         , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag, $self, $self_fields;
 
     echo "\n<tr id='row$outerrow'>";
     $anummer = $artikel['artikelnummer'];
@@ -282,18 +284,36 @@
     $produktid = $artikel['id'];
     $notiz = $artikel['notiz'];
 
-    echo '<th class="outer" style="vertical-align:top;">';
-    if( ! $detail ) {
+    // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
+    //
+    $neednewprice = FALSE;
+
+    // werte fuer neuen preiseintrag initialisieren:
+    //
+    unset( $newfc );
+    $newfc['verteileinheit'] = FALSE;
+    $newfc['liefereinheit'] = FALSE;
+    $newfc['gebindegroesse'] = FALSE;
+    $newfc['preis'] = FALSE;
+    $newfc['bnummer'] = FALSE;
+    $newfc['mwst'] = FALSE;
+    $newfc['pfand'] = FALSE;
+
+    // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
+    //
+    $neednewarticlenumber = FALSE;
+
+    echo "<th class='outer' style='vertical-align:top;'>";
+    if( $detail ) {
+      echo "$anummer<br>id:&nbsp;$produktid";
+    } else {
       echo "
         <a class='blocklink'
-        href=\"javascript:neuesfenster('$self&produktid=$produktid','foodsoftdetails')\"
+        href=\"javascript:neuesfenster('$self&produktid=$produktid','produktdetails')\"
         title='Details...'
-        onclick=\"document.getElementById('row$outerrow').className='modified';\">
+        onclick=\"document.getElementById('row$outerrow').className='modified';\"
+        >$anummer<br>id:&nbsp;$produktid</a>
       ";
-    }
-    echo "$anummer<br>id:&nbsp;$produktid";
-    if( ! $detail ) {
-      echo '</a>';
     }
     echo '</th><td class="outer" style="padding-bottom:1ex;">';
 
@@ -301,9 +321,9 @@
     //
     // produktpreise abfragen und (ggf.) anzeigen:
     //
-    ( $terrapreise = mysql_query(
-      'SELECT * FROM produktpreise WHERE produkt_id=' . $produktid . ' ORDER BY produkt_id,zeitstart' ) )
-      || error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
+    $produktpreise = mysql_query(
+      "SELECT * FROM produktpreise WHERE produkt_id='$produktid' ORDER BY produkt_id,zeitstart"
+    ) or error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
 
     if( $detail ) {
       echo "
@@ -338,14 +358,31 @@
         echo "<th title='Preiseintrag fuer Bestellung $bestellung_name'>Aktiv</th>";
       }
       echo "</tr>";
-      while( $pr1 = mysql_fetch_array($terrapreise) ) {
+      while( $pr1 = mysql_fetch_array($produktpreise) ) {
         preisdatenSetzen( &$pr1 );
         echo "
           <tr>
             <td>{$pr1['id']}</td>
             <td>{$pr1['bestellnummer']}</td>
             <td>{$pr1['zeitstart']}</td>
-            <td>{$pr1['zeitende']}</td>
+            <td>
+        ";
+        if( $pr1['zeitende'] ) {
+          echo "{$pr1['zeitende']}";
+        } else {
+          echo "
+            <form method='post' action='$self'>
+              $self_fields
+              <input type='hidden' name='action' value='zeitende_setzen'>
+              <input type='hidden' name='zeitende' value='$mysqljetzt'>
+              <input type='hidden' name='preis_id' value='{$pr1['id']}'>
+              <input type='submit' name='submit' value='Abschliessen'
+              title='Preisintervall abschliessen (z.B. falls Artikel nicht lieferbar!)'>
+            </form>
+          ";
+        }
+        echo "
+            </td>
             <td class='mult'>{$pr1['kan_liefermult']}</td>
             <td class='unit'>{$pr1['kan_liefereinheit']}</td>
             <td class='mult'>{$pr1['lieferpreis']}</td>
@@ -365,9 +402,11 @@
           } else {
             echo "
               <form action='$self' method='post'>
-                <input type='hidden' name='new_preisid' value='{$pr1['id']}'></input>
+                $self_fields
+                <input type='hidden' name='action' value='preiseintrag_waehlen'>
+                <input type='hidden' name='preis_id' value='{$pr1['id']}'>
                 <input type='submit' name='setzen' value='setzen'
-                title='Preiseintrag fuer Bestellung $bestellung_name waehlen'
+                  title='Preiseintrag fuer Bestellung $bestellung_name waehlen'
                 >
               </form>
             ";
@@ -376,8 +415,8 @@
         }
         echo "</tr>";
       }
-      if( mysql_num_rows( $terrapreise ) > 0 ) {
-        mysql_data_seek( $terrapreise, 0 );
+      if( mysql_num_rows( $produktpreise ) > 0 ) {
+        mysql_data_seek( $produktpreise, 0 );
       }
       echo '</table></div>';
     }
@@ -389,34 +428,38 @@
     //
     $pr0 = FALSE;
     $prgueltig = FALSE; // flag: wir haben einen akzeptablen preiseintrag fuer diesen artikel
-    while( $pr1 = mysql_fetch_array($terrapreise) ) {
+    while( $pr1 = mysql_fetch_array($produktpreise) ) {
       if( $pr0 ) {
         if ( $pr0['zeitende'] == '' ) {
-          echo '<div class="warn">FEHLER: Preisintervall ' . $pr0['id'] . ' nicht aktuell aber nicht abgeschlossen.</div>';
+          echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
           $detail && mysql_repair_link(
-            'UPDATE produktpreise SET zeitende="' . $pr1['zeitstart'] . '" WHERE id=' . $pr0['id'] 
-          , 'Zeitende in ' . $pr0['id'] . ' auf ' . $pr1['zeitstart'] . ' setzen'
-          , 'row' . $outerrow
+            "<input type='hidden' name='action' value='zeitende_setzen'>
+             <input type='hidden' name='zeitende' value='{$pr1['zeitstart']}'>
+             <input type='hidden' name='preis_id' value='{$pr0['id']}'>"
+          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , "row$outerrow"
           );
         } else if ( $pr0['zeitende'] > $pr1['zeitstart'] ) {
-          echo '<div class="warn">FEHLER: Ueberlapp in Preishistorie: ' . $pr0['id'] . ' und ' . $pr1['id'] . '.</div>';
+          echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
           $detail && mysql_repair_link(
-            'UPDATE produktpreise SET zeitende="' . $pr1['zeitstart'] . '" WHERE id=' . $pr0['id'] 
-          , 'Zeitende in ' . $pr0['id'] . ' auf ' . $pr1['zeitstart'] . ' setzen'
-          , 'row' . $outerrow
+            "<input type='hidden' name='action' value='zeitende_setzen'>
+             <input type='hidden' name='zeitende' value='{$pr1['zeitstart']}'>
+             <input type='hidden' name='preis_id' value='{$pr0['id']}'>"
+          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , "row$outerrow"
           );
         }
       }
       $pr0 = $pr1;
     }
     if( ! $pr0 ) {
-      echo '<div class="warn">WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div><br>';
+      echo "<div class='warn'>WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div>";
     } else if ( $pr0['zeitende'] != '' ) {
       if ( $pr0['zeitende'] < $mysqljetzt ) {
-        echo '<div class="warn">WARNUNG: kein aktuell gueltiger Preiseintrag fuer diesen Artikel vorhanden!</div><br>';
+        echo "<div class='warn'>WARNUNG: kein aktuell gueltiger Preiseintrag fuer diesen Artikel vorhanden!</div>";
         // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
       } else {
-        echo '<div class="warn">WARNUNG: aktueller Preis laeuft aus!</div><br>';
+        echo "<div class='warn'>WARNUNG: aktueller Preis laeuft aus!</div>";
         // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
         $prgueltig = $pr0;  // kann man noch zulassen...
       }
@@ -440,24 +483,8 @@
       $kan_liefereinheit = $prgueltig['kan_liefereinheit'];
       if( ! $kan_liefereinheit ) {
         echo "<div class='warn'>FEHLER: keine gueltige Liefereinheit</div>";
-        $detail && $kan_fceinheit && mysql_repair_link(
-          "UPDATE produktpreise SET liefereinheit='"
-          . $fcgebindegroesse * $kan_fcmult
-          . " $kan_fceinheit' WHERE id={$prgueltig['id']}" 
-        , "L-Einheit in {$prgueltig['id']} auf "
-           . $fcgebindegroesse * $kan_fcmult
-           . " $kan_fceinheit setzen"
-        , "row$outerrow"
-        );
+        $neednewprice = TRUE;
       }
-      // if( "$kan_fcmult $kan_fceinheit" != "$kan_fcmult $kan_fceinheit" ) {
-      //   echo "<div class='warn'>FEHLER: V-Einheit in Preishistorie anders als in Produktdatenbank</div>";
-      //   $detail && mysql_repair_link(
-      //     "UPDATE produktpreise SET verteileinheit='$kan_fcmult $kan_fceinheit' WHERE id={$prgueltig['id']}" 
-      //   , "V-Einheit in {$prgueltig['id']} auf $kan_fcmult $kan_fceinheit setzen"
-      //   , "row$outerrow"
-      //   );
-      // }
     } else {
       $fcbnummer = NULL;
       $fcgebindegroesse = NULL;
@@ -525,24 +552,6 @@
     }
     echo '</tr></table>';
 
-    // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
-    //
-    $neednewprice = FALSE;
-
-    // werte fuer neuen preiseintrag:
-    //
-    unset( $newfc );
-    $newfc['verteileinheit'] = FALSE;
-    $newfc['liefereinheit'] = FALSE;
-    $newfc['gebindegroesse'] = FALSE;
-    $newfc['preis'] = FALSE;
-    $newfc['bnummer'] = FALSE;
-    $newfc['mwst'] = FALSE;
-    $newfc['pfand'] = FALSE;
-
-    // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
-    //
-    $neednewarticlenumber = FALSE;
 
     //
     // Artikeldaten aus Katalog suchen und ggf anzeigen:
@@ -565,7 +574,12 @@
             <td>
               neue Artikel-Nr. setzen:
             </td>
-            <td><form action='$self' method='post'><input type='text' size='20' name='anummer' value='$anummer'></input>&nbsp;<input type='submit' name='Submit' value='OK'></input>
+            <td>
+              <form method='post' action='$self'>
+                $self_fields
+                <input type='hidden' name='action' value='artikelnummer_setzen'>
+                <input type='text' size='20' name='anummer' value='$anummer'>&nbsp;
+                <input type='submit' name='Submit' value='OK'>
               </form>
             </td>
           </tr>
@@ -573,10 +587,11 @@
             <td>
               ...oder: Katalogsuche nach:
             </td>
-            <td><form action='artikelsuche.php' method='post'><input name='terracn' value='$name' size='40'></input>&nbsp;<input type='submit' name='submit' value='Los!'
-                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'></input>
-                <input type='hidden' name='produktid' value='$produktid'></input>
-                <input type='hidden' name='produktname' value='$name'></input>
+            <td><form action='artikelsuche.php' method='post'>
+                <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
+                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'>
+                <input type='hidden' name='produktid' value='$produktid'>
+                <input type='hidden' name='produktname' value='$name'>
               </form>
             </td>
           </tr>
@@ -585,14 +600,14 @@
 
       if( ( ! $katalogeintraege ) || ( $katalogeintraege['count'] < 1 ) ) {
   
-        echo '<div class="warn">Katalogsuche: Artikelnummer nicht gefunden!</div>';
+        echo "<div class='warn'>Katalogsuche: Artikelnummer nicht gefunden!</div>";
         if( $detail ) {
           echo "
             <div id='anummer_form' class='small_form'>
               <form>
                 <fieldset>
                   <legend>
-                    Artikelnummer aendern:
+                    Artikelnummer &auml;ndern:
                   </legend>
                   $anummer_form
                 </fieldset>
@@ -610,7 +625,7 @@
                 <fieldset>
                   <legend>
                     <img class='button' src='img/close_black_trans.gif' title='Ausblenden' onclick='anummer_off();'></img>
-                    Artikelnummer aendern:
+                    Artikelnummer &auml;ndern:
                   </legend>
                   $anummer_form
                 </fieldset>
@@ -624,12 +639,12 @@
             Artikelnummer gefunden in Katalog {$katalogeintraege[0]['terradatum'][0]}:";
         if( $detail ) {
           echo "<span class='button' id='anummer_an_knopf'
-              onclick='anummer_on();' >Artikelnummer aendern...</span>";
+              onclick='anummer_on();' >Artikelnummer &auml;ndern...</span>";
         }
         echo "
           </div>
 
-          <table width='100%'>
+          <table width='100%' class='numbers'>
             <tr>
               <th>B-Nr.</th>
               <th>Bezeichnung</th>
@@ -650,18 +665,20 @@
         $terragebindegroesse = $katalogeintraege[0]["terragebindegroesse"][0];
         $terrabnummer = $katalogeintraege[0]["terrabestellnummer"][0];
   
-        echo '<tr>';
-        echo "  <td>" . $katalogeintraege[0]["terrabestellnummer"][0] . "</td>";
-        echo "  <td>" . $katalogeintraege[0]["cn"][0] . "</td>";
-        echo "  <td>" . $terraeinheit . "</td>";
-        echo "  <td>" . $terragebindegroesse . "</td>";
-        echo "  <td>" . $katalogeintraege[0]["terraherkunft"][0] . "</td>";
-        echo "  <td>" . $katalogeintraege[0]["terraverband"][0] . "</td>";
-        echo "  <td>" . $netto . "</td>";
-        echo "  <td>" . $mwst . "</td>";
-        echo "  <td>" . $brutto . "</td>";
-        echo "</tr>";
-        echo "</table>";
+        echo "
+            <tr>
+              <td>{$katalogeintraege[0]['terrabestellnummer'][0]}</td>
+              <td>{$katalogeintraege[0]['cn'][0]}</td>
+              <td>$terraeinheit</td>
+              <td>$terragebindegroesse</td>
+              <td>{$katalogeintraege[0]['terraherkunft'][0]}</td>
+              <td>{$katalogeintraege[0]['terraverband'][0]}</td>
+              <td>$netto</td>
+              <td>$mwst</td>
+              <td>$brutto</td>
+            </tr>
+          </table>
+        ";
 
         kanonische_einheit( $terraeinheit, &$kan_terraeinheit, &$kan_terramult );
 
@@ -796,6 +813,7 @@
         echo "
           <div style='padding:1ex;' id='preiseintrag_form' class='small_form'>
             <form name='Preisform' method='post' action='$self'>
+            $self_fields
             <fieldset>
               <legend>Vorschlag neuer Preiseintrag:</legend>
         ";
@@ -809,6 +827,7 @@
           </div>
           <div style='display:none;' id='preiseintrag_form' class='small_form'>
             <form name='Preisform' method='post' action='$self'>
+            $self_fields
             <fieldset>
               <legend>
                 <img class='button' title='Ausblenden' src='img/close_black_trans.gif'
@@ -821,26 +840,27 @@
           <tr>
             <td><label>Name:</label></td>
             <td><input type='text' size='42' name='newfcname' value='$name'
-             title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'></input>
-              <label>Notiz:</label> <input type='text' size='42' name='newnotiz' value='$notiz'></input>
+             title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'>
+              <label>Notiz:</label> <input type='text' size='42' name='newnotiz' value='$notiz'
+             title='Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant'>
             </td>
           </tr>
           <tr>
             <td><label>Bestell-Nr:</label></td>
             <td>
               <input type='text' size='8' name='newfcbnummer' value='{$newfc['bnummer']}'
-                title='Bestellnummer (die, die sich bei Terra staendig aendert!)'></input>
+                title='Bestellnummer (die, die sich bei Terra staendig aendert!)'>
 
               <label>MWSt:</label>
                 <input type='text' size='4' name='newfcmwst' id='newfcmwst' value='${newfc['mwst']}'
                    title='MWSt-Satz in Prozent'
                    onchange='preisberechnung_rueckwaerts();'
-                   ></input>
+                   >
 
               <label>Pfand:</label> <input type='text' size='4' name='newfcpfand' id='newfcpfand' value='{$newfc['pfand']}'
                 title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
                 onchange='preisberechnung_rueckwaerts();'
-                ></input>
+                >
             </td>
           </tr>
             <td><label>Verteil-Einheit:</label></td>
@@ -848,7 +868,7 @@
               <input type='text' size='4' name='newfcmult' id='newfcmult' value='${newfc['kan_verteilmult']}'
                title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
                onchange='preisberechnung_fcmult();'
-               ></input>
+               >
               <select size='1' name='newfceinheit' id='newfceinheit'
                onchange='preisberechnung_default();'
               >
@@ -859,7 +879,7 @@
               <label>Endpreis:</label>
                 <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='newfcpreis'
                 value='${newfc['preis']}' onchange='preisberechnung_vorwaerts();'
-                ></input>
+                >
                 / <span id='newfcendpreiseinheit'>{$newfc['kan_verteilmult']}
                     {$newfc['kan_verteileinheit']}</span>
 
@@ -867,7 +887,7 @@
                 <input type='text' size='4' name='newfcgebindegroesse' id='newfcgebindegroesse' value='${newfc['gebindegroesse']}'
                  title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
                  onchange='preisberechnung_gebinde();'
-                 ></input>
+                 >
                 * <span id='newfcgebindeeinheit']>{$newfc['kan_verteilmult']}
                     {$newfc['kan_verteileinheit']}</span>
             </td>
@@ -878,7 +898,7 @@
               <input type='text' size='4' name='newliefermult' id='newliefermult' value='${newfc['kan_liefermult']}'
                title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
                onchange='preisberechnung_default();'
-               ></input>
+               >
               <select size='1' name='newliefereinheit' id='newliefereinheit'
                onchange='preisberechnung_default();'
               >
@@ -891,31 +911,30 @@
                     <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='newfclieferpreis'
                     value='${newfc['lieferpreis']}'
                     onchange='preisberechnung_rueckwaerts();'
-                    ></input>
+                    >
                     / <span id='newfcpreiseinheit'>{$newfc['preiseinheit']}</span>
                 </td>
               </tr>
               <tr>
                 <td><label>ab:</label></td>
-                  <td><input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'></input>
+                  <td><input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'>
 
 
                   <label>&nbsp;</label>
                   <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
-                  ></input>
+                  >
 
                   <label>&nbsp;</label>
                   <label>Dynamische Neuberechnung:</label>
                   <input name='dynamischberechnen' type='checkbox' value='yes'
-                  title='Automatische Neuberechnung anderer Werte bei Aenderung eines Eintrags'
-                  checked></input>
+                  title='Dynamische Berechnung anderer Felder bei Aenderung eines Eintrags' checked>
 
                 </td>
               </tr>
             </table>
           </fieldset>
-          <input type='hidden' name='neuerpreiseintrag' value='1'>
+          <input type='hidden' name='action' value='neuer_preiseintrag'>
           </form>
         </div>
       ";
