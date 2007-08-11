@@ -1006,51 +1006,117 @@ $gruppen_pwd='obsolet';   // sollte nicht mehr gebraucht werden
 											  // Preise zum aktuellen Produkt auslesen..
                         // TF: warum nicht einfach die produktpreis_id aus der bestellvorlage nehmen?
                         // das ist doch der preis, der auch im lieferschein angezeigt, und vom konto abgebucht werden wird!
-											  $result2 = mysql_query(
+											
+                        $result2 = mysql_query(
                           "SELECT id, gebindegroesse, bestellnummer, preis
                                 , mwst, pfand, verteileinheit, liefereinheit, zeitende
                            FROM  produktpreise
                            WHERE id={$produkt_row['produktpreise_id']}"
                         ) or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
-                        // WHERE zeitstart <= '".mysql_escape_string($row_gesamtbestellung['bestellstart'])."' AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($row_gesamtbestellung['bestellende'])."') AND produkt_id=".mysql_escape_string($produkt_row['id'])." ORDER BY gebindegroesse;")
-												// for ($i = count($gebindegroessen)-1; $i >= 0; $i--) 
-												// {
-												if( $preise_row = mysql_fetch_array($result2) ) {
-                           $i = 0;
-                           preisdatenSetzen( $preise_row );
-													 
-															 if ($toleranzGebNr == $i) { 
-															    $toleranz_color_str = "style='color:#999999'";
-															 } else {
-															    $toleranz_color_str="";
-															 }	
-															 
-													 echo "
-											<!-- <tr>  -->
-												<td class='number'><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span></b>
-                          ({$preise_row['gebindegroesse']}*{$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']})</td>
-												<td class='number'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span></td>
-												<td 
-                      ";
-                      if( $preise_row['zeitende'] and ( $preise_row['zeitende'] < $row_gesamtbestellung['bestellende'] ) ) {
-                        echo " class='mult_outdated' title='Preis nicht mehr aktuell!'";
-                      } else {
-                        echo " class='mult'";
-                      }
-                      echo ">
-                          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','foodsoftdetail');\">
-                        ".sprintf("%.02f",$preise_row['preis'])."
-                        </a>
-                        </td>
-												<td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
-											<!-- </tr> -->";
-													} else {
+                        
+                        if( $result2 )
+                          $preise_row = mysql_fetch_array($result2);
+                        else
+                          $preise_row = false;
+
+                        if( $preise_row ) {
+                          //
+                          // bestellvorschlag hat preiseintrag: testen, ob er aktuell ist:
+                          //
+                          if( $preise_row['zeitende'] and ( $preise_row['zeitende'] < $row_gesamtbestellung['bestellende'] ) ) {
+                            $preis_aktuell = false;
+                            $result3 = mysql_query(
+                              "SELECT * FROM produktpreise
+                              WHERE produkt_id={$produkt_row['id']}
+                                    AND (ISNULL(zeitende) OR zeitende>='{$row_gesamtbestellung['bestellende']}') "
+                            );
+                            if( $result3 && mysql_fetch_array($result3) ) {
+                              $aktueller_preis_existiert = true;
+                            } else {
+                              $aktueller_preis_existiert = false;
+                            }
+                          } else {
+                            $preis_aktuell = true;
+                            $aktueller_preis_existiert = true;
+                          }
+                        } else {
+                          //
+                          // bestellvorschlag hat keinen preiseintrag: testen, ob es einen gibt:
+                          //
+                          $preis_aktuell = false;
+                          $result2 = mysql_query(
+                            "SELECT id, gebindegroesse, bestellnummer, preis
+                                  , mwst, pfand, verteileinheit, liefereinheit, zeitende
+                             FROM  produktpreise
+                             WHERE produkt_id={$produkt_row['id']}
+                                   AND ( ISNULL(zeitende) OR zeitende>='{$row_gesamtbestellung['bestellende']}') "
+                          ) or error(__LINE__,__FILE__,"Konnte Produktpreise nich aus DB laden..",mysql_error());												
+                          if( $result2 )
+                            $preise_row = mysql_fetch_array($result2);
+                          else
+                            $preise_row = false;
+                          if( $preise_row ) {
+                            $aktueller_preis_existiert = true;
+                          } else {
+                            $aktueller_preis_existiert = false;
+                          }
+                        }
+
+                        if( $aktueller_preis_existiert ) {
+                          $i = 0;
+                          preisdatenSetzen( $preise_row );
+
+                          if ($toleranzGebNr == $i) { 
+                            $toleranz_color_str = "style='color:#999999'";
+                          } else {
+                            $toleranz_color_str="";
+                          }	
+
+                          echo "
+                             <!-- <tr>  -->
+                             <td class='number'><b><span id='anz_prod(".$produkt_row['id'].")geb(".$i.")' ".$toleranz_color_str." >".$festeGebindeaufteilung[$i]."</span></b>
+                              ({$preise_row['gebindegroesse']}*{$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']})</td>
+                             <td class='number'><span id='gruppenMengeInGeb(".$produkt_row['id'].")(".$i.")'>".$gruppenMengeInGebinde[$i]."</span></td>
+                             <td
+                          ";
+                          if( $preis_aktuell ) {
+                            echo " class='mult'";
+                          } else {
                             echo "
-                              <td colspan='4'>
-                                <div class='warn'>Kein aktueller Preiseintrag</div>
-                              </td>
+                              class='mult_outdated'
+                              title='Preis nicht aktuell: Dienst 4 sollte aktualisieren!'
                             ";
                           }
+                          echo "
+                            ><a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
+                             ".sprintf("%.02f",$preise_row['preis'])."
+                             </a>
+                            </td>
+                            <td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
+                            <!-- </tr> -->";
+                        } else {
+//                           if( $aktueller_preis_existiert ) {
+//                             echo "
+//                               <td class='mult_outdated' colspan='4'
+//                               title='...bedeutet: Dienst 4 sollte den Preis aktualisieren!'
+//                               >
+//                               Preis 
+//                               <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
+//                                  ".sprintf("%.02f",$preise_row['preis'])."</a>
+//                               ist nicht aktuell
+//                               </td>
+//                             ";
+//                           } else {
+                            echo "
+                              <td class='warn' colspan='4'
+                              title='...kann bedeuten: Artikel nicht (mehr) lieferbar!'
+                              >Kein aktueller
+                                <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\"
+                                >Preiseintrag</a>
+                              </td>
+                            ";
+//                          }
+                        }
 											 
 						?>
 						    <!--	</table>  -->
