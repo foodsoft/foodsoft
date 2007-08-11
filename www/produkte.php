@@ -141,7 +141,7 @@
                 <td><input type='button' value='Reload' class='bigbutton' onClick=\"document.forms['reload_form'].submit();\"></td>
                   <td valign='middle' class='smalfont'>diese Seite aktualisieren...</td>
                 </tr><tr>
-                <td><input type='button' value='Lieferant wechseln' class='bigbutton' onClick=\"document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].lieferanten_id.value = ''; document.forms['reload_form'].submit();\"></td>
+                <td><input type='button' value='Lieferant wechseln' class='bigbutton' onClick=\"document.forms['reload_form'].lieferanten_id.value = ''; document.forms['reload_form'].submit();\"></td>
                   <td valign='middle' class='smalfont'>anderen Lieferanten auswählen</td>
                 </tr><tr>
                 <td><input type='button' value='Beenden' class='bigbutton' onClick=\"self.location.href='index.php';\"></td>
@@ -396,7 +396,7 @@
                   ";
                   if( !$readonly ) {
                     echo "
-                      <a class='png' href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$row['id']}','foodsoftdetail');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
+                      <a class='png' href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$row['id']}','produktdetails');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
                       <a class='png' href=\"javascript:f=window.open('windows/editProdukt.php?produkt_id={$row['id']}','editProdukt','width=400,height=450,left=200,top=100'); f.focus();\"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
                       <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
                       <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
