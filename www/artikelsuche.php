@@ -158,8 +158,8 @@
     $max = $count;
     if( $max > 100 ) $max = 100;
 
-    echo "<h2> " . $count . " Treffer (" . $max . " werden angezeigt)</h2>";
-    ?>
+    echo "
+      <h2>$count Treffer ($max werden angezeigt)</h2>
       <table>
         <tr>
           <th>A-Nr.</th>
@@ -174,19 +174,22 @@
           <th>Brutto</th>
           <th>Katalog</th>
         </tr>
-    <?php
+    ";
 
     if ( $produktid >= 0 ) {
-      echo "<form action='terraabgleich.php?produktid=$produktid' method='post'>";
+      echo "
+        <form action='terraabgleich.php?produktid=$produktid' method='post'>
+        <input type='hidden' name='action' value='artikelnummer_setzen'>
+      ";
     }
 
     for( $i=0; $i < $max; $i++ ) {
       echo "<tr>";
       echo "  <td>";
       if ( $produktid >= 0 ) {
-        echo '<input type="submit" name="anummer" value="' . $entries[$i]["terraartikelnummer"][0] . '"></input>';
+        echo "<input type='submit' name='anummer' value='{$entries[$i]['terraartikelnummer'][0]}'>";
       } else {
-        echo $entries[$i]["terraartikelnummer"][0];
+        echo "{$entries[$i]['terraartikelnummer'][0]}";
       }
       echo "</td>";
       echo "  <td>" . $entries[$i]["terrabestellnummer"][0] . "</td>";
