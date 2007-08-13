@@ -92,6 +92,7 @@
              <th>Pfand</th>
              <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
              <th colspan='2'>Liefermenge</th>
+             <th colspan='2'>Gebinde</th>
              <th>Gesamtpreis</th>
            </tr>
   ";
@@ -127,7 +128,7 @@
       if( $nichtgeliefert_header_ausgeben ) {
         echo "
           <tr id='row_total'>
-            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
+            <td colspan='11' style='text-align:right;'><b>Summe:</b></td>
             <td class='number'><b>
         ";
         printf( "%8.2lf", $preis_summe );
@@ -135,7 +136,7 @@
           </b></td>
           </tr>
           <tr>
-            <th colspan='10'>
+            <th colspan='12'>
               <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
                 onclick='nichtgeliefert_toggle();' title='Ausblenden'>
               </img>
@@ -168,16 +169,26 @@
       <td class='number'>{$produkte_row['pfand']}</td>
       <td class='mult'><a
         href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
-        onclick=\"
-          document.getElementById('row$produkt_id').className='modified';
-          document.getElementById('row_total').className='modified';\"
+          onclick=\"
+            document.getElementById('row$produkt_id').className='modified';
+            document.getElementById('row_total').className='modified';\"
+          title='Preis oder Produktdaten &auml;ndern'
         >
         $lieferpreis</a></td>
       <td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>
       <td class='mult'>
-        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></input>
+        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'
+          onchange=\"
+            document.getElementById('row$produkt_id').className='modified';
+            document.getElementById('row_total').className='modified';\"
+          title='tats&auml;chliche Liefermenge eingeben'
+        ></input>
       </td>
       <td class='unit'>{$produkte_row['preiseinheit']}</td>
+      <td class='mult'>"
+      . sprintf( "%.2lf", $produkte_row['liefermenge'] / $produkte_row['gebindegroesse'] ). " * </td>
+      <td class='unit'>(" . $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
+                         . " {$produkte_row['kan_verteileinheit']})</td>
       <td class='number'>$gesamtpreis</td>
     </tr>";
 
@@ -191,7 +202,7 @@
         // summe muss noch angezeigt werden:
         echo "
           <tr id='row_total'>
-            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
+            <td colspan='11' style='text-align:right;'><b>Summe:</b></td>
             <td class='number'><b>
         ";
         printf( "%8.2lf", $preis_summe );
@@ -202,7 +213,7 @@
       }
       echo "
         <tr>
-          <td colspan='10'>
+          <td colspan='12'>
             <input type='submit' value=' Lieferschein Aktualisieren '>
             <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen '>
           </td>
