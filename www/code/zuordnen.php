@@ -459,7 +459,9 @@ function select_basar(){
      bestellvorschlaege.gesamtbestellung_id,
      bestellvorschlaege.produktpreise_id,
      (bestellvorschlaege.liefermenge - sum(bestellzuordnung.menge)) as basar,
-     produktpreise.verteileinheit
+     produktpreise.verteileinheit,
+     produktpreise.preis,
+     gesamtbestellungen.name as bestellung_name
      FROM 
 `bestellzuordnung` 
 JOIN `gruppenbestellungen` ON ( `bestellzuordnung`.`gruppenbestellung_id` = `gruppenbestellungen`.`id` ) 
@@ -469,7 +471,8 @@ JOIN `gesamtbestellungen` ON ( `gesamtbestellungen`.`id` = `gruppenbestellungen`
 JOIN `produkte` ON ( bestellzuordnung.`produkt_id` = `produkte`.`id` ) 
 WHERE `bestellzuordnung`.`art` =2 
 GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`, produktpreise_id
-HAVING ( `basar` <>0) " ;
+HAVING ( `basar` <>0) 
+ORDER BY produkte.name,gesamtbestellung_id ";
 
 
  /*  

@@ -36,6 +36,7 @@
     <tr>
       <td colspan=3> Gruppe: 
         <select name='gruppe'>
+        <option value='' selected>(Gruppe w&auml;hlen)</option>
   ";
   optionen_gruppen();
   echo "
@@ -44,14 +45,17 @@
     </tr>
     <tr class='legende'>
       <th>Produkt</th>
+      <th>aus Bestellung</th>
+      <th colspan='2'>Preis</th>
       <th colspan='2'>Menge im Basar</th>
-      <th>Menge</th>
+      <th>Zuteilung</th>
     </tr>
   ";
 
   //Den Basar erstellen
   $result1 = sql_basar();
 
+  $letzte_produkt_id = -1;
   while  ($basar_row = mysql_fetch_array($result1)) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
      $fieldName = "menge_{$basar_row['produkt_id']}_{$basar_row['gesamtbestellung_id']}";
@@ -68,12 +72,22 @@
      }
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
      $menge *= $kan_verteilmult;
+     if( $letzte_produkt_id == $basar_row['produkt_id'] ) {
+       $name = '';
+     } else {
+       $name = $basar_row['name'];
+       $letzte_produkt_id = $basar_row['produkt_id'];
+     }
      echo "
        <tr>
-         <td>{$basar_row['name']}</td>
+         <td><b>$name</b></td>
+         <td><a href='index.php?area=lieferschein&bestellungs_id={$basar_row['gesamtbestellung_id']}'
+             title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>
+         <td class='mult'>{$basar_row['preis']}</td>
+         <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>
          <td class='mult'><b>$menge</b></td>
          <td class='unit'>$kan_verteileinheit</td>
-         <td><input name='{$fieldName}' type='text' size='3' /> $kan_verteileinheit</td>
+         <td><input name='{$fieldName}' type='text' size='5' /> $kan_verteileinheit</td>
        </tr>
      ";
   }
