@@ -148,10 +148,12 @@
         $pr0 = $pr1;
       }
       if( $pr0 ) {
-        if( mysql_query( "UPDATE produktpreise SET zeitende='$newfczeitstart' WHERE id=" . $pr0['id'] ) ) {
-          // echo "<div class='ok'>letzter Preiseintrag ausgelaufen ab: $newfczeitstart</div>";
-        } else {
-          echo "<div class='warn'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
+        if( ( ! $pr0['zeitende'] ) or ( $pr0['zeitende'] > $newfczeitstart ) ) {
+          if( mysql_query( "UPDATE produktpreise SET zeitende='$newfczeitstart' WHERE id=" . $pr0['id'] ) ) {
+            // echo "<div class='ok'>letzter Preiseintrag ausgelaufen ab: $newfczeitstart</div>";
+          } else {
+            echo "<div class='warn'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
+          }
         }
       }
       if( mysql_query( "
@@ -333,7 +335,7 @@
           </img>
       ";
       if( $bestell_id ) {
-        echo "Preiseintrag waehlen fuer Bestellung $bestellung_name:";
+        echo "Preiseintrag w&auml;hlen f&uuml;r Bestellung $bestellung_name:";
       } else {
         echo "Preis-Historie:";
       }
@@ -346,16 +348,16 @@
               <th>B-Nr</th>
               <th>von</th>
               <th>bis</th>
-              <th title='Liefer-Einheit: fuers Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
+              <th title='Liefer-Einheit: f&uuml;rs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
               <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-              <th title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
-              <th title='Gebindegroesse in V-Einheiten'>Gebinde</th>
+              <th title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
+              <th title='Gebindegr&ouml;&szlig;e in V-Einheiten'>Gebinde</th>
               <th>MWSt</th>
               <th title='Pfand je V-Einheit'>Pfand</th>
               <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
       ";
       if( $bestell_id ) {
-        echo "<th title='Preiseintrag fuer Bestellung $bestellung_name'>Aktiv</th>";
+        echo "<th title='Preiseintrag f&uuml;r Bestellung $bestellung_name'>Aktiv</th>";
       }
       echo "</tr>";
       while( $pr1 = mysql_fetch_array($produktpreise) ) {
@@ -377,7 +379,8 @@
               <input type='hidden' name='zeitende' value='$mysqljetzt'>
               <input type='hidden' name='preis_id' value='{$pr1['id']}'>
               <input type='submit' name='submit' value='Abschliessen'
-              title='Preisintervall abschliessen (z.B. falls Artikel nicht lieferbar!)'>
+                onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
+                title='Preisintervall abschliessen (z.B. falls Artikel nicht lieferbar!)'>
             </form>
           ";
         }
@@ -398,15 +401,19 @@
         if( $bestell_id ) {
           echo "<td>";
           if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
-            echo "<span class='ok' style='padding:0.2ex;'><b>&nbsp;aktiv&nbsp;</b></span>";
+            echo "<input type='submit' name='aktiv' value='aktiv' class='buttondown'
+              style='width:5em;'
+              title='gilt momentan f&uuml;r Abrechnung der Bestellung $bestellung_name'
+              >"; // <b>aktiv</b></span>";
           } else {
             echo "
               <form action='$self' method='post'>
                 $self_fields
                 <input type='hidden' name='action' value='preiseintrag_waehlen'>
                 <input type='hidden' name='preis_id' value='{$pr1['id']}'>
-                <input type='submit' name='setzen' value='setzen'
-                  title='Preiseintrag fuer Bestellung $bestellung_name waehlen'
+                <input type='submit' name='setzen' value='setzen' class='buttonup'
+                  style='width:5em;'
+                  title='diesen Preiseintrag f&uuml;r Bestellung $bestellung_name w&auml;hlen'
                 >
               </form>
             ";
@@ -456,10 +463,10 @@
       echo "<div class='warn'>WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div>";
     } else if ( $pr0['zeitende'] != '' ) {
       if ( $pr0['zeitende'] < $mysqljetzt ) {
-        echo "<div class='warn'>WARNUNG: kein aktuell gueltiger Preiseintrag fuer diesen Artikel vorhanden!</div>";
+        echo "<div class='warn'>WARNUNG: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div>";
         // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
       } else {
-        echo "<div class='warn'>WARNUNG: aktueller Preis laeuft aus!</div>";
+        echo "<div class='warn'>WARNUNG: aktueller Preis l&auml;uft aus!</div>";
         // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
         $prgueltig = $pr0;  // kann man noch zulassen...
       }
@@ -579,7 +586,9 @@
                 $self_fields
                 <input type='hidden' name='action' value='artikelnummer_setzen'>
                 <input type='text' size='20' name='anummer' value='$anummer'>&nbsp;
-                <input type='submit' name='Submit' value='OK'>
+                <input type='submit' name='Submit' value='OK'
+                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
+                >
               </form>
             </td>
           </tr>
@@ -589,7 +598,8 @@
             </td>
             <td><form action='artikelsuche.php' method='post'>
                 <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
-                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'>
+                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
+                 >
                 <input type='hidden' name='produktid' value='$produktid'>
                 <input type='hidden' name='produktname' value='$name'>
               </form>
@@ -849,7 +859,7 @@
             <td><label>Bestell-Nr:</label></td>
             <td>
               <input type='text' size='8' name='newfcbnummer' value='{$newfc['bnummer']}'
-                title='Bestellnummer (die, die sich bei Terra staendig aendert!)'>
+                title='Bestellnummer (die, die sich bei Terra st&auml;ndig &auml;ndert!)'>
 
               <label>MWSt:</label>
                 <input type='text' size='4' name='newfcmwst' id='newfcmwst' value='${newfc['mwst']}'
@@ -923,12 +933,13 @@
                   <label>&nbsp;</label>
                   <input type='submit' name='submit' value='OK'
                           onclick=\"document.getElementById('row$outerrow').className='modified';\";
+                          title='Neuen Preiseintrag vornehmen (und letzten ggf. abschliessen)'
                   >
 
                   <label>&nbsp;</label>
                   <label>Dynamische Neuberechnung:</label>
                   <input name='dynamischberechnen' type='checkbox' value='yes'
-                  title='Dynamische Berechnung anderer Felder bei Aenderung eines Eintrags' checked>
+                  title='Dynamische Berechnung anderer Felder bei &Auml;nderung eines Eintrags' checked>
 
                 </td>
               </tr>

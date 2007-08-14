@@ -227,7 +227,7 @@ table input {
 }
 
 /* für den hover effekt */
-table.liste tr:hover {
+table.liste tr:hover, table.numbers tr:hover {
 	background-color: #efefef;
 }
 	
@@ -314,6 +314,7 @@ a.button, span.button {
   border-width:1pt;
   border-color:#000000;
   font-weight:bold;
+  font-size:11pt;
 }
 a.button:hover, span.button:hover {
   font-weight:bold;
@@ -489,6 +490,37 @@ a.wikilink {
 a.wikilink:hover {
   background-image:url(../img/birne_rot.png);
   text-decoration:underline;
+}
+
+.buttonup {
+  color:#000000;
+  background-color:#eecccc;
+  border-style:outset;
+  border-width:3px;
+  padding:0.2ex 1ex 0.2ex 1ex;
+  text-align:center;
+  font-weight:normal;
+}
+.buttonup:hover {
+  font-weight: bold;
+  color:#000000;
+  background-color:#ddeecc;
+  border-style:outset;
+  border-width:3px;
+  padding:0.2ex 1ex 0.2ex 1ex;
+  text-align:center;
+}
+.buttondown {
+  color:#000000;
+  background-color:#ccffcc;
+  border-style:inset;
+  border-width:3px;
+  padding:0.2ex 1ex 0.2ex 1ex;
+  text-align:center;
+  font-weight:bold;
+}
+.buttondown:hover {
+  background-color:#ccffcc;
 }
   
   
