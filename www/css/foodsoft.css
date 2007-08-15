@@ -241,6 +241,15 @@ tr.legende {
 }
 tr.legende td { border: none}
 
+tr.summe {
+  font-weight:bold;
+}
+tr.summe td {
+  font-weight:bold;
+  border-top:2px solid black;
+  border-bottom:2px solid black;
+}
+
 .bigbutton		{
 	width:200px;
 	height:30px;

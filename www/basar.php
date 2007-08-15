@@ -34,8 +34,9 @@
          <form action='basar.php' method='post'>
          <table style='width: 600px;' class='numbers'>
     <tr>
-      <td colspan=3> Gruppe: 
+      <td colspan='5'> Gruppe: 
         <select name='gruppe'>
+        <option value='' selected>(Gruppe w&auml;hlen)</option>
   ";
   optionen_gruppen();
   echo "
@@ -44,14 +45,17 @@
     </tr>
     <tr class='legende'>
       <th>Produkt</th>
-      <th colspan='2'>Menge im Basar</th>
-      <th>Menge</th>
+      <th>aus Bestellung</th>
+      <th colspan='2'>Preis</th>
+      <th colspan='3'>Menge im Basar</th>
+      <th>Zuteilung</th>
     </tr>
   ";
 
   //Den Basar erstellen
   $result1 = sql_basar();
 
+  $letzte_produkt_id = -1;
   while  ($basar_row = mysql_fetch_array($result1)) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
      $fieldName = "menge_{$basar_row['produkt_id']}_{$basar_row['gesamtbestellung_id']}";
@@ -68,32 +72,47 @@
      }
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
      $menge *= $kan_verteilmult;
+     if( $letzte_produkt_id == $basar_row['produkt_id'] ) {
+       $name = '';
+     } else {
+       $name = $basar_row['name'];
+       $letzte_produkt_id = $basar_row['produkt_id'];
+     }
      echo "
        <tr>
-         <td>{$basar_row['name']}</td>
+         <td><b>$name</b></td>
+         <td><a
+           href=\"javascript:neuesfenster('/foodsoft/index.php?area=lieferschein&bestellungs_id={$basar_row['gesamtbestellung_id']}','lieferschein')\"
+             title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>
+         <td class='mult'>{$basar_row['preis']}</td>
+         <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>
          <td class='mult'><b>$menge</b></td>
-         <td class='unit'>$kan_verteileinheit</td>
-         <td><input name='{$fieldName}' type='text' size='3' /> $kan_verteileinheit</td>
+         <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
+         <td style='border-left-style:none;'><a 
+            href=\"javascript:neuesfenster('/foodsoft/windows/showBestelltProd.php?bestell_id={$basar_row['gesamtbestellung_id']}&produkt_id={$basar_row['produkt_id']}','produktverteilung');\"
+            ><img src='img/b_browse.png' border='0' title='Details zur Verteilung' alt='Details zur Verteilung'
+            ></a></td>
+         <td class='unit'><input name='{$fieldName}' type='text' size='5' /> $kan_verteileinheit</td>
        </tr>
      ";
   }
 
    echo "
      <tr style='border:none'>
-       <td colspan='4' style='border:none'></td>
+       <td colspan='5' style='border:none'></td>
      </tr>
      <tr>
-      <td colspan='4' >
+      <td colspan='5' >
         Glasr&uuml;ckgabe zu 16 Cent (Anzahl eintragen):	<input name='menge_glas' type='text' size='3' />
       </td>
      </tr>
 
   <tr style='border:none'>
-     <td colspan='4' style='border:none'></td>
+     <td colspan='5' style='border:none'></td>
   </tr>
    
    <tr style='border:none'>
-  <td colspan='4' style='border:none'>
+  <td colspan='5' style='border:none'>
      <input type='hidden' name='bestell_id' value='$bestell_id'>
      <input type='submit' value=' Neu laden / Basareintrag &uuml;bertragen '>
      <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
@@ -111,3 +130,10 @@
    $print_on_exit
  ";
 ?>
+<script type="text/javascript">
+  function neuesfenster(url,name) {
+    f=window.open(url,name);
+    f.focus();
+  }
+</script>
+

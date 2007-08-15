@@ -91,7 +91,7 @@
              <th>MWSt</th>
              <th>Pfand</th>
              <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-             <th colspan='2'>Liefermenge</th>
+             <th colspan='3'>Liefermenge</th>
              <th colspan='2'>Gebinde</th>
              <th>Gesamtpreis</th>
            </tr>
@@ -127,16 +127,12 @@
     if( $produkte_row['liefermenge'] == 0 ) {
       if( $nichtgeliefert_header_ausgeben ) {
         echo "
-          <tr id='row_total'>
-            <td colspan='11' style='text-align:right;'><b>Summe:</b></td>
-            <td class='number'><b>
-        ";
-        printf( "%8.2lf", $preis_summe );
-        echo "
-          </b></td>
+          <tr id='row_total' class='summe'>
+            <td colspan='12' style='text-align:right;'>Summe:</td>
+            <td class='number'>" .  sprintf( "%8.2lf", $preis_summe ) . "</td>
           </tr>
           <tr>
-            <th colspan='12'>
+            <th colspan='13'>
               <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
                 onclick='nichtgeliefert_toggle();' title='Ausblenden'>
               </img>
@@ -151,7 +147,7 @@
       echo "<tr name='geliefert'";
     }
 
-    echo " id='row$produkt_id'><td>$produkt_id";
+    echo " id='row$produkt_id'><td>";
 
     preisdatenSetzen( & $produkte_row );
 
@@ -162,13 +158,14 @@
     $gesamtpreis = sprintf( "%8.2lf", $lieferpreis * $liefermenge );
 
     echo "
-      {$produkte_row['produkt_name']}</td>
+        {$produkte_row['produkt_name']}
+      </td>
       <td class='mult'>{$produkte_row['preis_rund']}</td>
       <td class='unit'>/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
       <td class='number'>{$produkte_row['mwst']}</td>
       <td class='number'>{$produkte_row['pfand']}</td>
       <td class='mult'><a
-        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
+        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
           onclick=\"
             document.getElementById('row$produkt_id').className='modified';
             document.getElementById('row_total').className='modified';\"
@@ -184,7 +181,13 @@
           title='tats&auml;chliche Liefermenge eingeben'
         ></input>
       </td>
-      <td class='unit'>{$produkte_row['preiseinheit']}</td>
+      <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
+      <td style='border-left-style:none;'><a class='png' style='padding:0pt 1ex 0pt 1ex;'
+        href=\"javascript:neuesfenster('/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id','produktverteilung')\"
+        title='Details zur Verteilung'
+        ><img src='img/b_browse.png' style='border-style:none;padding:1px 1ex 1px 1ex;'
+           title='Details zur Verteilung' alt='Details zur Verteilung'
+        ></a></td>
       <td class='mult'>"
       . sprintf( "%.2lf", $produkte_row['liefermenge'] / $produkte_row['gebindegroesse'] ). " * </td>
       <td class='unit'>(" . $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
@@ -201,19 +204,15 @@
       if( $nichtgeliefert_header_ausgeben ) {
         // summe muss noch angezeigt werden:
         echo "
-          <tr id='row_total'>
-            <td colspan='11' style='text-align:right;'><b>Summe:</b></td>
-            <td class='number'><b>
-        ";
-        printf( "%8.2lf", $preis_summe );
-        echo "
-          </b></td>
+          <tr id='row_total' class='summe'>
+            <td colspan='12' style='text-align:right;'>Summe:</td>
+            <td class='number'>" .  sprintf( "%8.2lf", $preis_summe ) . "</td>
           </tr>
         ";
       }
       echo "
         <tr>
-          <td colspan='12'>
+          <td colspan='13'>
             <input type='submit' value=' Lieferschein Aktualisieren '>
             <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen '>
           </td>
