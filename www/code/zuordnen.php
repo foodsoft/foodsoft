@@ -217,13 +217,13 @@ function select_verteilmengen(){
 	from (".select_verteilmengen_preise().") as `verteilmengen_preise` group by `verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`produkt_id`";
 }
 function select_bestellkosten(){
-	return "select `verteilmengen_preise`.`bestellguppen_id` AS
-	`bestellguppen_id`,`verteilmengen_preise`.`bestell_id` AS
-	`bestell_id`,`verteilmengen_preise`.`name` AS
-	`name`,sum((`verteilmengen_preise`.`menge` *
-	`verteilmengen_preise`.`preis`)) AS
-	`gesamtpreis`,`verteilmengen_preise`.`bestellende` AS
-	`bestellende` from (".select_verteilmengen_preise().") as `verteilmengen_preise` group by `verteilmengen_preise`.`bestellguppen_id`,`verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`name`,`verteilmengen_preise`.`bestellende`";
+	return "
+        SELECT sum(menge) as verteilmenge, gesamtbestellung_id,
+	produkt_id FROM bestellzuordnung inner join
+	gruppenbestellungen on (bestellzuordnung.gruppenbestellung_id
+		= gruppenbestellungen.id) WHERE art = 2
+	GROUP BY gesamtbestellung_id , produkt_id
+	";
 }
 function select_bestellsumme(){
 	return "select bestellkosten.bestellguppen_id
@@ -455,24 +455,24 @@ function sql_basar(){
 }
 function select_basar(){
    return "
-     SELECT produkte.name, bestellvorschlaege.produkt_id,
-     bestellvorschlaege.gesamtbestellung_id,
-     bestellvorschlaege.produktpreise_id,
-     (bestellvorschlaege.liefermenge - sum(bestellzuordnung.menge)) as basar,
-     produktpreise.verteileinheit,
-     produktpreise.preis,
-     gesamtbestellungen.name as bestellung_name
-     FROM 
-`bestellzuordnung` 
-JOIN `gruppenbestellungen` ON ( `bestellzuordnung`.`gruppenbestellung_id` = `gruppenbestellungen`.`id` ) 
-JOIN `bestellvorschlaege` ON (  `bestellzuordnung`.`produkt_id` = `bestellvorschlaege`.`produkt_id` AND `gruppenbestellungen`.`gesamtbestellung_id` = `bestellvorschlaege`.`gesamtbestellung_id` )
-JOIN `produktpreise` ON ( `bestellvorschlaege`.`produktpreise_id` = `produktpreise`.`id` ) 
-JOIN `gesamtbestellungen` ON ( `gesamtbestellungen`.`id` = `gruppenbestellungen`.`gesamtbestellung_id` ) 
-JOIN `produkte` ON ( bestellzuordnung.`produkt_id` = `produkte`.`id` ) 
-WHERE `bestellzuordnung`.`art` =2 
-GROUP BY gesamtbestellungen.id , bestellzuordnung.`produkt_id`, produktpreise_id
-HAVING ( `basar` <>0) 
-ORDER BY produkte.name,gesamtbestellung_id ";
+SELECT produkte.name, bestellvorschlaege.produkt_id,
+bestellvorschlaege.gesamtbestellung_id,
+bestellvorschlaege.produktpreise_id, bestellvorschlaege.liefermenge,
+bz.verteilmenge, (bestellvorschlaege.liefermenge -
+	ifnull(bz.verteilmenge,0)) as basar, produktpreise.verteileinheit 
+
+FROM bestellvorschlaege 
+LEFT JOIN (". select_verteilmengen() .")as bz
+ON (bz.produkt_id =
+	bestellvorschlaege.produkt_id and bz.gesamtbestellung_id =
+	bestellvorschlaege.gesamtbestellung_id) 
+JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id ) 
+JOIN gesamtbestellungen ON ( gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id ) 
+JOIN produkte ON ( bestellvorschlaege.produkt_id = produkte.id ) 
+where (not isnull(liefermenge) or not isnull(bestellmenge)) 
+HAVING ( `basar` <>0 )
+ORDER BY produkte.name
+ ";
 
 
  /*  
