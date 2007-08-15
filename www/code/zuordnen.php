@@ -1088,7 +1088,9 @@ SELECT produkte.name, bestellvorschlaege.produkt_id,
 bestellvorschlaege.gesamtbestellung_id,
 bestellvorschlaege.produktpreise_id, bestellvorschlaege.liefermenge,
 bz.verteilmenge, (bestellvorschlaege.liefermenge -
-	ifnull(bz.verteilmenge,0)) as basar, produktpreise.verteileinheit 
+	ifnull(bz.verteilmenge,0)) as basar, produktpreise.verteileinheit,
+     produktpreise.preis,
+     gesamtbestellungen.name as bestellung_name
 
 FROM bestellvorschlaege 
 LEFT JOIN (". select_verteilmengen() .")as bz
