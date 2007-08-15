@@ -211,19 +211,22 @@ function select_verteilmengen_preise(){
 ";
 }
 function select_verteilmengen(){
-	return "select `verteilmengen_preise`.`bestell_id` AS
-	`bestell_id`,`verteilmengen_preise`.`produkt_id` AS
-	`produkt_id`,sum(`verteilmengen_preise`.`menge`) AS `menge`
-	from (".select_verteilmengen_preise().") as `verteilmengen_preise` group by `verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`produkt_id`";
-}
-function select_bestellkosten(){
 	return "
-        SELECT sum(menge) as verteilmenge, gesamtbestellung_id,
+SELECT sum(menge) as verteilmenge, gesamtbestellung_id,
 	produkt_id FROM bestellzuordnung inner join
 	gruppenbestellungen on (bestellzuordnung.gruppenbestellung_id
 		= gruppenbestellungen.id) WHERE art = 2
 	GROUP BY gesamtbestellung_id , produkt_id
 	";
+}
+function select_bestellkosten(){
+	return "select `verteilmengen_preise`.`bestellguppen_id` AS
+	`bestellguppen_id`,`verteilmengen_preise`.`bestell_id` AS
+	`bestell_id`,`verteilmengen_preise`.`name` AS
+	`name`,sum((`verteilmengen_preise`.`menge` *
+	`verteilmengen_preise`.`preis`)) AS
+	`gesamtpreis`,`verteilmengen_preise`.`bestellende` AS
+	`bestellende` from (".select_verteilmengen_preise().") as `verteilmengen_preise` group by `verteilmengen_preise`.`bestellguppen_id`,`verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`name`,`verteilmengen_preise`.`bestellende`";
 }
 function select_bestellsumme(){
 	return "select bestellkosten.bestellguppen_id
@@ -458,7 +461,7 @@ function select_basar(){
 SELECT produkte.name, bestellvorschlaege.produkt_id,
 bestellvorschlaege.gesamtbestellung_id,
 bestellvorschlaege.produktpreise_id, bestellvorschlaege.liefermenge,
-bz.verteilmenge, (bestellvorschlaege.liefermenge -
+verteilmenge, (bestellvorschlaege.liefermenge -
 	ifnull(bz.verteilmenge,0)) as basar, produktpreise.verteileinheit 
 
 FROM bestellvorschlaege 
