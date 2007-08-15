@@ -1,5 +1,5 @@
 <?php
-error_reporting(E_ALL); // alle Fehler anzeigen
+//error_reporting(E_ALL); // alle Fehler anzeigen
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
 //foodi als pwd: 35q3Za9.ZxrxYd
 
@@ -276,7 +276,7 @@ function compare_date2($first, $second){
 }
 function in_two_weeks(){
      //Now
-     $date = date_sql2intern(strftime("%D"));
+     $date = date_sql2intern(strftime("%Y-%m-%d %H:%M:%s"));
      //Correct format
     $toreturn = sql_add_days_to_date($date, 19);
     return $toreturn;
@@ -286,13 +286,21 @@ if(!function_exists("date_parse")){
 function date_parse($date_in){
 	$temp = explode(" ", $date_in);
 	 $date = explode("-", $temp[0]);
-         $time = explode(":", $temp[1]);
-		$toReturn = array("year" => $date[0],
+	 if(isset($temp[1])){
+           $time = explode(":", $temp[1]);
+	 }
+	 $toReturn = array( "year" => $date[0],
 				   "month" => $date[1],
-				   "day" => $date[2],
-				   "hour" => $time[0],
-				   "minute" => $time[1],
-				   "second" => $time[2]);
+				   "day" => $date[2]);
+	 if(isset($time[0])){
+	      $toRetrun["hour"] =  $time[0];
+	 }
+	 if(isset($time[1])){
+	      $toRetrun["minute"] =  $time[1];
+	 }
+	 if(isset($time[2])){
+	      $toRetrun["second"] =  $time[2];
+	 }
 	return $toReturn;
 }
 }
@@ -339,7 +347,7 @@ function get_latest_dienst($add_days=0){
      $row = mysql_fetch_array($result);
      $date = date_parse($row["datum"]);
      if($date["year"]==false){
-        $date = date_parse(strftime("%D"));
+        $date = date_parse(strftime("%Y-%m-%d"));
      }
      $date_formated = $date["day"].".".$date["month"].".".$date["year"];
      return $date_formated;

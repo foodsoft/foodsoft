@@ -1,8 +1,8 @@
 
 <?php
 
-error_reporting(E_ALL);
- $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
+//error_reporting(E_ALL);
+// $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
      if( ! $angemeldet ) {
        exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
      } 
