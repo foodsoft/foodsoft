@@ -165,7 +165,7 @@
       <td class='number'>{$produkte_row['mwst']}</td>
       <td class='number'>{$produkte_row['pfand']}</td>
       <td class='mult'><a
-        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
+        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
           onclick=\"
             document.getElementById('row$produkt_id').className='modified';
             document.getElementById('row_total').className='modified';\"
@@ -183,9 +183,10 @@
       </td>
       <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
       <td style='border-left-style:none;'><a class='png' style='padding:0pt 1ex 0pt 1ex;'
-        href=\"javascript:neuesfenster('/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id','produktVerteilung')\"
+        href=\"javascript:neuesfenster('/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id','produktverteilung')\"
         title='Details zur Verteilung'
-        ><img src='img/b_browse.png' border='0' title='Details zur Verteilung' alt='Details zur Verteilung'
+        ><img src='img/b_browse.png' style='border-style:none;padding:1px 1ex 1px 1ex;'
+           title='Details zur Verteilung' alt='Details zur Verteilung'
         ></a></td>
       <td class='mult'>"
       . sprintf( "%.2lf", $produkte_row['liefermenge'] / $produkte_row['gebindegroesse'] ). " * </td>

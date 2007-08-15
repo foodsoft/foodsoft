@@ -8,8 +8,21 @@
   need_http_var('bestell_id');
   need_http_var('produkt_id');
 
+  $self = "/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id";
+  $self_fields = "
+    <input type='hidden' name='bestell_id' value='$bestell_id'>
+    <input type='hidden' name='produkt_id' value='$produkt_id'>
+  ";
+
   get_http_var('order_by');
   $order_by != '' or $order_by = 'bestellguppen_id';
+
+  get_http_var('action');
+  if( $action == 'zuteilung_loeschen' ) {
+    need_http_var( 'zuteilung_id' );
+    mysql_query( "DELETE FROM bestellzuordnung WHERE id='$zuteilung_id'" )
+      or error( __LINE__, __FILE__, "L&ouml;schen fehlgeschlagen: " . mysql_error() );
+  }
 
   // daten zum bestellvorschlag ermitteln:
   //
@@ -33,6 +46,8 @@
   $vorschlag = mysql_fetch_array($result)  
     or error( __LINE__, __FILE__,
       "gesamtbestellung/bestellvorschlag nicht gefunden " );
+
+  preisdatenSetzen( & $vorschlag );
 
   $title = "Verteilung: {$vorschlag['name']}";
   $subtitle = "Produkt: {$vorschlag['produkt_name']}";
@@ -60,24 +75,44 @@
   ) or error( __LINE__, __FILE__,
     "Suche nach beteiligten Gruppen fehlgeschlagen: " . mysql_error() );
 
-  preisdatenSetzen( & $vorschlag );
 
   echo "
-    <h1>Verteilung {$vorschlag['produkt_name']} aus Bestellung {$vorschlag['name']}</h1>
+    <h1>Produktverteilung</h1>
+    <table class='liste' style='margin-bottom:2em;'>
+      <tr>
+        <th>Bestellung:</th>
+        <td><a
+           href=\"javascript:neuesfenster('/foodsoft/index.php?area=lieferschein&bestellungs_id=$bestell_id','lieferschein')\"
+             title='zum Lieferschein...'>{$vorschlag['name']}</a>
+        </td>
+      </tr>
+      <tr>
+        <th>Produkt:</th>
+        <td>
+          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id','produktdetails');\"
+            title='zu den Produktdetails...' >{$vorschlag['produkt_name']}</a>
+        </td>
+      </tr>
+    </table>
+        
+    <form action='$self' method='$post'>
+    $self_fields
     <table class='numbers'>
+  ";
+  echo "
       <tr class='summe'>
         <td colspan='3' style='text-align:right;'>Liefermenge:</td>
         <td class='mult'>" . $vorschlag['liefermenge'] * $vorschlag['kan_verteilmult'] . "</td>
         <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
-      </tr>
-      <tr>
-        <th>Gruppe</th>
-        <th colspan='2'>bestellt (Toleranz)</th>
-        <th colspan='2'>zugeteilt</th>
+        <td class='mult'>{$vorschlag['preis_rund']}</td>
+        <td class='unit'>/ {$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}</td>
+        <td class='number'>". sprintf( "%.2lf", $vorschlag['preis'] * $vorschlag['liefermenge'] ) . "</td>
       </tr>
   ";
+  distribution_tabellenkopf( 'Gruppe' );
 
   $verteilt = 0;
+  $problems = false;
   while( $gruppe = mysql_fetch_array($gruppen) ) {
     $gruppen_id = $gruppe['id'];
 
@@ -126,7 +161,7 @@
     // zugeteilte mengen ermitteln:
     //
     $zuteilungen = mysql_query(
-      "SELECT *
+      "SELECT *, bestellzuordnung.id as zuteilung_id
         FROM bestellzuordnung
         INNER JOIN gruppenbestellungen
                    ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
@@ -146,23 +181,53 @@
     } else if( $rows == 1 ) {
       $zuteilung = mysql_fetch_array($zuteilungen);
       preisdatenSetzen( & $zuteilung );
+
+      if( $action == 'zuteilungen_aendern' ) {
+        need_http_var("zuteilung_$gruppen_id");
+        $verteil_form = ${"zuteilung_$gruppen_id"} / $vorschlag['kan_verteilmult'];
+        if( $verteil_form != $zuteilung['menge'] ) {
+          changeVerteilmengen_sql( $verteil_form, $gruppen_id, $produkt_id, $bestell_id );
+          $zuteilung['menge'] = $verteil_form;
+        }
+      }
+
       echo "
-        <td class='mult'>" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] . "</td>
+        <td class='number' style='padding:1px 1ex 1px 1em;'>
+          <input name='zuteilung_$gruppen_id' type='text' size='5'
+            style='text-align:right;'
+            value='" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] . "'></td>
         <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
+        <td class='mult' style='padding-left:1em;'>{$vorschlag['preis_rund']}</td>
+        <td class='unit'>/ {$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}</td>
+        <td class='number'>". sprintf("%.2lf", $vorschlag['preis'] * $zuteilung['menge']) . "</td>
       ";
       $verteilt += $zuteilung['menge'];
     } else {
+      $problems = true;
       echo "
-        <td colspan='2' class='warn'>
-        FEHLER: $rows Zuteilungen:
+        <td colspan='2'>
+        <div class='warn' style='margin:1ex;'>FEHLER: $rows Zuteilungen:</div>
+        <table class='liste' width='90%'>
       ";
       while( $zuteilung = mysql_fetch_array($zuteilungen) ) {
         echo "
-          <br>" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] 
-          . "{$vorschlag['kan_verteileinheit']}
+          <tr>
+            <td class='unit'>" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] 
+                  . "{$vorschlag['kan_verteileinheit']}
+            </td>
+            <td class='unit'>
+              <form action='$self' method='post'>
+                $self_fields
+                <input type='hidden' name='action' value='zuteilung_loeschen'>
+                <input type='hidden' name='zuteilung_id' value='{$zuteilung['zuteilung_id']}'>
+                <input type='submit' name='submit'
+                  value='{$zuteilung['zuteilung_id']} l&ouml;schen'>
+              </form>
+            </td>
+          </tr>
         ";
       }
-      echo "</td>";
+      echo "</table></td>";
     }
     echo "</tr>";
   }
@@ -171,14 +236,51 @@
   
   echo "
     <tr class='summe'>
-      <td><a href='/foodsoft/basar.php'>Basar:</a></td>
+      <td><a href=\"javascript:neuesfenster('/foodsoft/basar.php','basar');\">Basar:</a></td>
       <td class='mult'>" . $basar_festmenge * $vorschlag['kan_verteilmult']
         . " (" . $basar_toleranzmenge * $vorschlag['kan_verteilmult']  . ")</td>
       <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
+  ";
+  if( ! $problems ) {
+    echo "
       <td class='mult'>" . $basar * $vorschlag['kan_verteilmult'] . "</td>
       <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
+      <td class='mult'>{$vorschlag['preis_rund']}</td>
+      <td class='unit'>/ {$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}</td>
+      <td class='number'>" . sprintf( "%.2lf", $vorschlag['preis'] * $basar ) . "</td>
+    ";
+  } else {
+    echo "
+      <td colspan='5' style='text-align:center;'><div class='warn'>(FEHLER!)</div></td>
+    ";
+  }
+
+  echo "
     </tr>
   ";
 
-  echo "$print_on_exit";
+  if( ! $problems ) {
+    echo "
+      <tr>
+        <td colspan='8'>
+          <input type='submit' name='submit' value='Verteilmengen &auml;ndern'>
+        </td>
+      </tr>
+      <input type='hidden' name='action' value='zuteilungen_aendern'>
+    ";
+  }
+  
+  echo "
+    </table>
+    </form>
+    $print_on_exit";
+   
 ?>
+
+<script type="text/javascript">
+  function neuesfenster(url,name) {
+    f=window.open(url,name);
+    f.focus();
+  }
+</script>
+
