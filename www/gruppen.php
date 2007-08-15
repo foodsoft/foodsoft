@@ -1,6 +1,7 @@
 <h1>Gruppenverwaltung...</h1>
 
 <?PHP
+  
   require_once("code/login.php");
   require_once("code/zuordnen.php");
 
@@ -67,6 +68,7 @@
          <th>Telefon</th>
          <th>Kontostand</th>
          <th>Mitgliederzahl</th>
+         <th>Diensteinteilung</th>
          <th>Optionen</th>
       </tr>
   ";
@@ -85,6 +87,7 @@
         <td>{$row['telefon']}</td>
         <td align='right'>$kontostand</td>
         <td>{$row['mitgliederzahl']}</td>
+        <td>{$row['diensteinteilung']}</td>
         <td>
     ";
     if( ! $readonly ) {

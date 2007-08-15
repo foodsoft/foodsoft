@@ -24,6 +24,7 @@
     get_http_var('newMail');
     get_http_var('newTelefon');
     get_http_var('newMitgliederzahl');
+    get_http_var('newDiensteinteilung');
     get_http_var('buchesockelbetrag');
 
     if ($newName == "")
@@ -38,13 +39,15 @@
 
     // nur dienst 4 und 5 buchen sockelbetraege:
     //
-    if( $dienst != 4 and $dienst != 5 )
+    if( $dienst != 4 and $dienst != 5 ){
       $newMitgliederzahl = $row['mitgliederzahl'];
-    else
+      $newDiensteinteilung = $row['diensteinteilung'];
+    }else {
       if ( ! (
                    ( ( $newMitgliederzahl == '0' ) || ( $newMitgliederzahl >= 1 ) )
                 && ( $newMitgliederzahl < 100 ) ) )
         $problems = $problems . "<div class='warn'>Keine g&uuml;ltige Mitgliederzahl angegeben!</div>";
+    }
 
     // Wenn keine Fehler, dann ändern...
     if( ! $problems ) {
@@ -55,12 +58,13 @@
            , email='".mysql_escape_string($newMail)."'
            , telefon='".mysql_escape_string($newTelefon)."'
            , mitgliederzahl='".mysql_escape_string($newMitgliederzahl)."'
+           , diensteinteilung='".mysql_escape_string($newDiensteinteilung)."'
          WHERE id=".mysql_escape_string($gruppen_id)
       ) ) {
         $problems = $problems . "<div class='warn'>&Auml;dern der Gruppe fehlgeschlagen:"
                                  .  mysql_error() . "</div>";
       } else {
-        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
+        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert </div>";
       }
 
       if( ( ! $problems ) && ( $newMitgliederzahl != $row['mitgliederzahl'] ) ) {
@@ -153,6 +157,21 @@
                <label style='padding-left:2ex;'>Sockelbetrag buchen:</label>
                <input style='margin:0pt;padding:0pt;' type='checkbox' name='buchesockelbetrag' value='1' checked></input>
              </span>
+            </td>
+				 </tr>				 
+				 
+			   <tr>
+				    <td><label>Diensteinteilung:</b></td>
+						<td style='white-space:nowrap;'>
+              <select name='newDiensteinteilung'>";
+    foreach($_SESSION['DIENSTEINTEILUNG'] as $dienst){
+	    $select_str="";
+	    if($dienst == $row['diensteinteilung']) $select_str="selected";
+	       echo "<option value='".$dienst."' ".$select_str.">".$dienst."</option>\n";  
+    }
+    echo "
+	         
+	      </select>
             </td>
 				 </tr>				 
     ";

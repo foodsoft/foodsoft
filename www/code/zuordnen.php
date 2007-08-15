@@ -1,5 +1,5 @@
 <?php
-//error_reporting(E_ALL); // alle Fehler anzeigen
+error_reporting(E_ALL); // alle Fehler anzeigen
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
 //foodi als pwd: 35q3Za9.ZxrxYd
 
@@ -20,6 +20,8 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
  define('STATUS_LIEFERANT', "beimLieferanten");
  define('STATUS_VERTEILT', "Verteilt");
  define('STATUS_ARCHIVIERT', "archiviert");
+
+ $_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
 
 /**
  *  Bestellvorschläge einfügen
@@ -279,6 +281,21 @@ function in_two_weeks(){
     $toreturn = sql_add_days_to_date($date, 19);
     return $toreturn;
 }
+
+if(!function_exists("date_parse")){
+function date_parse($date_in){
+	$temp = explode(" ", $date_in);
+	 $date = explode("-", $temp[0]);
+         $time = explode(":", $temp[1]);
+		$toReturn = array("year" => $date[0],
+				   "month" => $date[1],
+				   "day" => $date[2],
+				   "hour" => $time[0],
+				   "minute" => $time[1],
+				   "second" => $time[2]);
+	return $toReturn;
+}
+}
 /** Converts a date string from mysql
  *  to a date of the form
  *   $date["day"].".".$date["month"].".".$date["year"]
@@ -287,6 +304,7 @@ function date_sql2intern($date_in){
      $date = date_parse($date_in);
      return $date["day"].".".$date["month"].".".$date["year"];
 }
+
 /** Adds convertion commands in mysql to
  *  converts a date string 
  *  from  a date of the form
