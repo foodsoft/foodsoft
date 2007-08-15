@@ -46,6 +46,8 @@
 			   include('dienstverteilung.php');
 			else if ($area == 'dienste')
 			   include('dienste.php');
+			else if ($area == 'basar')
+			   include('basar.php');
 				 
 			// zur LieferantInnen-Administration verzweigen	 
 			else if ($area == 'lieferanten')
