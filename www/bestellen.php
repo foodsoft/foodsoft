@@ -467,10 +467,6 @@
 					    document.forms['bestellForm'].submit();
 					 }
 
-           function neuesfenster(url,name) {
-             f=window.open(url,name);
-             f.focus();
-           }
 				-->
 				</script>		
 				

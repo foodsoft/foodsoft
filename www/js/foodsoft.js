@@ -58,3 +58,8 @@ function deleteGroup(groupID)
 							}
 						}
 					}
+
+function neuesfenster(url,name) {
+  f=window.open(url,name);
+  f.focus();
+}
