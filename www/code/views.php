@@ -174,18 +174,23 @@ function rotationsplanView($row){
 }
 
 function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE){
-      $result1 = sql_bestellprodukte($bestell_id);
-      $preis_summe = 0;
+  global $area, $print_on_exit;
+
+  $result1 = sql_bestellprodukte($bestell_id);
+  $preis_summe = 0;
+  if( $editAmounts ) {
+    echo "<form action='index.php' method='post'>";
+  }
      ?>
-      <form action="index.php" method="post">
-      <table>
-           <tr>
+      <table class='numbers' width='100%'>
+           <tr class='legende'>
              <th>Produkt</th>
              <th title='Endpreis pro V-Einheit' colspan='2'>V-Preis</th>
              <th>MWSt</th>
              <th>Pfand</th>
              <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-             <th colspan='2'>Gesamtmenge</th>
+             <th colspan='3'>Liefermenge</th>
+             <th colspan='2'>Gebinde</th>
              <th>Gesamtpreis</th>
            </tr>
 
@@ -196,17 +201,18 @@ function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE
   while  ($produkte_row = mysql_fetch_array($result1)) {
     $produkt_id =$produkte_row['produkt_id'];
     if( $produkte_row['liefermenge'] == 0 ) {
+      if( ! $editAmounts )
+        break;  // nicht gelieferte werden nicht mehr angezeigt
       if( $nichtgeliefert_header_ausgeben ) {
         ?>
-          <tr id='row_total'>
-            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
-            <td class='number'><b>
-	<?
+          <tr id='row_total' class='summe'>
+            <td colspan='12' style='text-align:right;'>Summe:</td>
+            <td class='number'>
+        <?
         printf( "%8.2lf", $preis_summe );
         ?>
-          </b></td>
+          </td>
           </tr>
-	<? if($editAmounts){ ?>
           <tr>
             <th colspan='10'>
               <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
@@ -215,18 +221,13 @@ function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE
               Nicht bestellte oder nicht gelieferte Produkte:
             </th>
           </tr>
-	<?
-	  } //if($editAmounts)
+        <?
         $nichtgeliefert_header_ausgeben = false;
       }
-      if($editAmounts){
-          echo "<tr name='trnichtgeliefert'";
-      }
+      echo "<tr name='trnichtgeliefert'";
     } else {
       echo "<tr name='geliefert'";
     }
-
-    if($editAmounts ||  $produkte_row['liefermenge'] != 0 ){
 
     echo " id='row$produkt_id'><td>$produkt_id";
 
@@ -244,70 +245,117 @@ function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE
       <td class='unit'>/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
       <td class='number'>{$produkte_row['mwst']}</td>
       <td class='number'>{$produkte_row['pfand']}</td>
-      <td class='mult'>";
-      if($editAmounts){
+      <td class='mult'>
+    ";
+    if($editPrice){
       echo "<a
-        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
+        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
         onclick=\"
           document.getElementById('row$produkt_id').className='modified';
           document.getElementById('row_total').className='modified';\"
-        >
-	$lieferpreis</a>";
-      } else {
-	 echo $lieferpreis;
-      }
-      echo "</td>
+          title='Preis oder Produktdaten &auml;ndern'
+        >$lieferpreis</a>
+      ";
+    } else {
+      echo $lieferpreis;
+    }
+    echo "</td>
       <td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>
-      <td class='mult'>";
-      if($editPrice){
-         echo " <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'></input>";
-      } else {
-	 echo $liefermenge;
-      }
+      <td class='mult'>
+    ";
+    if($editAmounts){
       echo "
+        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'
+          onchange=\"
+            document.getElementById('row$produkt_id').className='modified';
+            document.getElementById('row_total').className='modified';\"
+          title='tats&auml;chliche Liefermenge eingeben'
+        >
+      ";
+    } else {
+      echo $liefermenge;
+    }
+    echo "
       </td>
-      <td class='unit'>{$produkte_row['preiseinheit']}</td>
+      <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
+      <td style='border-left-style:none;'><a class='png' style='padding:0pt 1ex 0pt 1ex;'
+        href=\"javascript:neuesfenster('/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id','produktverteilung')\"
+        title='Details zur Verteilung'
+        ><img src='img/b_browse.png' style='border-style:none;padding:1px 1ex 1px 1ex;'
+           title='Details zur Verteilung' alt='Details zur Verteilung'
+        ></a></td>
+      <td class='mult'>"
+      . sprintf( "%.2lf", $produkte_row['liefermenge'] / $produkte_row['gebindegroesse'] ). " * </td>
+      <td class='unit'>(" . $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
+                         . " {$produkte_row['kan_verteileinheit']})</td>
       <td class='number'>$gesamtpreis</td>
     </tr>";
 
     $preis_summe += $gesamtpreis;
-    }
-
 
   } //end while produkte array            
 
   if( $nichtgeliefert_header_ausgeben ) {
         // summe muss noch angezeigt werden:
 	?>
-          <tr id='row_total'>
-            <td colspan='9' style='text-align:right;'><b>Summe:</b></td>
-            <td class='number'><b>
+          <tr id='row_total' class='summe'>
+            <td colspan='12' style='text-align:right;'>Summe:</td>
+            <td class='number'>
         <?
         printf( "%8.2lf", $preis_summe );
-	?>
-          </b></td>
+        ?>
+          </td>
           </tr>
         <?
   }
 
-?>
-   <? if($editAmounts or $editPrice){?>
-	   <tr style='border:none'>
-		<td colspan='12' style='border:none'>
-		   <input type="hidden" name="area" value="lieferschein">			
-		   <input type="hidden" name="bestgr_pwd" value="<?PHP echo $bestgr_pwd; ?>">
-		   <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
-		   <input type="submit" value=" Lieferschein ändern ">
-		   <input type="reset" value=" Änderungen zurücknehmen">
-		</td>
+  if($editAmounts){
+    echo "
+      <tr style='border:none'>
+        <td colspan='13'>
+		   <input type='hidden' name='area' value='$area'>
+		   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+		   <input type='submit' value='Liefermengen ändern'>
+		   <input type='reset' value='Änderungen zurücknehmen'>
+		 </td>
 	   </tr>
-   <?}?>
-   </table>                   
+   </table>
    </form>
-      
-<?
+    ";
+  } else {
+    echo "</table>";
+  };
 
+  $print_on_exit = "$print_on_exit
+    <script type='text/javascript'>
+      nichtgeliefert_zeigen = 1;
+      function nichtgeliefert_toggle() {
+        nichtgeliefert_zeigen = !  nichtgeliefert_zeigen;
+        if( nichtgeliefert_zeigen ) {
+          rows = document.getElementsByName('trnichtgeliefert');
+          i=0;
+          while( rows[i] ) {
+            rows[i].style.display = '';
+            i++;
+          }
+          document.getElementById('nichtgeliefert_knopf').src = 'img/close_black_trans.gif';
+          document.getElementById('nichtgeliefert_knopf').title = 'Ausblenden';
+        } else {
+          rows = document.getElementsByName('trnichtgeliefert');
+          i=0;
+          while( rows[i] ) {
+            rows[i].style.display = 'none';
+            i++;
+          }
+          document.getElementById('nichtgeliefert_knopf').src = 'img/open_black_trans.gif';
+          document.getElementById('nichtgeliefert_knopf').title = 'Einblenden';
+        }
+      }
+    </script>
+  ";
 }
+
+
 /**
  * Gibt einen einzelnen Preis mit Pfand und Mehrwertsteuer aus
  * Argument: mysql_fetch_array(sql_produktpreise2())
@@ -431,9 +479,13 @@ function distribution_tabellenkopf($name){
  
   <?
 }
-function distribution_view($name, $festmenge, $toleranz, $verteilmenge, $verteilmult, $verteileinheit, $preis, $inputbox_name = false){
+function distribution_view($name, $festmenge, $toleranz, $verteilmenge, $verteilmult, $verteileinheit, $preis
+  , $inputbox_name = false, $summenzeile = false ){
+  if( $summenzeile )
+    echo "<tr class='summe'>";
+  else
+    echo "<tr>";
   echo "
-    <tr>
       <td>$name</td>
       <td class='mult'><b>" . $festmenge * $verteilmult . " </b> (" . $toleranz * $verteilmult . ")</td>
       <td class='unit'>$verteileinheit</td>

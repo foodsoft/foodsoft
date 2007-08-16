@@ -6,7 +6,7 @@ error_reporting(E_ALL);
        exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
      } 
 
-     if(!nur_fuer_dienst(4)){exit();}
+     if(!nur_fuer_dienst(1,3,4)){exit();}
 
 // Übergebene Variablen einlesen...
     $editable=FALSE;
@@ -44,31 +44,24 @@ error_reporting(E_ALL);
          //infos zur gesamtbestellung auslesen 
 	 $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
 
-	 //Liefermengen oder Preise ändern (Nur beim LIEFERSCHEIN)
-	 foreach (array_keys($_REQUEST) as $submitted){
-	 	if(strstr($submitted, "preis")!==FALSE){
-			$preis_form =$HTTP_GET_VARS[$submitted];
-			$podukt_id = str_replace("preis", "", $submitted);
-			$current_preis_id=sql_Lieferpreis($produkt_id, $bestell_id);
-			if($current_preis_id!=$preis_form){
-				changeLieferpreis_sql($preis_form, $produkt_id, $bestell_id );
-				 if(getState($bestell_id)==STATUS_LIEFERANT){
-					changeState($bestell_id, STATUS_VERTEILT);
-				 }
-			}
-		} elseif(strstr($submitted, "verteilmenge")!==FALSE) {
-			$menge_form =$HTTP_GET_VARS[$submitted];
-			$podukt_id = str_replace("verteilmenge", "", $submitted);
-			$current_menge=sql_liefermenge($produkt_id, $bestell_id);
-			if($current_menge_id!=$menge_form){
-				changeLiefermengen_sql($liefer_form, $produkt_id, $bestell_id );
-				 if(getState($bestell_id)==STATUS_LIEFERANT){
-					changeState($bestell_id, STATUS_VERTEILT);
-				 }
-			}
 
-		}
-	 }
+  // liefermengen aktualisieren:
+  //
+  if( $editable ) {
+    $produkte = sql_bestellprodukte($bestell_id);
+    while  ($produkte_row = mysql_fetch_array($produkte)) {
+      $produkt_id =$produkte_row['produkt_id'];
+      if( get_http_var( 'liefermenge'.$produkt_id ) ) {
+        preisdatenSetzen( & $produkte_row );
+        $mengenfaktor = $produkte_row['mengenfaktor'];
+        $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
+        if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
+          $liefermenge = ${"liefermenge$produkt_id"};
+          changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
+        }
+      }
+    }
+  }
 	
        //Formular ausgeben
 
@@ -80,7 +73,7 @@ error_reporting(E_ALL);
          
 ?>
 
-   <form action="index.php" method="post">
+   <form action="index.php" method="get">
 	   <input type="hidden" name="area" value="<?echo($area)?>">			
 	   <input type="submit" value="Zurück zur Auswahl ">
    </form>
