@@ -236,7 +236,7 @@
   
   echo "
     <tr class='summe'>
-      <td><a href=\"javascript:neuesfenster('/foodsoft/basar.php','basar');\"
+      <td><a href=\"javascript:neuesfenster('/foodsoft/index.php?area=basar','basar');\"
         title='Basar anzeigen...'>Basar:</a></td>
       <td class='mult'>" . $basar_festmenge * $vorschlag['kan_verteilmult']
         . " (" . $basar_toleranzmenge * $vorschlag['kan_verteilmult']  . ")</td>

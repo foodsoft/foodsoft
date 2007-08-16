@@ -5,8 +5,6 @@
 	require_once("$foodsoftpath/code/err_functions.php");
 	require_once("$foodsoftpath/code/zuordnen.php");
   require_once("$foodsoftpath/code/login.php" );
-  if( $angemeldet )
-     $pwd_ok = true;
 
   require_once ("$foodsoftpath/head.php");
 
@@ -84,7 +82,7 @@
          <td><a
            href=\"javascript:neuesfenster('/foodsoft/index.php?area=lieferschein&bestellungs_id={$basar_row['gesamtbestellung_id']}','lieferschein')\"
              title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>
-         <td class='mult'>{$basar_row['preis']}</td>
+         <td class='mult'>" . sprintf( "%8.2lf", $basar_row['preis'] ) . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>
          <td class='mult'><b>$menge</b></td>
          <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
@@ -127,7 +125,6 @@
      <input type='submit' value='Zur&uuml;ck '>
    </form>
 
-   $print_on_exit
  ";
 ?>
 
