@@ -50,6 +50,13 @@ require_once("$foodsoftpath/head.php");
          $row_gesamtbestellung = mysql_fetch_array($result);               
 ?>
 <h1>Bestellungen ansehen...</h1>
+
+	<p>
+<?	wikiLink("foodsoft:verteilung", "Wiki...");
+?>
+        </p>
+
+
 	 <?bestellung_overview($row_gesamtbestellung);?>
 	 <?changeState($bestell_id, "Verteilt")?>
       <br>

@@ -193,7 +193,11 @@
    echo "
      <h1>Up/Download der Datenbank...</h1>
    ";
+
+
+
    if( $readonly ) {
+	wikiLink("foodsoft:daten_auf_den_server_hochladen", "Wiki...");
      echo "
        <table>
        <tr>
@@ -221,6 +225,7 @@
      ";
 
    } else {
+	wikiLink("foodsoft:daten_vom_server_runterladen", "Wiki...");
      echo "
        <table>
        <tr>

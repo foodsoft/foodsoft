@@ -49,6 +49,7 @@
 
 
        <h1>Rotationsplan</h1>
+ 
 
    <form name="rotationsplan" action="index.php" method="post">
 	   <input type="hidden" name="area" value="dienste">			
@@ -93,6 +94,10 @@
 ?>
        <h1>Dienstliste</h1>
 
+	<p>
+<?	wikiLink("foodsoft:dienstplan", "Mehr Infos im Wiki...");
+?>
+        </p>
    <!-- Zeige bisherige Dienste-->
 
    

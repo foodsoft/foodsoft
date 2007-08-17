@@ -25,6 +25,9 @@
           $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
           echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
     }
+
+	wikiLink("foodsoft:bestellen", "Wiki...");
+
 			
 					   // Aktuelle Bestellung ermitteln...
 						 if (isset($HTTP_GET_VARS['bestellungs_id'])) {

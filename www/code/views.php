@@ -397,7 +397,7 @@ function preis_selection($produkt_id, $current_preis_id){
 
 
 /**
- *  Zeigt ein Produkt als Bestellungsübersicht
+ * Ausgabe der Links im Foodsoft-Kopf
  */
 function areas_in_head($area){
 

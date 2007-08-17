@@ -2,10 +2,10 @@
    
   $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
    
-  require_once('code/config.php');
-  require_once('code/err_functions.php');
-  require_once('code/connect_MySQL.php');
-  require_once('code/login.php');
+  require_once('../code/config.php');
+  require_once('../code/err_functions.php');
+  require_once('../code/connect_MySQL.php');
+  require_once('../code/login.php');
   nur_fuer_dienst(5);
    
   $msg = '';

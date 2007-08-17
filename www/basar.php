@@ -25,17 +25,19 @@
     sql_groupGlass( $gruppe, $menge_glas );
   }
 
-  echo "
+?>
     <h1>Basar</h1>
-      <br>
-      <br>
+
+      <p>
+<?	wikiLink("foodsoft:basarbewegungen_eintragen", "Wiki..."); ?>
+      </p>
          <form action='basar.php' method='post'>
          <table style='width: 600px;' class='numbers'>
     <tr>
       <td colspan='5'> Gruppe: 
         <select name='gruppe'>
         <option value='' selected>(Gruppe w&auml;hlen)</option>
-  ";
+<?
   optionen_gruppen();
   echo "
         </select>
