@@ -1,0 +1,15 @@
+====== Die Kontoblätter pflegen ======
+
+
+  * Bei der **Gruppenverwaltung** gibt es bei den **Optionen** ganz rechts in der Tabelle die Möglichkeit, Kontobewegungen einzutragen.
+    das **Finanzpasswort:**
+
+  * Gib nun unter **Kontotransaktionen** die Einzahlungen für die jeweiligen Gruppen ein.
+      Gehe dafür zu **Transaktion**, gib Datum und Nummer des Kontoauszugs sowie den überwiesenen Betrag ein und gehe auf **Durchführen**.
+
+  * Die Änderungen werden in der Tabelle erst dann sichtbar, wenn man die Seite aktualisiert, das passiert bei **Reload**.
+
+  * Parallel sollten die Einzahlungen auch im Ordner in den papiernen Kontoblättern vermerkt werden. 
+
+  * Sind Gruppen nahe dem Minusbereich, so weise sie doch in der Mail darauf hin.
+

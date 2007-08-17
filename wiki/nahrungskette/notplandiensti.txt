@@ -1,0 +1,54 @@
+====== Notfallplan für die Verteilung der Produkte ======
+
+
+
+Es kann aus diversen Gründen vorkommen, dass der Ablaufplan der Dienst nicht optimal funktioniert. Daher sind hier einige Möglichkeiten aufgelistet, die Dienstgruppe I/II in Notfällen helfen könnten.
+
+Am sinnvollsten ist es zunächst direkt Kontakt zur letzten Abrechnungsgruppe aufzunehmen und nachzufragen. Die aktuellen Dienste sind der Dienstliste und der email der letzten Gruppe IV zu entnehmen.
+
+===== Ordner: =====
+
+
+Problem:
+aus der email mit der neuen Bestelltabelle (bis spätestens Di.) ist nicht zu entnehmen, wann und wo die Ordner abzuholen sind.
+
+Lösung:
+alle emails noch einmal genau lesen oder im
+[[http://nahrungskette.fcschinke09.de/foodsoft/index.php?area=dienstkontrollblatt|Dienstkontrollblatt]]
+nachsehen, wer zuletzt Dienst gemacht hat.
+Per email oder Telefon (siehe [[privates:Mitgliederliste]]) möglichst schnell Kontakt aufnehmen
+wenn Gruppe IV nicht zu erreichen ist, eine email an den Verteiler schreiben
+
+===== Schlüssel =====
+
+
+Problem:
+der Schlüssel ist nicht da
+
+Lösung:
+Es gibt einen „Notschlüssel“ im Haus der Natur.
+
+===== Ihr hättet Dienst, seit aber nicht anwesend =====
+
+
+Problem:
+Ihr habt den momentanen Dienst, seit aber aus irgendeinem Grund nicht da. Jemand kommt zum Keller und sucht Euch.
+
+Lösung:
+Hinterlasst Euren Namen, den Grund für die Abwesenheit und Eure aktuelle Telefonnummer an der Kellertür.
+
+===== Datenbank im Keller läuft nicht =====
+Problem:
+Die Datenbank im Keller läuft nicht
+
+Lösung:
+Druckt die Verteiltabelle aus der Datenbank im Internet. Dies sollte aber nur geschehen, wenn's im Keller wirklich nicht geht, weil es ein Mehraufwand für Dienst 4 bedeutet.
+
+===== fehlende Datenbank =====
+
+
+Problem:
+auf dem USB-Stick ist keine aktuelle Datenbank
+
+Lösung:
+Ihr könnt die Datenbank aus dem [[daten_vom_server_runterladen|Internet herunterladen]]

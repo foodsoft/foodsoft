@@ -1,0 +1,102 @@
+====== Vorschläge zur Integration des Dienstplans in die Foodsoft ======
+
+===== Grundsätzliches / Fragen =====
+In der Foodsoft wird gespeichert, welche Gruppe welchen Dienst leisten soll. Sie zeigt gleichzeitig an, ob die Gruppen dies bereits bestätigt haben und meldet Dienste zu denen möglicherweise keiner auftaucht. Nach der Einführungsphase löst dieser Dienstplan die bisherigen Systeme (email, wiki) komplett ab. Der Rotationsplan für jeden Dienst wird in der Foodsoft verwaltet. Die Foodsoft hilft bei der Erstellung des neuen Dienstplans.
+
+:?:  Ich gehe hin und sage, ich kann keinen Dienst machen, muss dann ein Datum auswählen und schwupps steht ein anderer Name an Stelle von meinem. Läuft das nach einem Zufallsgenerator (jeder 1 oder 2 Mal für eine bestimmte Zeit) oder wird hier gewichtet: z.B. hat noch gar nicht oder schon so oft, nicht dass manche Leute immer sagen klappt nicht und nie dran kommen. 
+ 
+
+Der Dienstplan wird zunächst entsprechend des Rotationsplans erstellt. 
+Dadurch kommt jede Gruppe gleich oft an die Reihe. Entsprechend der Diskussion
+an der letzten [[nahrungskette:protokollarchv|Versammlung]] wird nicht nach bisher geleisteten Diensten gewichtet.
+
+Wenn Du sagst, dass Du keinen Dienst machen kannst, stehen diejenigen Daten zur Verfügung, an denen andere Gruppen ihren Dienst noch nicht akzeptiert haben. Du tauschst dann einfach den Dienst mit diesen Gruppen. Du kannst erst bestellen, wenn Du ein anderes Datum akzeptiert hast.
+
+
+
+:?:  Mensch kann ja dem ganzen auch entgehen indem einfach "kann doch nicht" geklickt wird! Und wie ist das zeitlich geregelt? Angenommen Person X soll morgen Dienst machen, sagt am Tag vorher "kann doch nicht" und schwupps wird irgendjemand spontan dahin gesetzt, der noch überhaupt nix von seinem Glück weiß und dann
+der/die dumme ist, wenn er/sies nicht mehr rechtzeitig mitbekommt..., da wird’s vielleicht ein klein wenig zu leicht sich einfach ohne Kümmern aus der Affäre zu ziehen.
+
+Der Plan ist, dass der Dienstplan etwa einen Monat im Voraus erstellt wird. Jede Gruppe müsste dann Ihre Dienste bereits akzeptiert haben. Klickt man auf "kann doch nicht", bleibt der Dienst offen. Es ist also nicht jemand anderes der dumme. Jeder sieht zudem, dass hier ein Dienst evtl. nicht klappt und dass eine Gruppe ihre Leistung nicht erbringt. Die bisherige Regelung, dass man sich um Ersatz kümmern muss gilt weiterhin. **Also nach einem Klick auf "Kann doch nicht" folgt der Griff zum Telefon!** Die Ersatzgruppe "übernimmt" dann den Dienst in der Foodsoft.
+
+:?: Was wäre denn z.B. mit einer Klausel du darfst nur bestellen, wenn du im letzten Quartal mindestens 1 oder 2 x Dienst gemacht hast (oder dich zumindest verbindlich irgendwo für einen Ersatzdienst eingeschrieben hast) und zum anderen kann die "Doch nicht-Taste" nur bis z.B. maximal 1 Woche vorher bedient werden und danach nur, wenn jemand sicher den Dienst mit der "Übernehmen-Taste" übernommen hat?!
+
+Gründsätzlich könnte die Foodsoft solche Klauseln testen. Aber wollen wir dies? Sollte auf einer der nächsten Sitzungen diskutiert werden, wieviel solche Kontrollen die Foodsoft leisten soll? Möglich wären zum Beispiel
+    * Anwesenheit an Versammlungen 
+    * Geleistete Dienste im letzten Jahr
+    * "Doch nicht" Dienste im letzten Jahr
+
+
+
+==== Dienststatus ====
+In der Foodsoft haben die Dienstvorschläge unterschiedliche Status:
+  * Vorgeschlagen: Aufgrund des Rotationsplans ist dies der Vorschlag der Foodsoft. Die Gruppen können entscheien, ob sie den Dienst leisten können oder nicht.
+  * Akzeptiert: Die Gruppe hat kann den Dienst an diesem Tag leisten
+  * Bestätigt: Die Gruppe hat sich in den 2 Wochen vor dem Dienst angemeldet und wurde nochmals darüber informiert. Damit dürfte der Dienst nicht vergessen gehen
+  * Geleistet: Die Gruppe hat den Dienst gemacht
+  * Nicht geleistet: Die Gruppe ist nicht zum Dienst erschienen, oder hat nachträglich (nach dem Akzeptieren) festgestellt, dass sie den Dienst nicht leisten kann. Eine andere Gruppe hat den Dienst übernommen.
+  * Offen: Eine Gruppe hat nach dem Akzeptieren festgestellt, dass sie den Dienst nicht leisten kann. Eine Ersatzgruppe wird gesucht.
+
+===== Hilfe bei Dienstvorschlägen (Dienst 5) =====
+
+Dienst 5 definiert die Rotationsfolge und legt fest, für welchen Zeitraum Dienste mit welcher Häufigkeit (wöchentlich, zweiwöchentlich) verteilt werden sollen. Die Foodsoft macht dann folgendes:
+  * Die Dienste werden entsprechend des Rotationsplans vergeben
+  * Der Rotationsplan wird so gedreht, dass beim nächsten Verteilen mit der richtigen Gruppe weitergemacht wird.
+
+===== Beim Anmelden - wenn neue Dienstvorschläge erzeugt wurden =====
+
+Den Gruppen wird beim ersten Bestellen (nachdem Dienst 5 vorschläge erzeugt hat) angezeigt, welche Dienste sie in der nächsten Zeit machen sollen. Die Gruppen haben die Gelegenheit, die Dienste zu akzeptieren oder abzulehnen.
+
+Wird ein Dienst abgelehnt, wird dieser mit dem nächsten Datum getauscht, das noch nicht fest vergeben ist. Dieser alternative Dienst kann erneut akzeptiert oder abgelehnt werden. Sind keine freien Dienste mehr verfügbar, wird der Dienst als offen gekennzeichnet. Es muss eine freiwillige Ersatzgruppe gefunden werden.
+
+Erst wenn für alle Dienste ein akzeptables Datum gefunden wurde, kann dann bestellt werden.
+
+===== Information über bevorstehenden Dienst =====
+
+Ab 2 Wochen vor einem Liefertermin, an dem eine Gruppe einen Dienst leisten muss, informiert die Foodsoft die Gruppe beim Anmelden über den bevorstehenden Dienst. Gleichzeitig informiert die Foodsoft über die Kontaktdaten der anderen Dienste. Der Zustand des Dienstes wechselt dann auf bestätigt.
+
+===== Gruppen-Dienstblatt =====
+Jede Gruppe kann auf ihrem Dienstblatt die vergangenen und bevorstehenden Dienste anschauen. Es gibt folgende Möglichkeiten:
+  * Die Gruppe merkt, dass sie einen akzeptierten Dienst nicht leisten kann. Der Status des Dienstes kann auf offen gewechselt werden.
+  * Im Dienstblatt stehen alle offenen Dienste. Die Gruppe kann einen offenen Dienst annehmen.
+
+===== Änderungen beim Bestellen =====
+
+Im [[foodsoft:bestellen|Bestellformular]] wird angezeigt, wenn ein Dienst der aktuellen Bestellung offen oder unbestätigt (die Gruppe, die den Dienst leisten müsste, hat sich in letzter Zeit nicht angemeldet) ist. Es ist wahrscheinlich, dass bei diesem Dienst Probleme auftauchen. 
+
+===== Beim Leisten eines Dienstes =====
+Meldet sich die Gruppe für den Dienst an, wird der Status auf geleistet geändert
+
+===== Langfristig  =====
+Wegfall der Auswahl eines Dienstes beim Anmelden, weil die Foodsoft automatisch erkennt, dass die angemeldete Gruppe den Dienst leisten muss. Evtl. die Funktion "Sonderdienst" noch beibehalten.
+
+===== Technische Details =====
+==== Benötigte Views ====
+  * Rotationsplan
+  * einzelner Dienst mit möglichen Aktionen ablehnen, akzeptieren, kann Dienst nicht leisten, offenen/unbestätigten Dienst übernehmen
+  * Dienstliste (zum Akzeptieren / in meinKonto) für Einzelgruppe
+  * Dienstliste - Überblick über alle Dienste (ohne Aktionen?) evtl. zusammen mit oben, aber Farben?
+  * Information zu bevorstehendem Dienst
+  * Liste der Lieferdaten für nächste Dienstperiode (mit Änderungsmöglichkeit)
+  * Warnmeldung zu offenen / unbestätigen Diensten
+==== Zusätzliche Datenbank Tabellen/Felder ====
+=== Bestellgruppen ===
+Hier ist der Rotationsplan gespeichert
+  * Diensteinteilung
+  * Rotationsplanposition
+=== Dienste ===
+Enthält Dienste für jedes einzelne Lieferdatum
+  * GruppenID
+  * Dienst
+  * Lieferdatum
+  * Status
+  * Bemerkung
+=== Dienstdauer ===
+Wird zu einem späteren Zeitpunkt benutzt, um festzulegen in welchem Zeitfenster (im Bezug auf das Lieferdatum) eine Gruppe beim Anmelden in die Dienstansicht gelangt.
+  * Dienst
+  * VorLieferdatum
+  * NachLieferdatum
+
+===== Offene Punkte =====
+  * Was geschieht, wenn eine Lieferung ausfällt?
+  * Zusammenhang zum Dienstprotokollblatt

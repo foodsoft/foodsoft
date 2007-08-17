@@ -1,0 +1,12 @@
+====== Daten auf den Server/Computer hochladen ======
+  - Im Keller: Akutellste FC_Daten-Datei vom USB-Stick (der USB-Stick heisst sda1 oder sdb1) ins Verzeichnis Foodi -> DatenbankBackup **kopieren**. Bitte eine Sicherheitskopie aufbewahren.
+  - Auf die Hauptseite wechseln (FC Nahrungskette - Logo oben links)
+  - Menüpunkt Up/Download anklicken
+  - Passwort eingeben
+  - Upload anklicken
+  - Durchsuchen anklicken
+  - Aktuellste FC_Daten-Datei (Vom selben Tag oder Vortag) aus  Foodi -> DatenbankBackup auswählen und OK
+  - Send File anklicken
+  - Kleines Browserfenster mit der Meldung "Datenbank hochgeladen" schliessen
+
+Wenn beim laden alles geklappt hat, sind nun die aktuellen Bestelldaten bereit.

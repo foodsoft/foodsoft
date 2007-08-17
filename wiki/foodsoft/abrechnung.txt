@@ -1,0 +1,23 @@
+----
+[[:|Nahrungskette]] * [[foodsoft:doku|Foodsoft]] * [[Abrechnung]]
+
+===== Foodsoft - Die Abrechnung =====
+
+  * Wie gehabt holt ihr Donnerstag abend (20.30 Uhr) die Ordner, Stick und Schlüssel aus dem Keller ab. Auf dem Stick sollte sich die Datenbank mit allen bisherigen Bestellungen befinden.
+
+  * Auch am Donnerstag abend, spätestens jedoch Freitag früh muß eine Prüfung der Rechnungen und Lieferscheine vorgenommen werden.
+
+  * Aus der [[privates:GMX Mailbox]] könnt ihr weiterhin die aktuellen Kataloge und Preislisten herunterladen und alte Emails verschieben oder löschen. Um die Produktdatenbank der Foodsoft auf den neuesten Stand zu bringen, gibt es die Funktion [[Datenbankabgleich]]. Bei Terra funktioniert das besonders komfortabel, da die Kataloge elektronisch verfuegbar sind und Abweichungen automatisch detektiert werden.
+
+  * Moeglichst bald nach Donnerstag abend solltet Ihr vom USB-Stick die [[Daten auf den Server hochladen]]: dann koennen alle im Internet Ihre Bestellungen einsehen und vielleicht auch noch weiterhin bestellen.
+
+  * Nun wartet die [[Bestellung der nächsten Lieferung]] auf Euch!
+
+
+  * Ebenfalls moeglichst bald, spaetestens aber am Montag abend, solltet Ihre die neuen [[Bestellvorlagen erstellen]], damit wenigstens am Dienstag Gelegenheit besteht, im Internet zu bestellen.
+
+  * Die Abrechnung der Lieferung wird durch die neue Datenbank stark vereinfacht. Die verteilten Produkte sind von der Verteilergruppe (I/II) bereits eingetragen und eventuelle Abweichungen auf den Lieferscheinen korrigiert. Imgrunde müßt ihr lediglich für die entsprechenden Gruppen die [[Basarbewegungen eintragen]], hier wird auch die Pfandrückgabe eingetragen! Damit ist der Einkauf vollständig dokumentiert.
+
+  * Da wir auf Sicherheit stehen :-), wollen wir, wie gehabt, zusätzlich zu der elektronischen Kontoführung in der Datenbank [[die papiernen Kontoblätter pflegen]].
+
+  * Irgendwann am Mittwoch muesst Ihr die [[Daten vom Server runterladen]] und auf dem USB-Stick speichern, den Ihr dann an Gruppe I/II uebergebt. Falls die Übergabe vor Mittwoch stattfindet, übertragt diese Aufgabe ausdrücklich an Gruppe I/II. Ansonsten entsteht eine zu lange Bestellpause für Online-Besteller.

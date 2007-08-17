@@ -1,0 +1,20 @@
+----
+[[:|Nahrungskette]] * [[doku|Foodsoft]] * [[Abrechnung]] * [[Bestellung der naechsten Lieferung]]
+
+
+
+====== Die Bestellung der nächsten Lieferung ======
+
+  * Vor dem Bestellen müssen die Preise und Bestellnummern der Produkte aktualisiert werden. Dazu gehe zur **Produktdatenbank**, wähle nacheinander die Lieferanten aus,
+  * **Schinkepasswort:**
+
+  * Nun erscheinen die Tabellen mit den Produkten der Lieferanten. Gehe auf **alle bearbeiten**, dann kannst du die Bestellnummern und Preise überprüfen und evtl. ändern.
+
+  * Die Gebinde werden automatisch aufgefüllt, indem die Toleranzbereiche der Gruppen soweit notwendig ausgenutzt werden. Wenn Du siehst, dass bei einem GEbinde nur noch wenig fehlt und das Produkt für den Basar geeignet ist, gehe zu **Bestellen**, wähle die Gruppe **Basar** aus, gib evtl. das Basar-PW ein und bestelle die fehlende Menge des Produktes. 
+Sollte ein Gebinde nicht zustande kommen, wird es automatisch gelöscht. Es bleibt also nur noch die Bestellung selbst:
+
+  * Um die Bestellungen für die Lieferanten anzusehen, gehe über **Bestellungen ein-(an)sehen** zur Bestellgruppe und wähle nacheinander die Bestellungen aus. 
+
+  * Nun kannst du die verschiedenen Bestellungen ausdrucken oder faxen bzw. bei den Lieferanten anrufen und die Bestellnummern durchgeben.
+  
+  * Falls der **Mindestbestellwert** bei den Liferanten **nicht erreicht** wurde und die Bestellung nicht zu Stande kommt, vergesst nicht das durch die Bestellung bereits von den Kontoständen der Besteller abgebuchte Geld zurück zu buchen. Dazu müsst Ihr Euch in unter **Bestellungen ein-/ansehen** als Sortiergruppe anmelden, die entsprechende Lieferung auswählen, dann zuerst im **Lieferschein** die Liefermengen aller Produkte auf 0 setzen und dann unter **nach Produkten sortiert** die den Gruppen zugeteilten Mengen auf 0 setzen. Jeweils dran denken, den **Lieferschein ändern** bzw. **Vrteilung ändern++-Button zu drücken.

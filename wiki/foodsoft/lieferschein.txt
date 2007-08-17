@@ -1,0 +1,11 @@
+===== Foodsoft - Der Lieferschein =====
+
+Diesen Progammteil erreicht man vom Hauptmenue ueber **Bestellung ansehen**, dann **Sortiergruppe** und **Lieferschein** anklicken) 
+
+Hier wird von Dienst I/II bei der [[Verteilung]] erfasst, wieviel und zu welchem Preis tatsaechlich geliefert wurde. Einheit gibt dabei an, in welcher Stückelung die Leute bestellt haben (z.B. 500g Kartoffeln). Die Gebindegrösse gibt an, wieviele dieser Stückelungen ein Gebinde füllen (z.B. 20x500g Kartoffeln). Der Preis ist als Nettopreis und Bruttopreis (mit MWST und Pfand) angezeigt.
+
+Änderungen mit Lieferschein ändern speichern.
+
+Auch Produkte, die gar nicht bestellt aber dennoch geliefert wurden, koennen am Ende des Lieferscheins eingetragen werden. Achtung, evtl. Änderungen erst speichern
+
+Die Differenz zwischen dem Lieferschein und den verteilten Mengen wird automatisch dem [[Basar]] zugeschlagen.

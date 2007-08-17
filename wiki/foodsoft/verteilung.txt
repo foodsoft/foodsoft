@@ -1,0 +1,25 @@
+----
+[[:|Nahrungskette]] * [[foodsoft:doku|Foodsoft]] * [[Verteilung]]
+
+===== Foodsoft - Die Verteiler =====
+
+Klärt bei der Entgegennahme der Ornder von Dienst IV, ob die Datenbank bereits runtergeladen und auf dem Stick gespeichert wurde! 
+Falls nicht, solltet Ihr das Mittwoch Abend tun. ([[Daten vom Server runterladen]])
+
+Bevor Ihr mit der Foodsoft im Keller arbeiten koennt, muesst Ihr erstmal 
+  * den Rechner hochfahren, 
+  * die Foodsoft mit dem Icon auf dem Desktop (Erdkugel) starten, und 
+  * vom USB-Stick die [[Daten auf den Server hochladen]] (Computer im Keller)
+
+Anschliessend ist fuer Euch der Programmteil **Bestellung ansehen**, dann **Sortiergruppe** besonders wichtig.
+
+Hier muesst Ihr nacheinander alle Bestellungen, zu denen Lieferungen eingetroffen sind, auswaehlen und die Waren verteilen:
+
+  * [[Lieferschein]] in der Foodsoft mit dem tatsächlichen Lieferschein vergleichen. Evtl. wurden einige Produkte nicht geliefert. Diese auf 0 setzen.
+
+  * Ihr koennt wahlweise nach Gruppen, oder nach Produkten (dies ist zu empfehlen, da hier auch die tatsächlich verteilten Mengen eingetragen werden können)  sortiert anzeigen lassen, wer was kriegen soll. Dort tragt Ihr ein, was Ihr tatsaechlich verteilt. Die Änderungen speichern, indem Ihr auf Verteilung ändern klickt.
+
+  * Nach der Verteilung sollte das Formular [[Basar]] genau das enthalten, was uebriggeblieben ist. Es kann sein, dass in der Liste der Basar-Produkte, noch Dinge von der vorherigen Woche stehen, welche nicht verteilt wurden. Um diese müsst Ihr Euch nicht kümmern. Falls es Differenzen gibt, überprüft nochmal Eure Einträge und  schreibt ggf. eine Nachricht an Gruppe 4.
+
+
+  * Ihr müsst die Datenbank nicht herunterladen. Das macht Dienst 3 am Abend

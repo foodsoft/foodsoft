@@ -1,0 +1,14 @@
+====== Daten vom Server/Computer herunterladen ======
+
+  - Auf die Hauptseite wechseln (FC Nahrungskette - Logo oben links)
+  - Menüpunkt Up/Download anklicken
+  - Passwort eingeben
+  - Download anklicken
+  - Datei lokal speichern als FC_Daten_DATUM_ZEIT.sql.tgz
+  - Datei auf USB-Stick **kopieren**. Bitte eine Sicherheitskopie aufbewahren.
+
+
+
+**Vorsicht**: Daten nur einmal herunterladen!!!
+
+Begründung: Beim Herunterladen werden die aktuellen Bestellungen automatisch gesperrt, indem das Ablaufdatum auf den jetztigen Zeitpunkt gesetzt wird. Werden die Daten ein zweites Mal heruntergeladen, lädt man die so gesperrten Bestellungen herunter.

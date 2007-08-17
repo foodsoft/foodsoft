@@ -1,0 +1,8 @@
+
+==== Papierenes Kontoblatt ====
+
+Trotz der modernen elektronischen Foodsoft wird zur Sicherheit fuer jede Gruppe auch ein Papier-Kontoblatt gefuehrt. In jeder Woche, in der fuer die Gruppe irgendwelche Transaktionen anfallen, wird eine Zeile ausgefuellt, mit den folgenden Feldern:
+  * Datum (vom Donnerstag der jeweiligen Woche)
+  * Einzahlungen (wird von [[Dienst IV]] einzutragen)
+  * Pfandgutschriften (wird von [[Dienst III]] eingetragen)
+  * FIXME weitere Felder...

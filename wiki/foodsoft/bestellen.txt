@@ -1,0 +1,17 @@
+---- 
+[[:|Nahrungskette]] * [[foodsoft:doku|Foodsoft]] * [[bestellen|Bestellen]]
+
+===== Foodsoft - Bestellungen =====
+
+Bestellen koennt Ihr
+  * jeden Donnerstag abend am Rechner im Keller, oder
+  * jeden Dienstag (und vielleicht auch zu anderen Zeiten, haengt von Gruppe IV ab) im Internet unter http://nahrungskette.fcschinke09.de/foodsoft 
+
+
+Ablauf:
+  * **Bestellen** im Hauptmenue
+  * Eingabe von Gruppenname und Passwort
+  * Jede Woche gibt es eine "Bestellung" fuer jeden Lieferanten, bei dem in dieser Woche bestellt werden soll (zur Zeit also in der Regel der Bauer, Terra, und Beumer&Lutum), die auch so benannt wird:  //<Lieferant> <Lieferdatum>//, also zum Beispiel **Terra 01.03.07** oder **Bauer 08.03.07**\\
+    * Jede Bestellung laeuft nur ueber einen bestimmten Zeitraum, hat also ein "Bestellende" (in der Regel am Freitag(?) vor der Lieferung): danach geht nix mehr, da dann Gruppe IV aktiv werden darf, um die Bestellung abzuschicken.\\
+    * Ihr muesst alle laufenden Bestellungen, an denen Ihr Euch beteiligen wollt, nacheinander anwaehlen und Eure Wuensche in das [[Bestellformular]] eintragen.
+  * Unter **Bestellungen einsehen**, dann **Konsumentengruppe** koennt ihr nach Bestellende nachschauen, was Ihr bestellt habt, oder was Ihr gekriegt haben solltet.

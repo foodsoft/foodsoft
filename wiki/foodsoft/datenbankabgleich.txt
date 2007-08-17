@@ -1,0 +1,76 @@
+[[:|Nahrungskette]] * [[Foodsoft:doku|Foodsoft]] * [[Datenbankabgleich]]
+
+====== Produktdaten / Datenbankabgleich ======
+
+Dies ist ein inzwischen recht komplexes Skript zur Verwaltung von Produktdaten, insbesondere Preisen und Gebindegroessen: 
+  * dargestellt ist entweder eine Uebersicht aller Produkte eines Lieferanten, oder eine Detailanzeige eines einzelnen Produktes. 
+  * aus der Uebersichtsliste zur Detailanzeige kommt man durch Klick auf die Schaltflaeche links (die mit der Artikelnummer und der (Foodsoft-internen) Produkt-ID).
+  * aus dem Lieferschein oder dem Bestellformular gelangt man durch Klick auf einen Produktpreis direkt in die Detailanzeige.
+
+==== Aufbau ====
+
+In der Detailanzeige werden untereinander gelistet:
+  * die Preishistorie des Produktes (kann ausgeblendet werden)
+  * der aktuellste Eintrag der Foodsoft-Datenbank
+  * der aktuelle Katalogeintrag, falls verfuegbar (zur Zeit nur bei Terra)
+
+==== Ein paar wichtige Begriffe: ====
+
+** Produkt-Bezeichnung **
+
+Dies sollte die generische Bezeichnung des Produktes sein, die sich moeglichst nie aendert((das ist wichtig, da sich Aenderungen auch rueckwirkend auf die Anzeige alter Bestellungen auswirken, was verwirrend sein kann!)). Bei Sachen, die abgepackt verkauft werden, sollte hier eine Mengenangabe erfolgen. Beispiel: //Joghurt Heidelbeer, 500g//
+
+** Notiz **
+
+Fuer aktuelle Details zum Produkt, die sich auch mal aendern koennen, wie Herkunft oder Marke.
+Beispiel: //Demeter, Milch regional, Heidelbeeren aus Spanien//
+
+** V-Einheit **
+
+Verteil-Einheit: die Einheit des Produktes, die von der Foodsoft intern benutzt wird: jeder Klick im Bestellformular bedeutet eine V-Einheit:
+  * bei abgepackten Sachen in der Regel 1 ST(ueck), oder 1 GL(as), oder 1 FL(asche), ...
+  * bei Sachen, die ausgewogen werden, meist 500 g oder 100 g.
+
+** Gebindegroesse **
+
+So viele V-Einheiten muessen beim Lieferanten auf einmal bestellt werden. Das muss eine ganze Zahl sein; da zum Beispiel Kartoffeln zuweilen in Saecken zu 12.5 kg verkauft werden, waere eine V-Einheit von 1000 g ungeeignet; wir verteilen daher pfundweise((da man nur ganze V-Einheiten bestellen kann, sind 500g bei Gemuese natuerlich auch kleinverbraucherfreundlicher!)).
+
+** L-Einheit ** 
+
+Liefer-Einheit: 
+Vielfache dieser Einheit werden in der Bestellung beim Lieferanten angegeben:
+  * bei Terra entspricht dies immer einem //Gebinde//, es gilt also: V-Einheit * Gebindegroesse = L-Einheit. Es gibt allerdings Faelle, wo man dies nicht sofort sieht oder ausrechnen kann: Avocados etwa werden in Gebinden zu 1 KI(ste) verkauft, also L-Einheit = 1 KI, aber stueckweise verteilt, also V-Einheit = 1 ST. Die Gebindegroesse gibt dann an, wieviel Stueck normalerweise in einer Kiste zu finden sind (das ist im Katalog meist in der Produktbeschreibung aufgefuehrt). Bestellen tun wir dann: //3 Gebinde Avocados//
+  * beim Bauern ist die L-Einheit immer 1000 g fuer Sachen, die nach Gewicht verkauft werden. Das kann hier //unabhaengig von der Gebindegroesse// sein, zum Beispiel bei Kartoffeln:
+    * V-Einheit = 500 g (wir verteilen pfundweise)
+    * Gebindegroesse = 5 (der Bauer liefert in Saecken zu 2.5 kg)
+    * L-Einheit = 1000 g (wir bestellen naemlich //7.5 kg Kartoffeln//, nicht //3 Gebinde Kartoffeln//)
+
+** Preis-Einheit **
+
+Das ist die Einheit, die typischerweise dem //Einzelpreis// in der Rechnung oder im Katalog des Lieferanten zugrundeliegt:
+  * bei Sachen, die ausgewogen werden: 1 kg
+  * bei Volumen: 1 Liter
+  * sonst: 1 STueck (oder 1 KI, 1 BE, 1 FL, ...)
+Also: immer die L-Einheit, ggf. umgerechnet in kg oder Liter, und mit Masszahl 1.
+
+** V-Preis: **
+
+Der Bruttopreis (also mit Mehrwertsteuer), inklusive Pfand, pro V-Einheit: soviel wird je verteilter V-Einheit vom Gruppenkonto abgebucht.
+Also: der fuer die Konsumenten relevante Preis!
+
+** L-Preis **
+
+Nettopreis (also ohne Mehrwertsteuer und ohne Pfand) pro Preis-Einheit: das ist der //Einzelpreis//, der in der Rechnung und im Katalog des Lieferanten aufgefuehrt sein sollte.
+Dieser Preis ist fuer Dienst IV beim Abgleich mit dem Lieferschein, und beim Aktualisieren der Produktpreise, relevant. 
+
+
+==== Aktionen ====
+
+Aenderungen an den Preisdaten darf nur Dienst 4 ausfuehren:
+
+  * falls ein aktueller Preiseintrag vorliegt, kann er abgeschlossen werden: das Produkt gilt dann als nicht (mehr) lieferbar.
+  * aendert sich der Preis, so kann ein neuer Preiseintrag angelegt werden((der bisher aktuelle Preiseintrag wird dabei automatisch abgeschlossen, das sollte also nicht zusaetzlich gemacht werden!)). Ein neuer Preiseintrag wird automatisch vorgeschlagen, wenn  Inkonsistenzen entdeckt werden oder der aktuelle Preis nicht mehr mit dem Katalog uebereinstimmt.  
+  * wird die Seite aus dem Bestellformular oder dem Lieferschein aufgerufen, so wird
+    * angezeigt, welcher Preiseintrag fuer diese Bestellung verwendet wird, und
+    * ein anderer kann gewaehlt werden. Dies geschieht über den **Aktiv**-Button und gilt nur für den betrachteten Lieferschein.
+  * fuer Artikel, fuer die eine Katalogsuche moeglich ist (zur Zeit nur Terra), kann die Artikelnummer((der automatische Vergleich des aktuellen Preiseintrags mit dem Katalog erfolgt (ausschliesslich!) ueber die Artikelnummer)) geaendert werden, entweder durch direkte Eingabe oder ueber eine Katalogsuche. Aenderung der Artikelnummer wird automatisch vorgeschlagen, wenn die Artikelnummer im Katalog nicht gefunden wird.
