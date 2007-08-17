@@ -30,7 +30,7 @@ function time_selector($stunde_feld, $stunde, $minute_feld, $minute){
 /**
  *  Zeigt einen Dienst und die möglichen Aktionen
  */
-function dienst_view($row, $gruppe, $show_buttons = TRUE){
+function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        $critical_date = in_two_weeks();
        if(compare_date2($row["Lieferdatum"], $critical_date)){
 	  //soon
@@ -51,14 +51,14 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE){
 	       <font color="<?echo $color_not_accepted?>"> Dieser Dienst ist euch zugeteilt <br>
 	       <?if($show_buttons){?>
 	       <form action="index.php">
-	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="akzeptieren_<?echo $row["ID"]?>">
 	       <input type="submit" value="akzeptieren">  
 	       </form>
 	       <?}?>
 	       <?if($show_buttons){?>
 	       <form action="index.php" >
-	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="abtauschen_<?echo $row["ID"]?>">
 	       <input type="submit" value="geht nicht">  
 	       </form>
@@ -77,7 +77,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE){
 		       ?>
 	               <?if($show_buttons){?>
 		       <form action="index.php">
-		       <input type="hidden" name="area" value="dienste">
+		       <input type="hidden" name="area" value=<?echo $area?>>
 		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
 		       <input  type="submit" value="übernehmen">  
 		       </form>
@@ -94,7 +94,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE){
 	       <font color=<?echo $color_not_accepted?>>Offener Dienst </font>
 	       <?if($show_buttons){?>
 	       <form action="index.php">
-	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
 	       <input  type="submit" value="übernehmen">  
 	       </form>
@@ -116,7 +116,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE){
 	    ?>
 	       <?if($show_buttons){?>
 	       <form action="index.php" >
-	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="wirdoffen_<?echo $row["ID"]?>">
 	       <input type="submit" value="kann doch nicht">  
 	       </form>
@@ -127,7 +127,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE){
 	       ?>
 	       <?if($show_buttons){?>
 	       <form action="index.php">
-	       <input type="hidden" name="area" value="dienste">
+	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
 	       <input  type="submit" value="übernehmen">  
 	       </form>
@@ -523,7 +523,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
                    <th> Bestellung: </th>
                      <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row['name']; 
 		     if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
-		     	  ?><br> <b>Vorsicht:</b> <a href=index.php?area=dienste>Dienstegruppen abwesend?</a>
+		     	  ?><br> <b>Vorsicht:</b> <a href=index.php?area=dienstplan>Dienstegruppen abwesend?</a>
 		     <? } ?>
 
 		     </td>

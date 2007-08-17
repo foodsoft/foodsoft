@@ -591,7 +591,7 @@ if($hat_dienst_I or $hat_dienst_IV){
 	$areas[] = array("area" => "index.php?area=lieferschein",
 	"hint" => "Hier kann der Lieferschein abgeglichen werden...",
 	"title" => "Lieferschein");
-	$areas[] = array("area" => "index.php?area=bestellt_produkte",
+	$areas[] = array("area" => "index.php?area=verteilung",
 	"hint" => "Hier kann die Verteilung eingesehen und angepasst werden...",
 	"title" => "Verteilung");
  }
@@ -625,13 +625,9 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 	"title" => "Up/Download");
 } 
 
-   $areas[] = array("area" => "index.php?area=dienste", 
+   $areas[] = array("area" => "index.php?area=dienstplan", 
 	        "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...", 
 		"title" => "Dienstplan"
-	   );
-   $areas[] = array("area" => "../wiki", 
-	        "hint"  => "Infos zur Foodcoop und Foodsoft", 
-		"title" => "Wiki"
 	   );
    return $areas;
 }

@@ -15,7 +15,7 @@ require_once("$foodsoftpath/head.php");
     		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
 	} else {
 	 	$result = sql_bestellungen( array(STATUS_LIEFERANT,STATUS_VERTEILT) );
-		select_bestellung_view($result, array("Verteiltabelle" => "bestellt_produkte"));
+		select_bestellung_view($result, array("Verteiltabelle" => "verteilung"));
 		exit();
 	 }
   get_http_var('gruppen_id');
@@ -31,7 +31,7 @@ require_once("$foodsoftpath/head.php");
 
     if (!isset($bestell_id)) {
 	 	$result = sql_bestellungen(array(STATUS_LIEFERANT, STATUS_VERTEILT));
-		select_bestellung_view($result, array("zeigen" => "bestellt_produkte") , "Veteilung der Bestellung");
+		select_bestellung_view($result, array("zeigen" => "verteilung") , "Veteilung der Bestellung");
 		exit();
 	 }
 
@@ -164,7 +164,7 @@ require_once("$foodsoftpath/head.php");
      <tr style='border:none'>
   	<td colspan='4' style='border:none;'>
   	   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
-  	   <input type='hidden' name='area' value='bestellt_produkte'>			
+  	   <input type='hidden' name='area' value='verteilung'>			
   	   <input type='submit' value=' speichern '>
   	   <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
   	</td>

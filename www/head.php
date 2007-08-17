@@ -59,7 +59,16 @@
       foreach(possible_areas() as $menu_area){
         areas_in_head($menu_area);
       }
-     echo "
+     echo "<li>";
+      if($area==""){
+	      $link="";
+      } else {
+	      $link="foodsoft:".$area;
+      }
+
+      wikiLink($link, "Wiki");
+     
+     echo " </li>
      </ul>
 <div id='payload'
     ";
