@@ -494,18 +494,22 @@ table.footer tr, table.footer td {
   border-style:none;
 }
 
-a.wikilink {
+a.wikilink, ul#menu li a.wikilink {
   padding:2px 1ex 2px 2em;
   font-size:11pt;
   background-color:white;
+  color:#ed0606;
   background-image:url(../img/gluehbirne_15x16.png);
   background-repeat:no-repeat;
   background-position:5px;
   text-decoration:none;
 }
-a.wikilink:hover {
+a.wikilink:hover, ul#menu li a.wikilink:hover {
   background-image:url(../img/birne_rot.png);
   text-decoration:underline;
+}
+ul#menu li a.wikilink {
+  margin-left:2em;
 }
 
 .buttonup {
