@@ -764,51 +764,34 @@ function getGlassID(){
 
 }
 function sql_create_gruppenbestellung($gruppe, $bestell_id){
-	    //Gruppenbestellung erzeugen
-	    $sql = "INSERT INTO gruppenbestellungen
-	    		(bestellguppen_id, gesamtbestellung_id)
-			VALUES (".$gruppe.", ".$bestell_id.")";
+	    $sql = "
+        INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id)
+        VALUES ($gruppe, $bestell_id)
+        ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
+      ";
 	    //echo $sql."<br>";
-	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gruppenbestellung nicht eintragen: ",mysql_error());
 	    //Id Auslesen und zurückgeben
 	    $sql = "SELECT last_insert_id() as id;";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
-	    $id = mysql_fetch_array($result);
+	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"SELECT last_insert_id() fehlgeschlagen: ",mysql_error());
+	    $id = mysql_fetch_array($result)
+        or error(__LINE__,__FILE__,"last_insert_id() nicht gefunden: ",mysql_error());
 	    return($id['id']);
 	
 }
 function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
 
-	    //Bestell-ID bestimmen
-      // wird jetzt uebergeben: da sich die masseinheiten aendern koennen, muessen wir
-      // dieselbe nehmen wie in der basaranzeige, nicht irgendeine zum produkt!
-	    // $sql = "SELECT * FROM (".select_basar().") as basar WHERE produkt_id = ".mysql_escape_string($produkt);
-	    //echo $sql."<br>";
-	    // $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basar nich aus DB laden..",mysql_error());
-	    // $row = mysql_fetch_array($result);
-	    // $bestell_id = $row['gesamtbestellung_id'];
+	    //Gruppenbestellung ID raussuchen:
+      $id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
+      //                   ^ ist idempotent!
 
-	    //Gruppenbestellung ID raussuchen
-	    $sql = "SELECT id FROM gruppenbestellungen
-	    		WHERE gesamtbestellung_id = ".$bestell_id.
-			" AND bestellguppen_id = ".$gruppe;
-
-	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gruppenbestellungen nich aus DB laden..",mysql_error());
-
-	    //Evtl. fehlende Gruppenbestellung erzeugen
-	    if(mysql_num_rows($result)==0){
-	    	sql_create_gruppenbestellung($gruppe, $bestell_id);
-	    	$result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gruppenbestellungen nich aus DB laden..",mysql_error());
-	    }
-	    
-	    $row = mysql_fetch_array($result);
-
-	    $sql2 = "INSERT INTO bestellzuordnung
-	    		(produkt_id, gruppenbestellung_id, menge, art)
-			VALUES (".$produkt.", ".$row['id'].", $menge, 2)";
+	    $sql = "
+        INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
+        VALUES ('$produkt','$id','$menge', 2)
+        ON DUPLICATE KEY UPDATE menge = menge + $menge
+      ";
 	    //echo $sql2."<br>";
-	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Basarkauf nicht eintragen",mysql_error());
+	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basarkauf nicht eintragen",mysql_error());
 }
 function kontostand($gruppen_id){
 	    //Bestellt
