@@ -161,7 +161,7 @@
     // zugeteilte mengen ermitteln:
     //
     $zuteilungen = mysql_query(
-      "SELECT *, bestellzuordnung.id as zuteilung_id
+      "SELECT sum(menge) as menge, count(*) as anzahl
         FROM bestellzuordnung
         INNER JOIN gruppenbestellungen
                    ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
@@ -171,66 +171,74 @@
               AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
               AND bestellzuordnung.produkt_id='$produkt_id'
               AND art=2
+        GROUP BY gruppenbestellungen.gesamtbestellung_id,gruppenbestellungen.bestellguppen_id
       "
     ) or error ( __LINE__, __FILE__,
       "Suche nach Zuteilungen fehlgeschlagen: " . mysql_error() );
 
-    $rows = mysql_num_rows($zuteilungen);
-    if( $rows == 0 ) {
-      echo "<td colspan='2'>(keine Zuteilungen)</td>";
-    } else if( $rows == 1 ) {
-      $zuteilung = mysql_fetch_array($zuteilungen);
-      preisdatenSetzen( & $zuteilung );
-
+    switch( $rows = mysql_num_rows($zuteilungen) ) {
+      case 0:
+        $menge = 0;
+        $anzahl = 0;
+        break;
+      case 1:
+        $zuteilung = mysql_fetch_array($zuteilungen);
+        $anzahl = $zuteilung['anzahl'];
+        $menge = $zuteilung['menge'];
+        break;
+      default:
+        $problems = true;
+    }
+    if( $problems ) {
+      echo "
+        <td colspan='2'>
+        <div class='warn' style='margin:1ex;'>FEHLER: $rows Zuteilungen</div>
+      ";
+    } else {
       if( $action == 'zuteilungen_aendern' ) {
         need_http_var("zuteilung_$gruppen_id");
         $verteil_form = ${"zuteilung_$gruppen_id"} / $vorschlag['kan_verteilmult'];
-        if( $verteil_form != $zuteilung['menge'] ) {
+        if( $verteil_form != $menge ) {
           changeVerteilmengen_sql( $verteil_form, $gruppen_id, $produkt_id, $bestell_id );
-          $zuteilung['menge'] = $verteil_form;
+          $menge = $verteil_form;
         }
       }
-
       echo "
         <td class='number' style='padding:1px 1ex 1px 1em;'>
           <input name='zuteilung_$gruppen_id' type='text' size='5'
             style='text-align:right;'
-            value='" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] . "'></td>
-        <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
+            value='" . $menge * $vorschlag['kan_verteilmult'] . "'></td>
+        <td class='unit'>{$vorschlag['kan_verteileinheit']} <!-- <font style='font-size:0.5ex;'>($anzahl)</font>--></td>
         <td class='mult' style='padding-left:1em;'>{$vorschlag['preis_rund']}</td>
         <td class='unit'>/ {$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}</td>
-        <td class='number'>". sprintf("%.2lf", $vorschlag['preis'] * $zuteilung['menge']) . "</td>
+        <td class='number'>". sprintf( "%.2lf", $vorschlag['preis'] * $menge ) . "</td>
       ";
-      $verteilt += $zuteilung['menge'];
-    } else {
-      $problems = true;
-      echo "
-        <td colspan='2'>
-        <div class='warn' style='margin:1ex;'>FEHLER: $rows Zuteilungen:</div>
-        <table class='liste' width='90%'>
-      ";
-      while( $zuteilung = mysql_fetch_array($zuteilungen) ) {
-        echo "
-          <tr>
-            <td class='unit'>" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] 
-                  . "{$vorschlag['kan_verteileinheit']}
-            </td>
-            <td class='unit'>
-              <form action='$self' method='post'>
-                $self_fields
-                <input type='hidden' name='action' value='zuteilung_loeschen'>
-                <input type='hidden' name='zuteilung_id' value='{$zuteilung['zuteilung_id']}'>
-                <input type='submit' name='submit'
-                  value='{$zuteilung['zuteilung_id']} l&ouml;schen'>
-              </form>
-            </td>
-          </tr>
-        ";
-      }
-      echo "</table></td>";
+      $verteilt += $menge;
     }
     echo "</tr>";
   }
+    
+//   Mehrfacheintraege sind kein Fehler, also nicht meckern:
+//         <table class='liste' width='90%'>
+//       while( $zuteilung = mysql_fetch_array($zuteilungen) ) {
+//         echo "
+//           <tr>
+//             <td class='unit'>" . $zuteilung['menge'] * $vorschlag['kan_verteilmult'] 
+//                   . "{$vorschlag['kan_verteileinheit']}
+//             </td>
+//             <td class='unit'>
+//               <form action='$self' method='post'>
+//                 $self_fields
+//                 <input type='hidden' name='action' value='zuteilung_loeschen'>
+//                 <input type='hidden' name='zuteilung_id' value='{$zuteilung['zuteilung_id']}'>
+//                 <input type='submit' name='submit'
+//                   value='{$zuteilung['zuteilung_id']} l&ouml;schen'>
+//               </form>
+//             </td>
+//           </tr>
+//         ";
+//       }
+//       echo "</table></td>";
 
   $basar = $vorschlag['liefermenge'] - $verteilt;
   
@@ -244,7 +252,7 @@
   ";
   if( ! $problems ) {
     echo "
-      <td class='mult'>" . $basar * $vorschlag['kan_verteilmult'] . "</td>
+      <td class='mult'>" . sprintf( "%.2lf", $basar * $vorschlag['kan_verteilmult'] ) . "</td>
       <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
       <td class='mult'>{$vorschlag['preis_rund']}</td>
       <td class='unit'>/ {$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}</td>
