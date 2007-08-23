@@ -632,17 +632,31 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
    return $areas;
 }
 
-function checkpassword($gruppen_id, $gruppen_pwd){
-if (isset($gruppen_id) && isset($gruppen_pwd) && $gruppen_id != "") 
-	 {
-      $result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-	    $bestellgruppen_row = mysql_fetch_array($result);
-			
-			return ($bestellgruppen_row['passwort'] == crypt($gruppen_pwd,35464));
-			
-			
-	 }
-	 return false;
+//
+// Passwort-Funktionen:
+//
+function check_password( $gruppen_id, $gruppen_pwd ) {
+  global $crypt_salt;
+  if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
+    $result = mysql_query( "SELECT password FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
+      or error(__LINE__,__FILE__,"Suche nach Bestellgruppe fehlgeschlagen: ",mysql_error());
+    $row = mysql_fetch_array($result);
+      or error(__LINE__,__FILE__,"Bestellgruppe nicht gefunden: ",mysql_error());
+    if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
+      return $row;
+  }
+  return false;
+}
+function set_password( $gruppen_id, $gruppen_pwd ) {
+  global $crypt_salt;
+  if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
+    ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
+    mysql_query( 
+      "UPDATE bestellgruppen SET passwort='"
+       . mysql_real_escape_string(crypt($gruppen_pwd,$crypt_salt))
+       . "' WHERE id='$gruppen_id'"
+    ) or error(__LINE__,__FILE__,"Setzen des Gruppenpassworts fehlgeschlagen: ",mysql_error());
+  }
 }
 
 function doSql($sql, $debug_level, $error_text){
@@ -1637,29 +1651,34 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   $pr['lieferpreis'] = sprintf( "%8.2lf", $pr['nettopreis'] * $pr['mengenfaktor'] );
 }
 
-function get_http_var( $name ) {
+// get_http_var: bisher definierte $typ argumente:
+//   M : Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
+//
+function get_http_var( $name, $typ = '' ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
   if( isset( $HTTP_GET_VARS[$name] ) ) {
     $$name = $HTTP_GET_VARS[$name];
-    return TRUE;
   } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
     $$name = $HTTP_POST_VARS[$name];
-    return TRUE;
   } else {
     unset( $$name );
     return FALSE;
   }
+  switch( $typ ) {
+    case 'M':
+      $$name = mysql_real_esacape_string( $$name );
+      break;
+    default:
+      break;
+  }
+  return TRUE;
 }
-function need_http_var( $name ) {
-  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
-  if( isset( $HTTP_GET_VARS[$name] ) ) {
-    $$name = $HTTP_GET_VARS[$name];
-  } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-    $$name = $HTTP_POST_VARS[$name];
-  } else {
+function need_http_var( $name, $typ = '' ) {
+  if( ! get_http_var( $name, $typ ) ) {
     error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
     exit();
   }
+  return TRUE;
 }
 
 function fail_if_readonly() {
