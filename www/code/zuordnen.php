@@ -651,7 +651,7 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 function check_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-    $result = mysql_query( "SELECT passwort FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
+    $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
       or error(__LINE__,__FILE__,"Suche nach Bestellgruppe fehlgeschlagen: ",mysql_error());
     $row = mysql_fetch_array($result);
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
@@ -681,7 +681,7 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
       UPDATE dienstkontrollblatt SET
         name = " . ( $name ? "'$name'" : "name" ) . "
       , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
-      , notiz = CONCAT( notiz, ' --- $notiz' )
+      , notiz = IF( notiz = '$notiz', notiz, CONCAT( notiz, ' --- $notiz' ) )
       WHERE id='$dienstkontrollblatt_id'
     " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
     return $dienstkontrollblatt_id;
@@ -1730,33 +1730,73 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 }
 
 // get_http_var: bisher definierte $typ argumente:
+//   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
 //   M : Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
+//   u : positive ganze Zahl
+//   f : Festkommazahl
 //
-function get_http_var( $name, $typ = '' ) {
+function get_http_var( $name, $typ = 'A', $default = false ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
   if( isset( $HTTP_GET_VARS[$name] ) ) {
-    $$name = $HTTP_GET_VARS[$name];
+    $val = $HTTP_GET_VARS[$name];
   } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-    $$name = $HTTP_POST_VARS[$name];
+    $val = $HTTP_POST_VARS[$name];
   } else {
-    unset( $$name );
-    return FALSE;
+    if( $default ) {
+      $$name = $default;
+      return TRUE;
+    } else {
+      unset( $$name );
+      return FALSE;
+    }
   }
+  if( $typ == 'A' ) {
+    if( substr( $name, -3 ) == '_id' ) {
+      $typ = 'u';
+    } else {
+      $typ = '';
+    }
+  }
+  $pattern = '';
   switch( $typ ) {
     case 'M':
-      $$name = mysql_real_escape_string( $$name );
+      $val = mysql_real_escape_string( $val );
+      break;
+    case 'u':
+      $val = trim($val);
+      $pattern = '/^\d+$/';
+      break;
+    case 'f':
+      $val = trim($val);
+      $pattern = '/^[-\d.]+$/';
       break;
     default:
       break;
   }
+  if( $pattern ) {
+    if( ! preg_match( $pattern, $val ) ) {
+      unset( $$name );
+      return FALSE;
+    }
+  }
+  $$name = $val;
   return TRUE;
 }
-function need_http_var( $name, $typ = '' ) {
-  if( ! get_http_var( $name, $typ ) ) {
+function need_http_var( $name, $typ = 'A' ) {
+  if( ! get_http_var( $name, $typ, false ) ) {
     error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
     exit();
   }
   return TRUE;
+}
+
+function reload_immediately( $url ) {
+  echo "
+    <form action='$url' name='reload_now_form' method='get'></form>
+    <script type='text/javascript'>document.forms['reload_now_form'].submit();</script>
+    $print_on_exit;
+  ";
+  exit();
 }
 
 function fail_if_readonly() {

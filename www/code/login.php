@@ -45,9 +45,9 @@
   
   init_login();
 
-  $telefon='';
-  $name='';
-  $notiz='';
+  $telefon ='';
+  $name ='';
+  $notiz ='';
   $problems = '';
 
   // pruefen, ob neue login daten uebergeben werden:
@@ -55,14 +55,12 @@
   get_http_var( 'action' );
 
   if( $action == 'login' ) {
-    get_http_var( 'login_gruppen_id' );
-    if( ( ! isset( $login_gruppen_id ) ) || ( strlen( $login_gruppen_id ) < 1 ) ) {
-      $problems = $problems . "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
-    }
+    get_http_var( 'login_gruppen_id', 'u' )
+      or $problems = $problems . "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
     get_http_var( 'passwort' )
       or $problems = $problems . "<div class='warn'>FEHLER: kein Passwort angegeben</div>";
-    get_http_var( 'dienst' ) or
-       $problems = $problems . "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
+    get_http_var( 'dienst', 'u' )
+      or $problems = $problems . "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
 
     switch( $dienst ) {
       case 0:
@@ -74,108 +72,37 @@
       default:
         $problems = $problems . "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
     }
-    
+
     if( $dienst != 0 ) {
-      get_http_var( 'coopie_name' );
+      get_http_var( 'coopie_name', 'M', '' );
       // if( ! $coopie_name || ( strlen( $coopie_name ) < 2 ) ) {
       //  $problems = $problems . "<div class='warn'>FEHLER: kein Name angegeben</div>";
       // }
-      get_http_var( 'telefon' );
-      get_http_var( 'notiz' );
+      get_http_var( 'telefon', 'M', '' );
+      get_http_var( 'notiz', 'M', '' );
     }
 
     if( ! $problems ) {
-      //
-      // passwort pruefen:
-      //
-      $result = mysql_query(
-        "SELECT * FROM bestellgruppen
-         WHERE (id=".mysql_escape_string($login_gruppen_id).") and (aktiv=1)"
-      ) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-	    $bestellgruppen_row = mysql_fetch_array($result);
-			if( $bestellgruppen_row['passwort'] != crypt($passwort,35464) ) {
+
+      if( $gruppe = check_password( $login_gruppen_id, $passwort ) ) {
+        $login_gruppen_name = $gruppe['name'];
+      } else {
         $problems = $problems . "<div class='warn'>FEHLER: Passwort leider falsch</div>";
       }
-      $login_gruppen_name = $bestellgruppen_row['name'];
-			
     }
 
-    // $msg = "login:<br>";
-
-    if ( ( ! $problems ) && ( $dienst != 0 ) ) {
-      //
-      // eintrag im dienstkontrollblatt:
-      //
-      $result = mysql_query(
-        "SELECT * FROM dienstkontrollblatt WHERE zeit like '$mysqlheute %' ORDER BY id"
+    if ( ( ! $problems ) && ( $dienst > 0 ) ) {
+      $dienstkontrollblatt_id = dienstkontrollblatt_eintrag(
+        false, $login_gruppen_id, $dienst, $coopie_name, $telefon, $notiz 
       );
-      $row = FALSE;
-      while( ( $r1 = mysql_fetch_array($result) ) ) {
-        $row = $r1;
-      }
-      if( $row && ( $row['dienst'] == $dienst ) && ( $row['gruppen_id'] == $login_gruppen_id ) ) {
-        // Eintrag existiert schon: ggf. aktualisieren:
-        if( $notiz != '' ) {
-          mysql_query(
-            "UPDATE dienstkontrollblatt SET notiz='" . mysql_escape_string( $row['notiz'] . $notiz )
-            . "' WHERE id={$row['id']}"
-          );
-        }
-        if( $telefon != '' ) {
-          mysql_query(
-            "UPDATE dienstkontrollblatt SET telefon='$telefon' WHERE id={$row['id']}"
-          );
-        }
-        if( $coopie_name != '' ) {
-          mysql_query(
-            "UPDATE dienstkontrollblatt SET name='" . mysql_escape_string($coopie_name)
-            . "' WHERE id={$row['id']}"
-          );
-        }
-        $dienstkontrollblatt_id = $row['id'];
-//         $msg = $msg
-//           . "update:<br>coopie_name: $coopie_name<br>"
-//           . "<br>telefon: $telefon<br>"
-//           . "<br>notiz: $telefon<br>";
-      } else {
-        $q = "INSERT INTO dienstkontrollblatt
-          (zeit,dienst,gruppen_id,name,telefon,notiz)
-          VALUES ('$mysqljetzt',$dienst,$login_gruppen_id,'$coopie_name','$telefon','$notiz')";
-        mysql_query( $q ) or error( __LINE__, __FILE__, "eintrag im dienstkontrollblatt fehlgeschlagen" );
-        $result = mysql_query(
-          "SELECT id FROM dienstkontrollblatt
-           WHERE zeit='$mysqljetzt' and dienst=$dienst and gruppen_id=$login_gruppen_id"
-        );
-        if( ! $result )
-          error( __LINE__, __FILE__, "eintrag im dienstkontrollblatt fehlgeschlagen" );
-        if( ! ( $row = mysql_fetch_array( $result ) ) )
-          error( __LINE__, __FILE__, "eintrag im dienstkontrollblatt fehlgeschlagen" );
-        $dienstkontrollblatt_id = $row['id'];
-//         $msg = $msg
-//           . "neueintrag: $q<br>id: {$row['id']} <br> coopie_name: $coopie_name / {$row['name']}<br>"
-//           . " telefon: $telefon / {$row['telefon']}<br>"
-//           . " notiz: $notiz / {$row['notiz']}<br>";
-      }
     } else {
       $dienstkontrollblatt_id = 0;
-
-//       if( ! $problems ) {
-//         get_http_var( 'quiz_name' ) && get_http_var( 'quiz_datum' )
-//           && ( $quiz_name ) && ( $quiz_datum )
-//           or $problems = $problems . "<div class='warn'>Bitte das Quiz ausf&uuml;llen!</div>";
-//       }
-//       if( ! $problems ) {
-//         mysql_query(
-//           "INSERT INTO dienstquiz
-//             (gruppen_id,name,datum,eingabezeit)
-//             VALUES ( $login_gruppen_id, '$quiz_name', '$quiz_datum', '$mysqljetzt' ) " );
-//       }
     }
 
     // ggf. passwort aendern:
     //
-    get_http_var( 'pwneu1' );
-    get_http_var( 'pwneu2' );
+    get_http_var( 'pwneu1', '' );
+    get_http_var( 'pwneu2', '' );
     if( isset($pwneu1) && ( strlen( $pwneu1 ) >= 1 ) ) {
       if( strlen( $pwneu1 ) < 2 ) {
         $problems = $problems . "<div class='warn'>FEHLER: neues Passwort zu kurz</div>";
@@ -185,18 +112,14 @@
       }
       if( ! $problems ) {
         setcookie( 'foodsoftkeks', '0', 0, '/' );
-        mysql_query( 
-          "UPDATE bestellgruppen SET passwort='"
-           . mysql_escape_string(crypt($pwneu1,35464))
-           . "' WHERE id=$login_gruppen_id"
-        ) or error(__LINE__,__FILE__,"Konnte das Gruppenpasswort nicht setzen.",mysql_error());
+        set_password( $login_gruppen_id, $pwneu1 )
+          or error(__LINE__,__FILE__,"Konnte das Gruppenpasswort nicht setzen: ",mysql_error());
         include( 'head.php' );
         echo "
           <div class='ok'>
            Passwort erfolgreich geaendert!  &nbsp; <a href='index.php'>weiter...</a>
           </div>
-          </body>
-          </html>
+          $print_on_exit
         ";
         exit();
       }
@@ -207,14 +130,14 @@
       $keks = base64_encode( "$klarkeks" );
       setcookie( 'foodsoftkeks', $keks, 0, '/' ) 
         or error( __LINE__, __FILE__, "setcookie() fehlgeschlagen" );
-      // require_once('head.php');
-      // echo "<div class='ok'>msg: $msg </div>";
-      // echo "keks: $klarkeks, $keks";
       $angemeldet = TRUE;
       set_privileges();
       return;
     }
 
+  // falls kein neues login:
+  // pruefen, ob schon eingeloggt:
+  //
   } elseif( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
 
     // echo "keks: {$_COOKIE['foodsoftkeks']} ";
@@ -222,18 +145,14 @@
     $keks = base64_decode( $_COOKIE['foodsoftkeks'] );
     sscanf( $keks, "%u-%u-%u-%s", &$login_gruppen_id, &$dienst, &$dienstkontrollblatt_id, &$passwort );
 
-    if( ( ! $login_gruppen_id ) or ( $login_gruppen_id < 1 ) ) {
-      $problems = $problems .  "fehler im keks: ungueltige login_gruppen_id";
+    if( ! ( $login_gruppen_id > 0 ) ) {
+      $problems = $problems .  "<div class='warn'>fehler im keks: ungueltige login_gruppen_id</div>";
     } else {
-      $result = mysql_query(
-        "SELECT * FROM bestellgruppen
-         WHERE (id=" . mysql_escape_string($login_gruppen_id) . ") and (aktiv=1)"
-      ) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-      $bestellgruppen_row = mysql_fetch_array($result);
-      if( $bestellgruppen_row['passwort'] != crypt($passwort,35464) ) {
-        $problems = $problems .  "fehler im keks: ungueltiges passwort";
-      } else {
+      $bestellgruppen_row = check_password( $login_gruppen_id, $passwort );
+      if( $bestellgruppen_row ) {
         $login_gruppen_name = $bestellgruppen_row['name'];
+      } else {
+        $problems = $problems .  "<div class='warn'>fehler im keks: ungueltiges passwort</div>";
       }
     }
     switch( $dienst ) {
@@ -244,41 +163,33 @@
       case 5:
         break;
       default:
-        $problems = $problems .  "fehler im keks: ungueltiger dienst";
+        $problems = $problems .  "<div class='warn'>fehler im keks: ungueltiger dienst</div>";
     }
     if( $dienst > 0 ) {
-      $result = mysql_query( "SELECT * FROM dienstkontrollblatt WHERE id='$dienstkontrollblatt_id'" )
-        or $problems = $problems . "fehler im keks: ungueltige dienstkontrollblatt_id";
-      $row = mysql_fetch_array($result);
-      $coopie_name = $row['name'];
+      if( $dienstkontrollblatt_id > 0 ) {
+        $result = dienstkontrollblatt_select( $dienstkontrollblatt_id );
+        $row = mysql_fetch_array($result)
+          or $problems = $problems .  "<div class='warn'>Dienstkontrollblatt-Eintrag nicht gefunden</div>";
+        $coopie_name = $row['name'];
+      } else {
+        $problems = $problems .  "<div class='warn'>fehler im keks: ungueltige dienstkontrollblatt_id</div>";
+      }
     }
 
     if( ! $problems ) {  // login ok, weitermachen...
 
       if( ( $action == 'logout' ) ) {
-        if( $dienst > 0 ) {
-          if( get_http_var('coopie_name') && get_http_var('telefon') && get_http_var('notiz') ) {
-            // ggf. noch  dienstkontrollblatt-Eintrag aktualisieren:
-            mysql_query(
-              " UPDATE dienstkontrollblatt
-                SET name='" . mysql_escape_string( $coopie_name ) . "' "
-              . ",  telefon='" . mysql_escape_string( $telefon ) . "' "
-              . ",  notiz='" . mysql_escape_string( $notiz ) . "' "
-              . "WHERE id=$dienstkontrollblatt_id"
-            ) or error( __LINE__, __FILE__, "Dienstkontrollblatt-Eintrag fehlgeschlagen", mysql_error() );
-            $problems = "<div class='ok'>Abgemeldet!</div>";
-          } else {
-            $problems = "<div class='warn'>Dienstkontrollblatt-Austrag fehlgeschlagen!</div>"
-             . get_http_var('coopie_name')
-             . " name: $coopie_name, "
-             . get_http_var('telefon')
-             . " telefon: $telefon, "
-             . get_http_var('notiz')
-             . " notiz: $notiz "
-            ;
-          }
+        // ggf. noch  dienstkontrollblatt-Eintrag aktualisieren:
+        if( $dienst > 0 and $dienstkontrollblatt_id > 0 ) {
+          get_http_var('coopie_name','M','');
+          get_http_var('telefon','M','');
+          get_http_var('notiz','M','');
+          dienstkontrollblatt_eintrag(
+            $dienstkontrollblatt_id, $login_gruppen_id, $dienst, $coopie_name, $telefon, $notiz 
+          );
         }
         logout();
+        $problems = "<div class='ok'>Abgemeldet!</div>";
       } else {
         $angemeldet = TRUE;
         set_privileges();
@@ -289,11 +200,12 @@
     }
   }
 
+  // ab hier: benutzer ist noch nicht eingeloggt, und hat keine gueltigen
+  // login daten uebergeben. Wir setzen alles zurueck und zeigen das
+  // anmeldeformular:
+
   logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 
-  //
-  // nutzer ist noch nicht angemeldet, also: formular ausgeben:
-  //
   set_privileges(); // im moment: keine...
   require_once('head.php');
 
