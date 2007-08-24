@@ -14,7 +14,7 @@ require_once("$foodsoftpath/head.php");
     if (isset($HTTP_GET_VARS['bestellungs_id'])) {
     		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
 	} else {
-	 	$result = sql_bestellungen( array(STATUS_LIEFERANT,STATUS_VERTEILT) );
+	 	$result = sql_bestellungen( $_SESSION['ALLOWED_ORDER_STATES'][$area] );
 		select_bestellung_view($result, array("Verteiltabelle" => "verteilung"));
 		exit();
 	 }

@@ -10,16 +10,13 @@ error_reporting(E_ALL);
 
 // Übergebene Variablen einlesen...
     $editable=FALSE;
-    $possibleState=array(STATUS_LIEFERANT);
 	switch($area){
 	case 'bestellschein':
-	   $possibleState[]=STATUS_BESTELLEN;
 	   $editable=FALSE;
 	   $title="Bestellschein für den Lieferanten";
 	   $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
 	   break;
 	case 'lieferschein':
-	   $possibleState[]=STATUS_VERTEILT;
 	   $editable=TRUE;
 	   $title="Lieferschein";
 	   $selectButtons = array("zeigen" => "lieferschein");
@@ -33,7 +30,7 @@ error_reporting(E_ALL);
     if (isset($HTTP_GET_VARS['bestellungs_id'])) {
     		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
 	} else {
-	 	$result = sql_bestellungen($possibleState);
+	 	$result = sql_bestellungen($_SESSION['ALLOWED_ORDER_STATES'][$area]);
 		select_bestellung_view($result, $selectButtons, $title );
 		exit();
 	 }

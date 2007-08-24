@@ -13,6 +13,38 @@ function number_selector($name, $min, $max, $selected, $format){
     </select>
   <?
 }
+/**
+ * Stellt eine komplette Editiermöglichkeit für
+ * Datum und Uhrzeit zur Verfügung.
+ * Muss in ein Formluar eingebaut werden
+ * Die Elemente des Datums stehen dann zur Verfügung als
+ *   <prefix>_minute
+ *   <prefix>_stunde
+ *   <prefix>_tag
+ *   <prefix>_monat
+ *   <prefix>_jahr
+ */
+function date_time_selector($sql_date, $prefix, $show_time=true){
+	$datum = date_parse($sql_date);
+
+?>     <table border=0>
+                  <tr>
+                     <td>Datum</td>
+                      <td>
+         <?date_selector($prefix."_tag", $datum['day'],$prefix."_monat", $datum['month'], $prefix."_jahr", $datum['year'])?>
+                     </td>
+                   
+                   </tr><tr>
+
+                 <td>Zeit</td>
+                         <td>
+         <?time_selector($prefix."_stunde", $datum['hour'],$prefix."_minute", $datum['minute'])?>
+                         </td>
+                     </tr>
+                  </table>   
+            
+<?
+}
 function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr){
     number_selector($tag_feld, 1, 31, $tag,"%02d");
     echo ".";
@@ -409,17 +441,21 @@ function areas_in_head($area){
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */
-function select_bestellung_view($result, $area, $head="Bitte eine Bestellung wählen:" ){
+function select_bestellung_view($result, $area, $head="Bitte eine Bestellung wählen:", $editDates = false ){
 
       echo "<h1>".$head."</h1>";
       $span =  count($area);
       ?>
       <br /> <br />
-	     <table style="width:600px;" class="liste">
+	     <table style="width:800px;" class="liste">
 		  <tr>
 		    <th>Name</th>
+                    <th>Status</th>
 		    <th>Beginn</th>
 		    <th>Ende</th>
+                    <th>Lieferung</th>
+        <!-- <th>Ausgang</th>
+        <th>Bezahlung</th> -->
 		    <th colspan=<?echo $span?>></th>
 		 </tr>
 		 <?php
@@ -427,18 +463,35 @@ function select_bestellung_view($result, $area, $head="Bitte eine Bestellung wä
 		 ?>
 		 <tr>                                 
 		    <td><?echo $row['name']?></td>
-		    <td><? echo $row['bestellstart']; ?></td>
+		    <td><? echo $row['state']; ?></td>
+		    <td><?
+			if($editDates){
+				date_time_selector($row['bestellstart'], "start");
+			} else {
+				echo $row['bestellstart']; 
+			}
+		        ?>
+                    </td>
 		    <td><? echo $row['bestellende']; ?></td>
+		    <td><? echo $row['lieferung']; ?></td>
+<!--
+		    <td><? echo $row['ausgang']; ?></td>
+		    <td><? echo $row['beahlung']; ?></td>
+-->
 		    <?
 			while($area_name = current($area)){
 			    $label=key($area);
 				   ?>
 				   <td>
-				      <form action="index.php" method="POST">         
+				   <?
+			           if(in_array($row['state'], $_SESSION['ALLOWED_ORDER_STATES'][$area_name])){ 
+				   ?>
+				      <form action="index.php" method="GET">         
 				      <input type="hidden" name="bestellungs_id" value=<? echo($row['id'])?> >
 				      <input type="hidden" name="area" value=<? echo($area_name)?> >
 					  <input type="submit" value="<?echo($label)?>">
 				       </form>
+				   <?}?>
 				   </td>
 		      <?
 		            next($area);

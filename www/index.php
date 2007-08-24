@@ -59,7 +59,14 @@
 				";
 			    break;
 		    default:
-			    include($area.".php");
+			    if(file_exists($area.".php")){
+			        include($area.".php");
+			    } else {
+                              ?>
+				      <div class='warn'>Ung&uuml;ltiger Bereich: <?echo($area)?></div></body></html>
+			      <?
+			        include('menu.php');
+			    }
 		    }
 	    }
 				 

@@ -22,6 +22,16 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
  define('STATUS_ARCHIVIERT', "archiviert");
 
  $_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
+ $_SESSION['ALLOWED_ORDER_STATES'] = array(
+	     'lieferschein' => array(STATUS_VERTEILT, STATUS_LIEFERANT),
+	     'bestellschein' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
+	     'bestellt_faxansicht' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
+	     'verteilung' => array(STATUS_LIEFERANT,STATUS_VERTEILT),
+	     'bestellungen_overview' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
+	     'konsument' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
+	     'check_balanced' => array(STATUS_VERTEILT),
+	     'archiv' => array(STATUS_ARCHIVIERT)
+	 );
 
 /**
  *  Bestellvorschläge einfügen
@@ -584,6 +594,9 @@ function possible_areas(){
 		"title" => "Mein Konto"
 	   )
    );
+$areas[] = array("area" => "index.php?area=bestellungen_overview",
+	"hint" => "Auflistung aller Bestellungen mit Status und Links",
+	"title" => "Alle Bestellungen");
 $areas[] = array("area" => "index.php?area=bestellen",
 	"hint" => "Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....",
 	"title" => "Bestellen");
@@ -641,7 +654,6 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
     $result = mysql_query( "SELECT password FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
       or error(__LINE__,__FILE__,"Suche nach Bestellgruppe fehlgeschlagen: ",mysql_error());
     $row = mysql_fetch_array($result);
-      or error(__LINE__,__FILE__,"Bestellgruppe nicht gefunden: ",mysql_error());
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
       return $row;
   }
@@ -1054,7 +1066,8 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	 }
 	 if($where != "") {
 	 	$query .= " WHERE ".$where;
-	}
+	 }
+	 $query .= " ORDER BY bestellende DESC,name";
 	$result = doSql(  $query, LEVEL_ALL,"Konnte Gesamtbestellungen nich aus DB laden.. ");
 	return $result;
 }

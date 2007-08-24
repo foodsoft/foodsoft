@@ -33,8 +33,8 @@
    get_http_var("lieferung_monat");
    get_http_var("lieferung_jahr");
    get_http_var("bestellname");
-   var_dump($_REQUEST);
-   var_dump($bestellname);
+   //var_dump($_REQUEST);
+   //var_dump($bestellname);
    get_http_var("bestelliste");
     
     // ggf. die neue bestellung einfügen 
@@ -79,20 +79,10 @@
          } //end if -wenn keine fehler ....
             
     } else {
-       $startzeit_tag       = date("j");
-       $startzeit_monat  = date("n");
-       $startzeit_jahr      = date("Y");   
-       $startzeit_stunde  = date("G");
-       $startzeit_minute  = date("i");
+       $startzeit   = date("Y-m-d  H:i:s");
+       $endzeit  = date("Y-m-d  22:00:00");  
        
-       $endzeit_tag       = date("j");
-       $endzeit_monat  = date("n");
-       $endzeit_jahr      = date("Y");
-       $endzeit_stunde  = "22";
-       
-       $lieferung_tag       = date("j");
-       $lieferung_monat  = date("n");
-       $lieferung_jahr      = date("Y");
+       $lieferung   = date("Y-m-d  H:i:s");
 
     }    
      
@@ -132,21 +122,7 @@
              <td valign="top"><b>Startzeit</b></td>
                <td>
                
-                <table border=0>
-                  <tr>
-                     <td>Datum</td>
-                      <td>
-         <?date_selector("startzeit_tag", $startzeit_tag,"startzeit_monat", $startzeit_monat, "startzeit_jahr", $startzeit_jahr)?>
-                     </td>
-                   
-                   </tr><tr>
-
-                 <td>Zeit</td>
-                         <td>
-         <?time_selector("startzeit_stunde", $startzeit_stunde,"startzeit_minute", $startzeit_minute)?>
-                         </td>
-                     </tr>
-                  </table>   
+		<?date_time_selector($startzeit,"startzeit");?>
                    
                </td>
           </tr>
@@ -154,37 +130,14 @@
              <td valign="top"><b>Ende</b></td>
                <td>
                
-                <table border=0>
-                  <tr>
-                     <td>Datum</td>
-                      <td>
-         <?date_selector("endzeit_tag", $endzeit_tag,"endzeit_monat", $endzeit_monat, "endzeit_jahr", $endzeit_jahr)?>
-                        </td>
-                   
-                   </tr><tr>
-
-                 <td>Zeit</td>
-                         <td>
-         <?time_selector("endzeit_stunde", $endzeit_stunde,"endzeit_minute", $endzeit_minute)?>
-                         </td>
-                     </tr>
-                  </table>   
+		<?date_time_selector($endzeit,"endzeit");?>
                    
                </td>
           </tr>
              <td valign="top"><b>Lieferung</b></td>
                <td>
                
-                <table border=0>
-                  <tr>
-                     <td>Datum</td>
-                      <td>
-         <?date_selector("lieferung_tag", $lieferung_tag,"lieferung_monat", $lieferung_monat, "lieferung_jahr", $lieferung_jahr)?>
-                        </td>
-                   
-                   </tr>
-                  </table>   
-                   
+		<?date_time_selector($lieferung,"lieferung",false);?>
                </td>
           </tr>
           <tr>
