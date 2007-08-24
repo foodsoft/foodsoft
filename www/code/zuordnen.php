@@ -651,7 +651,7 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 function check_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-    $result = mysql_query( "SELECT password FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
+    $result = mysql_query( "SELECT passwort FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
       or error(__LINE__,__FILE__,"Suche nach Bestellgruppe fehlgeschlagen: ",mysql_error());
     $row = mysql_fetch_array($result);
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
@@ -670,6 +670,50 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
     ) or error(__LINE__,__FILE__,"Setzen des Gruppenpassworts fehlgeschlagen: ",mysql_error());
   }
 }
+
+//
+// dienstkontrollblatt-Funktionen:
+// !!! TODO: dienstkontrollblatt muss UNIQUE ( $gruppen_id, $dienst, $datum ) bekommen !!!
+//
+function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
+  if( $dienstkontrollblatt_id ) {
+    mysql_query( "
+      UPDATE dienstkontrollblatt SET
+        name = " . ( $name ? "'$name'" : "name" ) . "
+      , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
+      , notiz = CONCAT( notiz, ' --- $notiz' )
+      WHERE id='$dienstkontrollblatt_id'
+    " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+    return $dienstkontrollblatt_id;
+  } else {
+    mysql_query( "
+      INSERT INTO dienstkontrollblatt (
+          gruppen_id
+        , dienst
+        , telefon
+        , name
+        , notiz
+        , datum
+        , zeit
+      ) VALUES (
+          '$gruppen_id'
+        , '$dienst'
+        , '$telefon'
+        , '$name'
+        , '$notiz'
+        , " . ( $datum ? "'$datum'" :  "CURDATE()" ) . "
+        , " . ( $zeit ? "'$zeit'" :  "CURTIME()" ) . "
+      )
+      ON DUPLICATE KEY UPDATE
+          name = " . ( $name ? "'$name'" : "name" ) . "
+        , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
+        , notiz = CONCAT( notiz, ' --- $notiz' )
+        , id = LAST_INSERT_ID(id)
+    " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+    return mysql_insert_id();
+  }
+}
+
 
 function doSql($sql, $debug_level, $error_text){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
@@ -1679,7 +1723,7 @@ function get_http_var( $name, $typ = '' ) {
   }
   switch( $typ ) {
     case 'M':
-      $$name = mysql_real_esacape_string( $$name );
+      $$name = mysql_real_escape_string( $$name );
       break;
     default:
       break;
