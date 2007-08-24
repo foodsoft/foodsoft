@@ -714,6 +714,27 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
   }
 }
 
+function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
+  $to_id or $to_id = $from_id;
+  $where = '';
+  if( $from_id ) {
+    $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
+  }
+  $result = mysql_query( "
+    SELECT *
+     , bestellgruppen.id as gruppen_id
+     , bestellgruppen.name as gruppen_name
+     , dienstkontrollblatt.id as id
+     , dienstkontrollblatt.name as name
+     , dienstkontrollblatt.telefon as telefon
+    FROM dienstkontrollblatt
+    INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
+    $where
+    ORDER BY dienstkontrollblatt.id
+  " ) or error( __LINE__, __FILE__, "Suche in dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+  return $result;
+}
+
 
 function doSql($sql, $debug_level, $error_text){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";

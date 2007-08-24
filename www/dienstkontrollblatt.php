@@ -11,18 +11,7 @@
   get_http_var('action');
 
   if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
-    $result = mysql_query(
-      " SELECT *
-         , bestellgruppen.id as gruppen_id
-         , bestellgruppen.name as gruppen_name
-         , dienstkontrollblatt.id as id
-         , dienstkontrollblatt.name as name
-         , dienstkontrollblatt.telefon as telefon
-        FROM dienstkontrollblatt
-        INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
-        WHERE dienstkontrollblatt.id = $dienstkontrollblatt_id
-      "
-    ) or error( __LINE__, __FILE__, "konnte dienstkontrollblatt nicht lesen", mysql_error() );
+    $result = dienstkontrollblatt_select( $dienstkontrollblatt_id );
     $row = mysql_fetch_array( $result );
 
     echo "
@@ -60,25 +49,14 @@
     get_http_var('id_to') or $id_to = $id_max;
     get_http_var('id_from') or $id_from = $id_to - 10;
   
-    $result = mysql_query(
-      " SELECT *
-          , bestellgruppen.id as gruppen_id
-          , bestellgruppen.name as gruppen_name
-          , dienstkontrollblatt.id as id
-          , dienstkontrollblatt.name as name
-          , dienstkontrollblatt.telefon as telefon
-         FROM dienstkontrollblatt
-         INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
-         WHERE (dienstkontrollblatt.id >= $id_from) and (dienstkontrollblatt.id <= $id_to)
-         ORDER BY dienstkontrollblatt.id
-      "
-    ) or error( __LINE__, __FILE__, "konnte dienstkontrollblatt nicht lesen", mysql_error() );
+    $result = dienstkontrollblatt_select( $id_from, $id_to );
 
     echo "
       <h1>Dienstkontrollblatt</h1>
       <table class='liste'>
         <tr>
           <th> Nr. </th>
+          <th> Datum </th>
           <th> Zeit </th>
           <th> Dienst </th>
           <th> Gruppe </th>
@@ -103,6 +81,7 @@
           <td>
             <a title='Zentrieren' style='padding:0pt 1ex 0pt 1ex;' href='index.php?area=dienstkontrollblatt&id_to=" . ($row['id'] + 5) . "'> {$row['id']} </a>
           </td>
+          <td>{$row['datum']}</td>
           <td>{$row['zeit']}</td>
           <td>{$row['dienst']}</td>
           <td>{$row['gruppen_name']}</td>
