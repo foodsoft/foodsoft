@@ -1,13 +1,10 @@
 <?php
 
-  // DATEI: Diese Datei enth�t allegmeine Einstellungen. Sie kann angepa� werden!
-
-
   // Verbindungseinstellungen fr den MySQL-Server und die MySQL-Datenbank
   // $db_server      MySQL-Server Hostname oder IP-Adresse (z.B. rdbms.strato.de)
   // $db_user        MySQL Benutzername 
-  // $db_pwd        MySQL Passwort
   // $db_name      Name der MySQL-Datenbank
+  // $db_pwd        MySQL Passwort
   $db_server =  "127.0.0.1";
   $db_name   = "nahrungskette";
   $db_user   = "nahrungskette";
@@ -33,17 +30,14 @@
   }
   $foodsoftserver or $foodsoftserver = "unbekannt";
 
-  $foodsoftpath = realpath( dirname( __FILE__ ) . '/../' ) . '/';
+  $foodsoftpath = realpath( dirname( __FILE__ ) . '/../' );
+  $document_root = realpath( $_SERVER['DOCUMENT_ROOT'] );
+
+  $len = strlen( $document_root );
+  assert( ! strncmp( $document_root, $foodsoftpath, $len ) );
+  $foodsoftdir = substr( $foodsoftpath, $len );
 
   $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
   $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
-
-  // die generalpasswoerter (nur noch voruebergehend noetig):
-  //
-  $real_gruppen_pwd = "foodi";
-  $real_lieferanten_pwd = "foodi";
-  $real_produkte_pwd = "foodi";
-  $real_bestellt_pwd = "foodi";
-  $real_info_pwd = "foodi";
 
 ?>

@@ -25,10 +25,8 @@
       <head>
         <title>$title</title>
         <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-        <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css' />
-        <link rel='stylesheet' type='text/css' media='print' href='/foodsoft/css/print.css' />
-        <!--  fuer die popups:  -->
-        <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
+        <link rel='stylesheet' type='text/css' href='$foodsoftdir/css/foodsoft.css'>
+        <script type='text/javascript' src='$foodsoftdir/js/foodsoft.js' language='javascript'></script>	 
       </head>
       <body onload='$onload_str' class='$ro'>
       <div style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;' class='head$ro'>

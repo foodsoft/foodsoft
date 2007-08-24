@@ -7,17 +7,11 @@
       <head>
         <title>FC Potsdam  - Foodsoft</title>
         <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-        <link rel='stylesheet' type='text/css' href='/foodsoft/css/foodsoft.css'>
-        <!--  fuer die popups:  -->
-        <script src='/foodsoft/js/foodsoft.js' type='text/javascript' language='javascript'></script>	 
+        <link rel='stylesheet' type='text/css' href='$foodsoftdir/css/foodsoft.css'>
+        <script type='text/javascript' src='$foodsoftdir/js/foodsoft.js' language='javascript'></script>	 
       </head>
       <body
     ";
-    // TF: test:  mal probieren ohne separate stylesheets fuer screen und print
-    //     (vielleicht verwirrt das den exploder??)
-    //    <link rel='stylesheet' type='text/css' media='screen' href='/foodsoft/css/foodsoft.css'>
-    //    <link rel='stylesheet' type='text/css' media='print' href='/foodsoft/css/print.css'>
-    //
     if( $readonly ) {
       echo " class='ro'";
     }
