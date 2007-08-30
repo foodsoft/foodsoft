@@ -749,29 +749,41 @@ function doSql($sql, $debug_level, $error_text){
 	return $result;
 
 }
+
+//
+// Bestell-Status Funktionen:
+//
 function getState($bestell_id){
      $sql = "SELECT state FROM gesamtbestellungen WHERE id = $bestell_id";
      $result = doSql($sql, LEVEL_ALL, "Konnte status  nicht von DB laden..");
      $row = mysql_fetch_array($result);
      return $row['state'];
 }
+
 function changeState($bestell_id, $state){
 
-     $current = getState($bestell_id);
+  $current = getState($bestell_id);
+  if( $current == $state )
+    return true;
 
-     switch($state){
-     case "bestellen":
-     break;
-     case "beimLieferanten":
-     break;
-     case "Verteilt":
-     break;
-     case "archiviert":
-     break;
-     default: error(__LINE__,__FILE__, "Ungültiger zu setzender Status");
-     }
-     $sql = "UPDATE gesamtbestellungen SET state = '$state' WHERE id = $bestell_id";
-    doSql($sql, LEVEL_KEY, "Konnte status  in DB nicht ändern..");
+  nur_fuer_dienst(1,3,4);
+  switch( "$current,$state" ){
+    case "bestellen,beimLieferanten":
+      verteilmengenZuweisen( $bestell_id );
+      break;
+    case "beimLieferanten,bestellen":
+      verteilmengenLoeschen( $bestell_id );
+      break;
+    case "beimLieferanten,Verteilt":
+      break;
+    case "Verteilt,archiviert":
+      break;
+    default:
+      error(__LINE__,__FILE__, "Ungültiger Statuswechsel");
+      return false;
+  }
+  $sql = "UPDATE gesamtbestellungen SET state = '$state' WHERE id = $bestell_id";
+  return doSql($sql, LEVEL_KEY, "Konnte status  in DB nicht ändern..");
 }
 
 /**
@@ -783,7 +795,8 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
     $query = "SELECT * FROM gesamtbestellungen WHERE (state =
     '".STATUS_BESTELLEN."' or state = '".STATUS_LIEFERANT."' ) AND id = ".mysql_escape_string($bestell_id);
 	$result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden.. ");
-	if(mysql_num_rows($result)==0) return false;
+	if(mysql_num_rows($result)==0)
+    return true;
 
 	$sql = "DELETE bestellzuordnung.* FROM bestellzuordnung inner
 	join gruppenbestellungen on (gruppenbestellungen.id =
