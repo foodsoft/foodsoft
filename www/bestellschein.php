@@ -1,39 +1,94 @@
 <?php
+//
+// bestellschein.php:
+// - wenn bestell_id (oder bestellungs_id...) uebergeben:
+//   detailanzeige, abhaengig vom status der bestellung
+// - wenn keine bestell_id uebergeben:
+//   auswahlliste aller bestellungen zeigen
+//   (ggf. mit filter "status")
+//
+
 error_reporting(E_ALL);
-// um die bestellungen nach produkten sortiert zu sehen ....
 
      if( ! $angemeldet ) {
        exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
      } 
 
-     if(!nur_fuer_dienst(1,3,4)){exit();}
+if( get_http_var( 'bestellungs_id', 'u' ) )
+  $bestell_id = $bestellungs_id;
+else
+  get_http_var( 'bestell_id', 'u' );
 
-// Übergebene Variablen einlesen...
-    $editable=FALSE;
-	switch($area){
-	case 'bestellschein':
-	   $editable=FALSE;
+
+
+if( ! get_http_var( 'status', 'w' ) ) {
+  switch( $area ) {
+    case 'lieferschein':
+      $status = 'Verteilt';
+      break;
+    case 'bestellschein':
+      $status = 'beimLieferanten';
+      break;
+    default:
+  }
+}
+
+$self = "$foodsoftdir/index.php?area=bestellschein";
+$self_fields = "<input type='hidden' name='area' value='bestellschein'>";
+if( $bestell_id ) {
+  $self = "$self&bestell_id=$bestell_id";
+  $self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
+}
+$self_form = "<form action='$self' method='post'>$self_fields";
+
+get_http_var( 'action', 'w' );
+switch( $action ) {
+  case 'changeState':
+    nur_fuer_dienst(1,3,4);
+    need_http_var( 'change_id', 'u' );
+    need_http_var( 'change_to', 'w' );
+    changeState( $change_id, $change_to );
+    break;
+  case 'changeEndDate':
+    nur_fuer_dienst(4);
+    // yet to be implemented...
+  default:
+    break;
+}
+ 
+  if( ! $bestell_id ) {
+    $result = sql_bestellungen( $status );
+    select_bestellung_view($result, /* $selectButtons, */ 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
+    echo "$print_on_exit";
+    exit();
+  }
+
+  $state = getState( $bestell_id );
+	switch($state){
+	case 'bestellen':
+     $editable = FALSE;
+	   $title="Bestellschein (vorlÃ¤ufig)";
+	   $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
+	   break;
+	case 'beimLieferanten':
+     $editable= FALSE;
 	   $title="Bestellschein für den Lieferanten";
 	   $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
 	   break;
-	case 'lieferschein':
-	   $editable=TRUE;
+	case 'Verteilt':
+	   $editable = ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
 	   $title="Lieferschein";
 	   $selectButtons = array("zeigen" => "lieferschein");
 	   break;
 	default: 
 	   ?>
-	   <p> Fehlerhafte Auswahl für area: <?echo $area?> </p>
+	   <div class='warn'>Keine Detailanzeige verfÃ¼gbar</div>
 	   <?
+     echo "$print_on_exit";
 	   exit();
 	}
-    if (isset($HTTP_GET_VARS['bestellungs_id'])) {
-    		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
-	} else {
-	 	$result = sql_bestellungen($_SESSION['ALLOWED_ORDER_STATES'][$area]);
-		select_bestellung_view($result, $selectButtons, $title );
-		exit();
-	 }
+
+
 										
 	 if(getState($bestell_id)==STATUS_BESTELLEN){
 	 	verteilmengenZuweisen($bestell_id);

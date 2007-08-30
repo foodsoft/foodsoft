@@ -27,17 +27,17 @@ function number_selector($name, $min, $max, $selected, $format){
 function date_time_selector($sql_date, $prefix, $show_time=true){
 	$datum = date_parse($sql_date);
 
-?>     <table border=0>
+?>     <table class='inner'>
                   <tr>
                      <td>Datum</td>
-                      <td>
+                      <td style='white-space:nowrap;'>
          <?date_selector($prefix."_tag", $datum['day'],$prefix."_monat", $datum['month'], $prefix."_jahr", $datum['year'])?>
                      </td>
                    
                    </tr><tr>
 
                  <td>Zeit</td>
-                         <td>
+                         <td style='white-space:nowrap;'>
          <?time_selector($prefix."_stunde", $datum['hour'],$prefix."_minute", $datum['minute'])?>
                          </td>
                      </tr>
@@ -441,13 +441,14 @@ function areas_in_head($area){
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */
-function select_bestellung_view($result, $area, $head="Bitte eine Bestellung wählen:", $editDates = false ){
+function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:", $editDates = false, $changeState = false ) {
+  global $self, $self_fields, $self_form, $foodsoftdir;
 
       echo "<h1>".$head."</h1>";
-      $span =  count($area);
+      // $span =  count($area);
       ?>
       <br /> <br />
-	     <table style="width:800px;" class="liste">
+	     <table style="width:100%" class="liste">
 		  <tr>
 		    <th>Name</th>
                     <th>Status</th>
@@ -456,48 +457,117 @@ function select_bestellung_view($result, $area, $head="Bitte eine Bestellung wä
                     <th>Lieferung</th>
         <!-- <th>Ausgang</th>
         <th>Bezahlung</th> -->
-		    <th colspan=<?echo $span?>></th>
-		 </tr>
-		 <?php
+		    <th> Detailansicht </th>
+      <?
+      if( $changeState )
+        echo "<th> Aktionen </th>";
+      echo "</tr>";
+
 		 while ($row = mysql_fetch_array($result)) {
+       $id = $row['id'];
+       $detail_url = "javascript:neuesfenster('$foodsoftdir/index.php?area=bestellschein&bestell_id=$id','bestellschein');";
+       $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?area=bestellt_faxansicht&bestell_id=$id','bestellfax');";
+       $self_form = "<form action='$self' method='post'>$self_fields";
 		 ?>
 		 <tr>                                 
 		    <td><?echo $row['name']?></td>
 		    <td><? echo $row['state']; ?></td>
+		    <td><? echo $row['bestellstart']; ?></td>
 		    <td><?
-			if($editDates){
-				date_time_selector($row['bestellstart'], "start");
+			if($editDates && ( $row['state'] == 'bestellen' ) ) {
+				date_time_selector($row['bestellende'], "ende");
 			} else {
-				echo $row['bestellstart']; 
+				echo $row['bestellende']; 
 			}
-		        ?>
+		  ?>
                     </td>
-		    <td><? echo $row['bestellende']; ?></td>
 		    <td><? echo $row['lieferung']; ?></td>
 <!--
 		    <td><? echo $row['ausgang']; ?></td>
-		    <td><? echo $row['beahlung']; ?></td>
+		    <td><? echo $row['bezahlung']; ?></td>
 -->
-		    <?
-			while($area_name = current($area)){
-			    $label=key($area);
-				   ?>
-				   <td>
-				   <?
-			           if(in_array($row['state'], $_SESSION['ALLOWED_ORDER_STATES'][$area_name])){ 
-				   ?>
-				      <form action="index.php" method="GET">         
-				      <input type="hidden" name="bestellungs_id" value=<? echo($row['id'])?> >
-				      <input type="hidden" name="area" value=<? echo($area_name)?> >
-					  <input type="submit" value="<?echo($label)?>">
-				       </form>
-				   <?}?>
-				   </td>
-		      <?
-		            next($area);
-
-			}
-			reset($area);
+      <?
+      switch( $row['state'] ) {
+        case 'bestellen':
+          ?>
+            <td><a href="<? echo "$detail_url"; ?>">Bestellschein (vorl&auml;ufig)</a></td>
+          <?
+          if( $changeState ) {
+            ?> <td> <?
+            if( $hat_dienst_IV ) {
+              echo "$self_form";
+              ?>
+                  <input type='hidden' name='action' value='changeState'>
+                  <input type='hidden' name='change_id' value='<? echo "$id"; ?>'>
+                  <input type='hidden' name='change_to' value='beimLieferanten'>
+                  <input type='submit' class='button' name='submit' value='>>> Bestellschein erstellen >>>'>
+                </form>
+              <?
+            }
+            ?> </td> <?
+          }
+          break;
+        case 'beimLieferanten':
+          ?>
+            <td><a href="<? echo "$detail_url"; ?>">Bestellschein</a>
+            ---
+            <a href="<? echo "$fax_url"; ?>">Bestell-Fax (.pdf)</a></td>
+          <?
+          if( $changeState ) {
+            ?> <td> <?
+            if( $hat_dienst_IV ) {
+              echo "$self_form";
+              ?>
+                  <input type='hidden' name='action' value='changeState'>
+                  <input type='hidden' name='change_id' value='<? echo "$id"; ?>'>
+                  <input type='hidden' name='change_to' value='bestellen'>
+                  <input type='submit' class='button' name='submit'
+                    title='Bestellung nochmal zum Bestellen freigeben'
+                    value='<<< Nachbestellen <<<'>
+                </form>
+              <?
+            }
+            if( $dienst > 0 ) {
+              echo "$self_form";
+              ?>
+                  <input type='hidden' name='action' value='changeState'>
+                  <input type='hidden' name='change_id' value='<? echo "$id"; ?>'>
+                  <input type='hidden' name='change_to' value='Verteilt'>
+                  <input type='submit' class='button' name='submit'
+                    title='Bestellung wurde geliefert: Lieferschein erstellen'
+                    value='>>> Lieferschein erstellen >>>'>
+                </form>
+              <?
+            }
+            ?> </td> <?
+          }
+          break;
+        case 'Verteilt':
+          ?>
+            <td><a href="<? echo "$detail_url"; ?>">Lieferschein</a>
+            ---
+            <a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a></td>
+          <?
+          if( $changeState ) {
+            ?>
+              <td> - </td>
+            <?
+          }
+          break;
+        case 'archiviert':
+        default:
+          ?>
+            <td>(keine Details verf&uuml;gbar)</td>
+          <?
+          if( $changeState ) {
+            ?>
+              <td> - </td>
+            <?
+          }
+          break;
+      }
+			
+      // reset($area);
 		    ?>
 		 </tr>   
 		  <?  }?>
