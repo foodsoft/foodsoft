@@ -1740,6 +1740,7 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 //   M : Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
 //   u : positive ganze Zahl
 //   f : Festkommazahl
+//   w : bezeichner: alphanumerisch und _
 //
 function get_http_var( $name, $typ = 'A', $default = false ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
@@ -1775,6 +1776,10 @@ function get_http_var( $name, $typ = 'A', $default = false ) {
     case 'f':
       $val = trim($val);
       $pattern = '/^[-\d.]+$/';
+      break;
+    case 'w':
+      $val = trim($val);
+      $pattern = '/^[a-zA-Z0-9_]+$/';
       break;
     default:
       break;

@@ -95,6 +95,7 @@
       $dienstkontrollblatt_id = dienstkontrollblatt_eintrag(
         false, $login_gruppen_id, $dienst, $coopie_name, $telefon, $notiz 
       );
+      // echo "<div class='ok'>neue dienstkontrollblatt_id: $dienstkontrollblatt_id</div>";
     } else {
       $dienstkontrollblatt_id = 0;
     }
@@ -117,7 +118,7 @@
         include( 'head.php' );
         echo "
           <div class='ok'>
-           Passwort erfolgreich geaendert!  &nbsp; <a href='index.php'>weiter...</a>
+           Passwort erfolgreich geaendert!  &nbsp; <a href='$foodsoftdir/index.php'>weiter...</a>
           </div>
           $print_on_exit
         ";
@@ -172,7 +173,7 @@
           or $problems = $problems .  "<div class='warn'>Dienstkontrollblatt-Eintrag nicht gefunden</div>";
         $coopie_name = $row['name'];
       } else {
-        $problems = $problems .  "<div class='warn'>fehler im keks: ungueltige dienstkontrollblatt_id</div>";
+        $problems = $problems .  "<div class='warn'>fehler im keks $keks: ungueltige dienstkontrollblatt_id: $dienstkontrollblatt_id</div>";
       }
     }
 
@@ -207,13 +208,13 @@
   logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 
   set_privileges(); // im moment: keine...
-  require_once('head.php');
+  require_once('$foodsoftdir/head.php');
 
-  get_http_var( 'area' );
+  get_http_var( 'area', 'w' );
   if( isset( $from_dokuwiki ) && $from_dokuwiki or ( $area == 'wiki' ) ) {
-    $form_action='/foodsoft/index.php?area=wiki';
+    $form_action='$foodsoftdir/index.php?area=wiki';
   } else {
-    $form_action='index.php';
+    $form_action='$foodsoftdir/index.php';
   }
   echo "
     <form action='$form_action' method='post' class='small_form'>
@@ -326,31 +327,6 @@
          </fieldset>
        </div>
        ";
-//        <div id='quiz' style='display:";
-//        echo $dienst ? 'none' : 'block';
-// echo ";'>
-//          <fieldset class='small_form' style='padding:1em'>
-//            <legend>
-//              Quiz
-//            </legend>
-//            <div class='kommentar'>
-//              Aus aktuellem Anlass: ein kleines Quiz:
-//            </div>
-//            <div class='newfield'>
-//              Den n&auml;chsten Dienst meiner Gruppe macht...
-//            </div>
-//            <div class='newfield'>
-//              <label>Name:</label>
-//              <input type='text' size='20' name='quiz_name' value='$quiz_name'>
-//              <label style='padding-left:4em;'>am:</label>
-//              <input type='text' size='20' name='quiz_datum' value='$quiz_datum'>
-//            </div>
-//            <div class='kommentar' style='padding-top:2em;'>
-//              Keine Ahnung? Kein Problem! Hier geht's zum
-//              <a href='http://nahrungskette.fcschinke09.de/wiki/doku.php?id=start&do=login' target='_new'>Dienstplan</a>!
-//            </div>
-//          </fieldset>
-//        </div>
   echo "
        <div class='newfield'>
          <input type='submit' name='submit' value='OK'>
@@ -388,39 +364,39 @@
       if( $dienst == func_get_arg($i) )
         return TRUE;
     }
-    require_once( 'head.php' );
-    echo "<div class='warn'>Keine Berechtigung</div></body></html>";
+    require_once( $foodsoftdir/'head.php' );
+    echo "<div class='warn'>Keine Berechtigung</div> $print_on_exit";
     exit();
   }
   function nur_fuer_dienst_I() {
     global $hat_dienst_I;
     if( ! $hat_dienst_I ) {
-      require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst I</div></body></html>";
+      require_once( '$foodsoftdir/head.php' );
+      echo "<div class='warn'>Nur fuer Dienst I</div> $print_on_exit";
       exit();
     }
   }
   function nur_fuer_dienst_III() {
     global $hat_dienst_III;
     if( ! $hat_dienst_III ) {
-      require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst II</div></body></html>";
+      require_once( '$foodsoftdir/head.php' );
+      echo "<div class='warn'>Nur fuer Dienst II</div> $print_on_exit";
       exit();
     }
   }
   function nur_fuer_dienst_IV() {
     global $hat_dienst_IV;
     if( ! $hat_dienst_IV ) {
-      require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst IV</div></body></html>";
+      require_once( '$foodsoftdir/head.php' );
+      echo "<div class='warn'>Nur fuer Dienst IV</div> $print_on_exit";
       exit();
     }
   }
   function nur_fuer_dienst_V() {
     global $hat_dienst_V;
     if( ! $hat_dienst_V ) {
-      require_once( 'head.php' );
-      echo "<div class='warn'>Nur fuer Dienst V</div></body></html>";
+      require_once( '$foodsoftdir/head.php' );
+      echo "<div class='warn'>Nur fuer Dienst V</div> $print_on_exit";
       exit();
     }
   }
