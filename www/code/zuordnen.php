@@ -707,9 +707,15 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
       ON DUPLICATE KEY UPDATE
           name = " . ( $name ? "'$name'" : "name" ) . "
         , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
-        , notiz = CONCAT( notiz, ' --- $notiz' )
+        , notiz = CONCAT( notiz, ' --- ', '$notiz' )
+        , zeit = CURTIME()
         , id = LAST_INSERT_ID(id)
     " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+    $id = mysql_insert_id();
+    //  WARNING: ^ does not always work (see http://bugs.mysql.com/bug.php?id=27033)
+    //  (fixed in mysql-5.0.45)
+    //
+    // echo "<div class='ok'>Dienstkontrollblatt: ID: $id</div>";
     return mysql_insert_id();
   }
 }
@@ -1792,7 +1798,7 @@ function need_http_var( $name, $typ = 'A' ) {
 
 function reload_immediately( $url ) {
   echo "
-    <form action='$url' name='reload_now_form' method='get'></form>
+    <form action='$url' name='reload_now_form' method='post'></form>
     <script type='text/javascript'>document.forms['reload_now_form'].submit();</script>
     $print_on_exit;
   ";
