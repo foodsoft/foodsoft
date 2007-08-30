@@ -81,7 +81,6 @@
 				 
 				    $row_gesamtbestellung = mysql_fetch_array($result);
 				    $bestell_id = $row_gesamtbestellung['id'];
-				    $lieferant_idx = $row_gesamtbestellung['id'];
 						$gesamt_preis = 0;
 						$max_gesamt_preis = 0;
 						
@@ -556,7 +555,6 @@
 	        <tr>
 						 <th>Bezeichnung</th>
 						 <th>Produktgruppe</th>
-						 <th>Lieferant</th>
 						 <th>Gebinde</th>
              <th>Anzahl</th>
              <th colspan='2'>Preis</th>
@@ -957,8 +955,6 @@
 						 		}  ?>
 						 </td>
 						 <td valign="top"><?PHP echo $produktgruppen_id2name[$produkt_row['produktgruppen_id']]; ?></td>
-						 <td valign="top"><?PHP echo $lieferanten_id2name[$produkt_row['lieferanten_id']]; 
-						 						$lieferant_idx=$lieferanten_id2name[$produkt_row['lieferanten_id']]; ?></td>
 						 <!-- <td valign="top">
 						     <table border="0" width="100%" class="inner"> -->
 			<?PHP 
@@ -1194,7 +1190,7 @@
 		    </form>
  
 <?php if( ! $readonly ) {  ?>
-   <h3> Zusätzlich Produkt in Bestellliste aufnehmen </h3>
+   <h3> Zusätzlich Produkt in Bestellvorlage aufnehmen </h3>
    <form method='post' action='index.php?area=bestellen'>
 	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
 	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
@@ -1234,11 +1230,8 @@
 							    // Bestellung in die Datenbank eintragen...
 							//		echo "trage daten ein!<br>";
 									
-									if (!isset($gruppenbestellung_id)) {
-									   //echo "-> INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id) VALUES (".$gruppen_id.",".$bestell_id.");<br>";
-									   mysql_query("INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id) VALUES (".mysql_escape_string($gruppen_id).",".mysql_escape_string($bestell_id).");")  or error(__LINE__,__FILE__,"Konnte Gruppenbestellung nicht in die Datenbank schreiben..",mysql_error());
-										 $gruppenbestellung_id = mysql_insert_id();
-									}
+                  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+                  //                         ^ ^ ^ ist idempotent!
 									
 									// erhöte Bestellmengen eintragen
 							    if (isset($neueBestellungFest))
