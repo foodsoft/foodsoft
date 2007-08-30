@@ -284,6 +284,9 @@ function sql_date_list($start, $end, $spacing) {
 function compare_date2($first, $second){
    return strtotime($first) < strtotime($second);
 }
+/**
+ *
+ */
 function in_two_weeks(){
      //Now
      $date = date_sql2intern(strftime("%Y-%m-%d %H:%M:%s"));
@@ -651,30 +654,34 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 function check_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-    $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1" )
-      or error(__LINE__,__FILE__,"Suche nach Bestellgruppe fehlgeschlagen: ",mysql_error());
+
+	  $sql="SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1";
+    $result = doSql($sql, LEVEL_ALL, "Suche nach Bestellgruppe fehlgeschlagen..");
     $row = mysql_fetch_array($result);
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
       return $row;
   }
   return false;
 }
+/**
+ *
+ */
 function set_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
-    mysql_query( 
-      "UPDATE bestellgruppen SET passwort='"
+    $query= "UPDATE bestellgruppen SET passwort='"
        . mysql_real_escape_string(crypt($gruppen_pwd,$crypt_salt))
-       . "' WHERE id='$gruppen_id'"
-    ) or error(__LINE__,__FILE__,"Setzen des Gruppenpassworts fehlgeschlagen: ",mysql_error());
+       . "' WHERE id='$gruppen_id'";
+    doSql($query, LEVEL_IMPORTANT, "Setzen des Gruppenpassworts fehlgeschlagen...");
+
   }
 }
 
-//
-// dienstkontrollblatt-Funktionen:
-// !!! TODO: dienstkontrollblatt muss UNIQUE ( $gruppen_id, $dienst, $datum ) bekommen !!!
-//
+/**
+ * dienstkontrollblatt-Funktionen:
+ * !!! TODO: dienstkontrollblatt muss UNIQUE ( $gruppen_id, $dienst, $datum ) bekommen !!!
+ */
 function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
   if( $dienstkontrollblatt_id ) {
     mysql_query( "
@@ -749,7 +756,6 @@ function doSql($sql, $debug_level, $error_text){
 	return $result;
 
 }
-
 //
 // Bestell-Status Funktionen:
 //
@@ -759,6 +765,9 @@ function getState($bestell_id){
      $row = mysql_fetch_array($result);
      return $row['state'];
 }
+/**
+ *
+ */
 
 function changeState($bestell_id, $state){
 
@@ -817,11 +826,13 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 
 	return true;
 }
+/**
+ *
+ */
 function sql_basar_id(){
 	    $sql = "SELECT id FROM bestellgruppen
 	    		WHERE name = \"_basar\"";
-	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basar-ID nich aus DB laden..",mysql_error());
+             $result = doSql($sql, LEVEL_ALL, "Konnte Basar-ID nich aus DB laden..");
 	    if(mysql_num_rows($result)!=1) 
 		error(__LINE__,__FILE__,"Kein Eintrag für Glasrueckgabe" );
 	    $row = mysql_fetch_array($result);
@@ -829,18 +840,25 @@ function sql_basar_id(){
 
 
 }
+/**
+ *
+ */
 function sqlUpdateTransaction($transaction, $receipt){
 	    $sql="UPDATE gruppen_transaktion SET kontoauszugs_nr = ".$receipt." WHERE id = ".$transaction;
-	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or
-	    error(__LINE__,__FILE__,"Konnte Transaktion in DB nicht aktualisieren.. ($sql)",mysql_error());
+            doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
 }
+/**
+ *
+ */
 function sql_groupGlass($gruppe, $menge){
 	//include_once("config.php");  tut bisher nicht
 	$pfand_preis = 0.16; 
 	sqlGroupTransaction(2, $gruppe, ($pfand_preis*$menge),"NULL" ,'Glasrueckgabe');
 }
 
+/**
+ *
+ */
 function sqlGroupTransaction($transaktionsart,
 			         $gruppen_id,
 				 $summe, $auszug_nr = NULL,
@@ -858,51 +876,43 @@ function sqlGroupTransaction($transaktionsart,
 			  "', '".mysql_escape_string($notiz).
 			  "', '".mysql_escape_string($kontobewegungs_datum).
 			  "')" ;
-	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Glas-Rückgabe nicht in DB speichern.. ($sql)",mysql_error());
+             doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
 }
-function getGlassID(){
-	    $sql = "SELECT id FROM produkte
-	    		WHERE name = \"glasrueckgabe\"";
-	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Glas-Produkt-ID nich aus DB laden..",mysql_error());
-	    if(mysql_num_rows($result)!=1) 
-		error(__LINE__,__FILE__,"Kein Eintrag für Glasrueckgabe" );
-	    $row = mysql_fetch_array($result);
-	    return $row['id'];
-
-
-}
+/**
+ *
+ */
 function sql_create_gruppenbestellung($gruppe, $bestell_id){
 	    $sql = "
         INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id)
         VALUES ($gruppe, $bestell_id)
         ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
       ";
-	    //echo $sql."<br>";
-	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gruppenbestellung nicht eintragen: ",mysql_error());
+            doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppenbestellung nicht in DB ändern...");
 	    //Id Auslesen und zurückgeben
 	    $sql = "SELECT last_insert_id() as id;";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"SELECT last_insert_id() fehlgeschlagen: ",mysql_error());
-	    $id = mysql_fetch_array($result)
-        or error(__LINE__,__FILE__,"last_insert_id() nicht gefunden: ",mysql_error());
+            $result = doSql($sql, LEVEL_ALL, "Konnte last_insert_id nicht laden..");
+	    $id = mysql_fetch_array($result);
 	    return($id['id']);
 	
 }
+/**
+ *
+ */
 function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
 
 	    //Gruppenbestellung ID raussuchen:
       $id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
       //                   ^ ist idempotent!
 
-	    $sql = "
-        INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
+	    $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
         VALUES ('$produkt','$id','$menge', 2)
         ON DUPLICATE KEY UPDATE menge = menge + $menge
       ";
-	    //echo $sql2."<br>";
-	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basarkauf nicht eintragen",mysql_error());
+            doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
 }
+/**
+ *
+ */
 function kontostand($gruppen_id){
 	    //Bestellt
 	    $query = "SELECT summe FROM (".select_bestellsumme().")as bestellsumme WHERE bestellguppen_id = ".mysql_escape_string($gruppen_id);
@@ -914,18 +924,22 @@ function kontostand($gruppen_id){
 	    $query = "SELECT sum( summe ) as summe
 			FROM `gruppen_transaktion`
 			WHERE gruppen_id =".mysql_escape_string($gruppen_id);
-	    //echo "<p>".$query."</p>";
-	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
+            $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
 	    $row = mysql_fetch_array($result);
 	    $summe += $row['summe'];
-
 	    return $summe;
 
 }
+/**
+ *
+ */
 function select_verteilmengen_preise(){
 	return "select `gruppenbestellungen`.`bestellguppen_id` AS `bestellguppen_id`,`gesamtbestellungen`.`id` AS `bestell_id`,`gesamtbestellungen`.`name` AS `name`,`bestellzuordnung`.`produkt_id` AS `produkt_id`,`bestellzuordnung`.`menge` AS `menge`,`produktpreise`.`preis` AS `preis`,`gesamtbestellungen`.`bestellende` AS `bestellende` from ((((`bestellzuordnung` join `gruppenbestellungen` on((`bestellzuordnung`.`gruppenbestellung_id` = `gruppenbestellungen`.`id`))) join `bestellvorschlaege` on(((`bestellzuordnung`.`produkt_id` = `bestellvorschlaege`.`produkt_id`) and (`gruppenbestellungen`.`gesamtbestellung_id` = `bestellvorschlaege`.`gesamtbestellung_id`)))) join `produktpreise` on((`bestellvorschlaege`.`produktpreise_id` = `produktpreise`.`id`))) join `gesamtbestellungen` on((`gesamtbestellungen`.`id` = `gruppenbestellungen`.`gesamtbestellung_id`))) where (`bestellzuordnung`.`art` = 2) order by `gesamtbestellungen`.`bestellende`
 ";
 }
+/**
+ *
+ */
 function select_verteilmengen(){
 	return " SELECT sum(menge) as verteilmenge, gesamtbestellung_id,
 	produkt_id FROM bestellzuordnung inner join
@@ -933,6 +947,9 @@ function select_verteilmengen(){
 		= gruppenbestellungen.id) WHERE art = 2
 	GROUP BY gesamtbestellung_id , produkt_id";
 }
+/**
+ *
+ */
 function select_bestellkosten(){
 	return "select `verteilmengen_preise`.`bestellguppen_id` AS
 	`bestellguppen_id`,`verteilmengen_preise`.`bestell_id` AS
@@ -942,18 +959,18 @@ function select_bestellkosten(){
 	`gesamtpreis`,`verteilmengen_preise`.`bestellende` AS
 	`bestellende` from (".select_verteilmengen_preise().") as `verteilmengen_preise` group by `verteilmengen_preise`.`bestellguppen_id`,`verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`name`,`verteilmengen_preise`.`bestellende`";
 }
+/**
+ *
+ */
 function select_bestellsumme(){
 	return "select bestellkosten.bestellguppen_id
 	,sum(bestellkosten.gesamtpreis) AS summe from
 	(".select_bestellkosten().") as`bestellkosten` group by `bestellkosten`.`bestellguppen_id`
 ";
-	/*
-	`bestellsumme` AS select `bestellkosten`.`bestellguppen_id` AS `bestellguppen_id`,sum(`bestellkosten`.`gesamtpreis`) AS `summe` from `bestellkosten` group by `bestellkosten`.`bestellguppen_id`
-	`bestellkosten` AS select `verteilmengen_preise`.`bestellguppen_id` AS `bestellguppen_id`,`verteilmengen_preise`.`bestell_id` AS `bestell_id`,`verteilmengen_preise`.`name` AS `name`,sum((`verteilmengen_preise`.`menge` * `verteilmengen_preise`.`preis`)) AS `gesamtpreis`,`verteilmengen_preise`.`bestellende` AS `bestellende` from `verteilmengen_preise` group by `verteilmengen_preise`.`bestellguppen_id`,`verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`name`,`verteilmengen_preise`.`bestellende`
-	`verteilmengen_preise` AS select `gruppenbestellungen`.`bestellguppen_id` AS `bestellguppen_id`,`gesamtbestellungen`.`id` AS `bestell_id`,`gesamtbestellungen`.`name` AS `name`,`bestellzuordnung`.`produkt_id` AS `produkt_id`,`bestellzuordnung`.`menge` AS `menge`,`produktpreise`.`preis` AS `preis`,`gesamtbestellungen`.`bestellende` AS `bestellende` from ((((`bestellzuordnung` join `gruppenbestellungen` on((`bestellzuordnung`.`gruppenbestellung_id` = `gruppenbestellungen`.`id`))) join `bestellvorschlaege` on(((`bestellzuordnung`.`produkt_id` = `bestellvorschlaege`.`produkt_id`) and (`gruppenbestellungen`.`gesamtbestellung_id` = `bestellvorschlaege`.`gesamtbestellung_id`)))) join `produktpreise` on((`bestellvorschlaege`.`produktpreise_id` = `produktpreise`.`id`))) join `gesamtbestellungen` on((`gesamtbestellungen`.`id` = `gruppenbestellungen`.`gesamtbestellung_id`))) where (`bestellzuordnung`.`art` = 2) order by `gesamtbestellungen`.`bestellende`
-	`verteilmengen` AS select `verteilmengen_preise`.`bestell_id` AS `bestell_id`,`verteilmengen_preise`.`produkt_id` AS `produkt_id`,sum(`verteilmengen_preise`.`menge`) AS `menge` from `verteilmengen_preise` group by `verteilmengen_preise`.`bestell_id`,`verteilmengen_preise`.`produkt_id`
-	*/
 }
+/**
+ *
+ */
 function sql_gesamtpreise($gruppe_id){
             $query = "SELECT gesamtbestellungen.id as gesamtbestellung_id, gesamtbestellungen.name, sum(menge * preis) AS gesamtpreis, 
 	    				DATE_FORMAT(bestellende,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as datum
@@ -972,14 +989,15 @@ function sql_gesamtpreise($gruppe_id){
 				GROUP BY gesamtbestellungen.name
 				    ORDER BY bestellende DESC;";
 
-//	    echo "<p>".$query."</p>";
-	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
-
+            $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nicht aus DB laden..");
 	    return $result;
 
 }
 
 
+/**
+ *
+ */
 function sql_bestellprodukte($bestell_id){
             $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
                               , produktpreise.liefereinheit as liefereinheit
@@ -994,11 +1012,12 @@ function sql_bestellprodukte($bestell_id){
 				    WHERE bestellvorschlaege.gesamtbestellung_id='".mysql_escape_string($bestell_id)."'
 				    ORDER BY IF(liefermenge>0,0,1), produktgruppen_id, produkte.name;";
 
-	    //echo "<p>".$query."</p>";
-	    $result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Produktdaten nich aus DB laden..",mysql_error());
-
+            $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
 	    return $result;
 }
+/**
+ *
+ */
 function sql_aktuelle_produktpreise($produkt_id){
    $sql = "SELECT id
            FROM produktpreise 
@@ -1008,11 +1027,51 @@ function sql_aktuelle_produktpreise($produkt_id){
 	return doSql($sql, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 
+/**
+ *  Erzeugt einen Produktpreiseintrag
+ *  Achtung, $start und $ende selbst escapen, damit
+ *  now() und null verwendet werden können.
+ */
+function sql_insert_produktpreis ($id, $preis, $start,$ende, $bestellnummer, $gebindegroesse){
+	$sql = "INSERT INTO produktpreise 
+		(produkt_id, preis, zeitstart, zeitende, bestellnummer, gebindegroesse) 
+		  VALUES ('".mysql_escape_string($id)."', 
+				 '".mysql_escape_string($preis)."', 
+				 $start, 
+				 $ende, 
+				 '".mysql_escape_string($bestellnummer)."', 
+				 '".mysql_escape_string($gebindgroesse)."')";
+        doSql($sql, LEVEL_IMPORTANT, "Konnte Preis nicht einfügen...");
+}
+/**
+ *  Setzt einen Preis auf abgelaufen
+ */
+function sql_expire_produktpreis ($id){
+	$query="UPDATE produktpreise SET zeitende=NOW() WHERE id=".$id;
+        doSql($query, LEVEL_IMPORTANT, "Konnte Preis nicht in löschen...");
+}
+
+/**
+ * Prüft, ob ein Preis noch gültig ist
+ */
+function is_expired_produktpreis($id){
+
+   $sql ="SELECT id FROM produktpreise WHERE id=".$id." AND (ISNULL(zeitende) OR zeitende >= NOW());";
+   $result = doSql($sql, LEVEL_ALL, "Konnte Preisdaten nicht aus DB laden..");
+   return (mysql_num_rows($result) == 0);
+}
+/**
+ *
+ */
 function sql_produktpreise2($produkt_id){
 	$query = "SELECT * FROM produktpreise 
-		  WHERE produkt_id=".mysql_escape_string($produkt_id);
+		WHERE produkt_id=".mysql_escape_string($produkt_id).
+		" ORDER BY zeitstart, zeitende, gebindegroesse";
 	return doSql($query, LEVEL_ALL, "Konnte Gebindegroessen nich aus DB laden..");
 }
+/**
+ *
+ */
 function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestellende=NULL){
 	
 	if($produkt_id=="") error(__LINE__,__FILE__, "Produkt_ID must not be empty");
@@ -1047,6 +1106,9 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 
 	return $result;
 }
+/**
+ *
+ */
 function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
 	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
 	if(mysql_num_rows($result)==0) $return = 0;
@@ -1059,6 +1121,9 @@ function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
 	return $return;
 	
 }
+/**
+ *
+ */
 function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
 	$query = "SELECT  *, gruppenbestellungen.id as gruppenbest_id,
 	bestellzuordnung.id as bestellzuordnung_id
@@ -1077,34 +1142,53 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
 	}else{
 		$query = $query." ORDER BY gruppenbestellung_id, art;";
 	}
-	//echo "<p>".$query."</p>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellmengen nich aus DB laden..",mysql_error());
+        $result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 	return $result;
 }
+/**
+ *
+ */
 function sql_gruppenname($gruppen_id){
-	$query="SELECT name 
-		FROM bestellgruppen 
+	$query="SELECT name FROM bestellgruppen 
 		WHERE id = ".mysql_escape_string($gruppen_id); 
-	//echo "<p>".$query."</p>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+        $result = doSql($query, LEVEL_ALL, "Konnte Gruppenname nicht aus DB laden..");
 	$row=mysql_fetch_array($result);
 	return $row['name'];
 }
-function sql_gruppen($bestell_id=FALSE){
-        if($bestell_id==FALSE){
+/**
+ *
+ */
+function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
+        if($bestell_id===FALSE && $produkt_id===FALSE){
 		$query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
-	} else {
+	} else if($produkt_id===FALSE) {
 	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
 		FROM bestellgruppen INNER JOIN gruppenbestellungen 
 		ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
 		WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id).
 		" GROUP BY bestellgruppen.id, bestellgruppen.name"; 
+	} else {
+		$query=
+    " SELECT gruppenbestellungen.bestellguppen_id as id
+           , bestellgruppen.name as name
+      FROM bestellzuordnung
+      INNER JOIN gruppenbestellungen
+              ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
+      INNER JOIN bestellgruppen
+              ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
+      WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
+            AND bestellzuordnung.produkt_id='$produkt_id'
+      GROUP BY bestellgruppen.id
+      ORDER BY ( bestellgruppen.id % 1000 )
+    ";
 	}
-	//echo "<p>".$query."</p>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
+        $result = doSql($query, LEVEL_ALL, "Konnte Bestellgruppendaten nicht aus DB laden..");
 	return $result;
 	
 }
+/**
+ *
+ */
 function optionen_gruppen() {
   $gruppen = sql_gruppen();
   while($gruppe = mysql_fetch_array($gruppen)){
@@ -1112,6 +1196,36 @@ function optionen_gruppen() {
   }
 }
 
+/**
+ * Daten zu Bestellvorschlag
+ */
+function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
+
+	  $query=
+    " SELECT * , produktpreise.id as preis_id
+               , produkte.name as produkt_name
+               , gesamtbestellungen.name as name
+      FROM gesamtbestellungen
+      INNER JOIN bestellvorschlaege
+              ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
+      INNER JOIN produkte
+              ON produkte.id=bestellvorschlaege.produkt_id
+      INNER JOIN produktpreise
+              ON produktpreise.id=bestellvorschlaege.produktpreise_id
+      WHERE     gesamtbestellungen.id='$bestell_id'
+            AND bestellvorschlaege.produkt_id='$produkt_id'
+	    ";
+
+    $result= doSql($query, LEVEL_ALL, "Suche in gesamtbestellungen,bestellvorschlaege fehlgeschlagen");
+    return mysql_fetch_array($result)  
+    		or error( __LINE__, __FILE__,
+      		"gesamtbestellung/bestellvorschlag nicht gefunden " );
+
+
+}
+/**
+ *
+ */
 function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	 $query = "SELECT * FROM gesamtbestellungen ";
 	 $where = "";
@@ -1156,6 +1270,9 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	return $result;
 }
 
+/**
+ *
+ */
 function nichtGeliefert($bestell_id, $produkt_id){
     $sql = "UPDATE bestellzuordnung INNER JOIN gruppenbestellungen 
 	    ON gruppenbestellung_id = gruppenbestellungen.id 
@@ -1163,15 +1280,16 @@ function nichtGeliefert($bestell_id, $produkt_id){
 	    WHERE art=2 
 	    AND produkt_id = ".$produkt_id." 
 	    AND gesamtbestellung_id = ".$bestell_id.";";
-    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht ändern..",mysql_error());
-    //echo $sql;
+    doSql($sql, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern...");
     $sql = "UPDATE bestellvorschlaege
     	    SET liefermenge = 0 
 	    WHERE produkt_id = ".$produkt_id."
 	    AND gesamtbestellung_id = ".$bestell_id;
-    //mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht ändern..",mysql_error());
-    //echo $sql;
+    doSql($sql, LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB ändern...");
 }
+/**
+ *
+ */
 function writeLiefermenge_sql($bestell_id){
 	$query = "SELECT produkt_id, sum(menge) as s FROM gruppenbestellungen  
 		  INNER JOIN bestellzuordnung ON
@@ -1179,25 +1297,28 @@ function writeLiefermenge_sql($bestell_id){
 		  WHERE art = 2 
 		  AND gesamtbestellung_id = ".$bestell_id." 
 		  GROUP BY produkt_id";
-	//echo $query."<br>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB schreiben...",mysql_error());
+        $result = doSql($query, LEVEL_ALL, "Konnte bestellte Mengen nicht aus DB laden..");
   	while ($produkt_row = mysql_fetch_array($result)){
 		$sql2 = "UPDATE bestellvorschlaege SET bestellmenge = "
 		        .$produkt_row['s'].", liefermenge = ".
 		        $produkt_row['s']." WHERE gesamtbestellung_id = ".
 			$bestell_id." AND produkt_id = ".$produkt_row['produkt_id'];
-		//echo $sql2."<br>";
-		mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB schreiben...",mysql_error());
+                doSql($sql2, LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB schreiben...");
 	}
 
 }
+/**
+ *
+ */
 function sql_basar(){
    $sql = "SELECT * FROM (".select_basar().") as basar";
-   //echo $sql."<br>";
-   $result =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Basardaten nich aus DB laden..",mysql_error());
+   $result = doSql($sql, LEVEL_ALL, "Konnte Basardaten nicht aus DB laden..");
    return $result;
 
 }
+/**
+ *
+ */
 function select_basar(){
    return "
 SELECT produkte.name, bestellvorschlaege.produkt_id,
@@ -1222,32 +1343,27 @@ ORDER BY produkte.name
 " ;
 
 
- /*  
-   "select
-   produkte.name,bestellvorschlaege.produkt_id,bestellvorschlaege.gesamtbestellung_id,(bestellvorschlaege.liefermenge
-   - verteilmengen.menge) AS basar,bestellvorschlaege.produktpreise_id
-   from (((".select_verteilmengen().") as `verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`))) having (`basar` <> 0) ";
-   */
 }
 
+/**
+ *
+ */
 function from_basar(){
    return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
-   /*
-   VIEW `basar` AS select `produkte`.`name` AS `name`,`bestellvorschlaege`.`produkt_id` AS `produkt_id`,`bestellvorschlaege`.`gesamtbestellung_id` AS `gesamtbestellung_id`,(`bestellvorschlaege`.`liefermenge` - `verteilmengen`.`menge`) AS `basar`,`bestellvorschlaege`.`produktpreise_id` AS `produktpreise_id` from ((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`))) having (`basar` <> 0)
-   */
 }
+/**
+ *
+ */
 function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
    $sql ="SELECT * FROM bestellvorschlaege 
    		WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
    		AND gesamtbestellung_id = ".mysql_escape_string($bestell_id) ;
-   //echo $sql."<br>";
-   $result2 =  mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+   $result2 = doSql($sql, LEVEL_ALL, "Konnte Preise nicht aus DB laden..");
    if (mysql_num_rows($result2) == 1){
    	$sql = "UPDATE 	bestellvorschlaege set liefermenge = liefermenge + ".$menge." 
 		WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
    		AND gesamtbestellung_id = ".mysql_escape_string($bestell_id) ;
-   //echo $sql."<br>";
-   mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden..",mysql_error());
+   doSql($sql, LEVEL_IMPORTANT, "Konnte Liefermenge nicht ändern..");
 
    }else {
 
@@ -1266,35 +1382,57 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
 		    $bestell_id.",".
 		    $preis_row['id'].",".
 		    $menge.")";
-	    //echo $sql."<br>";
-	    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nich aus DB laden.. ($sql)",mysql_error());
+            doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht eintragen..");
 	}
 	}
 	    //Dummy Eintrag in bestellzuordnung
 	    $sql = "SELECT id FROM gruppenbestellungen
 	    		WHERE gesamtbestellung_id = ".$bestell_id;
-	    //echo $sql."<br>";
-	    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte nicht aus DB laden.. ($sql)",mysql_error());
+            $result = doSql($sql, LEVEL_ALL, "Konnte nicht aus DB laden.. ");
 	    $row = mysql_fetch_array($result);
 	    $sql2 = "INSERT INTO bestellzuordnung
 	    		(produkt_id, gruppenbestellung_id, menge, art)
 			VALUES (".$produkt_id.", ".$row['id'].", 0, 2)";
-	    //echo $sql2."<br>";
-	    mysql_query($sql2) or error(__LINE__,__FILE__,"Konnte nicht in DB schreiben.. ($sql2)",mysql_error());
+            doSql($sql2, LEVEL_IMPORTANT, "Konnte nicht in DB schreiben.. ");
 
 }
-function sql_getLieferant($lieferant_id){
-    $sql="SELECT * FROM lieferanten WHERE id = ".$lieferant_id;
+/**
+ *  Namen eines Lieferanten abfragen
+ *  Wenn ID null, dann wird der String
+ *  alle Lieferanten zurückgegeben
+ */
+function lieferant_name ($id){
+	if($id != "0"){			
+		//wenn alle Lieferanten ausgewählt wurde
+		$infos = sql_getLieferant($id);
+		$name = $infos["name"];
+	} else {
+		$name = "allen Lieferanten";
+	}
+	return $name;
+}
+
+/**
+ *   Infos zu Lieferant abfragen
+ */
+function sql_getLieferant($lieferant_id=false){
+	if($lieferant_id===false){
+		$sql="SELECT * FROM lieferanten ORDER BY name";
+	}else {
+    		$sql="SELECT * FROM lieferanten WHERE id = ".$lieferant_id;
+	}
     $result=doSql($sql, LEVEL_ALL, "Error while retrieving Lieferanteninfos");
     return mysql_fetch_array($result);
 }
+/**
+ *
+ */
 function getProduzentBestellID($bestell_id){
     if($bestell_id==0) {error(__LINE__,__FILE__,"Do not call getProduzentBestellID with bestell_id null)", "bla");}
     $sql="SELECT DISTINCT lieferanten_id FROM bestellvorschlaege 
 		INNER JOIN produkte ON (produkt_id = produkte.id)
 		WHERE gesamtbestellung_id = ".$bestell_id;
-    //echo $sql."<br>";
-    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preise nicht aus DB laden.. ($sql)",mysql_error());
+    $result = doSql($sql, LEVEL_ALL, "Konnte Preise nicht aus DB laden..");
     if (mysql_num_rows($result) > 1)
 	    echo error(__LINE__,__FILE__,"Mehr als ein Lieferant fuer Bestellung ".$bestell_id);
 	 else {
@@ -1303,12 +1441,53 @@ function getProduzentBestellID($bestell_id){
 
 	 }
 }
+
+/**
+ *  Produktgruppen abfragen
+ */
+function sql_produktgruppen(){
+     $sql = "SELECT * FROM produktgruppen ORDER BY name"; 
+    $result = doSql($sql, LEVEL_ALL, "Konnte Produktgruppen nicht aus DB laden..");
+    return $result;
+	
+}
+/**
+ *  Produktinformationen abfragen
+ */
 function getProdukt($produkt_id){
    $sql = "SELECT * FROM produkte WHERE id = ".$produkt_id;
-    //echo $sql."<br>";
-    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
+    $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
     return mysql_fetch_array($result);
 }
+
+/**
+ *  Produktinformationen updaten
+ */
+function sql_update_produkt ($id, $name, $lieferant_id, $produktgruppen_id, $einheit, $notiz){
+	 $sql = "UPDATE produkte 
+			SET name='".mysql_escape_string($name)."', 
+			lieferanten_id='".mysql_escape_string($lieferanten_id)."', 
+			produktgruppen_id='".mysql_escape_string($produktgruppen_id)."', 
+			einheit='".mysql_escape_string($einheit)."', 
+			notiz='".mysql_escape_string($notiz)."' 
+			WHERE id=".mysql_escape_string($id);
+
+         doSql($sql, LEVEL_IMPORTANT, "Konnte Produkt nicht in DB ändern...");
+}
+
+/**
+ * Alle Produkte von einem Lieferanten, auch mit ungültigem Preis
+ */
+function getAlleProdukteVonLieferant ($lieferant_id){
+	  $sql = "SELECT produkte.*, produkte.id as prodId 
+			 FROM produkte
+			 WHERE produkte.lieferanten_id = '$lieferanten_id'
+			 ORDER BY produkte.lieferanten_id, produkte.produktgruppen_id, produkte.name";
+    $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nicht aus DB laden..");
+    return $result;
+}
+
+
 /**
  *   Produkte von einem Bestimmten Lieferanten abfragen
  *
@@ -1338,20 +1517,24 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
    $sql .= " AND zeitstart <= ".
 	$zeitpunkt." AND (ISNULL(zeitende) OR
 	zeitende >= ".$zeitpunkt.") ";
-    //echo $sql."<br>";
-    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
+    $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
     return $result;
 }
+/**
+ *
+ */
 function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $produkt_id){
 	if($gruppenMengeInGebinde > 0){
 		$query = "INSERT INTO  bestellzuordnung (menge, produkt_id, gruppenbestellung_id, art) 
 			  VALUES (".$gruppenMengeInGebinde.
 			 ", ".$produkt_id.
 			 ", ".$gruppenbestellung_id.", 2);";
-		//echo $query."<br>";
-		mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB schreiben...",mysql_error());
+                doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB schreiben...");
 	}
 }
+/**
+ *
+ */
 function sql_bestellvorschlag($bestell_id, $produkt_id){
 	$query="SELECT produktpreis_id FROM bestellvorschlaege 
 	  	WHERE gesamtbestellung_id = ".$bestell_id.
@@ -1360,15 +1543,24 @@ function sql_bestellvorschlag($bestell_id, $produkt_id){
 	$row = mysql_fetch_array($result);
 	return $row;
 }
+/**
+ *
+ */
 function sql_bestellpreis($bestell_id, $produkt_id){
 	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
 	return $row['produktpreis_id'];
 }
+/**
+ *
+ */
 function sql_liefermenge($bestell_id,$produkt_id){
 	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
 	return $row['liefermenge'];
 }
 
+/**
+ *
+ */
 function changeLieferpreis_sql($preis_id, $produkt_id, $bestellung_id){
 	$query = "UPDATE bestellvorschlaege 
 		  SET produktpreise_id = ".mysql_escape_string($preis_id)."
@@ -1377,14 +1569,19 @@ function changeLieferpreis_sql($preis_id, $produkt_id, $bestellung_id){
 	//echo $query."<br>";
 	doSql($query, LEVEL_IMPORTANT,"Konnte Lieferpreis nicht in DB ändern...");
 }
+/**
+ *
+ */
 function changeLiefermengen_sql($menge, $produkt_id, $bestellung_id){
 	$query = "UPDATE bestellvorschlaege 
 		  SET liefermenge = ".mysql_escape_string($menge)."
 		  WHERE produkt_id = ".mysql_escape_string($produkt_id)."
 		  AND gesamtbestellung_id = ".mysql_escape_string($bestellung_id).";";
-	//echo $query."<br>";
-	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Liefermengen nicht in DB ändern...",mysql_error());
+        doSql($query, LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB ändern...");
 }
+/**
+ *
+ */
 function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_id){
 	$where_clause = " WHERE art = 2 AND produkt_id = ".mysql_escape_string($produkt_id)."
 			 AND gruppenbestellung_id IN
@@ -1394,35 +1591,29 @@ function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_i
 				 ".mysql_escape_string($bestellung_id).") ";
 
 	$query = "SELECT * FROM bestellzuordnung ".$where_clause;
-	//echo $query."<br>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht von DB landen... ($sql)",mysql_error());
+        doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht von DB landen...");
 	$toDelete = mysql_num_rows($result) - 1 ;
 	if($toDelete > 0){
 		$query = "DELETE FROM bestellzuordnung
 			".$where_clause." LIMIT ".$toDelete;
-		echo $query."<br>";
-		$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
+                doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern...");
 	}
 
 	$query = "UPDATE bestellzuordnung 
 		  SET menge = ".mysql_escape_string($menge).$where_clause;
-	//echo $query."<br>";
-	mysql_query($query) or error(__LINE__,__FILE__,"Konnte Verteilmengen nicht in DB ändern...",mysql_error());
+        doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern...");
 }
-/*
-function check_bereitsVerteilt($bestell_id){
-	$query = "SELECT  *, gruppenbestellungen.id as gruppenbest_id,
-	bestellzuordnung.id as bestellzuordnung_id 
-	FROM gruppenbestellungen INNER JOIN bestellzuordnung 
-	ON (bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
-	WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id)." 
-	AND bestellzuordnung.art=2 ;";
-	//echo "<p>".$query."</p>";
-	$result = mysql_query($query) or error(__LINE__,__FILE__,"Konnte Bestellmengen nich aus DB laden..",mysql_error());
-	if(mysql_num_rows($result)==0) return false;
-	return true;
+
+/**
+ * 
+ */
+function sql_delete_bestellzuordnung ($id){
+    $query= "DELETE FROM bestellzuordnung WHERE id='$id'"; 
+    doSql($query, LEVEL_IMPORTANT, "Löschen fehlgeschlagen...");
 }
-*/
+/**
+ *
+ */
 function verteilmengenZuweisen($bestell_id){
   // nichts tun, wenn keine Bestellung ausgewählt
   if($bestell_id==""){
@@ -1631,6 +1822,9 @@ $masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
+/**
+ *
+ */
 function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
   global $masseinheiten;
   $kan_einheit = NULL;
@@ -1699,6 +1893,9 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
   return true;
 }
 
+/**
+ *
+ */
 function optionen_einheiten( $selected ) {
   global $masseinheiten;
   foreach( $masseinheiten as $e ) {
@@ -1712,6 +1909,9 @@ function optionen_einheiten( $selected ) {
 // preisdaten setzen:
 // berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
 //
+/**
+ *
+ */
 function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
   kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
@@ -1755,6 +1955,9 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _
 //
+/**
+ *
+ */
 function get_http_var( $name, $typ = 'A', $default = false ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
   if( isset( $HTTP_GET_VARS[$name] ) ) {
@@ -1806,6 +2009,9 @@ function get_http_var( $name, $typ = 'A', $default = false ) {
   $$name = $val;
   return TRUE;
 }
+/**
+ *
+ */
 function need_http_var( $name, $typ = 'A' ) {
   if( ! get_http_var( $name, $typ, false ) ) {
     error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
@@ -1814,6 +2020,9 @@ function need_http_var( $name, $typ = 'A' ) {
   return TRUE;
 }
 
+/**
+ *
+ */
 function reload_immediately( $url ) {
   echo "
     <form action='$url' name='reload_now_form' method='post'></form>
@@ -1831,6 +2040,9 @@ function fail_if_readonly() {
   }
 }
 
+/**
+ *
+ */
 function wikiLink( $topic, $text ) {
   global $foodsoftpath;
   echo "<a class='wikilink' target='wiki' href='/wiki/doku.php?id=$topic'>$text</a>";

@@ -20,33 +20,14 @@
   get_http_var('action');
   if( $action == 'zuteilung_loeschen' ) {
     need_http_var( 'zuteilung_id' );
-    mysql_query( "DELETE FROM bestellzuordnung WHERE id='$zuteilung_id'" )
-      or error( __LINE__, __FILE__, "L&ouml;schen fehlgeschlagen: " . mysql_error() );
+    sql_delete_bestellzuordnung($zuteilungs_id);
   }
 
   // daten zum bestellvorschlag ermitteln:
   //
-  $result = mysql_query(
-    " SELECT * , produktpreise.id as preis_id
-               , produkte.name as produkt_name
-               , gesamtbestellungen.name as name
-      FROM gesamtbestellungen
-      INNER JOIN bestellvorschlaege
-              ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
-      INNER JOIN produkte
-              ON produkte.id=bestellvorschlaege.produkt_id
-      INNER JOIN produktpreise
-              ON produktpreise.id=bestellvorschlaege.produktpreise_id
-      WHERE     gesamtbestellungen.id='$bestell_id'
-            AND bestellvorschlaege.produkt_id='$produkt_id'
-    "
-  ) or error( __LINE__, __FILE__,
-    "Suche in gesamtbestellungen,bestellvorschlaege fehlgeschlagen: " . mysql_error() );
+  $vorschlag = sql_bestellvorschlag_daten($bestell_id,$produkt_id);
 
-  $vorschlag = mysql_fetch_array($result)  
-    or error( __LINE__, __FILE__,
-      "gesamtbestellung/bestellvorschlag nicht gefunden " );
-
+  
   preisdatenSetzen( & $vorschlag );
 
   $title = "Verteilung: {$vorschlag['name']}";
@@ -59,21 +40,7 @@
 
   // alle an dieser bestellung dieses produktes beteiligten gruppen ermitteln:
   //
-  $gruppen = mysql_query(
-    " SELECT gruppenbestellungen.bestellguppen_id as id
-           , bestellgruppen.name as name
-      FROM bestellzuordnung
-      INNER JOIN gruppenbestellungen
-              ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
-      INNER JOIN bestellgruppen
-              ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
-      WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
-            AND bestellzuordnung.produkt_id='$produkt_id'
-      GROUP BY bestellgruppen.id
-      ORDER BY ( bestellgruppen.id % 1000 )
-    "
-  ) or error( __LINE__, __FILE__,
-    "Suche nach beteiligten Gruppen fehlgeschlagen: " . mysql_error() );
+  $gruppen = sql_gruppen($bestell_id, $produkt_id);
 
 
   echo "
@@ -117,7 +84,7 @@
     $gruppen_id = $gruppe['id'];
 
     // bestellte mengen ermitteln:
-    //
+    // TODO: mit sql_bestellmengen zusammenfassen
     $bestellungen = mysql_query(
       "SELECT SUM( menge * IF(art=0,1,0) ) as festmenge
             , SUM( menge * IF(art=1,1,0) ) as toleranzmenge
@@ -159,7 +126,7 @@
     ";
 
     // zugeteilte mengen ermitteln:
-    //
+    // TODO: mit sql_bestellmengen zusammen. Wieso  brauchen wir count?
     $zuteilungen = mysql_query(
       "SELECT sum(menge) as menge, count(*) as anzahl
         FROM bestellzuordnung

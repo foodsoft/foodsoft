@@ -22,13 +22,12 @@ if(!nur_fuer_dienst(4)){exit();}
 	    $action = $HTTP_GET_VARS['action'];
 			
 	    if ($action == "delete") {
-			   mysql_query("UPDATE produktpreise SET zeitende=NOW() WHERE id=".$HTTP_GET_VARS['id']) or error(__LINE__,__FILE__,"Konnte Preis nicht löschen..",mysql_error());
+			   sql_expire_produktpreis($HTTP_GET_VARS['id']);
 			}
 	    
 	 }
 	 
-   $result = mysql_query("SELECT * FROM produkte WHERE id=".$produkt_id) or error(__LINE__,__FILE__,"Konnte Produkt nich aus DB laden..",mysql_error());
-	 $produkt_row = mysql_fetch_array($result);	
+	 $produkt_row = getProdukt($produkt_id);	
 	 
 ?>
 
@@ -75,7 +74,7 @@ if(!nur_fuer_dienst(4)){exit();}
 			 </tr>
 			 
 			 <?PHP
-          $result = mysql_query("SELECT * FROM produktpreise WHERE produkt_id=".$produkt_id." ORDER BY zeitstart, zeitende, gebindegroesse;") or error(__LINE__,__FILE__,"Konnte Produkt nich aus DB laden..",mysql_error());
+          $result = sql_produktpreise2($produkt_id);
 	        while ($row = mysql_fetch_array($result)) 
 	        {
 			?>
@@ -91,8 +90,7 @@ if(!nur_fuer_dienst(4)){exit();}
 							    <input type="button" value="ändern" onClick="window.open('editProduktpreis.php?produkt_id=<?PHP echo $produkt_id; ?>&preis_id=<?PHP echo $row['id']; ?>&zeitstart=<?PHP echo $row['zeitstart']; ?>&zeitende=<?PHP echo $row['zeitende']; ?>&bestellnummer=<?PHP echo $row['bestellnummer']; ?>&gebindegroesse=<?PHP echo $row['gebindegroesse']; ?>&pfand=<?PHP echo $row['pfand']; ?>&mwst=<?PHP echo $row['mwst']; ?>&preis=<?PHP echo $row['preis']; ?>','editProduktpreis','width=400,height=350,left=100,top=100').focus()">
 						<?PHP 
 				   // Prüfe ob der Preis noch gültig ist
-					 $gueltig = mysql_query("SELECT id FROM produktpreise WHERE id=".$row['id']." AND (ISNULL(zeitende) OR zeitende >= NOW());") or error(__LINE__,__FILE__,"Konnte Preisdaten nich aus DB laden..",mysql_error());
-				   if (mysql_num_rows($gueltig) > 0) 
+				   if (!is_expired_produktpreis($row['id'])) 
 				   { echo "
 					   		<br /><input type='button' value='abgelaufen' onClick='deletePreis(".$row['id'].");'>";
 						?>

@@ -17,12 +17,6 @@
           // ggf. Aktionen durchführen (z.B. Produkt löschen... oder neue preise einfügen)
   $edit_all = false;
   get_http_var('action');
-  // loeschen ist keine gute idee (produkte werden fuer berechnung der kontostaende gebraucht!)
-  // if ($action == "delete") 
-  //  {
-  //    mysql_query("DELETE FROM produkte WHERE id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt nicht löschen.",mysql_error());
-  //    mysql_query("DELETE FROM kategoriezuordnung WHERE produkt_id=".mysql_escape_string($HTTP_GET_VARS['produkt_id'])) or error(__LINE__,__FILE__,"Konnte Produkt-Kategorienzuordnung nicht löschen.",mysql_error());
-  //  }
                       
   if ($action == "edit_all" and !$readonly ) { 
     nur_fuer_dienst(4);
@@ -40,15 +34,13 @@
                               for ($i=0; $i < count($prodIds); $i++) 
                               {
                                     //produkte werden aktualisiert ...
-                                 $sql = "UPDATE produkte 
-                                                SET name='".mysql_escape_string($HTTP_GET_VARS['name_'.$prodIds[$i]])."', 
-                                                lieferanten_id='".mysql_escape_string($HTTP_GET_VARS['lieferant_'.$prodIds[$i]])."', 
-                                                produktgruppen_id='".mysql_escape_string($HTTP_GET_VARS['prodgroup_'.$prodIds[$i]])."', 
-                                                einheit='".mysql_escape_string($HTTP_GET_VARS['einheit_'.$prodIds[$i]])."', 
-                                                notiz='".mysql_escape_string($HTTP_GET_VARS['notiz_'.$prodIds[$i]])."' 
-                                                WHERE id=".mysql_escape_string($prodIds[$i])."";
-                                                
-                                 mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkt nicht ändern.",mysql_error());
+				      sql_update_produkt($prodIds[$i],
+				                $HTTP_GET_VARS['name_'.$prodIds[$i]],
+						$HTTP_GET_VARS['lieferant_'.$prodIds[$i]],
+						$HTTP_GET_VARS['prodgroup_'.$prodIds[$i]],
+						$HTTP_GET_VARS['einheit_'.$prodIds[$i]],
+						$HTTP_GET_VARS['notiz_'.$prodIds[$i]]
+					      );
                                   
                                      // ggf. die Preise updaten, welche dann neu in die db geschrieben werden
                                      
@@ -65,36 +57,28 @@
                                                 if ($preis_row['preis'] != $HTTP_GET_VARS['preis_'.$prodIds[$i]] || $preis_row['bestellnummer'] != $HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]] || $preis_row['gebindegroesse'] != $HTTP_GET_VARS['gebindegroesse_'.$prodIds[$i]]) 
                                                 {
                                                             //wenn der neue preis (oder bestellnummer oder gebindegröße)nicht mit dem alten übereinstimmt, dann wird der alte ungültig gemacht
-                                                   $sql ="UPDATE produktpreise 
-                                                                  SET zeitende=NOW() 
-                                                                     WHERE id=".mysql_escape_string($preis_row['id'])."";
-                                                   mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preis nicht ändern.",mysql_error());
-                                                   
+						   sql_expire_produktpreis($preis_row['id']);
                                                          //jetzt wird der neue preis, bestellnummer, gebindegröße hinzugefügt
-                                                   $sql = "INSERT INTO produktpreise (produkt_id, preis, zeitstart, zeitende, bestellnummer, gebindegroesse) 
-                                                                  VALUES ('".mysql_escape_string($prodIds[$i])."', 
-                                                                                 '".mysql_escape_string($preis)."', 
-                                                                                 NOW(), 
-                                                                                 NULL, 
-                                                                                 '".mysql_escape_string($HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]])."', 
-                                                                                 '".mysql_escape_string($HTTP_GET_VARS['gebindegroesse_'.$prodIds[$i]] )."')";
-                                                    mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preis nicht einfügen.",mysql_error());
+						   sql_insert_produktpreis($prodIds[$i], 
+							   $preis, "NOW()", "NULL", 
+							   $HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]],
+							   $HTTP_GET_VARS['gebindegroesse_'.$prodIds[$i]] 
+						   );
                                                 
                                                 } //end if 
                                              
                                        }          
-                                          else if (mysql_num_rows($result2) == 0 && ($HTTP_GET_VARS['preis_'.$prodIds[$i]] != "" || $HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]] != ""))
-                                       {   
+				       else if (mysql_num_rows($result2) == 0 
+					       && ($HTTP_GET_VARS['preis_'.$prodIds[$i]] != "" 
+					       || $HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]] != ""
+				       )) {   
                                                 //wenn es keinen bis dato aktuellen preis gibt und preis, bestellnummer, gebinde nicht null sind, wird nur eine neue zeile eingefügt
                                                 
-                                                $sql = "INSERT INTO produktpreise (produkt_id, preis, zeitstart, zeitende, bestellnummer, gebindegroesse) 
-                                                               VALUES ('".mysql_escape_string($prodIds[$i])."', 
-                                                               '".mysql_escape_string($preis)."', 
-                                                               NOW(), 
-                                                               NULL, 
-                                                               '".mysql_escape_string($HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]])."', 
-                                                               '".mysql_escape_string($HTTP_GET_VARS['gebindegroesse_'.$prodIds[$i]] )."')";
-                                                mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Preis nicht einfügen.",mysql_error());
+					       sql_insert_produktpreis($prodIds[$i],
+							   $preis, "NOW()", "NULL", 
+							   $HTTP_GET_VARS['bestellnummer_'.$prodIds[$i]],
+							   $HTTP_GET_VARS['gebindegroesse_'.$prodIds[$i]] 
+						       );
                                        
                                        } //end preise aktualisieren 
                                                                       
@@ -103,10 +87,6 @@
                       } // end else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
                       
       
-      // Lieferanten Array aufbauen (ordnet jeder ID einen Namen zu)
-         $result = mysql_query("SELECT id,name FROM lieferanten") or error(__LINE__,__FILE__,"Konnte Lieferantennamen nich aus DB laden..",mysql_error());
-
-    
   
       //überprüfen ob ein lieferant schon ausgewählt wurde, ansonsten asuwahlfenster anzeigen:
            
@@ -172,17 +152,7 @@
 			
 				<?php	//lieferanten bestimmen für die überschrift ...
 				
-						if($lieferanten_id != "0")		//wenn alle Lieferanten ausgewählt wurde
-						{			
-								$sql = "SELECT name
-													FROM lieferanten
-													WHERE id = '$lieferanten_id'";
-								$res = mysql_query($sql);
-								$lieferant_name = mysql_result($res, 'name');
-						} else
-						{
-								$lieferant_name = "allen Lieferanten";
-						}
+	                 $lieferant_name = lieferant_name($lieferanten_id);
 						
 			 if (!$edit_all)
 			 {  					// für die normalansicht
@@ -233,14 +203,6 @@
 	<?PHP	}
 					
 		
-//			$result = mysql_query("SELECT p.*, l.name as lname, pp.preis, pp.bestellnummer
-//		       			       FROM produkte p, lieferanten l, produktpreise pp
-//		       			       WHERE p.id = pp.produkt_id
-//					       AND p.lieferanten_id = l.id
-//					       AND pp.zeitende IS NULL
-//					       AND pp.zeitstart <= NOW()
-//					       ORDER BY p.name") or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
-
       ?>
              <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">
              <input type="hidden" name="area" value="produkte">
@@ -248,17 +210,7 @@
          
             <?php   //lieferanten bestimmen für die überschrift ...
             
-                  if($lieferanten_id != "0")      //wenn alle Lieferanten ausgewählt wurde
-                  {         
-                        $sql = "SELECT name
-                                       FROM lieferanten
-                                       WHERE id = '$lieferanten_id'";
-                        $res = mysql_query($sql);
-                        $lieferant_name = mysql_result($res, 'name');
-                  } else
-                  {
-                        $lieferant_name = "allen Lieferanten";
-                  }
+                  $lieferant_name = lieferant_name($lieferanten_id);
                   
           if (!$edit_all)
           {                 // für die normalansicht
@@ -306,26 +258,25 @@
                              // hier im falle der "alle überarbeiten" ansicht
                              
                              
-          $result = mysql_query("SELECT * FROM produktgruppen ORDER BY name;") or error(__LINE__,__FILE__,"Konnte Produktgruppen nich aus DB laden..",mysql_error());   
+	    $result = sql_produktgruppen();
             while ($row = mysql_fetch_array($result)) 
                 $prodgroup_id2name[$row['id']] = $row['name'];
                   
-          $result = mysql_query("SELECT * FROM lieferanten ORDER BY name;") or error(__LINE__,__FILE__,"Konnte Produktgruppen nich aus DB laden..",mysql_error());   
+          $result = sql_getLieferant(); 
             while ($row = mysql_fetch_array($result)) 
                 $lieferanten_id2name[$row['id']] = $row['name'];
                   
-                  $sql = "SELECT produkte.*, produkte.id as prodId 
-                                 FROM produkte
-                                 WHERE produkte.lieferanten_id = '$lieferanten_id'
-                                 ORDER BY produkte.lieferanten_id, produkte.produktgruppen_id, produkte.name";
                   
-                 $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
+	    $result = getProdukteVonLieferant($lieferanten_id);
                   
        } else {         // hier für die standardansicht
        
                       // welcher lieferant soll angezeigt werden? bei "0" alle lieferanten ansonsten der spezielle
                       if ($lieferanten_id != "0")
                          {
+				 //TODO mit 
+				 //getAlleProdukteVonLieferant 
+				 //zusammen
                             $sql = "SELECT produkte.*, produkte.id as prodId, lieferanten.name as lname, produktgruppen.name as pname
                                     FROM produkte,lieferanten,produktgruppen
                                     WHERE lieferanten.id ='$lieferanten_id'

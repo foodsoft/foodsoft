@@ -34,6 +34,7 @@
   $document_root = realpath( $_SERVER['DOCUMENT_ROOT'] );
 
   $len = strlen( $document_root );
+  echo "\$document_root: ".$document_root."<br> \$foodsoftpath: ".$foodsoftpath;
   assert( ! strncmp( $document_root, $foodsoftpath, $len ) );
   $foodsoftdir = substr( $foodsoftpath, $len );
 
