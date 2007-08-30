@@ -208,13 +208,13 @@
   logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 
   set_privileges(); // im moment: keine...
-  require_once('$foodsoftdir/head.php');
+  require_once("$foodsoftpath/head.php");
 
   get_http_var( 'area', 'w' );
   if( isset( $from_dokuwiki ) && $from_dokuwiki or ( $area == 'wiki' ) ) {
-    $form_action='$foodsoftdir/index.php?area=wiki';
+    $form_action="$foodsoftdir/index.php?area=wiki";
   } else {
-    $form_action='$foodsoftdir/index.php';
+    $form_action="$foodsoftdir/index.php";
   }
   echo "
     <form action='$form_action' method='post' class='small_form'>
@@ -364,14 +364,14 @@
       if( $dienst == func_get_arg($i) )
         return TRUE;
     }
-    require_once( $foodsoftdir/'head.php' );
+    require_once( "$foodsoftpath/head.php" );
     echo "<div class='warn'>Keine Berechtigung</div> $print_on_exit";
     exit();
   }
   function nur_fuer_dienst_I() {
     global $hat_dienst_I;
     if( ! $hat_dienst_I ) {
-      require_once( '$foodsoftdir/head.php' );
+      require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst I</div> $print_on_exit";
       exit();
     }
@@ -379,7 +379,7 @@
   function nur_fuer_dienst_III() {
     global $hat_dienst_III;
     if( ! $hat_dienst_III ) {
-      require_once( '$foodsoftdir/head.php' );
+      require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst II</div> $print_on_exit";
       exit();
     }
@@ -387,7 +387,7 @@
   function nur_fuer_dienst_IV() {
     global $hat_dienst_IV;
     if( ! $hat_dienst_IV ) {
-      require_once( '$foodsoftdir/head.php' );
+      require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst IV</div> $print_on_exit";
       exit();
     }
@@ -395,7 +395,7 @@
   function nur_fuer_dienst_V() {
     global $hat_dienst_V;
     if( ! $hat_dienst_V ) {
-      require_once( '$foodsoftdir/head.php' );
+      require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst V</div> $print_on_exit";
       exit();
     }
