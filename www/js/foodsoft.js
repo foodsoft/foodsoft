@@ -59,7 +59,9 @@ function deleteGroup(groupID)
 						}
 					}
 
+// neuesfenster: neues (grosses) Fenster oeffnen: fuer Lieferschein, Produktpreisdetails, ...
+//
 function neuesfenster(url,name) {
-  f=window.open(url,name);
+  f=window.open(url,name,"dependend=yes,location=yes,resizable=yes,scrollbars=yes");
   f.focus();
 }
