@@ -14,3 +14,12 @@ INDEX ( `GruppenID` , `Dienst` )
 ) ENGINE = MYISAM COMMENT = 'Enthält Dienste für jedes einzelne Lieferdatum Enthält Dienste für j. Lieferdat';
 
 ALTER TABLE `gesamtbestellungen` CHANGE `lieferung` `lieferung` DATE NULL DEFAULT NULL  
+
+
+
+ALTER TABLE `dienstkontrollblatt`
+  ADD `datum` date NOT NULL default '0000-00-00',
+  CHANGE `zeit` time NOT NULL,
+  ADD UNIQUE KEY `secondary` (`gruppen_id`,`dienst`,`datum`) ;
+
+
