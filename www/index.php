@@ -2,35 +2,48 @@
   // Konfigurationsdatei einlesen
 	require_once('code/config.php');
 	
-	// Funktionen zur Fehlerbehandlung laden
   require_once('code/views.php');
   require_once('code/zuordnen.php');
+	// Funktionen zur Fehlerbehandlung laden
 	require_once('code/err_functions.php');
 	
   require_once('code/login.php');
+  if( ! $angemeldet ) {
+    echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
+    exit();
+  }
 	
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
 
-  get_http_var( 'area' );
 
-  if($area == 'bestellt_faxansicht'){
+  if( get_http_var( 'download','w' ) ) {  // Datei-Download (.pdf, ...): ohne Kopf
+    include( "$download.php" );
+    exit();
+  }
+  if( get_http_var( 'window','w' ) ) {    // window: anzeige in Unterfenster (kleiner Kopf)
+    require_once( 'windows/head.php' );
+    if( is_readable( "windows/$window.php" ) )
+      include( "windows/$window.php" );
+    else
+      include( "$window.php" );
+    echo "$print_on_exit";
+    exit();
+  }
+
+  get_http_var( 'area','w' );             // area: anzeige im Hauptfenster (normaler Kopf)
+
+  if($area == 'bestellt_faxansicht'){  // TODO: Aufruf per index.php?download=...
   	include("bestellt_faxansicht.php");
 	exit();
   }
 
 
-		//head einfügen
-	get_http_var( 'nohead' );
-  if( ! $nohead ) include ( "$foodsoftpath/head.php" );
+  include ( "head.php" );
+    include('dienst_info.php');
 
-  if( ! $angemeldet ) {
-    echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
-    exit();
-  }
   global $login_gruppen_id;
 
-  include('dienst_info.php');
 	 
 	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
 	    if (!isset($area)) {
@@ -51,12 +64,7 @@
 			    include('bestellschein.php');
 			    break;
 		    case "wiki":
-				echo "
-				  <form action='/wiki/doku.php' name='gotowiki_form' method='get'>
-				    <input type='hidden' name='do' value='show'>
-				  </form>
-				  <script type='text/javascript'>document.forms['gotowiki_form'].submit();</script>
-				";
+          reload_immediately( '$foodsoftdir/../wiki/doku.php?do=show' );
 			    break;
 		    default:
 			    if(file_exists($area.".php")){
