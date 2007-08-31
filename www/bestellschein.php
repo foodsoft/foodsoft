@@ -70,18 +70,18 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 	case STATUS_BESTELLEN:
      $editable = FALSE;
      if( $gruppen_id ) {
-       $default_spalten = 0x63f;
+        $default_spalten = 0x83f;
      } else {
-       $default_spalten = 0x67f;
+        $default_spalten = 0x67f;
      }
      $title="Bestellschein (vorläufig)";
      break;
 	case STATUS_LIEFERANT:
      $editable= FALSE;
      if( $gruppen_id ) {
-        $default_spalten = 0x6bf;
+        $default_spalten = 0x8bf;
      } else {
-       $default_spalten = 0x79f;
+        $default_spalten = 0x6ff;
      }
      $title="Bestellschein";
 	   // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
@@ -89,11 +89,11 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 	case STATUS_VERTEILT:
      if( $gruppen_id ) {
        $editable= FALSE;
-       $default_spalten = 0x6bf;
+        $default_spalten = 0x8bf;
      } else {
        // ggf. liefermengen aendern lassen:
 	     $editable = (!$readonly) and ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
-       $default_spalten = 0x79f;
+        $default_spalten = 0x6ff;
      }
 	   $title="Lieferschein";
 	   break;
@@ -105,7 +105,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 	   exit();
 }
 
-get_http_var( 'spalten', 'w' ) or $spalten = $default_spalten;
+get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
 
 										
 	 if($state==STATUS_LIEFERANT){
