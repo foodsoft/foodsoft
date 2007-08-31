@@ -205,48 +205,142 @@ function rotationsplanView($row){
     
 }
 
-function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE){
+// moegliche spalten:
+//   1: produktname
+//   2: V-Preis
+//   4: MWst
+//   8: Pfand
+//  10: Netto-L-Preis
+//  20: bestellmenge (*)
+//  40: gebinde bestellt (*)
+//  80: liefermenge (*)
+// 100: gebinde geliefert (*)
+// 200: gesamtpreis netto (*)
+// 400: gesamtpreis brutto (*)
+//
+// mit $gruppen_id: (*) nur fuer diese gruppe
+//
+function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = FALSE, $gruppen_id = false ) {
   global $area, $print_on_exit;
 
-  $result1 = sql_bestellprodukte($bestell_id);
-  $preis_summe = 0;
+  $result1 = sql_bestellprodukte($bestell_id,$gruppen_id);
+  $state = getState($bestell_id);
+  switch($state) {
+    case STATUS_BESTELLEN:
+      if( $gruppen_id ) {
+        $default_spalten = 0x63f;
+        $max_spalten = 0x67f;
+      } else {
+        $default_spalten = 0x67f;
+        $max_spalten = 0x67f;
+      }
+      break;
+    case STATUS_LIEFERANT:
+    case STATUS_VERTEILT:
+    default:
+      if( $gruppen_id ) {
+        $default_spalten = 0x6bf;
+        $max_spalten = 0x7ff;
+      } else {
+        $default_spalten = 0x79f;
+        $max_spalten = 0x7ff;
+      }
+      break;
+  }
+  if( ! $spalten ) {
+    $spalten = $spalten & $max_spalten;
+  } else {
+    $spalten = $default_spalten;
+  }
+
   if( $editAmounts ) {
     echo "<form action='index.php' method='post'>";
   }
-     ?>
-      <table class='numbers' width='100%'>
-           <tr class='legende'>
-             <th>Produkt</th>
-             <th title='Endpreis pro V-Einheit' colspan='2'>V-Preis</th>
-             <th>MWSt</th>
-             <th>Pfand</th>
-             <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-             <th colspan='3'>Liefermenge</th>
-             <th colspan='2'>Gebinde</th>
-             <th>Gesamtpreis</th>
-           </tr>
+  echo "<table class='numbers' width='100%'><tr class='legende'>";
+  $cols = 0;
+  if( $spalten & 0x1 ) {
+    echo "<th>Produkt<br>&nbsp;<!-- doppelzeile erzwingen --></th>";
+    $cols += 1;
+  }
+  if( $spalten & 0x2 ) {
+    echo "<th title='Endpreis pro V-Einheit' colspan='2'>V-Preis</th>";
+    $cols += 2;
+  }
+  if( $spalten & 0x4 ) {
+    echo "<th>MWSt</th>";
+    $cols += 1;
+  }
+  if( $spalten & 0x8 ) {
+    echo "<th>Pfand</th>";
+    $cols += 1;
+  }
+  if( $spalten & 0x10 ) {
+    echo "<th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>";
+    $cols += 2;
+  }
+  if( $spalten & 0x20 ) {
+    if( $gruppen_id) {
+      echo "<th colspan='2'>bestellt<br>fest(Toleranz)</th>";
+    } else {
+      echo "<th title='von Konsumenten bestellte Mengen: fest (Toleranz,Basar)' colspan='2'
+       >bestellt<br>fest (Toleranz,Basar)</th>";
+     }
+    $cols += 2;
+  }
+  if( $spalten & 0x40 ) {
+    echo "<th title='von Konsumenten bestellte Gebinde: fest / maximal' colspan='2'
+     >bestellt Gebinde<br>fest / maximal</th>";
+    $cols += 2;
+  }
+  if( $spalten & 0x80 ) {
+    if( $gruppen_id) {
+      echo "<th colspan='2'>Zuteilung</th>";
+      $cols += 2;
+    } else {
+      echo "<th colspan='3'>Liefermenge</th>";
+      $cols += 3;
+    }
+  }
+  if( $spalten & 0x100 ) {
+    echo "<th colspan='2'>Liefer-Gebinde</th>";
+    $cols += 2;
+  }
+  $cols_vor_summe = $cols;
+  if( $spalten & 0x200 ) {
+    echo "<th title='Netto-Gesamtpreis (ohne MWSt, ohne Pfand)'>Gesamt<br>Netto</th>";
+    $cols += 1;
+  }
+  if( $spalten & 0x400 ) {
+    echo "<th title='Brutto-Gesamtpreis (mit MWSt, ohne Pfand)'>Gesamt<br>Brutto</th>";
+    $cols += 1;
+  }
 
-     <?
-  $preis_summe = 0;
+  $netto_summe = 0;
+  $brutto_summe = 0;
   $nichtgeliefert_header_ausgeben = true;
 
   while  ($produkte_row = mysql_fetch_array($result1)) {
     $produkt_id =$produkte_row['produkt_id'];
     if( $produkte_row['liefermenge'] == 0 ) {
-      if( ! $editAmounts )
+      if( ! $editAmounts && ! $gruppen_id )
         break;  // nicht gelieferte werden nicht mehr angezeigt
       if( $nichtgeliefert_header_ausgeben ) {
+        if( $cols > $cols_vor_summe ) {
+          ?>
+            <tr id='row_total' class='summe'>
+              <td colspan='<? echo $cols_vor_summe; ?>' style='text-align:right;'>Summe:</td>
+          <?
+          if( $spalten & 0x200 )
+            echo "<td class='number'>".sprintf( "%8.2lf", $netto_summe )."</td>";
+          if( $spalten & 0x400 )
+            echo "<td class='number'>".sprintf( "%8.2lf", $brutto_summe )."</td>";
+          ?>
+            </tr>
+          <?
+        }
         ?>
-          <tr id='row_total' class='summe'>
-            <td colspan='12' style='text-align:right;'>Summe:</td>
-            <td class='number'>
-        <?
-        printf( "%8.2lf", $preis_summe );
-        ?>
-          </td>
-          </tr>
           <tr>
-            <th colspan='10'>
+            <th colspan='<? echo $cols ?>'>
               <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
                 onclick='nichtgeliefert_toggle();' title='Ausblenden'>
               </img>
@@ -260,100 +354,164 @@ function products_overview($bestell_id, $editAmounts = FALSE, $editPrice = FALSE
     } else {
       echo "<tr name='geliefert'";
     }
-
-    echo " id='row$produkt_id'><td>$produkt_id";
+    echo " id='row$produkt_id'>";
 
     preisdatenSetzen( & $produkte_row );
 
-    $lieferpreis = $produkte_row['lieferpreis'];
+    $nettolieferpreis = $produkte_row['nettolieferpreis'];
+    $bruttolieferpreis = $produkte_row['bruttolieferpreis'];
     $mengenfaktor = $produkte_row['mengenfaktor'];
-    $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
 
-    $gesamtpreis = sprintf( "%8.2lf", $lieferpreis * $liefermenge );
+    $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
+    $basarbestellmenge = $produkte_row['basarbestellmenge'];
+    $toleranzbestellmenge = $produkte_row['toleranzbestellmenge'];
+    $festbestellmenge = $gesamtbestellmenge - $toleranzbestellmenge - $basarbestellmenge;
 
-    echo "
-      {$produkte_row['produkt_name']}</td>
-      <td class='mult'>{$produkte_row['preis_rund']}</td>
-      <td class='unit'>/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
-      <td class='number'>{$produkte_row['mwst']}</td>
-      <td class='number'>{$produkte_row['pfand']}</td>
-      <td class='mult'>
-    ";
-    if($editPrice){
-      echo "<a
-        href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
-        onclick=\"
-          document.getElementById('row$produkt_id').className='modified';
-          document.getElementById('row_total').className='modified';\"
-          title='Preis oder Produktdaten &auml;ndern'
-        >$lieferpreis</a>
-      ";
+    if( $state == STATUS_BESTELLEN ) {
+      $liefermenge = $gesamtbestellmenge;
     } else {
-      echo $lieferpreis;
+      if( $gruppen_id ) {
+        $liefermenge = $produkte_row['verteilmenge'] / $mengenfaktor;
+      } else {
+        $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
+      }
     }
-    echo "</td>
-      <td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>
-      <td class='mult'>
-    ";
-    if($editAmounts){
-      echo "
-        <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'
-          onchange=\"
+
+    $nettogesamtpreis = sprintf( "%8.2lf", $nettolieferpreis * $liefermenge );
+    $bruttogesamtpreis = sprintf( "%8.2lf", $bruttolieferpreis * $liefermenge );
+
+    $gebindegroesse = $produkte_row['gebindegroesse'];
+
+    echo "<td>{$produkte_row['produkt_name']}</td>";
+    if( $spalten & 0x2 ) {
+      echo "<td class='mult'>" . sprintf( "%8.2lf", $produkte_row['preis'] ) . "</td>";
+      echo "<td class='unit'>/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>";
+    }
+    if( $spalten & 0x4 ) {
+      echo "<td class='number'>{$produkte_row['mwst']}</td>";
+    }
+    if( $spalten & 0x8 ) {
+      echo "<td class='number'>{$produkte_row['pfand']}</td>";
+    }
+    if( $spalten & 0x10 ) {
+      echo "<td class='mult'>";
+      if($editPrice){
+        echo "<a
+          href=\"javascript:neuesfenster('index.php?window=terraabgleich?produktid=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
+          onclick=\"
             document.getElementById('row$produkt_id').className='modified';
             document.getElementById('row_total').className='modified';\"
-          title='tats&auml;chliche Liefermenge eingeben'
-        >
-      ";
-    } else {
-      echo $liefermenge;
+            title='Preis oder Produktdaten &auml;ndern'
+          >" . sprintf( "%8.2lf", $nettolieferpreis ) . "</a>
+        ";
+      } else {
+        printf( "%8.2lf", $nettolieferpreis );
+      }
+      echo "</td><td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>";
     }
-    echo "
-      </td>
-      <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
-      <td style='border-left-style:none;'><a class='png' style='padding:0pt 1ex 0pt 1ex;'
-        href=\"javascript:neuesfenster('/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id','produktverteilung')\"
-        title='Details zur Verteilung'
-        ><img src='img/b_browse.png' style='border-style:none;padding:1px 1ex 1px 1ex;'
-           title='Details zur Verteilung' alt='Details zur Verteilung'
-        ></a></td>
-      <td class='mult'>"
-      . sprintf( "%.2lf", $produkte_row['liefermenge'] / $produkte_row['gebindegroesse'] ). " * </td>
-      <td class='unit'>(" . $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
+    if( $spalten & 0x20 ) {
+      if( $gruppen_id ) {
+        echo "
+          <td class='mult'>"
+          . sprintf("%.0lf(%.0lf)", $festbestellmenge, $toleranzbestellmenge )
+          . "</td>
+          <td class='unit'>* {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
+        ";
+      } else {
+        echo "
+          <td class='mult'>"
+          . sprintf("%.0lf (%.0lf,%.0lf)", $festbestellmenge, $toleranzbestellmenge,$basarbestellmenge )
+          . "</td>
+          <td class='unit'>* {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}</td>
+        ";
+      }
+    }
+    if( $spalten & 0x40 ) {
+      echo "
+        <td class='mult'>" . sprintf( "%.2lf", $festbestellmenge / $gebindegroesse ) . "</td>
+        <td class='unit'>/ " . sprintf( "%.2lf", $gesamtbestellmenge / $gebindegroesse ) . "</td>
+      ";
+    }
+    if( $spalten & 0x80 ) {
+      echo "<td class='mult'>";
+      if( $editAmounts && ! $gruppen_id ) {
+        echo "
+          <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge'
+            onchange=\"
+              document.getElementById('row$produkt_id').className='modified';
+              document.getElementById('row_total').className='modified';\"
+            title='tats&auml;chliche Liefermenge eingeben'
+          >
+        ";
+      } else {
+        echo $liefermenge;
+      }
+      echo "
+        </td>
+        <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
+      ";
+      if( ! $gruppen_id ) {
+        echo "
+          <td style='border-left-style:none;'><a class='png' style='padding:0pt 1pt 0pt 1pt;'
+            href=\"javascript:neuesfenster('index.php?window=showBestelltProd&bestell_id=$bestell_id&produkt_id=$produkt_id','produktverteilung')\"
+            title='Details zur Verteilung'
+            ><img src='img/b_browse.png' style='border-style:none;padding:1px 0.5ex 1px 0.5ex;'
+               title='Details zur Verteilung' alt='Details zur Verteilung'
+            ></a></td>
+        ";
+      }
+    }
+    if( $spalten & 0x100 ) {
+      echo "
+        <td class='mult'>"
+        . sprintf( "%.2lf", $produkte_row['liefermenge'] / $gebindegroesse ) . " * </td>
+        <td class='unit'>(" . $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
                          . " {$produkte_row['kan_verteileinheit']})</td>
-      <td class='number'>$gesamtpreis</td>
-    </tr>";
+      ";
+    }
+    if( $spalten & 0x200 ) {
+      echo "<td class='number'>$nettogesamtpreis</td>";
+    }
+    if( $spalten & 0x400 ) {
+      echo "<td class='number'>$bruttogesamtpreis</td>";
+    }
+    echo "</tr>";
 
-    $preis_summe += $gesamtpreis;
+    $netto_summe += $nettogesamtpreis;
+    $brutto_summe += $bruttogesamtpreis;
 
   } //end while produkte array            
 
   if( $nichtgeliefert_header_ausgeben ) {
         // summe muss noch angezeigt werden:
-	?>
-          <tr id='row_total' class='summe'>
-            <td colspan='12' style='text-align:right;'>Summe:</td>
-            <td class='number'>
-        <?
-        printf( "%8.2lf", $preis_summe );
-        ?>
-          </td>
-          </tr>
-        <?
+    if( $cols > $cols_vor_summe ) {
+      ?>
+        <tr id='row_total' class='summe'>
+          <td colspan='<? echo $cols_vor_summe ?>' style='text-align:right;'>Summe:</td>
+      <?
+      if( $spalten & 0x200 ) {
+        printf( "<td class='number'>%8.2lf</td>", $netto_summe );
+      }
+      if( $spalten & 0x400 ) {
+        printf( "<td class='number'>%8.2lf</td>", $brutto_summe );
+      }
+      echo "</tr>";
+    }
   }
 
   if($editAmounts){
-    echo "
-      <tr style='border:none'>
-        <td colspan='13'>
-		   <input type='hidden' name='area' value='$area'>
-		   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
-		   <input type='submit' value='Liefermengen ändern'>
-		   <input type='reset' value='Änderungen zurücknehmen'>
-		 </td>
-	   </tr>
-   </table>
-   </form>
-    ";
+    ?>
+        <tr style='border:none'>
+          <td colspan='<? echo $cols ?>'>
+            <input type='hidden' name='area' value='$area'>
+            <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+            <input type='submit' value='Liefermengen ändern'>
+            <input type='reset' value='Änderungen zurücknehmen'>
+          </td>
+        </tr>
+      </table>
+      </form>
+    <?
   } else {
     echo "</table>";
   };
@@ -465,8 +623,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
 
 		 while ($row = mysql_fetch_array($result)) {
        $id = $row['id'];
-       $detail_url = "javascript:neuesfenster('$foodsoftdir/index.php?area=bestellschein&bestell_id=$id','bestellschein');";
-       $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?area=bestellt_faxansicht&bestell_id=$id','bestellfax');";
+       $detail_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=bestellschein&bestell_id=$id','bestellschein');";
+       $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$id','bestellfax');";
        $self_form = "<form action='$self' method='post'>$self_fields";
 		 ?>
 		 <tr>                                 
@@ -669,7 +827,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
                   if( $gruppen_id == 99 )
                     echo "<span class='warn'> BASAR </span>";
                   else
-                    echo "$login_gruppen_name";
+                    echo sql_gruppenname($gruppen_id);
                 ?>
                 </td>
 	      </tr>	
