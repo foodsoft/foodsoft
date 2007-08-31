@@ -10,70 +10,92 @@
 
 error_reporting(E_ALL);
 
-     if( ! $angemeldet ) {
-       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-     } 
+if( ! $angemeldet ) {
+  exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
+} 
 
 if( get_http_var( 'bestellungs_id', 'u' ) )
   $bestell_id = $bestellungs_id;
 else
   get_http_var( 'bestell_id', 'u' );
 
-$self = "$foodsoftdir/index.php?area=bestellschein";
-$self_fields = "<input type='hidden' name='area' value='bestellschein'>";
-$self_form = "<form action='$self' method='post'>$self_fields";
+$area or $area = "bestellschein";
 
-get_http_var( 'action', 'w' );
+$self = "$foodsoftdir/index.php?area=$area";
+$self_fields = "<input type='hidden' name='area' value='$area'>";
+
 switch( $action ) {
   case 'changeState':
+    fail_if_readonly();
     nur_fuer_dienst(1,3,4);
     need_http_var( 'change_id', 'u' );
     need_http_var( 'change_to', 'w' );
     changeState( $change_id, $change_to );
     break;
   case 'changeEndDate':
+    fail_if_readonly();
     nur_fuer_dienst(4);
     // yet to be implemented...
   default:
     break;
 }
 
-if( $bestell_id ) {
-  $self = "$self&bestell_id=$bestell_id";
-  $self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
-  $state = getState( $bestell_id );
-} else {
+if( ! $bestell_id ) {
   if( ! get_http_var( 'state', 'w' ) ) {
     switch( $area ) {
       case 'lieferschein':
-        $state = 'Verteilt';
+        $state = STATUS_VERTEILT;
         break;
       case 'bestellschein':
-        $state = 'beimLieferanten';
+        $state = STATUS_LIEFERANT;
         break;
       default:
     }
+  }
   $result = sql_bestellungen( $state );
   select_bestellung_view($result, /* $selectButtons, */ 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
   echo "$print_on_exit";
   exit();
 }
 
-	switch($state){
+$self = "$self&bestell_id=$bestell_id";
+$self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
+
+$state = getState($bestell_id);
+get_http_var( 'gruppen_id', 'u' );
+if( $gruppen_id )
+  $gruppen_name = sql_gruppenname($gruppen_id);
+
+switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 	case STATUS_BESTELLEN:
      $editable = FALSE;
-	   $title="Bestellschein (vorläufig)";
-	   // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
-	   break;
+     if( $gruppen_id ) {
+       $default_spalten = 0x63f;
+     } else {
+       $default_spalten = 0x67f;
+     }
+     $title="Bestellschein (vorläufig)";
+     break;
 	case STATUS_LIEFERANT:
      $editable= FALSE;
-	   $title="Bestellschein f�r den Lieferanten";
+     if( $gruppen_id ) {
+        $default_spalten = 0x6bf;
+     } else {
+       $default_spalten = 0x79f;
+     }
+     $title="Bestellschein";
 	   // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
 	   break;
 	case STATUS_VERTEILT:
-	   $editable = ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
+     if( $gruppen_id ) {
+       $editable= FALSE;
+       $default_spalten = 0x6bf;
+     } else {
+       // ggf. liefermengen aendern lassen:
+	     $editable = (!$readonly) and ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
+       $default_spalten = 0x79f;
+     }
 	   $title="Lieferschein";
-	   // $selectButtons = array("zeigen" => "lieferschein");
 	   break;
 	default: 
 	   ?>
@@ -81,20 +103,19 @@ if( $bestell_id ) {
 	   <?
      echo "$print_on_exit";
 	   exit();
-	}
+}
 
+get_http_var( 'spalten', 'w' ) or $spalten = $default_spalten;
 
 										
-	 if(getState($bestell_id)==STATUS_LIEFERANT){
+	 if($state==STATUS_LIEFERANT){
 	 	verteilmengenZuweisen($bestell_id);
 	 }
-         //infos zur gesamtbestellung auslesen 
-	 $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
 
 
   // liefermengen aktualisieren:
   //
-  if( $editable ) {
+  if( $editable and $state == STATUS_VERTEILT ) {
     $produkte = sql_bestellprodukte($bestell_id);
     while  ($produkte_row = mysql_fetch_array($produkte)) {
       $produkt_id =$produkte_row['produkt_id'];
@@ -109,14 +130,17 @@ if( $bestell_id ) {
       }
     }
   }
+
+         //infos zur gesamtbestellung auslesen 
+	 $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
 	
        //Formular ausgeben
 
 	echo "<h1>".$title."</h1>";
 
-	 bestellung_overview(mysql_fetch_array($result));
+	 bestellung_overview(mysql_fetch_array($result),$gruppen_id,$gruppen_id);
 	 
-	 products_overview($bestell_id, $editable, $editable);
+	 products_overview($bestell_id, $editable, $editable, $spalten, $gruppen_id);
          
 ?>
 
