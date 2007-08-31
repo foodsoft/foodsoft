@@ -777,6 +777,7 @@ function changeState($bestell_id, $state){
   if( $current == $state )
     return true;
 
+  fail_if_readonly();
   nur_fuer_dienst(1,3,4);
   switch( "$current,$state" ){
     case STATUS_BESTELLEN . "," . STATUS_LIEFERANT:
@@ -808,6 +809,8 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 	$result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden.. ");
 	if(mysql_num_rows($result)==0)
     return true;
+  fail_if_readonly();
+  nur_fuer_dienst(1,3,4);
 
 	$sql = "DELETE bestellzuordnung.* FROM bestellzuordnung inner
 	join gruppenbestellungen on (gruppenbestellungen.id =
@@ -1004,19 +1007,44 @@ function sql_gesamtpreise($gruppe_id){
 /**
  *
  */
-function sql_bestellprodukte($bestell_id){
-            $query = "SELECT *, produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
-                              , produktpreise.liefereinheit as liefereinheit
-                              , produktpreise.verteileinheit as verteileinheit
-                              , produktpreise.gebindegroesse as gebindegroesse
-            FROM produkte INNER JOIN
-	                            bestellvorschlaege ON (produkte.id=bestellvorschlaege.produkt_id)
-				    INNER JOIN produktpreise 
-				    ON (bestellvorschlaege.produktpreise_id=produktpreise.id)
-				    INNER JOIN produktgruppen
-				    ON (produktgruppen.id=produkte.produktgruppen_id)
-				    WHERE bestellvorschlaege.gesamtbestellung_id='".mysql_escape_string($bestell_id)."'
-				    ORDER BY IF(liefermenge>0,0,1), produktgruppen_id, produkte.name;";
+function sql_bestellprodukte($bestell_id, $gruppen_id=false){
+  $basar_id = sql_basar_id();
+  $query = "SELECT *
+    , produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
+    , produktpreise.liefereinheit as liefereinheit
+    , produktpreise.verteileinheit as verteileinheit
+    , produktpreise.gebindegroesse as gebindegroesse
+    , sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) )
+        as gesamtbestellmenge
+    , sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,1,0)
+                                 * IF(bestellzuordnung.art<2,1,0) )
+       as basarbestellmenge
+    , sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,0,1)
+                                 * IF(bestellzuordnung.art=1,1,0) )
+       as toleranzbestellmenge
+    , sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0) )
+        as verteilmenge
+  FROM bestellvorschlaege
+  INNER JOIN produkte
+    ON (produkte.id=bestellvorschlaege.produkt_id)
+  INNER JOIN produktpreise 
+    ON (produktpreise.id=bestellvorschlaege.produktpreise_id)
+  INNER JOIN produktgruppen
+    ON (produktgruppen.id=produkte.produktgruppen_id)
+  INNER JOIN gruppenbestellungen
+    ON (gruppenbestellungen.gesamtbestellung_id=$bestell_id)
+  INNER JOIN bestellzuordnung
+    ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
+        and bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
+  WHERE bestellvorschlaege.gesamtbestellung_id=$bestell_id
+  "
+   . ( $gruppen_id ? " and gruppenbestellungen.bestellguppen_id=$gruppen_id " : "" ) .
+  "
+  GROUP BY bestellvorschlaege.produkt_id
+  "
+   . ( $gruppen_id ? " HAVING gesamtbestellmenge>0 " : "" ) .
+  "
+  ORDER BY IF(liefermenge>0,0,1), produktgruppen_id, produkte.name ";
 
             $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
 	    return $result;
@@ -1223,9 +1251,10 @@ function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
 	    ";
 
     $result= doSql($query, LEVEL_ALL, "Suche in gesamtbestellungen,bestellvorschlaege fehlgeschlagen");
-    return mysql_fetch_array($result)  
-    		or error( __LINE__, __FILE__,
-      		"gesamtbestellung/bestellvorschlag nicht gefunden " );
+    return mysql_fetch_array($result)  ;
+// (auskommentiert: liefert sonst immer true/false zurueck!)
+//    		or error( __LINE__, __FILE__,
+//      		"gesamtbestellung/bestellvorschlag nicht gefunden " );
 
 
 }
@@ -1579,6 +1608,8 @@ function changeLieferpreis_sql($preis_id, $produkt_id, $bestellung_id){
  *
  */
 function changeLiefermengen_sql($menge, $produkt_id, $bestellung_id){
+  fail_if_readonly();
+  nur_fuer_dienst(1,3,4);
 	$query = "UPDATE bestellvorschlaege 
 		  SET liefermenge = ".mysql_escape_string($menge)."
 		  WHERE produkt_id = ".mysql_escape_string($produkt_id)."
@@ -1949,9 +1980,20 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
     $pr['preiseinheit'] = false;
     $pr['mengenfaktor'] = 1.0;
   }
+
+  // Preise je V-Einheit:
+  $pr['endpreis'] = $pr['preis'];
+  $pr['bruttopreis'] = $pr['preis'] - $pr['pfand'];
+  $pr['nettopreis'] = $pr['bruttopreis'] / ( 1.0 + $pr['mwst'] / 100.0 );
+
+  // brutto/nettopreis je preiseinheit:
+  // $pr['endlieferpreis'] = $pr['endpreis'] * $pr['mengenfaktor'];
+  $pr['nettolieferpreis'] = $pr['nettopreis'] * $pr['mengenfaktor'];
+  $pr['bruttolieferpreis'] = $pr['bruttopreis'] * $pr['mengenfaktor'];
+
+  // deprecated:
+  $pr['lieferpreis'] = $pr['nettolieferpreis'];
   $pr['preis_rund'] = sprintf( "%8.2lf", $pr['preis'] );
-  $pr['nettopreis'] = ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 );
-  $pr['lieferpreis'] = sprintf( "%8.2lf", $pr['nettopreis'] * $pr['mengenfaktor'] );
 }
 
 // get_http_var: bisher definierte $typ argumente:
