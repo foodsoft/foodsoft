@@ -23,7 +23,9 @@
          $login_gruppen_name,
          $dienst,
          $coopie_name,
-         $dienstkontrollblatt_id;
+         $dienstkontrollblatt_id,
+         $foodsoftpath,
+         $foodsoftdir;
 
   function init_login() {
     global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $dienstkontrollblatt_id;
@@ -359,7 +361,7 @@
     }
   }
   function nur_fuer_dienst() {
-    global $dienst;
+    global $dienst, $foodsoftpath;
     for( $i = 0; $i < func_num_args(); $i++ ) {
       if( $dienst == func_get_arg($i) )
         return TRUE;
@@ -369,7 +371,7 @@
     exit();
   }
   function nur_fuer_dienst_I() {
-    global $hat_dienst_I;
+    global $hat_dienst_I, $foodsoftpath;
     if( ! $hat_dienst_I ) {
       require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst I</div> $print_on_exit";
@@ -377,7 +379,7 @@
     }
   }
   function nur_fuer_dienst_III() {
-    global $hat_dienst_III;
+    global $hat_dienst_III, $foodsoftpath;
     if( ! $hat_dienst_III ) {
       require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst II</div> $print_on_exit";
@@ -385,7 +387,7 @@
     }
   }
   function nur_fuer_dienst_IV() {
-    global $hat_dienst_IV;
+    global $hat_dienst_IV, $foodsoftpath;
     if( ! $hat_dienst_IV ) {
       require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst IV</div> $print_on_exit";
@@ -393,7 +395,7 @@
     }
   }
   function nur_fuer_dienst_V() {
-    global $hat_dienst_V;
+    global $hat_dienst_V, $foodsoftpath;
     if( ! $hat_dienst_V ) {
       require_once( "$foodsoftpath/head.php" );
       echo "<div class='warn'>Nur fuer Dienst V</div> $print_on_exit";
