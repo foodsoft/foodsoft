@@ -777,15 +777,15 @@ function changeState($bestell_id, $state){
 
   nur_fuer_dienst(1,3,4);
   switch( "$current,$state" ){
-    case "bestellen,beimLieferanten":
+    case STATUS_BESTELLEN . "," . STATUS_LIEFERANT:
       verteilmengenZuweisen( $bestell_id );
       break;
-    case "beimLieferanten,bestellen":
+    case STATUS_LIEFERANT . "," . STATUS_BESTELLEN:
       verteilmengenLoeschen( $bestell_id );
       break;
-    case "beimLieferanten,Verteilt":
+    case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
       break;
-    case "Verteilt,archiviert":
+    case STATUS_VERTEILT . "," . STATUS_ARCHIVIERT:
       break;
     default:
       error(__LINE__,__FILE__, "Ungültiger Statuswechsel");
@@ -830,6 +830,10 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
  *
  */
 function sql_basar_id(){
+  global $basar_id;
+  if( $basar_id ) {
+    return $basar_id;
+  } else {
 	    $sql = "SELECT id FROM bestellgruppen
 	    		WHERE name = \"_basar\"";
              $result = doSql($sql, LEVEL_ALL, "Konnte Basar-ID nich aus DB laden..");
@@ -837,9 +841,9 @@ function sql_basar_id(){
 		error(__LINE__,__FILE__,"Kein Eintrag für Glasrueckgabe" );
 	    $row = mysql_fetch_array($result);
 	    return $row['id'];
-
-
+  }
 }
+
 /**
  *
  */

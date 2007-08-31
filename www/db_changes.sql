@@ -23,3 +23,22 @@ ALTER TABLE `dienstkontrollblatt`
   ADD UNIQUE KEY `secondary` (`gruppen_id`,`dienst`,`datum`) ;
 
 
+INSERT INTO `nahrungskette`.`leitvariable` (
+`name` ,
+`value` ,
+`local` ,
+`comment`
+)
+VALUES (
+'basar_id', '99', '0', 'Gruppen-ID der besonderen Basar-Gruppe'
+);
+
+INSERT INTO `nahrungskette`.`leitvariable` (
+`name` ,
+`value` ,
+`local` ,
+`comment`
+)
+VALUES (
+'sockelbetrag', '6.00', '0', 'Sockelbeitrag pro Gruppenmitglied'
+);

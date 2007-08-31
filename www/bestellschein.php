@@ -19,26 +19,8 @@ if( get_http_var( 'bestellungs_id', 'u' ) )
 else
   get_http_var( 'bestell_id', 'u' );
 
-
-
-if( ! get_http_var( 'status', 'w' ) ) {
-  switch( $area ) {
-    case 'lieferschein':
-      $status = 'Verteilt';
-      break;
-    case 'bestellschein':
-      $status = 'beimLieferanten';
-      break;
-    default:
-  }
-}
-
 $self = "$foodsoftdir/index.php?area=bestellschein";
 $self_fields = "<input type='hidden' name='area' value='bestellschein'>";
-if( $bestell_id ) {
-  $self = "$self&bestell_id=$bestell_id";
-  $self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
-}
 $self_form = "<form action='$self' method='post'>$self_fields";
 
 get_http_var( 'action', 'w' );
@@ -55,30 +37,43 @@ switch( $action ) {
   default:
     break;
 }
- 
-  if( ! $bestell_id ) {
-    $result = sql_bestellungen( $status );
-    select_bestellung_view($result, /* $selectButtons, */ 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
-    echo "$print_on_exit";
-    exit();
-  }
 
+if( $bestell_id ) {
+  $self = "$self&bestell_id=$bestell_id";
+  $self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
   $state = getState( $bestell_id );
+} else {
+  if( ! get_http_var( 'state', 'w' ) ) {
+    switch( $area ) {
+      case 'lieferschein':
+        $state = 'Verteilt';
+        break;
+      case 'bestellschein':
+        $state = 'beimLieferanten';
+        break;
+      default:
+    }
+  $result = sql_bestellungen( $state );
+  select_bestellung_view($result, /* $selectButtons, */ 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
+  echo "$print_on_exit";
+  exit();
+}
+
 	switch($state){
-	case 'bestellen':
+	case STATUS_BESTELLEN:
      $editable = FALSE;
 	   $title="Bestellschein (vorlÃ¤ufig)";
-	   $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
+	   // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
 	   break;
-	case 'beimLieferanten':
+	case STATUS_LIEFERANT:
      $editable= FALSE;
 	   $title="Bestellschein für den Lieferanten";
-	   $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
+	   // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
 	   break;
-	case 'Verteilt':
+	case STATUS_VERTEILT:
 	   $editable = ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
 	   $title="Lieferschein";
-	   $selectButtons = array("zeigen" => "lieferschein");
+	   // $selectButtons = array("zeigen" => "lieferschein");
 	   break;
 	default: 
 	   ?>
@@ -90,7 +85,7 @@ switch( $action ) {
 
 
 										
-	 if(getState($bestell_id)==STATUS_BESTELLEN){
+	 if(getState($bestell_id)==STATUS_LIEFERANT){
 	 	verteilmengenZuweisen($bestell_id);
 	 }
          //infos zur gesamtbestellung auslesen 
