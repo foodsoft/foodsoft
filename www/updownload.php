@@ -233,7 +233,7 @@
            <label>Datenbank sperren und anschliessend speichern als <kbd>$downloadname</kbd>:</label>
          </td>
          <td>
-           <form action='index.php?nohead=1&area=updownload&action=download' method='post'>
+           <form action='index.php?download=updownload&action=download' method='post'>
              <input type='submit' value='Speichern'>
            </form>
          </td>
