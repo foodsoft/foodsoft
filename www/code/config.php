@@ -31,12 +31,11 @@
   $foodsoftserver or $foodsoftserver = "unbekannt";
 
   $foodsoftpath = realpath( dirname( __FILE__ ) . '/../' );
-  $document_root = realpath( $_SERVER['DOCUMENT_ROOT'] );
-
-  $len = strlen( $document_root );
-  echo "\$document_root: ".$document_root."<br> \$foodsoftpath: ".$foodsoftpath;
-  assert( ! strncmp( $document_root, $foodsoftpath, $len ) );
-  $foodsoftdir = substr( $foodsoftpath, $len );
+  // $document_root = realpath( $_SERVER['DOCUMENT_ROOT'] );
+  // $len = strlen( $document_root );
+  $foodsoftdir = ereg_replace( '/[^/]+$', '', $_SERVER['SCRIPT_NAME'] );
+  // ggf. unterverzeichnis /windows/ abschneiden:
+  $foodsoftdir = ereg_replace( '/windows$', '', $foodsoftdir );
 
   $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
   $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
