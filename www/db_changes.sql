@@ -42,3 +42,12 @@ INSERT INTO `nahrungskette`.`leitvariable` (
 VALUES (
 'sockelbetrag', '6.00', '0', 'Sockelbeitrag pro Gruppenmitglied'
 );
+
+-- bestellvorschlaege hatte bisher keinen index; dieser sollte gut sein fuer die performance:
+--
+ALTER TABLE `bestellvorschlaege` ADD PRIMARY KEY ( `gesamtbestellung_id` , `produkt_id` );
+
+-- bestellzuordnung: index fuer bessere performance (und vielleicht auch irgendwann mal UNIQUE):
+--
+ALTER TABLE `bestellzuordnung` ADD INDEX `secondary` ( `produkt_id` , `gruppenbestellung_id` , `art` );
+ 
