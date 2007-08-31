@@ -1,14 +1,11 @@
 <?PHP
 
-  require_once('code/config.php');
-  require_once("$foodsoftpath/code/err_functions.php");
-  require_once("$foodsoftpath/code/zuordnen.php");
-  require_once("$foodsoftpath/code/login.php");
+  assert( $angemeldet );   // aufruf jetzt per index.php?window=showBestelltProd
 
   need_http_var('bestell_id');
   need_http_var('produkt_id');
 
-  $self = "/foodsoft/windows/showBestelltProd.php?bestell_id=$bestell_id&produkt_id=$produkt_id";
+  $self = "index.php?window=showBestelltProd?bestell_id=$bestell_id&produkt_id=$produkt_id";
   $self_fields = "
     <input type='hidden' name='bestell_id' value='$bestell_id'>
     <input type='hidden' name='produkt_id' value='$produkt_id'>

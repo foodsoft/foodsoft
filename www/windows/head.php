@@ -33,7 +33,7 @@
       <table width='100%' class='head$ro'>
       <tr>
         <td style='padding-right:0.5ex;' class='head$ro'>
-          <img src='$img' class='button' title='Schlie&szlig;en' onClick='opener.focus(); window.close();'></img>
+          <img src='$img' class='button' title='Schlie&szlig;en' onClick='if(opener) opener.focus(); window.close();'></img>
         </td>
         <td>Foodsoft: $subtitle</td>
         <td>
