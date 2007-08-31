@@ -361,12 +361,13 @@
     }
   }
   function nur_fuer_dienst() {
+    global $dienst, $foodsoftpath, $print_on_exit;
     global $dienst, $foodsoftpath;
     for( $i = 0; $i < func_num_args(); $i++ ) {
       if( $dienst == func_get_arg($i) )
         return TRUE;
     }
-    require_once( "$foodsoftpath/head.php" );
+    require_once( $foodsoftpath."/head.php" );
     echo "<div class='warn'>Keine Berechtigung</div> $print_on_exit";
     exit();
   }

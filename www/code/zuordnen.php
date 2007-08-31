@@ -10,6 +10,7 @@ ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten
 ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
 */
 //Debug LEVEL_
+ define('LEVEL_NEVER',  5);
  define('LEVEL_ALL',  4);
  define('LEVEL_MOST',  3);
  define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
@@ -656,7 +657,8 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
 
 	  $sql="SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1";
-    $result = doSql($sql, LEVEL_ALL, "Suche nach Bestellgruppe fehlgeschlagen..");
+	  //do not show because this happens before header
+    $result = doSql($sql, LEVEL_NEVER, "Suche nach Bestellgruppe fehlgeschlagen..");
     $row = mysql_fetch_array($result);
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
       return $row;
