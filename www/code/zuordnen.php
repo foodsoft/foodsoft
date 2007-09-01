@@ -1258,10 +1258,13 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
 /**
  *
  */
-function optionen_gruppen($bestell_id=false,$produkt_id=false) {
+function optionen_gruppen($bestell_id=false,$produkt_id=false,$selected=false) {
   $gruppen = sql_gruppen($bestell_id,$produkt_id);
   while($gruppe = mysql_fetch_array($gruppen)){
-    echo "<option value='{$gruppe['id']}'>{$gruppe['name']}</option>\n";
+    echo "<option value='{$gruppe['id']}'";
+    if( $selected == $gruppe['id'] )
+      echo " selected";
+    echo ">{$gruppe['name']}</option>\n";
   }
 }
 

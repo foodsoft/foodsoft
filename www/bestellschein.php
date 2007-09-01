@@ -21,7 +21,7 @@ else
 
 $area or $area = "bestellschein";
 
-$self = "$foodsoftdir/index.php?area=$area";
+$self = "$foodsoftdir/index.php?window=$area";
 $self_fields = "<input type='hidden' name='area' value='$area'>";
 
 switch( $action ) {
@@ -41,6 +41,7 @@ switch( $action ) {
 }
 
 if( ! $bestell_id ) {
+  // auswahl praesentieren, abhaengig von $state oder $area:
   if( ! get_http_var( 'state', 'w' ) ) {
     switch( $area ) {
       case 'lieferschein':
@@ -53,56 +54,63 @@ if( ! $bestell_id ) {
     }
   }
   $result = sql_bestellungen( $state );
-  select_bestellung_view($result, /* $selectButtons, */ 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
+  select_bestellung_view($result, 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
   echo "$print_on_exit";
   exit();
 }
 
-$self = "$self&bestell_id=$bestell_id";
-$self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
-
-$state = getState($bestell_id);
-get_http_var( 'gruppen_id', 'u' );
+get_http_var( 'gruppen_id', 'u' ) or $gruppen_id = 0;
 if( $gruppen_id )
   $gruppen_name = sql_gruppenname($gruppen_id);
 
+$self = "$self&bestell_id=$bestell_id";
+
+// gruppen_id ist variabel, nicht automatisch in self_fields aufnehmen!
+$self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
+
+$state = getState($bestell_id);
+
+$default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND;
 switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
-	case STATUS_BESTELLEN:
-     $editable = FALSE;
-     if( $gruppen_id ) {
-        $default_spalten = 0x83f;
-     } else {
-        $default_spalten = 0x67f;
-     }
-     $title="Bestellschein (vorläufig)";
-     break;
-	case STATUS_LIEFERANT:
-     $editable= FALSE;
-     if( $gruppen_id ) {
-        $default_spalten = 0x8bf;
-     } else {
-        $default_spalten = 0x6ff;
-     }
-     $title="Bestellschein";
-	   // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
-	   break;
-	case STATUS_VERTEILT:
-     if( $gruppen_id ) {
-       $editable= FALSE;
-        $default_spalten = 0x8bf;
-     } else {
-       // ggf. liefermengen aendern lassen:
-	     $editable = (!$readonly) and ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
-        $default_spalten = 0x6ff;
-     }
-	   $title="Lieferschein";
-	   break;
-	default: 
-	   ?>
-	   <div class='warn'>Keine Detailanzeige verfügbar</div>
-	   <?
-     echo "$print_on_exit";
-	   exit();
+  case STATUS_BESTELLEN:
+    $editable = FALSE;
+    if( $gruppen_id ) {
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_ENDSUMME );
+    } else {
+      $default_spalten
+        |= ( PR_COL_BESTELLMENGE | PR_COL_BESTELLGEBINDE | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
+    }
+    $title="Bestellschein (vorläufig)";
+    break;
+  case STATUS_LIEFERANT:
+    $editable= FALSE;
+    if( $gruppen_id ) {
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+    } else {
+      $default_spalten
+        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
+             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
+    }
+    $title="Bestellschein";
+    // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
+    break;
+  case STATUS_VERTEILT:
+    if( $gruppen_id ) {
+      $editable= FALSE;
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+    } else {
+      // ggf. liefermengen aendern lassen:
+      $editable = (!$readonly) and ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
+      $default_spalten
+        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
+             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
+    }
+    $title="Lieferschein";
+    break;
+  default: 
+    ?> <div class='warn'>Keine Detailanzeige verfügbar</div> <?
+    echo "$print_on_exit";
+    exit();
 }
 
 get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
@@ -138,9 +146,19 @@ get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
 
 	echo "<h1>".$title."</h1>";
 
-	 bestellung_overview(mysql_fetch_array($result),$gruppen_id,$gruppen_id);
-	 
-	 products_overview($bestell_id, $editable, $editable, $spalten, $gruppen_id);
+  ?>
+    <table width='100%' class='layout'>
+      <tr>
+        <td style='text-align:left;'>
+  <?
+  bestellung_overview(mysql_fetch_array($result),$gruppen_id,$gruppen_id);
+  ?>
+        </td>
+        <td style='text-align:right;'>
+  <?
+  $select_cols = "</td></tr></table>";
+
+   products_overview($bestell_id, $editable, $editable, $spalten, $gruppen_id, $select_cols, true );
          
 ?>
 
@@ -148,3 +166,22 @@ get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
 	   <input type="hidden" name="area" value="<?echo($area)?>">			
 	   <input type="submit" value="Zur�ck zur Auswahl ">
    </form>
+
+<script type="text/javascript">
+  function drop_col(self,spalten) {
+    i = document.getElementById("select_drop_cols").selectedIndex;
+    s = document.getElementById("select_drop_cols").options[i].value;
+    window.location.href = self + '&spalten=' + ( spalten - parseInt(s) );
+  }
+  function insert_col(self,spalten) {
+    i = document.getElementById("select_insert_cols").selectedIndex;
+    s = document.getElementById("select_insert_cols").options[i].value;
+    window.location.href = self + '&spalten=' + ( spalten + parseInt(s) );
+  }
+  function select_group(self) {
+    i = document.getElementById("select_group").selectedIndex;
+    s = document.getElementById("select_group").options[i].value;
+    window.location.href = self + '&gruppen_id=' + s;
+  }
+
+</script>

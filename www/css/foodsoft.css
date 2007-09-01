@@ -216,7 +216,7 @@ table.info td, th {
 	
 a.png { border:none; }
 
-table.inner, table.inner td {
+table.layout, table.layout td, table.inner, table.inner td {
 	border:none;
 }
 table.inner td {
