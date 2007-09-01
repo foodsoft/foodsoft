@@ -1226,15 +1226,18 @@ function sql_gruppenname($gruppen_id){
  */
 function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
         if($bestell_id===FALSE && $produkt_id===FALSE){
-		$query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
-	} else if($produkt_id===FALSE) {
-	    $query="SELECT distinct bestellgruppen.id, bestellgruppen.name, max(gruppenbestellungen.id) as gruppenbestellungen_id
-		FROM bestellgruppen INNER JOIN gruppenbestellungen 
-		ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
-		WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id).
-		" GROUP BY bestellgruppen.id, bestellgruppen.name"; 
-	} else {
-		$query=
+                $query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
+        } else if($produkt_id===FALSE) {
+            $query="SELECT bestellgruppen.id, bestellgruppen.name, gruppenbestellungen.id as gruppenbestellungen_id
+                FROM bestellgruppen
+                INNER JOIN gruppenbestellungen
+                ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
+                WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id
+                GROUP BY bestellgruppen.id
+                ORDER BY ( bestellgruppen.id % 1000 )
+                "; 
+        } else {
+                $query=
     " SELECT gruppenbestellungen.bestellguppen_id as id
            , bestellgruppen.name as name
       FROM bestellzuordnung
@@ -1255,8 +1258,8 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
 /**
  *
  */
-function optionen_gruppen() {
-  $gruppen = sql_gruppen();
+function optionen_gruppen($bestell_id=false,$produkt_id=false) {
+  $gruppen = sql_gruppen($bestell_id,$produkt_id);
   while($gruppe = mysql_fetch_array($gruppen)){
     echo "<option value='{$gruppe['id']}'>{$gruppe['name']}</option>\n";
   }
