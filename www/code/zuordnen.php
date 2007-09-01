@@ -1009,21 +1009,53 @@ function sql_gesamtpreise($gruppe_id){
  */
 function sql_bestellprodukte($bestell_id, $gruppen_id=false){
   $basar_id = sql_basar_id();
+  $state = getState( $bestell_id );
+
+  // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
+  $gesamtbestellmenge_expr = "
+    sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) )
+  ";
+  // basarbestellmenge: _eigentliche_ basarbestellungen sind art=1,
+  // basar mit art=0 zaehlt wie gewoehnliche festmenge!
+  $basarbestellmenge_expr = "
+    sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,1,0)
+                               * IF(bestellzuordnung.art=1,1,0) )
+  ";
+  $toleranzbestellmenge_expr = "
+    sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,0,1)
+                               * IF(bestellzuordnung.art=1,1,0) )
+  ";
+  $verteilmenge_expr = "
+    sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0) )
+  ";
+
+  // tatsaechlich bestellte oder gelieferte produkte werden vor solchen mit
+  // menge 0 angezeigt; dafuer einen sortierbaren ausdruck definieren:
+  switch($state) {
+    case STATUS_BESTELLEN:
+    case STATUS_LIEFERANT:
+      // eigentlich wollen wir "ORDER BY if(gesamtbestellmenge>0,0,1),... "
+      // das geht aber so nicht ("reference to group function ... not supported"),
+      // deshalb ein extra feld:
+      $firstorder_expr = $gesamtbestellmenge_expr;
+      break;
+    default:
+      if( $gruppen_id )
+        $firstorder_expr = $verteilmenge_expr;
+      else
+        $firstorder_expr = "liefermenge";
+      break;
+  }
   $query = "SELECT *
     , produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.gebindegroesse as gebindegroesse
-    , sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) )
-        as gesamtbestellmenge
-    , sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,1,0)
-                                 * IF(bestellzuordnung.art<2,1,0) )
-       as basarbestellmenge
-    , sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,0,1)
-                                 * IF(bestellzuordnung.art=1,1,0) )
-       as toleranzbestellmenge
-    , sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0) )
-        as verteilmenge
+    , $gesamtbestellmenge_expr as gesamtbestellmenge
+    , $basarbestellmenge_expr  as basarbestellmenge
+    , $toleranzbestellmenge_expr as toleranzbestellmenge
+    , $verteilmenge_expr as verteilmenge
+    , IF( $firstorder_expr > 0, 0, 1 ) as menge_ist_null
   FROM bestellvorschlaege
   INNER JOIN produkte
     ON (produkte.id=bestellvorschlaege.produkt_id)
@@ -1042,13 +1074,13 @@ function sql_bestellprodukte($bestell_id, $gruppen_id=false){
   "
   GROUP BY bestellvorschlaege.produkt_id
   "
-   . ( $gruppen_id ? " HAVING gesamtbestellmenge>0 " : "" ) .
-  "
-  ORDER BY IF(liefermenge>0,0,1), produktgruppen_id, produkte.name ";
+   . ( $gruppen_id ? " HAVING gesamtbestellmenge>0 or verteilmenge>0" : "" ) .
+  " ORDER BY menge_ist_null, produktgruppen_id, produkte.name ";
 
-            $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
-	    return $result;
+  $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
+  return $result;
 }
+
 /**
  *
  */
