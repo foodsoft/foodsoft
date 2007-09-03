@@ -38,8 +38,8 @@
         <select name='gruppe'>
         <option value='' selected>(Gruppe w&auml;hlen)</option>
 <?
-  optionen_gruppen();
-  echo "
+  echo optionen_gruppen();
+?>
         </select>
       </td>
     </tr>
@@ -50,7 +50,7 @@
       <th colspan='3'>Menge im Basar</th>
       <th>Zuteilung</th>
     </tr>
-  ";
+<?
 
   //Den Basar erstellen
   $result1 = sql_basar();

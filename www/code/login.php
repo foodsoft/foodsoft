@@ -240,7 +240,7 @@
          <select size='1' name='login_gruppen_id'>
            <option value='' selected>(bitte Gruppe waehlen)</option>
   ";
-  optionen_gruppen();
+  echo optionen_gruppen();
   echo "
          </select>
          <label style='padding-left:4em;'>Passwort:</label>
