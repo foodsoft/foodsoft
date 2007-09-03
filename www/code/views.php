@@ -248,7 +248,7 @@ function products_overview(
     'header' => "Produkt", 'title' => "Produktname", 'cols' => 1
   );
   $col[PR_COL_LPREIS] = array(
-    'header' => "L-Preis", 'title' => "Nettopreis (ohne MWSt und Pfand beim Lieferanten", 'cols' => 2
+    'header' => "L-Preis", 'title' => "Nettopreis (ohne MWSt und Pfand) beim Lieferanten", 'cols' => 2
   );
   $col[PR_COL_MWST] = array(
     'header' => "MWSt", 'title' => "Mehrwertsteuersatz in Prozent", 'cols' => 1
@@ -257,7 +257,7 @@ function products_overview(
     'header' => "Pfand", 'title' => "Pfand pro V-Einheit", 'cols' => 1
   );
   $col[PR_COL_VPREIS] = array(
-    'header' => "V-Preis", 'title' => "Endpreis (mit MWSt und Pfand pro V-Einheit", 'cols' => 2
+    'header' => "V-Preis", 'title' => "Endpreis (mit MWSt und Pfand) pro V-Einheit", 'cols' => 2
   );
   $col[PR_COL_NETTOSUMME] = array(
     'header' => "Gesamt<br>Netto", 'cols' => 1,
@@ -441,6 +441,7 @@ function products_overview(
     $festbestellmenge = $gesamtbestellmenge - $toleranzbestellmenge - $basarbestellmenge;
 
     $gebindegroesse = $produkte_row['gebindegroesse'];
+    $kan_verteilmult = $produkte_row['kan_verteilmult'];
 
     switch($state) {
       case STATUS_BESTELLEN:
@@ -507,9 +508,11 @@ function products_overview(
     if( $spalten & PR_COL_BESTELLMENGE ) {
       printf(
         '<td class="mult">%1$.0lf / %2$.0lf' . ( $gruppen_id ? '' : ' / %3$.0lf' ) . '</td>
-         <td class="unit">* %4$s %5$s</td>'
-      , $festbestellmenge, $toleranzbestellmenge, $basarbestellmenge
-      , $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit']
+         <td class="unit">%4$s</td>'
+      , $festbestellmenge * $kan_verteilmult
+      , $toleranzbestellmenge * $kan_verteilmult
+      , $basarbestellmenge * $kan_verteilmult
+      , $produkte_row['kan_verteileinheit']
       );
     }
     if( $spalten & PR_COL_BESTELLGEBINDE ) {
