@@ -142,19 +142,14 @@
 					    echo "   <td></td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
 					    echo "   <td align='right' valign='bottom'> <b> ".sprintf("%.2lf",$vert_row['gesamtpreis'])."</b> <br>";
+              $details_url = "$foodsoftdir/index.php?window=bestellschein"
+              . "&gruppen_id=$gruppen_id"
+              . "&bestell_id={$vert_row['gesamtbestellung_id']}"
+              . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
+                                | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
 					    ?>
-						<form action=<?if($meinKonto) echo "index.php"; else echo "../index.php";?> method="post">
-							   <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-							   <input type="hidden" name="gruppen_pwd" value="<?PHP echo $HTTP_GET_VARS['gruppen_pwd']; ?>">
-							   <input
-							   type="hidden"
-							   name="bestell_id"
-							   value="<?PHP
-							   echo
-							   $vert_row['gesamtbestellung_id'] ?>">
-							   <input type="hidden" name="area" value="bestellt_gruppe">			
-							   <input type="submit" value="Details ">
-						   </form>
+							   <input type="submit" value="Details "
+                  onclick="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
 					    <?
 					    echo "   </td>";
 				 	    $vert_row = mysql_fetch_array($vert_result);
