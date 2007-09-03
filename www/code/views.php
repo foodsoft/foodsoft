@@ -226,16 +226,16 @@ define( 'PR_COL_ENDSUMME', 0x800 );      // Endpreis (mit Pfand) (1,3)
 // (2) nur moeglich ab STATUS_LIEFERANT
 // (3) bei STATUS_BESTELLEN: berechnet aus Bestellmenge, sonst aus Liefermenge
 //
-define( 'PR_SHOW_NICHTGELIEFERT', 0x1000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGELIEFERT', 0x1000 ); // nicht gelieferte Produkte auch anzeigen
 //
-// select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
-// falls String: drucken zwischen menue und Tabelle
+// $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
+// $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
 //
 function products_overview(
     $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
-    $select_columns = false, $select_group = false
+    $select_columns = false, $select_nichtgeliefert = false
   ) {
-  global $area, $print_on_exit, $self;
+  global $self;  // url fuer reload, noch _ohne_ $spalten und $gruppen_id!
 
   $result1 = sql_bestellprodukte($bestell_id,$gruppen_id);
   $state = getState($bestell_id);
@@ -318,81 +318,43 @@ function products_overview(
       }
     }
   }
-  
 
-  if( $select_columns || $select_group ) {
-    ?> <table class='info'> <?
-  
-    if( $select_group ) {
-      echo "
-        <tr>
-          <td>Gruppenansicht wählen:</td>
-          <td>
-            <select id='select_group' onchange=\"select_group('$self&spalten=$spalten');\">
-              <option value='0';
-      ";
-      if( ! $gruppen_id ) echo " selected";
-      echo ">Alle (Gesamtbestellung)</option>";
-      optionen_gruppen($bestell_id,false,$gruppen_id);
-      echo "
-        </select>
-      ";
-    }
-    if( $select_columns ) {
-      $opts_insert="";
-      $opts_drop="";
-      for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
-        if( array_key_exists( $n, $col ) ) {
-          $c = $col[$n];
-          if( $spalten & $n ) {
-            $opts_drop = "$opts_drop <option title='{$c['title']}' value='$n'>"
+  if( $select_columns ) {
+    $opts_insert="";
+    $opts_drop="";
+    for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
+      if( array_key_exists( $n, $col ) ) {
+        $c = $col[$n];
+        if( $spalten & $n ) {
+          $opts_drop = "$opts_drop <option title='{$c['title']}' value='$n'>"
+          . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
+        } else {
+          $opts_insert = "$opts_insert
+            <option title='{$c['title']}' value='$n'>"
             . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
-          } else {
-            $opts_insert = "$opts_insert
-              <option title='{$c['title']}' value='$n'>"
-              . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
-          }
         }
       }
-      ?>
-        <tr>
-          <td>Spalten einblenden:</td><td>
-      <?
-      if( $opts_insert ) {
-        echo "
-          <select id='select_insert_cols'
-            onchange=\"insert_col('$self&gruppen_id=$gruppen_id',$spalten);\"
-            ><option selected>(bitte waehlen)</option>$opts_insert</select>
-        ";
-      }
-      ?> 
-          </td>
-        </tr>
-        <tr>
-          <td>Spalten ausblenden:</td><td>
-      <?
-      if( $opts_drop ) {
-        echo "
+    }
+    if( $opts_insert ) {
+      option_menu_row( "
+        <td>Spalten einblenden:</td><td>
+        <select id='select_insert_cols'
+          onchange=\"insert_col('$self&gruppen_id=$gruppen_id',$spalten);\"
+          ><option selected>(bitte wählen)</option>$opts_insert</select></td>
+      " );
+    }
+    if( $opts_drop ) {
+      option_menu_row( "
+        <td>Spalten ausblenden:</td><td>
           <select id='select_drop_cols'
           onchange=\"drop_col('$self&gruppen_id=$gruppen_id',$spalten);\"
-          ><option selected>(bitte waehlen)</option>$opts_drop</select>
-        ";
-      }
-      ?>  </td>
-        </tr>
-      <?
+           ><option selected>(bitte wählen)</option>$opts_drop</select></td>
+      " );
     }
-
-    ?> </table> <?
-
-    if( is_string( $select_columns ) )
-      echo $select_columns;
-    if( is_string( $select_group ) )
-      echo $select_group;
   }
 
   if( $editAmounts ) {
-    ?> <form action='index.php' method='post'> <?
+    echo "<form action='$self&gruppen_id=$gruppen_id&spalten=$spalten' method='post'>";
   }
   ?> <table class='numbers' width='100%'><tr class='legende'> <?
 
@@ -412,63 +374,52 @@ function products_overview(
     }
   }
 
+  if( $cols > $cols_vor_summe ) { // mindestens eine summenspalte ist aktiv
+    $summenzeile = "
+      echo \"<tr id='row_total' class='summe'>
+              <td colspan='$cols_vor_summe' style='text-align:right;'>Summe:</td>\";
+      if( \$spalten & PR_COL_NETTOSUMME )
+        printf( \"<td class='number'>%8.2lf</td>\", \$netto_summe );
+      if( \$spalten & PR_COL_BRUTTOSUMME )
+        printf( \"<td class='number'>%8.2lf</td>\", \$brutto_summe );
+      if( \$spalten & PR_COL_ENDSUMME )
+        printf( \"<td class='number'>%8.2lf</td>\", \$endpreis_summe );
+      echo '</tr>';
+    ";
+  } else {
+    $summenzeile = '';
+  }
+  switch( $state ) {
+    case STATUS_BESTELLEN:
+    case STATUS_LIEFERANT:
+      $nichtgeliefert_header = 'Nicht bestellte Produkte';
+    break;
+    case STATUS_VERTEILT:
+    default:
+      $nichtgeliefert_header = ( $gruppen_id ?
+        'Nicht gelieferte oder zugeteilte Produkte' : 'Nicht gelieferte Produkte' );
+    break;
+  }
+
   $netto_summe = 0;
   $brutto_summe = 0;
   $endpreis_summe = 0;
-  $nichtgeliefert_header_ausgeben = true;
+  $haben_nichtgeliefert = false;
 
   while  ($produkte_row = mysql_fetch_array($result1)) {
     $produkt_id =$produkte_row['produkt_id'];
 
-    if( $produkte_row['menge_ist_null'] ) {
-      // if( ! $editAmounts && ! $gruppen_id )
-      //   break;  // nicht gelieferte werden nicht mehr angezeigt
-      if( $nichtgeliefert_header_ausgeben ) {
-        if( $cols > $cols_vor_summe ) { // mindestens eine summenspalte ist aktiv
-          ?>
-            <tr id='row_total' class='summe'>
-              <td colspan='<? echo $cols_vor_summe; ?>' style='text-align:right;'>Summe:</td>
-          <?
-          if( $spalten & PR_COL_NETTOSUMME )
-            printf( "<td class='number'>%8.2lf</td>", $netto_summe );
-          if( $spalten & PR_COL_BRUTTOSUMME )
-            printf( "<td class='number'>%8.2lf</td>", $brutto_summe );
-          if( $spalten & PR_COL_ENDSUMME )
-            printf( "<td class='number'>%8.2lf</td>", $endpreis_summe );
-          ?> </tr> <?
-        }
-        ?>
-          <tr>
-            <th colspan='<? echo $cols ?>'>
-              <img id='nichtgeliefert_knopf' class='button' src='img/close_black_trans.gif'
-                onclick='nichtgeliefert_toggle();' title='Ausblenden'>
-              </img>
-        <?
-        switch( $state ) {
-          case STATUS_BESTELLEN:
-          case STATUS_LIEFERANT:
-            ?> Nicht bestellte Produkte: <?
-            break;
-          case STATUS_VERTEILT:
-          default:
-            if( $gruppen_id ) {
-              ?> Nicht gelieferte oder zugeteilte Produkte: <?
-            } else {
-              ?> Nicht gelieferte Produkte: <?
-            }
-            break;
-        }
-        ?>
-            </th>
-          </tr>
-        <?
-        $nichtgeliefert_header_ausgeben = false;
+    if( $produkte_row['menge_ist_null'] && ! $haben_nichtgeliefert ) {
+      $haben_nichtgeliefert = true;
+      eval( $summenzeile );
+      $summenzeile = '';
+      if( $spalten & PR_ROWS_NICHTGELIEFERT ) {
+        echo "<tr><th colspan='$cols'>$nichtgeliefert_header:</th></tr>";
+      } else {
+        break;
       }
-      ?> <tr name='trnichtgeliefert' <?
-    } else {
-      ?> <tr name='geliefert' <?
     }
-    echo " id='row$produkt_id'>";
+    ?> <tr> <?
 
     preisdatenSetzen( & $produkte_row );
 
@@ -627,32 +578,14 @@ function products_overview(
 
   } //end while produkte array
 
-  if( $nichtgeliefert_header_ausgeben ) {
-        // summe muss noch angezeigt werden:
-    if( $cols > $cols_vor_summe ) {
-      ?>
-        <tr id='row_total' class='summe'>
-          <td colspan='<? echo $cols_vor_summe ?>' style='text-align:right;'>Summe:</td>
-      <?
-      if( $spalten & PR_COL_NETTOSUMME ) {
-        printf( "<td class='number'>%8.2lf</td>", $netto_summe );
-      }
-      if( $spalten & PR_COL_BRUTTOSUMME ) {
-        printf( "<td class='number'>%8.2lf</td>", $brutto_summe );
-      }
-      if( $spalten & PR_COL_ENDSUMME ) {
-        printf( "<td class='number'>%8.2lf</td>", $endpreis_summe );
-      }
-      ?> </tr> <?
-    }
-  }
+  eval( $summenzeile );
 
   if($editAmounts){
     ?>
         <tr style='border:none'>
           <td colspan='<? echo $cols ?>'>
-            <input type='hidden' name='area' value='$area'>
-            <input type='hidden' name='bestellungs_id' value='$bestell_id'>
+            <input type='hidden' name='spalten' value='$spalten'>
+            <input type='hidden' name='gruppen_id' value='$gruppen_id'>
             <input type='submit' value='Liefermengen ändern'>
             <input type='reset' value='Änderungen zurücknehmen'>
           </td>
@@ -664,35 +597,56 @@ function products_overview(
     ?> </table> <?
   };
 
-  $print_on_exit = "$print_on_exit
-    <script type='text/javascript'>
-      nichtgeliefert_zeigen = 1;
-      function nichtgeliefert_toggle() {
-        nichtgeliefert_zeigen = !  nichtgeliefert_zeigen;
-        if( nichtgeliefert_zeigen ) {
-          rows = document.getElementsByName('trnichtgeliefert');
-          i=0;
-          while( rows[i] ) {
-            rows[i].style.display = '';
-            i++;
-          }
-          document.getElementById('nichtgeliefert_knopf').src = 'img/close_black_trans.gif';
-          document.getElementById('nichtgeliefert_knopf').title = 'Ausblenden';
-        } else {
-          rows = document.getElementsByName('trnichtgeliefert');
-          i=0;
-          while( rows[i] ) {
-            rows[i].style.display = 'none';
-            i++;
-          }
-          document.getElementById('nichtgeliefert_knopf').src = 'img/open_black_trans.gif';
-          document.getElementById('nichtgeliefert_knopf').title = 'Einblenden';
-        }
-      }
-    </script>
-  ";
+  if( $haben_nichtgeliefert && $select_nichtgeliefert ) {
+    option_menu_row( "
+      <td colspan='2'>$nichtgeliefert_header zeigen:
+        <input type='checkbox'
+         " . ( ( $spalten & PR_ROWS_NICHTGELIEFERT ) ? ' checked' : '' ) . "'
+         onclick=\"window.location.href='$self&gruppen_id=$gruppen_id&spalten="
+                 . ($spalten ^ PR_ROWS_NICHTGELIEFERT) . "';\"
+         title='$nichtgeliefert_header vorhanden; diese auch anzeigen?'></td>
+    " );
+  }
 }
 
+// option_menu_row:
+// fuegt eine zeile in die <table id="option_menu_table"> ein.
+// die tabelle wird beim ersten aufruf erzeugt, und nach ausgabe des dokuments
+// in ein beliebiges elternelement mit id="option_menu" verschoben:
+//
+function option_menu_row( $option = false ) {
+  global $option_menu_counter, $print_on_exit;
+  if( ! $option_menu_counter ) {
+    // menu erstmal erzeugen (so dass wir einfuegen koennen):
+    echo "<table class='info' id='option_menu_table'></table>";
+    $option_menu_counter = 0;
+    // positionieren erst ganz am schluss (wenn parent sicher vorhanden ist):
+    $print_on_exit = $print_on_exit
+    . "
+      <script type='text/javascript'>
+      var option_menu_parent, option_menu_table;
+      option_menu_table = document.getElementById('option_menu_table');
+      if( option_menu_table ) {
+        option_menu_parent = document.getElementById('option_menu');
+        if( option_menu_parent ) {
+          option_menu_parent.appendChild(option_menu_table);
+        }
+      }
+      </script>
+    ";
+  }
+  if( $option ) {
+    $option_menu_counter++;
+    echo "
+      <table>
+        <tr id='option_entry_$option_menu_counter'>$option</tr>
+      </table>
+      <script type='text/javascript'>
+    " .  move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' ) . "
+      </script>
+    ";
+  }
+}
 
 /**
  * Gibt einen einzelnen Preis mit Pfand und Mehrwertsteuer aus

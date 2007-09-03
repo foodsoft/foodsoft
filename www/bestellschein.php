@@ -22,7 +22,7 @@ else
 $area or $area = "bestellschein";
 
 $self = "$foodsoftdir/index.php?window=$area";
-$self_fields = "<input type='hidden' name='area' value='$area'>";
+$self_fields = "<input type='hidden' name='window' value='$area'>";
 
 switch( $action ) {
   case 'changeState':
@@ -149,39 +149,43 @@ get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
   ?>
     <table width='100%' class='layout'>
       <tr>
-        <td style='text-align:left;'>
-  <?
-  bestellung_overview(mysql_fetch_array($result),$gruppen_id,$gruppen_id);
-  ?>
+        <td style='text-align:left;padding-bottom:1em;'>
+         <?
+         bestellung_overview(mysql_fetch_array($result),$gruppen_id,$gruppen_id);
+         ?>
         </td>
-        <td style='text-align:right;'>
+        <td style='text-align:right;padding-bottom:1em;' id='option_menu'>
+        </td>
+      </tr>
+    </table>
   <?
-  $select_cols = "</td></tr></table>";
 
-   products_overview($bestell_id, $editable, $editable, $spalten, $gruppen_id, $select_cols, true );
-         
+  option_menu_row( "<th colspan='2'>Anzeigeoptionen</th>" );
+
+  option_menu_row(
+    " <td>Gruppenansicht:</td>
+      <td><select id='select_group' onchange=\"select_group('$self&spalten=$spalten');\">
+    " . optionen_gruppen($bestell_id,false,$gruppen_id, "Alle (Gesamtbestellung)" ) . "
+      </select></td>"
+  );
+
+  products_overview(
+    $bestell_id,
+    $editable,   // Liefermengen edieren zulassen?
+    $editable,   // Preise edieren zulassen?
+    $spalten,    // welche Tabellenspalten anzeigen
+    $gruppen_id, // Gruppenansichte (0: alle)
+    true,        // angezeigte Spalten auswaehlen lassen
+    true,        // Gruppenansicht auswaehlen lassen
+    true         // Option: Anzeige nichtgelieferte zulassen
+  );
+
 ?>
 
+   <!-- nicht mehr sinnvoll, wenn in eigenem Fenster angezeigt:
    <form action="index.php" method="get">
 	   <input type="hidden" name="area" value="<?echo($area)?>">			
 	   <input type="submit" value="Zurück zur Auswahl ">
    </form>
+   -->
 
-<script type="text/javascript">
-  function drop_col(self,spalten) {
-    i = document.getElementById("select_drop_cols").selectedIndex;
-    s = document.getElementById("select_drop_cols").options[i].value;
-    window.location.href = self + '&spalten=' + ( spalten - parseInt(s) );
-  }
-  function insert_col(self,spalten) {
-    i = document.getElementById("select_insert_cols").selectedIndex;
-    s = document.getElementById("select_insert_cols").options[i].value;
-    window.location.href = self + '&spalten=' + ( spalten + parseInt(s) );
-  }
-  function select_group(self) {
-    i = document.getElementById("select_group").selectedIndex;
-    s = document.getElementById("select_group").options[i].value;
-    window.location.href = self + '&gruppen_id=' + s;
-  }
-
-</script>
