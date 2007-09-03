@@ -62,6 +62,23 @@ function deleteGroup(groupID)
 // neuesfenster: neues (grosses) Fenster oeffnen: fuer Lieferschein, Produktpreisdetails, ...
 //
 function neuesfenster(url,name) {
-  f=window.open(url,name,"dependend=yes,location=yes,resizable=yes,scrollbars=yes");
+  f=window.open(url,name,"dependent=yes,toolbar=yes,menubar=yes,location=yes,resizable=yes,scrollbars=yes");
   f.focus();
 }
+
+function drop_col(self,spalten) {
+  i = document.getElementById('select_drop_cols').selectedIndex;
+  s = document.getElementById('select_drop_cols').options[i].value;
+  window.location.href = self + '&spalten=' + ( spalten - parseInt(s) );
+}
+function insert_col(self,spalten) {
+  i = document.getElementById('select_insert_cols').selectedIndex;
+  s = document.getElementById('select_insert_cols').options[i].value;
+  window.location.href = self + '&spalten=' + ( spalten + parseInt(s) );
+}
+function select_group(self) {
+  i = document.getElementById('select_group').selectedIndex;
+  s = document.getElementById('select_group').options[i].value;
+  window.location.href = self + '&gruppen_id=' + s;
+}
+
