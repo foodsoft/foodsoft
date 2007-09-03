@@ -1258,14 +1258,20 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
 /**
  *
  */
-function optionen_gruppen($bestell_id=false,$produkt_id=false,$selected=false) {
+function optionen_gruppen($bestell_id=false,$produkt_id=false,$selected=false,$option_0=false) {
   $gruppen = sql_gruppen($bestell_id,$produkt_id);
-  while($gruppe = mysql_fetch_array($gruppen)){
-    echo "<option value='{$gruppe['id']}'";
-    if( $selected == $gruppe['id'] )
-      echo " selected";
-    echo ">{$gruppe['name']}</option>\n";
+
+  $output='';
+  if( $option_0 ) {
+    $output = "<option value='0' " . ( $selected ? "" : " selected" ) . ">$option_0</option>";
   }
+  while($gruppe = mysql_fetch_array($gruppen)){
+    $output = "$output
+     <option value='{$gruppe['id']}'" . ( ( $selected == $gruppe['id'] ) ? " selected" : "" )
+    . ">{$gruppe['name']}</option>
+    ";
+  }
+  return $output;
 }
 
 /**
@@ -2132,6 +2138,102 @@ function fail_if_readonly() {
 function wikiLink( $topic, $text ) {
   global $foodsoftpath;
   echo "<a class='wikilink' target='wiki' href='/wiki/doku.php?id=$topic'>$text</a>";
+}
+
+// insert_html:
+// erzeugt javascript-code, der $element als Child vom element $id ins HTML einfuegt.
+// $element is entweder ein string (erzeugt textelement), oder ein
+// array( tag, attrs, childs ):
+//   - tag ist der tag-name (z.b. 'table')
+//   - attrs ist false, oder Liste von Paaren ( name, wert) gewuenschter Attribute
+//   - childs ist entweder false, ein Textstring, oder ein Array von $element-Objekten
+function insert_html( $id, $element ) {
+  global $autoid;
+  if( ! $autoid ) $autoid = 0;
+
+  $output = '
+  ';
+  if( ! $element )
+    return $output;
+
+  if( is_string( $element ) ) {
+    $autoid++;
+    $output = "$output
+      var tnode_$autoid;
+      tnode_$autoid = document.createTextNode('$element');
+      document.getElementById('$id').appendChild(tnode_$autoid);
+    ";
+  } else {
+    assert( is_array( $element ) );
+    $tag = $element[0];
+    $attrs = $element[1];
+    $childs = $element[2];
+
+    // element mit eindeutiger id erzeugen:
+    $autoid++;
+    $newid = "autoid_$autoid";
+    $output = "$output
+      var enode_$newid;
+      var attr_$autoid;
+      enode_$newid = document.createElement('$tag');
+      attr_$autoid = document.createAttribute('id');
+      attr_$autoid.nodeValue = '$newid';
+      enode_$newid.setAttributeNode( attr_$autoid );
+    ";
+    // sonstige gewuenschte attribute erzeugen:
+    if( $attrs ) {
+      foreach( $attrs as $a ) {
+        $autoid++;
+        $output = "$output
+          var attr_$autoid;
+          attr_$autoid = document.createAttribute('{$a[0]}');
+          attr_$autoid.nodeValue = '{$a[1]}';
+          enode_$newid.setAttributeNode( attr_$autoid );
+        ";
+      }
+    }
+    // element einhaengen:
+    $output = "$output
+      document.getElementById( '$id' ).appendChild( enode_$newid );
+    ";
+
+    // rekursiv unterelemente erzeugen:
+    if( is_array( $childs ) ) {
+      foreach( $childs as $c )
+        $output = $output . insert_html( $newid, $c );
+    } else {
+      // abkuerzung fuer reinen textnode:
+      $output = $output . insert_html( $newid, $childs );
+    }
+  }
+  return $output;
+}
+
+// replace_html: wie insert_html, loescht aber vorher alle Child-Elemente von $id
+function replace_html( $id, $element ) {
+  global $autoid;
+  $autoid++;
+  $output = "
+    var enode_$autoid;
+    var child_$autoid;
+    enode_$autoid = document.getElementById('$id');
+    while( child_$autoid = enode_$autoid.firstChild )
+      enode_$autoid.removeChild(child_$autoid);
+  ";
+  return $output . insert_html( $id, $element );
+}
+
+function move_html( $id, $into_id ) {
+  global $autoid;
+  $autoid++;
+  return "
+    var child_$autoid;
+    child_$autoid = document.getElementById('$id');
+    document.getElementById('$into_id').appendChild(child_$autoid);
+  ";
+  // appendChild erzeugt _keine_ Kopie!
+  // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
+  //   document.getElementById('$id').removeChild(child_$autoid);
 }
 
 ?>
