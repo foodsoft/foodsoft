@@ -14,15 +14,14 @@ if( ! $angemeldet ) {
   exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
 } 
 
-if( get_http_var( 'bestellungs_id', 'u' ) )
+global $self_fields;
+
+if( get_http_var( 'bestellungs_id', 'u' ) ) {
   $bestell_id = $bestellungs_id;
-else
-  get_http_var( 'bestell_id', 'u' );
-
-$area or $area = "bestellschein";
-
-$self = "$foodsoftdir/index.php?window=$area";
-$self_fields = "<input type='hidden' name='window' value='$area'>";
+  $self_fields['bestell_id'] = $bestell_id;
+} else {
+  get_http_var( 'bestell_id', 'u', false, true );
+}
 
 switch( $action ) {
   case 'changeState':
@@ -31,6 +30,7 @@ switch( $action ) {
     need_http_var( 'change_id', 'u' );
     need_http_var( 'change_to', 'w' );
     changeState( $change_id, $change_to );
+    // echo "<div class='warn'>change_id: $change_id, change_to: $change_to</div>";
     break;
   case 'changeEndDate':
     fail_if_readonly();
@@ -42,15 +42,16 @@ switch( $action ) {
 
 if( ! $bestell_id ) {
   // auswahl praesentieren, abhaengig von $state oder $area:
-  if( ! get_http_var( 'state', 'w' ) ) {
+  if( ! get_http_var( 'state', 'w', false, true ) ) {
     switch( $area ) {
       case 'lieferschein':
         $state = STATUS_VERTEILT;
         break;
       case 'bestellschein':
-        $state = STATUS_LIEFERANT;
+        $state = array( STATUS_BESTELLEN, STATUS_LIEFERANT );
         break;
       default:
+        $state = false;
     }
   }
   $result = sql_bestellungen( $state );
@@ -59,14 +60,9 @@ if( ! $bestell_id ) {
   exit();
 }
 
-get_http_var( 'gruppen_id', 'u' ) or $gruppen_id = 0;
+get_http_var( 'gruppen_id', 'u', 0, true );
 if( $gruppen_id )
   $gruppen_name = sql_gruppenname($gruppen_id);
-
-$self = "$self&bestell_id=$bestell_id";
-
-// gruppen_id ist variabel, nicht automatisch in self_fields aufnehmen!
-$self_fields = "$self_fields<input type='hidden' name='bestell_id' value='$bestell_id'>";
 
 $state = getState($bestell_id);
 
@@ -113,7 +109,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
     exit();
 }
 
-get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
+get_http_var( 'spalten', 'w', $default_spalten, true );
 
 										
 	 if($state==STATUS_LIEFERANT){
@@ -164,7 +160,8 @@ get_http_var( 'spalten', 'w' ) or ( $spalten = $default_spalten );
 
   option_menu_row(
     " <td>Gruppenansicht:</td>
-      <td><select id='select_group' onchange=\"select_group('$self&spalten=$spalten');\">
+      <td><select id='select_group' onchange=\"select_group('"
+      . self_url( 'gruppen_id' ) . "&spalten=$spalten');\">
     " . optionen_gruppen($bestell_id,false,$gruppen_id, "Alle (Gesamtbestellung)" ) . "
       </select></td>"
   );

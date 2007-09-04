@@ -235,7 +235,7 @@ function products_overview(
     $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
     $select_columns = false, $select_nichtgeliefert = false
   ) {
-  global $self;  // url fuer reload, noch _ohne_ $spalten und $gruppen_id!
+  global $self_fields;
 
   $result1 = sql_bestellprodukte($bestell_id,$gruppen_id);
   $state = getState($bestell_id);
@@ -339,7 +339,7 @@ function products_overview(
       option_menu_row( "
         <td>Spalten einblenden:</td><td>
         <select id='select_insert_cols'
-          onchange=\"insert_col('$self&gruppen_id=$gruppen_id',$spalten);\"
+          onchange=\"insert_col('" . self_url('spalten') . "',$spalten);\"
           ><option selected>(bitte wählen)</option>$opts_insert</select></td>
       " );
     }
@@ -347,14 +347,14 @@ function products_overview(
       option_menu_row( "
         <td>Spalten ausblenden:</td><td>
           <select id='select_drop_cols'
-          onchange=\"drop_col('$self&gruppen_id=$gruppen_id',$spalten);\"
+          onchange=\"drop_col('" . self_url('spalten') . "',$spalten);\"
            ><option selected>(bitte wählen)</option>$opts_drop</select></td>
       " );
     }
   }
 
   if( $editAmounts ) {
-    echo "<form action='$self&gruppen_id=$gruppen_id&spalten=$spalten' method='post'>";
+    echo "<form action='" . self_url() . "' method='post'>" . self_post();
   }
   ?> <table class='numbers' width='100%'><tr class='legende'> <?
 
@@ -587,8 +587,6 @@ function products_overview(
     ?>
         <tr style='border:none'>
           <td colspan='<? echo $cols ?>'>
-            <input type='hidden' name='spalten' value='$spalten'>
-            <input type='hidden' name='gruppen_id' value='$gruppen_id'>
             <input type='submit' value='Liefermengen ändern'>
             <input type='reset' value='Änderungen zurücknehmen'>
           </td>
@@ -605,7 +603,7 @@ function products_overview(
       <td colspan='2'>$nichtgeliefert_header zeigen:
         <input type='checkbox'
          " . ( ( $spalten & PR_ROWS_NICHTGELIEFERT ) ? ' checked' : '' ) . "'
-         onclick=\"window.location.href='$self&gruppen_id=$gruppen_id&spalten="
+         onclick=\"window.location.href='" . self_url('spalten') . "&spalten="
                  . ($spalten ^ PR_ROWS_NICHTGELIEFERT) . "';\"
          title='$nichtgeliefert_header vorhanden; diese auch anzeigen?'></td>
     " );
@@ -705,15 +703,15 @@ function areas_in_head($area){
  * Liste zur Auswahl einer Bestellung via Link
  */
 function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:", $editDates = false, $changeState = false ) {
-  global $self, $self_fields, $self_form, $foodsoftdir;
+  global $self, $self_fields, $foodsoftdir, $dienst, $login_gruppen_id;
 
-      echo "<h1>".$head."</h1>";
+      echo "<h1>$head</h1>";
       // $span =  count($area);
       ?>
       <br /> <br />
 	     <table style="width:100%" class="liste">
 		  <tr>
-		    <th>Name</th>
+		    <th>Name </th>
                     <th>Status</th>
 		    <th>Beginn</th>
 		    <th>Ende</th>
@@ -728,11 +726,15 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
 
 		 while ($row = mysql_fetch_array($result)) {
        $id = $row['id'];
-       $detail_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=bestellschein&bestell_id=$id','bestellschein');";
+       $detail_url = "javascript:neuesfenster('"
+         . "$foodsoftdir/index.php?window=bestellschein"
+         . "&bestell_id=$id"
+         . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
+         . "','bestellschein');";
        $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$id','bestellfax');";
-       $self_form = "<form action='$self' method='post'>$self_fields";
+       $self_form = "<form name='self_form' action='$self' method='post'>$self_fields";
 		 ?>
-		 <tr>                                 
+		 <tr id='row<?echo $id; ?>'>                                 
 		    <td><?echo $row['name']?></td>
 		    <td><? echo $row['state']; ?></td>
 		    <td><? echo $row['bestellstart']; ?></td>
@@ -753,17 +755,22 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       switch( $row['state'] ) {
         case 'bestellen':
           ?>
-            <td><a href="<? echo "$detail_url"; ?>">Bestellschein (vorl&auml;ufig)</a></td>
+            <td>
+              <a href="<? echo "$detail_url"; ?>">Bestellschein (vorl&auml;ufig)</a></td>
           <?
           if( $changeState ) {
             ?> <td> <?
-            if( $hat_dienst_IV ) {
+            if( $dienst == 4 ) {
               echo "$self_form";
               ?>
                   <input type='hidden' name='action' value='changeState'>
                   <input type='hidden' name='change_id' value='<? echo "$id"; ?>'>
                   <input type='hidden' name='change_to' value='beimLieferanten'>
-                  <input type='submit' class='button' name='submit' value='>>> Bestellschein erstellen >>>'>
+                  <input type='hidden' name='bestell_id' value='<? echo "$id"; ?>'>
+                  <input type='submit' class='button' name='submit'
+                    value='>>> Bestellschein fertigmachen >>>'
+                    onclick="document.getElementById('row<? echo $id; ?>').className='modified';"
+                  >
                 </form>
               <?
             }
@@ -772,10 +779,15 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           break;
         case 'beimLieferanten':
           ?>
-            <td><a href="<? echo "$detail_url"; ?>">Bestellschein</a>
-            ---
-            <a href="<? echo "$fax_url"; ?>">Bestell-Fax (.pdf)</a></td>
+            <td>
+              <a href="<? echo "$detail_url"; ?>">Bestellschein</a>
           <?
+          if( $hat_dienst_IV ) {
+            ?>
+              <br><a href="<? echo "$fax_url"; ?>">Bestell-Fax (.pdf)</a>
+            <?
+          }
+          ?> </td> <?
           if( $changeState ) {
             ?> <td> <?
             if( $hat_dienst_IV ) {
@@ -807,10 +819,15 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           break;
         case 'Verteilt':
           ?>
-            <td><a href="<? echo "$detail_url"; ?>">Lieferschein</a>
-            ---
-            <a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a></td>
+            <td>
+              <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
           <?
+          if( $dienst > 0 ) {
+            ?>
+              <br><a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a></td>
+            <?
+          }
+          ?> </td> <?
           if( $changeState ) {
             ?>
               <td> - </td>
@@ -830,7 +847,6 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           break;
       }
 			
-      // reset($area);
 		    ?>
 		 </tr>   
 		  <?  }?>
