@@ -1692,7 +1692,7 @@ function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_i
 				 ".mysql_escape_string($bestellung_id).") ";
 
 	$query = "SELECT * FROM bestellzuordnung ".$where_clause;
-        doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht von DB landen...");
+        $result = doSql($query, LEVEL_ALL, "Konnte Verteilmengen nicht von DB laden...");
 	$toDelete = mysql_num_rows($result) - 1 ;
 	if($toDelete > 0){
 		$query = "DELETE FROM bestellzuordnung
@@ -2197,6 +2197,17 @@ function setWikiHelpTopic( $topic ) {
         = "<? echo $foodsoftdir; ?>/../wiki/doku.php?id=<? echo $topic; ?>";
     </script>
   <?
+}
+
+// auf <title> (fensterrahmen) kann offenbar nicht mehr zugegriffen werden(?), wir
+// koennen daher nur noch den subtitle (im fenster) setzen:
+//
+function setWindowSubtitle( $subtitle ) {
+  echo "
+    <script type='text/javascript'>
+  " . replace_html( 'subtitle', "Foodsoft: $subtitle" ) . "
+    </script>
+  ";
 }
 
 // self_url:
