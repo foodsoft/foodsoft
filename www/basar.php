@@ -39,11 +39,9 @@ if( $gruppe > 0 ) {
   }
 }
 
-// setWikiHelpTopic("foodsoft:basarbewegungen_eintragen");
-
 ?> <h1>Basar</h1> <?
 
-basar_overview( $bestell_id, $orderby, $dienst > 5 );
+basar_overview( $bestell_id, $orderby, $dienst > 0 );
   
 ?>
    <form action='index.php' method='post'>
