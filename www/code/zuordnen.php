@@ -2050,8 +2050,8 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 /**
  *
  */
-function get_http_var( $name, $typ = 'A', $default = false ) {
-  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS;
+function get_http_var( $name, $typ = 'A', $default = false, $is_self_field = false ) {
+  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
   if( isset( $HTTP_GET_VARS[$name] ) ) {
     $val = $HTTP_GET_VARS[$name];
   } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
@@ -2059,6 +2059,9 @@ function get_http_var( $name, $typ = 'A', $default = false ) {
   } else {
     if( $default ) {
       $$name = $default;
+      if( $is_self_field ) {
+        $self_fields[$name] = $val;
+      }
       return TRUE;
     } else {
       unset( $$name );
@@ -2099,13 +2102,16 @@ function get_http_var( $name, $typ = 'A', $default = false ) {
     }
   }
   $$name = $val;
+  if( $is_self_field ) {
+    $self_fields[$name] = $val;
+  }
   return TRUE;
 }
 /**
  *
  */
-function need_http_var( $name, $typ = 'A' ) {
-  if( ! get_http_var( $name, $typ, false ) ) {
+function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
+  if( ! get_http_var( $name, $typ, false, $is_self_field ) ) {
     error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
     exit();
   }
@@ -2135,9 +2141,58 @@ function fail_if_readonly() {
 /**
  *
  */
-function wikiLink( $topic, $text ) {
-  global $foodsoftpath;
-  echo "<a class='wikilink' target='wiki' href='/wiki/doku.php?id=$topic'>$text</a>";
+function wikiLink( $topic, $text, $head = false ) {
+  global $foodsoftdir;
+  echo "<a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) 
+  . "target='wiki' href='$foodsoftdir/../wiki/doku.php?id=$topic'>$text</a>";
+}
+
+function setWikiHelpTopic( $topic ) {
+  global $foodsoftdir;
+  ?>
+    <script type='text/javascript'>
+      document.getElementById('wikilink_head').href
+        = "<? echo $foodsoftdir; ?>/../wiki/doku.php?id=<? echo $topic; ?>";
+    </script>
+  <?
+}
+
+// self_url:
+// liefert url zum neuladen derselben seite, mit QUERY_STRING aus allen variablen
+// in global $self_fields, mit ausnahme der variablen in $exclude:
+// 
+function self_url( $exclude = array() ) {
+  global $self_fields;
+
+  $output = 'index.php?';
+  if( ! $exclude ) {
+    $exclude = array();
+  } elseif( is_string( $exclude ) ) {
+    $exclude = array( $exclude );
+  }
+  foreach( $self_fields as $key => $value )
+    if( ! array_search( $key, $exclude ) )
+      $output = $output . "&$key=$value";
+  return $output;
+}
+
+// self_post:
+// liefert 'hidden' input elemente, zum neuladen derselben seite per post, zu allen
+// variablen in global $self_fields, mit ausnahme der variablen in $exclude:
+// 
+function self_post( $exclude = array() ) {
+  global $self_fields;
+
+  $output = '';
+  if( ! $exclude ) {
+    $exclude = array();
+  } elseif( is_string( $exclude ) ) {
+    $exclude = array( $exclude );
+  }
+  foreach( $self_fields as $key => $value )
+    if( ! array_search( $key, $exclude ) )
+      $output = $output . "<input type='hidden' name='&$key' value='$value'>";
+  return $output;
 }
 
 // insert_html:
