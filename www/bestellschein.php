@@ -14,8 +14,6 @@ if( ! $angemeldet ) {
   exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
 } 
 
-global $self_fields;
-
 if( get_http_var( 'bestellungs_id', 'u' ) ) {
   $bestell_id = $bestellungs_id;
   $self_fields['bestell_id'] = $bestell_id;
@@ -161,7 +159,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
   option_menu_row(
     " <td>Gruppenansicht:</td>
       <td><select id='select_group' onchange=\"select_group('"
-      . self_url( 'gruppen_id' ) . "&spalten=$spalten');\">
+      . self_url( 'gruppen_id' ) . "');\">
     " . optionen_gruppen($bestell_id,false,$gruppen_id, "Alle (Gesamtbestellung)" ) . "
       </select></td>"
   );
