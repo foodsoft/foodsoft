@@ -38,9 +38,7 @@
         <td>Foodsoft: $subtitle</td>
         <td>
     ";
-    if( $wikitopic ) {
-      wikiLink( $wikitopic, "Hilfe-Wiki...", true );
-    }
+    wikiLink( ( $wikitopic ? $wikitopic : 'start' ) , "Hilfe-Wiki...", true );
     echo "
         </td>
       </tr>

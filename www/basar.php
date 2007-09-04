@@ -39,7 +39,7 @@ if( $gruppe > 0 ) {
   }
 }
 
-setWikiHelpTopic("foodsoft:basarbewegungen_eintragen");
+// setWikiHelpTopic("foodsoft:basarbewegungen_eintragen");
 
 ?> <h1>Basar</h1> <?
 
