@@ -779,6 +779,8 @@ function changeState($bestell_id, $state){
 
   fail_if_readonly();
   nur_fuer_dienst(1,3,4);
+
+  $changes = "state = '$state'";
   switch( "$current,$state" ){
     case STATUS_BESTELLEN . "," . STATUS_LIEFERANT:
       verteilmengenZuweisen( $bestell_id );
@@ -787,14 +789,18 @@ function changeState($bestell_id, $state){
       verteilmengenLoeschen( $bestell_id );
       break;
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
+      $changes = $changes . ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
     case STATUS_VERTEILT . "," . STATUS_ARCHIVIERT:
+      // TODO: tests:
+      //   - bezahlt?
+      //   - basarreste?
       break;
     default:
       error(__LINE__,__FILE__, "Ungültiger Statuswechsel");
       return false;
   }
-  $sql = "UPDATE gesamtbestellungen SET state = '$state' WHERE id = $bestell_id";
+  $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
   return doSql($sql, LEVEL_KEY, "Konnte status  in DB nicht ändern..");
 }
 
@@ -1389,8 +1395,8 @@ function writeLiefermenge_sql($bestell_id){
 /**
  *
  */
-function sql_basar(){
-   $sql = "SELECT * FROM (".select_basar().") as basar";
+function sql_basar($bestell_id=0,$order='produktname'){
+   $sql = "SELECT * FROM (".select_basar($bestell_id,$order).") as basar";
    $result = doSql($sql, LEVEL_ALL, "Konnte Basardaten nicht aus DB laden..");
    return $result;
 
@@ -1398,7 +1404,19 @@ function sql_basar(){
 /**
  *
  */
-function select_basar(){
+function select_basar($bestell_id=0, $order='produktname') {
+  switch( $order ) {
+    case 'datum':
+      $order_by = 'gesamtbestellungen.lieferung';
+      break;
+    case 'bestellung':
+      $order_by = 'gesamtbestellungen.name';
+      break;
+    default:
+    case 'produktname':
+      $order_by = 'produkte.name';
+      break;
+  }
    return "
 SELECT produkte.name, bestellvorschlaege.produkt_id,
 bestellvorschlaege.gesamtbestellung_id,
@@ -1416,9 +1434,11 @@ ON (bz.produkt_id =
 JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id ) 
 JOIN gesamtbestellungen ON ( gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id ) 
 JOIN produkte ON ( bestellvorschlaege.produkt_id = produkte.id ) 
-where (not isnull(liefermenge) or not isnull(bestellmenge)) 
+where (not isnull(liefermenge) or not isnull(bestellmenge))
+      and gesamtbestellungen.state>='Verteilt'
+      " . ( $bestell_id ? " and gesamtbestellungen.id=$bestell_id " : "" ) . "
 HAVING ( `basar` <>0 )
-ORDER BY produkte.name
+ORDER BY $order_by
 " ;
 
 
@@ -1987,6 +2007,28 @@ function optionen_einheiten( $selected ) {
   }
 }
 
+function optionen( $fieldname, $values ) {
+  $output = '';
+  foreach( $values as $v ) {
+    if( is_array( $v ) ) {
+      $value = $v[0];
+      $text = $v[1];
+      $title = ( $v[2] ? $v[2] : '' );
+    } else {
+      $value = $v;
+      $text = $v;
+      $title = '';
+    }
+    $output = $output . "<option value='$value'";
+    if( $value == $$fieldname )
+      $output = $output . " selected";
+    if( $title )
+      $output = $output . " title='$title'";
+    $output = $output . ">$text</option>";
+  }
+  return $output;
+}
+
 // preisdaten setzen:
 // berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
 //
@@ -2060,7 +2102,7 @@ function get_http_var( $name, $typ = 'A', $default = false, $is_self_field = fal
     if( $default ) {
       $$name = $default;
       if( $is_self_field ) {
-        $self_fields[$name] = $val;
+        $self_fields[$name] = $default;
       }
       return TRUE;
     } else {
@@ -2170,9 +2212,10 @@ function self_url( $exclude = array() ) {
   } elseif( is_string( $exclude ) ) {
     $exclude = array( $exclude );
   }
-  foreach( $self_fields as $key => $value )
-    if( ! array_search( $key, $exclude ) )
+  foreach( $self_fields as $key => $value ) {
+    if( ! in_array( $key, $exclude ) )
       $output = $output . "&$key=$value";
+  }
   return $output;
 }
 
@@ -2189,9 +2232,10 @@ function self_post( $exclude = array() ) {
   } elseif( is_string( $exclude ) ) {
     $exclude = array( $exclude );
   }
-  foreach( $self_fields as $key => $value )
-    if( ! array_search( $key, $exclude ) )
-      $output = $output . "<input type='hidden' name='&$key' value='$value'>";
+  foreach( $self_fields as $key => $value ) {
+    if( ! in_array( $key, $exclude ) )
+      $output = $output . "<input type='hidden' name='$key' value='$value'>";
+  }
   return $output;
 }
 

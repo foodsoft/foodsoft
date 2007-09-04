@@ -206,6 +206,137 @@ function rotationsplanView($row){
 }
 
 
+function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts = false ) {
+  global $self_fields, $gruppe;
+
+  if( $editAmounts ) {
+    echo "<form action='" . self_url() . "' method='post'>" . self_post();
+    $cols=9;
+  } else {
+    $cols=8;
+  }
+
+  ?> <table style='width: 600px;' class='numbers'> <?
+
+  if( $editAmounts ) {
+    ?>
+      <tr>
+        <td colspan='2'> Gruppe: 
+          <select name='gruppe'>
+          <option value='' selected>(Gruppe w&auml;hlen)</option>
+          <? echo optionen_gruppen(); ?>
+          </select>
+        </td>
+        <td colspan='<? echo $cols-2; ?>' style='text-align:right;padding-bottom:1ex;'>
+          Glasr&uuml;ckgabe zu je <? echo $pfand; ?> Euro (Anzahl eintragen):	<input name='menge_glas' type='text' size='3' />
+        </td>
+      </tr>
+    <?
+  }
+
+  $legend = array(
+    "<th><a href='" . self_url('orderby') . "&orderby=produktname'
+      title='Sortieren nach Produkten'>Produkt</a></th>"
+  , "<th><a href='" . self_url('orderby') . "&orderby=bestellung'
+      title='Sortieren nach Bestellung'>Bestellung</a></th>"
+  , "<th><a href='" . self_url('orderby') . "&orderby=datum'
+      title='Sortieren nach Lieferdatum'>Lieferdatum</a></th>"
+  , "<th colspan='2'>Preis</th>"
+  , "<th colspan='3'>Menge im Basar</th>"
+  , ( $editAmounts ? "<th>Zuteilung</th>" : "" )
+  );
+  switch( $order ) {
+    case 'bestellung':
+      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s';
+      $keyfield=1;
+      break;
+    case 'datum':
+      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s';
+      $keyfield=2;
+      break;
+    default:
+    case 'produktname':
+      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s';
+      $keyfield=0;
+      break;
+  }
+  vprintf( "<tr class='legende'>$rowformat</tr>", $legend );
+
+  $result = sql_basar( $bestell_id, $order );
+
+  $last_key = '';
+  $row_index=0;
+  $js = '';
+  $fieldcount=0;
+  while  ($basar_row = mysql_fetch_array($result)) {
+     kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
+     $menge=$basar_row['basar'];
+     // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
+     $menge *= $kan_verteilmult;
+
+     $row = array( 
+       "<td>{$basar_row['name']}</td>"
+     , "<td><a
+           href=\"javascript:neuesfenster('index.php?window=bestellschein&bestell_id={$basar_row['gesamtbestellung_id']}','bestellschein')\"
+             title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>"
+     , "<td>{$basar_row['lieferung']}</td>"
+     , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['preis'] ) . "</td>
+         <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
+     , "<td class='mult'><b>$menge</b></td>
+        <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>"
+     , "<td style='border-left-style:none;'><a 
+            href=\"javascript:neuesfenster('index.php?window=showBestelltProd&bestell_id={$basar_row['gesamtbestellung_id']}&produkt_id={$basar_row['produkt_id']}','produktverteilung');\"
+            ><img src='img/b_browse.png' border='0' title='Details zur Verteilung' alt='Details zur Verteilung'
+            ></a></td>
+         "
+         . ( $editAmounts ?
+             "<td class='unit'>
+              <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
+              <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
+              <input name='menge$fieldcount' type='text' size='5' /> $kan_verteileinheit</td>"
+           : ""
+           )
+     );
+     $fieldcount++;
+
+     // sortierschluessel nur einmal ausgeben:
+     //
+     if( $last_key == $row[$keyfield] ) {
+       $rowspan++;
+       $js = "
+         <script type='text/javascript'>
+         document.getElementById('row$row_index').rowSpan=$rowspan;
+         </script>
+       ";
+       $row[$keyfield] = "";
+     } else {
+       echo $js;
+       $js = '';
+       $last_key = $row[$keyfield];
+       $row_index++;
+       $rowspan=1;
+       $row[$keyfield] = preg_replace( "/^<td/", "<td id='row$row_index'", $row[$keyfield], 1 );
+     }
+     vprintf( "<tr>$rowformat</tr>\n", $row );
+  }
+  echo $js;
+
+  if( $editAmounts ) {
+    ?>
+      <tr style='border:none'>
+        <td colspan='<? echo $cols; ?>' style='border:none;padding-top:1ex;'>
+          <input type='submit' value=' Neu laden / Basareintrag &uuml;bertragen '>
+          <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
+        </td>
+      </tr>
+      </table>                   
+      </form>
+    <?
+  } else {
+    ?> </table> <?
+  }
+}
+
 // products_overview:
 // uebersicht ueber bestellte und gelieferte mengen einer Bestellung anzeigen
 // moegliche Tabellenspalten:
