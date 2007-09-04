@@ -60,7 +60,7 @@
 	      $link="foodsoft:".$area;
       }
 
-      wikiLink($link, "Wiki");
+      wikiLink($link, "Hilfe-Wiki", true );
      
      echo " </li>
      </ul>

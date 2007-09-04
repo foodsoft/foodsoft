@@ -13,7 +13,7 @@
   if( ! $kopf_schon_ausgegeben ) {
     if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
     if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
-    $img = "/foodsoft/img/close_black_trans.gif";
+    $img = "$foodsoftdir/img/close_black_trans.gif";
   
     if( $readonly ) {
       $ro='ro';
@@ -39,7 +39,7 @@
         <td>
     ";
     if( $wikitopic ) {
-      wikiLink( $wikitopic, "Wiki..." );
+      wikiLink( $wikitopic, "Hilfe-Wiki...", true );
     }
     echo "
         </td>

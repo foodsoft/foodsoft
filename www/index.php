@@ -16,12 +16,18 @@
 	// egal ob get oder post verwendet wird...
 	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
 
+  global $self_fields;
+  $self_fields = array();
 
   if( get_http_var( 'download','w' ) ) {  // Datei-Download (.pdf, ...): ohne Kopf
+    $area = $download;
+    $self_fields['download'] = $area;
     include( "$download.php" );
     exit();
   }
   if( get_http_var( 'window','w' ) ) {    // window: anzeige in Unterfenster (kleiner Kopf)
+    $area = $window;
+    $self_fields['window'] = $area;
     require_once( 'windows/head.php' );
     if( is_readable( "windows/$window.php" ) )
       include( "windows/$window.php" );
@@ -29,26 +35,26 @@
       include( "$window.php" );
     echo "$print_on_exit";
     exit();
-  }
+  } else {
 
-  get_http_var( 'area','w' );             // area: anzeige im Hauptfenster (normaler Kopf)
+    get_http_var( 'area','w' );             // area: anzeige im Hauptfenster (normaler Kopf)
 
-  if($area == 'bestellt_faxansicht'){  // TODO: Aufruf per index.php?download=...
-  	include("bestellt_faxansicht.php");
-	exit();
-  }
+    if($area == 'bestellt_faxansicht'){     // TODO: Aufruf per index.php?download=...
+    	include("bestellt_faxansicht.php");
+  	exit();
+    }
 
 
-  include ( "head.php" );
+    include ( "head.php" );
     include('dienst_info.php');
 
-  global $login_gruppen_id;
+    global $login_gruppen_id;
 
-	 
 	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
 	    if (!isset($area)) {
 			   include('menu.php');
 	    } else {
+        $self_fields['area'] = $area;
 		    switch($area){
 		    case "bestellen":
 			   //darf nur bestellen, wenn Dienste akzeptiert
@@ -60,6 +66,7 @@
 			   }
 			    break;
 		    case "lieferschein":
+        case "bestellungen_overview":
 			    //Fast gleich
 			    include('bestellschein.php');
 			    break;
@@ -79,7 +86,8 @@
 	    }
 				 
 				 
-
+  }
+  
   echo "
     <table width='100%' class='footer'>
       <tr>
@@ -96,4 +104,5 @@
     </table>
     $print_on_exit
   ";
+
 ?>
