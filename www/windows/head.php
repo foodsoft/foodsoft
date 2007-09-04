@@ -8,7 +8,7 @@
   global $angemeldet, $login_gruppen_name, $coopie_name
        , $dienst, $title, $subtitle, $wikitopic, $onload_str, $readonly
        , $kopf_schon_ausgegeben, $print_on_exit
-       , $foodsoftpath;
+       , $foodsoftpath, $area;
 
   if( ! $kopf_schon_ausgegeben ) {
     if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
@@ -23,7 +23,7 @@
     echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
       <html>
       <head>
-        <title>$title</title>
+        <title id='title'>$title</title>
         <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
         <link rel='stylesheet' type='text/css' href='$foodsoftdir/css/foodsoft.css'>
         <script type='text/javascript' src='$foodsoftdir/js/foodsoft.js' language='javascript'></script>	 
@@ -35,10 +35,10 @@
         <td style='padding-right:0.5ex;' class='head$ro'>
           <img src='$img' class='button' title='Schlie&szlig;en' onClick='if(opener) opener.focus(); window.close();'></img>
         </td>
-        <td>Foodsoft: $subtitle</td>
+        <td id='subtitle'>Foodsoft: $subtitle</td>
         <td>
     ";
-    wikiLink( ( $wikitopic ? $wikitopic : 'start' ) , "Hilfe-Wiki...", true );
+    wikiLink( ( $area ? "foodsoft:$area" : 'start' ) , "Hilfe-Wiki...", true );
     echo "
         </td>
       </tr>
