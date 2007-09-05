@@ -1013,7 +1013,7 @@ function sql_gesamtpreise($gruppe_id){
 /**
  *
  */
-function sql_bestellprodukte($bestell_id, $gruppen_id=false){
+function sql_bestellprodukte($bestell_id, $gruppen_id=false, $produkt_id=false ){
   $basar_id = sql_basar_id();
   $state = getState( $bestell_id );
 
@@ -1076,8 +1076,9 @@ function sql_bestellprodukte($bestell_id, $gruppen_id=false){
         and bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
   WHERE bestellvorschlaege.gesamtbestellung_id=$bestell_id
   "
-   . ( $gruppen_id ? " and gruppenbestellungen.bestellguppen_id=$gruppen_id " : "" ) .
-  "
+   . ( $gruppen_id ? " and gruppenbestellungen.bestellguppen_id=$gruppen_id " : "" )
+   . ( $produkt_id ? " and produkte.id=$produkt_id " : "" )
+  . "
   GROUP BY bestellvorschlaege.produkt_id
   "
    . ( $gruppen_id ? " HAVING gesamtbestellmenge>0 or verteilmenge>0" : "" ) .

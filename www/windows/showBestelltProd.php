@@ -2,21 +2,26 @@
 
 assert( $angemeldet );   // aufruf jetzt per index.php?window=showBestelltProd
 
+setWindowSubtitle( "Produktverteilung" );
+setWikiHelpTopic( "foodsoft:Produktverteilung" );  // TODO: das ganze Skript umbenennen?
+
 need_http_var('bestell_id', 'u', true);
 need_http_var('produkt_id', 'u', true);
 
 get_http_var('action','w');
-if( $action == 'zuteilung_loeschen' ) {
-  need_http_var( 'zuteilung_id' );
-  sql_delete_bestellzuordnung($zuteilungs_id);
-}
+
+$editAmounts = $hat_dienst_IV;
+
+// TODO: wird bisher von nirgendwo ausgeloest, wird das gebraucht?
+// if( $action == 'zuteilung_loeschen' ) {
+//   need_http_var( 'zuteilung_id' );
+//   sql_delete_bestellzuordnung($zuteilungs_id);
+// }
 
 // daten zum bestellvorschlag ermitteln:
 //
 $vorschlag = sql_bestellvorschlag_daten($bestell_id,$produkt_id);
 preisdatenSetzen( & $vorschlag );
-
-setWindowSubtitle( "Produktverteilung" );
 
 $basar_id = sql_basar_id();
 $basar_festmenge = 0;
@@ -38,13 +43,16 @@ $gruppen = sql_gruppen($bestell_id, $produkt_id);
     <tr>
       <th>Produkt:</th>
       <td>
-        <a href="javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=<? echo $produkt_id; ?>','produktdetails');"
+        <a href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $produkt_id; ?>','produktdetails');"
           title='zu den Produktdetails...' ><? echo $vorschlag['produkt_name']; ?></a>
       </td>
     </tr>
   </table>
 <?
-echo "<form action='" . self_url() . "' method='post'>" . self_post();
+
+if( $editAmounts ) {
+  echo "<form action='" . self_url() . "' method='post'>" . self_post();
+}
 
 ?>
   <table class='numbers'>
@@ -61,42 +69,52 @@ echo "<form action='" . self_url() . "' method='post'>" . self_post();
 distribution_tabellenkopf( 'Gruppe' );
 
 $verteilt = 0;
-$problems = false;
 while( $gruppe = mysql_fetch_array($gruppen) ) {
   $gruppen_id = $gruppe['id'];
 
   // bestellte mengen ermitteln:
   // TODO: mit sql_bestellmengen zusammenfassen
-  $bestellungen = mysql_query(
-    "SELECT SUM( menge * IF(art=0,1,0) ) as festmenge
-          , SUM( menge * IF(art=1,1,0) ) as toleranzmenge
-      FROM bestellzuordnung
-      INNER JOIN gruppenbestellungen
-              ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
-      WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
-            AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
-            AND bestellzuordnung.produkt_id='$produkt_id'
-            AND (art=0 OR art=1)
-      GROUP BY gruppenbestellungen.bestellguppen_id,bestellzuordnung.produkt_id
-    "
-  ) or error ( __LINE__, __FILE__,
-    "Suche nach bestellungen fehlgeschlagen: " . mysql_error() );
+  // DONE: sql_bestellprodukte liefert alle infos
+  //   $bestellungen = mysql_query(
+  //     "SELECT SUM( menge * IF(art=0,1,0) ) as festmenge
+  //           , SUM( menge * IF(art=1,1,0) ) as toleranzmenge
+  //       FROM bestellzuordnung
+  //       INNER JOIN gruppenbestellungen
+  //               ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
+  //       WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
+  //             AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
+  //             AND bestellzuordnung.produkt_id='$produkt_id'
+  //             AND (art=0 OR art=1)
+  //       GROUP BY gruppenbestellungen.bestellguppen_id,bestellzuordnung.produkt_id
+  //     "
+  //   ) or error ( __LINE__, __FILE__,
+  //     "Suche nach bestellungen fehlgeschlagen: " . mysql_error() );
 
-  $bestellung = mysql_fetch_array( $bestellungen );
-  if( $bestellung ) {
-    $festmenge = $bestellung['festmenge'];
-    $toleranzmenge = $bestellung['toleranzmenge'];
-  } else {
-    $festmenge = 0;
-    $toleranzmenge = 0;
-  }
+  $bestellungen = sql_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id );
 
-  // basar kommt extra ganz zum schluss; wir merken uns ggf. die bestellten mengen:
-  //
-  if( $gruppen_id == $basar_id ) {
-    $basar_festmenge = $festmenge;
-    $basar_toleranzmenge = $toleranzmenge;
-    continue;
+  switch( $rows = mysql_num_rows($bestellungen) ) {
+    case 0:
+      $festmenge = 0;
+      $toleranzmenge = 0;
+      $menge = 0;
+      break;
+    case 1:
+      $bestellung = mysql_fetch_array( $bestellungen );
+      //
+      // basar kommt extra ganz zum schluss; wir merken uns ggf. die bestellten mengen:
+      //
+      if( $gruppen_id == $basar_id ) {
+        // sonderfall: bei basar ist die toleranz in 'basarbestellmenge':
+        $basar_festmenge = $bestellung['gesamtbestellmenge'] - $bestellung['basarbestellmenge'];
+        $basar_toleranzmenge = $bestellung['basarbestellmenge'];
+        continue 2;  // 'switch' ist in php auch eine Schleife!
+      }
+      $toleranzmenge = $bestellung['toleranzbestellmenge'];
+      $festmenge = $bestellung['gesamtbestellmenge'] - $toleranzmenge;
+      $menge = $bestellung['verteilmenge'];
+      break;
+    default:
+      error ( __LINE__, __FILE__, 'FEHLER: $rows bestellungen gefunden' );
   }
 
   echo "
@@ -109,102 +127,92 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
 
   // zugeteilte mengen ermitteln:
   // TODO: mit sql_bestellmengen zusammen. Wieso  brauchen wir count?
-  $zuteilungen = mysql_query(
-    "SELECT sum(menge) as menge, count(*) as anzahl
-      FROM bestellzuordnung
-      INNER JOIN gruppenbestellungen
-                 ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
-      INNER JOIN bestellgruppen
-                 ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
-      WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
-            AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
-            AND bestellzuordnung.produkt_id='$produkt_id'
-            AND art=2
-      GROUP BY gruppenbestellungen.gesamtbestellung_id,gruppenbestellungen.bestellguppen_id
-    "
-  ) or error ( __LINE__, __FILE__,
-    "Suche nach Zuteilungen fehlgeschlagen: " . mysql_error() );
+  // DONE: sql_bestellprodukte liefert schon alles. count brauchen wir wohl nicht :-)
+  //   $zuteilungen = mysql_query(
+  //     "SELECT sum(menge) as menge, count(*) as anzahl
+  //       FROM bestellzuordnung
+  //       INNER JOIN gruppenbestellungen
+  //                  ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
+  //       INNER JOIN bestellgruppen
+  //                  ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
+  //       WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
+  //             AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
+  //             AND bestellzuordnung.produkt_id='$produkt_id'
+  //             AND art=2
+  //       GROUP BY gruppenbestellungen.gesamtbestellung_id,gruppenbestellungen.bestellguppen_id
+  //     "
+  //   ) or error ( __LINE__, __FILE__,
+  //     "Suche nach Zuteilungen fehlgeschlagen: " . mysql_error() );
 
-  switch( $rows = mysql_num_rows($zuteilungen) ) {
-    case 0:
-      $menge = 0;
-      $anzahl = 0;
-      break;
-    case 1:
-      $zuteilung = mysql_fetch_array($zuteilungen);
-      $anzahl = $zuteilung['anzahl'];
-      $menge = $zuteilung['menge'];
-      break;
-    default:
-      $problems = true;
-  }
-  if( $problems ) {
-    echo "
-      <td colspan='2'>
-      <div class='warn' style='margin:1ex;'>FEHLER: $rows Zuteilungen</div>
-    ";
-  } else {
-    if( $action == 'zuteilungen_aendern' ) {
-      need_http_var("zuteilung_$gruppen_id",'u');
+  if( $editAmounts && ( $action == 'zuteilungen_aendern' ) ) {
+    fail_if_readonly();
+    if( get_http_var("zuteilung_$gruppen_id",'f') ) {
       $verteil_form = ${"zuteilung_$gruppen_id"} / $vorschlag['kan_verteilmult'];
       if( $verteil_form != $menge ) {
         changeVerteilmengen_sql( $verteil_form, $gruppen_id, $produkt_id, $bestell_id );
         $menge = $verteil_form;
       }
     }
-    ?>
-      <td class='number' style='padding:1px 1ex 1px 1em;'>
-        <input name='zuteilung_<? echo $gruppen_id; ?>' type='text' size='5'
-          style='text-align:right;'
-          value='<? echo $menge * $vorschlag['kan_verteilmult']; ?>'></td>
-      <td class='unit'><? echo $vorschlag['kan_verteileinheit']; ?></td>
-      <td class='mult' style='padding-left:1em;'><? echo $vorschlag['preis_rund']; ?></td>
-      <td class='unit'>/ <? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></td>
-      <td class='number'><? printf( "%.2lf", $vorschlag['preis'] * $menge ); ?></td>
-    <?
-    $verteilt += $menge;
   }
-  ?> </tr> <?
+  ?> <td class='number' style='padding:1px 1ex 1px 1em;'> <?
+  if( $editAmounts ) {
+    ?>
+      <input name='zuteilung_<? echo $gruppen_id; ?>' type='text' size='5'
+        style='text-align:right;'
+        value='<? echo $menge * $vorschlag['kan_verteilmult']; ?>'
+        onfocus="document.getElementById('form_submit').style.display='';"
+        onchange="document.getElementById('form_submit').style.display='';"
+      >
+    <?
+  } else {
+    echo $menge * $vorschlag['kan_verteilmult'];
+  }
+  ?>
+    </td>
+    <td class='unit'><? echo $vorschlag['kan_verteileinheit']; ?></td>
+    <td class='mult' style='padding-left:1em;'><? echo $vorschlag['preis_rund']; ?></td>
+    <td class='unit'>/ <? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></td>
+    <td class='number'><? printf( "%.2lf", $vorschlag['preis'] * $menge ); ?></td>
+  </tr>
+  <?
+  $verteilt += $menge;
 }
 
 $basar = $vorschlag['liefermenge'] - $verteilt;
 
-echo "
+?>
   <tr class='summe'>
-    <td><a href=\"javascript:neuesfenster('index.php?window=basar','basar');\"
+    <td><a href="javascript:neuesfenster('index.php?window=basar','basar');"
       title='Basar anzeigen...'>Basar:</a></td>
-    <td class='mult'>" . $basar_festmenge * $vorschlag['kan_verteilmult']
-      . " (" . $basar_toleranzmenge * $vorschlag['kan_verteilmult']  . ")</td>
-    <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
-";
-if( ! $problems ) {
-  ?>
-    <td class='mult'><? printf( "%.2lf", $basar * $vorschlag['kan_verteilmult'] ); ?></td>
+    <td class='mult'><? echo $basar_festmenge * $vorschlag['kan_verteilmult']; ?>
+       (<? echo $basar_toleranzmenge * $vorschlag['kan_verteilmult']; ?>)</td>
+    <td class='unit'><? echo $vorschlag['kan_verteileinheit'] ?></td>
+    <td class='mult'><? echo $basar * $vorschlag['kan_verteilmult']; ?></td>
     <td class='unit'><? echo $vorschlag['kan_verteileinheit']; ?></td>
     <td class='mult'><? echo $vorschlag['preis_rund']; ?></td>
     <td class='unit'>/ <? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></td>
     <td class='number'><? printf( "%.2lf", $vorschlag['preis'] * $basar ); ?></td>
-  <?
-} else {
-  ?>
-    <td colspan='5' style='text-align:center;'><div class='warn'>(FEHLER!)</div></td>
-  <?
-}
+  </tr>
+<?
 
-?> </tr> <?
-
-if( ! $problems ) {
+if( $editAmounts ) {
   ?>
-    <tr>
-      <td colspan='8'>
-        <input type='submit' name='submit' value='Verteilmengen &auml;ndern'>
+    <tr style='display:none;' id='form_submit'>
+      <td colspan='3'>
+        <input type='submit' name='submit' value='Änderungen speichern'>
+      </td>
+      <td colspan='5'>
+        <input type='reset' name='reset' value='Änderungen rückgängig machen'
+        onclick="document.getElementById('form_submit').style.display='none';"
+        >
       </td>
     </tr>
-    <input type='hidden' name='action' value='zuteilungen_aendern'>
   <?
 }
 
-?>
-</table>
-</form>
+?> </table> <?
+
+if( $editAmounts ) {
+  ?> <input type='hidden' name='action' value='zuteilungen_aendern'> </form> <?
+}
 
