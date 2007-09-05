@@ -1999,12 +1999,14 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
  */
 function optionen_einheiten( $selected ) {
   global $masseinheiten;
+  $output = '';
   foreach( $masseinheiten as $e ) {
-    echo "<option value='$e'";
+    $output = $output . "<option value='$e'";
     if( $e == $selected )
-      echo " selected";
-    echo ">$e</option>";
+      $output = $output . " selected";
+    $output = $output . ">$e</option>";
   }
+  return $output;
 }
 
 function optionen( $fieldname, $values ) {
