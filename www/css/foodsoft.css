@@ -543,4 +543,8 @@ ul#menu li a.wikilink {
   background-color:#ccffcc;
 }
   
-  
+#option_menu {
+  padding-top:1ex;
+  padding-bottom:1em;
+}
+

@@ -109,14 +109,14 @@ if( $meinkonto ) {
 //      echo "<div class='warn'>noch in arbeit!</div>";
 //      exit(12);
 //    }
-   $cols = 5;
+   $cols = 6;
    ?>
 	 <table class="numbers">
 	    <tr>
 			   <th>Typ</th>
 				 <th>Eingabezeit</th>
 				 <th>Informationen</th>
-				 <th>Betrag</th>
+				 <th colspan='2'>Betrag</th>
 				 <th>Summe</th>
 			</tr>
       <tr class='summe'>
@@ -151,15 +151,19 @@ if( $meinkonto ) {
 					    //echo "   <td>".$vert_row['datum']."</td>\n";
 					    echo "   <td></td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
-					    echo "   <td align='right' valign='bottom'> <b> ".sprintf("%.2lf",$vert_row['gesamtpreis'])."</b> <br>";
+					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['gesamtpreis'])."</b> <br>";
               $details_url = "index.php?window=bestellschein"
               . "&gruppen_id=$gruppen_id"
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
 					    ?>
-							   <input type="submit" value="Details "
-                  onclick="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
+                </td>
+                <td class='unit'>
+                 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+                   href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
+                  <img src='img/b_browse.png' border='0' title='Details zur Bestellung' alt='Details zur Bestellung'/>
+                 </a>
                   </td>
                   <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
                 </tr>
@@ -207,8 +211,9 @@ if( $meinkonto ) {
 							}
 							
               ?>
-							  <td align='right' valign='bottom'>
-                  <b><? printf("%.2lf",$konto_row['summe']); ?></b>
+							  <td class='mult'>
+                  <b><? printf("%.2lf",$konto_row['summe']); ?></b></td>
+                  <td class='unit'>&nbsp;</td>
 					      <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
 							</tr>
               <?
