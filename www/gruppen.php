@@ -94,7 +94,7 @@
       if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-            href=\"javascript:window.open('windows/groupTransaktionMenu.php?gruppen_id={$row['id']}','groupTransaktion','width=500,height=300,left=200,top=100').focus()\">
+            href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id={$row['id']}','kontoblatt','width=500,height=300,left=200,top=100').focus()\">
            <img src='img/b_browse.png' border='0' titel='Kontotransaktionen' alt='Kontotransaktionen'/>
           </a>
         ";

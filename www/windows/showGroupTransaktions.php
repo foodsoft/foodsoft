@@ -1,4 +1,6 @@
 <?PHP
+
+ assert($angemeldet);
  
  //Vergleicht das Datum der beiden mysql-records
  //gibt +1 zurück, wenn Datum in $konto älter ist
@@ -41,39 +43,51 @@
 	}
  }
 
- require_once('code/config.php');
- require_once('code/err_functions.php');
- require_once('code/zuordnen.php');
- require_once('code/login.php');
+$meinkonto = ( $area == 'meinkonto' );
 
-/*   // wichtige Variablen einlesen...
- *	 if($meinKonto){  
- *  		$gruppen_pwd    = crypt($HTTP_GET_VARS['gruppen_pwd'],35464);
- *	 } else {
- *  		$gruppen_pwd    = $HTTP_GET_VARS['gruppen_pwd'];
- *	 }
- *	 $gruppen_id 	     = $HTTP_GET_VARS['gruppen_id'];
- */
+if( $meinkonto ) {
+  $gruppen_id = $login_gruppen_id;
+  $self_fields['gruppen_id'] = $gruppen_id;
+  $gruppen_name = sql_gruppenname( $gruppen_id );
+  ?>
+    <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <? echo $gruppen_name; ?>
+    <div id='option_menu'></div>
 
-  if($meinKonto) {
-    $gruppen_id = $login_gruppen_id;
-    // aus index.php aufgerufen: kopf ist schon ausgegeben!
-  } else {
-    nur_fuer_dienst(4,5);
-    // kontoanzeige fuer dienst 4: kopf muss noch ausgegeben werden!
-    require_once( "$foodsoftpath/head.php" );
-    need_http_var( 'gruppen_id' );
+    <h3>Ãœberweisung eintragen:</h3>
+
+    <form method='post' action='<? echo self_url(); ?>'>
+    <? echo self_post(); ?>
+    Ich habe heute <input type="text" size="12" name="amount"/>
+    Euro <input type="submit" value="Ã¼berwiesen"/>
+    </form>
+  <?
+
+  if( get_http_var( 'amount', 'f' ) ) {
+    sqlGroupTransaction( 0, $login_gruppen_id, $amount );
   }
- 
-	 // Variablen initialisieren
-	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-	 
-	 
-   if( ! $angemeldet ) {
-     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
-     exit();
-   }
-	 
+
+} else {
+  nur_fuer_dienst(4,5);
+  get_http_var( 'gruppen_id', 'u', false, true );
+  ?>
+  <h1>Kontoblatt</h1>
+  <div id='option_menu'></div>
+  <?
+
+  option_menu_row( "<th colspan='2'>Anzeigeoptionen</th>" );
+
+  option_menu_row(
+    " <td>Gruppe:</td>
+      <td><select id='select_group' onchange=\"select_group('"
+      . self_url( 'gruppen_id' ) . "');\">
+    " . optionen_gruppen( false, false,$gruppen_id, ( $gruppen_id ? false : "(bitte Gruppe wÃ¤hlen)" ) ) . "
+      </select></td>"
+  );
+  if( ! $gruppen_id )
+    return;
+}
+
+  $kontostand = kontostand($gruppen_id);
 
   // aktuelle Gruppendaten laden
 	$result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Gruppendaten nicht lesen.",mysql_error());
@@ -89,31 +103,26 @@
 	$type2str[2] = "Sonstiges";
 	
 
-/* kopf darf nicht bei $meinKonto ausgegeben werden!
- * <html>
- * <head>
- *    <title>Kontotransaktionen - Kontoauszüge</title>
- * <link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
- * </head>
- * <body onload="<?PHP echo $onload_str; ?>">
- */
 
-   echo "<h3>Kontoausz&uuml;ge von: {$bestellgruppen_row['name']}</h3>";
-
-   if( ( $gesamtbestellung_id = $HTTP_GET_VARS['gesamtbestellung_id'] ) ) {
-     echo "details fuer bestellung: $gesamtbestellung_id";
-     echo "<div class='warn'>noch in arbeit!</div>";
-     exit(12);
-   }
+//    if( ( $gesamtbestellung_id = $HTTP_GET_VARS['gesamtbestellung_id'] ) ) {
+//      echo "details fuer bestellung: $gesamtbestellung_id";
+//      echo "<div class='warn'>noch in arbeit!</div>";
+//      exit(12);
+//    }
+   $cols = 5;
    ?>
-   
 	 <table class="numbers">
 	    <tr>
-			   <th>type</th>
-				 <th>eingabezeit</th>
-				 <th>informationen</th>
-				 <th>summe</th>
+			   <th>Typ</th>
+				 <th>Eingabezeit</th>
+				 <th>Informationen</th>
+				 <th>Betrag</th>
+				 <th>Summe</th>
 			</tr>
+      <tr class='summe'>
+        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Kontostand:</td>
+        <td class='number'><? printf( "%8.2lf", $kontostand ); ?></td>
+      </tr>
 			<?PHP
 			   if(isset($_POST['trans_nr']) && isset($_POST['auszug'])){
 			          if($_POST['auszug'] > 0){
@@ -124,6 +133,7 @@
 			   $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
 				 $num_rows = mysql_num_rows($result);
 				 $vert_result = sql_gesamtpreise($gruppen_id);
+         $summe = $kontostand;
 				 $no_more_vert = false;
 				 $no_more_konto=false;
 				 $konto_row = mysql_fetch_array($result);
@@ -142,7 +152,7 @@
 					    echo "   <td></td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
 					    echo "   <td align='right' valign='bottom'> <b> ".sprintf("%.2lf",$vert_row['gesamtpreis'])."</b> <br>";
-              $details_url = "$foodsoftdir/index.php?window=bestellschein"
+              $details_url = "index.php?window=bestellschein"
               . "&gruppen_id=$gruppen_id"
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
@@ -150,8 +160,11 @@
 					    ?>
 							   <input type="submit" value="Details "
                   onclick="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
-					    <?
-					    echo "   </td>";
+                  </td>
+                  <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+                </tr>
+              <?
+              $summe += $vert_row['gesamtpreis'];
 				 	    $vert_row = mysql_fetch_array($vert_result);
 					    if(!$vert_row){
 					    	$no_more_vert = true;
@@ -176,12 +189,11 @@
                         } else {
 			   ?>
 						<form
-						action=showGroupTransaktions.php method="post">
-							   <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-							   <input type="hidden" name="gruppen_pwd" value="<?PHP echo $_REQUEST['gruppen_pwd']; ?>">
+						action='<? echo self_url(); ?>' method="post">
+              <? echo self_post(); ?>
 							   <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
-							   <input type="text" size=12 name=auszug />
-							   <input type="submit" value="Bestätigen ">
+							   <input type="text" size='12' name='auszug' />
+							   <input type="submit" value="BestÃ¤tigen ">
 						   </form>
 			   <?
                         }
@@ -194,8 +206,13 @@
 							   echo "<td>".$konto_row['notiz']."</td>";
 							}
 							
-							echo "   <td align='right' valign='bottom'><b>".sprintf("%.2lf",$konto_row['summe'])."</b></td>\n";
-							echo "</tr>\n";
+              ?>
+							  <td align='right' valign='bottom'>
+                  <b><? printf("%.2lf",$konto_row['summe']); ?></b>
+					      <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+							</tr>
+              <?
+              $summe -= $konto_row['summe'];
 				 	    $konto_row = mysql_fetch_array($result);
 					    if(!$konto_row){
 					    	$no_more_konto = true;
@@ -204,6 +221,10 @@
 				 	}
 				 }
 			?>
+      <tr class='summe'>
+        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Startsaldo:</td>
+        <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+      </tr>
 	 </table>
 	 <form name="skip" action="showGroupTransaktions.php">
 	    <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
