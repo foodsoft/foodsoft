@@ -1,55 +1,48 @@
 <?php
 
-	require_once('code/config.php');
-	require_once('code/err_functions.php');
-  require_once('code/login.php');
- 
-  get_http_var('area');
+assert( $angemeldet );
 
-	//head einfügen
-  $title="Artikelsuche im Terra-Katalog";
-  $subtitle="Artikelsuche im Terra-Katalog";
-	require_once ('windows/head.php');
+setWindowSubtitle( "Artikelsuche im Terra-Katalog" );
+setWikiHelpTopic( "foodsoft:katalogsuche" );
 
-  $filter = '';
-  get_http_var( 'terrabnummer' ) or $terrabnummer='';
-  $terrabnummer and $filter = $filter . '(terrabestellnummer='.$terrabnummer.')';
+$filter = '';
 
-  get_http_var( 'terraanummer' ) or $terraanummer='';
-  $terraanummer and $filter = $filter . '(terraartikelnummer='.$terraanummer.')';
+get_http_var( 'terrabnummer', 'w', '' );
+$terrabnummer and $filter = $filter . '(terrabestellnummer='.$terrabnummer.')';
 
-  get_http_var( 'terracn' ) or $terracn='';
-  $terracn and $filter = $filter . '(cn=*'.$terracn.'*)';
+get_http_var( 'terraanummer', 'w', '' );
+$terraanummer and $filter = $filter . '(terraartikelnummer='.$terraanummer.')';
 
-  get_http_var( 'terraminpreis' ) or $terraminpreis='';
-  $terraminpreis and $filter = $filter . '(terranettopreisincents>='.$terraminpreis.')';
+get_http_var( 'terracn', 'M', '' );
+$terracn and $filter = $filter . '(cn=*'.$terracn.'*)';
 
-  get_http_var( 'terramaxpreis' ) or $terramaxpreis='';
-  $terramaxpreis and $filter = $filter . '(terranettopreisincents<='.$terramaxpreis.')';
+get_http_var( 'terraminpreis', 'f', '' );
+$terraminpreis and $filter = $filter . '(terranettopreisincents>='.$terraminpreis.')';
 
-  get_http_var( 'terrakatalog' ) or $terrakatalog='';
-  $terrakatalog and $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
+get_http_var( 'terramaxpreis', 'f', '' );
+$terramaxpreis and $filter = $filter . '(terranettopreisincents<='.$terramaxpreis.')';
 
-  // produktid: wenn gesetzt, erlaube update der artikelnummer!
-  get_http_var( 'produktid' ) and get_http_var( 'produktname' ) or $produktid = -1;
+get_http_var( 'terrakatalog', 'M', '' );
+$terrakatalog and $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
 
-  echo "
-    <form action='artikelsuche.php' method='post' class='small_form'>
-     <fieldset class='small_form'>
-     <legend>
+// produktid: wenn gesetzt, erlaube update der artikelnummer!
+if( get_http_var( 'produktid', 'u', false, true ) ) {
+  need_http_var( 'produktname', 'M', true );
+}
+
+echo "
+  <form method='post' class='small_form' action='" . self_url() . "'>" . self_post() . "
+    <fieldset class='small_form'>
+    <legend>
   ";
-  if( $produktid >= 0 ) {
+  if( $produktid ) {
     echo "Katalogsuche nach Artikelnummer fuer <i>$produktname</i>:";
   } else {
     echo "Artikelsuche";
   }
-  echo "</legend>";
-  if( $produktid >= 0 ) {
-    echo "<input type='hidden' name='produktid' value='$produktid'>
-          <input type='hidden' name='produktname' value='$produktname'>";
-  }
   echo "
-     <table>
+    </legend>
+    <table>
      <tr>
        <td>
          Bestellnummer:
@@ -100,11 +93,11 @@
     </fieldset>
     </form>
   ";
-  
-  if( ( $produktid < 0 ) && ( $hat_dienst_IV or $hat_dienst_V ) ) {
+
+  if( ( ! $produktid ) && ( $hat_dienst_IV or $hat_dienst_V ) ) {
     echo "
       <br>
-      <form class='small_form' action='terrakatalog.upload.php' method='post' enctype='multipart/form-data'>
+      <form class='small_form' action='index.php?window=terrakatalog.upload.php' method='post' enctype='multipart/form-data'>
          <fieldset class='small_form'>
            <legend>
            Neuen Katalog einlesen:
@@ -129,7 +122,7 @@
   }
 
   if( $produktid >= 0 ) {
-    echo '<b>Zur Uebernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b>';
+    ?> <b>Zur Uebernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b> <?
   }
 
   if ( $filter != '' ) {
@@ -178,7 +171,7 @@
 
     if ( $produktid >= 0 ) {
       echo "
-        <form action='terraabgleich.php?produktid=$produktid' method='post'>
+        <form action='index.php?window=terraabgleich&produktid=$produktid' method='post'>
         <input type='hidden' name='action' value='artikelnummer_setzen'>
       ";
     }
@@ -191,30 +184,31 @@
       } else {
         echo "{$entries[$i]['terraartikelnummer'][0]}";
       }
-      echo "</td>";
-      echo "  <td>" . $entries[$i]["terrabestellnummer"][0] . "</td>";
-      echo "  <td>" . $entries[$i]["cn"][0] . "</td>";
-      echo "  <td>" . $entries[$i]["terraeinheit"][0] . "</td>";
-      echo "  <td>" . $entries[$i]["terragebindegroesse"][0] . "</td>";
-      echo "  <td>" . $entries[$i]["terraherkunft"][0] . "</td>";
-      echo "  <td>" . $entries[$i]["terraverband"][0] . "</td>";
       $netto = $entries[$i]["terranettopreisincents"][0] / 100.0;
       $mwst = $entries[$i]["terramwst"][0];
       $brutto = $netto * (1 + $mwst / 100.0 );
-      echo "  <td>" . $netto . "</td>";
-      echo "  <td>" . $mwst . "</td>";
-      echo "  <td>" . $brutto . "</td>";
-      echo "  <td>" . $entries[$i]["terradatum"][0] . "</td>";
-      echo "</tr>";
+      echo "
+        </td>
+        <td>{$entries[$i]['terrabestellnummer'][0]}</td>
+        <td>{$entries[$i]['cn'][0]}</td>
+        <td>{$entries[$i]['terraeinheit'][0]}</td>
+        <td>{$entries[$i]['terragebindegroesse'][0]}</td>
+        <td>{$entries[$i]['terraherkunft'][0]}</td>
+        <td>{$entries[$i]['terraverband'][0]}</td>
+        <td>$netto</td>
+        <td>$mwst</td>
+        <td>$brutto</td>
+        <td>{$entries[$i]['terradatum'][0]}</td>
+        </tr>
+      ";
     }
 
     if ( $produktid >= 0 ) {
-      echo '</form>';
+      ?> </form> <?
     }
 
-    echo "</table>";
+    ?> </table> <?
   }
 
-  echo "$print_on_exit";
 ?>
 
