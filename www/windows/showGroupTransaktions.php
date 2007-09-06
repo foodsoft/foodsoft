@@ -50,16 +50,31 @@ if( $meinkonto ) {
   $self_fields['gruppen_id'] = $gruppen_id;
   $gruppen_name = sql_gruppenname( $gruppen_id );
   ?>
-    <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <? echo $gruppen_name; ?>
+    <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <? echo $gruppen_name; ?></h1>
     <div id='option_menu'></div>
 
-    <h3>Überweisung eintragen:</h3>
+    <div id='transaction_button' style='padding-bottom:1em;'>
+    <span class='button'
+      onclick="document.getElementById('transaction_form').style.display='block';
+               document.getElementById('transaction_button').style.display='none';"
+      >Überweisung eintragen...</span>
+    </div>
 
-    <form method='post' action='<? echo self_url(); ?>'>
-    <? echo self_post(); ?>
-    Ich habe heute <input type="text" size="12" name="amount"/>
-    Euro <input type="submit" value="überwiesen"/>
-    </form>
+    <div id='transaction_form' style='display:none;padding-bottom:1em;'>
+      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+      <? echo self_post(); ?>
+      <fieldset>
+      <legend>
+        <img src='img/close_black_trans.gif' class='button'
+        onclick="document.getElementById('transaction_button').style.display='block';
+                 document.getElementById('transaction_form').style.display='none';">
+        Überweisung eintragen
+      </legend>
+      Ich habe heute <input type="text" size="12" name="amount"/>
+      Euro <input type="submit" value="überwiesen"/>
+      </fieldset>
+      </form>
+    </div>
   <?
 
   if( get_http_var( 'amount', 'f' ) ) {
@@ -85,6 +100,177 @@ if( $meinkonto ) {
   );
   if( ! $gruppen_id )
     return;
+  $gruppen_name = sql_gruppenname( $gruppen_id );
+
+  if( get_http_var( 'trans_nr', 'u' ) ) {
+    need_http_var( 'auszug_jahr', 'u' );
+    need_http_var( 'auszug_nr', 'u' );
+    sqlUpdateTransaction( $trans_nr, $auszug_nr, $auszug_jahr );
+  }
+
+  if( get_http_var( 'summe_einzahlung', 'f' ) ) {
+    need_http_var( 'day', 'u' );
+    need_http_var( 'month', 'u' );
+    need_http_var( 'year', 'u' );
+    need_http_var( 'auszug_jahr', 'u' );
+    need_http_var( 'auszug_nr', 'u' );
+    sqlGroupTransaction( '0', $gruppen_id , $summe_einzahlung , $auszug_nr , $auszug_jahr
+      , 'Einzahlung' , "$year-$month-$day" );
+  }
+
+  if( get_http_var( 'summe_transfer', 'f' ) ) {
+    need_http_var( 'day', 'u' );
+    need_http_var( 'month', 'u' );
+    need_http_var( 'year', 'u' );
+    need_http_var( 'notiz', 'M' );
+    need_http_var( 'to_group_id', 'u' );
+    $to_group_name = sql_gruppenname( $to_group_id );
+    sqlGroupTransaction( '2', $gruppen_id, -$summe_transfer
+      , NULL, NULL, "Transfer an $to_group_name: $notiz", "$year-$month-$day" );
+    sqlGroupTransaction( '2', $to_group_id, $summe_transfer
+      , '',  "Transfer von $gruppen_name: $notiz", "$year-$month-$day" );
+  }
+
+  if( get_http_var( 'summe_sonstiges', 'f' ) ) {
+    need_http_var( 'day', 'u' );
+    need_http_var( 'month', 'u' );
+    need_http_var( 'year', 'u' );
+    need_http_var( 'notiz', 'M' );
+    sqlGroupTransaction( '2', $gruppen_id, $summe_sonstiges, NULL, NULL,  $notiz, "$year-$month-$day" );
+    // TODO: Transaktionart?
+  }
+
+  ?>
+
+  <div id='transactions_button' style='padding-bottom:1em;'>
+  <span class='button'
+    onclick="document.getElementById('transactions_menu').style.display='block';
+             document.getElementById('transactions_button').style.display='none';"
+    >Transaktionen...</span>
+  </div>
+  
+  <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
+    <legend>
+      <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+      onclick="document.getElementById('transactions_button').style.display='block';
+               document.getElementById('transactions_menu').style.display='none';">
+      Transaktionen
+    </legend>
+
+      Art der Transaktion:
+      <span style='padding-left:1em;' title='Einzahlung der Gruppe auf das Bankkonto der Foodcoop'>
+      <input type='radio' name='transaktionsart'
+        onclick="document.getElementById('einzahlung_form').style.display='block';
+                 document.getElementById('transfer_form').style.display='none';
+                 document.getElementById('sonstige_form').style.display='none';"
+      ><b>Einzahlung</b>
+      </span>
+
+      <span style='padding-left:1em;' title='überweisung auf ein anderes Gruppenkonto'>
+      <input type='radio' name='transaktionsart'
+        onclick="document.getElementById('einzahlung_form').style.display='none';
+                 document.getElementById('transfer_form').style.display='block';
+                 document.getElementById('sonstige_form').style.display='none';"
+      ><b>Transfer an andere Gruppe</b>
+      </span>
+
+      <span style='padding-left:1em;' title='Sonstige Transaktionen'>
+      <input type='radio' name='transaktionsart'
+        onclick="document.getElementById('einzahlung_form').style.display='none';
+                 document.getElementById('transfer_form').style.display='none';
+                 document.getElementById('sonstige_form').style.display='block';"
+      ><b>sonstige Transaktion</b>
+      </span>
+
+      <div id='einzahlung_form' style='display:none;'>
+        <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+          <? echo self_post(); ?>
+          <fieldset>
+            <legend>
+              Einzahlung
+            </legend>
+            <table>
+              <tr>
+                <td>Kontoeingang:</td>
+                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+              </tr><tr>
+                <td>Kontoauszug Jahr:</td>
+                <td><? number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
+                / Nr: <input type="text" size="6" name="auszug_nr"></td>
+              </tr><tr>
+                <td>Summe:</td>
+                <td>
+                  <input type="text" name="summe_einzahlung" value="">
+                  <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+                </td>
+              </tr>
+            </table>
+          </fieldset>
+        </form>
+      </div>
+
+      <div id='transfer_form' style='display:none;'>
+        <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+          <? echo self_post(); ?>
+          <fieldset>
+            <legend>
+              Transfer von Gruppe <? echo $gruppen_name; ?> an andere Gruppe
+            </legend>
+            <table>
+              <tr>
+                <td>Datum:</td>
+                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+              </tr><tr>
+                <td>Notiz:</td>
+                <td><input type="text" size="60" name="notiz"></td>
+              </tr></tr>
+                <td>an Gruppe:</td>
+                <td>
+                  <select name='to_group_id' size='1'>
+                    <? echo optionen_gruppen( false, false, false, "(bitte Gruppe wählen)" ); ?>
+                  </select>
+                </td>
+              </tr><tr>
+                <td>Summe:</td>
+                <td>
+                  <input type="text" name="summe_transfer" value="">
+                  <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+                </td>
+              </tr>
+            </table>
+          </fieldset>
+        </form>
+      </div>
+
+      <div id='sonstige_form' style='display:none;'>
+        <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+          <? echo self_post(); ?>
+          <fieldset>
+            <legend>
+              Sonstige Transaktion
+            </legend>
+            <table>
+              <tr>
+                <td>Datum:</td>
+                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+              </tr><tr>
+                <td>Notiz:</td>
+                <td><input type="text" size="60" name="notiz"></td>
+              </tr><tr>
+                <td>Summe:</td>
+                <td>
+                  <input type="text" name="summe_sonstiges" value="">
+                  <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+                </td>
+              </tr>
+            </table>
+          </fieldset>
+        </form>
+      </div>
+
+    </fieldset>
+
+  <?
 }
 
   $kontostand = kontostand($gruppen_id);
@@ -124,13 +310,8 @@ if( $meinkonto ) {
         <td class='number'><? printf( "%8.2lf", $kontostand ); ?></td>
       </tr>
 			<?PHP
-			   if(isset($_POST['trans_nr']) && isset($_POST['auszug'])){
-			          if($_POST['auszug'] > 0){
-				  	sqlUpdateTransaction($_POST['trans_nr'], $_POST['auszug']);
-				  }
-			   }
 
-			   $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
+			   $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, kontoauszugs_jahr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
 				 $num_rows = mysql_num_rows($result);
 				 $vert_result = sql_gesamtpreise($gruppen_id);
          $summe = $kontostand;
@@ -151,14 +332,13 @@ if( $meinkonto ) {
 					    //echo "   <td>".$vert_row['datum']."</td>\n";
 					    echo "   <td></td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
-					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['gesamtpreis'])."</b> <br>";
+					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['gesamtpreis'])."</b></td>";
               $details_url = "index.php?window=bestellschein"
               . "&gruppen_id=$gruppen_id"
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
 					    ?>
-                </td>
                 <td class='unit'>
                  <a class='png' style='padding:0pt 1ex 0pt 1ex;'
                    href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
@@ -186,17 +366,17 @@ if( $meinkonto ) {
                            <tr><td>Einzahldatum:</td>
                            <td><?echo $konto_row['kontobewegungs_datum']?></td>
                            </tr>
-                           <tr><td>AuszugsNr:</td><td>
+                           <tr><td>Auszug:</td><td>
                              <?
-                        if($meinKonto or $konto_row['kontoauszugs_nr']>0){
-			   echo $konto_row['kontoauszugs_nr'] ;
+                        if($meinkonto or $konto_row['kontoauszugs_nr']>0){
+			   echo "{$konto_row['kontoauszugs_jahr']} / {$konto_row['kontoauszugs_nr']}";
                         } else {
 			   ?>
-						<form
-						action='<? echo self_url(); ?>' method="post">
+						<form action='<? echo self_url(); ?>' method="post">
               <? echo self_post(); ?>
 							   <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
-							   <input type="text" size='12' name='auszug' />
+                 Jahr: <?  number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
+                 / Nr: <input type="text" size='6' name='auszug_nr' />
 							   <input type="submit" value="Bestätigen ">
 						   </form>
 			   <?
@@ -231,6 +411,7 @@ if( $meinkonto ) {
         <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
       </tr>
 	 </table>
+
 	 <form name="skip" action="showGroupTransaktions.php">
 	    <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
 			<input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
@@ -253,9 +434,5 @@ if( $meinkonto ) {
 				 if ($upButtonScript != "") echo "<input type=button value='>' onClick=\"".$upButtonScript.";document.forms['skip'].submit()\"";
 			?>
 	 </form>
-<?php
-   if( !$meinKonto ) {
-	 	 echo "<a href='groupTransaktionMenu.php?gruppen_id={$bestellgruppen_row['id']}'>Zur&uuml;ck</a>";
-     exit( $print_on_exit );
-	 }
-?>
+
+ 
