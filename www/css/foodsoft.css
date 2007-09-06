@@ -428,7 +428,7 @@ p.li {
   margin:0em;
 }
 
-.small_form fieldset {
+.small_form fieldset, fieldset.small_form {
   background-color:#ffffd0;
   margin:1ex;
   border-style:solid;
