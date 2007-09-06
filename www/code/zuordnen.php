@@ -858,8 +858,8 @@ function sql_basar_id(){
 /**
  *
  */
-function sqlUpdateTransaction($transaction, $receipt){
-	    $sql="UPDATE gruppen_transaktion SET kontoauszugs_nr = ".$receipt." WHERE id = ".$transaction;
+function sqlUpdateTransaction($transaction, $receipt_nr, $receipt_year ){
+	    $sql="UPDATE gruppen_transaktion SET kontoauszugs_nr='$receipt_nr', kontoauszugs_jahr='$receipt_year' WHERE id = ".$transaction;
             doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
 }
 /**
@@ -868,7 +868,7 @@ function sqlUpdateTransaction($transaction, $receipt){
 function sql_groupGlass($gruppe, $menge){
 	//include_once("config.php");  tut bisher nicht
 	$pfand_preis = 0.16; 
-	sqlGroupTransaction(2, $gruppe, ($pfand_preis*$menge),"NULL" ,'Glasrueckgabe');
+	sqlGroupTransaction(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
 }
 
 /**
@@ -876,18 +876,19 @@ function sql_groupGlass($gruppe, $menge){
  */
 function sqlGroupTransaction($transaktionsart,
 			         $gruppen_id,
-				 $summe, $auszug_nr = NULL,
+				 $summe, $auszug_nr = "NULL", $auszug_jahr = "NULL",
 				 $notiz ="", 
 				 $kontobewegungs_datum ="NOW()"){
 
 	   $sql="INSERT INTO gruppen_transaktion 
 	                    (type, gruppen_id, eingabe_zeit,
-			      summe, kontoauszugs_nr, notiz, 
+			      summe, kontoauszugs_nr, kontoauszugs_jahr, notiz, 
 			      kontobewegungs_datum) 
 	         VALUES ('".mysql_escape_string($transaktionsart).
 		          "', '".mysql_escape_string($gruppen_id).
 			  "', NOW(), '".mysql_escape_string($summe).
 			  "', '".mysql_escape_string($auszug_nr).
+			  "', '".mysql_escape_string($auszug_jahr).
 			  "', '".mysql_escape_string($notiz).
 			  "', '".mysql_escape_string($kontobewegungs_datum).
 			  "')" ;
@@ -2086,11 +2087,12 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 }
 
 // get_http_var: bisher definierte $typ argumente:
+//   u (default wenn name auf _id endet): positive ganze Zahl
+//   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
 //   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
-//   M : Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
-//   u : positive ganze Zahl
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _
+//   /.../: regex pattern. Wert wird ausserdem ge-trim()-t
 //
 /**
  *
@@ -2117,11 +2119,11 @@ function get_http_var( $name, $typ = 'A', $default = false, $is_self_field = fal
     if( substr( $name, -3 ) == '_id' ) {
       $typ = 'u';
     } else {
-      $typ = '';
+      $typ = 'M';
     }
   }
   $pattern = '';
-  switch( $typ ) {
+  switch( substr( $typ, 0, 1 ) ) {
     case 'M':
       $val = mysql_real_escape_string( $val );
       break;
@@ -2137,8 +2139,11 @@ function get_http_var( $name, $typ = 'A', $default = false, $is_self_field = fal
       $val = trim($val);
       $pattern = '/^[a-zA-Z0-9_]+$/';
       break;
+    case '/':
+      $val = trim($val);
+      $pattern = $typ;
+       break;
     default:
-      break;
   }
   if( $pattern ) {
     if( ! preg_match( $pattern, $val ) ) {

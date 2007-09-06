@@ -51,3 +51,8 @@ ALTER TABLE `bestellvorschlaege` ADD PRIMARY KEY ( `gesamtbestellung_id` , `prod
 --
 ALTER TABLE `bestellzuordnung` ADD INDEX `secondary` ( `produkt_id` , `gruppenbestellung_id` , `art` );
  
+-- Wunsch von dienst 4: kontoauszug im Format "Jahr / Nr" eingeben:
+--
+ALTER TABLE `gruppen_transaktion` ADD `kontoauszugs_jahr` SMALLINT( 5 ) UNSIGNED NOT NULL;
+
+ 
