@@ -1,11 +1,11 @@
 <?PHP
    
-  $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+  assert( $angemeldet ) or exit();
+  assert( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
    
-  require_once('../code/config.php');
-  require_once('../code/err_functions.php');
-  require_once('../code/connect_MySQL.php');
-  require_once('../code/login.php');
+  setWindowSubtitle( 'Neue Bestellgruppe eintragen' );
+  setWikiHelpTopic( 'foodsoft:bestellgruppe_eintragen' );
+
   nur_fuer_dienst(5);
    
   $msg = '';
@@ -29,7 +29,7 @@
     // dabei pruefen, ob noch aktive gruppe derselben nummer existiert:
     $id = $newNummer;
     while( true ) {
-      $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$id" );
+      $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id='$id'" );
       if( ! $result ) {
         $problems = $problems . "<div class='warn'>Suche in bestellgruppen fehlgeschlagen: "
                     . mysql_error() . "</div>";
@@ -72,7 +72,7 @@
                   , '".mysql_escape_string($newMail)."'
                   , '".mysql_escape_string($newTelefon)."'
                   , '".mysql_escape_string($newMitgliederzahl)."'
-                  , '".crypt($pwd,35464)."')"
+                  , '".crypt($pwd,$crypt_salt)."')"
       ) ) {
         $problems = $problems . "<div class='warn'>Eintragen der Gruppe fehlgeschlagen:"
                                  .  mysql_error() . "</div>";
@@ -86,102 +86,83 @@
   
       if( ! $problems ) {
         // gruppe ist angelegt: jetzt sockelbetrag verbuchen!
-        $sockelbetrag = -6.00 * $newMitgliederzahl;
-        if( ! mysql_query(
-          "INSERT INTO gruppen_transaktion (
-              type
-            , gruppen_id
-            , eingabe_zeit
-            , summe
-            , kontoauszugs_nr
-            , notiz
-            , kontobewegungs_datum
-            , dienstkontrollblatt_id
-          ) VALUES (
+        $sockelbetrag = - $sockelbetrag * $newMitgliederzahl;
+        if( sqlGroupTransaction(
             2
           , $id
-          , NOW()
           , $sockelbetrag
-          , ''
-          , 'Sockelbetrag neue Gruppe $newNummer'
-          , ''
-          , $dienstkontrollblatt_id
-          )"
+          , "NULL"
+          , "NULL"
+          , "Sockelbetrag neue Gruppe $newNummer"
+          , "NOW()"
         ) ) {
+          $msg = $msg . "<div class='ok'>Sockelbetrag $sockelbetrag Euro wurde verbucht.</div>";
+        } else {
           $problems = $problems . "<div class='warn'>Verbuchen des Sockelbetrags fehlgeschlagen: "
                                      . mysql_error() . "</div>";
-        } else {
-          $msg = $msg . "<div class='ok'>Sockelbetrag $sockelbetrag Euro wurde verbucht.</div>";
         }
       }
 
     }
   }
  
-  $title = "Neue Bestellgruppe eintragen";
-  $subtitle = "Neue Bestellgruppe eintragen";
-  require_once('head.php');
-
-  echo "
-    <form action='insertGroup.php' method='post' class='small_form'>
+  ?>
+    <form action='<? echo self_url(); ?>' method='post' class='small_form'>
+    <? echo self_post(); ?>
       <fieldset style='width:350px;' class='small_form'>
       <legend>neue Bestellgruppe</legend>
-        $problems
-        $msg
+        <? echo $problems; echo $msg; ?>
         <table>
           <tr>
              <td><label>Gruppennummer:</label></td>
              <td>
-               <input type='input' size='3' name='newNummer' value='$newNummer'></input>
-               
+               <input type='input' size='3' name='newNummer' value='<? echo $newNummer; ?>'></input>
              </td>
           </tr>
           <tr>
              <td><label>Gruppenname:</label></td>
              <td>
-               <input type='input' size='24' name='newName' value='$newName'></input>
+               <input type='input' size='24' name='newName' value='<? echo $newName; ?>'></input>
              </td>
           </tr>
           <tr>
              <td><label>AnsprechpartnerIn:</label></td>
              <td>
-               <input type='input' size='24' name='newAnsprechpartner' value='$newAnsprechpartner'></input>
+               <input type='input' size='24' name='newAnsprechpartner' value='<? echo $newAnsprechpartner; ?>'></input>
              </td>
           </tr>
           <tr>
              <td><label>Email-Adresse:</label></td>
              <td>
-               <input type='input' size='24' name='newMail' value='$newMail'></input>
+               <input type='input' size='24' name='newMail' value='<? echo $newMail; ?>'></input>
              </td>
           </tr>
           <tr>
              <td><label>Telefonnummer:</label></td>
              <td>
-               <input type='input' size='24' name='newTelefon' value='$newTelefon'></input>
+               <input type='input' size='24' name='newTelefon' value='<? echo $newTelefon; ?>'></input>
              </td>
           </tr>
           <tr>
              <td><label>Mitgliederzahl:</label></td>
              <td>
-               <input type='input' size='2' value='$newMitgliederzahl' name='newMitgliederzahl'></input>
+               <input type='input' size='2' value='<? echo $newMitgliederzahl; ?>' name='newMitgliederzahl'></input>
              </td>
           </tr>
           <tr>
              <td colspan='2' align='center'>
-  ";
+  <?
   if( ! $done ) {
-    echo "<input type='submit' value='Einf&uuml;gen'></input>";
+    ?> <input type='submit' value='Einf&uuml;gen'></input> <?
   } else {
-    echo "<input value='OK' type='button' onClick='opener.focus(); window.close();'></td>";
+    ?> <input value='OK' type='button' onClick='if(opener) opener.focus();window.close();'></td> <?
   }
-  echo "
+  ?>
           </tr>
         </table>
       </fieldset>
     </form>
-  ";
+  <?
 
 ?>
 
-</body>
-</html>

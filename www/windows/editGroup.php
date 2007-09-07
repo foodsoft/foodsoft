@@ -1,12 +1,12 @@
 <?PHP
 
-  require_once('../code/config.php');
-  require_once('../code/err_functions.php');
-  require_once('../code/connect_MySQL.php');
-  require_once('../code/login.php');
-  need_http_var('gruppen_id');
+  assert( $angemeldet ) or exit();
+  assert( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
 
-  // $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+  setWindowSubtitle( 'Bestellgruppe edieren' );
+  setWikiHelpTopic( 'foodsoft:bestellgruppe_edieren' );
+
+  need_http_var( 'gruppen_id','u', true );
 
   if( $gruppen_id != $login_gruppen_id )
     nur_fuer_dienst(4,5);   // nur dienst 4 und 5 ediert fremde gruppen
@@ -15,9 +15,7 @@
   $pwmsg = '';
   $problems = '';
 
-  $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$gruppen_id" );
-  if( ! ( $row = mysql_fetch_array( $result ) ) )
-    $problems = $problems . "<div class='warn'>Konnte Gruppendaten nicht laden</div>";
+  $row = sql_gruppendaten( $gruppen_id );
 
   if( get_http_var('newName') ) {
     get_http_var('newAnsprechpartner');
@@ -69,35 +67,23 @@
 
       if( ( ! $problems ) && ( $newMitgliederzahl != $row['mitgliederzahl'] ) ) {
         if( $buchesockelbetrag ) {
-          $sockeldiff = 6.0 * ($row['mitgliederzahl'] - $newMitgliederzahl);
-          if( ! mysql_query(
-            " INSERT INTO gruppen_transaktion (
-                type
-              , gruppen_id
-              , eingabe_zeit
-              , summe
-              , kontoauszugs_nr
-              , notiz
-              , kontobewegungs_datum
-              , dienstkontrollblatt_id
-            ) VALUES (
+          $sockeldiff = $sockelbetrag * ($row['mitgliederzahl'] - $newMitgliederzahl);
+          if( sqlGroupTransaction(
               2
             , $gruppen_id
-            , NOW()
             , $sockeldiff
-            , ''
-            , 'Korrektur Sockelbetrag bei Aenderung Mitgliederzahl {$row['mitgliederzahl']} -> $newMitgliederzahl'
-            , ''
-            , $dienstkontrollblatt_id
-            ) " 
+            , "NULL"
+            , "NULL"
+            , "Korrektur Sockelbetrag bei Ã„nderung Mitgliederzahl {$row['mitgliederzahl']} -> $newMitgliederzahl"
+            , "NOW()"
           ) ) {
+            $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
+          } else {
             $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
                                        . mysql_error() . "</div>";
-          } else {
-            $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
           }
         } else {
-          $msg = $msg . "<div class='warn'>Sockelbetrag: Aenderung $sockeldiff wurde <b>nicht</b> verbucht!</div>";
+          $msg = $msg . "<div class='warn'>Sockelbetrag: Ã„nderung $sockeldiff wurde <b>nicht</b> verbucht!</div>";
         }
       }
     }
@@ -108,44 +94,39 @@
 			// neues Passwort anlegen...
 			if ($action == "new_pwd") {
 			   $pwd = strval(rand(1000,9999));
-				 mysql_query("UPDATE bestellgruppen SET passwort='".mysql_escape_string(crypt($pwd,35464))."' WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte das Gruppenpasswort nicht zurücksetzen.",mysql_error());
+         set_password( $gruppen_id, $pwd );
 				 $pwmsg = $pwmsg .  "<div class='ok' style='padding:1em;'>Das neu angelegte Gruppenpasswort ist: <b>$pwd</b></div>";
 			}
   }
 
-  $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$gruppen_id" );
-  if( ! ( $row = mysql_fetch_array( $result ) ) )
-    $problems = $problems . "<div class='warn'>Konnte Gruppendaten nicht laden</div>";
+  // gruppendaten (ggf nochmal neu!) laden:
+  //
+  $row = sql_gruppendaten( $gruppen_id );
 
-  $title = "Bestellgruppe edieren";
-  $subtitle = "Bestellgruppe " . $gruppen_id % 1000 . " edieren";
-  require_once('head.php');
-
-  echo "
-	  <form action='editGroup.php' method='post' class='small_form'>
-      <input type='hidden' name='gruppen_id' value='$gruppen_id'>
+  ?>
+	  <form action='<? echo self_url(); ?>' method='post' class='small_form'>
+      <? echo self_post(); ?>
       <fieldset style='width:350px;' class='small_form'>
-       <legend>Stammdaten Gruppe " . $gruppen_id % 1000 . " </legend>
-       $msg
-       $problems
+       <legend>Stammdaten Gruppe <? echo $gruppen_id % 1000; ?></legend>
+       <? echo $msg; echo $problems; ?>
   		 <table>
 			   <tr>
 				   <td><label>Gruppenname:</label></td>
-					 <td><input type='input' size='24' name='newName' value='{$row['name']}'></td>
+					 <td><input type='input' size='24' name='newName' value='<? echo $row['name']; ?>'></td>
 				 </tr>
 			   <tr>
 				    <td><label>AnsprechpartnerIn:</label></td>
-						<td><input type='input' size='24' name='newAnsprechpartner' value='{$row['ansprechpartner']}'></td>
+						<td><input type='input' size='24' name='newAnsprechpartner' value='<? echo $row['ansprechpartner']; ?>'></td>
 				 </tr>				 
 			   <tr>
 				    <td><label>Email-Adresse:</label></td>
-						<td><input type='input' size='24' name='newMail' value='{$row['email']}'></td>
+						<td><input type='input' size='24' name='newMail' value='<? echo $row['email']; ?>'></td>
 				 </tr>				 
 			   <tr>
 				    <td><label>Telefonnummer:</label></td>
-						<td><input type='input' size='24' name='newTelefon' value='{$row['telefon']}'></td>
+						<td><input type='input' size='24' name='newTelefon' value='<? echo $row['telefon']; ?>'></td>
 				 </tr>
-  ";
+  <?
   if( $hat_dienst_IV or $hat_dienst_V ) {
     echo "
 			   <tr>
@@ -169,41 +150,42 @@
 	    if($dienst == $row['diensteinteilung']) $select_str="selected";
 	       echo "<option value='".$dienst."' ".$select_str.">".$dienst."</option>\n";  
     }
-    echo "
+    ?>
 	         
 	      </select>
             </td>
 				 </tr>				 
-    ";
+    <?
   }
-  echo "
+  ?>
 				 <tr>
 				    <td colspan='2' align='center'><input type='submit' value='&Auml;ndern'></td>
 				 </tr>
 			 </table>
       </fieldset>
 	   </form>
-  ";
+  <?
 	 
-  if( $hat_dienst_IV or $hat_dienst_V ) {
-    echo "
-	   <form action='editGroup.php' name='optionen' class='small_form'>
-			 <input type='hidden' name='gruppen_id' value='$gruppen_id'>	 
-			 <input type='hidden' name='action'>
+  if( $hat_dienst_V ) {
+    ?>
+      <form action='<? echo self_url(); ?>' name='optionen' class='small_form' method='post'>
+      <? echo self_post(); ?>
+			 <input type='hidden' name='action' value=''>
        <fieldset style='width:350px;' class='small_form'>
 	  	   <legend>Optionen</legend>
-         $pwmsg
+         <? echo $pwmsg; ?>
          <table style='width:350px;' class='menu'>
 			     <tr>
-			        <td><input type='button' value='neues Passwort' onClick=\"document.forms['optionen'].action.value='new_pwd'; document.forms['optionen'].submit();\"></td>
+			        <td><input type='button' value='neues Passwort'
+                onClick="document.forms['optionen'].action.value='new_pwd';
+                document.forms['optionen'].submit();">
+              </td>
 					    <td class='smalfont'>Gruppenpasswort zur&uuml;cksetzen...</td>
 			     </tr>
 	        </table>
        </fieldset>
-	  </form>
-    ";
+      </form>
+    <?
   }
 ?>
 
-</body>
-</html>

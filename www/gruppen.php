@@ -45,7 +45,7 @@ if( $action == 'delete' ) {
       <tr>
         <td>
           <input type='button' value='Neue Gruppe' class='bigbutton'
-          onClick="window.open('index.php?window=insertGroup','insertGroup','width=390,height=360,left=200,top=100').focus();"></td>
+          onClick="window.open('index.php?window=insertGroup','insertGroup','width=390,height=420,left=200,top=100').focus();"></td>
         <td valign='middle' class='smallfont'>Eine neue Bestellgruppe hinzufügen...</td>
       </tr>
     <?
@@ -90,7 +90,7 @@ if( $action == 'delete' ) {
       if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-            href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id={$row['id']}','kontoblatt','width=500,height=300,left=200,top=100').focus()\">
+            href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id={$row['id']}','kontoblatt');\">
            <img src='img/b_browse.png' border='0' titel='Kontotransaktionen' alt='Kontotransaktionen'/>
           </a>
         ";
@@ -116,7 +116,7 @@ if( $action == 'delete' ) {
           <a class='png' href="javascript:if(confirm('Soll die Gruppe wirklich GELÖSCHT werden?')){
             document.forms['reload_form'].action.value='delete';
             document.forms['reload_form'].gruppen_id.value='<? echo $row['id']; ?>';
-            document.forms['reload_form'].submit();">
+            document.forms['reload_form'].submit();}">
           <img src='img/b_drop.png' border='0' alt='Gruppe löschen' title='Gruppe löschen'/></a>
         <?
       }
