@@ -671,6 +671,7 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
 function set_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
+    fail_if_readonly();
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
     $query= "UPDATE bestellgruppen SET passwort='"
        . mysql_real_escape_string(crypt($gruppen_pwd,$crypt_salt))
@@ -859,7 +860,12 @@ function sql_basar_id(){
  *
  */
 function sqlUpdateTransaction($transaction, $receipt_nr, $receipt_year ){
-	    $sql="UPDATE gruppen_transaktion SET kontoauszugs_nr='$receipt_nr', kontoauszugs_jahr='$receipt_year' WHERE id = ".$transaction;
+  nur_fuer_dienst(4);
+  fail_if_readonly();
+  $sql="UPDATE gruppen_transaktion
+    SET kontoauszugs_nr='$receipt_nr', kontoauszugs_jahr='$receipt_year',
+        dienstkontrollblatt_id='$dienstkontrollblatt_id'
+    WHERE id = '$transaction'";
             doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
 }
 /**
@@ -879,11 +885,12 @@ function sqlGroupTransaction($transaktionsart,
 				 $summe, $auszug_nr = "NULL", $auszug_jahr = "NULL",
 				 $notiz ="", 
 				 $kontobewegungs_datum ="NOW()"){
+  fail_if_readonly();
 
 	   $sql="INSERT INTO gruppen_transaktion 
 	                    (type, gruppen_id, eingabe_zeit,
 			      summe, kontoauszugs_nr, kontoauszugs_jahr, notiz, 
-			      kontobewegungs_datum) 
+			      kontobewegungs_datum, dienstkontrollblatt_id ) 
 	         VALUES ('".mysql_escape_string($transaktionsart).
 		          "', '".mysql_escape_string($gruppen_id).
 			  "', NOW(), '".mysql_escape_string($summe).
@@ -891,8 +898,9 @@ function sqlGroupTransaction($transaktionsart,
 			  "', '".mysql_escape_string($auszug_jahr).
 			  "', '".mysql_escape_string($notiz).
 			  "', '".mysql_escape_string($kontobewegungs_datum).
-			  "')" ;
-             doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
+        "', '$dienstkontrollblatt_id'
+			  )" ;
+  return doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
 }
 /**
  *
@@ -1229,6 +1237,14 @@ function sql_gruppenname($gruppen_id){
 	$row=mysql_fetch_array($result);
 	return $row['name'];
 }
+
+function sql_gruppendaten( $gruppen_id ) {
+  $query = "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'";
+  $result = doSql($query, LEVEL_ALL, "Suche nach Bestellgruppe fehlgeschlagen");
+  if( mysql_num_rows( $result ) != 1 )
+    error(__LINE__,__FILE__,"Suche nach Bestellgruppe ohne eindeutiges Ergebnis");
+  return mysql_fetch_array( $result );
+}
 /**
  *
  */
@@ -1263,6 +1279,8 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
 	return $result;
 	
 }
+
+
 /**
  *
  */
@@ -2194,7 +2212,8 @@ function fail_if_readonly() {
 function wikiLink( $topic, $text, $head = false ) {
   global $foodsoftdir;
   echo "<a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) 
-  . "target='wiki' href='$foodsoftdir/../wiki/doku.php?id=$topic'>$text</a>";
+  . "target='wiki' title='zur Wiki-Seite $topic'
+    href='$foodsoftdir/../wiki/doku.php?id=$topic'>$text</a>";
 }
 
 function setWikiHelpTopic( $topic ) {
@@ -2203,6 +2222,8 @@ function setWikiHelpTopic( $topic ) {
     <script type='text/javascript'>
       document.getElementById('wikilink_head').href
         = "<? echo $foodsoftdir; ?>/../wiki/doku.php?id=<? echo $topic; ?>";
+      document.getElementById('wikilink_head').title
+        = "zur Wiki-Seite <? echo $topic; ?>";
     </script>
   <?
 }
