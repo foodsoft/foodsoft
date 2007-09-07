@@ -2,13 +2,9 @@
 
 // dienstkontrollblatt.php
 //
-	require_once('code/config.php');
-	require_once('code/err_functions.php');
-	require_once('code/connect_MySQL.php');
-  require_once('code/login.php');
-  require_once('head.php');
+	assert( $angemeldet ) or exit();
 
-  get_http_var('action');
+  get_http_var('action','w');
 
   if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
 
@@ -117,5 +113,3 @@
 
 ?>
 
-</body>
-</html>
