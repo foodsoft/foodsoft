@@ -1,10 +1,7 @@
 <?php
 
-   require_once( "$foodsoftpath/code/config.php" );
-   require_once( "$foodsoftpath/code/err_functions.php" );
-   require_once( "$foodsoftpath/code/zuordnen.php" );
-   require_once( "$foodsoftpath/code/login.php" );
-   // nur_fuer_dienst(1,3,4);
+   assert( $angemeldet ) or exit();
+   nur_fuer_dienst(1,3,4);
 
    $path = array_merge(
      split( ':', getenv("PATH") )
@@ -75,7 +72,7 @@
 
    $downloadname = "foodsoft.$foodsoftserver." . date('Ymd.Hi') . ".sql.gz" ;
 
-   get_http_var( 'action' );
+   get_http_var( 'action', 'w' );
 
    function datenbank_sperren() {
      if( mysql_query( 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
@@ -189,23 +186,22 @@
      exit();
    }
 
-   require_once( "$foodsoftpath/head.php" ); 
-   echo "
+   ?>
      <h1>Up/Download der Datenbank...</h1>
-   ";
-
+   <?
 
 
    if( $readonly ) {
 	wikiLink("foodsoft:daten_auf_den_server_hochladen", "Wiki...");
-     echo "
+     ?>
        <table>
        <tr>
          <td>
            <label>Datenbank hochladen und anschliessend freigeben:</label>
          </td>
          <td>
-           <form enctype='multipart/form-data' action='index.php?area=updownload&action=upload' method='post'>
+           <form enctype='multipart/form-data' action='<? echo self_url; ?>' method='post'>
+             <input type='hidden' name='action' value='upload'>
              <input name='userfile' type='file'>
              <input type='submit' value='Hochladen'>
            </form>
@@ -216,24 +212,26 @@
            <label>Datenbank <em>ohne</em> Upload wieder freigeben:</label>
          </td>
          <td>
-           <form action='index.php?area=updownload&action=release' method='post'>
+           <form action='<? echo self_url; ?>' method='post'>
+             <input type='hidden' name='action' value='release'>
              <input type='submit' value='Freigeben'>
            </form>
          </td>
        </tr>
        </table>
-     ";
+     <?
 
    } else {
 	wikiLink("foodsoft:daten_vom_server_runterladen", "Wiki...");
-     echo "
+     ?>
        <table>
        <tr>
          <td>
-           <label>Datenbank sperren und anschliessend speichern als <kbd>$downloadname</kbd>:</label>
+           <label>Datenbank sperren und anschliessend speichern als <kbd><? echo $downloadname; ?></kbd>:</label>
          </td>
          <td>
-           <form action='index.php?download=updownload&action=download' method='post'>
+           <form action='index.php?download=updownload' method='post'>
+             <input type='hidden' name='action' value='download'>
              <input type='submit' value='Speichern'>
            </form>
          </td>
@@ -243,15 +241,16 @@
            <label>Datenbank <em>ohne</em> Speichern sperren:</label>
          </td>
          <td>
-           <form action='index.php?area=updownload&action=lock' method='post'>
+           <form action='<? echo self_url; ?>' method='post'>
+             <input type='hidden' name='action' value='lock'>
              <input type='submit' value='Sperren'>
            </form>
          </td>
        </tr>
        </table>
-     ";
+     <?
    }
-   echo "</table>";
+   ?> </table> <?
 
 
 ?>
