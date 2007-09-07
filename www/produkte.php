@@ -1,8 +1,7 @@
 <h1>Produktdatenbank ....</h1>
 
 <?PHP
-  require_once("$foodsoftpath/code/zuordnen.php");
-  require_once("$foodsoftpath/code/login.php");
+  assert( $angemeldet ) or exit();
 
 /* wie das skript funktioniert:
 
@@ -163,10 +162,10 @@
               <?php
                 echo $lieferant_name;
                 if ( $lieferant_name == "Terra" ) {
-                 echo '<a class="button" href="artikelsuche.php" target="_new">Katalogsuche</a>';
+                 ?> <a class="button" href="javascript:neuesfenster('index.php?window=artikelsuche','artikelsuche');">Katalogsuche</a> <?
                 }
                  // if( $hat_dienst_IV ) {
-                   echo "<a class='button' href='terraabgleich.php?lieferanten_id=$lieferanten_id' target='_new'>Datenbankabgleich</a>";
+                   ?> <a class="button" href="javascript:neuesfenster('index.php?window=terraabgleich&lieferanten_id=<? echo $lieferanten_id; ?>','terraabgleich;');">Datenbankabgleich</a> <?
                  // }
               ?>
 
@@ -347,7 +346,7 @@
                   ";
                   if( !$readonly ) {
                     echo "
-                      <a class='png' href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$row['id']}','produktdetails');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
+                      <a class='png' href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid={$row['id']}','produktdetails');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
                       <a class='png' href=\"javascript:f=window.open('windows/editProdukt.php?produkt_id={$row['id']}','editProdukt','width=400,height=450,left=200,top=100'); f.focus();\"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
                       <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
                       <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
@@ -476,8 +475,6 @@
              </form>
             <?php
       } //end if
-
-  echo "$print_on_exit";
 
 ?>
 

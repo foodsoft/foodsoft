@@ -1,6 +1,6 @@
 <?php
 
-assert( $angemeldet );
+assert( $angemeldet ) or exit();
 
 setWindowSubtitle( "Artikelsuche im Terra-Katalog" );
 setWikiHelpTopic( "foodsoft:katalogsuche" );
@@ -97,7 +97,7 @@ echo "
   if( ( ! $produktid ) && ( $hat_dienst_IV or $hat_dienst_V ) ) {
     echo "
       <br>
-      <form class='small_form' action='index.php?window=terrakatalog.upload.php' method='post' enctype='multipart/form-data'>
+      <form class='small_form' action='index.php?window=terrakatalog_upload' method='post' enctype='multipart/form-data'>
          <fieldset class='small_form'>
            <legend>
            Neuen Katalog einlesen:
@@ -121,7 +121,7 @@ echo "
     ";
   }
 
-  if( $produktid >= 0 ) {
+  if( $produktid > 0 ) {
     ?> <b>Zur Uebernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b> <?
   }
 
@@ -169,7 +169,7 @@ echo "
         </tr>
     ";
 
-    if ( $produktid >= 0 ) {
+    if ( $produktid > 0 ) {
       echo "
         <form action='index.php?window=terraabgleich&produktid=$produktid' method='post'>
         <input type='hidden' name='action' value='artikelnummer_setzen'>
@@ -179,7 +179,7 @@ echo "
     for( $i=0; $i < $max; $i++ ) {
       echo "<tr>";
       echo "  <td>";
-      if ( $produktid >= 0 ) {
+      if ( $produktid > 0 ) {
         echo "<input type='submit' name='anummer' value='{$entries[$i]['terraartikelnummer'][0]}'>";
       } else {
         echo "{$entries[$i]['terraartikelnummer'][0]}";
@@ -203,7 +203,7 @@ echo "
       ";
     }
 
-    if ( $produktid >= 0 ) {
+    if ( $produktid > 0 ) {
       ?> </form> <?
     }
 

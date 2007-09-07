@@ -1044,34 +1044,21 @@
                             ";
                           }
                           echo "
-                            ><a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
+                            ><a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
                              ".sprintf("%.02f",$preise_row['preis'])."
                              </a>
                             </td>
                             <td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
                             <!-- </tr> -->";
                         } else {
-//                           if( $aktueller_preis_existiert ) {
-//                             echo "
-//                               <td class='mult_outdated' colspan='4'
-//                               title='...bedeutet: Dienst 4 sollte den Preis aktualisieren!'
-//                               >
-//                               Preis 
-//                               <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
-//                                  ".sprintf("%.02f",$preise_row['preis'])."</a>
-//                               ist nicht aktuell
-//                               </td>
-//                             ";
-//                           } else {
-                            echo "
-                              <td class='warn' colspan='4'
-                              title='...kann bedeuten: Artikel nicht (mehr) lieferbar!'
-                              >Kein aktueller
-                                <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\"
-                                >Preiseintrag</a>
-                              </td>
-                            ";
-//                          }
+                          echo "
+                            <td class='warn' colspan='4'
+                            title='...kann bedeuten: Artikel nicht (mehr) lieferbar!'
+                            >Kein aktueller
+                              <a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\"
+                              >Preiseintrag</a>
+                            </td>
+                          ";
                         }
 											 
 						?>

@@ -11,7 +11,7 @@
 // - bestell_id: erlaubt auswahl preiseintrag fuer diese bestellung (nur mit produktid)
 // - lieferanten_id: anzeige aller produkte eines lieferanten
 
-assert( $angemeldet );
+assert( $angemeldet ) or exit();
 
 nur_fuer_dienst(4,5);
 
