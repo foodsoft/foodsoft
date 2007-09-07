@@ -2,14 +2,6 @@
 //  das  javascript der foodsoft  
 // copyright Fc Schinke09 2006 
 
-function deleteGroup(groupID)
-			{
- 	       if (confirm('Soll die Gruppe wirklich GELÖSCHT werden?')) { 
-				    document.forms['reload_form'].action.value="delete";
-						document.forms['reload_form'].gruppen_id.value=groupID;
-						document.forms['reload_form'].submit();
-				 }
-			}
 			
 	    function deleteLieferant(lieferantID)
 			{
