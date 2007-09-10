@@ -1286,16 +1286,27 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
  */
 function optionen_gruppen($bestell_id=false,$produkt_id=false,$selected=false,$option_0=false) {
   $gruppen = sql_gruppen($bestell_id,$produkt_id);
-
   $output='';
   if( $option_0 ) {
-    $output = "<option value='0' " . ( $selected ? "" : " selected" ) . ">$option_0</option>";
+    $output = "<option value='0'";
+    if( $selected == 0 ) {
+      $output = $output . " selected";
+      $selected = -1;
+    }
+    $output = $output . ">$option_0</option>";
   }
   while($gruppe = mysql_fetch_array($gruppen)){
     $output = "$output
-     <option value='{$gruppe['id']}'" . ( ( $selected == $gruppe['id'] ) ? " selected" : "" )
-    . ">{$gruppe['name']}</option>
-    ";
+      <option value='{$gruppe['id']}'";
+    if( $selected == $gruppe['id'] ) {
+      $output = $output . " selected";
+      $selected = -1;
+    }
+    $output = $output . ">{$gruppe['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
+    $output = "<option value='0' selected>(bitte Gruppe wählen)</option>" . $output;
   }
   return $output;
 }
