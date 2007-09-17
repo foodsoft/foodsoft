@@ -834,7 +834,7 @@ function areas_in_head($area){
  * Liste zur Auswahl einer Bestellung via Link
  */
 function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:", $editDates = false, $changeState = false ) {
-  global $self, $self_fields, $foodsoftdir, $dienst, $login_gruppen_id;
+  global $self, $self_fields, $foodsoftdir, $dienst, $login_gruppen_id, $hat_dienst_IV;
 
       echo "<h1>$head</h1>";
       // $span =  count($area);

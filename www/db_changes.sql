@@ -19,8 +19,8 @@ ALTER TABLE `gesamtbestellungen` CHANGE `lieferung` `lieferung` DATE NULL DEFAUL
 
 ALTER TABLE `dienstkontrollblatt`
   ADD `datum` date NOT NULL default '0000-00-00',
-  CHANGE `zeit` time NOT NULL,
-  ADD UNIQUE KEY `secondary` (`gruppen_id`,`dienst`,`datum`) ;
+  CHANGE `zeit` `zeit` TIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  ADD UNIQUE KEY `secondary` (`gruppen_id` (10),`dienst`,`datum`) ;
 
 
 INSERT INTO `nahrungskette`.`leitvariable` (
@@ -41,6 +41,11 @@ INSERT INTO `nahrungskette`.`leitvariable` (
 )
 VALUES (
 'sockelbetrag', '6.00', '0', 'Sockelbeitrag pro Gruppenmitglied'
+);
+
+INSERT INTO `leitvariable` ( `name` , `value` , `local` , `comment` )
+VALUES (
+'crypt_salt', '35464', '0', 'Salz fuer crypt()'
 );
 
 -- bestellvorschlaege hatte bisher keinen index; dieser sollte gut sein fuer die performance:
