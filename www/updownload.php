@@ -200,7 +200,8 @@
            <label>Datenbank hochladen und anschliessend freigeben:</label>
          </td>
          <td>
-           <form enctype='multipart/form-data' action='<? echo self_url; ?>' method='post'>
+           <form enctype='multipart/form-data' action='<? echo self_url(); ?>' method='post'>
+             <? echo self_post(); ?>
              <input type='hidden' name='action' value='upload'>
              <input name='userfile' type='file'>
              <input type='submit' value='Hochladen'>
@@ -212,7 +213,7 @@
            <label>Datenbank <em>ohne</em> Upload wieder freigeben:</label>
          </td>
          <td>
-           <form action='<? echo self_url; ?>' method='post'>
+           <form action='<? echo self_url(); ?>' method='post'><? echo self_post(); ?>
              <input type='hidden' name='action' value='release'>
              <input type='submit' value='Freigeben'>
            </form>
@@ -241,7 +242,7 @@
            <label>Datenbank <em>ohne</em> Speichern sperren:</label>
          </td>
          <td>
-           <form action='<? echo self_url; ?>' method='post'>
+           <form action='<? echo self_url(); ?>' method='post'><? echo self_post(); ?>
              <input type='hidden' name='action' value='lock'>
              <input type='submit' value='Sperren'>
            </form>
