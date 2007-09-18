@@ -207,7 +207,7 @@ function rotationsplanView($row){
 
 
 function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts = false ) {
-  global $self_fields, $gruppe;
+  global $self_fields, $gruppe, $pfand;
 
   if( $editAmounts ) {
     echo "<form action='" . self_url() . "' method='post'>" . self_post();
@@ -863,6 +863,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
          . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
          . "','bestellschein');";
        $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$id','bestellfax');";
+       $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestellungs_id=$id','Verteil-Liste');";
        $self_form = "<form name='self_form' action='$self' method='post'>$self_fields";
 		 ?>
 		 <tr id='row<?echo $id; ?>'>                                 

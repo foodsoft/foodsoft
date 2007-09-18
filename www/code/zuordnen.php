@@ -1,5 +1,5 @@
 <?php
-//error_reporting(E_ALL); // alle Fehler anzeigen
+error_reporting(E_ALL); // alle Fehler anzeigen
 //all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
 //foodi als pwd: 35q3Za9.ZxrxYd
 
@@ -1455,8 +1455,8 @@ bestellvorschlaege.produktpreise_id, bestellvorschlaege.liefermenge,
 bz.verteilmenge, (bestellvorschlaege.liefermenge -
 	ifnull(bz.verteilmenge,0)) as basar, produktpreise.verteileinheit,
      produktpreise.preis,
-     gesamtbestellungen.name as bestellung_name
-
+     gesamtbestellungen.name as bestellung_name,
+     gesamtbestellungen.lieferung
 FROM bestellvorschlaege 
 LEFT JOIN (". select_verteilmengen() .")as bz
 ON (bz.produkt_id =

@@ -72,7 +72,9 @@ if( $action == 'delete' ) {
 
   $result = sql_gruppen();
   while ($row = mysql_fetch_array($result)) {
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
     $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
+      }
     $nr = $row['id'] % 1000;
     echo "
       <tr>
@@ -81,7 +83,14 @@ if( $action == 'delete' ) {
         <td>{$row['ansprechpartner']}</td>
         <td>{$row['email']}</td>
         <td>{$row['telefon']}</td>
-        <td align='right'>$kontostand</td>
+	";
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
+        echo "<td align='right'>$kontostand</td>";
+	} else {
+		
+        echo "<td></td>";
+	}
+    echo"
         <td>{$row['mitgliederzahl']}</td>
         <td>{$row['diensteinteilung']}</td>
         <td>
