@@ -59,9 +59,12 @@ if( ! $bestell_id ) {
 }
 
 get_http_var( 'gruppen_id', 'u', 0, true );
-if( $gruppen_id )
-  $gruppen_name = sql_gruppenname($gruppen_id);
 
+if( $gruppen_id ) {
+  if( $gruppen_id != $login_gruppen_id )
+    nur_fuer_dienst(4);
+  $gruppen_name = sql_gruppenname($gruppen_id);
+}
 $state = getState($bestell_id);
 
 $default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND;
@@ -160,8 +163,13 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
     " <td>Gruppenansicht:</td>
       <td><select id='select_group' onchange=\"select_group('"
       . self_url( 'gruppen_id' ) . "');\">
-    " . optionen_gruppen($bestell_id,false,$gruppen_id, "Alle (Gesamtbestellung)" ) . "
-      </select></td>"
+    " . optionen_gruppen(
+        $bestell_id
+       , false
+       , $gruppen_id
+       , "Alle (Gesamtbestellung)"
+      , ( $hat_dienst_IV ? false : $login_gruppen_id )
+      ) . " </select></td>"
   );
 
   products_overview(
@@ -176,11 +184,4 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
   );
 
 ?>
-
-   <!-- nicht mehr sinnvoll, wenn in eigenem Fenster angezeigt:
-   <form action="index.php" method="get">
-	   <input type="hidden" name="area" value="<?echo($area)?>">			
-	   <input type="submit" value="Zurück zur Auswahl ">
-   </form>
-   -->
 

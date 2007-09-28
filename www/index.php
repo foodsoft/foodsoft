@@ -7,6 +7,7 @@
 	// Funktionen zur Fehlerbehandlung laden
 	require_once('code/err_functions.php');
 	
+  $area = "";
   require_once('code/login.php');
   if( ! $angemeldet ) {
     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
@@ -73,6 +74,9 @@
 		    case "wiki":
           reload_immediately( '$foodsoftdir/../wiki/doku.php?do=show' );
 			    break;
+        case "":
+	        include('menu.php');
+          break;
 		    default:
 			    if(file_exists($area.".php")){
 			        include($area.".php");

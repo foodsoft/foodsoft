@@ -1,6 +1,7 @@
 <?php
   global $angemeldet, $login_gruppen_name, $coopie_name, $dienst
-       , $readonly, $kopf_schon_ausgegeben, $print_on_exit;
+       , $readonly, $kopf_schon_ausgegeben, $print_on_exit, $area, $foodsoftdir;
+
   if( ! $kopf_schon_ausgegeben ) {
     echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
       <html>
@@ -10,6 +11,8 @@
         <link rel='stylesheet' type='text/css' href='$foodsoftdir/css/foodsoft.css'>
         <script type='text/javascript' src='$foodsoftdir/js/foodsoft.js' language='javascript'></script>	 
       </head>
+      <!-- foodsoftpath:$foodsoftpath: -->
+      <!-- foodsoftdir:$foodsoftdir: -->
       <body
     ";
     if( $readonly ) {
@@ -54,14 +57,9 @@
         areas_in_head($menu_area);
       }
      echo "<li>";
-      if($area==""){
-	      $link="";
-      } else {
-	      $link="foodsoft:".$area;
-      }
 
-      wikiLink($link, "Hilfe-Wiki", true );
-     
+     wikiLink( isset($area) ? "foodsoft:$area" : "", "Hilfe-Wiki", true );
+
      echo " </li>
      </ul>
 <div id='payload'

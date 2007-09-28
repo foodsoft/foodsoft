@@ -12,7 +12,7 @@
  */
 
 define('DOKU_AUTH', dirname(__FILE__));
-define('FOODSOFT_DIR', realpath( DOKU_AUTH . '/../../../foodsoft' ) );
+define('FOODSOFT_PATH', realpath( DOKU_AUTH . '/../../../foodsoft' ) );
 
 require_once(DOKU_AUTH.'/basic.class.php');
 
@@ -37,16 +37,15 @@ class auth_foodsoft extends auth_basic {
      */
     function auth_foodsoft() {
       global $ACT;
-
-      // echo "<!-- ACT: $ACT -->";
+      global $foodsoftdir, $foodsoftpath, $from_dokuwiki;
 
       if( $_REQUEST['do'] == 'login' ) {
         $dir = getcwd();
-        chdir( FOODSOFT_DIR );
-        require_once( FOODSOFT_DIR . '/code/config.php' );
-        require_once( FOODSOFT_DIR . '/code/err_functions.php' );
-        $from_dokuwiki=true;
-        require_once( FOODSOFT_DIR . '/code/login.php' );
+        chdir( FOODSOFT_PATH );
+        $foodsoftpath = FOODSOFT_PATH;
+        $from_dokuwiki = true;
+        require_once( FOODSOFT_PATH . '/code/config.php' );
+        require_once( FOODSOFT_PATH . '/code/login.php' );
         chdir( $dir );
         $_REQUEST['do'] = 'show';
       }
@@ -82,12 +81,14 @@ class auth_foodsoft extends auth_basic {
 
     function trustExternal($user,$pass,$sticky=false){
       global $USERINFO, $angemeldet, $login_gruppen_name;
+      global $foodsoftdir, $foodsoftpath, $from_dokuwiki;
       if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
         $dir = getcwd();
-        chdir( FOODSOFT_DIR );
-        require_once( FOODSOFT_DIR . '/code/config.php' );
-        require_once( FOODSOFT_DIR . '/code/err_functions.php' );
-        require_once( FOODSOFT_DIR . '/code/login.php' );
+        chdir( FOODSOFT_PATH );
+        $foodsoftpath = FOODSOFT_PATH;
+        $from_dokuwiki = true;
+        require_once( FOODSOFT_PATH . '/code/config.php' );
+        require_once( FOODSOFT_PATH . '/code/login.php' );
         chdir( $dir );
         if( $angemeldet ) {
           $USERINFO['pass'] = 'XXX';

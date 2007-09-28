@@ -1,107 +1,78 @@
 <?PHP
-   
-      /* wichtige variablen:
-      array: $liste[ ] enthält die produkt_id s für die bestellung
-      
-      */   
-   
-    
-    $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-    $errStr = "";
-    
-    // Verbindung zur Datenbank herstellen
-    require_once('../code/config.php');
-    require_once('../code/views.php');
-    require_once('../code/err_functions.php');
-    require_once('../code/login.php');
-    require_once('../code/zuordnen.php');
-    
-    // zur Sicherheit das Passwort prüfen..
-    nur_fuer_dienst_IV();
-    
-   get_http_var("startzeit_tag");
-   get_http_var("startzeit_monat");
-   get_http_var("startzeit_jahr");
-   get_http_var("startzeit_stunde");
-   get_http_var("startzeit_minute");
-   get_http_var("endzeit_tag");
-   get_http_var("endzeit_monat");
-   get_http_var("endzeit_jahr");
-   get_http_var("endzeit_stunde");
-   get_http_var("endzeit_minute");
-   get_http_var("lieferung_tag");
-   get_http_var("lieferung_monat");
-   get_http_var("lieferung_jahr");
-   get_http_var("bestellname");
-   //var_dump($_REQUEST);
-   //var_dump($bestellname);
-   get_http_var("bestelliste");
-    
-    // ggf. die neue bestellung einfügen 
-    if (isset($startzeit_tag)) {
-         $startzeit = $startzeit_jahr."-".
-	              $startzeit_monat."-".
-		      $startzeit_tag." ".
-		      $startzeit_stunde.":".
-		      $startzeit_minute.":00";
-         $endzeit = $endzeit_jahr."-".
-	            $endzeit_monat."-".
-		    $endzeit_tag." ".
-		    $endzeit_stunde.":".
-		    $endzeit_minute.":00";
-         $lieferung = $lieferung_jahr."-".
-	            $lieferung_monat."-".
-		    $lieferung_tag;
-         
-         $bestellname_repl = str_replace("'", "", str_replace('"',"'",$bestellname));
-         var_dump($bestellname_repl);
-         
-         if ($bestellname_repl == "") $errStr.= "Die Bestellung muß einen Namen bekommen!<br>";
-         if (!isset($bestelliste)) $errStr.= "Die Bestellung enthält keine Produkte!<br>";
 
-         
-         // Wenn keine Fehler, dann einfügen...
-         if ($errStr == "") {
-             sql_insert_bestellung($bestellname_repl, $startzeit, $endzeit, $lieferung);
-             $gesamtbestellung_id = mysql_insert_id();
-                                    
-             for ($i = 0; $i < count($bestelliste); $i++) {
+  assert( $angemeldet ) or exit();
+
+  setWindowSubtitle( 'Neue Bestellvorlage anlegen' );
+  setWikiHelpTopic( 'foodsoft:bestellvorlage_anlegen' );
+
+  nur_fuer_dienst_IV();
+  fail_if_readonly();
+
+  $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+  $errStr = "";
+
+  get_http_var('action','w');
+
+  if( $action == 'insert' ) {
+    need_http_var("startzeit_tag",'u');
+    need_http_var("startzeit_monat",'u');
+    need_http_var("startzeit_jahr",'u');
+    need_http_var("startzeit_stunde",'u');
+    need_http_var("startzeit_minute",'u');
+    need_http_var("endzeit_tag"),'u';
+    need_http_var("endzeit_monat",'u');
+    need_http_var("endzeit_jahr",'u');
+    need_http_var("endzeit_stunde",'u');
+    need_http_var("endzeit_minute",'u');
+    need_http_var("lieferung_tag",'u');
+    need_http_var("lieferung_monat",'u');
+    need_http_var("lieferung_jahr",'u');
+    need_http_var("bestellname",'M');
+
+    bestelliste = $HTTP_POST_VARS['bestelliste'];
+    if( ! is_array( $bestelliste ) ) {
+      $errStr = "Keine Produktliste nicht uebergeben!";
+    }
+    foreach( $bestelliste as $p )
+      assert( preg_match( '/^\d+$/', $p ) or exit();
+
+    $startzeit = "$startzeit_jahr-$startzeit_monat-$startzeit_tag $startzeit_stunde:$startzeit_minute:00";
+    $endzeit = "$endzeit_jahr-$endzeit_monat-$endzeit_tag $endzeit_stunde:$endzeit_minute:00";
+    $lieferung = "$lieferung_jahr-$lieferung_monat-$lieferung_tag";
+
+    if( $bestellname == "" )
+      $errStr.= "Die Bestellung muß einen Namen bekommen!<br>";
+
+    // Wenn keine Fehler, dann einfügen...
+    if ($errStr == "") {
+      sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung);
+      $gesamtbestellung_id = mysql_insert_id();
+
+      for ($i = 0; $i < count($bestelliste); $i++) {
                         // preis, gebinde, und bestellnummer auslesen
-		  $result = sql_aktuelle_produktpreise($bestelliste[$i]);
-                  $produkt_row = mysql_fetch_array($result);  // alles in ein array schreiben
+        $result = sql_aktuelle_produktpreise($bestelliste[$i]);
+        $produkt_row = mysql_fetch_array($result);  // alles in ein array schreiben
                           // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben
-		  sql_insert_bestellvorschlaege($bestelliste[$i],$gesamtbestellung_id,$produkt_row['id']);
-                     
-             } //end for - bestellvorschläge füllen
-      
-             $onload_str = "opener.focus(); opener.document.forms['reload_form'].submit(); window.close();";
-                     
-         } //end if -wenn keine fehler ....
-            
-    } else {
-       $startzeit   = date("Y-m-d  H:i:s");
-       $endzeit  = date("Y-m-d  22:00:00");  
-       
-       $lieferung   = date("Y-m-d  H:i:s");
+        sql_insert_bestellvorschlaege($bestelliste[$i],$gesamtbestellung_id,$produkt_row['id']);
 
-    }    
-     
-    
+      } //end for - bestellvorschläge füllen
+
+    } //end if -wenn keine fehler ....
+  
+  } else {
+     $startzeit   = date("Y-m-d  H:i:s");
+     $endzeit  = date("Y-m-d  22:00:00");  
+
+     $lieferung   = date("Y-m-d  H:i:s");
+
+   }    
+
 ?>
-
-<html>
-<head>
-   <meta http-equiv="Content-Type" content="ISO-8859-15">
-   <title>neue Bestellung</title>
-    <link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
-</head>
-<body onload="<?PHP echo $onload_str; ?>">
 
 
 <h3>neue Bestellung</h3>
-    <form name="reload_form" action="insertBestellung.php">
-      <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
-      <input type="hidden" name="action" value="">
+  <form action='<? echo self_url(); ?>' method='post' class='small_form'>
+    <input type="hidden" name="action" value="insert">
       
       <?PHP
          if (isset($HTTP_GET_VARS['bestelliste'])) {

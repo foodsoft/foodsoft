@@ -25,7 +25,8 @@
          $coopie_name,
          $dienstkontrollblatt_id,
          $foodsoftpath,
-         $foodsoftdir;
+         $foodsoftdir,
+         $action;
 
   function init_login() {
     global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $dienstkontrollblatt_id;
@@ -54,7 +55,7 @@
 
   // pruefen, ob neue login daten uebergeben werden:
   //
-  get_http_var( 'action' );
+  get_http_var( 'action', 'w', '' );
 
   if( $action == 'login' ) {
     get_http_var( 'login_gruppen_id', 'u' )
@@ -151,6 +152,7 @@
     if( ! ( $login_gruppen_id > 0 ) ) {
       $problems = $problems .  "<div class='warn'>fehler im keks: ungueltige login_gruppen_id</div>";
     } else {
+      // echo "<!-- from cookie: :$login_gruppen_id,$passwort: -->";
       $bestellgruppen_row = check_password( $login_gruppen_id, $passwort );
       if( $bestellgruppen_row ) {
         $login_gruppen_name = $bestellgruppen_row['name'];

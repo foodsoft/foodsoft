@@ -1,37 +1,39 @@
 
-
 <?PHP
-//   error_reporting(E_ALL); // alle Fehler anzeigen
-   require_once("$foodsoftpath/code/zuordnen.php");
-   require_once("$foodsoftpath/code/views.php");
+  error_reporting('E_NONE'); 
 
+  assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=bestellen erfolgen
+	
+  setWikiHelpTopic( "foodsoft:bestellen" );
 
-   if( ! $angemeldet ) {
-     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>";
-     return;
-   } else	 {
 	//$status und $useDate definieren, welche Bestellungen angezeigt werden
 	$status = array(STATUS_BESTELLEN);
 	$useDate = FALSE;
-        if( $hat_dienst_IV ) {
-	  //Alle Bestellungen mit Status Bestellen oder LIEFERANT
-	  $status[] = STATUS_LIEFERANT;
-          $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
-          // echo "<div class='warn'>dienst IV: bestellt fuer $gruppen_id</div>";
-          echo "<h1>Bestellen f&uuml;r den Basar</h1>";
-        } else {
-	  //Nur aktuell gültige Bestellungen
-	  $useDate = TRUE;
-          $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
-          echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
-    }
 
-	wikiLink("foodsoft:bestellen", "Wiki...");
+  if( $hat_dienst_IV ) {
+    //Alle Bestellungen mit Status Bestellen oder LIEFERANT
+    $status[] = STATUS_LIEFERANT;
+    $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
+    echo "<h1>Bestellen f&uuml;r den Basar</h1>";
+  } else {
+    //Nur aktuell gültige Bestellungen
+    $useDate = TRUE;
+    $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
+    echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
+  }
+
+  $kontostand = kontostand( $gruppen_id );
+
 
 			
 					   // Aktuelle Bestellung ermitteln...
-						 if (isset($HTTP_GET_VARS['bestellungs_id'])) {
-						    $bestell_id = $HTTP_GET_VARS['bestellungs_id'];
+						 if ( get_http_var('bestellungs_id', 'u') ) {
+						    $bestell_id = $bestellungs_id;
+                $self_fields['bestell_id'] = $bestell_id;
+             } else {
+               get_http_var('bestell_id','u',false,true );
+             }
+             if( $bestell_id ) {
 						    if($hat_dienst_IV){
 						    	verteilmengenLoeschen($bestell_id);
 						    }
@@ -551,7 +553,7 @@
 					 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
 					 <input type="hidden" name="isChanged">
 					 <input type="hidden" name="action">
-				<table class='numbers' style="margin:40px 0 0 0;">
+				<table class='numbers' width='100%' style="margin:40px 0 0 0;">
 	        <tr>
 						 <th>Bezeichnung</th>
 						 <th>Produktgruppe</th>
@@ -1131,6 +1133,7 @@
 						    {
 						    		$preis_style = "color:#0000FF;font-weight:bold;";
 								}
+                $preis_style = '';
 						echo "
 						 <span style='font-size:0.8em;".$preis_style."'>(<span id='kosten_max_".$produkt_row['id']."'>".sprintf("%.02f",$max_preis)."</span>)</span>";
 	 ?>		 
@@ -1143,7 +1146,7 @@
 						 }
 		?>
 		    <tr>
-				   <td colspan="9" align="right"><b>Gesamtpreis:</b></td>
+				   <td colspan="8" align="right"><b>Gesamtpreis:</b></td>
 					 <td align="right" id="td_gesamt_preis">
 					    <span id="gesamt_preis" style="font-weight:bold;"><?PHP echo sprintf("%.02f",$gesamt_preis); ?></span><br />
 							<span style="font-size:0.8em;">(<span id="gesamt_preis_max"><?PHP echo  sprintf("%.02f",$max_gesamt_preis); ?></span>)</span>
@@ -1151,18 +1154,18 @@
 					 <input type="hidden" name="gesamt_preis">
 				</tr>
 		    <tr>
-				   <td colspan="9" align="right"><b>Gruppenkontostand:</b></td>
+				   <td colspan="8" align="right"><b>Gruppenkontostand:</b></td>
 					 <td align="right" id="td_kontostand"><span style="font-weight:bold;" id="alt_konto"><?PHP echo sprintf("%.02f",$kontostand); ?></span</td>
 				</tr>							
 		    <tr>
-				   <td colspan="9" align="right"><b>neuer Kontostand:</b></td>
+				   <td colspan="8" align="right"><b>neuer Kontostand:</b></td>
 					 <td align="right" id="td_neuer_kontostand">
 					    <span style="font-weight:bold;" id="neu_konto"><?PHP echo sprintf("%.02f",($kontostand - $gesamt_preis)); ?></span><br />
 							<span  style="font-size:0.8em;">(<span id="neu_konto_min"><?PHP echo  sprintf("%.02f",($kontostand - $max_gesamt_preis)); ?></span>)</span>
 					 </td>
 				</tr>				
 	      <tr>
-				   <th colspan="10">
+				   <th colspan="9">
 					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
                <?php
                  if( ! $readonly ) {
@@ -1269,7 +1272,6 @@
 		
 				 }
 				 
-		}
 			
   ?>
 	

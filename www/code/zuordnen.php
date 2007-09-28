@@ -1,7 +1,8 @@
 <?php
-error_reporting(E_ALL); // alle Fehler anzeigen
-//all pwd empty: update `bestellgruppen` set passwort = '352DeJsgtxG.6'
-//foodi als pwd: 35q3Za9.ZxrxYd
+
+global $from_dokuwiki;
+$from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
+  error_reporting(E_ALL); // alle Fehler anzeigen
 
 
 /*
@@ -1284,7 +1285,16 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
 /**
  *
  */
-function optionen_gruppen($bestell_id=false,$produkt_id=false,$selected=false,$option_0=false) {
+function optionen_gruppen(
+  $bestell_id = false
+, $produkt_id = false
+, $selected = false
+, $option_0 = false
+, $allowedgroups = false
+) {
+  if( $allowedgroups )
+    if( ! is_array( $allowedgroups ) )
+      $allowedgroups = array( $allowedgroups );
   $gruppen = sql_gruppen($bestell_id,$produkt_id);
   $output='';
   if( $option_0 ) {
@@ -1296,9 +1306,12 @@ function optionen_gruppen($bestell_id=false,$produkt_id=false,$selected=false,$o
     $output = $output . ">$option_0</option>";
   }
   while($gruppe = mysql_fetch_array($gruppen)){
+    $id = $gruppe['id'];
+    if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
+      continue;
     $output = "$output
-      <option value='{$gruppe['id']}'";
-    if( $selected == $gruppe['id'] ) {
+      <option value='$id'";
+    if( $selected == $id ) {
       $output = $output . " selected";
       $selected = -1;
     }
@@ -2126,14 +2139,14 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 /**
  *
  */
-function get_http_var( $name, $typ = 'A', $default = false, $is_self_field = false ) {
+function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = false ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
   if( isset( $HTTP_GET_VARS[$name] ) ) {
     $val = $HTTP_GET_VARS[$name];
   } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
     $val = $HTTP_POST_VARS[$name];
   } else {
-    if( $default ) {
+    if( isset( $default ) ) {
       $$name = $default;
       if( $is_self_field ) {
         $self_fields[$name] = $default;
@@ -2222,9 +2235,11 @@ function fail_if_readonly() {
  */
 function wikiLink( $topic, $text, $head = false ) {
   global $foodsoftdir;
-  echo "<a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) 
-  . "target='wiki' title='zur Wiki-Seite $topic'
-    href='$foodsoftdir/../wiki/doku.php?id=$topic'>$text</a>";
+  echo "
+    <a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) . "
+    title='zur Wiki-Seite $topic'
+    href=\"javascript:neuesfenster('$foodsoftdir/../wiki/doku.php?id=$topic','wiki');\">$text</a>
+  ";
 }
 
 function setWikiHelpTopic( $topic ) {
@@ -2232,7 +2247,7 @@ function setWikiHelpTopic( $topic ) {
   ?>
     <script type='text/javascript'>
       document.getElementById('wikilink_head').href
-        = "<? echo $foodsoftdir; ?>/../wiki/doku.php?id=<? echo $topic; ?>";
+        = "javascript:neuesfenster('<? echo $foodsoftdir; ?>/../wiki/doku.php?id=<? echo $topic; ?>','wiki');";
       document.getElementById('wikilink_head').title
         = "zur Wiki-Seite <? echo $topic; ?>";
     </script>
