@@ -97,7 +97,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
-      $editable = (!$readonly) and ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
+      $editable = (!$readonly) && ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
              | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
@@ -141,7 +141,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 	
        //Formular ausgeben
 
-	echo "<h1>".$title."</h1>";
+	echo "<h1>$title</h1>";
 
   ?>
     <table width='100%' class='layout'>
