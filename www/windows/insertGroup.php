@@ -116,53 +116,51 @@
           <tr>
              <td><label>Gruppennummer:</label></td>
              <td>
-               <input type='input' size='3' name='newNummer' value='<? echo $newNummer; ?>'></input>
+               <input type='input' size='3' name='newNummer' value='<? echo $newNummer; ?>'>
              </td>
           </tr>
           <tr>
              <td><label>Gruppenname:</label></td>
              <td>
-               <input type='input' size='24' name='newName' value='<? echo $newName; ?>'></input>
+               <input type='input' size='24' name='newName' value='<? echo $newName; ?>'>
              </td>
           </tr>
           <tr>
              <td><label>AnsprechpartnerIn:</label></td>
              <td>
-               <input type='input' size='24' name='newAnsprechpartner' value='<? echo $newAnsprechpartner; ?>'></input>
+               <input type='input' size='24' name='newAnsprechpartner' value='<? echo $newAnsprechpartner; ?>'>
              </td>
           </tr>
           <tr>
              <td><label>Email-Adresse:</label></td>
              <td>
-               <input type='input' size='24' name='newMail' value='<? echo $newMail; ?>'></input>
+               <input type='input' size='24' name='newMail' value='<? echo $newMail; ?>'>
              </td>
           </tr>
           <tr>
              <td><label>Telefonnummer:</label></td>
              <td>
-               <input type='input' size='24' name='newTelefon' value='<? echo $newTelefon; ?>'></input>
+               <input type='input' size='24' name='newTelefon' value='<? echo $newTelefon; ?>'>
              </td>
           </tr>
           <tr>
              <td><label>Mitgliederzahl:</label></td>
              <td>
-               <input type='input' size='2' value='<? echo $newMitgliederzahl; ?>' name='newMitgliederzahl'></input>
+               <input type='input' size='2' value='<? echo $newMitgliederzahl; ?>' name='newMitgliederzahl'>
              </td>
           </tr>
           <tr>
              <td colspan='2' align='center'>
   <?
   if( ! $done ) {
-    ?> <input type='submit' value='Einf&uuml;gen'></input> <?
+    ?> <input type='submit' value='Einf&uuml;gen'> <?
   } else {
-    ?> <input value='OK' type='button' onClick='if(opener) opener.focus();window.close();'></td> <?
+    ?> <input value='OK' type='button' onClick='if(opener) opener.focus();window.close();'> <?
   }
   ?>
+             </td>
           </tr>
         </table>
       </fieldset>
     </form>
-  <?
-
-?>
 
