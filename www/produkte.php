@@ -12,11 +12,12 @@
       2.3. action = change_all -> die preise werden ggf. aktualisiert .. 
 
 */
+  get_http_var( 'lieferanten_id', 'u', false, true );
     
-          // ggf. Aktionen durchführen (z.B. Produkt löschen... oder neue preise einfügen)
   $edit_all = false;
-  get_http_var('action');
-                      
+  get_http_var('action','w','');
+
+
   if ($action == "edit_all" and !$readonly ) { 
     nur_fuer_dienst(4);
          $edit_all = true;
@@ -89,8 +90,6 @@
   
       //überprüfen ob ein lieferant schon ausgewählt wurde, ansonsten asuwahlfenster anzeigen:
            
-      //gewählte lieferanten_id auslesen          
-      $lieferanten_id = $HTTP_GET_VARS['lieferanten_id'];
             
       if ($lieferanten_id !="") {
         echo "
@@ -140,13 +139,14 @@
 		<?PHP
 		   } else {
 		?>
-			<form action="windows/insertBestellung.php" target="insertBestellung" name="newBestellungForm">
+			<form action="index.php?window=insertBestellung" method="post" target="insertBestellung" name="newBestellungForm">
 
 	  <?PHP
 		   }
 		?>
 				 <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">
 				 <input type="hidden" name="area" value="produkte">
+				 <input type="hidden" name="action" value="insert">
 
 			
 				<?php	//lieferanten bestimmen für die überschrift ...
