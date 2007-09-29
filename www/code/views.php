@@ -368,7 +368,7 @@ function products_overview(
   ) {
   global $self_fields;
 
-  $result1 = sql_bestellprodukte($bestell_id,$gruppen_id);
+  $result = sql_bestellprodukte($bestell_id,$gruppen_id);
   $state = getState($bestell_id);
 
   $warnung_vorlaeufig = "";
@@ -537,7 +537,7 @@ function products_overview(
   $endpreis_summe = 0;
   $haben_nichtgeliefert = false;
 
-  while  ($produkte_row = mysql_fetch_array($result1)) {
+  while  ($produkte_row = mysql_fetch_array($result)) {
     $produkt_id =$produkte_row['produkt_id'];
 
     if( $produkte_row['menge_ist_null'] && ! $haben_nichtgeliefert ) {
@@ -1004,7 +1004,7 @@ function select_products_not_in_list($bestell_id){
 	 if($bestell_id!=0){
 	   $produkte=getProdukteVonLieferant(getProduzentBestellID($bestell_id), $bestell_id);
 	   while($prod = mysql_fetch_array($produkte)){
-		echo "<option value=\"".$prod['p_id']."\">".
+		echo "<option value=\"".$prod['produkt_id']."\">".
 			$prod['name']." (".$prod['einheit'].") "."</option>\n";
 	   }
 	 }

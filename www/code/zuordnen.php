@@ -861,6 +861,7 @@ function sql_basar_id(){
  *
  */
 function sqlUpdateTransaction($transaction, $receipt_nr, $receipt_year ){
+  global $dienstkontrollblatt_id;
   nur_fuer_dienst(4);
   fail_if_readonly();
   $sql="UPDATE gruppen_transaktion
@@ -1641,28 +1642,46 @@ function getAlleProdukteVonLieferant ($lieferant_id){
  *   Bestellung drin sind.
  */
 function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
-   if($bestell_id === Null){
-	$zeitpunkt="NOW()";
-   	$sql = "SELECT *, produkte.id as p_id FROM produkte inner join produktpreise ON
-	(produkte.id = produktpreise.produkt_id) WHERE lieferanten_id =
-	".$lieferant_id;
-   } else {
-   	$zeitpunkt = " (SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id.") ";
-   	$sql = "SELECT *, produkte.id as p_id FROM produkte inner join produktpreise ON
-	(produkte.id = produktpreise.produkt_id) left join (SELECT * FROM
-	bestellvorschlaege WHERE gesamtbestellung_id = ". $bestell_id.
-	") as vorschlaege ON
-	(produkte.id = vorschlaege.produkt_id) WHERE
-	lieferanten_id =  ".$lieferant_id."  and
-	isnull(gesamtbestellung_id)";
-	
-   }
-   $sql .= " AND zeitstart <= ".
-	$zeitpunkt." AND (ISNULL(zeitende) OR
-	zeitende >= ".$zeitpunkt.") ";
-    $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
-    return $result;
+  if($bestell_id === Null){
+    $zeitpunkt="NOW()";
+    $sql = "
+      SELECT *
+      , produkte.name as name
+      , produktgruppen.name as produktgruppen_name
+      , produkte.id as produkt_id
+      , produktgruppen.id as produktgruppen_id
+      FROM produkte
+      INNER JOIN produktgruppen
+        ON produktgruppen.id = produkte.produktgruppen_id
+      INNER JOIN produktpreise
+        ON (produkte.id = produktpreise.produkt_id)
+      WHERE lieferanten_id = $lieferant_id ";
+  } else {
+    $zeitpunkt = " (SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id.") ";
+    $sql = "
+      SELECT *
+      , produkte.name as name
+      , produktgruppen.name as produktgruppen_name
+      , produkte.id as produkt_id
+      , produktgruppen.id as produktgruppen_id
+      FROM produkte
+      INNER JOIN produktgruppen
+        ON produktgruppen.id = produkte.produktgruppen_id
+      INNER JOIN produktpreise ON
+        (produkte.id = produktpreise.produkt_id)
+      LEFT JOIN (SELECT * FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id ) as vorschlaege
+        ON (produkte.id = vorschlaege.produkt_id)
+      WHERE lieferanten_id = $lieferant_id AND isnull(gesamtbestellung_id)";
+  }
+  $sql .= "
+    AND zeitstart <= $zeitpunkt AND ( ISNULL(zeitende) OR zeitende >= $zeitpunkt )
+    ORDER BY produktgruppen.id, produkte.name
+  ";
+  $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
+  echo "<!-- getproduktevonlieferant: $sql, " . mysql_num_rows($result) . " -->";
+  return $result;
 }
+
 /**
  *
  */
@@ -2054,6 +2073,7 @@ function optionen_einheiten( $selected ) {
 }
 
 function optionen( $fieldname, $values ) {
+  global $$fieldname;
   $output = '';
   foreach( $values as $v ) {
     if( is_array( $v ) ) {
