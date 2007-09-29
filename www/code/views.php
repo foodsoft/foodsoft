@@ -582,8 +582,9 @@ function products_overview(
         } else {
           // voraussichtliche liefermenge berechnen:
           $gebinde = (int)($festbestellmenge / $gebindegroesse);
-          if( $gebinde * $gebindegroesse < $festbestellmenge ) { // zu wenig: versuche aufzurunden...
-            if( $basarbestellmenge + $toleranzbestellmenge >= $gebindegroesse ) {
+          $festmengenrest = $festbestellmenge - $gebinde * $gebindegroesse;
+          if( $festmengenrest > 0 ) { // zu wenig: versuche aufzurunden...
+            if( $festmengenrest + $basarbestellmenge + $toleranzbestellmenge >= $gebindegroesse ) {
               $gebinde += 1;
             }
           }
@@ -660,22 +661,31 @@ function products_overview(
     }
     if( $spalten & PR_COL_LIEFERMENGE ) {
       echo "<td class='mult'>";
-      if( $editAmounts && ! $gruppen_id ) {
+      if( $gruppen_id ) {    // Gruppenansicht: V-Einheit benutzen
+        printf( "%d", $liefermenge * $kan_verteilmult );
         echo "
-          <input name='liefermenge$produkt_id' type='text' size='5' value='$liefermenge_scaled'
-            onchange=\"
-              document.getElementById('row$produkt_id').className='modified';
-              document.getElementById('row_total').className='modified';\"
-            title='tats&auml;chliche Liefermenge eingeben'
-          >
+          </td>
+          <td class='unit' style='border-right-style:none;'>{$produkte_row['kan_verteileinheit']}</td>
         ";
-      } else {
-        echo $liefermenge_scaled;
+      } else {               // Gesamtansicht: Preis-Einheit benutzen:
+        if( $editAmounts ) {
+          printf( "
+            <input name='liefermenge$produkt_id' style='text-align:right;' type='text' size='6' value='%.3lf'
+              onchange=\"
+                document.getElementById('row$produkt_id').className='modified';
+                document.getElementById('row_total').className='modified';\"
+              title='tats&auml;chliche Liefermenge eingeben'
+            >"
+          , $liefermenge_scaled
+          );
+        } else {
+          printf( "%.3lf", $liefermenge_scaled );
+        }
+        echo "
+          </td>
+          <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
+        ";
       }
-      echo "
-        </td>
-        <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
-      ";
       if( ! $gruppen_id ) {
         echo "
           <td style='border-left-style:none;'><a class='png' style='padding:0pt 1pt 0pt 1pt;'
