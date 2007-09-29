@@ -13,9 +13,9 @@
 
 assert( $angemeldet ) or exit();
 
-nur_fuer_dienst(4,5);
+// nur_fuer_dienst(4,5);   // alle anschauen lassen (aber aktionen sind eingeschraenkt!)
 
-$detail = get_http_var('produktid','u',false,true);
+$detail = get_http_var('produktid','u',NULL,true);
 
 get_http_var('bestell_id','u',false,true);
 
@@ -756,7 +756,7 @@ if( $detail ) {
       //
 
       if( ! $newfc['gebindegroesse'] ) {
-        $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
+        $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 1 ) ? $fcgebindegroesse : 1 );
       }
 
       if( ! $newfc['verteileinheit'] ) {
@@ -1052,8 +1052,12 @@ if( $detail ) {
     berechnen = document.Preisform.dynamischberechnen.checked;
     if( berechnen ) {
       verteilmult = parseInt( document.Preisform.newfcmult.value );
+      if( verteilmult < 1 )
+        verteilmult = 1;
       if( (verteilmult > 0) && (alt > 0) ) {
         gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
+        if( gebindegroesse < 1 )
+          gebindegroesse = 1;
         document.Preisform.newfcgebindegroesse.value = gebindegroesse;
       }
     }
@@ -1064,10 +1068,12 @@ if( $detail ) {
     berechnen = document.Preisform.dynamischberechnen.checked;
     if( berechnen ) {
       gebindegroesse = parseInt( document.Preisform.newfcgebindegroesse.value );
-      if( (gebindegroesse > 0) && (alt > 0) ) {
-        verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
-        document.Preisform.newfcmult.value = verteilmult;
-      }
+      if( gebindegroesse < 1 )
+        gebindegroesse = 1;
+      // if( (gebindegroesse > 0) && (alt > 0) ) {
+      //  verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
+      //  document.Preisform.newfcmult.value = verteilmult;
+      // }
     }
     preisberechnung_default();
   }
