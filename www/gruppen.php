@@ -100,13 +100,13 @@ if( $action == 'delete' ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
             href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id={$row['id']}','kontoblatt');\">
-           <img src='img/b_browse.png' border='0' titel='Kontotransaktionen' alt='Kontotransaktionen'/>
+           <img src='img/b_browse.png' border='0' title='Kontotransaktionen' alt='Kontotransaktionen'/>
           </a>
         ";
       } elseif( $login_gruppen_id == $row['id'] ) {
         ?>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
-           <img src='img/b_browse.png' border='0' titel='Mein Konto' alt='Mein Konto'/>
+           <img src='img/b_browse.png' border='0' title='Mein Konto' alt='Mein Konto'/>
           </a>
         <?
       }
@@ -114,7 +114,7 @@ if( $action == 'delete' ) {
         ?>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
           href="javascript:window.open('index.php?window=editGroup&gruppen_id=<? echo $row['id']; ?>','insertGroup','width=390,height=420,left=200,top=100').focus();">
-          <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' titel='Gruppendaten ändern'/></a>
+          <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' title='Gruppendaten ändern'/></a>
         <?
       }
       // loeschen nur wenn

@@ -80,7 +80,7 @@
 						 <td>
 						 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
                href=\"javascript:window.open('windows/detailsLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-               <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' titel='Details zum Lieferanten' />
+               <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' title='Details zum Lieferanten' />
              </a>
     ";
     if( ! $readonly ) {
@@ -88,10 +88,10 @@
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
             href=\"javascript:window.open('windows/editLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-            <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' titel='Lieferanten editieren' />
+            <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' title='Lieferanten editieren' />
           </a>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
-            <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' titel='Lieferanten l&ouml;schen' />
+            <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' title='Lieferanten l&ouml;schen' />
           </a>
         ";
       }
