@@ -55,7 +55,18 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
 	              mysql_escape_string($endzeit)."', '".
 		      mysql_escape_string($lieferung)."')";
   doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellung nicht aufnehmen.");
+}
 
+function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
+  $sql = "
+    UPDATE gesamtbestellungen
+    SET name = '" . mysql_escape_string($name) . "'
+      , bestellstart='$startzeit'
+      , bestellende='$endzeit'
+      , lieferung='$lieferung'
+    WHERE id=$bestell_id
+  ";
+  return doSql($sql, LEVEL_IMPORTANT, "Update Gesamtbestellung fehlgeschlagen");
 }
 
 /**

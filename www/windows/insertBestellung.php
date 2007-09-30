@@ -84,6 +84,7 @@
 ?>
 
 <form action='<? echo self_url(); ?>' method='post' class='small_form'>
+  <? echo self_post(); ?>
   <fieldset style='width:390px;' class='small_form'>
     <legend>neue Bestellvorlage</legend>
     <input type="hidden" name="action" value="insert">

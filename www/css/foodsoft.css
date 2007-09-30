@@ -228,7 +228,16 @@ th.menge, th.toleranz {
 th.gebinde {
 	width: 170px;
 }
-	
+
+ul.inner {
+  padding:0pt 0pt 0pt 1.5em;
+  margin:0pt;
+  list-style-type:square;
+}
+ul.inner li {
+  margin: 0.5ex 0ex 0.5ex 0ex;
+}
+
 table input {
 	font-size:11pt;
 }
