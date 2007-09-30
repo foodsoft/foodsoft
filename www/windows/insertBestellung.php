@@ -11,7 +11,7 @@
   $errStr = "";
 
   $startzeit = date("Y-m-d H:i:s");
-  $endzeit   = date("Y-m-d 20:00:00");  
+  $endzeit   = date("Y-m-d 20:00:00");
   $lieferung = date("Y-m-d H:i:s");
   $done = false;
 
@@ -70,19 +70,16 @@
       sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung);
       $gesamtbestellung_id = mysql_insert_id();
 
-      for ($i = 0; $i < count($bestelliste); $i++) {
+      foreach( $bestelliste as $produkt_id ) {
         // preis, gebinde, und bestellnummer auslesen:
-        $result = sql_aktuelle_produktpreise($bestelliste[$i]);
-        $produkt_row = mysql_fetch_array($result);  // alles in ein array schreiben
+        $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
         // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
-        sql_insert_bestellvorschlaege($bestelliste[$i],$gesamtbestellung_id,$produkt_row['id']);
+        sql_insert_bestellvorschlaege( $produkt_id, $gesamtbestellung_id, $preis_id );
       } //end for - bestellvorschl‰ge f¸llen
       $done = true;
     }
    }
 
-  if( $errStr ) 
-    echo "<div class='warn'>$errStr</div>";
 
 ?>
 
@@ -95,6 +92,10 @@
       foreach( $bestelliste as $p ) {
         echo "<input type='hidden' name='bestelliste[]' value='$p'>\n";
       }
+      if( $errStr ) 
+        echo "<div class='warn'>$errStr</div>";
+      if( $done )
+        echo "<div class='ok'>Bestellvorlage wurde eingef√ºgt:</div>";
     ?>
 
     <table style="width:370px;">

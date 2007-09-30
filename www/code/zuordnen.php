@@ -1103,12 +1103,26 @@ function sql_bestellprodukte($bestell_id, $gruppen_id=false, $produkt_id=false )
  *
  */
 function sql_aktuelle_produktpreise($produkt_id){
-   $sql = "SELECT id
-           FROM produktpreise 
-           WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
-           AND (zeitende >= NOW() OR ISNULL(zeitende))";                     
+  $sql = "SELECT id
+          FROM produktpreise 
+          WHERE produkt_id =$produkt_id
+          AND (zeitende >= NOW() OR ISNULL(zeitende))
+          ORDER BY zeitende DESC";
+  // aktuellster preis ist immer vorn (auch NULL!)
 
-	return doSql($sql, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
+  return doSql($sql, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
+}
+
+/* sql_aktueller_produktpreis_id:
+ *  liefert id des aktuellsten preises zu $produkt_id,
+ *  oder 0 falls es NOW() keinen gueltigen preis gibt:
+ */
+function sql_aktueller_produktpreis_id( $produkt_id ) {
+  $result = sql_aktuelle_produktpreise( $produkt_id );
+  if( msyql_num_rows( $result ) < 1 )
+    return 0;
+  $row = mysql_fetch_array( $result );
+  return $row['id'];
 }
 
 /**
