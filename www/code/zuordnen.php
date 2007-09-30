@@ -781,28 +781,37 @@ function getState($bestell_id){
      return $row['state'];
 }
 /**
- *
+ *  changeState: 
+ *   - fuehrt erlaubte Statusaenderungen einer Bestellung aus
+ *   - ggf. werden Nebenwirkungen, wie verteilmengenZuweisen, ausgeloest
  */
-
 function changeState($bestell_id, $state){
+  global $mysqljetzt;
 
-  $current = getState($bestell_id);
+  $bestellung = sql_bestellung( $bestell_id );
+
+  $current = $bestellung['state'];
   if( $current == $state )
     return true;
 
   fail_if_readonly();
   nur_fuer_dienst(1,3,4);
 
+  echo "<!-- changeState: $bestell_id, $state -->";
+
+  $do_verteilmengen_zuweisen = false;
   $changes = "state = '$state'";
   switch( "$current,$state" ){
     case STATUS_BESTELLEN . "," . STATUS_LIEFERANT:
-      verteilmengenZuweisen( $bestell_id );
+      $do_verteilmengen_zuweisen = true;  // erst nach statuswechsel ausfuehren!
+      if( $bestellung['bestellende'] > $mysqljetzt )
+        $changes .= ", bestellende=NOW()";
       break;
     case STATUS_LIEFERANT . "," . STATUS_BESTELLEN:
       verteilmengenLoeschen( $bestell_id );
       break;
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
-      $changes = $changes . ", lieferung=NOW()";   // TODO: eingabe erlauben?
+      $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
     case STATUS_VERTEILT . "," . STATUS_ARCHIVIERT:
       // TODO: tests:
@@ -814,7 +823,13 @@ function changeState($bestell_id, $state){
       return false;
   }
   $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
-  return doSql($sql, LEVEL_KEY, "Konnte status  in DB nicht ändern..");
+  echo "<!-- changeState: $sql -->";
+  $result = doSql($sql, LEVEL_KEY, "Konnte status der Bestellung ändern..");
+  if( $result ) {
+    if( $do_verteilmengen_zuweisen )
+      verteilmengenZuweisen( $bestell_id );
+  }
+  return $result;
 }
 
 /**
@@ -823,30 +838,32 @@ function changeState($bestell_id, $state){
  *  oder sonst ein Fehler besteht
  */
 function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
-    $query = "SELECT * FROM gesamtbestellungen WHERE (state =
-    '".STATUS_BESTELLEN."' or state = '".STATUS_LIEFERANT."' ) AND id = ".mysql_escape_string($bestell_id);
-	$result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden.. ");
-	if(mysql_num_rows($result)==0)
+  $query = "SELECT * FROM gesamtbestellungen
+            WHERE id = $bestell_id and (state = '".STATUS_BESTELLEN."' or state = '".STATUS_LIEFERANT."' )";
+  $result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden.. ");
+  if(mysql_num_rows($result)==0)
     return true;
   fail_if_readonly();
   nur_fuer_dienst(1,3,4);
 
-	$sql = "DELETE bestellzuordnung.* FROM bestellzuordnung inner
-	join gruppenbestellungen on (gruppenbestellungen.id =
-	gruppenbestellung_id) WHERE art = 2 AND gesamtbestellung_id = ".$bestell_id;
-	if($nur_basar) {
-	    $sql.=" AND bestellguppen_id = ".mysql_escape_string(sql_basar_id());
-	}
+  $sql = "
+    DELETE bestellzuordnung.*
+    FROM bestellzuordnung
+    INNER JOIN gruppenbestellungen
+      ON (gruppenbestellungen.id = gruppenbestellung_id)
+    WHERE art = 2 AND gesamtbestellung_id = ".$bestell_id;
+    if($nur_basar) {
+      $sql .= " AND bestellguppen_id = ".sql_basar_id();
+  }
 
-	doSql($sql, LEVEL_ALL, "Konnte bestellungen nicht aus DB löschen..");
-
+  doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen..");
 
 	if(! $nur_basar){
 		$sql = "UPDATE bestellvorschlaege set bestellmenge = NULL where gesamtbestellung_id = ".$bestell_id;
-		doSql($sql, LEVEL_ALL, "Konnte bestellungen nicht aus DB löschen..");
+		doSql($sql, LEVEL_ALL, "Konnte Bestellmengen nicht aus bestellvorschlaege löschen..");
 	}
 
-	changeState($bestell_id, STATUS_BESTELLEN);
+	// changeState($bestell_id, STATUS_BESTELLEN);
 
 	return true;
 }
@@ -1423,6 +1440,15 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	 $query .= " ORDER BY bestellende DESC,name";
 	$result = doSql(  $query, LEVEL_ALL,"Konnte Gesamtbestellungen nich aus DB laden.. ");
 	return $result;
+}
+
+function sql_bestellung( $id ) {
+  $result = sql_bestellungen( false, false, $id );
+  if( ! $result or mysql_num_rows( $result ) != 1 ) {
+    error( __LINE__, __FILE__, "Lesen der Gesamtbestellung fehlgeschlagen" );
+    exit();
+  }
+  return mysql_fetch_array( $result );
 }
 
 /**
@@ -2003,7 +2029,7 @@ function verteilmengenZuweisen($bestell_id){
 	if(!verteilmengenLoeschen($bestell_id, TRUE))
 		error(__LINE__,__FILE__,"Konnte basareinträge  nicht löschen..","")	;
 	
-	changeState($bestell_id, STATUS_LIEFERANT);
+	// changeState($bestell_id, STATUS_LIEFERANT);
 }
 
 global $masseinheiten;
@@ -2248,7 +2274,7 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
  *
  */
 function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
-  if( ! get_http_var( $name, $typ, false, $is_self_field ) ) {
+  if( ! get_http_var( $name, $typ, NULL, $is_self_field ) ) {
     error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
     exit();
   }

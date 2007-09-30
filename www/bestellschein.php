@@ -21,19 +21,30 @@ if( get_http_var( 'bestellungs_id', 'u' ) ) {
   get_http_var( 'bestell_id', 'u', false, true );
 }
 
+get_http_var( 'action', 'w', '' );
+echo "<!-- action: $action -->";
 switch( $action ) {
   case 'changeState':
     fail_if_readonly();
     nur_fuer_dienst(1,3,4);
     need_http_var( 'change_id', 'u' );
     need_http_var( 'change_to', 'w' );
-    changeState( $change_id, $change_to );
-    // echo "<div class='warn'>change_id: $change_id, change_to: $change_to</div>";
+    echo "<!-- going to call changeState: $change_id, $change_to -->";
+    if( changeState( $change_id, $change_to ) ) {
+      if( ! $bestell_id ) {  // falls nicht bereits in detailanzeige:
+        switch( $change_to ) {
+          case STATUS_LIEFERANT:   // bestellschein oder ...
+          case STATUS_VERTEILT:    // ... lieferschein anzeigen:
+            echo "
+              <script type='text/javascript'>
+                neuesfenster('index.php?window=bestellschein&bestell_id=$change_id','bestellschein');
+              </script>
+            ";
+          break;
+        }
+      }
+    }
     break;
-  case 'changeEndDate':
-    fail_if_readonly();
-    nur_fuer_dienst(4);
-    // yet to be implemented...
   default:
     break;
 }
@@ -49,8 +60,9 @@ if( ! $bestell_id ) {
         $state = array( STATUS_BESTELLEN, STATUS_LIEFERANT );
         break;
       default:
-        $state = false;
+        $state = FALSE;
     }
+    $self_fields['state'] = $state;
   }
   $result = sql_bestellungen( $state );
   select_bestellung_view($result, 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
