@@ -877,7 +877,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
     $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
     $edit_link = "<a class='png' style='padding:0pt 1ex 0pt 1ex;'
       href=\"javascript:window.open('index.php?window=editBestellung&bestell_id=$id','editBestellung','width=400,height=420,left=100,top=100').focus();\">
-      <img src='img/b_edit.png' border='0' alt='Daten der Bestellung ändern' title='Daten der Bestellung ändern'></a>
+      <img src='img/b_edit.png' border='0' alt='Daten der Bestellung ändern' title='Daten der Bestellung ändern'>
+      edieren...</a>
     ";
     $aktionen = "";
 
@@ -948,7 +949,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
               <input type='hidden' name='change_id' value='$id'>
               <input type='hidden' name='change_to' value='Verteilt'>
               <input type='submit' class='button' name='submit'
-                title='Bestellung wurde geliefert: jetzt Lieferschein erstellen?'
+                title='Bestellung wurde geliefert, Lieferschein abgleichen?'
                 value='> Lieferschein erstellen >'>
               </form></li>
             ";

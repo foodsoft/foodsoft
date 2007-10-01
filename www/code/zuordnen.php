@@ -44,10 +44,19 @@ function sql_insert_bestellvorschlaege(
 , $preis_id = 0
 , $bestellmenge = 0, $liefermenge = 0
 ) {
+  global $hat_dienst_IV;
+
+  // finde NOW() aktuellen preis:
   if( ! $preis_id )
     $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+
+  // kludge alert: finde erstmal irgendeinen preis...
+  if( ! $preis_id )
+    if( $hat_dienst_IV )
+      $preis_id = sql_aktueller_produktpreis_id( $produkt_id, false );
+
   if( ! $preis_id ) {
-    // error( "Eintrag Bestellvorschlag fehlgeschlagen: kein aktueller Preiseintrag!" );
+    error( "Eintrag Bestellvorschlag fehlgeschlagen: kein Preiseintrag gefunden!" );
     return false;
   }
   $sql = "
@@ -1051,7 +1060,7 @@ function select_verteilmengen_preise(){
  */
 function select_verteilmengen(){
   return "
-    SELECT ( sum(menge) as verteilmenge )
+    SELECT sum(menge) as verteilmenge
          , gesamtbestellung_id
          , produkt_id
     FROM bestellzuordnung
@@ -1204,11 +1213,15 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
  *
  */
 function sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt = "NOW()" ){
+  if( $zeitpunkt ) {
+    $zeitfilter = " AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
+                    AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))";
+  } else {
+    $zeitfilter = "";
+  }
   $sql = "SELECT id
           FROM produktpreise 
-          WHERE produkt_id = $produkt_id
-                 AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
-                 AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))
+          WHERE produkt_id = $produkt_id $zeitfilter
           ORDER BY zeitende DESC";
   // aktuellster preis ist immer vorn (auch NULL!)
 
@@ -1625,8 +1638,9 @@ function from_basar(){
 
 /**
  *  zusaetzlicheBestellung:
- *    um nachtraeglich (insbesonder nach Lieferung) ein Produkt zu einer Bestellung hinzuzufuegen.
- *    eine entsprechende Basarbestellung wird erzeugt
+ *    um nachtraeglich (insbesondere nach Lieferung) ein Produkt zu einer Bestellung hinzuzufuegen.
+ *    - eine entsprechende Basarbestellung wird erzeugt
+ *    - liefermenge wird noch _nicht_ gesetzt
  */
 function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
    sql_insert_bestellvorschlaege( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
@@ -1741,7 +1755,6 @@ function getAlleProdukteVonLieferant ($lieferant_id){
  */
 function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
   if($bestell_id === Null){
-    $zeitpunkt="NOW()";
     $sql = "
       SELECT *
       , produkte.name as name
@@ -1753,28 +1766,68 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
         ON produktgruppen.id = produkte.produktgruppen_id
       INNER JOIN produktpreise
         ON (produkte.id = produktpreise.produkt_id)
-      WHERE lieferanten_id = $lieferant_id ";
+      WHERE lieferanten_id = $lieferant_id
+            AND zeitstart <= NOW() AND ( ISNULL(zeitende) OR zeitende >= NOW() )
+    ";
   } else {
-    $zeitpunkt = " (SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id.") ";
-    $sql = "
-      SELECT *
-      , produkte.name as name
-      , produktgruppen.name as produktgruppen_name
-      , produkte.id as produkt_id
-      , produktgruppen.id as produktgruppen_id
-      FROM produkte
-      INNER JOIN produktgruppen
-        ON produktgruppen.id = produkte.produktgruppen_id
-      INNER JOIN produktpreise ON
-        (produkte.id = produktpreise.produkt_id)
-      LEFT JOIN (SELECT * FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id ) as vorschlaege
-        ON (produkte.id = vorschlaege.produkt_id)
-      WHERE lieferanten_id = $lieferant_id AND isnull(gesamtbestellung_id)";
+    $state = getState( $bestell_id );
+    switch( $state ) {
+      case STATUS_BESTELLEN:
+        // produkte in bestellvorlage aufnehmen:
+        //  - wenn noch kein vorschlag vorhanden und
+        //  - aktuell gueltiger preis existiert
+        $zeitpunkt = " (SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id.") ";
+        $sql = "
+          SELECT *
+          , produkte.name as name
+          , produktgruppen.name as produktgruppen_name
+          , produkte.id as produkt_id
+          , produktgruppen.id as produktgruppen_id
+          FROM produkte
+          INNER JOIN produktgruppen
+            ON produktgruppen.id = produkte.produktgruppen_id
+          INNER JOIN produktpreise ON
+            (produkte.id = produktpreise.produkt_id)
+          LEFT JOIN (SELECT * FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id ) as vorschlaege
+            ON (produkte.id = vorschlaege.produkt_id)
+          WHERE lieferanten_id = $lieferant_id AND isnull(gesamtbestellung_id)
+          AND zeitstart <= $zeitpunkt AND ( ISNULL(zeitende) OR zeitende >= $zeitpunkt )
+        ";
+        break;
+      default:
+        // zusaetzlich geliefertes produkt aufnehmen:
+        //  - wenn keine bestellung vorliegt (aber vorschlag evtl. schon!)
+        //  - zeiten seien hier fast egal (lieferschein wird sowieso abgeglichen;
+        //    (bei nachtraeglichem einfuegen wird die startzeit fast nie passen :-) )
+        $sql = "
+          SELECT *
+          , produkte.name as name
+          , produktgruppen.name as produktgruppen_name
+          , produkte.id as produkt_id
+          , produktgruppen.id as produktgruppen_id
+          FROM produkte
+          INNER JOIN produktgruppen
+            ON produktgruppen.id = produkte.produktgruppen_id
+          INNER JOIN produktpreise ON
+            (produkte.id = produktpreise.produkt_id)
+          LEFT JOIN
+            ( SELECT bestellvorschlaege.produkt_id, bestellvorschlaege.gesamtbestellung_id
+              FROM bestellvorschlaege
+              INNER JOIN gruppenbestellungen
+                ON gruppenbestellungen.gesamtbestellung_id = bestellvorschlaege.gesamtbestellung_id
+              INNER JOIN bestellzuordnung
+                ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
+              WHERE bestellvorschlaege.gesamtbestellung_id = $bestell_id
+              GROUP BY produkt_id
+            ) as bestellungen
+            ON (produkte.id = bestellungen.produkt_id)
+          WHERE lieferanten_id = $lieferant_id AND isnull(gesamtbestellung_id)
+          GROUP BY produkte.id
+        ";
+      break;
+    }
   }
-  $sql .= "
-    AND zeitstart <= $zeitpunkt AND ( ISNULL(zeitende) OR zeitende >= $zeitpunkt )
-    ORDER BY produktgruppen.id, produkte.name
-  ";
+  $sql .= " ORDER BY produktgruppen.id, produkte.name ";
   $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
   return $result;
 }
