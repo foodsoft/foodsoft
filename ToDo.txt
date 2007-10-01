@@ -1,5 +1,4 @@
-Lieferschein: Wenn ich nicht als Dienst angemeldet bin, sollte ich
-nicht anschauen können, was Timo bestellt hat.
+Wenn ein Formular sich selbst wieder aufrufen soll, self_url()
+verwenden.
 
-views(867): $self_fields ist array und kann deshalb nicht mit echo
-ausgegeben werden.
+
