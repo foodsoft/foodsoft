@@ -45,6 +45,16 @@ switch( $action ) {
       }
     }
     break;
+
+  case 'insert':
+    fail_if_readonly();
+    nur_fuer_dienst(1,3,4);
+    need_http_var( 'produkt_id', 'u' );
+    need_http_var( 'menge', 'f' );
+    if( $bestell_id && ( $menge > 0 ) ) {
+      zusaetzlicheBestellung( $produkt_id, $bestell_id, $menge );
+    }
+
   default:
     break;
 }
@@ -194,6 +204,28 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
     true,        // Gruppenansicht auswaehlen lassen
     true         // Option: Anzeige nichtgelieferte zulassen
   );
+
+  switch( $state ) {
+    case STATUS_LIEFERANT:
+    case STATUS_VERTEILT:
+      if( ! $readonly and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
+        echo "
+          <h3>Zusätzliches Produkt eintragen (wirkt wie Basarbestellung):</h3>
+          <form method='post' action='" . self_url() . "'> " . self_post() . "
+            <input type='hidden' name='action' value='insert'>
+        ";
+        select_products_not_in_list($bestell_id);
+        echo "
+          <label>Menge:</label>
+          <input type='text' size='6' style='text-align:right;' name='menge' value='0'>
+          <input type='submit' value='Produkt hinzufügen'>
+          </form>
+        ";
+      }
+      break;
+    default:
+      break;
+  }
 
 ?>
 

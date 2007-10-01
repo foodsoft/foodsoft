@@ -477,37 +477,11 @@
 				
 				<?bestellung_overview($row_gesamtbestellung, TRUE, $gruppen_id);
 				   if (isset($HTTP_GET_VARS['produkt_id'])) {
-						//Produkt in Liste aufnehmen
-						 
-							
-						$newproduct = $HTTP_GET_VARS['produkt_id'];
-						$errStr = "";
-						//echo $newproduct;
-						//echo $bestell_id;
-
-						//echo $query;
-						$result= sql_produktpreise($newproduct, $bestell_id, $bestellende, $bestellende);
-						$row = mysql_fetch_array($result);
-						$preis_id = $row['id'];
-
-						
-						if ($newproduct == "") $errStr = "Kein Produkt ausgesucht?!";
-						if ($bestell_id == "") $errStr = "Bestellung nicht zugeordnet?!";
-						if ($preis_id == "") $errStr = "Kein Preis zugeordnet!";
-						
-						// Wenn keine Fehler, dann einfügen...
-						if ($errStr == "") {
-							
-							
-							mysql_query("INSERT INTO bestellvorschlaege 
-								     (produkt_id, gesamtbestellung_id, produktpreise_id, liefermenge)
-								     VALUES ('".$newproduct."', '".$bestell_id."','".$preis_id."','NULL')")
-								     or error(__LINE__,__FILE__,"Konnte neues Produkt nicht einfügen.",mysql_error());
-							
-						} else {
-							echo "<p> Fehler beim Einfügen des zusätzlichen Produkts: ".$errStr." (Produkt_ID = $newproduct, Preis_ID = $preis_id)";
-						}
-					   }
+						// zusaetzliches Produkt in Bestellvorlage aufnehmen
+            need_http_var( 'produkt_id', 'u' );
+            assert( $bestell_id ) and  // TODO: sollte hier immer erfuellt sein?
+            sql_insert_bestellvorschlaege( $produkt_id, $bestell_id );
+					}
 					  // jetzt werden die anderen bestellungen angezeigt...
 					 				// aber nur wenn es mehrere gibt ...
 					 				
