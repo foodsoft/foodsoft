@@ -616,6 +616,9 @@ function products_overview(
     if( $spalten & PR_COL_NAME ) {
       echo "<td>{$produkte_row['produkt_name']}</td>";
     }
+    if( $spalten & PR_COL_BNUMMER ) {
+      echo "<td>{$produkte_row['bestellnummer']}</td>";
+    }
     if( $spalten & PR_COL_LPREIS ) {
       echo "<td class='mult'>";
       if($editPrice){
