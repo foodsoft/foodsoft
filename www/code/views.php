@@ -25,6 +25,7 @@ function number_selector($name, $min, $max, $selected, $format){
  *   <prefix>_jahr
  */
 function date_time_selector($sql_date, $prefix, $show_time=true){
+  echo "<!-- sql_date :$sql_date -->";
 	$datum = date_parse($sql_date);
 
 ?>     <table class='inner'>
@@ -342,17 +343,18 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 // uebersicht ueber bestellte und gelieferte mengen einer Bestellung anzeigen
 // moegliche Tabellenspalten:
 define( 'PR_COL_NAME' , 0x1 );           // produktname
-define( 'PR_COL_LPREIS', 0x2 );          // Netto-L-Preis
-define( 'PR_COL_MWST', 0x4 );            // Mehrwertsteuersatz
-define( 'PR_COL_PFAND', 0x8 );           // Pfand
-define( 'PR_COL_VPREIS', 0x10 );         // V-Preis
-define( 'PR_COL_BESTELLMENGE', 0x20 );   // bestellte menge (1)
-define( 'PR_COL_BESTELLGEBINDE', 0x40 ); // bestellte Gebinde (1)
-define( 'PR_COL_LIEFERMENGE', 0x80 );    // gelieferte Menge (1,2)
-define( 'PR_COL_LIEFERGEBINDE', 0x100 ); // gelieferte Gebinde(1,2)
-define( 'PR_COL_NETTOSUMME', 0x200 );    // Gesamtpreis Netto (1,3)
-define( 'PR_COL_BRUTTOSUMME', 0x400 );   // Gesamtpreis Brutto (1,3)
-define( 'PR_COL_ENDSUMME', 0x800 );      // Endpreis (mit Pfand) (1,3)
+define( 'PR_COL_BNUMMER', 0x2 );      // Bestellnummer
+define( 'PR_COL_LPREIS', 0x4 );          // Netto-L-Preis
+define( 'PR_COL_MWST', 0x8 );            // Mehrwertsteuersatz
+define( 'PR_COL_PFAND', 0x10 );           // Pfand
+define( 'PR_COL_VPREIS', 0x20 );         // V-Preis
+define( 'PR_COL_BESTELLMENGE', 0x40 );   // bestellte menge (1)
+define( 'PR_COL_BESTELLGEBINDE', 0x80 ); // bestellte Gebinde (1)
+define( 'PR_COL_LIEFERMENGE', 0x100 );    // gelieferte Menge (1,2)
+define( 'PR_COL_LIEFERGEBINDE', 0x200 ); // gelieferte Gebinde(1,2)
+define( 'PR_COL_NETTOSUMME', 0x400 );    // Gesamtpreis Netto (1,3)
+define( 'PR_COL_BRUTTOSUMME', 0x800 );   // Gesamtpreis Brutto (1,3)
+define( 'PR_COL_ENDSUMME', 0x1000 );      // Endpreis (mit Pfand) (1,3)
 //
 // (1) mit $gruppen_id: Anzeige nur fuer diese gruppe
 // (2) nur moeglich ab STATUS_LIEFERANT
@@ -378,6 +380,9 @@ function products_overview(
   }
   $col[PR_COL_NAME] = array(
     'header' => "Produkt", 'title' => "Produktname", 'cols' => 1
+  );
+  $col[PR_COL_BNUMMER] = array(
+    'header' => "B-Nr.", 'title' => "Bestellnummer", 'cols' => 1
   );
   $col[PR_COL_LPREIS] = array(
     'header' => "L-Preis", 'title' => "Nettopreis (ohne MWSt und Pfand) beim Lieferanten", 'cols' => 2

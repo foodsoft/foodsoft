@@ -26,7 +26,7 @@ get_http_var( 'terrakatalog', 'M', '' );
 $terrakatalog and $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
 
 // produktid: wenn gesetzt, erlaube update der artikelnummer!
-if( get_http_var( 'produktid', 'u', false, true ) ) {
+if( get_http_var( 'produktid', 'u', NULL, true ) ) {
   need_http_var( 'produktname', 'M', true );
 }
 

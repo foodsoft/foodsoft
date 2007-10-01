@@ -335,23 +335,32 @@ function in_two_weeks(){
 
 if(!function_exists("date_parse")){
 function date_parse($date_in){
+  echo "<!-- date_parse: $date_in -->";
 	$temp = explode(" ", $date_in);
-	 $date = explode("-", $temp[0]);
+	
+   $date = explode("-", $temp[0]);
+   if( count($date) == 3 ) {
+     $toReturn = array( "year" => $date[0],
+				   "month" => $date[1],
+				   "day" => $date[2]);
+   } else {
+	      $toReturn["year"] =  date('Y');
+	      $toReturn["month"] =  date('m');
+	      $toReturn["day"] =  date('d');
+   }
+
 	 if(isset($temp[1])){
            $time = explode(":", $temp[1]);
 	 }
-	 $toReturn = array( "year" => $date[0],
-				   "month" => $date[1],
-				   "day" => $date[2]);
-	 if(isset($time[0])){
-	      $toRetrun["hour"] =  $time[0];
-	 }
-	 if(isset($time[1])){
-	      $toRetrun["minute"] =  $time[1];
-	 }
-	 if(isset($time[2])){
-	      $toRetrun["second"] =  $time[2];
-	 }
+   if( isset($time) && count($time) == 3 ) {
+	      $toReturn["hour"] =  $time[0];
+	      $toReturn["minute"] =  $time[1];
+	      $toReturn["second"] =  $time[2];
+	 } else {
+	      $toReturn["hour"] =  "00";
+	      $toReturn["minute"] =  "00";
+	      $toReturn["second"] =  "00";
+   }
 	return $toReturn;
 }
 }
