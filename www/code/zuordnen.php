@@ -38,13 +38,29 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
 /**
  *  Bestellvorschläge einfügen
  */
-function sql_insert_bestellvorschlaege($produkt_id,$gesamtbestellung_id, $preis_id ){
-  $sql = "INSERT INTO bestellvorschlaege (produkt_id, gesamtbestellung_id, produktpreise_id)
-          VALUES ('".mysql_escape_string($produkt_id)."', 
-                  '".mysql_escape_string($gesamtbestellung_id)."',
-                  '".mysql_escape_string($preis_id)."')";
-  doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellungs-Produktliste nicht aufnehmen.");
+function sql_insert_bestellvorschlaege(
+  $produkt_id
+, $gesamtbestellung_id
+, $preis_id = 0
+, $bestellmenge = 0, $liefermenge = 0
+) {
+  if( ! $preis_id )
+    $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+  if( ! $preis_id ) {
+    // error( "Eintrag Bestellvorschlag fehlgeschlagen: kein aktueller Preiseintrag!" );
+    return false;
+  }
+  $sql = "
+    INSERT INTO bestellvorschlaege
+      (produkt_id, gesamtbestellung_id, produktpreise_id, bestellmenge, liefermenge )
+    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, $bestellmenge, $liefermenge )
+    ON DUPLICATE KEY UPDATE produktpreise_id = $preis_id
+                          , bestellmenge = bestellmenge + $bestellmenge
+                          , liefermenge = liefermenge + $liefermenge
+  ";
+  return doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen.");
 }
+
 /**
  *  Gesamtbestellung einfügen
  */
@@ -833,16 +849,22 @@ function changeState($bestell_id, $state){
 }
 
 /**
- *  Dient dazu, die Verteilmengen nochmal zu
- *  löschen, wenn erneut als Basar angemeldet wird
- *  oder sonst ein Fehler besteht
+ * verteilmengenLoeschen:
+ *  - Verteilmengen nochmal löschen bei statuswechsel LIEFERANT -> BESTELLEN
+ *    ( $nur_basar == false ), oder
+ *  - nur die Verteilmengen fuer basar loeschen (nach verteilmengenZuweisen),
+ *    da basar nie Verteilmengen erhalten sollte
  */
 function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
-  $query = "SELECT * FROM gesamtbestellungen
-            WHERE id = $bestell_id and (state = '".STATUS_BESTELLEN."' or state = '".STATUS_LIEFERANT."' )";
-  $result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden.. ");
-  if(mysql_num_rows($result)==0)
-    return true;
+  $state = getState( $bestell_id );
+  switch( $state ) {
+    case STATUS_BESTELLEN:
+    case STATUS_LIEFERANT:
+      break;
+    default:
+      error( __LINE__, __FILE__, "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
+      return false;
+  }
   fail_if_readonly();
   nur_fuer_dienst(1,3,4);
 
@@ -851,11 +873,10 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
     FROM bestellzuordnung
     INNER JOIN gruppenbestellungen
       ON (gruppenbestellungen.id = gruppenbestellung_id)
-    WHERE art = 2 AND gesamtbestellung_id = ".$bestell_id;
+    WHERE art = 2 AND gesamtbestellung_id = $bestell_id ";
     if($nur_basar) {
       $sql .= " AND bestellguppen_id = ".sql_basar_id();
   }
-
   doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen..");
 
 	if(! $nur_basar){
@@ -863,10 +884,9 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 		doSql($sql, LEVEL_ALL, "Konnte Bestellmengen nicht aus bestellvorschlaege löschen..");
 	}
 
-	// changeState($bestell_id, STATUS_BESTELLEN);
-
 	return true;
 }
+
 /**
  *
  */
@@ -1181,12 +1201,14 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
 
 /**
  *
+ *
  */
-function sql_aktuelle_produktpreise($produkt_id){
+function sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt = "NOW()" ){
   $sql = "SELECT id
           FROM produktpreise 
-          WHERE produkt_id =$produkt_id
-          AND (zeitende >= NOW() OR ISNULL(zeitende))
+          WHERE produkt_id = $produkt_id
+                 AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
+                 AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))
           ORDER BY zeitende DESC";
   // aktuellster preis ist immer vorn (auch NULL!)
 
@@ -1197,9 +1219,11 @@ function sql_aktuelle_produktpreise($produkt_id){
  *  liefert id des aktuellsten preises zu $produkt_id,
  *  oder 0 falls es NOW() keinen gueltigen preis gibt:
  */
-function sql_aktueller_produktpreis_id( $produkt_id ) {
-  $result = sql_aktuelle_produktpreise( $produkt_id );
-  if( msyql_num_rows( $result ) < 1 )
+function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
+  $result = sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt );
+  $n = mysql_num_rows($result);
+  echo "<!-- aktueller_produktpreis: $n -->";
+  if( mysql_num_rows( $result ) < 1 )
     return 0;
   $row = mysql_fetch_array( $result );
   return $row['id'];
@@ -1598,51 +1622,22 @@ ORDER BY $order_by
 function from_basar(){
    return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
 }
+
 /**
- *
+ *  zusaetzlicheBestellung:
+ *    um nachtraeglich (insbesonder nach Lieferung) ein Produkt zu einer Bestellung hinzuzufuegen.
+ *    eine entsprechende Basarbestellung wird erzeugt
  */
-function zusaetzlicheBestellung($produkt_id, $bestell_id, $menge ){
-   $sql ="SELECT * FROM bestellvorschlaege 
-   		WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
-   		AND gesamtbestellung_id = ".mysql_escape_string($bestell_id) ;
-   $result2 = doSql($sql, LEVEL_ALL, "Konnte Preise nicht aus DB laden..");
-   if (mysql_num_rows($result2) == 1){
-   	$sql = "UPDATE 	bestellvorschlaege set liefermenge = liefermenge + ".$menge." 
-		WHERE produkt_id = ".mysql_escape_string($produkt_id)." 
-   		AND gesamtbestellung_id = ".mysql_escape_string($bestell_id) ;
-   doSql($sql, LEVEL_IMPORTANT, "Konnte Liefermenge nicht ändern..");
-
-   }else {
-
-   $result2 =  sql_produktpreise($produkt_id, $bestell_id);
-   if (mysql_num_rows($result2) > 1){
-	    error(__LINE__,__FILE__,"Mehr als ein Preis");
-   } else if (mysql_num_rows($result2) ==0){
-   	    error(__LINE__,__FILE__,"Kein gültiger Preis zum Zeitpunkt
-	    des Bestellendes? Produkt_ID $produkt_id, BestellID = $bestell_id");
-	 } else {
-	    $preis_row = mysql_fetch_array($result2);
-	    //var_dump($preis_row);
-	    $sql = "INSERT INTO bestellvorschlaege 
-	              (produkt_id, gesamtbestellung_id, produktpreise_id, liefermenge)
-	            VALUES (".$produkt_id.",".
-		    $bestell_id.",".
-		    $preis_row['id'].",".
-		    $menge.")";
-            doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht eintragen..");
-	}
-	}
-	    //Dummy Eintrag in bestellzuordnung
-	    $sql = "SELECT id FROM gruppenbestellungen
-	    		WHERE gesamtbestellung_id = ".$bestell_id;
-            $result = doSql($sql, LEVEL_ALL, "Konnte nicht aus DB laden.. ");
-	    $row = mysql_fetch_array($result);
-	    $sql2 = "INSERT INTO bestellzuordnung
-	    		(produkt_id, gruppenbestellung_id, menge, art)
-			VALUES (".$produkt_id.", ".$row['id'].", 0, 2)";
-            doSql($sql2, LEVEL_IMPORTANT, "Konnte nicht in DB schreiben.. ");
-
+function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
+   sql_insert_bestellvorschlaege( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
+   $gruppenbestellung_id = sql_create_gruppenbestellung( sql_basar_id(), $bestell_id );
+   $sql = "
+     INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
+     VALUES ( $produkt_id, $gruppenbestellung_id, $bestellmenge, 1)
+   ";
+   return doSql( $sql, LEVEL_IMPORTANT, "zusaetzlicheBestellung fehlgeschlagen: ");
 }
+
 /**
  *  Namen eines Lieferanten abfragen
  *  Wenn ID null, dann wird der String
@@ -1781,7 +1776,6 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
     ORDER BY produktgruppen.id, produkte.name
   ";
   $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
-  echo "<!-- getproduktevonlieferant: $sql, " . mysql_num_rows($result) . " -->";
   return $result;
 }
 
@@ -1887,8 +1881,8 @@ function verteilmengenZuweisen($bestell_id){
   	echo "<h2>Bitte Bestellung auswählen!!</h2>";
 	return;
   }
-  // Gleich aussteigen, wenn zuweisung bereits erfolgt
-  if(getState($bestell_id)!=STATUS_BESTELLEN) return;
+
+  if(getState($bestell_id)!=STATUS_LIEFERANT) return;
 
   //row_gesamtbestellung einlesen aus Datenbank
   //benötigt für Bestellstart und Ende
