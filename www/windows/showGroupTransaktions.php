@@ -311,9 +311,11 @@ if( $meinkonto ) {
       </tr>
 			<?PHP
 
-			   $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, kontoauszugs_jahr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
-				 $num_rows = mysql_num_rows($result);
-				 $vert_result = sql_gesamtpreise($gruppen_id);
+			   // $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, kontoauszugs_jahr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
+			   $result = sql_get_group_transactions( $gruppen_id );
+         $num_rows = mysql_num_rows($result);
+
+         $vert_result = sql_gesamtpreise($gruppen_id);
          $summe = $kontostand;
 				 $no_more_vert = false;
 				 $no_more_konto=false;

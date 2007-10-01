@@ -932,6 +932,21 @@ function sqlGroupTransaction($transaktionsart,
 			  )" ;
   return doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
 }
+
+function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = NULL ) {
+  $sql = "
+    SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, kontoauszugs_jahr, notiz
+         , DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') AS date
+    FROM gruppen_transaktion
+    WHERE ( gruppen_id = $gruppen_id )
+        " . ( $from_date ? " AND ( eingabe_zeit >= '$from_date' ) " : "" ) . "
+        " . ( $to_date ? " AND ( eingabe_zeit <= '$to_date' ) " : "" ) . "
+    ORDER BY eingabe_zeit DESC
+  ";
+  // LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
+  return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
+}
+
 /**
  *
  */
@@ -1056,37 +1071,40 @@ function select_bestellsumme(){
     GROUP BY bestellkosten.bestellguppen_id
   ";
 }
+
 /**
  *
  */
-function sql_gesamtpreise($gruppe_id){
-            $query = "SELECT gesamtbestellungen.id as gesamtbestellung_id, gesamtbestellungen.name, sum(menge * preis) AS gesamtpreis, 
-	    				DATE_FORMAT(bestellende,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as datum
-				FROM  bestellzuordnung 
-				INNER JOIN gruppenbestellungen ON ( gruppenbestellung_id = gruppenbestellungen.id )
-				INNER JOIN bestellvorschlaege
-				on (
-				bestellvorschlaege.gesamtbestellung_id
-				=
-				gruppenbestellungen.gesamtbestellung_id
-				and bestellvorschlaege.produkt_id =
-				bestellzuordnung.produkt_id  )
-				INNER JOIN produktpreise ON ( produktpreise_id = produktpreise.id ) 
-				INNER JOIN gesamtbestellungen ON (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
-				WHERE art =2 and bestellguppen_id = '".mysql_escape_string($gruppe_id)."'
-				GROUP BY gesamtbestellungen.name
-				    ORDER BY bestellende DESC;";
+function sql_gesamtpreise( $gruppen_id ) {
+  $query = "
+    SELECT gesamtbestellungen.id as gesamtbestellung_id
+         , gesamtbestellungen.name
+         , sum(menge * preis) AS gesamtpreis
+         , DATE_FORMAT(bestellende,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as datum
+    FROM  bestellzuordnung
+    INNER JOIN gruppenbestellungen
+      ON ( gruppenbestellung_id = gruppenbestellungen.id )
+    INNER JOIN bestellvorschlaege
+      ON   ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
+       AND ( bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id  )
+    INNER JOIN produktpreise
+      ON ( produktpreise_id = produktpreise.id )
+    INNER JOIN gesamtbestellungen
+      ON ( gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id )
+    WHERE ( art = 2 ) AND ( bestellguppen_id = $gruppen_id )
+    GROUP BY gesamtbestellungen.id
+    ORDER BY bestellende DESC;
+  ";
 
-            $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nicht aus DB laden..");
-	    return $result;
-
+  $result = doSql($query, LEVEL_ALL, "Konnte Gesamtpreise nicht aus DB laden..");
+  return $result;
 }
 
 
 /**
  *
  */
-function sql_bestellprodukte($bestell_id, $gruppen_id=false, $produkt_id=false ){
+function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false ){
   $basar_id = sql_basar_id();
   $state = getState( $bestell_id );
 
