@@ -361,6 +361,7 @@ define( 'PR_COL_ENDSUMME', 0x1000 );      // Endpreis (mit Pfand) (1,3)
 // (3) bei STATUS_BESTELLEN: berechnet aus Bestellmenge, sonst aus Liefermenge
 //
 define( 'PR_ROWS_NICHTGELIEFERT', 0x1000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGEFUELLT', 0x2000 ); // nicht gelieferte Produkte auch anzeigen
 //
 // $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
 // $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
@@ -542,6 +543,7 @@ function products_overview(
   $brutto_summe = 0;
   $endpreis_summe = 0;
   $haben_nichtgeliefert = false;
+  $haben_nichtgefuellt = false;
 
   while  ($produkte_row = mysql_fetch_array($result)) {
     $produkt_id =$produkte_row['produkt_id'];
@@ -556,7 +558,6 @@ function products_overview(
         break;
       }
     }
-    ?> <tr> <?
 
     preisdatenSetzen( & $produkte_row );
 
@@ -613,6 +614,18 @@ function products_overview(
     $bruttogesamtpreis = sprintf( "%8.2lf", $bruttopreis * $liefermenge );
     $endgesamtpreis = sprintf( "%8.2lf", $endpreis * $liefermenge );
 
+    $netto_summe += $nettogesamtpreis;
+    $brutto_summe += $bruttogesamtpreis;
+    $endpreis_summe += $endgesamtpreis;
+
+    if( $gebinde < 1 ) {
+      $haben_nichtgefuellt = true;
+      if( ! ( $spalten & PR_ROWS_NICHTGEFUELLT ) ) {
+        continue;
+      }
+    }
+
+    ?> <tr> <?
     if( $spalten & PR_COL_NAME ) {
       echo "<td>{$produkte_row['produkt_name']}</td>";
     }
@@ -725,10 +738,6 @@ function products_overview(
     }
     ?> </tr> <?
 
-    $netto_summe += $nettogesamtpreis;
-    $brutto_summe += $bruttogesamtpreis;
-    $endpreis_summe += $endgesamtpreis;
-
   } //end while produkte array
 
   eval( $summenzeile );
@@ -756,6 +765,16 @@ function products_overview(
          onclick=\"window.location.href='" . self_url('spalten') . "&spalten="
                  . ($spalten ^ PR_ROWS_NICHTGELIEFERT) . "';\"
          title='$nichtgeliefert_header vorhanden; diese auch anzeigen?'></td>
+    " );
+  }
+  if( $haben_nichtgefuellt ) {
+    option_menu_row( "
+      <td colspan='2'>nicht-volle Gebinde zeigen:
+        <input type='checkbox'
+         " . ( ( $spalten & PR_ROWS_NICHTGEFUELLT ) ? ' checked' : '' ) . "'
+         onclick=\"window.location.href='" . self_url('spalten') . "&spalten="
+                 . ($spalten ^ PR_ROWS_NICHTGEFUELLT) . "';\"
+         title='nicht gefuellte Gebinde vorhanden; diese auch anzeigen?'></td>
     " );
   }
 }
