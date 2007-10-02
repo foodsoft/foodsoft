@@ -1826,6 +1826,7 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
                 ON gruppenbestellungen.gesamtbestellung_id = bestellvorschlaege.gesamtbestellung_id
               INNER JOIN bestellzuordnung
                 ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
+                   AND bestellzuordnung.produkt_id = bestellvorschlaege.produkt_id
               WHERE bestellvorschlaege.gesamtbestellung_id = $bestell_id
               GROUP BY produkt_id
             ) as bestellungen

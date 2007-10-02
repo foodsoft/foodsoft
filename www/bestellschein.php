@@ -209,7 +209,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
   switch( $state ) {
     case STATUS_LIEFERANT:
     case STATUS_VERTEILT:
-      if( ! $readonly and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
+      if( ! $readonly and ! $gruppen_id and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
         echo "
           <h3>Zusätzliches Produkt eintragen (wirkt wie Basar<b>bestellung</b>):</h3>
           <form method='post' action='" . self_url() . "'> " . self_post() . "
