@@ -51,7 +51,7 @@ class PDF extends FPDF //die klassen und funtionen für die pdf erzeugung
 // Übergebene Variablen einlesen...
 if (isset($_REQUEST['bestellungs_id'])) $bestell_id = $_REQUEST['bestellungs_id'];
 	
-verteilmengenZuweisen($bestell_id);
+// verteilmengenZuweisen($bestell_id);
 	
 $pwd_ok = false;
 $bestgrup_view = false;

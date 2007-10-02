@@ -650,26 +650,14 @@ $areas[] = array("area" => "index.php?area=bestellungen_overview",
 $areas[] = array("area" => "index.php?area=bestellen",
 	"hint" => "Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....",
 	"title" => "Bestellen");
-if($hat_dienst_I or $hat_dienst_IV){
-	$areas[] = array("area" => "index.php?area=lieferschein",
-	"hint" => "Hier kann der Lieferschein abgeglichen werden...",
-	"title" => "Lieferschein");
-	$areas[] = array("area" => "index.php?area=verteilung",
-	"hint" => "Hier kann die Verteilung eingesehen und angepasst werden...",
-	"title" => "Verteilung");
- }
 if($hat_dienst_IV){
-	$areas[] = array("area" => "index.php?area=bestellschein",
-	"hint" => "FAX mit Bestellung, Gesamtbestellung ansehen",
-	"title" => "Bestellschein");
 	$areas[] = array("area" => "index.php?area=produkte",
 	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
 } 
 	$areas[] = array("area" => "index.php?area=gruppen",
 	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
-	"title" => "Gruppenverwaltung");		
+	"title" => "Gruppen");		
 if($hat_dienst_IV or $hat_dienst_III){
-
 	$areas[] = array("area" => "index.php?area=basar",
 	"hint" => "Produkte im Basar an Gruppen verteilen",
 	"title" => "Basar");

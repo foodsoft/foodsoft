@@ -135,12 +135,6 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
-										
-	 if($state==STATUS_LIEFERANT){
-	 	verteilmengenZuweisen($bestell_id);
-	 }
-
-
   // liefermengen aktualisieren:
   //
   if( $editable and $state == STATUS_VERTEILT ) {

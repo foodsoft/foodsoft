@@ -42,7 +42,7 @@
 
   get_http_var('action','w','');
 
-  if( $action == 'insert' ) {
+  if( ( $action == 'insert' ) && get_http_var( 'startzeit_tag', 'u' ) ) {
     need_http_var("startzeit_tag",'u');
     need_http_var("startzeit_monat",'u');
     need_http_var("startzeit_jahr",'u');
