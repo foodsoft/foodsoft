@@ -97,7 +97,8 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_ENDSUMME );
     } else {
       $default_spalten
-        |= ( PR_COL_BESTELLMENGE | PR_COL_BESTELLGEBINDE | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
+        |= ( PR_COL_BESTELLMENGE | PR_COL_BESTELLGEBINDE | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME
+             | PR_ROWS_NICHTGEFUELLT );
     }
     $title="Bestellschein (vorläufig)";
     break;
@@ -108,7 +109,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
     } else {
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
-             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
+             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME | PR_ROWS_NICHTGEFUELLT );
     }
     $title="Bestellschein";
     // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
@@ -122,7 +123,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
       $editable = (!$readonly) && ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
-             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME );
+             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME | PR_ROWS_NICHTGEFUELLT );
     }
     $title="Lieferschein";
     break;

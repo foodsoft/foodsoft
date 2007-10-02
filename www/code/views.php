@@ -343,25 +343,26 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 // uebersicht ueber bestellte und gelieferte mengen einer Bestellung anzeigen
 // moegliche Tabellenspalten:
 define( 'PR_COL_NAME' , 0x1 );           // produktname
-define( 'PR_COL_BNUMMER', 0x2 );      // Bestellnummer
-define( 'PR_COL_LPREIS', 0x4 );          // Netto-L-Preis
-define( 'PR_COL_MWST', 0x8 );            // Mehrwertsteuersatz
-define( 'PR_COL_PFAND', 0x10 );           // Pfand
-define( 'PR_COL_VPREIS', 0x20 );         // V-Preis
-define( 'PR_COL_BESTELLMENGE', 0x40 );   // bestellte menge (1)
-define( 'PR_COL_BESTELLGEBINDE', 0x80 ); // bestellte Gebinde (1)
-define( 'PR_COL_LIEFERMENGE', 0x100 );    // gelieferte Menge (1,2)
-define( 'PR_COL_LIEFERGEBINDE', 0x200 ); // gelieferte Gebinde(1,2)
-define( 'PR_COL_NETTOSUMME', 0x400 );    // Gesamtpreis Netto (1,3)
-define( 'PR_COL_BRUTTOSUMME', 0x800 );   // Gesamtpreis Brutto (1,3)
-define( 'PR_COL_ENDSUMME', 0x1000 );      // Endpreis (mit Pfand) (1,3)
+define( 'PR_COL_ANUMMER', 0x2 );      // Artikelnummer
+define( 'PR_COL_BNUMMER', 0x4 );      // Bestellnummer
+define( 'PR_COL_LPREIS', 0x8 );          // Netto-L-Preis
+define( 'PR_COL_MWST', 0x10 );            // Mehrwertsteuersatz
+define( 'PR_COL_PFAND', 0x20 );           // Pfand
+define( 'PR_COL_VPREIS', 0x40 );         // V-Preis
+define( 'PR_COL_BESTELLMENGE', 0x80 );   // bestellte menge (1)
+define( 'PR_COL_BESTELLGEBINDE', 0x100 ); // bestellte Gebinde (1)
+define( 'PR_COL_LIEFERMENGE', 0x200 );    // gelieferte Menge (1,2)
+define( 'PR_COL_LIEFERGEBINDE', 0x400 ); // gelieferte Gebinde(1,2)
+define( 'PR_COL_NETTOSUMME', 0x800 );    // Gesamtpreis Netto (1,3)
+define( 'PR_COL_BRUTTOSUMME', 0x1000 );   // Gesamtpreis Brutto (1,3)
+define( 'PR_COL_ENDSUMME', 0x2000 );      // Endpreis (mit Pfand) (1,3)
 //
 // (1) mit $gruppen_id: Anzeige nur fuer diese gruppe
 // (2) nur moeglich ab STATUS_LIEFERANT
 // (3) bei STATUS_BESTELLEN: berechnet aus Bestellmenge, sonst aus Liefermenge
 //
-define( 'PR_ROWS_NICHTGELIEFERT', 0x1000 ); // nicht gelieferte Produkte auch anzeigen
-define( 'PR_ROWS_NICHTGEFUELLT', 0x2000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGELIEFERT', 0x4000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGEFUELLT', 0x8000 ); // nicht gefuellte gebinde auch anzeigen?
 //
 // $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
 // $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
@@ -381,6 +382,9 @@ function products_overview(
   }
   $col[PR_COL_NAME] = array(
     'header' => "Produkt", 'title' => "Produktname", 'cols' => 1
+  );
+  $col[PR_COL_ANUMMER] = array(
+    'header' => "A-Nr.", 'title' => "Artikelnummer", 'cols' => 1
   );
   $col[PR_COL_BNUMMER] = array(
     'header' => "B-Nr.", 'title' => "Bestellnummer", 'cols' => 1
@@ -424,6 +428,7 @@ function products_overview(
         'title' => "der Gruppe zugeteilte Menge", 'header' => "Zuteilung", 'cols' => 2
       );
     }
+    $option_nichtgefuellt = false;
   } else {
     $col[PR_COL_BESTELLMENGE] = array(
      'title' => "von Konsumenten bestellte Mengen: fest/Toleranz/Basar",
@@ -434,6 +439,7 @@ function products_overview(
         'title' => "von Konsumenten und Basar bestellte Gebinde: aufgefüllt / fest /maximal",
         'header' => "bestellt Gebinde<br>voll / fest / max", 'cols' => 2
       );
+      $option_nichtgefuellt = true;
     } else {
       $col[PR_COL_BESTELLGEBINDE] = array(
         'title' => "von Konsumenten und Basar bestellte Gebinde: fest /maximal",
@@ -446,6 +452,7 @@ function products_overview(
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "beim Lieferanten bestellte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
         );
+        $option_nichtgefuellt = true;
       } else {
         $col[PR_COL_LIEFERMENGE] = array(
           'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => 3
@@ -453,6 +460,7 @@ function products_overview(
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "vom Lieferanten gelieferte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
         );
+        $option_nichtgefuellt = false;
       }
     }
   }
@@ -618,16 +626,21 @@ function products_overview(
     $brutto_summe += $bruttogesamtpreis;
     $endpreis_summe += $endgesamtpreis;
 
-    if( $gebinde < 1 ) {
-      $haben_nichtgefuellt = true;
-      if( ! ( $spalten & PR_ROWS_NICHTGEFUELLT ) ) {
-        continue;
+    if( $option_nichtgefuellt ) {
+      if( $gebinde < 1 ) {
+        $haben_nichtgefuellt = true;
+        if( ! ( $spalten & PR_ROWS_NICHTGEFUELLT ) ) {
+          continue;
+        }
       }
     }
 
     ?> <tr> <?
     if( $spalten & PR_COL_NAME ) {
       echo "<td>{$produkte_row['produkt_name']}</td>";
+    }
+    if( $spalten & PR_COL_ANUMMER ) {
+      echo "<td>{$produkte_row['artikelnummer']}</td>";
     }
     if( $spalten & PR_COL_BNUMMER ) {
       echo "<td>{$produkte_row['bestellnummer']}</td>";
@@ -767,7 +780,7 @@ function products_overview(
          title='$nichtgeliefert_header vorhanden; diese auch anzeigen?'></td>
     " );
   }
-  if( $haben_nichtgefuellt ) {
+  if( $option_nichtgefuellt && $haben_nichtgefuellt ) {
     option_menu_row( "
       <td colspan='2'>nicht-volle Gebinde zeigen:
         <input type='checkbox'
