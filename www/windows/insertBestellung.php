@@ -13,6 +13,7 @@
   $startzeit = date("Y-m-d H:i:s");
   $endzeit   = date("Y-m-d 20:00:00");
   $lieferung = date("Y-m-d H:i:s");
+  $bestellname = "";
   $done = false;
 
   $bestelliste = array();
@@ -42,7 +43,7 @@
 
   get_http_var('action','w','');
 
-  if( ( $action == 'insert' ) && get_http_var( 'startzeit_tag', 'u' ) ) {
+  if( $action == 'insert' ) {
     need_http_var("startzeit_tag",'u');
     need_http_var("startzeit_monat",'u');
     need_http_var("startzeit_jahr",'u');
@@ -85,7 +86,7 @@
 
 <form action='<? echo self_url(); ?>' method='post' class='small_form'>
   <? echo self_post(); ?>
-  <fieldset style='width:390px;' class='small_form'>
+  <fieldset style='width:350px;' class='small_form'>
     <legend>neue Bestellvorlage</legend>
     <input type="hidden" name="action" value="insert">
 
@@ -99,7 +100,7 @@
         echo "<div class='ok'>Bestellvorlage wurde eingefügt:</div>";
     ?>
 
-    <table style="width:370px;">
+    <table style="width:350px;">
       <tr>
         <td><label>Name:</label></td>
         <td><input type="text" name="bestellname" size="35" value="<? echo "$bestellname"; ?>"></td>

@@ -7,7 +7,9 @@
    fail_if_readonly();
    nur_fuer_dienst_IV();
 	 
-	 // ggf. die neues produkt hinzufügen
+   $errStr = "";
+
+   // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
 	 
 	    $newName        	                            = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newProdukt_name']));
@@ -20,7 +22,6 @@
 			$newKategorien                            = $HTTP_GET_VARS['newProduk_kategorien'];
 			
 			
-			$errStr = "";
 			if ($newName == "") $errStr = "Das neue Produkt muß einen Name haben!<br>";
 			if ($newEinheit == "") $errStr = "Das neue Produkt muß einen Einheit haben!<br>";
 			if ($newProduktgruppe == "") $errStr = "Das neue Produkt muß zu einer Produktgruppe gehören!<br>";
@@ -66,15 +67,16 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 </form>
 
 
-	 <form action="insertProdukt.php">
-		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
-		<table class="menu" width="400px">
+	 <form action="insertProdukt.php" class='small_form'>
+    <fieldset style='width:390px;' class='small_form'>
+    <legend>Neues Produkt</legend>
+		<table class="menu" width="390px">
 		   <tr>
-			    <td><b>Name</b></td>
-					<td><input type="input" size="20" name="newProdukt_name"></td>
+			    <td><label>Name</label></td>
+					<td><input type="input" size="40" name="newProdukt_name"></td>
 			 </tr>
 		   <tr>
-			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td><label>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></label></td>
 					<td>
 						<select name="newProdukt_produktgruppe">
                <?PHP
@@ -88,7 +90,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>
 		   <tr>
-			    <td><b>Verteil-Einheit (z.B. 100 gr)</b></td>
+			    <td><label>Verteil-Einheit (z.B. 100 gr)</label></td>
 					<td><input type="input" size="20" name="newProdukt_einheit"></td>
 			 </tr>		 
 		   <!-- TODO: liefereinheit ebenfalls setzen lassen! <tr>
@@ -111,7 +113,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>				
 		   <tr>
-			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php?produkte_pwd=<?PHP echo $produkte_pwd; ?>','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 					
 			    	<select name="newProduk_kategorien[]" size="5" multiple="multiple">

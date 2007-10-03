@@ -106,7 +106,7 @@
         if( !$readonly ) {
           echo "
                <tr>
-               <td><input type='button' value='Neues Produkt' class='bigbutton' onClick=\"window.open('windows/insertProdukt.php','insertProdukt','width=420,height=500,left=100,top=100').focus()\"></td>
+               <td><input type='button' value='Neues Produkt' class='bigbutton' onClick=\"window.open('windows/insertProdukt.php','insertProdukt','width=450,height=500,left=100,top=100').focus()\"></td>
                   <td valign='middle' class='smalfont'>Einen neues Produkt hinzufügen...</td>
                 </tr><tr>
                 <td><input type='button' value='alle Bearbeiten' class='bigbutton' onClick=\"document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();\"></td>
@@ -146,7 +146,6 @@
 		?>
 				 <input type="hidden" name="lieferanten_id" value="<?PHP echo $lieferanten_id; ?>">
 				 <input type="hidden" name="area" value="produkte">
-				 <input type="hidden" name="action" value="insert">
 
 			
 				<?php	//lieferanten bestimmen für die überschrift ...
