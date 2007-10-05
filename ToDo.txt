@@ -1,4 +1,13 @@
 Wenn ein Formular sich selbst wieder aufrufen soll, self_url()
 verwenden.
 
+Muell-Gruppe implementieren
+
+Kontoauszuege: Abgleich mit Papierkontoblaettern klaeren, unbestaetigte
+  Ueberweisungen deutlicher anzeigen, loeschbar machen
+
+Dienstplan: Alice (Gr. 8) fragt, wie sie den aktualisieren soll?
+
+Doku-Wiki: viele Seiten neu schreiben, einige aktualisieren (Freiwillige?)
+
 
