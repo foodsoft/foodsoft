@@ -6,13 +6,10 @@
 	
   setWikiHelpTopic( "foodsoft:bestellen" );
 
-	//$status und $useDate definieren, welche Bestellungen angezeigt werden
-	$status = array(STATUS_BESTELLEN);
-	$useDate = FALSE;
-
   if( $hat_dienst_IV ) {
-    //Alle Bestellungen mit Status Bestellen oder LIEFERANT
-    $status[] = STATUS_LIEFERANT;
+    // auch dienst_IV bestellt nur im STATUS_BESTELLEN (kann man ja zuruecksetzen!):
+    // $status[] = STATUS_LIEFERANT;
+    $useDate = FALSE;
     $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
     echo "<h1>Bestellen f&uuml;r den Basar</h1>";
   } else {
@@ -26,21 +23,22 @@
 
 
 			
-					   // Aktuelle Bestellung ermitteln...
-						 if ( get_http_var('bestellungs_id', 'u') ) {
-						    $bestell_id = $bestellungs_id;
-                $self_fields['bestell_id'] = $bestell_id;
-             } else {
-               get_http_var('bestell_id','u',false,true );
-             }
-             if( $bestell_id ) {
-						    if($hat_dienst_IV){
-						    	verteilmengenLoeschen($bestell_id);
-						    }
-						    $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
-						 } else {
-						 	$result = sql_bestellungen($status, $useDate);
-						 }
+  // Aktuelle Bestellung ermitteln...
+  if ( get_http_var('bestellungs_id', 'u') ) {
+    $bestell_id = $bestellungs_id;
+    $self_fields['bestell_id'] = $bestell_id;
+  } else {
+    get_http_var('bestell_id','u',false,true );
+  if( $bestell_id ) {
+    if( getStatus( $bestell_id ) != STATUS_BESTELLEN )
+      $bestell_id = NULL;
+  }
+
+  if( $bestell_id ) {
+    $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
+  } else {
+    $result = sql_bestellungen( STATUS_BESTELLEN, $useDate);
+  }
 				
 						if (mysql_num_rows($result) > 1) 
 						{
@@ -56,10 +54,10 @@
 												<th>Produkte</th>
 											</tr>
 											<?php
-											while ($row = mysql_fetch_array($result)) 
-											{ echo "
+											while ($row = mysql_fetch_array($result)) {
+                        echo "
 											<tr>											
-												<td><a class=\"tabelle\" href=\"index.php?area=bestellen&gruppen_id=".$gruppen_id."&bestellungs_id=".$row['id']."\">".$row['name']."</a></td>
+												<td><a class=\"tabelle\" href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>".$row['name']."</a></td>
 												<td>".$row['bestellstart']."</td>
 												<td>".$row['bestellende']."</td>";
 												//jetzt die anzahl der produkte bestimmen ...
@@ -73,7 +71,7 @@
 											</tr>	";
 												}
 							echo "</table> ";
-							exit;  //hier ist dann zu ende ...
+							return;
               ?>
 											
 				
@@ -486,7 +484,7 @@
 					 				// aber nur wenn es mehrere gibt ...
 					 				
 					 				// die aktuellen bestellungen werden ausgelesen ...
-					$result = sql_bestellungen($status, $useDate);
+					$result = sql_bestellungen( STATUS_BESTELLEN, $useDate);
 					
 		 ?>
 					 <table style="width:auto; position:absolute; top:160px; right:10px; font-size:0.9em;" class="menu">
