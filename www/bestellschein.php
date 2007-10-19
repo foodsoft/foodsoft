@@ -82,7 +82,7 @@ if( ! $bestell_id ) {
 
 get_http_var( 'gruppen_id', 'u', 0, true );
 
-if( $gruppen_id ) {
+if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
   if( $gruppen_id != $login_gruppen_id )
     nur_fuer_dienst(4);
   $gruppen_name = sql_gruppenname($gruppen_id);
