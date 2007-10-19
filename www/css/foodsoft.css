@@ -382,7 +382,7 @@ table.numbers th {
   text-align:center;
 }
 
-table.numbers td.number {
+td.number {
   white-space:nowrap;
   text-align:right;
 }
