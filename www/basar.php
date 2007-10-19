@@ -1,7 +1,7 @@
 <?php
 //error_reporting(E_ALL); // alle Fehler anzeigen
 
-assert( $angemeldet );  // aufruf nur per index.php?area=basar...
+assert( $angemeldet ) or exit();  // aufruf nur per index.php?area=basar...
 
 // self-variable:
 //

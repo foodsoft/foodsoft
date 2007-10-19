@@ -11,9 +11,6 @@
 
   ?> <h1>Bilanz</h1> <?
 
-  isset($basar_id) or $basar_id = 99;
-  isset($muell_id) or $muell_id = 13;
-
   // aktiva berechnen:
   //
 
@@ -111,6 +108,18 @@
     , $basar_wert
     );
     $aktiva += $basar_wert;
+
+    printf( "
+          <tr>
+            <th>Bestand Pfandverpackungen:</th>
+          </tr>
+          <tr>
+            <td class='number'>%.2lf</td>
+          </tr>
+      "
+    , $inventur_pfandwert
+    );
+    $aktiva += $inventur_pfandwert;
 
     printf( "
 

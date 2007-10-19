@@ -209,7 +209,7 @@ function rotationsplanView($row){
 
 
 function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts = false ) {
-  global $self_fields, $gruppe, $pfand;
+  global $self_fields, $gruppe, $pfand, $specialgroups;
 
   if( $editAmounts ) {
     echo "<form action='" . self_url() . "' method='post'>" . self_post();
@@ -226,7 +226,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
         <td colspan='2'> Gruppe: 
           <select name='gruppe'>
           <option value='' selected>(Gruppe w&auml;hlen)</option>
-          <? echo optionen_gruppen(); ?>
+          <? echo optionen_gruppen( false, false, false, false, false, $specialgroups ); ?>
           </select>
         </td>
         <td colspan='<? echo $cols-2; ?>' style='text-align:right;padding-bottom:1ex;'>

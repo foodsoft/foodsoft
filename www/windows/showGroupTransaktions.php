@@ -95,7 +95,7 @@ if( $meinkonto ) {
     " <td>Gruppe:</td>
       <td><select id='select_group' onchange=\"select_group('"
       . self_url( 'gruppen_id' ) . "');\">
-    " . optionen_gruppen( false, false,$gruppen_id, ( $gruppen_id ? false : "(bitte Gruppe wählen)" ) ) . "
+    " . optionen_gruppen( false, false, $gruppen_id, ( $gruppen_id ? false : "(bitte Gruppe wählen)"), false , $specialgroups ) . "
       </select></td>"
   );
   if( ! $gruppen_id )
