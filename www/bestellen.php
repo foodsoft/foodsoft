@@ -21,66 +21,100 @@
 
   $kontostand = kontostand( $gruppen_id );
 
-
-			
   // Aktuelle Bestellung ermitteln...
   if ( get_http_var('bestellungs_id', 'u') ) {
     $bestell_id = $bestellungs_id;
     $self_fields['bestell_id'] = $bestell_id;
   } else {
     get_http_var('bestell_id','u',false,true );
-  if( $bestell_id ) {
-    if( getStatus( $bestell_id ) != STATUS_BESTELLEN )
-      $bestell_id = NULL;
   }
 
   if( $bestell_id ) {
-    $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
-  } else {
-    $result = sql_bestellungen( STATUS_BESTELLEN, $useDate);
+    if( getState( $bestell_id ) != STATUS_BESTELLEN )
+      $bestell_id = NULL;
   }
-				
-						if (mysql_num_rows($result) > 1) 
-						{
-					?>
-					
-					       Es laufen im Moment mehrere Bestellungen. Bitte eine w‰hlen:<br />
-								 <br />
-					    			 <table style="width:600px;" class="liste">
-										 	<tr>
-												<th>Name</th>
-												<th>Beginn</th>
-												<th>Ende</th>
-												<th>Produkte</th>
-											</tr>
-											<?php
-											while ($row = mysql_fetch_array($result)) {
-                        echo "
-											<tr>											
-												<td><a class=\"tabelle\" href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>".$row['name']."</a></td>
-												<td>".$row['bestellstart']."</td>
-												<td>".$row['bestellende']."</td>";
-												//jetzt die anzahl der produkte bestimmen ...
-												$sql ="SELECT * 
-																FROM bestellvorschlaege 
-																WHERE gesamtbestellung_id=".$row['id']."";
-												$res = mysql_query($sql);
-												$num = mysql_num_rows($res);
-												echo"
-												<td>".$num."</td>
-											</tr>	";
-												}
-							echo "</table> ";
-							return;
-              ?>
-											
-				
-							 		
-		<?PHP
-				 } else 	{		// jetzt wird die gew‰hlte bestellung angezeigt
-				 
-				    $row_gesamtbestellung = mysql_fetch_array($result);
-				    $bestell_id = $row_gesamtbestellung['id'];
+
+  $laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN, $useDate );
+  if (mysql_num_rows($laufende_bestellungen) < 1) {
+    ?>
+      <div class='warn'>
+        Zur Zeit laufen leider keine Bestellungen!
+        <a href='index.php'>Zur√ºck...</a>
+      </div>
+    <?
+    return;
+  }
+
+  // tabelle fuer infos und auswahl bestellungen:
+  //
+  ?> <table width='100%' class='layout'><tr> <?
+
+  if( $bestell_id ) {
+    $gesamtbestellung = sql_bestellungen( STATUS_BESTELLEN, FALSE, $bestell_id );
+  }
+  if( $gesamtbestellung and mysql_num_rows($gesamtbestellung) == 1 ) {
+    $row_gesamtbestellung = mysql_fetch_array($gesamtbestellung);
+  } else {
+    $bestell_id = 0;
+  }
+  if( $bestell_id ) {
+    ?> <td style='text-align:left;padding-bottom:1em;'> <?
+    bestellung_overview( $row_gesamtbestellung, TRUE, $gruppen_id );
+    ?> </td> <?
+  }
+
+  if (mysql_num_rows($laufende_bestellungen) > 1) {
+    ?>
+      <td style='text-align:left;padding:1ex 1em 2em 3em;'>
+      <h4> Zur Zeit laufende Bestellungen: </h4>
+      <table style="width:600px;" class="liste">
+        <tr>
+          <th>Name</th>
+          <th>Beginn</th>
+          <th>Ende</th>
+          <th>Produkte</th>
+        </tr>
+    <?
+    while( $row = mysql_fetch_array($laufende_bestellungen) ) {
+      //jetzt die anzahl der produkte bestimmen ...
+      $sql = "SELECT * 
+        FROM bestellvorschlaege 
+        WHERE gesamtbestellung_id={$row['id']}
+      ";
+      $res = mysql_query($sql);
+      $num = mysql_num_rows($res);
+      if( $row['id'] != $bestell_id ) {
+        echo "
+          <tr>
+            <td><a class='tabelle' href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>{$row['name']}</a></td>
+            <td>{$row['bestellstart']}</td>
+            <td>{$row['bestellende']}</td>
+            <td>$num</td>
+          </tr>
+        ";
+      } else {
+        echo "
+          <tr class='active'>
+            <td style='font-weight:bold;'>{$row['name']}</td>
+            <td>{$row['bestellstart']}</td>
+            <td>{$row['bestellende']}</td>
+            <td>$num</td>
+          </tr>
+        ";
+      }
+    }
+    echo "</table></td>";
+  }
+
+  ?> </tr></table> <?
+
+  if( ! $bestell_id )
+    return;
+
+
+  // ab hier: eigentliches bestellformular:
+
+
 						$gesamt_preis = 0;
 						$max_gesamt_preis = 0;
 						
@@ -473,7 +507,7 @@
 				</script>		
 				
 				
-				<?bestellung_overview($row_gesamtbestellung, TRUE, $gruppen_id);
+				<?
 				   if (isset($HTTP_GET_VARS['produkt_id'])) {
 						// zusaetzliches Produkt in Bestellvorlage aufnehmen
             need_http_var( 'produkt_id', 'u' );
@@ -487,35 +521,6 @@
 					$result = sql_bestellungen( STATUS_BESTELLEN, $useDate);
 					
 		 ?>
-					 <table style="width:auto; position:absolute; top:160px; right:10px; font-size:0.9em;" class="menu">
-					 			<tr>
-					 				<th colspan="2">andere Bestellungen...</th>
-					 			</tr>
-								<?php
-								//nur bei anderen bestellugnen soll das angezeigt werden andernfalls Meldung ...
-								//TODO: mit code/views:select_bestellung_view zusammenf¸hren
-						if (mysql_num_rows($result) > 1) 
-						{										
-								while ($row = mysql_fetch_array($result)) 
-								{ 
-										if ($row['id'] != $bestell_id)
-										{
-											echo "
-											<tr>											
-												<td><a class=\"tabelle\" href=\"index.php?area=bestellen&gruppen_id=".$gruppen_id."&bestellungs_id=".$row['id']."\">".$row['name']."</a></td>
-												<td> | Ende: ".$row['bestellende']."</td>
-											</tr>	";
-										}
-									}		
-							} else 
-							{
-								echo "
-									<tr>
-										<td colspan=\"2\">zur Zeit gibt es keine weiteren Bestellungen ...</td>
-									</tr>";
-								}
-				?>					
-						</table>
 	
 								<!-- Bestelltabelle Anfang -->
 								
@@ -1242,7 +1247,6 @@
 						
 				
 		
-				 }
 				 
 			
   ?>

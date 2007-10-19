@@ -419,6 +419,9 @@ tr.modified td, tr.modified th, .modified {
   background-image:url(modified.gif);
   background-repeat:repeat;
 }
+tr.active td {
+  background-color:#ccffcc;
+}
 
 div.untertabelle {
   font-size:12pt;
