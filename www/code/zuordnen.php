@@ -1420,10 +1420,14 @@ function optionen_gruppen(
 , $selected = false
 , $option_0 = false
 , $allowedgroups = false
+, $additionalgroups = array()
 ) {
+  global $specialgroups;
   if( $allowedgroups )
     if( ! is_array( $allowedgroups ) )
       $allowedgroups = array( $allowedgroups );
+  if( ! is_array( $additionalgroups ) )
+    $additionalgroups = array( $additionalgroups );
   $gruppen = sql_gruppen($bestell_id,$produkt_id);
   $output='';
   if( $option_0 ) {
@@ -1436,8 +1440,12 @@ function optionen_gruppen(
   }
   while($gruppe = mysql_fetch_array($gruppen)){
     $id = $gruppe['id'];
-    if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
-      continue;
+    if( ! in_array( $id, $additionalgroups ) ) {
+      if( in_array( $id, $specialgroups ) )
+        continue;
+      if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
+        continue;
+    }
     $output = "$output
       <option value='$id'";
     if( $selected == $id ) {

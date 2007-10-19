@@ -186,6 +186,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
        , $gruppen_id
        , "Alle (Gesamtbestellung)"
       , ( $hat_dienst_IV ? false : $login_gruppen_id )
+      , $specialgroups
       ) . " </select></td>"
   );
 

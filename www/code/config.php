@@ -56,4 +56,11 @@
   $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
   $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
 
+  // gruppen mit sonderbedeutung merken:
+  $specialgroups = array();
+  if( isset( $basar_id ) )
+    $specialgroups[] = $basar_id;
+  if( isset( $muell_id ) )
+    $specialgroups[] = $muell_id;
+
 ?>

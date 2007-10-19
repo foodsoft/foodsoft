@@ -72,10 +72,11 @@ if( $action == 'delete' ) {
 
   $result = sql_gruppen();
   while ($row = mysql_fetch_array($result)) {
-      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
-    $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
-      }
-    $nr = $row['id'] % 1000;
+    $id = $row['id'];
+    if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
+      $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
+    }
+    $nr = $id % 1000;
     echo "
       <tr>
         <td>$nr</td>
@@ -84,7 +85,7 @@ if( $action == 'delete' ) {
         <td>{$row['email']}</td>
         <td>{$row['telefon']}</td>
 	";
-      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
         echo "<td align='right'>$kontostand</td>";
 	} else {
 		
@@ -103,14 +104,14 @@ if( $action == 'delete' ) {
            <img src='img/b_browse.png' border='0' title='Kontotransaktionen' alt='Kontotransaktionen'/>
           </a>
         ";
-      } elseif( $login_gruppen_id == $row['id'] ) {
+      } elseif( $login_gruppen_id == $id ) {
         ?>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
            <img src='img/b_browse.png' border='0' title='Mein Konto' alt='Mein Konto'/>
           </a>
         <?
       }
-      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $row['id'] ) ) {
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
         ?>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
           href="javascript:window.open('index.php?window=editGroup&gruppen_id=<? echo $row['id']; ?>','insertGroup','width=390,height=420,left=200,top=100').focus();">
@@ -120,7 +121,11 @@ if( $action == 'delete' ) {
       // loeschen nur wenn
       // - kontostand 0
       // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
-      if( ( $dienst == 5 ) && ( abs($kontostand) < 0.005 ) && ( $row['mitgliederzahl'] == 0 ) ) {
+      if(    ( $dienst == 5 )
+          && ( abs($kontostand) < 0.005 )
+          && ( $row['mitgliederzahl'] == 0 )
+          && ( ! in_array( $id, $specialgroups ) )
+      ) {
         ?>
           <a class='png' href="javascript:if(confirm('Soll die Gruppe wirklich GELÖSCHT werden?')){
             document.forms['reload_form'].action.value='delete';

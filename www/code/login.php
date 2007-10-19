@@ -240,7 +240,6 @@
        <div class='newfield'>
          <label>Gruppe:</label>
          <select size='1' name='login_gruppen_id'>
-           <option value='' selected>(bitte Gruppe waehlen)</option>
   ";
   echo optionen_gruppen();
   echo "
