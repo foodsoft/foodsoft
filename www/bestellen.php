@@ -63,50 +63,51 @@
     ?> </td> <?
   }
 
-  if (mysql_num_rows($laufende_bestellungen) > 1) {
-    ?>
-      <td style='text-align:left;padding:1ex 1em 2em 3em;'>
-      <h4> Zur Zeit laufende Bestellungen: </h4>
-      <table style="width:600px;" class="liste">
+  ?>
+    <td style='text-align:left;padding:1ex 1em 2em 3em;'>
+    <h4> Zur Zeit laufende Bestellungen: </h4>
+    <table style="width:600px;" class="liste">
+      <tr>
+        <th>Name</th>
+        <th>Beginn</th>
+        <th>Ende</th>
+        <th>Produkte</th>
+      </tr>
+  <?
+  while( $row = mysql_fetch_array($laufende_bestellungen) ) {
+    //jetzt die anzahl der produkte bestimmen ...
+    $sql = "SELECT * 
+      FROM bestellvorschlaege 
+      WHERE gesamtbestellung_id={$row['id']}
+    ";
+    $res = mysql_query($sql);
+    $num = mysql_num_rows($res);
+    if( $row['id'] != $bestell_id ) {
+      echo "
         <tr>
-          <th>Name</th>
-          <th>Beginn</th>
-          <th>Ende</th>
-          <th>Produkte</th>
+          <td><a class='tabelle' href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>{$row['name']}</a></td>
+          <td>{$row['bestellstart']}</td>
+          <td>{$row['bestellende']}</td>
+          <td>$num</td>
         </tr>
-    <?
-    while( $row = mysql_fetch_array($laufende_bestellungen) ) {
-      //jetzt die anzahl der produkte bestimmen ...
-      $sql = "SELECT * 
-        FROM bestellvorschlaege 
-        WHERE gesamtbestellung_id={$row['id']}
       ";
-      $res = mysql_query($sql);
-      $num = mysql_num_rows($res);
-      if( $row['id'] != $bestell_id ) {
-        echo "
-          <tr>
-            <td><a class='tabelle' href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>{$row['name']}</a></td>
-            <td>{$row['bestellstart']}</td>
-            <td>{$row['bestellende']}</td>
-            <td>$num</td>
-          </tr>
-        ";
-      } else {
-        echo "
-          <tr class='active'>
-            <td style='font-weight:bold;'>{$row['name']}</td>
-            <td>{$row['bestellstart']}</td>
-            <td>{$row['bestellende']}</td>
-            <td>$num</td>
-          </tr>
-        ";
-      }
+    } else {
+      echo "
+        <tr class='active'>
+          <td style='font-weight:bold;'>{$row['name']}</td>
+          <td>{$row['bestellstart']}</td>
+          <td>{$row['bestellende']}</td>
+          <td>$num</td>
+        </tr>
+      ";
     }
-    echo "</table></td>";
   }
-
-  ?> </tr></table> <?
+  ?>
+        </table>
+      </td>
+    </tr>
+    </table>
+  <?
 
   if( ! $bestell_id )
     return;
