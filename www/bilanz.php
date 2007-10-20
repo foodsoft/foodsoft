@@ -19,7 +19,7 @@
   if( ! isset( $inventur_pfandwert ) )
     $inventur_pfandwert = 0.0;
 
-  $kontostaende = sql_bankkontostand();
+  $kontosalden = sql_saldo();
 
   $basar_wert = 0.0;
   $basar = sql_basar();
@@ -117,9 +117,9 @@
   ";
 
   rubrik( "Bankguthaben" );
-  while( $konto = mysql_fetch_array( $kontostaende ) ) {
-    posten( "Konto {$konto['name']}", $konto['kontostand'] );
-    $aktiva += $konto['kontostand'];
+  while( $konto = mysql_fetch_array( $kontosalden ) ) {
+    posten( "Konto {$konto['name']}", $konto['saldo'] );
+    $aktiva += $konto['saldo'];
   }
   posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
   $aktiva += $gruppen_einzahlungen_ungebucht;

@@ -975,7 +975,7 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
 }
 
 
-function sql_bankkontostand( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
+function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   $where = "";
   if( $konto_id ) {
     $where .= (
@@ -994,14 +994,47 @@ function sql_bankkontostand( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
       );
     }
   }
-
+  // echo "<br>where 1: ,$where,<br>";
   return doSql( "
-    SELECT sum( betrag ) as kontostand,
+    SELECT sum( betrag ) as saldo,
            bankkonten.name as name
     FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id
-    GROUP BY konto_id
     $where
+    GROUP BY konto_id
+  " );
+}
+
+function sql_konten() {
+  return doSql( "SELECT * FROM bankkonten ORDER BY name" );
+}
+
+function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
+  $where = "";
+  $groupby = "GROUP BY konto_id, kontoauszug_jahr, kontoauszug_nr";
+  if( $konto_id ) {
+    $where .= (
+      ( $where ? " AND " : " WHERE " ) . "(konto_id=$konto_id)"
+    );
+  }
+  if( $auszug_jahr ) {
+    $where .= (
+      ( $where ? " AND " : " WHERE " ) . "(kontoauszug_jahr=$auszug_jahr)"
+    );
+    if( $auszug_nr ) {
+      $where .= (
+        ( $where ? " AND " : " WHERE " ) . "(kontoauszug_nr=$auszug_nr)"
+      );
+      $groupby = "";
+    }
+  }
+  // echo "<br>where 2: ,$where,<br>";
+  return doSql( "
+    SELECT *, bankkonto.id as id FROM bankkonto
+    JOIN bankkonten ON bankkonten.id=konto_id
+    $where
+    $groupby
+    ORDER BY konto_id, kontoauszug_jahr, kontoauszug_nr
   " );
 }
 

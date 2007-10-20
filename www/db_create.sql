@@ -302,7 +302,7 @@ CREATE TABLE `bankkonto` (
  `konto_id` smallint(4) NOT NULL,
  `kommentar` TEXT NOT NULL
   PRIMARY KEY  (`id`),
-  KEY `secondary` (`kontoauszug_jahr`,`kontoauszug_nr`)
+  KEY `secondary` ( `konto_id`, `kontoauszug_jahr`,`kontoauszug_nr`)
  )
  ENGINE = myisam DEFAULT CHARACTER SET utf8 COMMENT = 'Bankkontotransaktionen';
 
