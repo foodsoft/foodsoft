@@ -118,7 +118,11 @@
 
   rubrik( "Bankguthaben" );
   while( $konto = mysql_fetch_array( $kontosalden ) ) {
-    posten( "Konto {$konto['name']}", $konto['saldo'] );
+    posten( "
+      <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"
+      >Konto {$konto['name']}</a>"
+    , $konto['saldo']
+    );
     $aktiva += $konto['saldo'];
   }
   posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );

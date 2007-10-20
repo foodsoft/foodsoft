@@ -996,7 +996,8 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   }
   // echo "<br>where 1: ,$where,<br>";
   return doSql( "
-    SELECT sum( betrag ) as saldo,
+    SELECT konto_id,
+           sum( betrag ) as saldo,
            bankkonten.name as name
     FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id

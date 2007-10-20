@@ -7,6 +7,9 @@
     exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
   } 
 
+  setWindowSubtitle( 'Kontoverwaltung' );
+  setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
+
   ?> <h1>Kontoverwaltung</h1> <?
 
   $konten = sql_konten();
@@ -85,10 +88,11 @@
     need( mysql_num_rows( $saldo ) == 1 );
 
     $saldo_row = mysql_fetch_array( $saldo );
+    $detailurl="javascript:neuesfenster('index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$jahr&auszug_nr=$nr','kontoauszug');";
     echo "
-      <tr>
+      <tr onclick=\"$detailurl\">
         <td>$jahr</td>
-        <td class='number'>$nr</td>
+        <td class='number'><a href='$detailurl'>$nr</a></td>
         <td class='number'>$posten</td>
         <td class='number'>{$saldo_row['saldo']}</td>
       </tr>
