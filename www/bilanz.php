@@ -37,15 +37,17 @@
 
   $abschreibung = kontostand( $muell_id );
 
-  $gruppen_guthaben = 0.0;
-  $gruppen_forderungen = 0.0;
   
   // passiva berechnen:
   //
 
+  $gruppen_guthaben = 0.0;
+  $gruppen_forderungen = 0.0;
+  $gruppen_sockel = 0.0;
   $gruppen = sql_gruppen();
   while( $gruppe = mysql_fetch_array($gruppen) ) {
     $w = kontostand( $gruppe['id'] );
+    $gruppen_sockel += $sockelbetrag * $gruppe['mitgliederzahl'];
     if( $w > 0 )
       $gruppen_guthaben += $w;
     else
@@ -94,71 +96,83 @@
           <tr>
             <td class='number'>" . sprintf( "%8.2lf", $kontostand_wert ) . "</td>
           </tr>
-    ";
-    $aktiva += $kontostand_wert;
+  ";
+  $aktiva += $kontostand_wert;
 
-    printf( "
-          <tr>
-            <th>Warenbestand Basar:</th>
-          </tr>
-          <tr>
-            <td class='number'>%.2lf</td>
-          </tr>
-      "
-    , $basar_wert
-    );
-    $aktiva += $basar_wert;
+  printf( "
+        <tr>
+          <th>Warenbestand Basar:</th>
+        </tr>
+        <tr>
+          <td class='number'>%.2lf</td>
+        </tr>
+    "
+  , $basar_wert
+  );
+  $aktiva += $basar_wert;
 
-    printf( "
-          <tr>
-            <th>Bestand Pfandverpackungen:</th>
-          </tr>
-          <tr>
-            <td class='number'>%.2lf</td>
-          </tr>
-      "
-    , $inventur_pfandwert
-    );
-    $aktiva += $inventur_pfandwert;
+  printf( "
+        <tr>
+          <th>Bestand Pfandverpackungen:</th>
+        </tr>
+        <tr>
+          <td class='number'>%.2lf</td>
+        </tr>
+    "
+  , $inventur_pfandwert
+  );
+  $aktiva += $inventur_pfandwert;
 
-    printf( "
+  printf( "
 
-          <tr>
-            <th>Forderungen an Gruppen:</th>
-          </tr>
-          <tr>
-            <td class='number'>%.2lf</td>
-          </tr>
-        </table>
-      "
-    , $gruppen_forderungen
-    );
-    
-    $aktiva += $gruppen_forderungen;
+        <tr>
+          <th>Forderungen an Gruppen:</th>
+        </tr>
+        <tr>
+          <td class='number'>%.2lf</td>
+        </tr>
+    "
+  , $gruppen_forderungen
+  );
+  
+  $aktiva += $gruppen_forderungen;
 
-    echo "
-        </td><td>
+  //
+  // ab hier passiva:
+  //
+  echo "
+      </table>
+      </td><td>
 
-        <table class='inner' width='100%'>
-    ";
+      <table class='inner' width='100%'>
+  ";
 
-    printf( "
-          <tr>
-            <th>Einlagen der Gruppen:</th>
-          </tr>
-          <tr>
-            <td class='number'>%.2lf</td>
-          </tr>
-      "
-    , $gruppen_guthaben
-    );
-    $passiva += $gruppen_guthaben;
+  printf( "
+        <tr>
+          <th>Einlagen der Gruppen:</th>
+        </tr>
+        <tr>
+          <td>Sockeleinlagen:</td>
+        </tr>
+        <tr>
+          <td class='number'>%.2lf</td>
+        </tr>
+        <tr>
+          <td>Kontoguthaben:</td>
+        </tr>
+        <tr>
+          <td class='number'>%.2lf</td>
+        </tr>
+    "
+  , $gruppen_sockel, $gruppen_guthaben
+  );
+  $passiva += ( $gruppen_guthaben + $gruppen_sockel );
 
-    echo "
+  echo "
 
-          <tr>
-            <th>Verbindlichkeiten:</th>
-          </tr>
+        <tr>
+          <th>Verbindlichkeiten:</th>
+        </tr>
   ";
   while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
     printf( "
@@ -174,6 +188,21 @@
     );
     $passiva += $vkeit['schuld'];
   }
+
+  $bilanzverlust = $aktiva - $passiva;
+  $passiva += $bilanzverlust;
+
+  printf( "
+
+        <tr>
+          <th>Bilanzverlust:</th>
+        </tr>
+        <tr>
+          <td class='number'>%.2lf</td>
+        </tr>
+    "
+  , $bilanzverlust
+  );
 
   echo "
         </table>

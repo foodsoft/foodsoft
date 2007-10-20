@@ -11,6 +11,20 @@ INSERT INTO `nahrungskette`.`leitvariable` (
 );
 
 
+CREATE TABLE `bankkonto` (
+ `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+ `kontoauszug_jahr` SMALLINT NOT NULL, 
+ `kontoauszug_nr` SMALLINT NOT NULL, 
+ `eingabedatum` DATE NOT NULL, 
+ `gruppen_id` INT NOT NULL,
+ `lieferanten_id` INT NOT NULL,
+ `dienstkontrollblatt_id` INT NOT NULL,
+ `betrag` DECIMAL(10,2) NOT NULL,
+ `kommentar` TEXT NOT NULL
+  PRIMARY KEY  (`id`),
+  KEY `secondary` (`kontoauszug_jahr`,`kontoauszug_nr`)
+ )
+ ENGINE = myisam DEFAULT CHARACTER SET utf8 COMMENT = 'Bankkontotransaktionen';
 
 -- ab hier: alt...
 --
