@@ -650,6 +650,11 @@ $areas[] = array("area" => "index.php?area=bestellungen_overview",
 $areas[] = array("area" => "index.php?area=bestellen",
 	"hint" => "Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....",
 	"title" => "Bestellen");
+
+$areas[] = array("area" => "index.php?area=bilanz",
+	"hint" => "Finanzen der FC: Überblick und Verwaltung",
+	"title" => "Bilanz");
+
 if($hat_dienst_IV){
 	$areas[] = array("area" => "index.php?area=produkte",
 	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 

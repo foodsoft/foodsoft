@@ -9,7 +9,7 @@
     exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
   } 
 
-  ?> <h1>Bilanz</h1> <?
+  ?> <h1>Bilanz - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink></h1> <?
 
   // aktiva berechnen:
   //
