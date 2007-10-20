@@ -265,6 +265,19 @@ tr.summe td {
   border-top:2px solid black;
   border-bottom:2px solid black;
 }
+tr.rubrik th {
+  background-color:#eeeeee;
+  border-top:1px solid black;
+  margin:1ex 0ex 1ex 0ex;
+}
+tr.posten td {
+  padding:1em 0em 1em 0em;
+  text-align:right;
+}
+tr.posten td.number {
+  font-weight:bold;
+}
+
 
 .bigbutton		{
 	width:200px;

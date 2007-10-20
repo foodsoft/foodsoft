@@ -786,7 +786,7 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
 }
 
 
-function doSql($sql, $debug_level, $error_text){
+function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
 	$result = mysql_query($sql) or
 	error(__LINE__,__FILE__,$error_text."(".$sql.")",mysql_error(), debug_backtrace());
@@ -941,6 +941,7 @@ function sqlGroupTransaction($transaktionsart,
 				 $summe, $auszug_nr = "NULL", $auszug_jahr = "NULL",
 				 $notiz ="", 
 				 $kontobewegungs_datum ="NOW()"){
+  global $dienstkontrollblatt_id;
   fail_if_readonly();
 
 	   $sql="INSERT INTO gruppen_transaktion 
@@ -2375,6 +2376,7 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
   }
   return TRUE;
 }
+
 /**
  *
  */
@@ -2384,6 +2386,16 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
     exit();
   }
   return TRUE;
+}
+
+function need( $exp, $comment ) {
+  global $print_on_exit;
+  isset( $comment ) or $comment = "Fataler Fehler";
+  if( ! $exp ) {
+    echo "<div class='warn'>$comment</div>$print_on_exit";
+    exit();
+  }
+  return true;
 }
 
 /**
@@ -2401,7 +2413,10 @@ function reload_immediately( $url ) {
 function fail_if_readonly() {
   global $readonly;
   if( $readonly ) {
-    echo "<div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div></body></html>";
+    echo "
+      <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div>
+      $print_on_exit
+    ";
     exit();
   }
 }

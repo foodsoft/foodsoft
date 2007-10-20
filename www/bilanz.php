@@ -37,6 +37,13 @@
 
   $abschreibung = kontostand( $muell_id );
 
+  $result = doSQL( "
+    SELECT sum( summe ) as summe
+    FROM gruppen_transaktion
+    WHERE (type=0) and (kontoauszugs_nr<=0)
+  " );
+  $row = mysql_fetch_array( $result );
+  $gruppen_einzahlungen_ungebucht = $row['summe'];
   
   // passiva berechnen:
   //
@@ -70,71 +77,55 @@
     WHERE gesamtbestellungen.state = 'Verteilt' and isnull(gesamtbestellungen.bezahlung) 
     GROUP BY lieferanten.id
     HAVING schuld <> 0;
-  ", LEVEL_IMPORTANT, "fehler: " );
+  " );
 
 
   $aktiva = 0;
   $passiva = 0;
 
+
+  function rubrik( $name ) {
+    echo "
+      <tr class='rubrik'>
+        <th colspan='2'>$name</th>
+      </tr>
+    ";
+  }
+  function posten( $name, $wert ) {
+    printf( "
+      <tr class='posten'>
+        <td>%s:</td>
+        <td class='number'>%.2lf</td>
+      </tr>
+      "
+    , $name, $wert
+    );
+  }
+
   echo "
     <table width='100%'>
       <colgroup>
-        <col width='*'>
-        <col width='*'>
+        <col width='*'><col width='*'>
       </colgroup>
-      <tr>
-        <th> Aktiva </th>
-        <th> Passiva </th>
-      </tr>
+      <tr><th> Aktiva </th><th> Passiva </th></tr>
       <tr>
         <td>
 
         <table class='inner' width='100%'>
-          <tr>
-            <th>Bankguthaben:</th>
-          </tr>
-          <tr>
-            <td class='number'>" . sprintf( "%8.2lf", $kontostand_wert ) . "</td>
-          </tr>
   ";
-  $aktiva += $kontostand_wert;
 
-  printf( "
-        <tr>
-          <th>Warenbestand Basar:</th>
-        </tr>
-        <tr>
-          <td class='number'>%.2lf</td>
-        </tr>
-    "
-  , $basar_wert
-  );
-  $aktiva += $basar_wert;
+  rubrik( "Bankguthaben" );
+  posten( "Kontostand", $kontostand_wert );
+  posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
+  $aktiva += ( $kontostand_wert + $gruppen_einzahlungen_ungebucht );
 
-  printf( "
-        <tr>
-          <th>Bestand Pfandverpackungen:</th>
-        </tr>
-        <tr>
-          <td class='number'>%.2lf</td>
-        </tr>
-    "
-  , $inventur_pfandwert
-  );
-  $aktiva += $inventur_pfandwert;
+  rubrik( "Umlaufvermögen" );
+  posten( "Warenbestand Basar", $basar_wert );
+  posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
+  $aktiva += ( $basar_wert + $inventur_pfandwert );
 
-  printf( "
-
-        <tr>
-          <th>Forderungen an Gruppen:</th>
-        </tr>
-        <tr>
-          <td class='number'>%.2lf</td>
-        </tr>
-    "
-  , $gruppen_forderungen
-  );
-  
+  rubrik( "Forderungen" );
+  posten( "Forderungen an Gruppen", $gruppen_forderungen );
   $aktiva += $gruppen_forderungen;
 
   //
@@ -147,62 +138,22 @@
       <table class='inner' width='100%'>
   ";
 
-  printf( "
-        <tr>
-          <th>Einlagen der Gruppen:</th>
-        </tr>
-        <tr>
-          <td>Sockeleinlagen:</td>
-        </tr>
-        <tr>
-          <td class='number'>%.2lf</td>
-        </tr>
-        <tr>
-          <td>Kontoguthaben:</td>
-        </tr>
-        <tr>
-          <td class='number'>%.2lf</td>
-        </tr>
-    "
-  , $gruppen_sockel, $gruppen_guthaben
-  );
+  rubrik( "Einlagen der Gruppen" );
+  posten( "Sockeleinlagen", $gruppen_sockel );
+  posten( "Kontoguthaben", $gruppen_guthaben );
   $passiva += ( $gruppen_guthaben + $gruppen_sockel );
 
-  echo "
-
-        <tr>
-          <th>Verbindlichkeiten:</th>
-        </tr>
-  ";
+  rubrik( "Verbindlichkeiten" );
   while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-    printf( "
-      <tr>
-        <td>%s:</td>
-      </tr>
-      <tr>
-        <td class='number'>%.2lf</td>
-      </tr>
-      "
-    , $vkeit['name']
-    , $vkeit['schuld']
-    );
+    posten( $vkeit['name'], $vkeit['schuld'] );
     $passiva += $vkeit['schuld'];
   }
 
   $bilanzverlust = $aktiva - $passiva;
   $passiva += $bilanzverlust;
 
-  printf( "
-
-        <tr>
-          <th>Bilanzverlust:</th>
-        </tr>
-        <tr>
-          <td class='number'>%.2lf</td>
-        </tr>
-    "
-  , $bilanzverlust
-  );
+  rubrik( "Bilanzausgleich" );
+  posten( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust", $bilanzverlust );
 
   echo "
         </table>
