@@ -19,15 +19,11 @@
   if( ! isset( $inventur_pfandwert ) )
     $inventur_pfandwert = 0.0;
 
-  if( ! isset( $kontostand_datum ) )
-    $kontostand_datum = "(keine)";
-  if( ! isset( $kontostand_wert ) )
-    $kontostand_wert = 0.0;
+  $kontostaende = sql_bankkontostand();
 
   $basar_wert = 0.0;
   $basar = sql_basar();
 
-  
   while( $row = mysql_fetch_array( $basar ) ) {
     // print_r( $row );
     $basar_wert += $row['basar'] * $row['preis'];
@@ -84,22 +80,28 @@
   $passiva = 0;
 
 
+  $erster_posten = 1;
   function rubrik( $name ) {
+    global $erster_posten;
     echo "
       <tr class='rubrik'>
         <th colspan='2'>$name</th>
       </tr>
     ";
+    $erster_posten = 1;
   }
   function posten( $name, $wert ) {
+    global $erster_posten;
     printf( "
-      <tr class='posten'>
+      <tr class='%s'>
         <td>%s:</td>
         <td class='number'>%.2lf</td>
       </tr>
       "
+    , $erster_posten ? 'ersterposten' : 'posten'
     , $name, $wert
     );
+    $erster_posten = 0;
   }
 
   echo "
@@ -115,9 +117,12 @@
   ";
 
   rubrik( "Bankguthaben" );
-  posten( "Kontostand", $kontostand_wert );
+  while( $konto = mysql_fetch_array( $kontostaende ) ) {
+    posten( "Konto {$konto['name']}", $konto['kontostand'] );
+    $aktiva += $konto['kontostand'];
+  }
   posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
-  $aktiva += ( $kontostand_wert + $gruppen_einzahlungen_ungebucht );
+  $aktiva += $gruppen_einzahlungen_ungebucht;
 
   rubrik( "Umlaufvermögen" );
   posten( "Warenbestand Basar", $basar_wert );

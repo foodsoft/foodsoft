@@ -268,13 +268,17 @@ tr.summe td {
 tr.rubrik th {
   background-color:#eeeeee;
   border-top:1px solid black;
-  margin:1ex 0ex 1ex 0ex;
+  padding:1ex 0ex 1ex 0ex;
 }
 tr.posten td {
+  padding:0ex 0em 1em 0em;
+  text-align:right;
+}
+tr.ersterposten td {
   padding:1em 0em 1em 0em;
   text-align:right;
 }
-tr.posten td.number {
+tr.posten td.number, tr.ersterposten td.number {
   font-weight:bold;
 }
 

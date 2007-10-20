@@ -974,6 +974,38 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
 }
 
+
+function sql_bankkontostand( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
+  $where = "";
+  if( $konto_id ) {
+    $where .= (
+      ( $where ? " AND " : " WHERE " ) . "(konto_id=$konto_id)"
+    );
+  }
+  if( $auszug_jahr ) {
+    if( $auszug_nr ) {
+      $where .= (
+        ( $where ? " AND " : " WHERE " )
+          . "( (kontoauszug_jahr<$auszug_jahr) or ((kontoauszug_jahr=$auszug_jahr) and (kontoauszug_nr<=$auszug_nr)) )"
+      );
+    } else {
+      $where .= (
+        ( $where ? " AND " : " WHERE " ) . "(kontoauszug_jahr<=$auszug_jahr)"
+      );
+    }
+  }
+
+  return doSql( "
+    SELECT sum( betrag ) as kontostand,
+           bankkonten.name as name
+    FROM bankkonto
+    JOIN bankkonten ON bankkonten.id=konto_id
+    GROUP BY konto_id
+    $where
+  " );
+}
+
+
 /**
  *
  */
@@ -2388,9 +2420,8 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
   return TRUE;
 }
 
-function need( $exp, $comment ) {
+function need( $exp, $comment = "Fataler Fehler" ) {
   global $print_on_exit;
-  isset( $comment ) or $comment = "Fataler Fehler";
   if( ! $exp ) {
     echo "<div class='warn'>$comment</div>$print_on_exit";
     exit();
