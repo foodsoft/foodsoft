@@ -1047,20 +1047,56 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
-  
-  
-  
+function adefault( $array, $index, $default ) {
+  if( isset( $array[$index] ) )
+    return $array[$index];
+  else
+    return $default;
+}
+
+/*
+ * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
+ *
+ */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
   global $dienstkontrollblatt_id;
   nur_fuer_dienst_IV();
-  if( isset( $soll['konto_id'] ) or isset( $haben['konto_id'] ) )
-    $typ = 0;
-  else
+  need( $dienstkontrollblatt_id and $notiz );
+  need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
+  if( $soll['konto_id'] == -1 and $haben['konto_id'] == -1 )
     $typ = 1;
+  else
+    $typ = 0;
 
-  
+  if( $soll['konto_id'] == -1 ) {
+    $soll_id = sql_gruppen_transaktion(
+      $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
+    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
+    );
+  } else {
+    $soll_id = sql_bank_transaktion(
+      $typ, adefault( $soll, 'gruppen_id', 0 ), -$betrag
+    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
+    );
 
 
+  if( $haben['konto_id'] == -1 ) {
+    $haben_id = sql_gruppen_transaktion(
+      $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
+    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
+    );
+  } else {
+    $haben_id = sql_bank_transaktion(
+      $typ, adefault( $haben, 'gruppen_id', 0 ), $betrag
+    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
+    );
+  }
+
+  return;
 }
 
 
