@@ -1536,6 +1536,33 @@ function optionen_gruppen(
   return $output;
 }
 
+function optionen_lieferanten( $selected = false, $option_0 = false ) {
+  $lieferanten = sql_lieferanten();
+  $output = "";
+  if( $option_0 ) {
+    $output = "<option value='0'";
+    if( $selected == 0 ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">$option_0</option>";
+  }
+  while( $lieferant = mysql_fetch_array($lieferanten) ) {
+    $id = $lieferant['id'];
+    $output .= "<option value='$id'";
+    if( $selected == $id ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">{$lieferant['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
+    $output = "<option value='0' selected>(bitte Lieferant wählen)</option>" . $output;
+  }
+  return $output;
+}
+  
 /**
  * Daten zu Bestellvorschlag
  */
@@ -1748,18 +1775,21 @@ function lieferant_name ($id){
 	return $name;
 }
 
+function sql_lieferanten( $id = false ) {
+  $where = ( $lieferant_id ? "WHERE id=$lieferant_id" : "" );
+  return doSql( "SELECT * FROM lieferanten $where", LEVEL_ALL, "Suche nach Lieferanten fehlgeschlagen: " );
+}
+
+
 /**
  *   Infos zu Lieferant abfragen
  */
-function sql_getLieferant($lieferant_id=false){
-	if($lieferant_id===false){
-		$sql="SELECT * FROM lieferanten ORDER BY name";
-	}else {
-    		$sql="SELECT * FROM lieferanten WHERE id = ".$lieferant_id;
-	}
-    $result=doSql($sql, LEVEL_ALL, "Error while retrieving Lieferanteninfos");
-    return mysql_fetch_array($result);
+function sql_getLieferant($lieferant_id){
+  $result = sql_lieferanten( $lieferant_id );
+  need( mysql_num_rows( $result ) == 1 );
+  return mysql_fetch_array($result);
 }
+
 /**
  *
  */
