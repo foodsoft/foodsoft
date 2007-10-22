@@ -92,10 +92,11 @@
   }
   function posten( $name, $wert ) {
     global $erster_posten;
+    $class = ( $wert < 0 ? 'rednumber' : 'number' );
     printf( "
       <tr class='%s'>
         <td>%s:</td>
-        <td class='number'>%.2lf</td>
+        <td class='$class'>%.2lf</td>
       </tr>
       "
     , $erster_posten ? 'ersterposten' : 'posten'
