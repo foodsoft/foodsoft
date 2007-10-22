@@ -1036,7 +1036,10 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   }
   // echo "<br>where 2: ,$where,<br>";
   return doSql( "
-    SELECT *, bankkonto.id as id FROM bankkonto
+    SELECT *
+    , bankkonto.id as id
+    , bankkonto.kommentar as kommentar
+    FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id
     $where
     $groupby

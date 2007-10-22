@@ -60,19 +60,29 @@
   $verbindlichkeiten = doSql( "
     SELECT lieferanten.id as id
          , lieferanten.name as name
-         , sum( bestellvorschlaege.liefermenge * produktpreise.preis ) as schuld
-    FROM gesamtbestellungen
-    INNER JOIN bestellvorschlaege
-      ON bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id
-    INNER JOIN produkte
-      ON produkte.id = bestellvorschlaege.produkt_id
-    INNER JOIN produktpreise
-      ON produktpreise.id = bestellvorschlaege.produktpreise_id
-    INNER JOIN lieferanten
-      ON lieferanten.id = produkte.lieferanten_id
-    WHERE gesamtbestellungen.state = 'Verteilt' and isnull(gesamtbestellungen.bezahlung) 
-    GROUP BY lieferanten.id
-    HAVING schuld <> 0;
+         , rechnungen.betrag as rechnungssumme
+         , zahlungen.bezahlt as bezahlt
+    FROM lieferanten
+    LEFT JOIN (
+      SELECT produkte.lieferanten_id as lieferanten_id
+           , sum( produktpreise.preis * bestellvorschlaege.liefermenge ) as betrag
+      FROM produkte
+      INNER JOIN bestellvorschlaege
+        ON bestellvorschlaege.produkt_id = produkte.id
+      INNER JOIN gesamtbestellungen
+        ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id
+      INNER JOIN produktpreise
+        ON produktpreise.id = bestellvorschlaege.produktpreise_id
+      WHERE gesamtbestellungen.state = 'Verteilt'
+      GROUP BY lieferanten_id
+    ) as rechnungen
+      ON rechnungen.lieferanten_id = lieferanten.id
+    LEFT JOIN (
+      SELECT lieferanten_id, sum( betrag ) as bezahlt FROM bankkonto
+      GROUP BY lieferanten_id
+    ) as zahlungen
+      ON zahlungen.lieferanten_id = lieferanten.id
+    HAVING (rechnungssumme <> 0) or (bezahlt<> 0);
   " );
 
 
@@ -155,8 +165,9 @@
 
   rubrik( "Verbindlichkeiten" );
   while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-    posten( $vkeit['name'], $vkeit['schuld'] );
-    $passiva += $vkeit['schuld'];
+    $restschuld = $vkeit['rechnungssumme'] + $vkeit['bezahlt'];
+    posten( $vkeit['name'], $restschuld );
+    $passiva += $restschuld;
   }
 
   $bilanzverlust = $aktiva - $passiva;
