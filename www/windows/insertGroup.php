@@ -87,7 +87,7 @@
       if( ! $problems ) {
         // gruppe ist angelegt: jetzt sockelbetrag verbuchen!
         $sockelbetrag = - $sockelbetrag * $newMitgliederzahl;
-        if( sqlGroupTransaction(
+        if( sql_gruppen_transaktion(
             2
           , $id
           , $sockelbetrag

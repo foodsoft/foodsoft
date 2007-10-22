@@ -78,7 +78,7 @@ if( $meinkonto ) {
   <?
 
   if( get_http_var( 'amount', 'f' ) ) {
-    sqlGroupTransaction( 0, $login_gruppen_id, $amount );
+    sql_gruppen_transaktion( 0, $login_gruppen_id, $amount );
   }
 
 } else {
@@ -223,7 +223,7 @@ if( $meinkonto ) {
               </tr><tr>
                 <td>Notiz:</td>
                 <td><input type="text" size="60" name="notiz"></td>
-              </tr></tr>
+              </tr><tr>
                 <td>an Gruppe:</td>
                 <td>
                   <select name='to_group_id' size='1'>

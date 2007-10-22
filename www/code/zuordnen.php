@@ -935,34 +935,70 @@ function sqlUpdateTransaction($transaction, $receipt_nr, $receipt_year ){
 function sql_groupGlass($gruppe, $menge){
 	//include_once("config.php");  tut bisher nicht
 	$pfand_preis = 0.16; 
-	sqlGroupTransaction(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
+	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
 }
 
 /**
- *
+ * transaktionsart: 0 : gruppen_transaktion / bankkonto
+ *                  1 : gruppen_transaktion / gruppen_transaktion
+ *                  2 : gruppen_transaktion / (FIXME)
  */
-function sqlGroupTransaction($transaktionsart,
-			         $gruppen_id,
-				 $summe, $auszug_nr = "NULL", $auszug_jahr = "NULL",
-				 $notiz ="", 
-				 $kontobewegungs_datum ="NOW()"){
-  global $dienstkontrollblatt_id;
+function sql_gruppen_transaktion(
+  $transaktionsart, $gruppen_id, $summe,
+  $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="", 
+  $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $bankkonto_id = 0
+) {
+  global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
+  need( $hat_dienst_IV or ( $transaktionsart == 2 ) );
+  need( $gruppen_id or $lieferanten_id );
+  // wird art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
+  // need( $transaktionsart or $bankkonto_id );
 
-	   $sql="INSERT INTO gruppen_transaktion 
-	                    (type, gruppen_id, eingabe_zeit,
-			      summe, kontoauszugs_nr, kontoauszugs_jahr, notiz, 
-			      kontobewegungs_datum, dienstkontrollblatt_id ) 
-	         VALUES ('".mysql_escape_string($transaktionsart).
-		          "', '".mysql_escape_string($gruppen_id).
-			  "', NOW(), '".mysql_escape_string($summe).
-			  "', '".mysql_escape_string($auszug_nr).
-			  "', '".mysql_escape_string($auszug_jahr).
-			  "', '".mysql_escape_string($notiz).
-			  "', '".mysql_escape_string($kontobewegungs_datum).
-        "', '$dienstkontrollblatt_id'
-			  )" ;
-  return doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
+  $sql="
+    INSERT INTO gruppen_transaktion (
+      type, gruppen_id, lieferanten_id, 
+    , eingabe_zeit, summe
+    , kontoauszugs_jahr, kontoauszugs_nr
+    , kontobewegungs_datum
+    , dienstkontrollblatt_id, notiz
+    , bankkonto_id
+    ) VALUES (
+	    '$transaktionsart', '$gruppen_id', '$lieferanten_id'
+    , 'NOW()', '$summe'
+    , '$auszug_jahr', '$auszugs_nr'
+    , '$kontobewegungs_datum'
+    , '$dienstkontrollblatt_id', '$notiz'
+    , '$bankkonto_id'
+    );
+  ";
+  doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
+  return mysql_insert_id();
+}
+
+function sql_bank_transaktion(
+  $konto_id, $auszug_jahr, $auszug_nr
+, $haben, $datum, $gruppen_id, $lieferanten_id
+, $dienstkontrollblatt_id, $notiz
+) {
+  need( $konto_id and $auzug_jahr and $auzug_nr );
+  need( $dienstkontrollblatt_id and $notiz );
+  fail_if_readonly();
+  doSql( "
+    INSERT INTO bankkonto (
+      konto_id, kontoauszug_jahr, kontoauszug_nr
+    , betrag, eingabedatum
+    , gruppen_id, lieferanten_id
+    , dienstkontrollblatt_id, kommentar
+    ) VALUES (
+      '$konto_id', '$auszug_jahr', '$auszug_nr'
+      '$haben', '$datum'
+      '$gruppen_id', '$lieferanten_id'
+      '$dienstkontrollblatt_id', '$notiz'
+    ); "
+  , LEVEL_IMPORTANT, "Buchung fehlgeschlagen"
+  );
+  return mysql_insert_id();
 }
 
 function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = NULL ) {
@@ -1010,6 +1046,24 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
     GROUP BY konto_id
   " );
 }
+
+  
+  
+  
+function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
+  global $dienstkontrollblatt_id;
+  nur_fuer_dienst_IV();
+  if( isset( $soll['konto_id'] ) or isset( $haben['konto_id'] ) )
+    $typ = 0;
+  else
+    $typ = 1;
+
+  
+
+
+}
+
+
 
 function sql_konten() {
   return doSql( "SELECT * FROM bankkonten ORDER BY name" );
@@ -1764,8 +1818,8 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
  *  Wenn ID null, dann wird der String
  *  alle Lieferanten zurückgegeben
  */
-function lieferant_name ($id){
-	if($id != "0"){			
+function lieferant_name($id){
+	if($id){			
 		//wenn alle Lieferanten ausgewählt wurde
 		$infos = sql_getLieferant($id);
 		$name = $infos["name"];
@@ -1776,7 +1830,7 @@ function lieferant_name ($id){
 }
 
 function sql_lieferanten( $id = false ) {
-  $where = ( $lieferant_id ? "WHERE id=$lieferant_id" : "" );
+  $where = ( $id ? "WHERE id=$id" : "" );
   return doSql( "SELECT * FROM lieferanten $where", LEVEL_ALL, "Suche nach Lieferanten fehlgeschlagen: " );
 }
 

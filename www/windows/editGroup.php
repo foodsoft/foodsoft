@@ -68,7 +68,7 @@
       if( ( ! $problems ) && ( $newMitgliederzahl != $row['mitgliederzahl'] ) ) {
         if( $buchesockelbetrag ) {
           $sockeldiff = $sockelbetrag * ($row['mitgliederzahl'] - $newMitgliederzahl);
-          if( sqlGroupTransaction(
+          if( sql_gruppen_transaktion(
               2
             , $gruppen_id
             , $sockeldiff

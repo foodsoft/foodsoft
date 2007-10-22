@@ -39,26 +39,32 @@
         <th>Name</th>
         <th>BLZ</th>
         <th>Konto-Nr</th>
+        <th>Online-Banking</th>
+        <th>Kommentar</th>
       </tr>
   <?
   while( $row = mysql_fetch_array($konten) ) {
     if( $row['id'] != $konto_id ) {
       echo "
-        <tr>
+        <tr onclick=\"window.location.href='" . self_url('konto_id') . "&konto_id={$row['id']}';\">
           <td><a class='tabelle' href='" . self_url('konto_id') . "&konto_id={$row['id']}'>{$row['name']}</a></td>
-          <td>{$row['blz']}</td>
-          <td>{$row['kontonr']}</td>
-        </tr>
       ";
     } else {
-      echo "
-        <tr class='active'>
-          <td style='font-weight:bold;'>{$row['name']}</td>
-          <td>{$row['blz']}</td>
-          <td>{$row['kontonr']}</td>
-        </tr>
-      ";
+      echo "<tr class='active'><td style='font-weight:bold;'>{$row['name']}</td>";
     }
+    echo "
+        <td class='number'>{$row['blz']}</td>
+        <td class='number'>{$row['kontonr']}</td>
+    ";
+    if( ( $url = $row['url'] ) ) {
+      echo "<td><a href=\"javascript:neuesfenster('$url','onlinebanking');\">$url</a></td>";
+    } else {
+      echo "<td> - </td>";
+    }
+    echo "
+        <td>{$row['kommentar']}</td>
+      </tr>
+    ";
   }
   ?> </table></div> <?
 
@@ -99,10 +105,6 @@
     ";
   }
   ?> </table> <?
-
-
-
-
 
 ?>
 
