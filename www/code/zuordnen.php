@@ -1363,7 +1363,7 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
   . "
   GROUP BY bestellvorschlaege.produkt_id
   "
-   . ( $gruppen_id ? " HAVING gesamtbestellmenge>0 or verteilmenge>0" : "" ) .
+   . ( $gruppen_id ? " HAVING gesamtbestellmenge<>0 or verteilmenge<>0" : "" ) .
   " ORDER BY menge_ist_null, produktgruppen_id, produkte.name ";
 
   $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
