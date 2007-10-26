@@ -46,6 +46,8 @@ function sql_insert_bestellvorschlaege(
 ) {
   global $hat_dienst_IV;
 
+  fail_if_readonly();
+
   // finde NOW() aktuellen preis:
   if( ! $preis_id )
     $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
@@ -74,6 +76,7 @@ function sql_insert_bestellvorschlaege(
  *  Gesamtbestellung einfügen
  */
 function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
+  fail_if_readonly();
    $sql = "INSERT INTO gesamtbestellungen (name, bestellstart, bestellende, lieferung) 
            VALUES ('".mysql_escape_string($name)."', '".
 	              mysql_escape_string($startzeit)."', '".
@@ -83,6 +86,7 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
 }
 
 function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
+  fail_if_readonly();
   $sql = "
     UPDATE gesamtbestellungen
     SET name = '" . mysql_escape_string($name) . "'
@@ -688,6 +692,7 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
    return $areas;
 }
 
+
 //
 // Passwort-Funktionen:
 //
@@ -720,10 +725,9 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
   }
 }
 
-/**
- * dienstkontrollblatt-Funktionen:
- * !!! TODO: dienstkontrollblatt muss UNIQUE ( $gruppen_id, $dienst, $datum ) bekommen !!!
- */
+//
+// dienstkontrollblatt-Funktionen:
+//
 function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
   if( $dienstkontrollblatt_id ) {
     mysql_query( "
@@ -798,6 +802,8 @@ function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfeh
 	return $result;
 
 }
+
+
 //
 // Bestell-Status Funktionen:
 //
@@ -898,22 +904,16 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 	return true;
 }
 
-/**
- *
- */
 function sql_basar_id(){
   global $basar_id;
-  if( $basar_id ) {
-    return $basar_id;
-  } else {
-	    $sql = "SELECT id FROM bestellgruppen
-	    		WHERE name = \"_basar\"";
-             $result = doSql($sql, LEVEL_ALL, "Konnte Basar-ID nich aus DB laden..");
-	    if(mysql_num_rows($result)!=1) 
-		error(__LINE__,__FILE__,"Kein Eintrag für Glasrueckgabe" );
-	    $row = mysql_fetch_array($result);
-	    return $row['id'];
-  }
+  need( $basar_id );
+  return $basar_id;
+}
+
+function sql_muell_id(){
+  global $muell_id;
+  need( $muell_id );
+  return $muell_id;
 }
 
 /**
