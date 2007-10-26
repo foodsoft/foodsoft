@@ -1184,9 +1184,12 @@ function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
 
 
 
-function subquery_bestellzuordnung_soll_gruppe( $gesamtbestellung_id = 0 ) {
+function subquery_bestellungen_soll_gruppe( $bestell_id = false ) {
+  $filter = "(bestellzuordnung.art=2) AND (gruppenbestellungen.bestellguppen_id=bestellgruppen.id)";
+  if( $bestell_id )
+    $filter .= "AND (gruppenbestellungen.gesamtbestellung_id=$bestell_id)";
   return " (
-    SELECT sum( bestellzuordnung.menge * produktpreise.preis ) AS soll_gruppe
+    SELECT sum( bestellzuordnung.menge * produktpreise.preis )
       FROM gruppenbestellungen
       JOIN bestellzuordnung
         ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
@@ -1195,59 +1198,57 @@ function subquery_bestellzuordnung_soll_gruppe( $gesamtbestellung_id = 0 ) {
            AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
       JOIN produktpreise
         ON produktpreise.id = bestellvorschlaege.produktpreise_id
-     WHERE (bestellzuordnung.art=2)
-           AND (gruppenbestellungen.bestellguppen_id=bestellgruppen.id)
-  ".( $gesamtbestellung_id ? "AND (bestellvorschlaege.gesamtbestellung_id=$gesamtbestellung_id)" :"" )."
+     WHERE $filter
   ) ";
 }
 
-function subquery_bestellzuordnung_haben_lieferant( $gesamtbestellung_id = 0 ) {
+function subquery_bestellungen_haben_lieferant( $bestell_id = false ) {
+  $filter = "WHERE (produkte.lieferanten_id = lieferanten.id)";
+  if( $bestell_id )
+    $filter .= "AND (bestellvorschlaege.gesamtbestellung_id=$bestell_id)";
   return " (
-    SELECT sum( bestellvorschlaege.liefermenge * produktpreise.preis ) AS haben_lieferant
+    SELECT sum( bestellvorschlaege.liefermenge * produktpreise.preis )
       FROM bestellvorschlaege
       JOIN produktpreise
         ON produktpreise.id = bestellvorschlaege.produktpreise_id
       JOIN produkte
         ON produkte.id = bestellvorschlaege.produkt_id
-     WHERE (produkte.lieferanten_id = lieferanten.id)
-  ".( $gesamtbestellung_id ? "AND (bestellvorschlaege.gesamtbestellung_id = $gesamtbestellung_id)" : "")."
+     WHERE $filter
   ) ";
 }
 
-function subquery_gruppentransaktionen_haben_gruppe() {
+function subquery_transaktionen_haben_gruppe() {
   return " (
-    SELECT sum( summe ) AS haben_gruppe
+    SELECT sum( summe )
       FROM gruppen_transaktion
      WHERE gruppen_transaktion.gruppen_id = bestellgruppen.id
   ) ";
 }
 
-function subquery_lieferantentransaktionen_soll_lieferant( $lieferanten_id ) {
+function subquery_transaktionen_soll_lieferant() {
   return " (
-    SELECT sum( -summe ) AS soll_lieferant
+    SELECT sum( -summe )
       FROM gruppen_transaktion
      WHERE gruppen_transaktion.lieferanten_id = lieferanten.id
   ) ";
 }
 
-function sql_soll_haben_gruppe( $gruppen_id ) {
+function sql_haben_gruppe( $gruppen_id ) {
   $sql = "
     SELECT bestellgruppen.id as gruppen_id
          , bestellgruppen.name as gruppen_name
-       , ".subquery_bestellzuordnung_soll_gruppe()." AS soll_gruppe
-       , ".subquery_gruppentransaktionen_haben_gruppe()." AS haben_gruppe
+       , (".subquery_transaktionen_haben_gruppe()."-".subquery_bestellungen_soll_gruppe().") as haben
     FROM bestellgruppen
     WHERE bestellgruppen.id = $gruppen_id
   ";
   return doSql( $sql );
 }
 
-function sql_soll_haben_lieferant( $lieferanten_id ) {
+function sql_haben_lieferant( $lieferanten_id ) {
   $sql = "
     SELECT lieferanten.id as lieferanten_id
          , lieferanten.name as lieferanten_name
-       , ".subquery_bestellzuordnung_haben_lieferant()." AS haben_lieferant
-       , ".subquery_lieferantentransaktionen_soll_lieferant()." AS soll_lieferant
+       , (".subquery_bestellungen_haben_lieferant()."-".subquery_transaktionen_soll_lieferant().") as haben
     FROM lieferanten
     WHERE lieferanten.id = $lieferanten_id
   ";
@@ -1255,39 +1256,15 @@ function sql_soll_haben_lieferant( $lieferanten_id ) {
 }
 
 function kontostand($gruppen_id){
-  $result = sql_soll_haben_gruppe( $gruppen_id );
+  $result = sql_haben_gruppe( $gruppen_id );
   need( mysql_num_rows( $result ) == 1 );
   $row = mysql_fetch_array( $result );
   need( $row['gruppen_id'] == $gruppen_id );
-  return $row['haben_gruppe'] - $row['soll_gruppe'];
+  return $row['haben'];
 }
 
-/**
- *
- */
-function select_verteilmengen_preise(){
-  return "
-    SELECT gruppenbestellungen.bestellguppen_id AS bestellguppen_id
-         , gesamtbestellungen.id AS bestell_id
-         , gesamtbestellungen.name AS name
-         , bestellzuordnung.produkt_id AS produkt_id
-         , bestellzuordnung.menge AS menge
-         , produktpreise.preis AS preis
-         , gesamtbestellungen.bestellende AS bestellende
-    FROM bestellzuordnung
-    JOIN gruppenbestellungen
-      ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-    JOIN bestellvorschlaege
-      ON (bestellzuordnung.produkt_id = bestellvorschlaege.produkt_id)
-         AND ( gruppenbestellungen.gesamtbestellung_id = bestellvorschlaege.gesamtbestellung_id )
-    JOIN produktpreise
-      ON bestellvorschlaege.produktpreise_id = produktpreise.id
-    JOIN gesamtbestellungen
-      ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
-    WHERE bestellzuordnung.art = 2
-    ORDER by gesamtbestellungen.bestellende
-  ";
-}
+
+
 
 /**
  *
@@ -1527,19 +1504,20 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 
 	return $result;
 }
-/**
- *
- */
-function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
-	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
-	if(mysql_num_rows($result)==0) $return = 0;
-	else if(mysql_num_rows($result)>1) 
-		error(__LINE__,__FILE__,"Nicht genau ein Eintrag (".mysql_num_rows($result).") für Verteilmenge: bestell_id = $bestell_id, produkt_id = $produkt_id, gruppen_id = $gruppen_id" );
-	else{
-		$row = mysql_fetch_array($result);
-		$return = $row['menge'];
-	}
-	return $return;
+
+// /**
+//  *
+//  */
+// function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
+// 	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
+// 	if(mysql_num_rows($result)==0) $return = 0;
+// 	else if(mysql_num_rows($result)>1) 
+// 		error(__LINE__,__FILE__,"Nicht genau ein Eintrag (".mysql_num_rows($result).") für Verteilmenge: bestell_id = $bestell_id, produkt_id = $produkt_id, gruppen_id = $gruppen_id" );
+// 	else{
+// 		$row = mysql_fetch_array($result);
+// 		$return = $row['menge'];
+// 	}
+// 	return $return;
 	
 }
 /**
@@ -1870,12 +1848,12 @@ ORDER BY $order_by
 
 }
 
-/**
- *
- */
-function from_basar(){
-   return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
-}
+// /**
+//  *
+//  */
+// function from_basar(){
+//    return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
+// }
 
 /**
  *  zusaetzlicheBestellung:
