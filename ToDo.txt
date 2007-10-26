@@ -10,4 +10,9 @@ Dienstplan: Alice (Gr. 8) fragt, wie sie den aktualisieren soll?
 
 Doku-Wiki: viele Seiten neu schreiben, einige aktualisieren (Freiwillige?)
 
-
+Readonly: ist nicht überall implementiert. Vorschlag: Alle abfragen
+laufen über "unsere" runsql() *heisst die wirklich so*. Wenn die
+Abfrage ein update, insert oder delete enthält, auf read-only
+überprüfen. Vorteil: wir müssen nicht an jeder Stelle dran denken. Die
+runsql() sollte sowieso verwendet werden, um die log-levels richtig
+benutzen zu können.
