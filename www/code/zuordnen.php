@@ -1055,6 +1055,16 @@ function adefault( $array, $index, $default ) {
     return $default;
 }
 
+function mysql2array( $result, $key, $val ) {
+  $r = array();
+  while( $row = mysql_fetch_array( $result ) ) {
+    need( isset( $row[$key] ) );
+    need( isset( $row[$val] ) );
+    $r[$row[$key]] = $row[$val];
+  }
+  return $r;
+}
+
 /*
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  *
@@ -1081,6 +1091,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
     , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
     , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
     );
+  }
 
 
   if( $haben['konto_id'] == -1 ) {
@@ -1169,25 +1180,86 @@ function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
             doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
 }
 
-/**
- *
- */
-function kontostand($gruppen_id){
-	    //Bestellt
-	    $query = "SELECT summe FROM (".select_bestellsumme().") as bestellsumme WHERE bestellguppen_id = ".mysql_escape_string($gruppen_id);
-	    //echo "<p>".$query."</p>";
-	    $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nicht aus DB laden..");
-	    $row = mysql_fetch_array($result);
-	    $summe = -$row['summe'];
-	    //Sonstige Transaktionen
-	    $query = "SELECT sum( summe ) as summe
-			FROM `gruppen_transaktion`
-			WHERE gruppen_id =".mysql_escape_string($gruppen_id);
-            $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
-	    $row = mysql_fetch_array($result);
-	    $summe += $row['summe'];
-	    return $summe;
 
+
+
+
+function subquery_bestellzuordnung_soll_gruppe( $gesamtbestellung_id = 0 ) {
+  return " (
+    SELECT sum( bestellzuordnung.menge * produktpreise.preis ) AS soll_gruppe
+      FROM gruppenbestellungen
+      JOIN bestellzuordnung
+        ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+      JOIN bestellvorschlaege
+        ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
+           AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
+      JOIN produktpreise
+        ON produktpreise.id = bestellvorschlaege.produktpreise_id
+     WHERE (bestellzuordnung.art=2)
+           AND (gruppenbestellungen.bestellguppen_id=bestellgruppen.id)
+  ".( $gesamtbestellung_id ? "AND (bestellvorschlaege.gesamtbestellung_id=$gesamtbestellung_id)" :"" )."
+  ) ";
+}
+
+function subquery_bestellzuordnung_haben_lieferant( $gesamtbestellung_id = 0 ) {
+  return " (
+    SELECT sum( bestellvorschlaege.liefermenge * produktpreise.preis ) AS haben_lieferant
+      FROM bestellvorschlaege
+      JOIN produktpreise
+        ON produktpreise.id = bestellvorschlaege.produktpreise_id
+      JOIN produkte
+        ON produkte.id = bestellvorschlaege.produkt_id
+     WHERE (produkte.lieferanten_id = lieferanten.id)
+  ".( $gesamtbestellung_id ? "AND (bestellvorschlaege.gesamtbestellung_id = $gesamtbestellung_id)" : "")."
+  ) ";
+}
+
+function subquery_gruppentransaktionen_haben_gruppe() {
+  return " (
+    SELECT sum( summe ) AS haben_gruppe
+      FROM gruppen_transaktion
+     WHERE gruppen_transaktion.gruppen_id = bestellgruppen.id
+  ) ";
+}
+
+function subquery_lieferantentransaktionen_soll_lieferant( $lieferanten_id ) {
+  return " (
+    SELECT sum( -summe ) AS soll_lieferant
+      FROM gruppen_transaktion
+     WHERE gruppen_transaktion.lieferanten_id = lieferanten.id
+  ) ";
+}
+
+function sql_soll_haben_gruppe( $gruppen_id ) {
+  $sql = "
+    SELECT bestellgruppen.id as gruppen_id
+         , bestellgruppen.name as gruppen_name
+       , ".subquery_bestellzuordnung_soll_gruppe()." AS soll_gruppe
+       , ".subquery_gruppentransaktionen_haben_gruppe()." AS haben_gruppe
+    FROM bestellgruppen
+    WHERE bestellgruppen.id = $gruppen_id
+  ";
+  return doSql( $sql );
+}
+
+function sql_soll_haben_lieferant( $lieferanten_id ) {
+  $sql = "
+    SELECT lieferanten.id as lieferanten_id
+         , lieferanten.name as lieferanten_name
+       , ".subquery_bestellzuordnung_haben_lieferant()." AS haben_lieferant
+       , ".subquery_lieferantentransaktionen_soll_lieferant()." AS soll_lieferant
+    FROM lieferanten
+    WHERE lieferanten.id = $lieferanten_id
+  ";
+  return doSql( $sql );
+}
+
+function kontostand($gruppen_id){
+  $result = sql_soll_haben_gruppe( $gruppen_id );
+  need( mysql_num_rows( $result ) == 1 );
+  $row = mysql_fetch_array( $result );
+  need( $row['gruppen_id'] == $gruppen_id );
+  return $row['haben_gruppe'] - $row['soll_gruppe'];
 }
 
 /**
@@ -1232,35 +1304,6 @@ function select_verteilmengen(){
     GROUP BY gesamtbestellung_id , produkt_id
   ";
 }
-/**
- *
- */
-function select_bestellkosten(){
-  return "
-    SELECT verteilmengen_preise.bestellguppen_id AS bestellguppen_id
-         , verteilmengen_preise.bestell_id AS bestell_id
-         , verteilmengen_preise.name AS name
-         , ( sum( verteilmengen_preise.menge * verteilmengen_preise.preis ) ) AS gesamtpreis
-         , verteilmengen_preise.bestellende AS bestellende
-    FROM (".select_verteilmengen_preise().") AS verteilmengen_preise
-    GROUP BY verteilmengen_preise.bestellguppen_id
-           , verteilmengen_preise.bestell_id
-           , verteilmengen_preise.name
-           , verteilmengen_preise.bestellende
-  ";
-}
-/**
- *
- */
-function select_bestellsumme(){
-  return "
-    SELECT bestellkosten.bestellguppen_id
-         , sum( bestellkosten.gesamtpreis ) AS summe
-    FROM (".select_bestellkosten().") AS bestellkosten
-    GROUP BY bestellkosten.bestellguppen_id
-  ";
-}
-
 
 
 
