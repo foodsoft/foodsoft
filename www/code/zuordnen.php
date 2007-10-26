@@ -764,12 +764,9 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
         , zeit = CURTIME()
         , id = LAST_INSERT_ID(id)
     " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
-    $id = mysql_insert_id();
+    return mysql_insert_id();
     //  WARNING: ^ does not always work (see http://bugs.mysql.com/bug.php?id=27033)
     //  (fixed in mysql-5.0.45)
-    //
-    // echo "<div class='ok'>Dienstkontrollblatt: ID: $id</div>";
-    return mysql_insert_id();
   }
 }
 
@@ -916,6 +913,11 @@ function sql_muell_id(){
   return $muell_id;
 }
 
+//
+// finanztransaktionen
+//
+
+
 /**
  *
  */
@@ -1035,7 +1037,6 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
       );
     }
   }
-  // echo "<br>where 1: ,$where,<br>";
   return doSql( "
     SELECT konto_id,
            sum( betrag ) as saldo,
@@ -1138,23 +1139,20 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
 }
 
 
-/**
- *
- */
+//
+// bestellungen
+//
 function sql_create_gruppenbestellung($gruppe, $bestell_id){
-	    $sql = "
-        INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id)
-        VALUES ($gruppe, $bestell_id)
-        ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
-      ";
-            doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppenbestellung nicht in DB ändern...");
-	    //Id Auslesen und zurückgeben
-	    $sql = "SELECT last_insert_id() as id;";
-            $result = doSql($sql, LEVEL_ALL, "Konnte last_insert_id nicht laden..");
-	    $id = mysql_fetch_array($result);
-	    return($id['id']);
-	
+  fail_if_readonly();
+  $sql = "
+    INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id)
+    VALUES ($gruppe, $bestell_id)
+    ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
+  ";
+  doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppenbestellung nicht in DB ändern...");
+  return mysql_insert_id();
 }
+
 /**
  *
  */
@@ -1170,6 +1168,7 @@ function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
       ";
             doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
 }
+
 /**
  *
  */
@@ -1190,6 +1189,7 @@ function kontostand($gruppen_id){
 	    return $summe;
 
 }
+
 /**
  *
  */
@@ -1232,7 +1232,6 @@ function select_verteilmengen(){
     GROUP BY gesamtbestellung_id , produkt_id
   ";
 }
-
 /**
  *
  */
@@ -1250,7 +1249,6 @@ function select_bestellkosten(){
            , verteilmengen_preise.bestellende
   ";
 }
-
 /**
  *
  */
@@ -1262,6 +1260,9 @@ function select_bestellsumme(){
     GROUP BY bestellkosten.bestellguppen_id
   ";
 }
+
+
+
 
 /**
  *
