@@ -21,13 +21,15 @@ CREATE TABLE `bankkonto` (
  `dienstkontrollblatt_id` INT NOT NULL,
  `betrag` DECIMAL(10,2) NOT NULL,
  `konto_id` smallint(4) NOT NULL,
- `kommentar` TEXT NOT NULL
+ `kommentar` TEXT NOT NULL,
+ `konterbuchung_id` INT NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `secondary` (`konto_id`, `kontoauszug_jahr`,`kontoauszug_nr`)
  )
  ENGINE = myisam DEFAULT CHARACTER SET utf8 COMMENT = 'Bankkontotransaktionen';
 
-ALTER TABLE `gruppen_transaktion` ADD `bankkonto_id` INT NOT NULL DEFAULT '0';
+ALTER TABLE `gruppen_transaktion` ADD `konterbuchung_id` INT NOT NULL DEFAULT '0';
+ALTER TABLE `gruppen_transaktion` ADD `lieferanten_id` INT NOT NULL DEFAULT '0';
 
 CREATE TABLE `bankkonten` (
 `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,

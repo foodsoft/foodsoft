@@ -149,7 +149,7 @@ CREATE TABLE `gruppen_transaktion` (
   `kontoauszugs_nr` int(11) NOT NULL default '0',
   `notiz` text NOT NULL,
   `kontobewegungs_datum` date NOT NULL default '0000-00-00',
-  `bankkonto_id` INT NOT NULL default '0',
+  `konterbuchung_id` INT NOT NULL default '0',
   PRIMARY KEY  (`id`),
   KEY `secondary` (`gruppen_id`,`kontobewegungs_datum`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
@@ -300,7 +300,8 @@ CREATE TABLE `bankkonto` (
  `dienstkontrollblatt_id` INT NOT NULL,
  `betrag` DECIMAL(10,2) NOT NULL,
  `konto_id` smallint(4) NOT NULL,
- `kommentar` TEXT NOT NULL
+ `kommentar` TEXT NOT NULL,
+ `konterbuchung_id` INT NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `secondary` ( `konto_id`, `kontoauszug_jahr`,`kontoauszug_nr`)
  )
