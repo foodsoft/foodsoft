@@ -1,10 +1,21 @@
 <?php
 
+//
+// debugging und fehlerbehandlung:
+//
+
 global $from_dokuwiki;
 $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
   error_reporting(E_ALL); // alle Fehler anzeigen
 
-
+//Debug LEVEL_
+ define('LEVEL_NEVER',  5);
+ define('LEVEL_ALL',  4);
+ define('LEVEL_MOST',  3);
+ define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
+ define('LEVEL_KEY',  1);
+ define('LEVEL_NONE',  0);
+ $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
@@ -19,24 +30,41 @@ function sql_single_row( $sql ) {
   return mysql_fetch_array($result);
 }
 
+function need( $exp, $comment = "Fataler Fehler" ) {
+  global $print_on_exit;
+  if( ! $exp ) {
+    echo "<div class='warn'>$comment</div>$print_on_exit";
+    exit();
+  }
+  return true;
+}
+
+
+function fail_if_readonly() {
+  global $readonly;
+  if( $readonly ) {
+    echo "
+      <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div>
+      $print_on_exit
+    ";
+    exit();
+  }
+}
+
 
 /*
 ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten', 'Verteilt', 'archiviert' ) NOT NULL DEFAULT 'bestellen';
 
 ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
 */
-//Debug LEVEL_
- define('LEVEL_NEVER',  5);
- define('LEVEL_ALL',  4);
- define('LEVEL_MOST',  3);
- define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
- define('LEVEL_KEY',  1);
- define('LEVEL_NONE',  0);
- $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
  define('STATUS_BESTELLEN', "bestellen");
  define('STATUS_LIEFERANT', "beimLieferanten");
  define('STATUS_VERTEILT', "Verteilt");
  define('STATUS_ARCHIVIERT', "archiviert");
+
+//
+// dienstplan-funktionen:
+//
 
  $_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
  $_SESSION['ALLOWED_ORDER_STATES'] = array(
@@ -50,73 +78,6 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
 	     'archiv' => array(STATUS_ARCHIVIERT)
 	 );
 
-/**
- *  Bestellvorschläge einfügen
- */
-function sql_insert_bestellvorschlaege(
-  $produkt_id
-, $gesamtbestellung_id
-, $preis_id = 0
-, $bestellmenge = 0, $liefermenge = 0
-) {
-  global $hat_dienst_IV;
-
-  fail_if_readonly();
-
-  // finde NOW() aktuellen preis:
-  if( ! $preis_id )
-    $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
-
-  // kludge alert: finde erstmal irgendeinen preis...
-  if( ! $preis_id )
-    if( $hat_dienst_IV )
-      $preis_id = sql_aktueller_produktpreis_id( $produkt_id, false );
-
-  if( ! $preis_id ) {
-    error( "Eintrag Bestellvorschlag fehlgeschlagen: kein Preiseintrag gefunden!" );
-    return false;
-  }
-  $sql = "
-    INSERT INTO bestellvorschlaege
-      (produkt_id, gesamtbestellung_id, produktpreise_id, bestellmenge, liefermenge )
-    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, $bestellmenge, $liefermenge )
-    ON DUPLICATE KEY UPDATE produktpreise_id = $preis_id
-                          , bestellmenge = bestellmenge + $bestellmenge
-                          , liefermenge = liefermenge + $liefermenge
-  ";
-  return doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen.");
-}
-
-/**
- *  Gesamtbestellung einfügen
- */
-function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
-  fail_if_readonly();
-   $sql = "INSERT INTO gesamtbestellungen (name, bestellstart, bestellende, lieferung) 
-           VALUES ('".mysql_escape_string($name)."', '".
-	              mysql_escape_string($startzeit)."', '".
-	              mysql_escape_string($endzeit)."', '".
-		      mysql_escape_string($lieferung)."')";
-  doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellung nicht aufnehmen.");
-}
-
-function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
-  fail_if_readonly();
-  $sql = "
-    UPDATE gesamtbestellungen
-    SET name = '" . mysql_escape_string($name) . "'
-      , bestellstart='$startzeit'
-      , bestellende='$endzeit'
-      , lieferung='$lieferung'
-    WHERE id=$bestell_id
-  ";
-  return doSql($sql, LEVEL_IMPORTANT, "Update Gesamtbestellung fehlgeschlagen");
-}
-
-
-//
-// 1. dienstplan-funktionen:
-//
 
 /**
  *  Dienst bestaetigen 
@@ -718,7 +679,7 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 
 
 //
-// 2. Passwort-Funktionen:
+// Passwort-Funktionen:
 //
 //
 function check_password( $gruppen_id, $gruppen_pwd ) {
@@ -817,7 +778,7 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
 
 
 //
-// bestellgruppen-funktionen
+// bestellgruppen-funktionen:
 //
 
 function sql_basar_id(){
@@ -926,7 +887,7 @@ function optionen_gruppen(
 }
 
 //
-// lieferanten-funktionen
+// lieferanten-funktionen:
 //
 
 function optionen_lieferanten( $selected = false, $option_0 = false ) {
@@ -956,16 +917,15 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
   return $output;
 }
 
+//
+// funktionen fuer gesamtbestellung und bestellvorschlaege
+//
 
-//
-// Bestell-Status Funktionen:
-//
 function getState($bestell_id){
-     $sql = "SELECT state FROM gesamtbestellungen WHERE id = $bestell_id";
-     $result = doSql($sql, LEVEL_ALL, "Konnte status  nicht von DB laden..");
-     $row = mysql_fetch_array($result);
-     return $row['state'];
+  $row = mysql_select_single_row( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id" );
+  return $row['state'];
 }
+
 /**
  *  changeState: 
  *   - fuehrt erlaubte Statusaenderungen einer Bestellung aus
@@ -982,8 +942,6 @@ function changeState($bestell_id, $state){
 
   fail_if_readonly();
   nur_fuer_dienst(1,3,4);
-
-  echo "<!-- changeState: $bestell_id, $state -->";
 
   $do_verteilmengen_zuweisen = false;
   $changes = "state = '$state'";
@@ -1009,13 +967,116 @@ function changeState($bestell_id, $state){
       return false;
   }
   $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
-  echo "<!-- changeState: $sql -->";
   $result = doSql($sql, LEVEL_KEY, "Konnte status der Bestellung ändern..");
   if( $result ) {
     if( $do_verteilmengen_zuweisen )
       verteilmengenZuweisen( $bestell_id );
   }
   return $result;
+}
+
+/**
+ *  Gesamtbestellung einfügen
+ */
+function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
+  fail_if_readonly();
+  nur_fuer_dienst_IV();
+   $sql = "INSERT INTO gesamtbestellungen (name, bestellstart, bestellende, lieferung) 
+           VALUES ('".mysql_escape_string($name)."', '".
+	              mysql_escape_string($startzeit)."', '".
+	              mysql_escape_string($endzeit)."', '".
+		      mysql_escape_string($lieferung)."')";
+  doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellung nicht aufnehmen.");
+}
+
+function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
+  fail_if_readonly();
+  nur_fuer_dienst_IV();
+  $sql = "
+    UPDATE gesamtbestellungen
+    SET name = '" . mysql_escape_string($name) . "'
+      , bestellstart='$startzeit'
+      , bestellende='$endzeit'
+      , lieferung='$lieferung'
+    WHERE id=$bestell_id
+  ";
+  return doSql($sql, LEVEL_IMPORTANT, "Update Gesamtbestellung fehlgeschlagen");
+}
+
+/**
+ *  Bestellvorschläge einfügen
+ */
+function sql_insert_bestellvorschlaege(
+  $produkt_id
+, $gesamtbestellung_id
+, $preis_id = 0
+, $bestellmenge = 0, $liefermenge = 0
+) {
+  global $hat_dienst_IV;
+
+  fail_if_readonly();
+
+  // finde NOW() aktuellen preis:
+  if( ! $preis_id )
+    $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+
+  // kludge alert: finde erstmal irgendeinen preis...
+  if( ! $preis_id )
+    if( $hat_dienst_IV )
+      $preis_id = sql_aktueller_produktpreis_id( $produkt_id, false );
+
+  if( ! $preis_id ) {
+    error( "Eintrag Bestellvorschlag fehlgeschlagen: kein Preiseintrag gefunden!" );
+    return false;
+  }
+  $sql = "
+    INSERT INTO bestellvorschlaege
+      (produkt_id, gesamtbestellung_id, produktpreise_id, bestellmenge, liefermenge )
+    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, $bestellmenge, $liefermenge )
+    ON DUPLICATE KEY UPDATE produktpreise_id = $preis_id
+                          , bestellmenge = bestellmenge + $bestellmenge
+                          , liefermenge = liefermenge + $liefermenge
+  ";
+  return doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen.");
+}
+
+function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
+	  $query=
+    " SELECT * , produktpreise.id as preis_id
+               , produkte.name as produkt_name
+               , gesamtbestellungen.name as name
+      FROM gesamtbestellungen
+      INNER JOIN bestellvorschlaege
+              ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
+      INNER JOIN produkte
+              ON produkte.id=bestellvorschlaege.produkt_id
+      INNER JOIN produktpreise
+              ON produktpreise.id=bestellvorschlaege.produktpreise_id
+      WHERE     gesamtbestellungen.id='$bestell_id'
+            AND bestellvorschlaege.produkt_id='$produkt_id'
+	    ";
+    $result= doSql($query, LEVEL_ALL, "Suche in gesamtbestellungen,bestellvorschlaege fehlgeschlagen");
+    return mysql_fetch_array($result)  ;
+}
+
+function sql_bestellpreis($bestell_id, $produkt_id){
+	$row = sql_bestellvorschlag_daten($bestell_id, $produkt_id);
+	return $row['preis_id'];
+}
+
+
+
+
+//
+// funktionen fuer bestellmengen und verteilmengen
+//
+
+function sql_liefermenge($bestell_id,$produkt_id){
+  $row = sql_select_single_row( "
+    SELECT liefermenge FROM bestellvorschlaege
+    WHERE (gesamtbestellung_id='$bestell_id') and (produkt_id='$produkt_id')
+  " );
+  return $row['liefermenge'];
 }
 
 /**
@@ -1058,8 +1119,11 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 }
 
 
+
+
+
 //
-// finanztransaktionen
+// funktionen fuer gruppen-, lieferanten-, und bankkonto
 //
 
 
@@ -1650,21 +1714,7 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 	return $result;
 }
 
-// /**
-//  *
-//  */
-// function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
-// 	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
-// 	if(mysql_num_rows($result)==0) $return = 0;
-// 	else if(mysql_num_rows($result)>1) 
-// 		error(__LINE__,__FILE__,"Nicht genau ein Eintrag (".mysql_num_rows($result).") für Verteilmenge: bestell_id = $bestell_id, produkt_id = $produkt_id, gruppen_id = $gruppen_id" );
-// 	else{
-// 		$row = mysql_fetch_array($result);
-// 		$return = $row['menge'];
-// 	}
-// 	return $return;
-	
-}
+
 /**
  *
  */
@@ -1690,34 +1740,6 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
 	return $result;
 }
   
-/**
- * Daten zu Bestellvorschlag
- */
-function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
-
-	  $query=
-    " SELECT * , produktpreise.id as preis_id
-               , produkte.name as produkt_name
-               , gesamtbestellungen.name as name
-      FROM gesamtbestellungen
-      INNER JOIN bestellvorschlaege
-              ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
-      INNER JOIN produkte
-              ON produkte.id=bestellvorschlaege.produkt_id
-      INNER JOIN produktpreise
-              ON produktpreise.id=bestellvorschlaege.produktpreise_id
-      WHERE     gesamtbestellungen.id='$bestell_id'
-            AND bestellvorschlaege.produkt_id='$produkt_id'
-	    ";
-
-    $result= doSql($query, LEVEL_ALL, "Suche in gesamtbestellungen,bestellvorschlaege fehlgeschlagen");
-    return mysql_fetch_array($result)  ;
-// (auskommentiert: liefert sonst immer true/false zurueck!)
-//    		or error( __LINE__, __FILE__,
-//      		"gesamtbestellung/bestellvorschlag nicht gefunden " );
-
-
-}
 /**
  *
  */
@@ -2082,31 +2104,6 @@ function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $
                 doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB schreiben...");
 	}
 }
-/**
- *
- */
-function sql_bestellvorschlag($bestell_id, $produkt_id){
-	$query="SELECT produktpreis_id FROM bestellvorschlaege 
-	  	WHERE gesamtbestellung_id = ".$bestell_id.
-		"AND produkt_Id = ".$produkt_id;
-	$result = doSql($query, LEVEL_ALL, "Konnte Bestellpreis nicht laden");
-	$row = mysql_fetch_array($result);
-	return $row;
-}
-/**
- *
- */
-function sql_bestellpreis($bestell_id, $produkt_id){
-	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
-	return $row['produktpreis_id'];
-}
-/**
- *
- */
-function sql_liefermenge($bestell_id,$produkt_id){
-	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
-	return $row['liefermenge'];
-}
 
 /**
  *
@@ -2157,21 +2154,11 @@ function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_i
 }
 
 /**
- * 
- */
-function sql_delete_bestellzuordnung ($id){
-    $query= "DELETE FROM bestellzuordnung WHERE id='$id'"; 
-    doSql($query, LEVEL_IMPORTANT, "Löschen fehlgeschlagen...");
-}
-/**
  *
  */
 function verteilmengenZuweisen($bestell_id){
   // nichts tun, wenn keine Bestellung ausgewählt
-  if($bestell_id==""){
-  	echo "<h2>Bitte Bestellung auswählen!!</h2>";
-	return;
-  }
+  need($bestell_id);
 
   if(getState($bestell_id)!=STATUS_LIEFERANT) return;
 
@@ -2460,28 +2447,6 @@ function optionen_einheiten( $selected ) {
   return $output;
 }
 
-function optionen( $fieldname, $values ) {
-  global $$fieldname;
-  $output = '';
-  foreach( $values as $v ) {
-    if( is_array( $v ) ) {
-      $value = $v[0];
-      $text = $v[1];
-      $title = ( $v[2] ? $v[2] : '' );
-    } else {
-      $value = $v;
-      $text = $v;
-      $title = '';
-    }
-    $output = $output . "<option value='$value'";
-    if( $value == $$fieldname )
-      $output = $output . " selected";
-    if( $title )
-      $output = $output . " title='$title'";
-    $output = $output . ">$text</option>";
-  }
-  return $output;
-}
 
 // preisdaten setzen:
 // berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
@@ -2619,14 +2584,9 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
   return TRUE;
 }
 
-function need( $exp, $comment = "Fataler Fehler" ) {
-  global $print_on_exit;
-  if( ! $exp ) {
-    echo "<div class='warn'>$comment</div>$print_on_exit";
-    exit();
-  }
-  return true;
-}
+//
+// HTML-funktionen:
+//
 
 /**
  *
@@ -2639,21 +2599,6 @@ function reload_immediately( $url ) {
   ";
   exit();
 }
-
-function fail_if_readonly() {
-  global $readonly;
-  if( $readonly ) {
-    echo "
-      <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div>
-      $print_on_exit
-    ";
-    exit();
-  }
-}
-
-/**
- *
- */
 function wikiLink( $topic, $text, $head = false ) {
   global $foodsoftdir;
   echo "
@@ -2722,6 +2667,29 @@ function self_post( $exclude = array() ) {
   foreach( $self_fields as $key => $value ) {
     if( ! in_array( $key, $exclude ) )
       $output = $output . "<input type='hidden' name='$key' value='$value'>";
+  }
+  return $output;
+}
+
+function optionen( $fieldname, $values ) {
+  global $$fieldname;
+  $output = '';
+  foreach( $values as $v ) {
+    if( is_array( $v ) ) {
+      $value = $v[0];
+      $text = $v[1];
+      $title = ( $v[2] ? $v[2] : '' );
+    } else {
+      $value = $v;
+      $text = $v;
+      $title = '';
+    }
+    $output = $output . "<option value='$value'";
+    if( $value == $$fieldname )
+      $output = $output . " selected";
+    if( $title )
+      $output = $output . " title='$title'";
+    $output = $output . ">$text</option>";
   }
   return $output;
 }
@@ -2821,5 +2789,42 @@ function move_html( $id, $into_id ) {
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
+
+
+
+//
+// unbenutzte funktionen:
+//
+
+// function sql_delete_bestellzuordnung ($id){
+//     $query= "DELETE FROM bestellzuordnung WHERE id='$id'"; 
+//     doSql($query, LEVEL_IMPORTANT, "Löschen fehlgeschlagen...");
+// }
+//
+//
+// function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
+// 	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
+// 	if(mysql_num_rows($result)==0) $return = 0;
+// 	else if(mysql_num_rows($result)>1) 
+// 		error(__LINE__,__FILE__,"Nicht genau ein Eintrag (".mysql_num_rows($result).") für Verteilmenge: bestell_id = $bestell_id, produkt_id = $produkt_id, gruppen_id = $gruppen_id" );
+// 	else{
+// 		$row = mysql_fetch_array($result);
+// 		$return = $row['menge'];
+// 	}
+// 	return $return;
+// }
+// /**
+//  *
+//  */
+// function sql_bestellvorschlag($bestell_id, $produkt_id){
+// 	$query="SELECT produktpreis_id FROM bestellvorschlaege 
+// 	  	WHERE gesamtbestellung_id = ".$bestell_id.
+// 		"AND produkt_Id = ".$produkt_id;
+// 	$result = doSql($query, LEVEL_ALL, "Konnte Bestellpreis nicht laden");
+// 	$row = mysql_fetch_array($result);
+// 	return $row;
+// }
+
+
 
 ?>
