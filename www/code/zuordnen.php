@@ -1771,13 +1771,13 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
   $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="", 
-  $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $bankkonto_id = 0
+  $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
   global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
   need( $hat_dienst_IV or ( $transaktionsart == 2 ) );
   need( $gruppen_id or $lieferanten_id );
-  // wird art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
+  // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
   // need( $transaktionsart or $bankkonto_id );
 
   $sql="
@@ -1787,14 +1787,14 @@ function sql_gruppen_transaktion(
     , kontoauszugs_jahr, kontoauszugs_nr
     , kontobewegungs_datum
     , dienstkontrollblatt_id, notiz
-    , bankkonto_id
+    , konterbuchung_id
     ) VALUES (
 	    '$transaktionsart', '$gruppen_id', '$lieferanten_id'
     , 'NOW()', '$summe'
     , '$auszug_jahr', '$auszugs_nr'
     , '$kontobewegungs_datum'
     , '$dienstkontrollblatt_id', '$notiz'
-    , '$bankkonto_id'
+    , '$konterbuchung_id
     );
   ";
   doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
@@ -1805,6 +1805,7 @@ function sql_bank_transaktion(
   $konto_id, $auszug_jahr, $auszug_nr
 , $haben, $datum, $gruppen_id, $lieferanten_id
 , $dienstkontrollblatt_id, $notiz
+, $konterbuchung_id = 0
 ) {
   need( $konto_id and $auzug_jahr and $auzug_nr );
   need( $dienstkontrollblatt_id and $notiz );
@@ -1815,11 +1816,13 @@ function sql_bank_transaktion(
     , betrag, eingabedatum
     , gruppen_id, lieferanten_id
     , dienstkontrollblatt_id, kommentar
+    , konterbuchung_id
     ) VALUES (
       '$konto_id', '$auszug_jahr', '$auszug_nr'
-      '$haben', '$datum'
-      '$gruppen_id', '$lieferanten_id'
-      '$dienstkontrollblatt_id', '$notiz'
+    , '$haben', '$datum'
+    , '$gruppen_id', '$lieferanten_id'
+    , '$dienstkontrollblatt_id', '$notiz'
+    , '$konterbuchung_id'
     ); "
   , LEVEL_IMPORTANT, "Buchung fehlgeschlagen"
   );
@@ -1828,14 +1831,14 @@ function sql_bank_transaktion(
 
 function sql_link_transaktion( $soll_id, $haben_id ) {
   if( $soll_id > 0 )
-    doSql( "UPDATE bankkonto SET bankkonto_id=$haben_id WHERE id=$soll_id" );
+    doSql( "UPDATE bankkonto SET konterbuchung_id=$haben_id WHERE id=$soll_id" );
   else
-    doSql( "UPDATE gruppen_transaktion SET bankkonto_id=$haben_id WHERE id=".(-$soll_id) );
+    doSql( "UPDATE gruppen_transaktion SET konterbuchung_id=$haben_id WHERE id=".(-$soll_id) );
 
   if( $haben_id > 0 )
-    doSql( "UPDATE bankkonto SET bankkonto_id=$soll_id WHERE id=$haben_id" );
+    doSql( "UPDATE bankkonto SET konterbuchung_id=$soll_id WHERE id=$haben_id" );
   else
-    doSql( "UPDATE gruppen_transaktion SET bankkonto_id=$soll_id WHERE id=".(-$haben_id) );
+    doSql( "UPDATE gruppen_transaktion SET konterbuchung_id=$soll_id WHERE id=".(-$haben_id) );
 }
 
 /*
@@ -1856,13 +1859,13 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
     $soll_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
     , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
+    , $datum, adefault( $soll, 'lieferanten_id', 0 )
     );
   } else {
     $soll_id = sql_bank_transaktion(
       $typ, adefault( $soll, 'gruppen_id', 0 ), -$betrag
     , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
+    , $datum, adefault( $soll, 'lieferanten_id', 0 )
     );
   }
 
@@ -1870,13 +1873,13 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
     , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
+    , $datum, adefault( $haben, 'lieferanten_id', 0 )
     );
   } else {
     $haben_id = sql_bank_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), $betrag
     , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
+    , $datum, adefault( $haben, 'lieferanten_id', 0 )
     );
   }
 
@@ -1939,7 +1942,7 @@ function sql_get_transaction( $id ) {
       SELECT kontoauszug_jahr, kontoauszug_nr
            , betrag as haben
            , kommentar
-           , bankkonto.bankkonto_id as konterbuchung_id
+           , bankkonto.konterbuchung_id
            , bankkonten.name as bankname
       FROM bankkonto
       JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
@@ -1950,7 +1953,7 @@ function sql_get_transaction( $id ) {
       SELECT bankkonto.kontoauszug_jahr, bankkonto.kontoauszug_nr
            , -summe as haben
            , gruppen_transaktion.notiz as kommentar
-           , gruppen_transaktion.bankkonto_id as konterbuchung_id
+           , gruppen_transaktion.konterbuchung_id as konterbuchung_id
            , bankkonten.name as bankname
       FROM gruppen_transaktion
       LEFT JOIN bankkonto
