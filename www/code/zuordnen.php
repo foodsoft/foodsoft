@@ -1251,7 +1251,8 @@ function sql_gesamtpreise( $gruppen_id ) {
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
          , sum(menge * preis) AS gesamtpreis
-         , DATE_FORMAT(bestellende,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as datum
+         , DATE_FORMAT(bestellende,'%d.%m.%Y') as valuta_trad
+         , DATE_FORMAT(bestellende,'%Y%m%d') as valuta_kan
     FROM  bestellzuordnung
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellung_id = gruppenbestellungen.id )
@@ -1264,7 +1265,7 @@ function sql_gesamtpreise( $gruppen_id ) {
       ON ( gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id )
     WHERE ( art = 2 ) AND ( bestellguppen_id = $gruppen_id )
     GROUP BY gesamtbestellungen.id
-    ORDER BY bestellende DESC;
+    ORDER BY valuta_kan DESC;
   ";
 
   $result = doSql($query, LEVEL_ALL, "Konnte Gesamtpreise nicht aus DB laden..");
@@ -1920,11 +1921,13 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
   $sql = "
     SELECT id, type, summe, kontobewegungs_datum, bankkonto_id, kontoauszugs_nr, kontoauszugs_jahr, notiz
          , DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') AS date
+         , DATE_FORMAT(kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
+         , DATE_FORMAT(kontobewegungs_datum,'%Y%m%d') AS valuta_kan
     FROM gruppen_transaktion
     WHERE ( gruppen_id = $gruppen_id )
         " . ( $from_date ? " AND ( eingabe_zeit >= '$from_date' ) " : "" ) . "
         " . ( $to_date ? " AND ( eingabe_zeit <= '$to_date' ) " : "" ) . "
-    ORDER BY kontobewegungs_datum DESC
+    ORDER BY valuta_kan DESC
   ";
   // LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");

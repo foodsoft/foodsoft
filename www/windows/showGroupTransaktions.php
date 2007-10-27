@@ -7,40 +7,16 @@
  //gibt 0 zurück, wenn Daten gleich sind
  //gibt -1 zurück, wen Datum in $veteil älter ist
  function compare_date($konto, $verteil){
- 	//Kein weiterer Eintrag in Konto
+	//Kein weiterer Eintrag in Konto
  	if(!$konto) return 1;
 	if(!$verteil) return -1;
- 	$konto_date = $konto['date'];
-	$verteil_date = $verteil['datum'];
-	// Zeit abschneiden
-	$temp = explode("<", $konto_date);
-	//echo "konto-datum ".$temp[0];
-	$k = explode(".", $temp[0]);
-	$temp = explode("<", $verteil_date);
-	//echo "verteil-datum ".$temp[0];
-	$v = explode(".", $temp[0]);
-	//Jahr vegleichen
-	if($k[2]<$v[2]){
-		return 1;
-	} else if($k[2]>$v[2]){
-		return -1;
-	} else {
-		//Monat vergleichen
-		if($k[1]<$v[1]){
-			return 1;
-		} else if($k[1]>$v[1]){
-			return -1;
-		} else {
-			//Tag vergleichen
-			if($k[0]<$v[0]){
-				return 1;
-			} else if($k[0]>$v[0]){
-				return -1;
-			} else {
-				return 0;
-			}
-		}
-	}
+ 	$konto_date = $konto['valuta_kan'];
+	$verteil_date = $verteil['valuta_kan'];
+  if( $konto_date < $verteil_date )
+    return 1;
+  if( $konto_date > $verteil_date )
+    return -1;
+  return 0;
  }
 
 $meinkonto = ( $area == 'meinkonto' );
@@ -296,12 +272,13 @@ if( $meinkonto ) {
 //      echo "<div class='warn'>noch in arbeit!</div>";
 //      exit(12);
 //    }
-   $cols = 6;
+   $cols = 7;
    ?>
 	 <table class="numbers">
 	    <tr>
 			   <th>Typ</th>
-				 <th>Eingabezeit</th>
+				 <th>Valuta</th>
+				 <th>Buchung</th>
 				 <th>Informationen</th>
 				 <th colspan='2'>Betrag</th>
 				 <th>Summe</th>
@@ -332,8 +309,8 @@ if( $meinkonto ) {
 				    		//Eintrag in Konto ist Älter -> Verteil ausgeben
 					    echo "<tr>\n";
 					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
-					    //echo "   <td>".$vert_row['datum']."</td>\n";
-					    echo "   <td></td>\n";
+					    echo "   <td>".$vert_row['valuta_trad']."</td>\n";
+					    echo "   <td> </td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
 					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['gesamtpreis'])."</b></td>";
               $details_url = "index.php?window=bestellschein"
@@ -361,6 +338,7 @@ if( $meinkonto ) {
               echo "
                 <tr>
                   <td valign='top'><b>{$type2str[$konto_row['type']]}</b></td>
+                  <td>{$konto_row['valuta_trad']}</td>
                   <td>{$konto_row['date']}</td>
               ";
               if ($konto_row['type'] == 0) {
