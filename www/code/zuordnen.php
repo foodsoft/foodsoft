@@ -5,6 +5,21 @@ $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
   error_reporting(E_ALL); // alle Fehler anzeigen
 
 
+
+function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
+	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
+	$result = mysql_query($sql) or
+	error(__LINE__,__FILE__,$error_text."(".$sql.")",mysql_error(), debug_backtrace());
+	return $result;
+
+}
+function sql_single_row( $sql ) {
+  $result = doSql( $sql );
+  need( mysql_num_rows($result) == 1 );
+  return mysql_fetch_array($result);
+}
+
+
 /*
 ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten', 'Verteilt', 'archiviert' ) NOT NULL DEFAULT 'bestellen';
 
@@ -97,6 +112,11 @@ function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell
   ";
   return doSql($sql, LEVEL_IMPORTANT, "Update Gesamtbestellung fehlgeschlagen");
 }
+
+
+//
+// 1. dienstplan-funktionen:
+//
 
 /**
  *  Dienst bestaetigen 
@@ -635,6 +655,10 @@ function sql_rotationsplan($dienst){
 		ORDER BY rotationsplanposition ASC";
 	return doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
 }
+
+
+
+
 /**
  * Returns an array of functions (i.e. forms) a
  * group is allowed to access based on the task
@@ -694,14 +718,14 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 
 
 //
-// Passwort-Funktionen:
+// 2. Passwort-Funktionen:
+//
 //
 function check_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-
-	  $sql="SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1";
-	  //do not show because this happens before header
+    $sql="SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1";
+    //do not show because this happens before header
     $result = doSql($sql, LEVEL_NEVER, "Suche nach Bestellgruppe fehlgeschlagen..");
     $row = mysql_fetch_array($result);
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
@@ -709,9 +733,7 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
   }
   return false;
 }
-/**
- *
- */
+
 function set_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
@@ -727,6 +749,7 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
 
 //
 // dienstkontrollblatt-Funktionen:
+//
 //
 function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
   if( $dienstkontrollblatt_id ) {
@@ -792,12 +815,145 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
 }
 
 
-function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
-	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
-	$result = mysql_query($sql) or
-	error(__LINE__,__FILE__,$error_text."(".$sql.")",mysql_error(), debug_backtrace());
-	return $result;
 
+//
+// bestellgruppen-funktionen
+//
+
+function sql_basar_id(){
+  global $basar_id;
+  need( $basar_id );
+  return $basar_id;
+}
+
+function sql_muell_id(){
+  global $muell_id;
+  need( $muell_id );
+  return $muell_id;
+}
+
+
+function sql_gruppendaten( $gruppen_id ) {
+  return sql_single_row( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'" );
+}
+function sql_gruppenname($gruppen_id){
+  $row = sql_gruppendaten( $gruppen_id );
+  return $row['name'];
+}
+
+/*
+ * sql_gruppen: SELECT
+ * - alle aktiven gruppen, oder
+ * - alle an einer gesamtbestellung beteiligten gruppen, oder
+ * - alle an bestellung/zuteilung eines produktes einer gesamtbestellung beteligten gruppen
+ */
+function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
+        if($bestell_id===FALSE && $produkt_id===FALSE){
+                $query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
+        } else if($produkt_id===FALSE) {
+            $query="SELECT bestellgruppen.id, bestellgruppen.name, gruppenbestellungen.id as gruppenbestellungen_id
+                FROM bestellgruppen
+                INNER JOIN gruppenbestellungen
+                ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
+                WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id
+                GROUP BY bestellgruppen.id
+                ORDER BY ( bestellgruppen.id % 1000 )
+                "; 
+        } else {
+                $query=
+    " SELECT gruppenbestellungen.bestellguppen_id as id
+           , bestellgruppen.name as name
+      FROM bestellzuordnung
+      INNER JOIN gruppenbestellungen
+              ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
+      INNER JOIN bestellgruppen
+              ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
+      WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
+            AND bestellzuordnung.produkt_id='$produkt_id'
+      GROUP BY bestellgruppen.id
+      ORDER BY ( bestellgruppen.id % 1000 )
+    ";
+	}
+        $result = doSql($query, LEVEL_ALL, "Konnte Bestellgruppendaten nicht aus DB laden..");
+	return $result;
+}
+
+function optionen_gruppen(
+  $bestell_id = false
+, $produkt_id = false
+, $selected = false
+, $option_0 = false       /* erzeuge option value='0' mit diesem titel (z.b. 'Alle') */
+, $allowedgroups = false  /* array erlaubter gruppen_ids */
+, $additionalgroups = array() /* zusaetzlich in jedem fall anzubietende gruppen (z.b. basar) */
+) {
+  global $specialgroups;
+  if( $allowedgroups )
+    if( ! is_array( $allowedgroups ) )
+      $allowedgroups = array( $allowedgroups );
+  if( ! is_array( $additionalgroups ) )
+    $additionalgroups = array( $additionalgroups );
+  $gruppen = sql_gruppen($bestell_id,$produkt_id);
+  $output='';
+  if( $option_0 ) {
+    $output = "<option value='0'";
+    if( $selected == 0 ) {
+      $output = $output . " selected";
+      $selected = -1;
+    }
+    $output = $output . ">$option_0</option>";
+  }
+  while($gruppe = mysql_fetch_array($gruppen)){
+    $id = $gruppe['id'];
+    if( ! in_array( $id, $additionalgroups ) ) {
+      if( in_array( $id, $specialgroups ) )
+        continue;
+      if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
+        continue;
+    }
+    $output = "$output
+      <option value='$id'";
+    if( $selected == $id ) {
+      $output = $output . " selected";
+      $selected = -1;
+    }
+    $output = $output . ">{$gruppe['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
+    $output = "<option value='0' selected>(bitte Gruppe wählen)</option>" . $output;
+  }
+  return $output;
+}
+
+//
+// lieferanten-funktionen
+//
+
+function optionen_lieferanten( $selected = false, $option_0 = false ) {
+  $lieferanten = sql_lieferanten();
+  $output = "";
+  if( $option_0 ) {
+    $output = "<option value='0'";
+    if( $selected == 0 ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">$option_0</option>";
+  }
+  while( $lieferant = mysql_fetch_array($lieferanten) ) {
+    $id = $lieferant['id'];
+    $output .= "<option value='$id'";
+    if( $selected == $id ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">{$lieferant['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
+    $output = "<option value='0' selected>(bitte Lieferant wählen)</option>" . $output;
+  }
+  return $output;
 }
 
 
@@ -901,17 +1057,6 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 	return true;
 }
 
-function sql_basar_id(){
-  global $basar_id;
-  need( $basar_id );
-  return $basar_id;
-}
-
-function sql_muell_id(){
-  global $muell_id;
-  need( $muell_id );
-  return $muell_id;
-}
 
 //
 // finanztransaktionen
@@ -1543,136 +1688,6 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
 	}
         $result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 	return $result;
-}
-/**
- *
- */
-function sql_gruppenname($gruppen_id){
-	$query="SELECT name FROM bestellgruppen 
-		WHERE id = ".mysql_escape_string($gruppen_id); 
-        $result = doSql($query, LEVEL_ALL, "Konnte Gruppenname nicht aus DB laden..");
-	$row=mysql_fetch_array($result);
-	return $row['name'];
-}
-
-function sql_gruppendaten( $gruppen_id ) {
-  $query = "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'";
-  $result = doSql($query, LEVEL_ALL, "Suche nach Bestellgruppe fehlgeschlagen");
-  if( mysql_num_rows( $result ) != 1 )
-    error(__LINE__,__FILE__,"Suche nach Bestellgruppe ohne eindeutiges Ergebnis");
-  return mysql_fetch_array( $result );
-}
-/**
- *
- */
-function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
-        if($bestell_id===FALSE && $produkt_id===FALSE){
-                $query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
-        } else if($produkt_id===FALSE) {
-            $query="SELECT bestellgruppen.id, bestellgruppen.name, gruppenbestellungen.id as gruppenbestellungen_id
-                FROM bestellgruppen
-                INNER JOIN gruppenbestellungen
-                ON (gruppenbestellungen.bestellguppen_id = bestellgruppen.id)
-                WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id
-                GROUP BY bestellgruppen.id
-                ORDER BY ( bestellgruppen.id % 1000 )
-                "; 
-        } else {
-                $query=
-    " SELECT gruppenbestellungen.bestellguppen_id as id
-           , bestellgruppen.name as name
-      FROM bestellzuordnung
-      INNER JOIN gruppenbestellungen
-              ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
-      INNER JOIN bestellgruppen
-              ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
-      WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
-            AND bestellzuordnung.produkt_id='$produkt_id'
-      GROUP BY bestellgruppen.id
-      ORDER BY ( bestellgruppen.id % 1000 )
-    ";
-	}
-        $result = doSql($query, LEVEL_ALL, "Konnte Bestellgruppendaten nicht aus DB laden..");
-	return $result;
-	
-}
-
-
-/**
- *
- */
-function optionen_gruppen(
-  $bestell_id = false
-, $produkt_id = false
-, $selected = false
-, $option_0 = false
-, $allowedgroups = false
-, $additionalgroups = array()
-) {
-  global $specialgroups;
-  if( $allowedgroups )
-    if( ! is_array( $allowedgroups ) )
-      $allowedgroups = array( $allowedgroups );
-  if( ! is_array( $additionalgroups ) )
-    $additionalgroups = array( $additionalgroups );
-  $gruppen = sql_gruppen($bestell_id,$produkt_id);
-  $output='';
-  if( $option_0 ) {
-    $output = "<option value='0'";
-    if( $selected == 0 ) {
-      $output = $output . " selected";
-      $selected = -1;
-    }
-    $output = $output . ">$option_0</option>";
-  }
-  while($gruppe = mysql_fetch_array($gruppen)){
-    $id = $gruppe['id'];
-    if( ! in_array( $id, $additionalgroups ) ) {
-      if( in_array( $id, $specialgroups ) )
-        continue;
-      if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
-        continue;
-    }
-    $output = "$output
-      <option value='$id'";
-    if( $selected == $id ) {
-      $output = $output . " selected";
-      $selected = -1;
-    }
-    $output = $output . ">{$gruppe['name']}</option>";
-  }
-  if( $selected >=0 ) {
-    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
-    $output = "<option value='0' selected>(bitte Gruppe wählen)</option>" . $output;
-  }
-  return $output;
-}
-
-function optionen_lieferanten( $selected = false, $option_0 = false ) {
-  $lieferanten = sql_lieferanten();
-  $output = "";
-  if( $option_0 ) {
-    $output = "<option value='0'";
-    if( $selected == 0 ) {
-      $output .= " selected";
-      $selected = -1;
-    }
-    $output .= ">$option_0</option>";
-  }
-  while( $lieferant = mysql_fetch_array($lieferanten) ) {
-    $id = $lieferant['id'];
-    $output .= "<option value='$id'";
-    if( $selected == $id ) {
-      $output .= " selected";
-      $selected = -1;
-    }
-    $output .= ">{$lieferant['name']}</option>";
-  }
-  if( $selected >=0 ) {
-    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
-    $output = "<option value='0' selected>(bitte Lieferant wählen)</option>" . $output;
-  }
-  return $output;
 }
   
 /**
