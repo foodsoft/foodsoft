@@ -105,7 +105,8 @@ if( $meinkonto ) {
   if( get_http_var( 'trans_nr', 'u' ) ) {
     need_http_var( 'auszug_jahr', 'u' );
     need_http_var( 'auszug_nr', 'u' );
-    sqlUpdateTransaction( $trans_nr, $auszug_nr, $auszug_jahr );
+    need_http_var( 'konto_id', 'u' );
+    sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, 'gebuchte Einzahlung' );
   }
 
   if( get_http_var( 'summe_einzahlung', 'f' ) ) {
@@ -285,7 +286,7 @@ if( $meinkonto ) {
 	$size          = 2000;
 	 
 	$type2str[0] = "Einzahlung";
-	$type2str[1] = "Bestellung";
+	$type2str[1] = "Ãœberweisung";
 	$type2str[2] = "Sonstiges";
 	
 
@@ -327,7 +328,7 @@ if( $meinkonto ) {
 				 //}
 				 while (!($no_more_vert && $no_more_konto)) {
 				    //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
-				    if(compare_date($konto_row, $vert_row)==1 && !$no_more_vert){
+            if(compare_date($konto_row, $vert_row)==1 && !$no_more_vert){
 				    		//Eintrag in Konto ist Älter -> Verteil ausgeben
 					    echo "<tr>\n";
 					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
@@ -356,36 +357,49 @@ if( $meinkonto ) {
 					    	$no_more_vert = true;
 					    }
 
-			            } else {
-
-					    echo "<tr>\n";
-							echo "   <td valign='top'><b>".$type2str[$konto_row['type']]."</b></td>\n";
-							echo "   <td>".$konto_row['date']."</td>\n";
-							
-							if ($konto_row['type'] == 0) {
-                     ?>
-                          <td> <table style='font-size:10pt' class='inner'>
-                           <tr><td>Einzahldatum:</td>
-                           <td><?echo $konto_row['kontobewegungs_datum']?></td>
-                           </tr>
-                           <tr><td>Auszug:</td><td>
-                             <?
-                        if($meinkonto or $konto_row['kontoauszugs_nr']>0){
-			   echo "{$konto_row['kontoauszugs_jahr']} / {$konto_row['kontoauszugs_nr']}";
-                        } else {
-			   ?>
-						<form action='<? echo self_url(); ?>' method="post">
-              <? echo self_post(); ?>
-							   <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
-                 Jahr: <?  number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
-                 / Nr: <input type="text" size='6' name='auszug_nr' />
-							   <input type="submit" value="BestÃ¤tigen ">
-						   </form>
-			   <?
-                        }
-                        ?></td></tr>
-                           </table> </td>
-                     <?
+            } else {
+              echo "
+                <tr>
+                  <td valign='top'><b>{$type2str[$konto_row['type']]}</b></td>
+                  <td>{$konto_row['date']}</td>
+              ";
+              if ($konto_row['type'] == 0) {
+                ?>
+                  <td>
+                    <table style='font-size:10pt' class='inner'>
+                      <tr>
+                        <td>Einzahldatum:</td>
+                        <td><?echo $konto_row['kontobewegungs_datum']?></td>
+                      </tr>
+                      <tr><td>Auszug:</td><td>
+                <?
+                if( $konto_row['bankkonto_id'] > 0 ) {
+                  $bank_row = sql_get_transaction( $konto_row['bankkonto_id'] );
+                  echo "
+                    {$bank_row['kontoauszug_jahr']} / {$bank_row['kontoauszug_nr']}
+                    <br>
+                    ({$bank_row['bankname']})
+                  ";
+                } else {
+                  if( $meinkonto ) {
+                    ?> <div class='warn'>noch nicht verbucht</div> <?
+                  } else {
+                    ?>
+                      <form action='<? echo self_url(); ?>' method="post">
+                        <? echo self_post(); ?>
+                        <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
+                        <select name='konto_id' size='1'>
+                        <? echo optionen_konten(); ?>
+                        </select>
+                        <br>
+                        Jahr: <?  number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
+                        / Nr: <input type="text" size='6' name='auszug_nr' />
+                        <input type="submit" value="BestÃ¤tigen ">
+                      </form>
+                    <?
+                  }
+                }
+                ?> </td></tr> </table> </td> <?
 							} else if ($konto_row['type'] == 1) {
 							   echo "<td>[noch nicht unterstützt]</td>";
 		    } else {

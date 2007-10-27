@@ -26,7 +26,7 @@ function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfeh
 	return $result;
 
 }
-function sql_single_row( $sql ) {
+function sql_select_single_row( $sql ) {
   $result = doSql( $sql );
   need( mysql_num_rows($result) == 1 );
   return mysql_fetch_array($result);
@@ -52,6 +52,24 @@ function fail_if_readonly() {
     exit();
   }
 }
+
+function adefault( $array, $index, $default ) {
+  if( isset( $array[$index] ) )
+    return $array[$index];
+  else
+    return $default;
+}
+
+function mysql2array( $result, $key, $val ) {
+  $r = array();
+  while( $row = mysql_fetch_array( $result ) ) {
+    need( isset( $row[$key] ) );
+    need( isset( $row[$val] ) );
+    $r[$row[$key]] = $row[$val];
+  }
+  return $r;
+}
+
 
 
 /*
@@ -802,7 +820,7 @@ function sql_muell_id(){
 
 
 function sql_gruppendaten( $gruppen_id ) {
-  return sql_single_row( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'" );
+  return sql_select_single_row( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'" );
 }
 function sql_gruppenname($gruppen_id){
   $row = sql_gruppendaten( $gruppen_id );
@@ -1745,28 +1763,6 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 
 
 /**
- *
- */
-function sqlUpdateTransaction($transaction, $receipt_nr, $receipt_year ){
-  global $dienstkontrollblatt_id;
-  nur_fuer_dienst(4);
-  fail_if_readonly();
-  $sql="UPDATE gruppen_transaktion
-    SET kontoauszugs_nr='$receipt_nr', kontoauszugs_jahr='$receipt_year',
-        dienstkontrollblatt_id='$dienstkontrollblatt_id'
-    WHERE id = '$transaction'";
-            doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
-}
-/**
- *
- */
-function sql_groupGlass($gruppe, $menge){
-	//include_once("config.php");  tut bisher nicht
-	$pfand_preis = 0.16; 
-	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
-}
-
-/**
  * transaktionsart: 0 : gruppen_transaktion / bankkonto
  *                  1 : gruppen_transaktion / gruppen_transaktion
  *                  2 : gruppen_transaktion / (FIXME)
@@ -1829,20 +1825,140 @@ function sql_bank_transaktion(
   return mysql_insert_id();
 }
 
+function sql_link_transaktion( $soll_id, $haben_id ) {
+  if( $soll_id > 0 )
+    doSql( "UPDATE bankkonto SET bankkonto_id=$haben_id WHERE id=$soll_id" );
+  else
+    doSql( "UPDATE gruppen_transaktion SET bankkonto_id=$haben_id WHERE id=".(-$soll_id) );
+
+  if( $haben_id > 0 )
+    doSql( "UPDATE bankkonto SET bankkonto_id=$soll_id WHERE id=$haben_id" );
+  else
+    doSql( "UPDATE gruppen_transaktion SET bankkonto_id=$soll_id WHERE id=".(-$haben_id) );
+}
+
+/*
+ * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
+ *
+ */
+function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
+  global $dienstkontrollblatt_id;
+  nur_fuer_dienst_IV();
+  need( $dienstkontrollblatt_id and $notiz );
+  need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
+  if( $soll['konto_id'] == -1 and $haben['konto_id'] == -1 )
+    $typ = 1;
+  else
+    $typ = 0;
+
+  if( $soll['konto_id'] == -1 ) {
+    $soll_id = -1 * sql_gruppen_transaktion(
+      $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
+    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
+    );
+  } else {
+    $soll_id = sql_bank_transaktion(
+      $typ, adefault( $soll, 'gruppen_id', 0 ), -$betrag
+    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
+    );
+  }
+
+  if( $haben['konto_id'] == -1 ) {
+    $haben_id = -1 * sql_gruppen_transaktion(
+      $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
+    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
+    );
+  } else {
+    $haben_id = sql_bank_transaktion(
+      $typ, adefault( $haben, 'gruppen_id', 0 ), $betrag
+    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
+    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
+    );
+  }
+
+  sql_link_transaktion( $soll_id, $haben_id );
+
+  return;
+}
+
+function sql_groupGlass($gruppe, $menge){
+	$pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
+	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
+}
+
+/**
+ *
+ */
+function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_year, $notiz ){
+  global $dienstkontrollblatt_id;
+  fail_if_readonly();
+  nur_fuer_dienst_IV();
+
+  $row = sql_select_single_row( "SELECT * FROM gruppen_transaktion WHERE id=$soll_id" );
+
+  $haben_id = bankkonto_transaktion(
+    $konto_id, $receipt_year, $receipt_nr
+  , $row['summe'], 'NOW()', $row['gruppen_id'], $row['lieferanten_id']
+  , $dienstkontrollblatt_id, $notiz
+  );
+
+  sql_link_transaktion( $soll_id, $haben_id );
+
+  $sql="UPDATE gruppen_transaktion
+    SET kontoauszugs_nr='$receipt_nr', kontoauszugs_jahr='$receipt_year',
+        dienstkontrollblatt_id='$dienstkontrollblatt_id'
+    WHERE id = '$soll_id'
+  ";
+  doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
+}
+
+
 function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = NULL ) {
   $sql = "
-    SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, kontoauszugs_jahr, notiz
+    SELECT id, type, summe, kontobewegungs_datum, bankkonto_id, kontoauszugs_nr, kontoauszugs_jahr, notiz
          , DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') AS date
     FROM gruppen_transaktion
     WHERE ( gruppen_id = $gruppen_id )
         " . ( $from_date ? " AND ( eingabe_zeit >= '$from_date' ) " : "" ) . "
         " . ( $to_date ? " AND ( eingabe_zeit <= '$to_date' ) " : "" ) . "
-    ORDER BY eingabe_zeit DESC
+    ORDER BY kontobewegungs_datum DESC
   ";
   // LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
 }
 
+function sql_get_transaction( $id ) {
+  if( $id > 0 ) {
+    $sql = "
+      SELECT kontoauszug_jahr, kontoauszug_nr
+           , betrag as haben
+           , kommentar
+           , bankkonto.bankkonto_id as konterbuchung_id
+           , bankkonten.name as bankname
+      FROM bankkonto
+      JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
+      WHERE bankkonto.id = $id
+    ";
+  } else {
+    $sql = "
+      SELECT bankkonto.kontoauszug_jahr, bankkonto.kontoauszug_nr
+           , -summe as haben
+           , gruppen_transaktion.notiz as kommentar
+           , gruppen_transaktion.bankkonto_id as konterbuchung_id
+           , bankkonten.name as bankname
+      FROM gruppen_transaktion
+      LEFT JOIN bankkonto
+             ON bankkonto.id = gruppen_transaktion.bankkonto_id
+      LEFT JOIN bankkonten
+             ON bankkonten.id = bankkonto.konto_id
+      WHERE bankkonto.id = ".(-$id)."
+    ";
+  }
+  return sql_select_single_row( $sql );
+}
 
 function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   $where = "";
@@ -1874,74 +1990,29 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
-function adefault( $array, $index, $default ) {
-  if( isset( $array[$index] ) )
-    return $array[$index];
-  else
-    return $default;
-}
-
-function mysql2array( $result, $key, $val ) {
-  $r = array();
-  while( $row = mysql_fetch_array( $result ) ) {
-    need( isset( $row[$key] ) );
-    need( isset( $row[$val] ) );
-    $r[$row[$key]] = $row[$val];
-  }
-  return $r;
-}
-
-/*
- * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
- *
- */
-function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
-  global $dienstkontrollblatt_id;
-  nur_fuer_dienst_IV();
-  need( $dienstkontrollblatt_id and $notiz );
-  need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
-  if( $soll['konto_id'] == -1 and $haben['konto_id'] == -1 )
-    $typ = 1;
-  else
-    $typ = 0;
-
-  if( $soll['konto_id'] == -1 ) {
-    $soll_id = sql_gruppen_transaktion(
-      $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
-    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
-    );
-  } else {
-    $soll_id = sql_bank_transaktion(
-      $typ, adefault( $soll, 'gruppen_id', 0 ), -$betrag
-    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $soll, 'lieferanten_id', 0 ), 0
-    );
-  }
-
-
-  if( $haben['konto_id'] == -1 ) {
-    $haben_id = sql_gruppen_transaktion(
-      $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
-    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
-    );
-  } else {
-    $haben_id = sql_bank_transaktion(
-      $typ, adefault( $haben, 'gruppen_id', 0 ), $betrag
-    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $haben, 'lieferanten_id', 0 ), $soll_id
-    );
-  }
-
-  return;
-}
-
-
-
 function sql_konten() {
   return doSql( "SELECT * FROM bankkonten ORDER BY name" );
 }
+
+function optionen_konten( $selected = 0 ) {
+  $konten = sql_konten();
+  $output = "";
+  while( $konto = mysql_fetch_array($konten) ) {
+    $id = $konto['id'];
+    $output .= "<option value='$id'";
+    if( $selected == $id ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">{$konto['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
+    $output = "<option value='0' selected>(bitte Konto wählen)</option>" . $output;
+  }
+  return $output;
+}
+
 
 function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   $where = "";
@@ -1962,7 +2033,6 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
       $groupby = "";
     }
   }
-  // echo "<br>where 2: ,$where,<br>";
   return doSql( "
     SELECT *
     , bankkonto.id as id
@@ -1974,10 +2044,6 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
     ORDER BY konto_id, kontoauszug_jahr, kontoauszug_nr
   " );
 }
-
-
-
-
 
 
 function subquery_bestellungen_soll_gruppe( $bestell_id = false ) {
@@ -1999,12 +2065,14 @@ function subquery_bestellungen_soll_gruppe( $bestell_id = false ) {
 }
 
 function subquery_bestellungen_haben_lieferant( $bestell_id = false ) {
-  $filter = "WHERE (produkte.lieferanten_id = lieferanten.id)";
+  $filter = "(produkte.lieferanten_id = lieferanten.id)";
   if( $bestell_id )
     $filter .= "AND (bestellvorschlaege.gesamtbestellung_id=$bestell_id)";
   return " (
     SELECT sum( bestellvorschlaege.liefermenge * produktpreise.preis )
       FROM bestellvorschlaege
+      JOIN gesamtbestellungen
+        ON gesamtbestellung.id = bestellvorschlaege.gesamtbestellung_id
       JOIN produktpreise
         ON produktpreise.id = bestellvorschlaege.produktpreise_id
       JOIN produkte
