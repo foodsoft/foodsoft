@@ -19,7 +19,6 @@
   if( ! isset( $inventur_pfandwert ) )
     $inventur_pfandwert = 0.0;
 
-  $kontosalden = sql_saldo();
 
   $basar_wert = 0.0;
   $basar = sql_basar();
@@ -41,54 +40,6 @@
   $row = mysql_fetch_array( $result );
   $gruppen_einzahlungen_ungebucht = $row['summe'];
   
-  // passiva berechnen:
-  //
-
-  $gruppen_guthaben = 0.0;
-  $gruppen_forderungen = 0.0;
-  $gruppen_sockel = 0.0;
-  $gruppen = sql_gruppen();
-  while( $gruppe = mysql_fetch_array($gruppen) ) {
-    $w = kontostand( $gruppe['id'] );
-    $gruppen_sockel += $sockelbetrag * $gruppe['mitgliederzahl'];
-    if( $w > 0 )
-      $gruppen_guthaben += $w;
-    else
-      $gruppen_forderungen -= $w;
-  }
-
-  $verbindlichkeiten = doSql( "
-    SELECT lieferanten.id as id
-         , lieferanten.name as name
-         , rechnungen.betrag as rechnungssumme
-         , zahlungen.bezahlt as bezahlt
-    FROM lieferanten
-    LEFT JOIN (
-      SELECT produkte.lieferanten_id as lieferanten_id
-           , sum( produktpreise.preis * bestellvorschlaege.liefermenge ) as betrag
-      FROM produkte
-      INNER JOIN bestellvorschlaege
-        ON bestellvorschlaege.produkt_id = produkte.id
-      INNER JOIN gesamtbestellungen
-        ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id
-      INNER JOIN produktpreise
-        ON produktpreise.id = bestellvorschlaege.produktpreise_id
-      WHERE gesamtbestellungen.state = 'Verteilt'
-      GROUP BY lieferanten_id
-    ) as rechnungen
-      ON rechnungen.lieferanten_id = lieferanten.id
-    LEFT JOIN (
-      SELECT lieferanten_id, sum( betrag ) as bezahlt FROM bankkonto
-      GROUP BY lieferanten_id
-    ) as zahlungen
-      ON zahlungen.lieferanten_id = lieferanten.id
-    HAVING (rechnungssumme <> 0) or (bezahlt<> 0);
-  " );
-
-
-  $aktiva = 0;
-  $passiva = 0;
-
 
   $erster_posten = 1;
   function rubrik( $name ) {
@@ -101,7 +52,7 @@
     $erster_posten = 1;
   }
   function posten( $name, $wert ) {
-    global $erster_posten;
+    global $erster_posten, $seitensumme;
     $class = ( $wert < 0 ? 'rednumber' : 'number' );
     printf( "
       <tr class='%s'>
@@ -113,6 +64,7 @@
     , $name, $wert
     );
     $erster_posten = 0;
+    $seitensumme += $wert;
   }
 
   echo "
@@ -127,26 +79,31 @@
         <table class='inner' width='100%'>
   ";
 
+
+  $seitensumme = 0;
+
   rubrik( "Bankguthaben" );
-  while( $konto = mysql_fetch_array( $kontosalden ) ) {
-    posten( "
-      <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"
-      >Konto {$konto['name']}</a>"
-    , $konto['saldo']
-    );
-    $aktiva += $konto['saldo'];
-  }
-  posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
-  $aktiva += $gruppen_einzahlungen_ungebucht;
+    $kontosalden = sql_saldo();
+    while( $konto = mysql_fetch_array( $kontosalden ) ) {
+      posten( "
+        <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"
+        >Konto {$konto['name']}</a>"
+      , $konto['saldo']
+      );
+    }
+    
+    posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
 
   rubrik( "Umlaufvermögen" );
-  posten( "Warenbestand Basar", $basar_wert );
-  posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
-  $aktiva += ( $basar_wert + $inventur_pfandwert );
+    posten( "Warenbestand Basar", $basar_wert );
+    posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
 
   rubrik( "Forderungen" );
-  posten( "Forderungen an Gruppen", $gruppen_forderungen );
-  $aktiva += $gruppen_forderungen;
+    posten( "Forderungen an Gruppen", forderungen_gruppen_summe() );
+
+
+  $aktiva = $seitensumme;
+
 
   //
   // ab hier passiva:
@@ -158,23 +115,26 @@
       <table class='inner' width='100%'>
   ";
 
-  rubrik( "Einlagen der Gruppen" );
-  posten( "Sockeleinlagen", $gruppen_sockel );
-  posten( "Kontoguthaben", $gruppen_guthaben );
-  $passiva += ( $gruppen_guthaben + $gruppen_sockel );
+  $seitensumme = 0;
+  
 
+  rubrik( "Einlagen der Gruppen" );
+    posten( "Sockeleinlagen", sockel_gruppen_summe() );
+    posten( "Kontoguthaben", guthaben_gruppen_summe() );
+
+  $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
   rubrik( "Verbindlichkeiten" );
-  while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-    $restschuld = $vkeit['rechnungssumme'] + $vkeit['bezahlt'];
-    posten( $vkeit['name'], $restschuld );
-    $passiva += $restschuld;
-  }
+    while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
+      posten( $vkeit['name'], $vkeit['soll'] );
+    }
+
+  $passiva = $seitensumme;
 
   $bilanzverlust = $aktiva - $passiva;
   $passiva += $bilanzverlust;
 
   rubrik( "Bilanzausgleich" );
-  posten( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust", $bilanzverlust );
+    posten( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust", $bilanzverlust );
 
   echo "
         </table>

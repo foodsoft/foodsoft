@@ -831,6 +831,15 @@ function sql_gruppenname($gruppen_id){
   return $row['name'];
 }
 
+function subquery_aktive_bestellgruppen() {
+  return " (
+    SELECT *
+    FROM bestellgruppen
+    WHERE (bestellgruppen.aktiv = 1)
+          AND NOT (bestellgruppen.id IN ( ".sql_basar_id().", ".sql_muell_id()." ) )
+  ) ";
+}
+
 /*
  * sql_gruppen: SELECT
  * - alle aktiven gruppen, oder
@@ -2117,18 +2126,69 @@ function subquery_transaktionen_soll_lieferant( $using ) {
   ) ";
 }
 
-function sql_haben_gruppe( $gruppen_id ) {
-  return sql_select_single_row( "
-    SELECT bestellgruppen.id as gruppen_id
-         , bestellgruppen.name as gruppen_name
-       , (".subquery_transaktionen_haben_gruppe('bestellgruppen')."
-            - ".subquery_bestellungen_soll_gruppe('bestellgruppen').") as haben
-    FROM bestellgruppen
-    WHERE bestellgruppen.id = $gruppen_id
+// nicht korrekt: sockelbetraege (noch?) nicht erfasst!
+//
+// function sql_haben_gruppe( $gruppen_id ) {
+//   return sql_select_single_row( "
+//     SELECT bestellgruppen.id as gruppen_id
+//          , bestellgruppen.name as gruppen_name
+//        , (".subquery_transaktionen_haben_gruppe('bestellgruppen')."
+//             - ".subquery_bestellungen_soll_gruppe('bestellgruppen').") as haben
+//     FROM bestellgruppen
+//     WHERE bestellgruppen.id = $gruppen_id
+//   " );
+// }
+
+
+function subquery_haben_lieferant( $using ) {
+  return " (
+    SELECT (" .subquery_bestellungen_haben_lieferant($using). "
+            - " .subquery_transaktionen_soll_lieferant($using). ") as haben
+  ) ";
+}
+
+function subquery_kontostand_gruppe( $using ) {
+  return " (
+    SELECT (".subquery_transaktionen_haben_gruppe('bestellgruppen')."
+           - ".subquery_bestellungen_soll_gruppe('bestellgruppen')." ) as haben
+  ) ";
+}
+
+function sql_verbindlichkeiten_lieferanten() {
+  return doSql( "
+    SELECT lieferanten.id as lieferanten_id
+         , lieferanten.name as name
+         , ( ".subquery_haben_lieferant('lieferanten')." ) as soll
+    FROM lieferanten
+    HAVING (soll <> 0)
   " );
 }
 
-function sql_bestellungen_soll( $gruppen_id ) {
+function forderungen_gruppen_summe() {
+  $row = sql_select_single_row( "
+    SELECT ifnull( sum( table_soll_gruppe.soll_gruppe ), 0.0 ) as soll
+    FROM (
+      SELECT ( -" .subquery_kontostand_gruppe('bestellgruppen'). ") as soll_gruppe
+      FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
+      HAVING (soll_gruppe > 0)
+    ) AS table_soll_gruppe
+  " );
+  return $row['soll'];
+}
+
+function guthaben_gruppen_summe() {
+  $row = sql_select_single_row( "
+    SELECT ifnull( sum( table_haben_gruppe.haben_gruppe ), 0.0 ) as haben
+    FROM (
+      SELECT (" .subquery_kontostand_gruppe('bestellgruppen'). ") as haben_gruppe
+      FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
+      HAVING (haben_gruppe > 0)
+    ) AS table_haben_gruppe
+  " );
+  return $row['haben'];
+}
+
+function sql_bestellungen_soll_gruppe( $gruppen_id ) {
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
@@ -2147,20 +2207,22 @@ function sql_bestellungen_soll( $gruppen_id ) {
   return $result;
 }
 
-function sql_haben_lieferant( $lieferanten_id ) {
-  return sql_select_single_row( "
-    SELECT lieferanten.id as lieferanten_id
-         , lieferanten.name as lieferanten_name
-       , (".subquery_bestellungen_haben_lieferant('lieferanten')."
-            - ".subquery_transaktionen_soll_lieferant('lieferanten').") as haben
-    FROM lieferanten
-    WHERE lieferanten.id = $lieferanten_id
+function kontostand($gruppen_id){
+  $row = sql_select_single_row( "
+    SELECT (".subquery_kontostand_gruppe('bestellgruppen').") as haben
+    FROM bestellgruppen
+    WHERE bestellgruppen.id = $gruppen_id
   " );
+  return $row['haben'];
 }
 
-function kontostand($gruppen_id){
-  $row = sql_haben_gruppe( $gruppen_id );
-  return $row['haben'];
+function sockel_gruppen_summe() {
+  global $sockelbetrag;
+  $row = sql_select_single_row( "
+    SELECT sum( $sockelbetrag * bestellgruppen.mitgliederzahl ) as soll
+    FROM ".subquery_aktive_bestellgruppen()." as bestellgruppen
+  " );
+  return $row['soll'];
 }
 
 
