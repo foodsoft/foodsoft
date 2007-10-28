@@ -144,6 +144,7 @@ CREATE TABLE `gruppen_transaktion` (
   `dienstkontrollblatt_id` int(11) NOT NULL default '0',
   `type` tinyint(1) NOT NULL default '0',
   `gruppen_id` int(11) NOT NULL default '0',
+  `lieferanten_id` int(11) NOT NULL default '0',
   `eingabe_zeit` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `summe` decimal(10,2) NOT NULL default '0.00',
   `kontoauszugs_nr` int(11) NOT NULL default '0',

@@ -1,6 +1,6 @@
 <?PHP
 
- assert($angemeldet);
+ assert($angemeldet) or exit();
  
  //Vergleicht das Datum der beiden mysql-records
  //gibt +1 zurück, wenn Datum in $konto älter ist
@@ -25,10 +25,10 @@ if( $meinkonto ) {
   $gruppen_id = $login_gruppen_id;
   $self_fields['gruppen_id'] = $gruppen_id;
   $gruppen_name = sql_gruppenname( $gruppen_id );
-  ?>
-    <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <? echo $gruppen_name; ?></h1>
-    <div id='option_menu'></div>
+  ?> <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <? echo $gruppen_name; ?></h1> <?
 
+  if( ! $readonly ) {
+    ?>
     <div id='transaction_button' style='padding-bottom:1em;'>
     <span class='button'
       onclick="document.getElementById('transaction_form').style.display='block';
@@ -51,15 +51,16 @@ if( $meinkonto ) {
       </fieldset>
       </form>
     </div>
-  <?
+    <?
 
-  if( get_http_var( 'amount', 'f' ) ) {
-    sql_gruppen_transaktion( 0, $login_gruppen_id, $amount );
+    if( get_http_var( 'amount', 'f' ) ) {
+      sql_gruppen_transaktion( 0, $login_gruppen_id, $amount, NULL, NULL, "Einzahlung" );
+    }
   }
 
 } else {
   nur_fuer_dienst(4,5);
-  get_http_var( 'gruppen_id', 'u', false, true );
+  get_http_var( 'gruppen_id', 'u', 0, true );
   ?>
   <h1>Kontoblatt</h1>
   <div id='option_menu'></div>
@@ -91,8 +92,18 @@ if( $meinkonto ) {
     need_http_var( 'year', 'u' );
     need_http_var( 'auszug_jahr', 'u' );
     need_http_var( 'auszug_nr', 'u' );
-    sqlGroupTransaction( '0', $gruppen_id , $summe_einzahlung , $auszug_nr , $auszug_jahr
-      , 'Einzahlung' , "$year-$month-$day" );
+    need_http_var( 'konto_id', 'u' );
+    sql_doppelte_transaktion(
+      array(
+        'konto_id' => -1, 'gruppen_id' => $gruppen_id
+      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , array(
+        'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
+      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , $summe_einzahlung
+    , "$year-$month-$day"
+    , "Einzahlung"
+    );
   }
 
   if( get_http_var( 'summe_transfer', 'f' ) ) {
@@ -102,20 +113,23 @@ if( $meinkonto ) {
     need_http_var( 'notiz', 'M' );
     need_http_var( 'to_group_id', 'u' );
     $to_group_name = sql_gruppenname( $to_group_id );
-    sqlGroupTransaction( '2', $gruppen_id, -$summe_transfer
-      , NULL, NULL, "Transfer an $to_group_name: $notiz", "$year-$month-$day" );
-    sqlGroupTransaction( '2', $to_group_id, $summe_transfer
-      , '',  "Transfer von $gruppen_name: $notiz", "$year-$month-$day" );
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1 , 'gruppen_id' => $gruppen_id )
+    , array( 'konto_id' => -1 , 'gruppen_id' => $to_group_id )
+    , $summe_transfer
+    , "$year-$month-$day"
+    , "Transfer von $gruppen_name an $to_group_name: $notiz"
+    );
   }
 
-  if( get_http_var( 'summe_sonstiges', 'f' ) ) {
-    need_http_var( 'day', 'u' );
-    need_http_var( 'month', 'u' );
-    need_http_var( 'year', 'u' );
-    need_http_var( 'notiz', 'M' );
-    sqlGroupTransaction( '2', $gruppen_id, $summe_sonstiges, NULL, NULL,  $notiz, "$year-$month-$day" );
-    // TODO: Transaktionart?
-  }
+//   if( get_http_var( 'summe_sonstiges', 'f' ) ) {
+//     need_http_var( 'day', 'u' );
+//     need_http_var( 'month', 'u' );
+//     need_http_var( 'year', 'u' );
+//     need_http_var( 'notiz', 'M' );
+//     sqlGroupTransaction( '2', $gruppen_id, $summe_sonstiges, NULL, NULL,  $notiz, "$year-$month-$day" );
+//     // TODO: Transaktionart?
+//   }
 
   ?>
 
@@ -151,6 +165,7 @@ if( $meinkonto ) {
       ><b>Transfer an andere Gruppe</b>
       </span>
 
+  <!--
       <span style='padding-left:1em;' title='Sonstige Transaktionen'>
       <input type='radio' name='transaktionsart'
         onclick="document.getElementById('einzahlung_form').style.display='none';
@@ -158,6 +173,7 @@ if( $meinkonto ) {
                  document.getElementById('sonstige_form').style.display='block';"
       ><b>sonstige Transaktion</b>
       </span>
+  -->
 
       <div id='einzahlung_form' style='display:none;'>
         <form method='post' class='small_form' action='<? echo self_url(); ?>'>
@@ -168,12 +184,15 @@ if( $meinkonto ) {
             </legend>
             <table>
               <tr>
-                <td>Kontoeingang:</td>
-                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+                <td>Konto:</td>
+                <td><select name='konto_id' size='1'><? echo optionen_konten(); ?></select></td>
               </tr><tr>
                 <td>Kontoauszug Jahr:</td>
                 <td><? number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
                 / Nr: <input type="text" size="6" name="auszug_nr"></td>
+              </tr><tr>
+                <td>Valuta:</td>
+                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
               </tr><tr>
                 <td>Summe:</td>
                 <td>
@@ -195,18 +214,18 @@ if( $meinkonto ) {
             </legend>
             <table>
               <tr>
-                <td>Datum:</td>
-                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-              </tr><tr>
-                <td>Notiz:</td>
-                <td><input type="text" size="60" name="notiz"></td>
-              </tr><tr>
                 <td>an Gruppe:</td>
                 <td>
                   <select name='to_group_id' size='1'>
                     <? echo optionen_gruppen( false, false, false, "(bitte Gruppe wÃ¤hlen)" ); ?>
                   </select>
                 </td>
+              </tr><tr>
+                <td>Notiz:</td>
+                <td><input type="text" size="60" name="notiz"></td>
+              </tr><tr>
+                <td>Valuta:</td>
+                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
               </tr><tr>
                 <td>Summe:</td>
                 <td>
@@ -219,6 +238,7 @@ if( $meinkonto ) {
         </form>
       </div>
 
+  <!--
       <div id='sonstige_form' style='display:none;'>
         <form method='post' class='small_form' action='<? echo self_url(); ?>'>
           <? echo self_post(); ?>
@@ -244,6 +264,7 @@ if( $meinkonto ) {
           </fieldset>
         </form>
       </div>
+   -->
 
     </fieldset>
 
@@ -265,13 +286,6 @@ if( $meinkonto ) {
 	$type2str[1] = "Ãœberweisung";
 	$type2str[2] = "Sonstiges";
 	
-
-
-//    if( ( $gesamtbestellung_id = $HTTP_GET_VARS['gesamtbestellung_id'] ) ) {
-//      echo "details fuer bestellung: $gesamtbestellung_id";
-//      echo "<div class='warn'>noch in arbeit!</div>";
-//      exit(12);
-//    }
    $cols = 7;
    ?>
 	 <table class="numbers">
@@ -293,7 +307,7 @@ if( $meinkonto ) {
 			   $result = sql_get_group_transactions( $gruppen_id );
          $num_rows = mysql_num_rows($result);
 
-         $vert_result = sql_gesamtpreise($gruppen_id);
+         $vert_result = sql_bestellungen_soll($gruppen_id);
          $summe = $kontostand;
 				 $no_more_vert = false;
 				 $no_more_konto=false;
@@ -312,7 +326,7 @@ if( $meinkonto ) {
 					    echo "   <td>".$vert_row['valuta_trad']."</td>\n";
 					    echo "   <td> </td>\n";
 					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
-					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['gesamtpreis'])."</b></td>";
+					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['soll'])."</b></td>";
               $details_url = "index.php?window=bestellschein"
               . "&gruppen_id=$gruppen_id"
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
@@ -328,7 +342,7 @@ if( $meinkonto ) {
                   <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
                 </tr>
               <?
-              $summe += $vert_row['gesamtpreis'];
+              $summe += $vert_row['soll'];
 				 	    $vert_row = mysql_fetch_array($vert_result);
 					    if(!$vert_row){
 					    	$no_more_vert = true;
@@ -351,8 +365,8 @@ if( $meinkonto ) {
                       </tr>
                       <tr><td>Auszug:</td><td>
                 <?
-                if( $konto_row['bankkonto_id'] > 0 ) {
-                  $bank_row = sql_get_transaction( $konto_row['bankkonto_id'] );
+                if( $konto_row['konterbuchung_id'] > 0 ) {
+                  $bank_row = sql_get_transaction( $konto_row['konterbuchung_id'] );
                   echo "
                     {$bank_row['kontoauszug_jahr']} / {$bank_row['kontoauszug_nr']}
                     <br>
@@ -360,7 +374,7 @@ if( $meinkonto ) {
                   ";
                 } else {
                   if( $meinkonto ) {
-                    ?> <div class='warn'>noch nicht verbucht</div> <?
+                    ?> <div class='warn'>noch nich verbucht</div> <?
                   } else {
                     ?>
                       <form action='<? echo self_url(); ?>' method="post">
