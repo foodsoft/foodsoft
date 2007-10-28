@@ -83,7 +83,7 @@
   $seitensumme = 0;
 
   rubrik( "Bankguthaben" );
-    $kontosalden = sql_saldo();
+    $kontosalden = sql_bankkonto_salden();
     while( $konto = mysql_fetch_array( $kontosalden ) ) {
       posten( "
         <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"

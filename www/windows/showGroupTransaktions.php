@@ -370,7 +370,7 @@ if( $meinkonto ) {
                   echo "
                     {$bank_row['kontoauszug_jahr']} / {$bank_row['kontoauszug_nr']}
                     <br>
-                    ({$bank_row['bankname']})
+                    ({$bank_row['kontoname']})
                   ";
                 } else {
                   if( $meinkonto ) {

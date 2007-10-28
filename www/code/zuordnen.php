@@ -839,6 +839,9 @@ function subquery_aktive_bestellgruppen() {
           AND NOT (bestellgruppen.id IN ( ".sql_basar_id().", ".sql_muell_id()." ) )
   ) ";
 }
+function sql_aktive_bestellgruppen() {
+  return doSql( subquery_aktive_bestellgruppen() );
+}
 
 /*
  * sql_gruppen: SELECT
@@ -1931,7 +1934,7 @@ function sql_get_transaction( $id ) {
            , betrag as haben
            , kommentar
            , bankkonto.konterbuchung_id as konterbuchung_id
-           , bankkonten.name as bankname
+           , bankkonten.name as kontoname
            , gruppen_id, lieferanten_id
       FROM bankkonto
       JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
@@ -1943,7 +1946,7 @@ function sql_get_transaction( $id ) {
            , -summe as haben
            , gruppen_transaktion.notiz as kommentar
            , gruppen_transaktion.konterbuchung_id as konterbuchung_id
-           , bankkonten.name as bankname
+           , bankkonten.name as kontoname
            , gruppen_transaktion.gruppen_id as gruppen_id,
            , gruppen_transaktion.lieferanten_id as lieferanten_id
       FROM gruppen_transaktion
@@ -1957,13 +1960,19 @@ function sql_get_transaction( $id ) {
   return sql_select_single_row( $sql );
 }
 
-function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
-  $where = "";
-  if( $konto_id ) {
-    $where .= (
-      ( $where ? " AND " : " WHERE " ) . "(konto_id=$konto_id)"
-    );
-  }
+function sql_bankkonto_salden() {
+  return doSql( "
+    SELECT konto_id,
+           IFNULL(sum( betrag ),0.0) as saldo,
+           bankkonten.name as kontoname
+    FROM bankkonto
+    JOIN bankkonten ON bankkonten.id=konto_id
+    GROUP BY konto_id
+  " );
+}
+
+function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
+  $where = "WHERE (konto_id=$konto_id)";
   if( $auszug_jahr ) {
     if( $auszug_nr ) {
       $where .= (
@@ -1976,19 +1985,27 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
       );
     }
   }
-  return doSql( "
+  $row = sql_select_single_row( "
     SELECT konto_id,
            IFNULL(sum( betrag ),0.0) as saldo,
            bankkonten.name as name
     FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id
     $where
-    GROUP BY konto_id
   " );
+  return $row['saldo'];
 }
 
 function sql_konten() {
   return doSql( "SELECT * FROM bankkonten ORDER BY name" );
+}
+
+function sql_kontodaten( $konto_id ) {
+  return sql_select_single_row( "SELECT * FROM bankkonten WHERE id='$konto_id'" );
+}
+function sql_kontoname($konto_id){
+  $row = sql_kontodaten( $konto_id );
+  return $row['name'];
 }
 
 function optionen_konten( $selected = 0 ) {
@@ -2040,12 +2057,12 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
-/* subquery_bestellungen_soll_gruppe:
+/* subquery_bestellungen_soll_gruppen:
  *   liefert schuld von gruppen aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
 */
-function subquery_bestellungen_soll_gruppe( $using ) {
+function subquery_bestellungen_soll_gruppen( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "gesamtbestellungen", $using ) or $morejoins .= "
@@ -2072,12 +2089,12 @@ function subquery_bestellungen_soll_gruppe( $using ) {
   ) ";
 }
 
-/* subquery_bestellungen_haben_lieferant:
+/* subquery_bestellungen_haben_lieferanten:
  *   liefert forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'lieferanten'
 */
-function subquery_bestellungen_haben_lieferant( $using ) {
+function subquery_bestellungen_haben_lieferanten( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "gesamtbestellungen", $using ) or $morejoins .= "
@@ -2100,7 +2117,7 @@ function subquery_bestellungen_haben_lieferant( $using ) {
   ) ";
 }
 
-function subquery_transaktionen_haben_gruppe( $using ) {
+function subquery_transaktionen_haben_gruppen( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "bestellgruppen", $using ) or $morejoins .= "
@@ -2113,7 +2130,7 @@ function subquery_transaktionen_haben_gruppe( $using ) {
   ) ";
 }
 
-function subquery_transaktionen_soll_lieferant( $using ) {
+function subquery_transaktionen_soll_lieferanten( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "lieferanten", $using ) or $morejoins .= "
@@ -2126,31 +2143,18 @@ function subquery_transaktionen_soll_lieferant( $using ) {
   ) ";
 }
 
-// nicht korrekt: sockelbetraege (noch?) nicht erfasst!
-//
-// function sql_haben_gruppe( $gruppen_id ) {
-//   return sql_select_single_row( "
-//     SELECT bestellgruppen.id as gruppen_id
-//          , bestellgruppen.name as gruppen_name
-//        , (".subquery_transaktionen_haben_gruppe('bestellgruppen')."
-//             - ".subquery_bestellungen_soll_gruppe('bestellgruppen').") as haben
-//     FROM bestellgruppen
-//     WHERE bestellgruppen.id = $gruppen_id
-//   " );
-// }
 
-
-function subquery_haben_lieferant( $using ) {
+function subquery_haben_lieferanten( $using ) {
   return " (
-    SELECT (" .subquery_bestellungen_haben_lieferant($using). "
-            - " .subquery_transaktionen_soll_lieferant($using). ") as haben
+    SELECT (" .subquery_bestellungen_haben_lieferanten($using). "
+            - " .subquery_transaktionen_soll_lieferanten($using). ") as haben
   ) ";
 }
 
-function subquery_kontostand_gruppe( $using ) {
+function subquery_kontostand_gruppen( $using ) {
   return " (
-    SELECT (".subquery_transaktionen_haben_gruppe('bestellgruppen')."
-           - ".subquery_bestellungen_soll_gruppe('bestellgruppen')." ) as haben
+    SELECT (".subquery_transaktionen_haben_gruppen('bestellgruppen')."
+           - ".subquery_bestellungen_soll_gruppen('bestellgruppen')." ) as haben
   ) ";
 }
 
@@ -2158,7 +2162,7 @@ function sql_verbindlichkeiten_lieferanten() {
   return doSql( "
     SELECT lieferanten.id as lieferanten_id
          , lieferanten.name as name
-         , ( ".subquery_haben_lieferant('lieferanten')." ) as soll
+         , ( ".subquery_haben_lieferanten('lieferanten')." ) as soll
     FROM lieferanten
     HAVING (soll <> 0)
   " );
@@ -2168,7 +2172,7 @@ function forderungen_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_soll_gruppe.soll_gruppe ), 0.0 ) as soll
     FROM (
-      SELECT ( -" .subquery_kontostand_gruppe('bestellgruppen'). ") as soll_gruppe
+      SELECT ( -" .subquery_kontostand_gruppen('bestellgruppen'). ") as soll_gruppe
       FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
       HAVING (soll_gruppe > 0)
     ) AS table_soll_gruppe
@@ -2180,7 +2184,7 @@ function guthaben_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_haben_gruppe.haben_gruppe ), 0.0 ) as haben
     FROM (
-      SELECT (" .subquery_kontostand_gruppe('bestellgruppen'). ") as haben_gruppe
+      SELECT (" .subquery_kontostand_gruppen('bestellgruppen'). ") as haben_gruppe
       FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
       HAVING (haben_gruppe > 0)
     ) AS table_haben_gruppe
@@ -2194,7 +2198,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
          , gesamtbestellungen.name
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , " .subquery_bestellungen_soll_gruppe( array('bestellgruppen','gesamtbestellungen') ). " as soll
+         , " .subquery_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). " as soll
     FROM gesamtbestellungen
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
@@ -2209,7 +2213,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
 
 function kontostand($gruppen_id){
   $row = sql_select_single_row( "
-    SELECT (".subquery_kontostand_gruppe('bestellgruppen').") as haben
+    SELECT (".subquery_kontostand_gruppen('bestellgruppen').") as haben
     FROM bestellgruppen
     WHERE bestellgruppen.id = $gruppen_id
   " );

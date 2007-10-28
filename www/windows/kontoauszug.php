@@ -12,20 +12,10 @@ need_http_var( 'auszug_nr', 'u', true );
 $auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
 // need( mysql_num_rows( $auszug ) > 0, "Keine Posten vorhanden" );
 
-$result = sql_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
-if( mysql_num_rows( $result ) < 1 ) {
-  $startsaldo = 0.0;
-} else {
-  need( mysql_num_rows( $result ) == 1 );
-  $row = mysql_fetch_array( $result );
-  $startsaldo = $row['saldo'];
-}
+$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
+$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
 
-$result = sql_saldo( $konto_id, $auszug_jahr, $auszug_nr );
-need( mysql_num_rows( $result ) == 1 );
-$row = mysql_fetch_array( $result );
-$saldo = $row['saldo'];
-$bankname = $row['name'];
+$kontoname = sql_kontoname($konto_id);
 
 get_http_var( 'action', 'w', false );
 
@@ -114,7 +104,7 @@ if( $action == 'zahlung_gruppegruppe' ) {
   sql_konto_transaktion( $von, $nach, $betrag, "$year-$month-$day", $notiz );
 }
 
-echo "<h1>Kontoauszug: $bankname - $auszug_jahr / $auszug_nr</h1>";
+echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
 ?>
   <div id='transactions_button' style='padding-bottom:1em;'>

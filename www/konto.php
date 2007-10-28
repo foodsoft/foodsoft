@@ -90,17 +90,15 @@
     $nr = $auszug['kontoauszug_nr'];
 
     $posten = mysql_num_rows( sql_kontoauszug( $konto_id, $jahr, $nr ) );
-    $saldo = sql_saldo( $konto_id, $auszug['kontoauszug_jahr'], $auszug['kontoauszug_nr'] );
-    need( mysql_num_rows( $saldo ) == 1 );
+    $saldo = sql_bankkonto_saldo( $konto_id, $auszug['kontoauszug_jahr'], $auszug['kontoauszug_nr'] );
 
-    $saldo_row = mysql_fetch_array( $saldo );
     $detailurl="javascript:neuesfenster('index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$jahr&auszug_nr=$nr','kontoauszug');";
     echo "
       <tr onclick=\"$detailurl\">
         <td>$jahr</td>
         <td class='number'><a href='$detailurl'>$nr</a></td>
         <td class='number'>$posten</td>
-        <td class='number'>{$saldo_row['saldo']}</td>
+        <td class='number'>$saldo</td>
       </tr>
     ";
   }
