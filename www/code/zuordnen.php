@@ -1217,7 +1217,7 @@ function sql_liefermenge($bestell_id,$produkt_id){
 
 function select_verteilmengen(){
   return "
-    SELECT sum(menge) as verteilmenge
+    SELECT IFNULL(sum(menge),0.0) as verteilmenge
          , gesamtbestellung_id
          , produkt_id
     FROM bestellzuordnung
@@ -1256,20 +1256,20 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "
-    sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) )
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) ), 0.0 )
   ";
   // basarbestellmenge: _eigentliche_ basarbestellungen sind art=1,
   // basar mit art=0 zaehlt wie gewoehnliche festmenge!
   $basarbestellmenge_expr = "
-    sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,1,0)
-                               * IF(bestellzuordnung.art=1,1,0) )
+    ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,1,0)
+                               * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
   ";
   $toleranzbestellmenge_expr = "
-    sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,0,1)
-                               * IF(bestellzuordnung.art=1,1,0) )
+    ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,0,1)
+                               * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
   ";
   $verteilmenge_expr = "
-    sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0) )
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0) ), 0.0 )
   ";
 
   // tatsaechlich bestellte oder gelieferte produkte werden vor solchen mit
@@ -1969,7 +1969,7 @@ function sql_saldo( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   }
   return doSql( "
     SELECT konto_id,
-           sum( betrag ) as saldo,
+           IFNULL(sum( betrag ),0.0) as saldo,
            bankkonten.name as name
     FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id
@@ -2046,7 +2046,7 @@ function subquery_bestellungen_soll_gruppe( $using ) {
     JOIN bestellgruppen ON bestellgruppen.id = gruppenbestellungen.bestellguppen_id
   ";
   return " (
-    SELECT sum( bestellzuordnung.menge * produktpreise.preis )
+    SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.preis ), 0.0 )
       FROM gruppenbestellungen
       $morejoins
       JOIN bestellzuordnung
@@ -2078,7 +2078,7 @@ function subquery_bestellungen_haben_lieferant( $using ) {
     JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
   ";
   return " (
-    SELECT sum( bestellvorschlaege.liefermenge * produktpreise.preis )
+    SELECT IFNULL( sum( bestellvorschlaege.liefermenge * produktpreise.preis ), 0.0 )
       FROM bestellvorschlaege
       JOIN produktpreise
         ON produktpreise.id = bestellvorschlaege.produktpreise_id
@@ -2098,7 +2098,7 @@ function subquery_transaktionen_haben_gruppe( $using ) {
     JOIN bestellgruppen ON bestellgruppen.id = gruppen_transaktion.gruppen_id
   ";
   return " (
-    SELECT sum( summe )
+    SELECT IFNULL( sum( summe ), 0.0 )
       FROM gruppen_transaktion
      WHERE gruppen_transaktion.gruppen_id = bestellgruppen.id
   ) ";
@@ -2111,7 +2111,7 @@ function subquery_transaktionen_soll_lieferant( $using ) {
     JOIN lieferanten ON lieferanten.id = gruppen_transaktion.lieferanten_id
   ";
   return " (
-    SELECT sum( -summe )
+    SELECT IFNULL( sum( -summe ), 0.0 )
       FROM gruppen_transaktion
      WHERE gruppen_transaktion.lieferanten_id = lieferanten.id
   ) ";
