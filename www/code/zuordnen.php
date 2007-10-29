@@ -41,7 +41,6 @@ function need( $exp, $comment = "Fataler Fehler" ) {
   return true;
 }
 
-
 function fail_if_readonly() {
   global $readonly;
   if( $readonly ) {
@@ -70,6 +69,29 @@ function mysql2array( $result, $key, $val ) {
   return $r;
 }
 
+/*
+ * needjoins:
+ *  erzeugt JOIN-anweisungen aus $rules; in $using koennen tabellen uebergeben werden,
+ *  die bereits eingebunden sind (z.B. aus ausserem SELECT) und uebergangen werden sollen
+ *  (fuer skalare wie in SELECT ... , ( SELECT ... ) as , ... )
+ */  
+function needjoins( $using, $rules ) {
+  is_array( $using ) or $using = array( $using );
+  $joins = "";
+  $keys = array_keys( $rules );
+  foreach( $using as $table )
+    need( in_array( $table, $keys ) );
+  foreach( $keys as $table ) {
+    if( ! in_array( $table, $using ) ) {
+      if( is_array( $r = $rules[$table] ) ) {
+        $joins .= " JOIN ({$r[0]}) AS $table ON {$r[1]} ";
+      } else {
+        $joins .= " JOIN $table ON $r ";
+      }
+    }
+  }
+  return $joins;
+}
 
 
 /*
@@ -831,13 +853,16 @@ function sql_gruppenname($gruppen_id){
   return $row['name'];
 }
 
-function subquery_aktive_bestellgruppen() {
-  return " (
+function select_aktive_bestellgruppen() {
+  return "
     SELECT *
     FROM bestellgruppen
     WHERE (bestellgruppen.aktiv = 1)
           AND NOT (bestellgruppen.id IN ( ".sql_basar_id().", ".sql_muell_id()." ) )
-  ) ";
+  ";
+}
+function sql_aktive_bestellgruppen() {
+  return doSql( select_aktive_bestellgruppen() );
 }
 function sql_aktive_bestellgruppen() {
   return doSql( subquery_aktive_bestellgruppen() );
@@ -1103,6 +1128,13 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	return $result;
 }
 
+function select_gesamtbestellungen_schuldverhaeltnis() {
+  return "
+    SELECT * FROM gesamtbestellungen
+    WHERE state in ('".STATUS_LIEFERANT."','".STATUS_VERTEILT."')
+  ";
+}
+
 function sql_bestellung( $id ) {
   $result = sql_bestellungen( false, false, $id );
   if( ! $result or mysql_num_rows( $result ) != 1 ) {
@@ -1227,16 +1259,16 @@ function sql_liefermenge($bestell_id,$produkt_id){
   return $row['liefermenge'];
 }
 
-function select_verteilmengen(){
+function select_verteilmenge() {
   return "
     SELECT IFNULL(sum(menge),0.0) as verteilmenge
-         , gesamtbestellung_id
-         , produkt_id
     FROM bestellzuordnung
-    INNER JOIN gruppenbestellungen
-       ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-    WHERE art = 2
-    GROUP BY gesamtbestellung_id , produkt_id
+    JOIN gruppenbestellungen
+      ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
+    WHERE (art = 2)
+      AND (produkte.id = bestellzuordnung.produkt_id)
+      AND (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
+    GROUP BY gesamtbestellungen.id, produkte.id
   ";
 }
 
@@ -1679,50 +1711,54 @@ function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
  *  produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
  */
 function sql_basar($bestell_id=0,$order='produktname'){
-   $sql = "SELECT * FROM (".select_basar($bestell_id,$order).") as basar";
-   $result = doSql($sql, LEVEL_ALL, "Konnte Basardaten nicht aus DB laden..");
-   return $result;
-
-}
-/**
- *
- */
-function select_basar($bestell_id=0, $order='produktname') {
+  $where = ( $bestell_id ? "WHERE gesamtbestellungen.id = $bestell_id" : "" );
   switch( $order ) {
     case 'datum':
-      $order_by = 'gesamtbestellungen.lieferung';
+      $order_by = 'lieferung';
       break;
     case 'bestellung':
-      $order_by = 'gesamtbestellungen.name';
+      $order_by = 'bestellung_name';
       break;
     default:
     case 'produktname':
-      $order_by = 'produkte.name';
+      $order_by = 'produkt_name';
       break;
   }
-   return "
-SELECT produkte.name, bestellvorschlaege.produkt_id,
-bestellvorschlaege.gesamtbestellung_id,
-bestellvorschlaege.produktpreise_id, bestellvorschlaege.liefermenge,
-bz.verteilmenge, (bestellvorschlaege.liefermenge -
-	ifnull(bz.verteilmenge,0)) as basar, produktpreise.verteileinheit,
-     produktpreise.preis,
-     gesamtbestellungen.name as bestellung_name,
-     gesamtbestellungen.lieferung
-FROM bestellvorschlaege 
-LEFT JOIN (". select_verteilmengen() .")as bz
-ON (bz.produkt_id =
-	bestellvorschlaege.produkt_id and bz.gesamtbestellung_id =
-	bestellvorschlaege.gesamtbestellung_id) 
-JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id ) 
-JOIN gesamtbestellungen ON ( gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id ) 
-JOIN produkte ON ( bestellvorschlaege.produkt_id = produkte.id ) 
-where (not isnull(liefermenge) or not isnull(bestellmenge))
-      and gesamtbestellungen.state>='Verteilt'
-      " . ( $bestell_id ? " and gesamtbestellungen.id=$bestell_id " : "" ) . "
-HAVING ( `basar` <>0 )
-ORDER BY $order_by
-" ;
+  $sql = select_basar() . "$where ORDER BY $order_by";
+  return doSql($sql, LEVEL_ALL, "Konnte Basardaten nicht aus DB laden..");
+}
+
+/**
+ *
+ */
+function select_basar() {
+  return "
+    SELECT produkte.name as produkt_name
+         , gesamtbestellungen.name as bestellung_name
+         , gesamtbestellungen.lieferung as lieferung
+         , produktpreise.preis
+         , produktpreise.verteileinheit
+         , bestellvorschlaege.produkt_id
+         , bestellvorschlaege.gesamtbestellung_id
+         , bestellvorschlaege.produktpreise_id
+         , bestellvorschlaege.liefermenge
+         , bestellvorschlaege.bestellmenge
+         , ( bestellvorschlaege.liefermenge - ( ".select_verteilmenge()." ) ) as basar
+    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
+    JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
+    JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
+    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
+    HAVING (basar <> 0)
+  " ;
+}
+
+
+function basar_wert_summe() {
+  $row = sql_select_single_row( "
+    SELECT IFNULL(sum( basar.basar * basar.preis ), 0.0 ) as wert
+    FROM ( " .select_basar(). " ) as basar
+  " );
+  return $row['wert'];
 }
 
 /**
@@ -2057,12 +2093,20 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
+<<<<<<< zuordnen.php
+/* select_bestellungen_soll_gruppen:
+=======
 /* subquery_bestellungen_soll_gruppen:
+>>>>>>> 1.89
  *   liefert schuld von gruppen aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
 */
+<<<<<<< zuordnen.php
+function select_bestellungen_soll_gruppen( $using ) {
+=======
 function subquery_bestellungen_soll_gruppen( $using ) {
+>>>>>>> 1.89
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "gesamtbestellungen", $using ) or $morejoins .= "
@@ -2071,7 +2115,7 @@ function subquery_bestellungen_soll_gruppen( $using ) {
   in_array( "bestellgruppen", $using ) or $morejoins .= "
     JOIN bestellgruppen ON bestellgruppen.id = gruppenbestellungen.bestellguppen_id
   ";
-  return " (
+  return "
     SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.preis ), 0.0 )
       FROM gruppenbestellungen
       $morejoins
@@ -2086,7 +2130,7 @@ function subquery_bestellungen_soll_gruppen( $using ) {
            AND (gruppenbestellungen.bestellguppen_id=bestellgruppen.id)
            AND (gruppenbestellungen.gesamtbestellung_id=gesamtbestellungen.id)
            AND ".SQL_FILTER_SCHULDVERHAELTNIS."
-  ) ";
+  ";
 }
 
 /* subquery_bestellungen_haben_lieferanten:
@@ -2153,8 +2197,13 @@ function subquery_haben_lieferanten( $using ) {
 
 function subquery_kontostand_gruppen( $using ) {
   return " (
+<<<<<<< zuordnen.php
+    SELECT (".subquery_transaktionen_haben_gruppen('bestellgruppen')."
+           - (".select_bestellungen_soll_gruppen('bestellgruppen').") ) as haben
+=======
     SELECT (".subquery_transaktionen_haben_gruppen('bestellgruppen')."
            - ".subquery_bestellungen_soll_gruppen('bestellgruppen')." ) as haben
+>>>>>>> 1.89
   ) ";
 }
 
@@ -2172,8 +2221,13 @@ function forderungen_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_soll_gruppe.soll_gruppe ), 0.0 ) as soll
     FROM (
+<<<<<<< zuordnen.php
+      SELECT ( -" .subquery_kontostand_gruppen('bestellgruppen'). ") AS soll_gruppe
+      FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
+=======
       SELECT ( -" .subquery_kontostand_gruppen('bestellgruppen'). ") as soll_gruppe
       FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
+>>>>>>> 1.89
       HAVING (soll_gruppe > 0)
     ) AS table_soll_gruppe
   " );
@@ -2184,8 +2238,13 @@ function guthaben_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_haben_gruppe.haben_gruppe ), 0.0 ) as haben
     FROM (
+<<<<<<< zuordnen.php
+      SELECT (" .subquery_kontostand_gruppen('bestellgruppen'). ") AS haben_gruppe
+      FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
+=======
       SELECT (" .subquery_kontostand_gruppen('bestellgruppen'). ") as haben_gruppe
       FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
+>>>>>>> 1.89
       HAVING (haben_gruppe > 0)
     ) AS table_haben_gruppe
   " );
@@ -2224,7 +2283,7 @@ function sockel_gruppen_summe() {
   global $sockelbetrag;
   $row = sql_select_single_row( "
     SELECT sum( $sockelbetrag * bestellgruppen.mitgliederzahl ) as soll
-    FROM ".subquery_aktive_bestellgruppen()." as bestellgruppen
+    FROM (".select_aktive_bestellgruppen().") AS bestellgruppen
   " );
   return $row['soll'];
 }
