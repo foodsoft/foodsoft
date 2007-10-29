@@ -1,3 +1,8 @@
+-- Neu!!!!!!!!! Nicht mehr hier eintragen, sondern in zuordnen.php
+-- function update_database().
+-- Dazu gibt es neu die Leitvariable database_version.
+-- Incrementiert jeweils um 1. Wenn nicht gesetzt, wird 0 angenommen.
+
 INSERT INTO `nahrungskette`.`leitvariable` (
 `name` , `value` , `local` , `comment`
 ) VALUES (
@@ -23,7 +28,6 @@ CREATE TABLE `bankkonto` (
  `konto_id` smallint(4) NOT NULL,
  `kommentar` TEXT NOT NULL,
  `konterbuchung_id` INT NOT NULL,
-  PRIMARY KEY  (`id`),
   KEY `secondary` (`konto_id`, `kontoauszug_jahr`,`kontoauszug_nr`)
  )
  ENGINE = myisam DEFAULT CHARACTER SET utf8 COMMENT = 'Bankkontotransaktionen';

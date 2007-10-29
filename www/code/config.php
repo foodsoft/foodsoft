@@ -63,4 +63,9 @@
   if( isset( $muell_id ) )
     $specialgroups[] = $muell_id;
 
-?>
+  // databaseversion
+  $database_version or $database_version = 0;
+  require_once('code/err_functions.php');
+  require_once('code/zuordnen.php');
+  update_database($database_version);
+  ?>

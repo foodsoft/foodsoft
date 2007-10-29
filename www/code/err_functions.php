@@ -34,10 +34,11 @@
 		 
 		 log_error($line,$file,$string,$error,$stack);
 	 
-      $fehler = "<b>Fehler in Zeile ".$line." in ".$file."</b> ";
+      $fehler = "<div class='warn'><b>Fehler in Zeile ".$line." in ".$file."</b> ";
       $fehler .= "<br>" . $string . "<br>";
       if($error) $fehler .= "<b>MySQL-Error:</b> ". $error;
       if($stack) $fehler .= "<br><b>Stack:</b><br><code>".var_export($stack, TRUE)."</code>";
+      $fehler .= "</div>";
 			
 			if ($error_report_adress != "") mail($error_report_adress,$test_title." - Error mail!!",$fehler);
 			

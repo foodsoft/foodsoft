@@ -24,9 +24,8 @@ if( $action == 'delete' ) {
       <div class='warn'>(bitte erst auf null setzen, um Sockelbetrag zu verbuchen!)</div>
     <?
   } else {
-    if( ! mysql_query(
-      "UPDATE bestellgruppen SET aktiv=0 WHERE id='$gruppen_id'"
-    ) ) echo "<div class='warn'>Konnte Bestellgruppe nicht l&ouml;schen: " . mysql_error() . "</div>";
+    $sql = "UPDATE bestellgruppen SET aktiv=0 WHERE id='$gruppen_id'";
+	doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellgruppe nicht l&ouml;schen");
   }
 }
 
@@ -51,8 +50,12 @@ if( $action == 'delete' ) {
     <?
   }
 
+// Hier ändern. Code in views verschieben, details in editGroup verschieben
+
   ?>
     </table>
+
+ 
 
     <br><br>
 

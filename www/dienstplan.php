@@ -26,6 +26,7 @@
 	     } else {
 	          get_http_var("startdatum"); //ToDo check for date
 	          get_http_var("enddatum"); //ToDo check for date
+		  fail_if_readonly();
 	          create_dienste($startdatum,$enddatum,$dienstfrequenz);
 		  ?>echo <p><b> Dienste erstellt </b></p><?
 	     }
@@ -58,8 +59,10 @@
 	     if (!isset($plan_dienst)) $plan_dienst = "1/2";
              foreach (array_keys($_REQUEST) as $submitted){
 	 	if(strstr($submitted, "up_")!==FALSE){
+		  fail_if_readonly();
 		    sql_change_rotationsplan(substr($submitted, 3), $plan_dienst, FALSE);
 		} elseif(strstr($submitted, "down_")!==FALSE){
+		  fail_if_readonly();
 		    sql_change_rotationsplan(substr($submitted, 5), $plan_dienst, TRUE);
 		}
 	      }
@@ -123,6 +126,7 @@
                    $row = sql_get_dienst_by_id($command[1]);
 		   if($row["Status"]=="Offen" || isset($_REQUEST["confirmed"])){
 		   //Offenen Dienst gleich übernehmen
+		  fail_if_readonly();
                        sql_dienst_uebernehmen($command[1]);
                    } else {
 		   //Nicht bestätigten Dienst: Confirmation
@@ -139,6 +143,7 @@
 		   }
 		   break;
 		case "wirdoffen":
+		  fail_if_readonly();
 		   sql_dienst_wird_offen($command[1]);
 		   break;
 		case "abtauschen":
@@ -151,6 +156,7 @@
 		           //Keine Möglichkeit zum Tauschen
 			   //Das eigene Datum ist auch in der Liste
 			   ?> <b> Keine Tauschmöglichkeit. Dienst ist jetzt offen </b> <?
+		  fail_if_readonly();
 		           sql_dienst_wird_offen($command[1]);
 		       } else {
 		           ?> 
@@ -176,11 +182,13 @@
 
 		   } else {
 		   //erst bei gewähltem Datum ausführen
+		  fail_if_readonly();
 		       sql_dienst_abtauschen($command[1], $abtauschdatum);
 
 		   }
 		   break;
 		case "akzeptieren":
+		  fail_if_readonly();
 		   sql_dienst_akzeptieren($command[1]);
 		   break;
 		

@@ -9,6 +9,7 @@
 //
 
 error_reporting(E_ALL);
+//$_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
 if( ! $angemeldet ) {
   exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
@@ -135,7 +136,10 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
+
   // liefermengen aktualisieren:
+//  Hier werden die vom Formular übergebenen Werte ausgewertet
+//  FIXME in obiges switch-statement integrieren
   //
   if( $editable and $state == STATUS_VERTEILT ) {
     $produkte = sql_bestellprodukte($bestell_id);
@@ -150,9 +154,15 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
           changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
         }
       }
+
+    }
+    // Als nicht geliefert markierte Produkte löschen
+    if(get_http_var( 'nichtGeliefert')){
+    	foreach($nichtGeliefert as $p_id){
+    		nichtGeliefert($bestell_id, $p_id);
+    	}
     }
   }
-
          //infos zur gesamtbestellung auslesen 
 	 $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
 	

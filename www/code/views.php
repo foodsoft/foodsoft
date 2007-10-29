@@ -447,7 +447,7 @@ function products_overview(
       );
       if( $state == STATUS_LIEFERANT ) {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "beim Lieferanten bestellte Menge", 'header' => "L-Menge", 'cols' => 3
+          'title' => "beim Lieferanten bestellte Menge", 'header' => "L-Menge", 'cols' => 4
         );
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "beim Lieferanten bestellte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
@@ -455,7 +455,7 @@ function products_overview(
         $option_nichtgefuellt = true;
       } else {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => 3
+          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => 4
         );
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "vom Lieferanten gelieferte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
@@ -713,6 +713,7 @@ function products_overview(
             >"
           , $liefermenge_scaled
           );
+	
         } else {
           printf( "%.3lf", $liefermenge_scaled );
         }
@@ -720,6 +721,18 @@ function products_overview(
           </td>
           <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
         ";
+        if( $editAmounts ) {
+	  //Checkbox für fehlende Lieferung. Löscht auch gleich 
+		//die Einträge in der Verteiltabelle
+        echo "
+              <td style='border-left-style:none;border-right-style:none;'>
+		<input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='$produkt_id'>
+	      </td>
+        ";
+	} else {
+		echo " <td></td>";
+	}
+
       }
       if( ! $gruppen_id ) {
         echo "
@@ -759,7 +772,7 @@ function products_overview(
     ?>
         <tr style='border:none'>
           <td colspan='<? echo $cols ?>'>
-            <input type='submit' value='Liefermengen ändern'>
+            <input type='submit' value='Speichern'>
             <input type='reset' value='Änderungen zurücknehmen'>
           </td>
         </tr>

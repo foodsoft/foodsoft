@@ -16,3 +16,7 @@ Abfrage ein update, insert oder delete enthält, auf read-only
 überprüfen. Vorteil: wir müssen nicht an jeder Stelle dran denken. Die
 runsql() sollte sowieso verwendet werden, um die log-levels richtig
 benutzen zu können.
+
+Im Keller funktionert beim Hochladen die Sache mit dem Exit-Status
+nicht. Exit Status im Keller ist immer 2. Damit funktioniert die
+Foodsoft in der aktuellen Version nicht.
