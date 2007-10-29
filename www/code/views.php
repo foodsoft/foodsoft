@@ -277,7 +277,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      $menge *= $kan_verteilmult;
 
      $row = array( 
-       "<td>{$basar_row['name']}</td>"
+       "<td>{$basar_row['produkt_name']}</td>"
      , "<td><a
            href=\"javascript:neuesfenster('index.php?window=bestellschein&bestell_id={$basar_row['gesamtbestellung_id']}','bestellschein')\"
              title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>"
