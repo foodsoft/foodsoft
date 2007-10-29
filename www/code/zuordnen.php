@@ -17,7 +17,7 @@ $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
  define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
  define('LEVEL_KEY',  1);
  define('LEVEL_NONE',  0);
- $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
+ $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
@@ -40,6 +40,7 @@ function need( $exp, $comment = "Fataler Fehler" ) {
   }
   return true;
 }
+
 
 function fail_if_readonly() {
   global $readonly;
@@ -73,7 +74,7 @@ function mysql2array( $result, $key, $val ) {
  * needjoins:
  *  erzeugt JOIN-anweisungen aus $rules; in $using koennen tabellen uebergeben werden,
  *  die bereits eingebunden sind (z.B. aus ausserem SELECT) und uebergangen werden sollen
- *  (fuer skalare wie in SELECT ... , ( SELECT ... ) as , ... )
+ *  (fuer skalare subqueries wie in SELECT ... , ( SELECT ... ) as , ... )
  */  
 function needjoins( $using, $rules ) {
   is_array( $using ) or $using = array( $using );
@@ -483,8 +484,8 @@ function sql_rotate_rotationsplan($latest_position, $dienst){
      *group to the back of the rotation system.
      *Mark the changed entries with negative numbers.
      */
-    var_dump(sql_rotationsplan_extrem($dienst));
-    var_dump($latest_position);
+    // var_dump(sql_rotationsplan_extrem($dienst));
+    // var_dump($latest_position);
     $shift =sql_rotationsplan_extrem($dienst) - $latest_position ;
     $sql = "UPDATE bestellgruppen 
             SET rotationsplanposition = -1 * (rotationsplanposition +".$shift.") 
@@ -863,9 +864,6 @@ function select_aktive_bestellgruppen() {
 }
 function sql_aktive_bestellgruppen() {
   return doSql( select_aktive_bestellgruppen() );
-}
-function sql_aktive_bestellgruppen() {
-  return doSql( subquery_aktive_bestellgruppen() );
 }
 
 /*
@@ -1268,7 +1266,6 @@ function select_verteilmenge() {
     WHERE (art = 2)
       AND (produkte.id = bestellzuordnung.produkt_id)
       AND (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
-    GROUP BY gesamtbestellungen.id, produkte.id
   ";
 }
 
@@ -2093,7 +2090,7 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
-/* subquery_bestellungen_soll_gruppen:
+/* select_bestellungen_soll_gruppen:
  *   liefert schuld von gruppen aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
@@ -2125,12 +2122,12 @@ function select_bestellungen_soll_gruppen( $using ) {
   ";
 }
 
-/* subquery_bestellungen_haben_lieferanten:
+/* select_bestellungen_haben_lieferanten:
  *   liefert forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'lieferanten'
 */
-function subquery_bestellungen_haben_lieferanten( $using ) {
+function select_bestellungen_haben_lieferanten( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "gesamtbestellungen", $using ) or $morejoins .= "
@@ -2139,7 +2136,7 @@ function subquery_bestellungen_haben_lieferanten( $using ) {
   in_array( "lieferanten", $using ) or $morejoins .= "
     JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
   ";
-  return " (
+  return "
     SELECT IFNULL( sum( bestellvorschlaege.liefermenge * produktpreise.preis ), 0.0 )
       FROM bestellvorschlaege
       JOIN produktpreise
@@ -2150,55 +2147,55 @@ function subquery_bestellungen_haben_lieferanten( $using ) {
      WHERE (produkte.lieferanten_id = lieferanten.id)
            AND (bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id)
            AND ".SQL_FILTER_SCHULDVERHAELTNIS."
-  ) ";
+  ";
 }
 
-function subquery_transaktionen_haben_gruppen( $using ) {
+function select_transaktionen_haben_gruppen( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "bestellgruppen", $using ) or $morejoins .= "
     JOIN bestellgruppen ON bestellgruppen.id = gruppen_transaktion.gruppen_id
   ";
-  return " (
+  return "
     SELECT IFNULL( sum( summe ), 0.0 )
       FROM gruppen_transaktion
      WHERE gruppen_transaktion.gruppen_id = bestellgruppen.id
-  ) ";
+  ";
 }
 
-function subquery_transaktionen_soll_lieferanten( $using ) {
+function select_transaktionen_soll_lieferanten( $using ) {
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "lieferanten", $using ) or $morejoins .= "
     JOIN lieferanten ON lieferanten.id = gruppen_transaktion.lieferanten_id
   ";
-  return " (
+  return "
     SELECT IFNULL( sum( -summe ), 0.0 )
       FROM gruppen_transaktion
      WHERE gruppen_transaktion.lieferanten_id = lieferanten.id
-  ) ";
+  ";
 }
 
 
-function subquery_haben_lieferanten( $using ) {
-  return " (
-    SELECT (" .subquery_bestellungen_haben_lieferanten($using). "
-            - " .subquery_transaktionen_soll_lieferanten($using). ") as haben
-  ) ";
+function select_haben_lieferanten( $using ) {
+  return "
+    SELECT ( (" .select_bestellungen_haben_lieferanten($using). ")
+            - (" .select_transaktionen_soll_lieferanten($using). ") ) as haben
+  ";
 }
 
-function subquery_kontostand_gruppen( $using ) {
-  return " (
-    SELECT (".subquery_transaktionen_haben_gruppen('bestellgruppen')."
+function select_kontostand_gruppen( $using ) {
+  return "
+    SELECT ( (".select_transaktionen_haben_gruppen('bestellgruppen').")
            - (".select_bestellungen_soll_gruppen('bestellgruppen').") ) as haben
-  ) ";
+  ";
 }
 
 function sql_verbindlichkeiten_lieferanten() {
   return doSql( "
     SELECT lieferanten.id as lieferanten_id
          , lieferanten.name as name
-         , ( ".subquery_haben_lieferanten('lieferanten')." ) as soll
+         , ( ".select_haben_lieferanten('lieferanten')." ) as soll
     FROM lieferanten
     HAVING (soll <> 0)
   " );
@@ -2208,7 +2205,7 @@ function forderungen_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_soll_gruppe.soll_gruppe ), 0.0 ) as soll
     FROM (
-      SELECT ( -" .subquery_kontostand_gruppen('bestellgruppen'). ") AS soll_gruppe
+      SELECT ( -(" .select_kontostand_gruppen('bestellgruppen'). ") ) AS soll_gruppe
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
       HAVING (soll_gruppe > 0)
     ) AS table_soll_gruppe
@@ -2220,7 +2217,7 @@ function guthaben_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_haben_gruppe.haben_gruppe ), 0.0 ) as haben
     FROM (
-      SELECT (" .subquery_kontostand_gruppen('bestellgruppen'). ") AS haben_gruppe
+      SELECT (" .select_kontostand_gruppen('bestellgruppen'). ") AS haben_gruppe
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
       HAVING (haben_gruppe > 0)
     ) AS table_haben_gruppe
@@ -2234,7 +2231,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
          , gesamtbestellungen.name
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , " .subquery_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). " as soll
+         , (" .select_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). ") as soll
     FROM gesamtbestellungen
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
@@ -2249,7 +2246,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
 
 function kontostand($gruppen_id){
   $row = sql_select_single_row( "
-    SELECT (".subquery_kontostand_gruppen('bestellgruppen').") as haben
+    SELECT (".select_kontostand_gruppen('bestellgruppen').") as haben
     FROM bestellgruppen
     WHERE bestellgruppen.id = $gruppen_id
   " );
@@ -2666,6 +2663,38 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
 //
 ////////////////////////////////////
 
+function checkValue( $val, $typ){
+	  $pattern = '';
+	  switch( substr( $typ, 0, 1 ) ) {
+	    case 'M':
+	      $val = mysql_real_escape_string( $val );
+	      break;
+	    case 'u':
+	      $val = trim($val);
+	      $pattern = '/^\d+$/';
+	      break;
+	    case 'f':
+	      $val = trim($val);
+	      $pattern = '/^[-\d.]+$/';
+	      break;
+	    case 'w':
+	      $val = trim($val);
+	      $pattern = '/^[a-zA-Z0-9_]+$/';
+	      break;
+	    case '/':
+	      $val = trim($val);
+	      $pattern = $typ;
+	       break;
+	    default:
+	  }
+	  if( $pattern ) {
+	    if( ! preg_match( $pattern, $val ) ) {
+	      return FALSE;
+	    }
+	  }
+      return $val;
+
+}
 
 // get_http_var: bisher definierte $typ argumente:
 //   u (default wenn name auf _id endet): positive ganze Zahl
@@ -2681,11 +2710,12 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
 function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = false ) {
   global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
   if( isset( $HTTP_GET_VARS[$name] ) ) {
-    $val = $HTTP_GET_VARS[$name];
+    $arry = $HTTP_GET_VARS[$name];
   } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-    $val = $HTTP_POST_VARS[$name];
+    $arry = $HTTP_POST_VARS[$name];
   } else {
     if( isset( $default ) ) {
+	    //FIXME Allow defaults für arrays
       $$name = $default;
       if( $is_self_field ) {
         $self_fields[$name] = $default;
@@ -2696,47 +2726,39 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
       return FALSE;
     }
   }
-  if( $typ == 'A' ) {
-    if( substr( $name, -3 ) == '_id' ) {
-      $typ = 'u';
-    } else {
-      $typ = 'M';
-    }
+	  if( $typ == 'A' ) {
+	    if( substr( $name, -3 ) == '_id' ) {
+	      $typ = 'u';
+	    } else {
+	      $typ = 'M';
+	    }
+	  }
+
+  if(is_array($arry)){
+  foreach($arry as $key => $val){
+      $new = checkvalue($val, $typ);
+      if($new===FALSE){
+	      unset( $$name );
+	      return FALSE;
+      } else {
+	      $arry[$key]=$new;
+      }
   }
-  $pattern = '';
-  switch( substr( $typ, 0, 1 ) ) {
-    case 'M':
-      $val = mysql_real_escape_string( $val );
-      break;
-    case 'u':
-      $val = trim($val);
-      $pattern = '/^\d+$/';
-      break;
-    case 'f':
-      $val = trim($val);
-      $pattern = '/^[-\d.]+$/';
-      break;
-    case 'w':
-      $val = trim($val);
-      $pattern = '/^[a-zA-Z0-9_]+$/';
-      break;
-    case '/':
-      $val = trim($val);
-      $pattern = $typ;
-       break;
-    default:
+	     //FIXME self_fields for arrays?
+	  $$name = $arry;
+  } else {
+      $new = checkvalue($arry, $typ);
+      if($new===FALSE){
+	      unset( $$name );
+	      return FALSE;
+      } else {
+	  $$name = $new;
+	  if( $is_self_field ) {
+	    $self_fields[$name] = $new;
+	  }
+      }
   }
-  if( $pattern ) {
-    if( ! preg_match( $pattern, $val ) ) {
-      unset( $$name );
-      return FALSE;
-    }
-  }
-  $$name = $val;
-  if( $is_self_field ) {
-    $self_fields[$name] = $val;
-  }
-  return TRUE;
+     return TRUE;
 }
 
 /**
@@ -2760,6 +2782,72 @@ function reload_immediately( $url ) {
   ";
   exit();
 }
+/**
+ *
+ */
+function update_database($version){
+	switch($version){
+	case 0:
+		$sql = "
+			CREATE TABLE `gruppenmitglieder` (
+			 `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+			 `gruppen_id` INT NOT NULL,
+			 `name` TEXT NOT NULL, 
+			 `vorname` TEXT NOT NULL, 
+			 `telefon` TEXT NOT NULL, 
+			 `email` TEXT NOT NULL, 
+			 `diensteinteilung` ENUM( '1/2', '3', '4', '5', 'freigestellt' ) NOT NULL DEFAULT 'freigestellt',
+			 `rotationsplanposition` INT NOT NULL
+			 )
+			 ENGINE = myisam DEFAULT CHARACTER SET utf8 COMMENT = 'Mitglieder einer Foodcoopgruppe';
+			";
+		doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht anlegen");
+
+		$sql="INSERT INTO `nahrungskette`.`leitvariable` (
+			`name` ,
+			`value` ,
+			`local` ,
+			`comment`
+			)
+			VALUES (
+				'database_version',
+				'1', '0',
+			       	'Versionskontrolle für Datenbank. Erlaubt automatisches Anpassen der Datenbank beim start.'
+			);
+               ";
+		doSql($sql, LEVEL_IMPORTANT, "Konnte Leitvariable database_version nicht einfügen");
+	case 1:
+		//Später während änderungen gemacht werden brauchen 
+		//wird die alten Daten noch
+		$sql = " INSERT INTO gruppenmitglieder 
+			(gruppen_id, name, telefon, email, diensteinteilung, rotationsplanposition)
+			SELECT id, ansprechpartner, telefon, email, diensteinteilung, rotationsplanposition 
+			FROM bestellgruppen;
+			";
+		//doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht mit Werten fuellen");
+		$sql = " ALTER TABLE `bestellgruppen`
+			  DROP `ansprechpartner`,
+			  DROP `telefon`,
+			  DROP `email`,
+			  DROP `diensteinteilung`,
+			  DROP `rotationsplanposition`;
+			";
+		//doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht anlegen");
+		$sql="UPDATE nahrungskette
+			set `value` = 2 ,
+			WHERE `name` = 'database_version' ;
+               ";
+		//doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht anlegen");
+/*
+	case n:
+		$sql = "
+			";
+		doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht anlegen");
+	       
+ */
+	}
+}
+
 function wikiLink( $topic, $text, $head = false ) {
   global $foodsoftdir;
   echo "
