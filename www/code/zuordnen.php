@@ -17,7 +17,7 @@ $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
  define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
  define('LEVEL_KEY',  1);
  define('LEVEL_NONE',  0);
- $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
+ $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
@@ -71,29 +71,33 @@ function mysql2array( $result, $key, $val ) {
 }
 
 /*
- * needjoins:
- *  erzeugt JOIN-anweisungen aus $rules; in $using koennen tabellen uebergeben werden,
- *  die bereits eingebunden sind (z.B. aus ausserem SELECT) und uebergangen werden sollen
- *  (fuer skalare subqueries wie in SELECT ... , ( SELECT ... ) as , ... )
- */  
-function needjoins( $using, $rules ) {
+ * need_joins: fuer skalare subqueries wie in SELECT x , ( SELECT ... ) as y, z ):
+ *  erzeugt aus $rules JOIN-anweisungen fuer benoetigte tabellen; in $using koennen
+ *  tabellen uebergeben werden, die bereits verfuegbar sind
+ */
+function need_joins( $using, $rules ) {
+  $joins = '';
   is_array( $using ) or $using = array( $using );
-  $joins = "";
   $keys = array_keys( $rules );
-  foreach( $using as $table )
-    need( in_array( $table, $keys ) );
-  foreach( $keys as $table ) {
-    if( ! in_array( $table, $using ) ) {
-      if( is_array( $r = $rules[$table] ) ) {
-        $joins .= " JOIN ({$r[0]}) AS $table ON {$r[1]} ";
-      } else {
-        $joins .= " JOIN $table ON $r ";
-      }
-    }
-  }
+  foreach( $keys as $table )
+    if( ! in_array( $table, $using ) )
+      $joins .= " JOIN " . $rules[$table];
   return $joins;
 }
 
+/*
+ * use_filters: fuer skalare subqueries wie in SELECT x , ( SELECT ... ) as y, z ):
+ *  erzeugt optionale filterausdruecke, die bereits verfuegbare tabellen benutzen
+ */
+function use_filters( $using, $rules ) {
+  $filters = '';
+  is_array( $using ) or $using = array( $using );
+  $keys = array_keys( $rules );
+  foreach( $keys as $table )
+    if( in_array( $table, $using ) )
+      $filters .= " AND ({$rules[$table]}) ";
+  return $filters;
+}
 
 /*
 ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten', 'Verteilt', 'archiviert' ) NOT NULL DEFAULT 'bestellen';
@@ -105,9 +109,6 @@ ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
  define('STATUS_VERTEILT', "Verteilt");
  define('STATUS_ARCHIVIERT', "archiviert");
 
- define('SQL_FILTER_SCHULDVERHAELTNIS'
-   ,"(gesamtbestellungen.state in ('".STATUS_LIEFERANT."','".STATUS_VERTEILT."'))"
- );
 
 ////////////////////////////////////
 //
@@ -1126,6 +1127,10 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 	return $result;
 }
 
+/* function select_gesamtbestellungen_schuldverhaeltnis():
+ *  liefert gesamtbestellungen, fuer die bereits ein verbindlicher vertrag besteht
+ *  (ab STATUS_LIEFERANT)
+ */
 function select_gesamtbestellungen_schuldverhaeltnis() {
   return "
     SELECT * FROM gesamtbestellungen
@@ -1965,7 +1970,7 @@ function sql_get_transaction( $id ) {
     $sql = "
       SELECT kontoauszug_jahr, kontoauszug_nr
            , betrag as haben
-           , kommentar
+           , bankkonto.kommentar as kommentar
            , bankkonto.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
            , gruppen_id, lieferanten_id
@@ -2095,31 +2100,25 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
 */
-function select_bestellungen_soll_gruppen( $using ) {
-  is_array( $using ) or $using = array( $using );
-  $morejoins = "";
-  in_array( "gesamtbestellungen", $using ) or $morejoins .= "
-    JOIN gesamtbestellungen ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
-  ";
-  in_array( "bestellgruppen", $using ) or $morejoins .= "
-    JOIN bestellgruppen ON bestellgruppen.id = gruppenbestellungen.bestellguppen_id
-  ";
+function select_bestellungen_soll_gruppen( $using = array() ) {
   return "
     SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.preis ), 0.0 )
-      FROM gruppenbestellungen
-      $morejoins
-      JOIN bestellzuordnung
-        ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-      JOIN bestellvorschlaege
-        ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
-           AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
-      JOIN produktpreise
-        ON produktpreise.id = bestellvorschlaege.produktpreise_id
-     WHERE (bestellzuordnung.art=2)
-           AND (gruppenbestellungen.bestellguppen_id=bestellgruppen.id)
-           AND (gruppenbestellungen.gesamtbestellung_id=gesamtbestellungen.id)
-           AND ".SQL_FILTER_SCHULDVERHAELTNIS."
-  ";
+    FROM gruppenbestellungen
+  " . need_joins( $using, array(
+      'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
+                               ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
+    ) ) . "
+    JOIN bestellzuordnung
+      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+    JOIN bestellvorschlaege
+      ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
+         AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
+    JOIN produktpreise
+      ON produktpreise.id = bestellvorschlaege.produktpreise_id
+    WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
+      'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
+    , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
+    ) );
 }
 
 /* select_bestellungen_haben_lieferanten:
@@ -2127,15 +2126,7 @@ function select_bestellungen_soll_gruppen( $using ) {
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'lieferanten'
 */
-function select_bestellungen_haben_lieferanten( $using ) {
-  is_array( $using ) or $using = array( $using );
-  $morejoins = "";
-  in_array( "gesamtbestellungen", $using ) or $morejoins .= "
-    JOIN gesamtbestellungen ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id
-  ";
-  in_array( "lieferanten", $using ) or $morejoins .= "
-    JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
-  ";
+function select_bestellungen_haben_lieferanten( $using = array() ) {
   return "
     SELECT IFNULL( sum( bestellvorschlaege.liefermenge * produktpreise.preis ), 0.0 )
       FROM bestellvorschlaege
@@ -2143,51 +2134,45 @@ function select_bestellungen_haben_lieferanten( $using ) {
         ON produktpreise.id = bestellvorschlaege.produktpreise_id
       JOIN produkte
         ON produkte.id = bestellvorschlaege.produkt_id
-      $morejoins
-     WHERE (produkte.lieferanten_id = lieferanten.id)
-           AND (bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id)
-           AND ".SQL_FILTER_SCHULDVERHAELTNIS."
-  ";
+  " . need_joins( $using, array(
+      'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
+                               ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id'
+  ) ) . "
+    WHERE true " . use_filters( $using, array(
+      'lieferanten' => 'lieferanten.id = produkte.lieferanten_id'
+    , 'gesamtbestellungen' => 'bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id'
+    ) );
 }
 
-function select_transaktionen_haben_gruppen( $using ) {
-  is_array( $using ) or $using = array( $using );
-  $morejoins = "";
-  in_array( "bestellgruppen", $using ) or $morejoins .= "
-    JOIN bestellgruppen ON bestellgruppen.id = gruppen_transaktion.gruppen_id
-  ";
+function select_transaktionen_haben_gruppen( $using = array() ) {
   return "
     SELECT IFNULL( sum( summe ), 0.0 )
       FROM gruppen_transaktion
-     WHERE gruppen_transaktion.gruppen_id = bestellgruppen.id
-  ";
+     WHERE ( gruppen_transaktion.gruppen_id > 0 ) " . use_filters( $using, array(
+        'bestellgruppen' => 'bestellgruppen.id = gruppen_transaktion.gruppen_id'
+  ) );
 }
 
-function select_transaktionen_soll_lieferanten( $using ) {
-  is_array( $using ) or $using = array( $using );
-  $morejoins = "";
-  in_array( "lieferanten", $using ) or $morejoins .= "
-    JOIN lieferanten ON lieferanten.id = gruppen_transaktion.lieferanten_id
-  ";
+function select_transaktionen_soll_lieferanten( $using = array() ) {
   return "
     SELECT IFNULL( sum( -summe ), 0.0 )
       FROM gruppen_transaktion
-     WHERE gruppen_transaktion.lieferanten_id = lieferanten.id
-  ";
+     WHERE ( gruppen_transaktion.lieferanten_id > 0 ) " . use_filters( $using, array(
+       'lieferanten' => 'gruppen_transaktion.lieferanten_id = lieferanten.id'
+  ) );
 }
 
-
-function select_haben_lieferanten( $using ) {
+function select_haben_lieferanten( $using = array() ) {
   return "
     SELECT ( (" .select_bestellungen_haben_lieferanten($using). ")
             - (" .select_transaktionen_soll_lieferanten($using). ") ) as haben
   ";
 }
 
-function select_kontostand_gruppen( $using ) {
+function select_kontostand_gruppen( $using = array() ) {
   return "
-    SELECT ( (".select_transaktionen_haben_gruppen('bestellgruppen').")
-           - (".select_bestellungen_soll_gruppen('bestellgruppen').") ) as haben
+    SELECT ( (".select_transaktionen_haben_gruppen($using).")
+           - (".select_bestellungen_soll_gruppen($using).") ) as haben
   ";
 }
 
@@ -2232,12 +2217,12 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
          , (" .select_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). ") as soll
-    FROM gesamtbestellungen
+    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
     INNER JOIN bestellgruppen
       ON bestellgruppen.id = gruppenbestellungen.bestellguppen_id
-    WHERE ( gruppenbestellungen.bestellguppen_id = $gruppen_id ) AND ".SQL_FILTER_SCHULDVERHAELTNIS."
+    WHERE ( gruppenbestellungen.bestellguppen_id = $gruppen_id )
     ORDER BY valuta_kan DESC;
   ";
   $result = doSql($query, LEVEL_ALL, "Konnte Gesamtpreise nicht aus DB laden..");
