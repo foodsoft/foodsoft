@@ -3,9 +3,7 @@
   // konto.php: Bankkonto-Verwaltung
   //
 
-  if( ! $angemeldet ) {
-    exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-  } 
+  assert( $angemeldet ) or exit();
 
   setWindowSubtitle( 'Kontoverwaltung' );
   setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
