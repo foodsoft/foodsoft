@@ -1,158 +1,140 @@
 <?php
-  //
-  // bilanz.php
-  //
+//
+// bilanz.php
+//
 
-  error_reporting(E_ALL);
+assert( $angemeldet ) or exit();
 
-  if( ! $angemeldet ) {
-    exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-  } 
+?> <h1>Bilanz - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink></h1> <?
 
-  ?> <h1>Bilanz - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink></h1> <?
+// aktiva berechnen:
+//
 
-  // aktiva berechnen:
-  //
-
-  if( ! isset( $inventur_datum ) )
-    $inventur_datum = "(keine)";
-  if( ! isset( $inventur_pfandwert ) )
-    $inventur_pfandwert = 0.0;
+if( ! isset( $inventur_datum ) )
+  $inventur_datum = "(keine)";
+if( ! isset( $inventur_pfandwert ) )
+  $inventur_pfandwert = 0.0;
 
 
-  $basar_wert = 0.0;
-  $basar = sql_basar();
+$row = sql_select_single_row( "
+  SELECT sum( summe ) as summe
+  FROM gruppen_transaktion
+  WHERE (type=0) and (kontoauszugs_nr<=0)
+" );
+$gruppen_einzahlungen_ungebucht = $row['summe'];
 
-  while( $row = mysql_fetch_array( $basar ) ) {
-    // print_r( $row );
-    $basar_wert += $row['basar'] * $row['preis'];
-  }
 
-  $basar_2 = kontostand( $basar_id );
-
-  $abschreibung = kontostand( $muell_id );
-
-  $result = doSQL( "
-    SELECT sum( summe ) as summe
-    FROM gruppen_transaktion
-    WHERE (type=0) and (kontoauszugs_nr<=0)
-  " );
-  $row = mysql_fetch_array( $result );
-  $gruppen_einzahlungen_ungebucht = $row['summe'];
-  
-
-  $erster_posten = 1;
-  function rubrik( $name ) {
-    global $erster_posten;
-    echo "
-      <tr class='rubrik'>
-        <th colspan='2'>$name</th>
-      </tr>
-    ";
-    $erster_posten = 1;
-  }
-  function posten( $name, $wert ) {
-    global $erster_posten, $seitensumme;
-    $class = ( $wert < 0 ? 'rednumber' : 'number' );
-    printf( "
-      <tr class='%s'>
-        <td>%s:</td>
-        <td class='$class'>%.2lf</td>
-      </tr>
-      "
-    , $erster_posten ? 'ersterposten' : 'posten'
-    , $name, $wert
-    );
-    $erster_posten = 0;
-    $seitensumme += $wert;
-  }
-
+$erster_posten = 1;
+function rubrik( $name ) {
+  global $erster_posten;
   echo "
-    <table width='100%'>
-      <colgroup>
-        <col width='*'><col width='*'>
-      </colgroup>
-      <tr><th> Aktiva </th><th> Passiva </th></tr>
-      <tr>
-        <td>
-
-        <table class='inner' width='100%'>
+    <tr class='rubrik'>
+      <th colspan='2'>$name</th>
+    </tr>
   ";
+  $erster_posten = 1;
+}
+function posten( $name, $wert ) {
+  global $erster_posten, $seitensumme;
+  $class = ( $wert < 0 ? 'rednumber' : 'number' );
+  printf( "
+    <tr class='%s'>
+      <td>%s:</td>
+      <td class='$class'>%.2lf</td>
+    </tr>
+    "
+  , $erster_posten ? 'ersterposten' : 'posten'
+  , $name, $wert
+  );
+  $erster_posten = 0;
+  $seitensumme += $wert;
+}
 
-
-  $seitensumme = 0;
-
-  rubrik( "Bankguthaben" );
-    $kontosalden = sql_bankkonto_salden();
-    while( $konto = mysql_fetch_array( $kontosalden ) ) {
-      posten( "
-        <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"
-        >Konto {$konto['name']}</a>"
-      , $konto['saldo']
-      );
-    }
-    
-    posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
-
-  rubrik( "Umlaufvermögen" );
-    posten( "Warenbestand Basar", $basar_wert );
-    posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
-
-  rubrik( "Forderungen" );
-    posten( "Forderungen an Gruppen", forderungen_gruppen_summe() );
-
-
-  $aktiva = $seitensumme;
-
-
-  //
-  // ab hier passiva:
-  //
-  echo "
-      </table>
-      </td><td>
+echo "
+  <table width='100%'>
+    <colgroup>
+      <col width='*'><col width='*'>
+    </colgroup>
+    <tr><th> Aktiva </th><th> Passiva </th></tr>
+    <tr>
+      <td>
 
       <table class='inner' width='100%'>
-  ";
+";
 
-  $seitensumme = 0;
+
+$seitensumme = 0;
+
+rubrik( "Bankguthaben" );
+  $kontosalden = sql_bankkonto_salden();
+  while( $konto = mysql_fetch_array( $kontosalden ) ) {
+    posten( "
+      <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"
+      >Konto {$konto['kontoname']}</a>"
+    , $konto['saldo']
+    );
+  }
   
+  posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
 
-  rubrik( "Einlagen der Gruppen" );
-    posten( "Sockeleinlagen", sockel_gruppen_summe() );
-    posten( "Kontoguthaben", guthaben_gruppen_summe() );
+rubrik( "Umlaufvermögen" );
+  posten( "Warenbestand Basar", basar_wert_summe() );
+  posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
 
-  $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
-  rubrik( "Verbindlichkeiten" );
-    while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-      posten( $vkeit['name'], $vkeit['soll'] );
-    }
+rubrik( "Forderungen" );
+  posten( "Forderungen an Gruppen", forderungen_gruppen_summe() );
 
-  $passiva = $seitensumme;
 
-  $bilanzverlust = $aktiva - $passiva;
-  $passiva += $bilanzverlust;
+$aktiva = $seitensumme;
 
-  rubrik( "Bilanzausgleich" );
-    posten( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust", $bilanzverlust );
 
-  echo "
-        </table>
-        </td>
-      </tr>
-  ";
+//
+// ab hier passiva:
+//
+echo "
+    </table>
+    </td><td>
 
-  printf ("
-      <tr class='summe'>
-        <td class='number'>%.2lf</td>
-        <td class='number'>%.2lf</td>
-      </tr>
-    "
-  , $aktiva
-  , $passiva
-  );
+    <table class='inner' width='100%'>
+";
 
-  echo "</table>";
+$seitensumme = 0;
+
+
+rubrik( "Einlagen der Gruppen" );
+  posten( "Sockeleinlagen", sockel_gruppen_summe() );
+  posten( "Kontoguthaben", guthaben_gruppen_summe() );
+
+$verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
+rubrik( "Verbindlichkeiten" );
+  while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
+    posten( $vkeit['name'], $vkeit['soll'] );
+  }
+
+$passiva = $seitensumme;
+
+$bilanzverlust = $aktiva - $passiva;
+$passiva += $bilanzverlust;
+
+rubrik( "Bilanzausgleich" );
+  posten( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust", $bilanzverlust );
+
+echo "
+      </table>
+      </td>
+    </tr>
+";
+
+printf ("
+    <tr class='summe'>
+      <td class='number'>%.2lf</td>
+      <td class='number'>%.2lf</td>
+    </tr>
+  "
+, $aktiva
+, $passiva
+);
+
+echo "</table>";
 
 ?>
-

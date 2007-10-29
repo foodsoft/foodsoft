@@ -1973,6 +1973,7 @@ function sql_get_transaction( $id ) {
            , bankkonto.kommentar as kommentar
            , bankkonto.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
+           , bankkonten.id as konto_id
            , gruppen_id, lieferanten_id
       FROM bankkonto
       JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
@@ -2024,11 +2025,8 @@ function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
     }
   }
   $row = sql_select_single_row( "
-    SELECT konto_id,
-           IFNULL(sum( betrag ),0.0) as saldo,
-           bankkonten.name as name
+    SELECT IFNULL(sum( betrag ),0.0) as saldo
     FROM bankkonto
-    JOIN bankkonten ON bankkonten.id=konto_id
     $where
   " );
   return $row['saldo'];
