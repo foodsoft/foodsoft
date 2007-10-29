@@ -307,7 +307,7 @@ if( $meinkonto ) {
 			   $result = sql_get_group_transactions( $gruppen_id );
          $num_rows = mysql_num_rows($result);
 
-         $vert_result = sql_bestellungen_soll($gruppen_id);
+         $vert_result = sql_bestellungen_soll_gruppe($gruppen_id);
          $summe = $kontostand;
 				 $no_more_vert = false;
 				 $no_more_konto=false;
@@ -359,18 +359,17 @@ if( $meinkonto ) {
                 ?>
                   <td>
                     <table style='font-size:10pt' class='inner'>
-                      <tr>
-                        <td>Einzahldatum:</td>
-                        <td><?echo $konto_row['kontobewegungs_datum']?></td>
-                      </tr>
                       <tr><td>Auszug:</td><td>
                 <?
                 if( $konto_row['konterbuchung_id'] > 0 ) {
                   $bank_row = sql_get_transaction( $konto_row['konterbuchung_id'] );
-                  echo "
-                    {$bank_row['kontoauszug_jahr']} / {$bank_row['kontoauszug_nr']}
-                    <br>
-                    ({$bank_row['kontoname']})
+                  $konto_id = $bank_row['konto_id'];
+                  $auszug_nr = $bank_row['kontoauszug_nr'];
+                  $auszug_jahr = $bank_row['kontoauszug_jahr'];
+                  echo "<a href=\"javascript:neuesfenster(
+                      'index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
+                      ,'kontoauszug'
+                    );\">$auszug_jahr / $auszug_nr ({$bank_row['kontoname']})</a>
                   ";
                 } else {
                   if( $meinkonto ) {
