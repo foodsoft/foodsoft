@@ -2093,20 +2093,12 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
-<<<<<<< zuordnen.php
-/* select_bestellungen_soll_gruppen:
-=======
 /* subquery_bestellungen_soll_gruppen:
->>>>>>> 1.89
  *   liefert schuld von gruppen aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
 */
-<<<<<<< zuordnen.php
 function select_bestellungen_soll_gruppen( $using ) {
-=======
-function subquery_bestellungen_soll_gruppen( $using ) {
->>>>>>> 1.89
   is_array( $using ) or $using = array( $using );
   $morejoins = "";
   in_array( "gesamtbestellungen", $using ) or $morejoins .= "
@@ -2197,13 +2189,8 @@ function subquery_haben_lieferanten( $using ) {
 
 function subquery_kontostand_gruppen( $using ) {
   return " (
-<<<<<<< zuordnen.php
     SELECT (".subquery_transaktionen_haben_gruppen('bestellgruppen')."
            - (".select_bestellungen_soll_gruppen('bestellgruppen').") ) as haben
-=======
-    SELECT (".subquery_transaktionen_haben_gruppen('bestellgruppen')."
-           - ".subquery_bestellungen_soll_gruppen('bestellgruppen')." ) as haben
->>>>>>> 1.89
   ) ";
 }
 
@@ -2221,13 +2208,8 @@ function forderungen_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_soll_gruppe.soll_gruppe ), 0.0 ) as soll
     FROM (
-<<<<<<< zuordnen.php
       SELECT ( -" .subquery_kontostand_gruppen('bestellgruppen'). ") AS soll_gruppe
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
-=======
-      SELECT ( -" .subquery_kontostand_gruppen('bestellgruppen'). ") as soll_gruppe
-      FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
->>>>>>> 1.89
       HAVING (soll_gruppe > 0)
     ) AS table_soll_gruppe
   " );
@@ -2238,13 +2220,8 @@ function guthaben_gruppen_summe() {
   $row = sql_select_single_row( "
     SELECT ifnull( sum( table_haben_gruppe.haben_gruppe ), 0.0 ) as haben
     FROM (
-<<<<<<< zuordnen.php
       SELECT (" .subquery_kontostand_gruppen('bestellgruppen'). ") AS haben_gruppe
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
-=======
-      SELECT (" .subquery_kontostand_gruppen('bestellgruppen'). ") as haben_gruppe
-      FROM " .subquery_aktive_bestellgruppen(). " as bestellgruppen
->>>>>>> 1.89
       HAVING (haben_gruppe > 0)
     ) AS table_haben_gruppe
   " );
