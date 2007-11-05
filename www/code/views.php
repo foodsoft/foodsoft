@@ -1156,6 +1156,185 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 	    <?
 }
 
+
+function formular_buchung_gruppe_bank(
+  $gruppen_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = ''
+) {
+  ?>
+    <form method='post' class='small_form'
+          action='<? echo self_url(array('konto_id','auszug_jahr','auszug_nr','gruppen_id')); ?>'>
+      <? echo self_post(array('konto_id','auszug_jahr','auszug_nr','gruppen_id')); ?>
+      <input type='hidden' name='action' value='zahlung_gruppe'>
+      <fieldset>
+        <legend>
+          Einzahlung / Auszahlung Gruppe
+        </legend>
+        <table>
+          <tr>
+            <td><label>Gruppe:</label></td>
+            <td><select name='gruppen_id'><? echo optionen_gruppen( 0, 0, $gruppen_id ); ?></select></td>
+          </tr>
+          <tr>
+            <td><label>Konto:</label></td>
+            <td><select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+              &nbsp; <label>Auszug:</label>
+              <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
+              <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Betrag:</label></td>
+            <td>
+              <input type="text" name="betrag" value="">
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz"></td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
+function formular_buchung_lieferant_bank(
+  $lieferanten_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = ''
+) {
+  ?>
+    <form method='post' class='small_form'
+          action='<? echo self_url(array('konto_id','auszug_jahr','auszug_nr','lieferanten_id')); ?>'>
+      <? echo self_post(array('konto_id','auszug_jahr','auszug_nr','lieferanten_id')); ?>
+      <input type='hidden' name='action' value='zahlung_lieferant'>
+      <fieldset>
+        <legend>
+          Überweisung / Lastschrift Lieferant
+        </legend>
+        <table>
+          <tr>
+            <td><label>Lieferant:</label></td>
+            <td><select name='lieferant_id'><? echo optionen_lieferanten(); ?></select></td>
+          </tr>
+          <tr>
+            <td>label>Konto:</label></td>
+            <td><select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+              &nbsp; <label>Auszug:</label>
+              <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
+              <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Betrag:</label></td>
+            <td>
+              <input type="text" name="betrag" value="">
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz"></td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
+function formular_buchung_gruppe_lieferant(
+  $gruppen_id = 0, $lieferanten_id = 0
+) {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url(array('gruppen_id','lieferanten_id')); ?>'>
+      <? echo self_post(array('gruppen_id','lieferanten_id')); ?>
+      <input type='hidden' name='action' value='zahlung_gruppe_lieferant'>
+      <fieldset>
+        <legend>
+          Zahlung von Gruppe an Lieferant
+        </legend>
+        <table>
+          <tr>
+            <td><label>von Gruppe:</label></td>
+            <td><select name='gruppen_id'><? echo optionen_gruppen( 0, 0, $gruppen_id ); ?></select></td>
+          </tr>
+          <tr>
+            <td><label>an Lieferant:</label></td>
+            <td><select name='lieferant_id'><? echo optionen_lieferanten( $lieferanten_id ); ?></select></td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label>Betrag:</label></td>
+            <td>
+              <input type="text" name="betrag" value="">
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz"></td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
+function formular_buchung_gruppe_gruppe(
+  $gruppen_id = 0, $nach_gruppen_id = 0
+) {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url('gruppen_id'); ?>'>
+      <? echo self_post('gruppen_id'); ?>
+      <input type='hidden' name='action' value='umbuchung_gruppe_gruppe'>
+      <fieldset>
+        <legend>
+          Umbuchung von Gruppe an Gruppe
+        </legend>
+        <table>
+          <tr>
+            <td><label>von Gruppe:</label></td>
+            <td><select name='gruppen_id'><? echo optionen_gruppen( 0, 0, $gruppen_id ); ?></select></td>
+          </tr>
+          <tr>
+            <td><label>an Gruppe:</label></td>
+            <td><select name='nach_gruppen_id'><? echo optionen_gruppen( 0, 0, $nach_gruppen_id ); ?></select></td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label>Betrag:</label></td>
+            <td>
+              <input type="text" name="betrag" value="">
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz"></td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
 /**
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)

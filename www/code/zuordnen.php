@@ -925,7 +925,7 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
 function optionen_gruppen(
   $bestell_id = false
 , $produkt_id = false
-, $selected = false
+, $selected = 0
 , $option_0 = false       /* erzeuge option value='0' mit diesem titel (z.b. 'Alle') */
 , $allowedgroups = false  /* array erlaubter gruppen_ids */
 , $additionalgroups = array() /* zusaetzlich in jedem fall anzubietende gruppen (z.b. basar) */

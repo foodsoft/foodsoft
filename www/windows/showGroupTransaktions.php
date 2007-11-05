@@ -79,6 +79,8 @@ if( $meinkonto ) {
     return;
   $gruppen_name = sql_gruppenname( $gruppen_id );
 
+  get_http_var( 'action', 'w', '' );
+
   if( get_http_var( 'trans_nr', 'u' ) ) {
     need_http_var( 'auszug_jahr', 'u' );
     need_http_var( 'auszug_nr', 'u' );
@@ -86,7 +88,8 @@ if( $meinkonto ) {
     sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, 'gebuchte Einzahlung' );
   }
 
-  if( get_http_var( 'summe_einzahlung', 'f' ) ) {
+  if( $action == 'zahlung_gruppe' ) {
+    need_http_var( 'betrag', 'f' ) ) {
     need_http_var( 'day', 'u' );
     need_http_var( 'month', 'u' );
     need_http_var( 'year', 'u' );
@@ -100,28 +103,39 @@ if( $meinkonto ) {
     , array(
         'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
       , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-    , $summe_einzahlung
+    , $betrag
     , "$year-$month-$day"
     , "Einzahlung"
     );
   }
 
-  if( get_http_var( 'summe_transfer', 'f' ) ) {
+  if( $action == 'umbuchung_gruppegruppe' ) {
+    need_http_var( 'betrag', 'f' ) ) {
     need_http_var( 'day', 'u' );
     need_http_var( 'month', 'u' );
     need_http_var( 'year', 'u' );
     need_http_var( 'notiz', 'M' );
-    need_http_var( 'to_group_id', 'u' );
-    $to_group_name = sql_gruppenname( $to_group_id );
+    need_http_var( 'nach_gruppen_id', 'u' );
+    $nach_gruppen_name = sql_gruppenname( $nach_gruppen_id );
     sql_doppelte_transaktion(
       array( 'konto_id' => -1 , 'gruppen_id' => $gruppen_id )
-    , array( 'konto_id' => -1 , 'gruppen_id' => $to_group_id )
-    , $summe_transfer
+    , array( 'konto_id' => -1 , 'gruppen_id' => $nach_gruppen_id )
+    , $betrag
     , "$year-$month-$day"
-    , "Transfer von $gruppen_name an $to_group_name: $notiz"
+    , "Transfer von $gruppen_name an $nach_gruppen_name: $notiz"
     );
   }
 
+  if( $action == 'zahlung_gruppe_lieferant' ) {
+    need_http_var( 'betrag', 'f' ) ) {
+    need_http_var( 'day', 'u' );
+    need_http_var( 'month', 'u' );
+    need_http_var( 'year', 'u' );
+    need_http_var( 'notiz', 'M' );
+    need_http_var( 'lieferanten_id', 'u' );
+
+
+  
 //   if( get_http_var( 'summe_sonstiges', 'f' ) ) {
 //     need_http_var( 'day', 'u' );
 //     need_http_var( 'month', 'u' );
@@ -149,122 +163,41 @@ if( $meinkonto ) {
     </legend>
 
       Art der Transaktion:
-      <span style='padding-left:1em;' title='Einzahlung der Gruppe auf das Bankkonto der Foodcoop'>
+      <span style='padding-left:1em;' title='Einzahlung auf oder Auszahlung von Bankkonto der Foodcoop'>
       <input type='radio' name='transaktionsart'
         onclick="document.getElementById('einzahlung_form').style.display='block';
-                 document.getElementById('transfer_form').style.display='none';
-                 document.getElementById('sonstige_form').style.display='none';"
+                 document.getElementById('gruppegruppe_form').style.display='none';
+                 document.getElementById('gruppelieferant_form').style.display='none';"
       ><b>Einzahlung</b>
       </span>
 
       <span style='padding-left:1em;' title='überweisung auf ein anderes Gruppenkonto'>
       <input type='radio' name='transaktionsart'
         onclick="document.getElementById('einzahlung_form').style.display='none';
-                 document.getElementById('transfer_form').style.display='block';
-                 document.getElementById('sonstige_form').style.display='none';"
+                 document.getElementById('gruppegruppe_form').style.display='block';
+                 document.getElementById('gruppelieferant_form').style.display='none';"
       ><b>Transfer an andere Gruppe</b>
       </span>
 
-  <!--
-      <span style='padding-left:1em;' title='Sonstige Transaktionen'>
+      <span style='padding-left:1em;' title='überweisung von Gruppe an Lieferant'>
       <input type='radio' name='transaktionsart'
         onclick="document.getElementById('einzahlung_form').style.display='none';
-                 document.getElementById('transfer_form').style.display='none';
-                 document.getElementById('sonstige_form').style.display='block';"
-      ><b>sonstige Transaktion</b>
+                 document.getElementById('gruppegruppe_form').style.display='none';
+                 document.getElementById('gruppelieferant_form').style.display='block';"
+      ><b>Überweisung von Gruppe an Lieferant</b>
       </span>
-  -->
 
       <div id='einzahlung_form' style='display:none;'>
-        <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-          <? echo self_post(); ?>
-          <fieldset>
-            <legend>
-              Einzahlung
-            </legend>
-            <table>
-              <tr>
-                <td>Konto:</td>
-                <td><select name='konto_id' size='1'><? echo optionen_konten(); ?></select></td>
-              </tr><tr>
-                <td>Kontoauszug Jahr:</td>
-                <td><? number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
-                / Nr: <input type="text" size="6" name="auszug_nr"></td>
-              </tr><tr>
-                <td>Valuta:</td>
-                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-              </tr><tr>
-                <td>Summe:</td>
-                <td>
-                  <input type="text" name="summe_einzahlung" value="">
-                  <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-                </td>
-              </tr>
-            </table>
-          </fieldset>
-        </form>
+        <? echo formular_buchung_gruppe_bank( $gruppen_id ); ?>
       </div>
 
-      <div id='transfer_form' style='display:none;'>
-        <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-          <? echo self_post(); ?>
-          <fieldset>
-            <legend>
-              Transfer von Gruppe <? echo $gruppen_name; ?> an andere Gruppe
-            </legend>
-            <table>
-              <tr>
-                <td>an Gruppe:</td>
-                <td>
-                  <select name='to_group_id' size='1'>
-                    <? echo optionen_gruppen( false, false, false, "(bitte Gruppe wählen)" ); ?>
-                  </select>
-                </td>
-              </tr><tr>
-                <td>Notiz:</td>
-                <td><input type="text" size="60" name="notiz"></td>
-              </tr><tr>
-                <td>Valuta:</td>
-                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-              </tr><tr>
-                <td>Summe:</td>
-                <td>
-                  <input type="text" name="summe_transfer" value="">
-                  <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-                </td>
-              </tr>
-            </table>
-          </fieldset>
-        </form>
+      <div id='gruppegruppe_form' style='display:none;'>
+        <? echo formular_buchung_gruppe_gruppe( $gruppen_id, 0 ); ?>
       </div>
 
-  <!--
-      <div id='sonstige_form' style='display:none;'>
-        <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-          <? echo self_post(); ?>
-          <fieldset>
-            <legend>
-              Sonstige Transaktion
-            </legend>
-            <table>
-              <tr>
-                <td>Datum:</td>
-                <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-              </tr><tr>
-                <td>Notiz:</td>
-                <td><input type="text" size="60" name="notiz"></td>
-              </tr><tr>
-                <td>Summe:</td>
-                <td>
-                  <input type="text" name="summe_sonstiges" value="">
-                  <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-                </td>
-              </tr>
-            </table>
-          </fieldset>
-        </form>
+      <div id='gruppelieferant_form' style='display:none;'>
+        <? formular_buchung_gruppe_lieferant( $gruppen_id, 0 );
       </div>
-   -->
 
     </fieldset>
 
