@@ -733,12 +733,13 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 //
 //
 function check_password( $gruppen_id, $gruppen_pwd ) {
-  global $crypt_salt;
+  global $crypt_salt, $specialgroups;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-    $sql="SELECT * FROM bestellgruppen WHERE id='$gruppen_id' AND aktiv=1";
-    //do not show because this happens before header
-    $result = doSql($sql, LEVEL_NEVER, "Suche nach Bestellgruppe fehlgeschlagen..");
-    $row = mysql_fetch_array($result);
+    if( in_array( $gruppen_id, $specialgroups ) )
+      return false;
+    $row = sql_gruppendaten( $gruppen_id );
+    if( ! $row['aktiv'] )
+      return false;
     if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
       return $row;
   }
@@ -746,7 +747,7 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
 }
 
 function set_password( $gruppen_id, $gruppen_pwd ) {
-  global $crypt_salt;
+  global $crypt_salt, $login_gruppen_id;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     fail_if_readonly();
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
@@ -1254,14 +1255,6 @@ function sql_create_gruppenbestellung($gruppe, $bestell_id){
 //
 ////////////////////////////////////
 
-function sql_liefermenge($bestell_id,$produkt_id){
-  $row = sql_select_single_row( "
-    SELECT liefermenge FROM bestellvorschlaege
-    WHERE (gesamtbestellung_id='$bestell_id') and (produkt_id='$produkt_id')
-  " );
-  return $row['liefermenge'];
-}
-
 function select_verteilmenge() {
   return "
     SELECT IFNULL(sum(menge),0.0) as verteilmenge
@@ -1403,7 +1396,9 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
   doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen..");
 
 	if(! $nur_basar){
-		$sql = "UPDATE bestellvorschlaege set bestellmenge = NULL where gesamtbestellung_id = ".$bestell_id;
+		$sql = "UPDATE bestellvorschlaege
+            set bestellmenge = NULL, liefermenge = NULL
+            where gesamtbestellung_id = ".$bestell_id;
 		doSql($sql, LEVEL_ALL, "Konnte Bestellmengen nicht aus bestellvorschlaege löschen..");
 	}
 
@@ -1781,9 +1776,6 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 
 
 
-
-
-
 ////////////////////////////////////
 //
 // funktionen fuer gruppen-, lieferanten-, und bankkonto
@@ -1818,7 +1810,7 @@ function sql_gruppen_transaktion(
     , konterbuchung_id
     ) VALUES (
 	    '$transaktionsart', '$gruppen_id', '$lieferanten_id'
-    , 'NOW()', '$summe'
+    , NOW(), '$summe'
     , '$auszug_jahr', '$auszugs_nr'
     , '$kontobewegungs_datum'
     , '$dienstkontrollblatt_id', '$notiz'
@@ -1831,9 +1823,9 @@ function sql_gruppen_transaktion(
 
 function sql_bank_transaktion(
   $konto_id, $auszug_jahr, $auszug_nr
-, $haben, $datum, $gruppen_id, $lieferanten_id
+, $haben, $valuta, $gruppen_id, $lieferanten_id
 , $dienstkontrollblatt_id, $notiz
-, $konterbuchung_id = 0
+, $konterbuchung_id
 ) {
   need( $konto_id and $auzug_jahr and $auzug_nr );
   need( $dienstkontrollblatt_id and $notiz );
@@ -1841,13 +1833,13 @@ function sql_bank_transaktion(
   doSql( "
     INSERT INTO bankkonto (
       konto_id, kontoauszug_jahr, kontoauszug_nr
-    , betrag, eingabedatum
+    , betrag, buchungsdatum, valuta
     , gruppen_id, lieferanten_id
     , dienstkontrollblatt_id, kommentar
     , konterbuchung_id
     ) VALUES (
       '$konto_id', '$auszug_jahr', '$auszug_nr'
-    , '$haben', '$datum'
+    , '$haben', NOW(), '$valuta'
     , '$gruppen_id', '$lieferanten_id'
     , '$dienstkontrollblatt_id', '$notiz'
     , '$konterbuchung_id'
@@ -1872,7 +1864,7 @@ function sql_link_transaktion( $soll_id, $haben_id ) {
 /*
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
-function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
+function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   global $dienstkontrollblatt_id;
   nur_fuer_dienst_IV();
   need( $dienstkontrollblatt_id and $notiz );
@@ -1886,12 +1878,12 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
     $soll_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
     , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $soll, 'lieferanten_id', 0 )
+    , $valuta, adefault( $soll, 'lieferanten_id', 0 )
     );
   } else {
     $soll_id = sql_bank_transaktion(
       $soll['konto_id'], adefault( $soll, 'auszug_jahr', '' ), adefault( $soll, 'auszug_nr', '' )
-    , -$betrag, $datum, adefault( $soll, 'gruppen_id', 0 ), adefault( $soll, 'lieferanten_id', 0 )
+    , -$betrag, $valuta, adefault( $soll, 'gruppen_id', 0 ), adefault( $soll, 'lieferanten_id', 0 )
     , $dienstkontrollblatt_id, $notiz, 0
     );
   }
@@ -1900,12 +1892,12 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $datum, $notiz ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
     , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
-    , $datum, adefault( $haben, 'lieferanten_id', 0 )
+    , $valuta, adefault( $haben, 'lieferanten_id', 0 )
     );
   } else {
     $haben_id = sql_bank_transaktion(
       $haben['konto_id'], adefault( $haben, 'auszug_jahr', '' ), adefault( $haben, 'auszug_nr', '' )
-    , $betrag, $datum, adefault( $haben, 'gruppen_id', 0 ), adefault( $haben, 'lieferanten_id', 0 )
+    , $betrag, $valuta, adefault( $haben, 'gruppen_id', 0 ), adefault( $haben, 'lieferanten_id', 0 )
     , $dienstkontrollblatt_id, $notiz, 0
     );
   }
@@ -1923,17 +1915,17 @@ function sql_groupGlass($gruppe, $menge){
 /**
  *
  */
-function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_year, $notiz ){
+function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_year, $valuta, $notiz ){
   global $dienstkontrollblatt_id;
   fail_if_readonly();
   nur_fuer_dienst_IV();
 
   $row = sql_select_single_row( "SELECT * FROM gruppen_transaktion WHERE id=$soll_id" );
 
-  $haben_id = bankkonto_transaktion(
+  $haben_id = sql_bank_transaktion(
     $konto_id, $receipt_year, $receipt_nr
-  , $row['summe'], 'NOW()', $row['gruppen_id'], $row['lieferanten_id']
-  , $dienstkontrollblatt_id, $notiz
+  , $row['summe'], $valuta, $row['gruppen_id'], $row['lieferanten_id']
+  , $dienstkontrollblatt_id, $notiz, 0
   );
 
   sql_link_transaktion( $soll_id, $haben_id );
@@ -1971,6 +1963,8 @@ function sql_get_transaction( $id ) {
       SELECT kontoauszug_jahr, kontoauszug_nr
            , betrag as haben
            , bankkonto.kommentar as kommentar
+           , bankkonto.valuta as valuta
+           , bankkonto.buchungsdatum as buchungsdatum
            , bankkonto.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
            , bankkonten.id as konto_id
@@ -1984,6 +1978,8 @@ function sql_get_transaction( $id ) {
       SELECT bankkonto.kontoauszug_jahr, bankkonto.kontoauszug_nr
            , -summe as haben
            , gruppen_transaktion.notiz as kommentar
+           , gruppen_transaktion.kontobewegungsdatum as valuta
+           , gruppen_transaktion.eingabe_zeit as buchungsdatum
            , gruppen_transaktion.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
            , gruppen_transaktion.gruppen_id as gruppen_id,
@@ -3079,6 +3075,15 @@ function move_html( $id, $into_id ) {
 // function from_basar(){
 //    return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
 // }
+//
+// function sql_liefermenge($bestell_id,$produkt_id){
+//   $row = sql_select_single_row( "
+//     SELECT liefermenge FROM bestellvorschlaege
+//     WHERE (gesamtbestellung_id='$bestell_id') and (produkt_id='$produkt_id')
+//   " );
+//   return $row['liefermenge'];
+// }
+
 
 
 ?>

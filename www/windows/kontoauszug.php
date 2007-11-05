@@ -31,14 +31,17 @@ if( $action == 'zahlung_gruppe' ) {
   need_http_var( 'day', 'u' );
   need_http_var( 'month', 'u' );
   need_http_var( 'year', 'u' );
-  $von = false;  // FIXME: einfache buchungen sollte es nicht geben...
-  $nach = array(
-    'konto_id' => $konto_id
-  , 'auszug_jahr' => $auszug_jahr
-  , 'auszug_nr' => $auszug_nr
-  , 'gruppen_id' => $gruppen_id
+  sql_doppelte_transaktion(
+    array(
+      'konto_id' => -1, 'gruppen_id' => $gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array(
+      'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
   );
-  sql_konto_transaktion( $von, $nach, $betrag, "$year-$month-$day", $notiz );
 }
 
 if( $action == 'zahlung_lieferant' ) {
@@ -48,14 +51,17 @@ if( $action == 'zahlung_lieferant' ) {
   need_http_var( 'month', 'u' );
   need_http_var( 'year', 'u' );
   need_http_var( 'notiz', 'M' );
-  $von = array(
-    'konto_id' => $konto_id
-  , 'auszug_jahr' => $auszug_jahr
-  , 'auszug_nr' => $auszug_nr
-  , 'lieferant_id' => $lieferant_id
+  sql_doppelte_transaktion(
+    array(
+      'konto_id' => $konto_id, 'lieferant_id' => $lieferant_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array(
+      'konto_id' => -1, 'lieferant_id' => $lieferant_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
   );
-  $nach = false;  // FIXME: einfache buchungen sollte es nicht geben...
-  sql_konto_transaktion( $von, $nach, $betrag, "$year-$month-$day", $notiz );
 }
 
 if( $action == 'zahlung_gruppelieferant' ) {
@@ -66,42 +72,38 @@ if( $action == 'zahlung_gruppelieferant' ) {
   need_http_var( 'month', 'u' );
   need_http_var( 'year', 'u' );
   need_http_var( 'notiz', 'M' );
-  $von = array(
-    'konto_id' => $konto_id
-  , 'auszug_jahr' => $auszug_jahr
-  , 'auszug_nr' => $auszug_nr
-  , 'gruppen_id' => $gruppen_id
+  sql_doppelte_transaktion(
+    array(
+      'konto_id' => -1, 'gruppen_id' => $gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array(
+      'konto_id' => -1, 'lieferant_id' => $lieferant_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
   );
-  $nach = array(
-    'konto_id' => $konto_id
-  , 'auszug_jahr' => $auszug_jahr
-  , 'auszug_nr' => $auszug_nr
-  , 'lieferant_id' => $lieferant_id
-  );
-  sql_konto_transaktion( $von, $nach, $betrag, "$year-$month-$day", $notiz );
 }
 
-if( $action == 'zahlung_gruppegruppe' ) {
+if( $action == 'umbuchung_gruppegruppe' ) {
   need_http_var( 'betrag', 'f' );
-  need_http_var( 'lieferant_id', 'u' );
-  need_http_var( 'gruppen_id', 'u' );
+  need_http_var( 'von_gruppen_id', 'u' );
+  need_http_var( 'nach_gruppen_id', 'u' );
   need_http_var( 'day', 'u' );
   need_http_var( 'month', 'u' );
   need_http_var( 'year', 'u' );
   need_http_var( 'notiz', 'M' );
-  $von = array(
-    'konto_id' => $konto_id
-  , 'auszug_jahr' => $auszug_jahr
-  , 'auszug_nr' => $auszug_nr
-  , 'gruppen_id' => $von_gruppen_id
+  sql_doppelte_transaktion(
+    array(
+      'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array(
+      'konto_id' => -1, 'von_gruppen_id' => $von_gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
   );
-  $nach = array(
-    'konto_id' => $konto_id
-  , 'auszug_jahr' => $auszug_jahr
-  , 'auszug_nr' => $auszug_nr
-  , 'gruppen_id' => $nach_gruppen_id
-  );
-  sql_konto_transaktion( $von, $nach, $betrag, "$year-$month-$day", $notiz );
 }
 
 echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
@@ -163,8 +165,9 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
     </ul>
 
     <div id='gruppe_form' style='display:none;'>
-      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-        <? echo self_post(); ?>
+      <form method='post' class='small_form'
+            action='<? echo self_url(array('konto_id','auszug_jahr','auszug_nr')); ?>'>
+        <? echo self_post(array('konto_id','auszug_jahr','auszug_nr')); ?>
         <input type='hidden' name='action' value='zahlung_gruppe'>
         <fieldset>
           <legend>
@@ -176,7 +179,15 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
               <td><select name='gruppen_id'><? echo optionen_gruppen(); ?></select></td>
             </tr>
             <tr>
-              <td><label>Datum:</label></td>
+              <td>label>Konto:</label></td>
+              <td><select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+                &nbsp; <label>Auszug:</label>
+                <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
+                <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              </td>
+            </tr>
+            <tr>
+              <td><label>Valuta:</label></td>
               <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
             </tr>
             <tr>
@@ -196,8 +207,9 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
     </div>
 
     <div id='lieferant_form' style='display:none;'>
-      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-        <? echo self_post(); ?>
+      <form method='post' class='small_form'
+            action='<? echo self_url(array('konto_id','auszug_jahr','auszug_nr')); ?>'>
+        <? echo self_post(array('konto_id','auszug_jahr','auszug_nr')); ?>
         <input type='hidden' name='action' value='zahlung_lieferant'>
         <fieldset>
           <legend>
@@ -209,7 +221,15 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
               <td><select name='lieferant_id'><? echo optionen_lieferanten(); ?></select></td>
             </tr>
             <tr>
-              <td><label>Datum:</label></td>
+              <td>label>Konto:</label></td>
+              <td><select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+                &nbsp; <label>Auszug:</label>
+                <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
+                <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              </td>
+            </tr>
+            <tr>
+              <td><label>Valuta:</label></td>
               <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
             </tr>
             <tr>
@@ -246,7 +266,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
               <td><select name='lieferant_id'><? echo optionen_lieferanten(); ?></select></td>
             </tr>
             <tr>
-              <td><label>Datum:</label></td>
+              <td><label>Valuta:</label></td>
               <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
             </tr>
             <tr>
@@ -283,7 +303,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
               <td><select name='nach_gruppen_id'><? echo optionen_gruppen(); ?></select></td>
             </tr>
             <tr>
-              <td><label>Datum:</label></td>
+              <td><label>Valuta:</label></td>
               <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
             </tr>
             <tr>
@@ -306,18 +326,11 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
 <?
 
-
-
-
-
-
-
-
-
 ?>
   <table class='liste'>
     <tr class='legende'>
       <th>Nr</th>
+      <th>Valuta</th>
       <th>Text</th>
       <th>Betrag</th>
     </tr>
@@ -325,7 +338,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
 printf( "
     <tr class='summe'>
-      <td colspan='2' style='text-align:right;'>Startsaldo:</td>
+      <td colspan='3' style='text-align:right;'>Startsaldo:</td>
       <td class='number'>%.2lf</td>
     </tr>
   "
@@ -338,19 +351,46 @@ while( $row = mysql_fetch_array( $auszug ) ) {
   echo "
     <tr>
       <td class='number'>$n</td>
+      <td class='number'>{$row['valuta']}</td>
       <td>
   ";
   $gid = $row['gruppen_id'];
   $lid = $row['lieferanten_id'];
   $kommentar = $row['kommentar'];
+  $konterbuchung_id = $row['konterbuchung_id'];
   if( $gid ) {
-    printf( "<p>Überweisung Gruppe %d (%s)<p>" , $gid % 1000, sql_gruppenname( $gid ) );
+    printf( "<p>Überweisung Gruppe %d (%s)</p>" , $gid % 1000, sql_gruppenname( $gid ) );
   }
   if( $lid ) {
-    printf( "<p>Überweisung Lieferant %s<p>" , lieferant_name( $lid ) );
+    printf( "<p>Überweisung Lieferant %s</p>" , lieferant_name( $lid ) );
   }
   if( $kommentar ) {
     echo "<p>$kommentar</p>";
+  }
+  if( $konterbuchung_id ) {
+    $konterbuchung = sql_get_transaction( $konterbuchung_id );
+    if( $konterbuchung_id > 0 ) {
+      $k_konto_id = $konterbuchung['konto_id'];
+      $k_auszug_jahr = $konterbuchung['auszug_jahr'];
+      $k_auszug_nr = $konterbuchung['auszug_nr'];
+      echo "
+        <p>Gegenbuchung:
+        <a href='index.php?window=kontoauszug&konto_id=$k_konto_id&auszus_jahr=$k_kontoauszug_jahr&$k_kontoauszug_nr'
+        >{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr</a></p>
+      ";
+    } else {
+      $gruppen_id = $konterbuchung['gruppen_id'];
+      $gruppen_name = sql_gruppenname( $gruppen_id );
+      $lieferanten_id=$konterbuchung['lieferanten_id'];
+      if( $gruppen_id ) {
+        echo "
+          <p><a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions?gruppen_id=$gruppen_id');\"
+          >Gruppenkonto $gruppen_name</a></p>
+        ";
+      }
+    }
+  } else {
+    echo "<div class='warn'>einfache Buchung</div>";
   }
   printf( "<td class='number' style='vertical-align:bottom;'>%.2lf</td>", $row['betrag'] );
   echo "</tr>";
@@ -358,7 +398,7 @@ while( $row = mysql_fetch_array( $auszug ) ) {
 
 printf( "
     <tr class='summe'>
-      <td colspan='2' style='text-align:right;'>Saldo:</td>
+      <td colspan='3' style='text-align:right;'>Saldo:</td>
       <td class='number'>%.2lf</td>
     </tr>
   "
