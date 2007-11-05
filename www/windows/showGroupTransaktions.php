@@ -89,7 +89,7 @@ if( $meinkonto ) {
   }
 
   if( $action == 'zahlung_gruppe' ) {
-    need_http_var( 'betrag', 'f' ) ) {
+    need_http_var( 'betrag', 'f' );
     need_http_var( 'day', 'u' );
     need_http_var( 'month', 'u' );
     need_http_var( 'year', 'u' );
@@ -109,8 +109,8 @@ if( $meinkonto ) {
     );
   }
 
-  if( $action == 'umbuchung_gruppegruppe' ) {
-    need_http_var( 'betrag', 'f' ) ) {
+  if( $action == 'umbuchung_gruppe_gruppe' ) {
+    need_http_var( 'betrag', 'f' );
     need_http_var( 'day', 'u' );
     need_http_var( 'month', 'u' );
     need_http_var( 'year', 'u' );
@@ -127,12 +127,13 @@ if( $meinkonto ) {
   }
 
   if( $action == 'zahlung_gruppe_lieferant' ) {
-    need_http_var( 'betrag', 'f' ) ) {
+    need_http_var( 'betrag', 'f' );
     need_http_var( 'day', 'u' );
     need_http_var( 'month', 'u' );
     need_http_var( 'year', 'u' );
     need_http_var( 'notiz', 'M' );
     need_http_var( 'lieferanten_id', 'u' );
+  }
 
 
   
@@ -196,7 +197,7 @@ if( $meinkonto ) {
       </div>
 
       <div id='gruppelieferant_form' style='display:none;'>
-        <? formular_buchung_gruppe_lieferant( $gruppen_id, 0 );
+        <? formular_buchung_gruppe_lieferant( $gruppen_id, 0 ); ?>
       </div>
 
     </fieldset>

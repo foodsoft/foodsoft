@@ -64,7 +64,7 @@ if( $action == 'zahlung_lieferant' ) {
   );
 }
 
-if( $action == 'zahlung_gruppelieferant' ) {
+if( $action == 'zahlung_gruppe_lieferant' ) {
   need_http_var( 'betrag', 'f' );
   need_http_var( 'lieferant_id', 'u' );
   need_http_var( 'gruppen_id', 'u' );
@@ -173,11 +173,11 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
     </div>
 
     <div id='gruppelieferant_form' style='display:none;'>
-      <? formular_buchung_gruppe_lieferant( 0, 0 );
+      <? formular_buchung_gruppe_lieferant( 0, 0 ); ?>
     </div>
 
     <div id='gruppegruppe_form' style='display:none;'>
-      <? formular_buchung_gruppe_gruppe( 0, 0 );
+      <? formular_buchung_gruppe_gruppe( 0, 0 ); ?>
     </div>
 
   </fieldset>
