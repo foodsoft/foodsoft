@@ -128,15 +128,21 @@ if( $meinkonto ) {
 
   if( $action == 'zahlung_gruppe_lieferant' ) {
     need_http_var( 'betrag', 'f' );
+    need_http_var( 'lieferant_id', 'u' );
     need_http_var( 'day', 'u' );
     need_http_var( 'month', 'u' );
     need_http_var( 'year', 'u' );
     need_http_var( 'notiz', 'M' );
-    need_http_var( 'lieferanten_id', 'u' );
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id );
+    , array( 'konto_id' => -1, 'lieferant_id' => $lieferant_id );
+    , $betrag
+    , "$year-$month-$day"
+    , "$notiz"
+    );
   }
 
 
-  
 //   if( get_http_var( 'summe_sonstiges', 'f' ) ) {
 //     need_http_var( 'day', 'u' );
 //     need_http_var( 'month', 'u' );

@@ -73,12 +73,8 @@ if( $action == 'zahlung_gruppe_lieferant' ) {
   need_http_var( 'year', 'u' );
   need_http_var( 'notiz', 'M' );
   sql_doppelte_transaktion(
-    array(
-      'konto_id' => -1, 'gruppen_id' => $gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array(
-      'konto_id' => -1, 'lieferant_id' => $lieferant_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , array( 'konto_id' => -1, 'lieferant_id' => $lieferant_id )
   , $betrag
   , "$year-$month-$day"
   , "$notiz"
@@ -98,7 +94,7 @@ if( $action == 'umbuchung_gruppegruppe' ) {
       'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id
     , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
   , array(
-      'konto_id' => -1, 'von_gruppen_id' => $von_gruppen_id
+      'konto_id' => -1, 'gruppen_id' => $von_gruppen_id
     , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
   , $betrag
   , "$year-$month-$day"
