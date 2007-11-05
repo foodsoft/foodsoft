@@ -851,6 +851,11 @@ function sql_muell_id(){
 function sql_gruppendaten( $gruppen_id ) {
   return sql_select_single_row( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'" );
 }
+
+function sql_gruppen_members( $gruppen_id){
+  return doSql("SELECT * FROM gruppenmitglieder WHERE gruppen_id = ".$gruppen_id, LEVEL_ALL);
+}
+
 function sql_gruppenname($gruppen_id){
   $row = sql_gruppendaten( $gruppen_id );
   return $row['name'];
@@ -873,10 +878,22 @@ function sql_aktive_bestellgruppen() {
  * - alle aktiven gruppen, oder
  * - alle an einer gesamtbestellung beteiligten gruppen, oder
  * - alle an bestellung/zuteilung eines produktes einer gesamtbestellung beteligten gruppen
+ *
  */
+
+
 function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
         if($bestell_id===FALSE && $produkt_id===FALSE){
-                $query="SELECT * FROM bestellgruppen WHERE aktiv=1 ORDER by (id%1000)";
+		$query=" SELECT *
+			FROM bestellgruppen
+			INNER JOIN (
+				SELECT gruppen_id, count( gruppen_id ) AS Mitgliederza
+				FROM gruppenmitglieder
+				GROUP BY gruppen_id
+			) AS gruppen_mitglieder_zahl ON ( bestellgruppen.id = gruppen_id )
+			WHERE aktiv =1
+			ORDER BY ( bestellgruppen.id %1000)
+			";
         } else if($produkt_id===FALSE) {
             $query="SELECT bestellgruppen.id, bestellgruppen.name, gruppenbestellungen.id as gruppenbestellungen_id
                 FROM bestellgruppen
@@ -2224,6 +2241,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
 }
 
 function kontostand($gruppen_id){
+	//FIXME: zu langsam auf Gruppenview wenn Dienst5
   $row = sql_select_single_row( "
     SELECT (".select_kontostand_gruppen('bestellgruppen').") as haben
     FROM bestellgruppen
@@ -2642,13 +2660,15 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
 //
 ////////////////////////////////////
 
-function checkValue( $val, $typ){
+function checkvalue( $val, $typ){
 	  $pattern = '';
 	  switch( substr( $typ, 0, 1 ) ) {
 	    case 'M':
 	      $val = mysql_real_escape_string( $val );
 	      break;
 	    case 'u':
+		    //FIXME: zahl sollte als zahl zurückgegeben 
+		    //werden, zur Zeit String
 	      $val = trim($val);
 	      $pattern = '/^\d+$/';
 	      break;
@@ -2804,11 +2824,27 @@ function update_database($version){
 			FROM bestellgruppen;
 			";
 		//doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht mit Werten fuellen");
+		
+	        $sql = " INSERT INTO gruppenmitglieder( gruppen_id, diensteinteilung )
+			SELECT gruppen_id, diensteinteilung
+			FROM (
+
+			SELECT gruppen_id, mitgliederzahl, bestellgruppen.diensteinteilung
+			FROM `gruppenmitglieder`
+			INNER JOIN bestellgruppen ON ( gruppen_id = bestellgruppen.id )
+			GROUP BY gruppen_id, bestellgruppen.diensteinteilung
+			HAVING count( gruppenmitglieder.telefon ) < mitgliederzahl
+			) AS bla
+			";
+	        //while(mysql_affected_rows() > 0){
+		    //doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht mit leeren Werten fuellen");
+		//}
 		$sql = " ALTER TABLE `bestellgruppen`
 			  DROP `ansprechpartner`,
 			  DROP `telefon`,
 			  DROP `email`,
 			  DROP `diensteinteilung`,
+			  DROP `mitgliederzahl`,
 			  DROP `rotationsplanposition`;
 			";
 		//doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht anlegen");

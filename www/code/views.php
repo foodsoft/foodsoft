@@ -1156,4 +1156,68 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 	    <?
 }
 
+/**
+ * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
+ * Argument: sql_members($group_id)
+ */
+function membertable_view($rows, $editable=FALSE, $edit_einteilung=FALSE){
 ?>
+   
+    <table class='liste'>
+      <tr>
+         <th>Vorname</th>
+         <th>Name</th>
+         <th>Mail</th>
+         <th>Telefon</th>
+         <th>Diensteinteilung</th>
+      </tr>
+<?     
+  while ($row = mysql_fetch_array($rows)) {
+   if($editable){
+	echo"
+      <tr>
+	 <td><input type='input' size='12' name='newVorname' value='{$row['vorname']}'></td>
+	 <td><input type='input' size='12' name='newName' value='{$row['name']}'></td>
+	 <td><input type='input' size='12' name='newEmail' value='{$row['email']}'></td>
+	 <td><input type='input' size='12' name='newTelefon' value='{$row['telefon']}'></td>
+	";
+   }else {
+	echo"
+      <tr>
+        <td>{$row['vorname']}</td>
+        <td>{$row['name']}</td>
+        <td>{$row['email']}</td>
+        <td>{$row['telefon']}</td>
+	";
+   }
+   if($edit_einteilung){
+	echo"
+	   <td>
+              <select name='newDienst'>
+	";
+	    
+	  var_dump($_SESSION['DIENSTEINTEILUNG']);
+	  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) { 
+	       if ($i == $row['diensteinteilung']) $select_str="selected";
+     	       else $select_str = ""; 
+	       echo "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
+	echo"
+               </select>
+	   </td>
+	";
+
+   }else{
+	echo"
+        <td>{$row['diensteinteilung']}</td>
+	";
+   }
+	echo"
+      <tr/>
+	";
+  }
+?>
+          
+      </tr>
+    </table>
+<?
+}

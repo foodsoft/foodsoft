@@ -51,10 +51,12 @@ if( $action == 'delete' ) {
   }
 
 // Hier ändern. Code in views verschieben, details in editGroup verschieben
+   $show_member_details=FALSE;
 
   ?>
     </table>
 
+ 
  
 
     <br><br>
@@ -63,12 +65,16 @@ if( $action == 'delete' ) {
       <tr>
          <th>Nr</th>
          <th>Gruppenname</th>
+	 <!--
          <th>AnsprechpartnerIn</th>
          <th>Mail</th>
          <th>Telefon</th>
+         -->
          <th>Kontostand</th>
          <th>Mitgliederzahl</th>
+	 <!--
          <th>Diensteinteilung</th>
+         -->
          <th>Optionen</th>
       </tr>
   <?
@@ -84,9 +90,11 @@ if( $action == 'delete' ) {
       <tr>
         <td>$nr</td>
         <td>{$row['name']}</td>
+	 <!--
         <td>{$row['ansprechpartner']}</td>
         <td>{$row['email']}</td>
         <td>{$row['telefon']}</td>
+         -->
 	";
       if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
         echo "<td align='right'>$kontostand</td>";
@@ -96,21 +104,26 @@ if( $action == 'delete' ) {
 	}
     echo"
         <td>{$row['mitgliederzahl']}</td>
+	 <!--
         <td>{$row['diensteinteilung']}</td>
+         -->
         <td>
+          <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=gruppen_mitglieder&gruppen_id=$id'>
+           <img src='img/b_browse.png' border='0' title='Personen' alt='Personen'/>
+          </a>
     ";
     if( ! $readonly ) {
       if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
             href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id={$row['id']}','kontoblatt');\">
-           <img src='img/b_browse.png' border='0' title='Kontotransaktionen' alt='Kontotransaktionen'/>
+           <img src='img/chart.png' border='0' title='Kontotransaktionen' alt='Kontotransaktionen'/>
           </a>
         ";
       } elseif( $login_gruppen_id == $id ) {
         ?>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
-           <img src='img/b_browse.png' border='0' title='Mein Konto' alt='Mein Konto'/>
+           <img src='img/chart.png' border='0' title='Mein Konto' alt='Mein Konto'/>
           </a>
         <?
       }
@@ -139,6 +152,16 @@ if( $action == 'delete' ) {
       }
     }
     ?> </td> </tr> <?
+
+    if($show_member_details){
+?>
+	<tr>
+          <td/>
+          <td colspan="4">
+	<?  membertable_view(sql_gruppen_members($id)); ?>
+         <td/>
+<?
+    }
   }
 ?>
 
