@@ -82,11 +82,11 @@ if( $meinkonto ) {
   get_http_var( 'action', 'w', '' );
   switch( $action ) {
     case 'finish_transaction':
-      need_http_var( 'trans_nr', 'u' ) );
+      need_http_var( 'trans_nr', 'u' );
       need_http_var( 'auszug_jahr', 'u' );
       need_http_var( 'auszug_nr', 'u' );
       need_http_var( 'konto_id', 'u' );
-      sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, 'gebuchte Einzahlung' );
+      sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, "$year-$month-$day", 'gebuchte Einzahlung' );
       break;
     case 'zahlung_gruppe':
       buchung_gruppe_bank();
@@ -111,26 +111,23 @@ if( $meinkonto ) {
 //     // TODO: Transaktionart?
 //   }
   
-}
-
-
   ?>
 
-  <div id='transactions_button' style='padding-bottom:1em;'>
-  <span class='button'
-    onclick="document.getElementById('transactions_menu').style.display='block';
-             document.getElementById('transactions_button').style.display='none';"
-    >Transaktionen...</span>
-  </div>
+    <div id='transactions_button' style='padding-bottom:1em;'>
+    <span class='button'
+      onclick="document.getElementById('transactions_menu').style.display='block';
+               document.getElementById('transactions_button').style.display='none';"
+      >Transaktionen...</span>
+    </div>
 
-  <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
-    <legend>
-      <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-      onclick="document.getElementById('transactions_button').style.display='block';
-               document.getElementById('transactions_menu').style.display='none';">
-      Transaktionen
-    </legend>
-
+    <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
+      <legend>
+        <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+        onclick="document.getElementById('transactions_button').style.display='block';
+                 document.getElementById('transactions_menu').style.display='none';">
+        Transaktionen
+      </legend>
+  
       Art der Transaktion:
       <span style='padding-left:1em;' title='Einzahlung auf oder Auszahlung von Bankkonto der Foodcoop'>
       <input type='radio' name='transaktionsart'

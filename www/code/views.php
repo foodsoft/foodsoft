@@ -1189,13 +1189,17 @@ function formular_buchung_gruppe_bank(
           <tr>
             <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Betrag:</label></td>
             <td>
-              <input type="text" name="betrag" value="">
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+              <input type="text" name="betrag" value=""
+              title='von der Gruppe eingezahlt: postiv / an die Gruppe ausgezahlt: negativ'>
             </td>
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz"></td>
+            <td>
+              <input type="text" size="60" name="notiz">
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
           </tr>
         </table>
       </fieldset>
@@ -1242,7 +1246,10 @@ function formular_buchung_lieferant_bank(
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz"></td>
+            <td><input type="text" size="60" name="notiz">
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
           </tr>
         </table>
       </fieldset>
@@ -1279,12 +1286,14 @@ function formular_buchung_gruppe_lieferant(
             <td><label>Betrag:</label></td>
             <td>
               <input type="text" name="betrag" value="">
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz"></td>
+            <td><input type="text" size="60" name="notiz">
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
           </tr>
         </table>
       </fieldset>
@@ -1321,12 +1330,14 @@ function formular_buchung_gruppe_gruppe(
             <td><label>Betrag:</label></td>
             <td>
               <input type="text" name="betrag" value="">
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz"></td>
+            <td><input type="text" size="60" name="notiz">
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
           </tr>
         </table>
       </fieldset>

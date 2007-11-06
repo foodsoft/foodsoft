@@ -28,7 +28,7 @@ function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfeh
 }
 function sql_select_single_row( $sql ) {
   $result = doSql( $sql );
-  need( mysql_num_rows($result) == 1 );
+  need( mysql_num_rows($result) == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig" );
   return mysql_fetch_array($result);
 }
 
@@ -1819,7 +1819,7 @@ function sql_gruppen_transaktion(
 
   $sql="
     INSERT INTO gruppen_transaktion (
-      type, gruppen_id, lieferanten_id, 
+      type, gruppen_id, lieferanten_id 
     , eingabe_zeit, summe
     , kontoauszugs_jahr, kontoauszugs_nr
     , kontobewegungs_datum
@@ -1828,10 +1828,10 @@ function sql_gruppen_transaktion(
     ) VALUES (
 	    '$transaktionsart', '$gruppen_id', '$lieferanten_id'
     , NOW(), '$summe'
-    , '$auszug_jahr', '$auszugs_nr'
+    , '$auszug_jahr', '$auszug_nr'
     , '$kontobewegungs_datum'
     , '$dienstkontrollblatt_id', '$notiz'
-    , '$konterbuchung_id
+    , '$konterbuchung_id'
     );
   ";
   doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
@@ -1844,7 +1844,7 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
-  need( $konto_id and $auzug_jahr and $auzug_nr );
+  need( $konto_id and $auszug_jahr and $auszug_nr );
   need( $dienstkontrollblatt_id and $notiz );
   fail_if_readonly();
   doSql( "
@@ -1929,11 +1929,8 @@ function sql_groupGlass($gruppe, $menge){
 	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
 }
 
-function buchung_gruppe_bank(
-  $betrag = false, $gruppen_id = false, $notiz = false
-, $day = false, $month = false, $year = false
-, $auszug_jahr = false, $auszug_nr = false, $konto_id = false
-) {
+function buchung_gruppe_bank() {
+  global $betrag, $gruppen_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $gruppen_name = sql_gruppenname( $gruppen_id );
@@ -1963,11 +1960,8 @@ function buchung_gruppe_bank(
   );
 }
 
-function buchung_lieferant_bank(
-  $betrag = false, $lieferant_id = false, $notiz = false
-, $day = false, $month = false, $year = false
-, $auszug_jahr = false, $auszug_nr = false, $konto_id = false
-) {
+function buchung_lieferant_bank() {
+  global $betrag, $lieferant_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
   $betrag or need_http_var( 'betrag', 'f' );
   $lieferant_id or need_http_var( 'lieferant_id', 'u' );
   $day or need_http_var( 'day', 'u' );
@@ -1990,10 +1984,8 @@ function buchung_lieferant_bank(
   );
 }
 
-function buchung_gruppe_lieferant(
-  $betrag = false, $lieferant_id = false, $gruppen_id = false
-, $notiz = false, $day = false, $month = false, $year = false
-) {
+function buchung_gruppe_lieferant() {
+  global $betrag, $lieferant_id, $gruppen_id, $notiz, $day, $month, $year;
   $betrag or need_http_var( 'betrag', 'f' );
   $lieferant_id or need_http_var( 'lieferant_id', 'u' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
@@ -2010,10 +2002,8 @@ function buchung_gruppe_lieferant(
   );
 }
 
-function buchung_gruppe_gruppe(
-  $betrag = false, $gruppen_id = false, $nach_gruppen_id = false
-, $notiz = false, $day = false, $month = false, $year = false
-) {
+function buchung_gruppe_gruppe() {
+  global $betrag, $gruppen_id, $nach_gruppen_id, $notiz, $day, $month, $year;
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $nach_gruppen_id or need_http_var( 'nach_gruppen_id', 'u' );
@@ -2077,6 +2067,7 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
 }
 
 function sql_get_transaction( $id ) {
+  // echo "sql_get_transaction: $id<br>";
   if( $id > 0 ) {
     $sql = "
       SELECT kontoauszug_jahr, kontoauszug_nr
@@ -2087,28 +2078,30 @@ function sql_get_transaction( $id ) {
            , bankkonto.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
            , bankkonten.id as konto_id
-           , gruppen_id, lieferanten_id
+           , gruppen_id
+           , lieferanten_id
       FROM bankkonto
       JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
       WHERE bankkonto.id = $id
     ";
   } else {
     $sql = "
-      SELECT bankkonto.kontoauszug_jahr, bankkonto.kontoauszug_nr
-           , -summe as haben
+      SELECT bankkonto.kontoauszug_jahr
+           , bankkonto.kontoauszug_nr
+           , (-summe) as haben
            , gruppen_transaktion.notiz as kommentar
-           , gruppen_transaktion.kontobewegungsdatum as valuta
+           , gruppen_transaktion.kontobewegungs_datum as valuta
            , gruppen_transaktion.eingabe_zeit as buchungsdatum
            , gruppen_transaktion.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
-           , gruppen_transaktion.gruppen_id as gruppen_id,
+           , gruppen_transaktion.gruppen_id as gruppen_id
            , gruppen_transaktion.lieferanten_id as lieferanten_id
       FROM gruppen_transaktion
       LEFT JOIN bankkonto
              ON bankkonto.id = gruppen_transaktion.konterbuchung_id
       LEFT JOIN bankkonten
              ON bankkonten.id = bankkonto.konto_id
-      WHERE bankkonto.id = ".(-$id)."
+      WHERE gruppen_transaktion.id = ".(-$id)."
     ";
   }
   return sql_select_single_row( $sql );

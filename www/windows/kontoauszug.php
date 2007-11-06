@@ -9,14 +9,6 @@ need_http_var( 'konto_id', 'u', true );
 need_http_var( 'auszug_jahr', 'u', true );
 need_http_var( 'auszug_nr', 'u', true );
 
-$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
-// need( mysql_num_rows( $auszug ) > 0, "Keine Posten vorhanden" );
-
-$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
-$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
-
-$kontoname = sql_kontoname($konto_id);
-
 get_http_var( 'action', 'w', false );
 switch( $action ) {
   case 'zahlung_gruppe':
@@ -33,6 +25,17 @@ switch( $action ) {
 //     break;
 }
 
+if( $action ) {
+  reload_immediately( self_url() );
+}
+
+$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
+
+$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
+$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
+
+$kontoname = sql_kontoname($konto_id);
+
 echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
 ?>
@@ -43,7 +46,6 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
     >Transaktion eintragen...</span>
   </div>
 
-�
   <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
     <legend>
       <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
@@ -70,7 +72,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
                  document.getElementById('lieferant_form').style.display='block';
                  document.getElementById('gruppelieferant_form').style.display='none';
                  document.getElementById('gruppegruppe_form').style.display='none';"
-      ><b>Überweisung / Abbuchung Lieferant</b>
+      ><b>Überweisung / Lastschrift Lieferant</b>
       </li>
 
       <!--
@@ -173,7 +175,7 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       $lieferanten_id=$konterbuchung['lieferanten_id'];
       if( $gruppen_id ) {
         echo "
-          <p><a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions?gruppen_id=$gruppen_id');\"
+          <p><a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id');\"
           >Gruppenkonto $gruppen_name</a></p>
         ";
       }
