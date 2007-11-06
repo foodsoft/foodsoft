@@ -86,6 +86,9 @@ if( $meinkonto ) {
       need_http_var( 'auszug_jahr', 'u' );
       need_http_var( 'auszug_nr', 'u' );
       need_http_var( 'konto_id', 'u' );
+      need_http_var( 'year', 'u' );
+      need_http_var( 'month', 'u' );
+      need_http_var( 'day', 'u' );
       sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, "$year-$month-$day", 'gebuchte Einzahlung' );
       break;
     case 'zahlung_gruppe':
@@ -279,12 +282,16 @@ if( $meinkonto ) {
                         <? echo self_post(); ?>
                         <input type="hidden" name="action" value="finish_transaction">
                         <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
-                        <select name='konto_id' size='1'>
+                      <select name='konto_id' size='1'>
                         <? echo optionen_konten(); ?>
                         </select>
-                        <br>
+                      <br>
                         Jahr: <?  number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
                         / Nr: <input type="text" size='6' name='auszug_nr' />
+                      <br>
+                        <label>Valuta:</label>
+                        <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
+                        &nbsp;
                         <input type="submit" value="Bestätigen ">
                       </form>
                     <?

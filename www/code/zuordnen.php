@@ -1844,8 +1844,11 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
+echo 1;
   need( $konto_id and $auszug_jahr and $auszug_nr );
+echo 2;
   need( $dienstkontrollblatt_id and $notiz );
+echo 3;
   fail_if_readonly();
   doSql( "
     INSERT INTO bankkonto (
@@ -2037,7 +2040,7 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
   , $dienstkontrollblatt_id, $notiz, 0
   );
 
-  sql_link_transaktion( $soll_id, $haben_id );
+  sql_link_transaktion( -$soll_id, $haben_id );
 
   $sql="
     UPDATE gruppen_transaktion
@@ -2045,6 +2048,7 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
         dienstkontrollblatt_id='$dienstkontrollblatt_id'
     WHERE id = '$soll_id'
   ";
+      echo 6;
   doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
 }
 
