@@ -18,88 +18,19 @@ $saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
 $kontoname = sql_kontoname($konto_id);
 
 get_http_var( 'action', 'w', false );
-
-if( $action == 'zahlung_gruppe' ) {
-  need_http_var( 'betrag', 'f' );
-  need_http_var( 'gruppen_id', 'u' );
-  $gruppen_name = sql_gruppenname( $gruppen_id );
-  if( $betrag < 0 ) {
-    need_http_var( 'notiz', 'M' );
-  } else {
-    get_http_var( 'notiz', 'M', "Einzahlung Gruppe $gruppen_name" );
-  }
-  need_http_var( 'day', 'u' );
-  need_http_var( 'month', 'u' );
-  need_http_var( 'year', 'u' );
-  sql_doppelte_transaktion(
-    array(
-      'konto_id' => -1, 'gruppen_id' => $gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array(
-      'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , $betrag
-  , "$year-$month-$day"
-  , "$notiz"
-  );
-}
-
-if( $action == 'zahlung_lieferant' ) {
-  need_http_var( 'betrag', 'f' );
-  need_http_var( 'lieferant_id', 'u' );
-  need_http_var( 'day', 'u' );
-  need_http_var( 'month', 'u' );
-  need_http_var( 'year', 'u' );
-  need_http_var( 'notiz', 'M' );
-  sql_doppelte_transaktion(
-    array(
-      'konto_id' => $konto_id, 'lieferant_id' => $lieferant_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array(
-      'konto_id' => -1, 'lieferant_id' => $lieferant_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , $betrag
-  , "$year-$month-$day"
-  , "$notiz"
-  );
-}
-
-if( $action == 'zahlung_gruppe_lieferant' ) {
-  need_http_var( 'betrag', 'f' );
-  need_http_var( 'lieferant_id', 'u' );
-  need_http_var( 'gruppen_id', 'u' );
-  need_http_var( 'day', 'u' );
-  need_http_var( 'month', 'u' );
-  need_http_var( 'year', 'u' );
-  need_http_var( 'notiz', 'M' );
-  sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , array( 'konto_id' => -1, 'lieferant_id' => $lieferant_id )
-  , $betrag
-  , "$year-$month-$day"
-  , "$notiz"
-  );
-}
-
-if( $action == 'umbuchung_gruppegruppe' ) {
-  need_http_var( 'betrag', 'f' );
-  need_http_var( 'von_gruppen_id', 'u' );
-  need_http_var( 'nach_gruppen_id', 'u' );
-  need_http_var( 'day', 'u' );
-  need_http_var( 'month', 'u' );
-  need_http_var( 'year', 'u' );
-  need_http_var( 'notiz', 'M' );
-  sql_doppelte_transaktion(
-    array(
-      'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array(
-      'konto_id' => -1, 'gruppen_id' => $von_gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , $betrag
-  , "$year-$month-$day"
-  , "$notiz"
-  );
+switch( $action ) {
+  case 'zahlung_gruppe':
+    buchung_gruppe_bank();
+    break;
+  case 'zahlung_lieferant':
+    buchung_lieferant_bank();
+    break;
+//   case 'zahlung_gruppe_lieferant':
+//     buchung_gruppe_lieferant();
+//     break;
+//   case 'umbuchung_gruppegruppe':
+//     buchung_gruppe_gruppe();
+//     break;
 }
 
 echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
@@ -112,6 +43,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
     >Transaktion eintragen...</span>
   </div>
 
+�
   <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
     <legend>
       <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
@@ -132,7 +64,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
       ><b>Einzahlung / Auszahlung Gruppe</b>
       </li>
 
-      <li title='Überweisung an oder Lastschrift Lieferant'>
+      <li title='Überweisung an oder Lastschrift von Lieferant'>
       <input type='radio' name='transaktionsart'
         onclick="document.getElementById('gruppe_form').style.display='none';
                  document.getElementById('lieferant_form').style.display='block';
@@ -141,6 +73,7 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
       ><b>Überweisung / Abbuchung Lieferant</b>
       </li>
 
+      <!--
       <li title='Direkte Überweisung einer Gruppe an einen Lieferanten'>
       <input type='radio' name='transaktionsart'
         onclick="document.getElementById('gruppe_form').style.display='none';
@@ -158,6 +91,8 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
                  document.getElementById('gruppegruppe_form').style.display='block';"
       ><b>Umbuchung Gruppe -> Gruppe</b>
       </li>
+      -->
+
     </ul>
 
     <div id='gruppe_form' style='display:none;'>

@@ -80,68 +80,27 @@ if( $meinkonto ) {
   $gruppen_name = sql_gruppenname( $gruppen_id );
 
   get_http_var( 'action', 'w', '' );
-
-  if( get_http_var( 'trans_nr', 'u' ) ) {
-    need_http_var( 'auszug_jahr', 'u' );
-    need_http_var( 'auszug_nr', 'u' );
-    need_http_var( 'konto_id', 'u' );
-    sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, 'gebuchte Einzahlung' );
+  switch( $action ) {
+    case 'finish_transaction':
+      need_http_var( 'trans_nr', 'u' ) );
+      need_http_var( 'auszug_jahr', 'u' );
+      need_http_var( 'auszug_nr', 'u' );
+      need_http_var( 'konto_id', 'u' );
+      sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, 'gebuchte Einzahlung' );
+      break;
+    case 'zahlung_gruppe':
+      buchung_gruppe_bank();
+      break;
+//    case 'zahlung_lieferant':
+//      buchung_lieferant_bank();
+//      break;
+    case 'zahlung_gruppe_lieferant':
+      buchung_gruppe_lieferant();
+      break;
+    case 'umbuchung_gruppegruppe':
+      buchung_gruppe_gruppe();
+      break;
   }
-
-  if( $action == 'zahlung_gruppe' ) {
-    need_http_var( 'betrag', 'f' );
-    need_http_var( 'day', 'u' );
-    need_http_var( 'month', 'u' );
-    need_http_var( 'year', 'u' );
-    need_http_var( 'auszug_jahr', 'u' );
-    need_http_var( 'auszug_nr', 'u' );
-    need_http_var( 'konto_id', 'u' );
-    sql_doppelte_transaktion(
-      array(
-        'konto_id' => -1, 'gruppen_id' => $gruppen_id
-      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-    , array(
-        'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
-      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-    , $betrag
-    , "$year-$month-$day"
-    , "Einzahlung"
-    );
-  }
-
-  if( $action == 'umbuchung_gruppe_gruppe' ) {
-    need_http_var( 'betrag', 'f' );
-    need_http_var( 'day', 'u' );
-    need_http_var( 'month', 'u' );
-    need_http_var( 'year', 'u' );
-    need_http_var( 'notiz', 'M' );
-    need_http_var( 'nach_gruppen_id', 'u' );
-    $nach_gruppen_name = sql_gruppenname( $nach_gruppen_id );
-    sql_doppelte_transaktion(
-      array( 'konto_id' => -1 , 'gruppen_id' => $gruppen_id )
-    , array( 'konto_id' => -1 , 'gruppen_id' => $nach_gruppen_id )
-    , $betrag
-    , "$year-$month-$day"
-    , "Transfer von $gruppen_name an $nach_gruppen_name: $notiz"
-    );
-  }
-
-  if( $action == 'zahlung_gruppe_lieferant' ) {
-    need_http_var( 'betrag', 'f' );
-    need_http_var( 'lieferant_id', 'u' );
-    need_http_var( 'day', 'u' );
-    need_http_var( 'month', 'u' );
-    need_http_var( 'year', 'u' );
-    need_http_var( 'notiz', 'M' );
-    sql_doppelte_transaktion(
-      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id );
-    , array( 'konto_id' => -1, 'lieferant_id' => $lieferant_id );
-    , $betrag
-    , "$year-$month-$day"
-    , "$notiz"
-    );
-  }
-
 
 //   if( get_http_var( 'summe_sonstiges', 'f' ) ) {
 //     need_http_var( 'day', 'u' );
@@ -151,6 +110,9 @@ if( $meinkonto ) {
 //     sqlGroupTransaction( '2', $gruppen_id, $summe_sonstiges, NULL, NULL,  $notiz, "$year-$month-$day" );
 //     // TODO: Transaktionart?
 //   }
+  
+}
+
 
   ?>
 
@@ -160,7 +122,7 @@ if( $meinkonto ) {
              document.getElementById('transactions_button').style.display='none';"
     >Transaktionen...</span>
   </div>
-  
+
   <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
     <legend>
       <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
@@ -318,6 +280,7 @@ if( $meinkonto ) {
                     ?>
                       <form action='<? echo self_url(); ?>' method="post">
                         <? echo self_post(); ?>
+                        <input type="hidden" name="action" value="finish_transaction">
                         <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
                         <select name='konto_id' size='1'>
                         <? echo optionen_konten(); ?>
