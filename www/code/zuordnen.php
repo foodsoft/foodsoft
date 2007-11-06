@@ -886,7 +886,7 @@ function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
         if($bestell_id===FALSE && $produkt_id===FALSE){
 		$query=" SELECT *
 			FROM bestellgruppen
-			INNER JOIN (
+			LEFT JOIN (
 				SELECT gruppen_id, count( gruppen_id ) AS Mitgliederza
 				FROM gruppenmitglieder
 				GROUP BY gruppen_id
@@ -1928,6 +1928,108 @@ function sql_groupGlass($gruppe, $menge){
 	$pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
 	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
 }
+
+function buchung_gruppe_bank(
+  $betrag = false, $gruppen_id = false, $notiz = false
+, $day = false, $month = false, $year = false
+, $auszug_jahr = false, $auszug_nr = false, $konto_id = false
+) {
+  $betrag or need_http_var( 'betrag', 'f' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'u' );
+  $gruppen_name = sql_gruppenname( $gruppen_id );
+  if( ! $notiz ) {
+    if( $betrag < 0 ) {
+      need_http_var( 'notiz', 'M' );
+    } else {
+      get_http_var( 'notiz', 'M', "Einzahlung Gruppe $gruppen_name" );
+    }
+  }
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  $konto_id or need_http_var( 'konto_id', 'u' );
+  $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
+  $auszug_nr or need_http_var( 'auszug_nr', 'u' );
+  sql_doppelte_transaktion(
+    array(
+      'konto_id' => -1, 'gruppen_id' => $gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array(
+      'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
+  );
+}
+
+function buchung_lieferant_bank(
+  $betrag = false, $lieferant_id = false, $notiz = false
+, $day = false, $month = false, $year = false
+, $auszug_jahr = false, $auszug_nr = false, $konto_id = false
+) {
+  $betrag or need_http_var( 'betrag', 'f' );
+  $lieferant_id or need_http_var( 'lieferant_id', 'u' );
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  $notiz or need_http_var( 'notiz', 'M' );
+  $konto_id or need_http_var( 'konto_id', 'u' );
+  $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
+  $auszug_nr or need_http_var( 'auszug_nr', 'u' );
+  sql_doppelte_transaktion(
+    array(
+      'konto_id' => $konto_id, 'lieferant_id' => $lieferant_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array(
+      'konto_id' => -1, 'lieferant_id' => $lieferant_id
+    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
+  );
+}
+
+function buchung_gruppe_lieferant(
+  $betrag = false, $lieferant_id = false, $gruppen_id = false
+, $notiz = false, $day = false, $month = false, $year = false
+) {
+  $betrag or need_http_var( 'betrag', 'f' );
+  $lieferant_id or need_http_var( 'lieferant_id', 'u' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'u' );
+  $notiz or need_http_var( 'notiz', 'M' );
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , array( 'konto_id' => -1, 'lieferant_id' => $lieferant_id )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
+  );
+}
+
+function buchung_gruppe_gruppe(
+  $betrag = false, $gruppen_id = false, $nach_gruppen_id = false
+, $notiz = false, $day = false, $month = false, $year = false
+) {
+  $betrag or need_http_var( 'betrag', 'f' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'u' );
+  $nach_gruppen_id or need_http_var( 'nach_gruppen_id', 'u' );
+  $notiz or need_http_var( 'notiz', 'M' );
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
+  );
+}
+
 
 /**
  *

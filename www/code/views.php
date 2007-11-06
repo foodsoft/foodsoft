@@ -1172,7 +1172,7 @@ function formular_buchung_gruppe_bank(
         <table>
           <tr>
             <td><label>Gruppe:</label></td>
-            <td><select name='gruppen_id'><? echo optionen_gruppen( 0, 0, $gruppen_id ); ?></select></td>
+            <td><select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select></td>
           </tr>
           <tr>
             <td><label>Konto:</label></td>
@@ -1265,7 +1265,7 @@ function formular_buchung_gruppe_lieferant(
         <table>
           <tr>
             <td><label>von Gruppe:</label></td>
-            <td><select name='gruppen_id'><? echo optionen_gruppen( 0, 0, $gruppen_id ); ?></select></td>
+            <td><select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select></td>
           </tr>
           <tr>
             <td><label>an Lieferant:</label></td>
@@ -1307,11 +1307,11 @@ function formular_buchung_gruppe_gruppe(
         <table>
           <tr>
             <td><label>von Gruppe:</label></td>
-            <td><select name='gruppen_id'><? echo optionen_gruppen( 0, 0, $gruppen_id ); ?></select></td>
+            <td><select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select></td>
           </tr>
           <tr>
             <td><label>an Gruppe:</label></td>
-            <td><select name='nach_gruppen_id'><? echo optionen_gruppen( 0, 0, $nach_gruppen_id ); ?></select></td>
+            <td><select name='nach_gruppen_id'><? echo optionen_gruppen( false, false, $nach_gruppen_id ); ?></select></td>
           </tr>
           <tr>
             <td><label>Valuta:</label></td>
