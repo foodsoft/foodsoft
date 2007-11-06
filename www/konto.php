@@ -72,8 +72,44 @@
   $auszuege = sql_kontoauszug( $konto_id );
 
   ?>
+
+    <div id='neuer_auszug_button' style='padding-bottom:1em;'>
+      <span class='button'
+        onclick="document.getElementById('neuer_auszug_menu').style.display='block';
+                 document.getElementById('neuer_auszug_button').style.display='none';"
+      >Neuen Auszug anlegen...</span>
+    </div>
+
+    <div id='neuer_auszug_menu' style='display:none;margin-bottom:2em;'>
+      <form method='post' action='javascript:neuer_auszug(<? echo $konto_id; ?>);'>
+        <fieldset class='small_form'>
+        <legend>
+          <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+          onclick="document.getElementById('neuer_auszug_button').style.display='block';
+                   document.getElementById('neuer_auszug_menu').style.display='none';">
+          Neuen Auszug anlegen
+        </legend>
+        <label>Jahr:</label>
+        <input id='input_auszug_jahr' type='text' size='4' name='auszug_jahr' value='<? echo date('Y'); ?>'>
+        /
+        <label>Nr:</label>
+        <input id='input_auszug_nr' type='text' size='2' name='auszug_nr' value=''>
+        &nbsp;
+        <input type='submit' value='OK' onclick='neuer_auszug(<? echo $konto_id; ?>);'>
+      </form>
+      <script type='text/javascript'>
+      <!--
+        function neuer_auszug(konto_id) {
+          jahr = document.getElementById('input_auszug_jahr').value;
+          nr = document.getElementById('input_auszug_nr').value;
+          neuesfenster('index.php?window=kontoauszug&konto_id='+konto_id+'&auszug_jahr='+jahr+'&auszug_nr='+nr,'kontoauszug');
+        }
+      //-->
+      </script>
+    </div>
+
     <h3>Auszüge:</h3>
-    
+
     <table class='liste'>
       <tr class='legende'>
         <th>Jahr</th>
@@ -103,4 +139,3 @@
   ?> </table> <?
 
 ?>
-
