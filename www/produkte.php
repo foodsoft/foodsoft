@@ -106,7 +106,7 @@
         if( !$readonly ) {
           echo "
                <tr>
-               <td><input type='button' value='Neues Produkt' class='bigbutton' onClick=\"window.open('windows/insertProdukt.php','insertProdukt','width=450,height=500,left=100,top=100').focus()\"></td>
+               <td><input type='button' value='Neues Produkt' class='bigbutton' onClick=\"window.open('index.php?window=insertProdukt','insertProdukt','width=450,height=500,left=100,top=100').focus()\"></td>
                   <td valign='middle' class='smalfont'>Einen neues Produkt hinzufügen...</td>
                 </tr><tr>
                 <td><input type='button' value='alle Bearbeiten' class='bigbutton' onClick=\"document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();\"></td>
@@ -260,7 +260,7 @@
             while ($row = mysql_fetch_array($result)) 
                 $prodgroup_id2name[$row['id']] = $row['name'];
                   
-          $result = sql_getLieferant(); 
+          $result = sql_lieferanten(); 
             while ($row = mysql_fetch_array($result)) 
                 $lieferanten_id2name[$row['id']] = $row['name'];
                   
@@ -346,7 +346,7 @@
                   if( !$readonly ) {
                     echo "
                       <a class='png' href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid={$row['id']}','produktdetails');\"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
-                      <a class='png' href=\"javascript:f=window.open('windows/editProdukt.php?produkt_id={$row['id']}','editProdukt','width=400,height=450,left=200,top=100'); f.focus();\"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
+                      <a class='png' href=\"javascript:f=window.open('index.php?window=editProdukt&produkt_id={$row['id']}','editProdukt','width=400,height=450,left=200,top=100'); f.focus();\"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
                       <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
                       <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
                       -->

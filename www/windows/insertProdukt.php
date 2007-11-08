@@ -1,9 +1,8 @@
 <?PHP
+   assert( $angemeldet ) or exit();
+
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
-   require_once("code/config.php");
-   require_once("$foodsoftpath/code/err_functions.php");
-   require_once("$foodsoftpath/code/login.php");
    fail_if_readonly();
    nur_fuer_dienst_IV();
 	 

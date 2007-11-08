@@ -1,17 +1,9 @@
 <?PHP
-	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-  require_once('../code/login.php');
-      if( ! $angemeldet ) {
-       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-     } 
+   assert( $angemeldet ) or exit();
 
 if(!nur_fuer_dienst(4)){exit();}
 
-
-   need_http_var('produkt_id');
+   need_http_var('produkt_id','u');
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
