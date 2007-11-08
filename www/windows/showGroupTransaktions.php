@@ -184,9 +184,6 @@ if( $meinkonto ) {
 	//Funktioniert erstmal mit der Mischung aus Automatischer Berechung und manuellen Eintr�gen nicht
 	$size          = 2000;
 	 
-	$type2str[0] = "Einzahlung";
-	$type2str[1] = "Überweisung";
-	$type2str[2] = "Sonstiges";
 	
    $cols = 7;
    ?>
@@ -253,7 +250,19 @@ if( $meinkonto ) {
             } else {
               echo "
                 <tr>
-                  <td valign='top'><b>{$type2str[$konto_row['type']]}</b></td>
+                  <td valign='top'><b>";
+              switch( $konto_row['type'] ) {
+                case 0:
+                  echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
+                  break;
+                case 1:
+                  echo "Transfer";
+                  break;
+                case 2:
+                  echo "Sonstiges";
+                  break;
+              }
+              echo "</td>
                   <td>{$konto_row['valuta_trad']}</td>
                   <td>{$konto_row['date']}</td>
               ";
@@ -298,11 +307,28 @@ if( $meinkonto ) {
                   }
                 }
                 ?> </td></tr> </table> </td> <?
-							} else if ($konto_row['type'] == 1) {
-							   echo "<td>[noch nicht unterst�tzt]</td>";
-		    } else {
-							   echo "<td>".$konto_row['notiz']."</td>";
-							}
+              } else if ($konto_row['type'] == 1) {
+                $k_id = $konto_row['konterbuchung_id'];
+                if( ! ( $k_id < 0 ) ) {
+                  echo "<td class='warn'>Fehler: Buchung unvollständig</td>";
+                } else {
+                  $k_row = sql_get_transaction( $k_id );
+                  $k_gruppen_id = $k_row['gruppen_id'];
+                  $k_lieferanten_id = $k_row['lieferanten_id'];
+                  if( $k_gruppen_id > 0 ) {
+                    printf( "<td>Überweisung %s %sGruppe %s%s</td>"
+                    , ( $konto_row['summe'] > 0 ? 'von' : 'an' )
+                    , ( $meinkonto ? '' : "<a href='" .self_url('gruppen_id'). "&gruppen_id=$k_gruppen_id'>" )
+                    , sql_gruppenname( $$k_gruppen_id )
+                    , ( $meinkonto ? '' : "</a>" )
+                    );
+                  } else if ( $k_lieferanten_id > 0 ) {
+                    echo "<td>Überweisung Lieferant " . lieferant_name( $k_lieferanten_id );
+                  }
+                }
+              } else if ($konto_row['type'] == 2) {
+                echo "<td>".$konto_row['notiz']."</td>";
+              }
 							
               ?>
 							  <td class='mult'>

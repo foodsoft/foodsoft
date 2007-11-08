@@ -1812,7 +1812,7 @@ function sql_gruppen_transaktion(
 ) {
   global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
-  need( $hat_dienst_IV or ( $transaktionsart == 2 ) );
+  ( $transaktionsart == 2 ) or nur_fuer_dienst_IV;
   need( $gruppen_id or $lieferanten_id );
   // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
   // need( $transaktionsart or $bankkonto_id );
@@ -1834,7 +1834,7 @@ function sql_gruppen_transaktion(
     , '$konterbuchung_id'
     );
   ";
-  doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern.. ");
+  doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern: ");
   return mysql_insert_id();
 }
 
@@ -1844,11 +1844,8 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
-echo 1;
   need( $konto_id and $auszug_jahr and $auszug_nr );
-echo 2;
   need( $dienstkontrollblatt_id and $notiz );
-echo 3;
   fail_if_readonly();
   doSql( "
     INSERT INTO bankkonto (
@@ -2048,8 +2045,7 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
         dienstkontrollblatt_id='$dienstkontrollblatt_id'
     WHERE id = '$soll_id'
   ";
-      echo 6;
-  doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren..");
+  doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren: ");
 }
 
 
