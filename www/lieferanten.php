@@ -66,27 +66,29 @@
       echo "<a href='{$row['url']}' target='_new'>{$row['url']}</a>";
     else
       echo "-";
-    echo "   </td>
-						 <td>
-						 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-               href=\"javascript:window.open('index.php?window=editLieferant&ro=1&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-               <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' title='Details zum Lieferanten' />
-             </a>
-    ";
-    if( ! $readonly ) {
-      if( $dienst == 4 or $dienst == 5 ) {
-        echo "
-          <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-            href=\"javascript:window.open('index.php?window=editLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-            <img src='img/b_edit.png' border='0' alt='Lieferanten edieren' title='Lieferanten editieren' />
-          </a>
-          <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
-            <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' title='Lieferanten l&ouml;schen' />
-          </a>
-        ";
-      }
+    ?>
+      </td>
+      <td>
+    <?
+    if( ( ! $readonly ) and ( $dienst == 4 or $dienst == 5 ) ) {
+      echo "
+        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+          href=\"javascript:window.open('index.php?window=editLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
+          <img src='img/b_edit.png' border='0' alt='Lieferanten edieren' title='Lieferanten editieren' />
+        </a>
+        <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
+          <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' title='Lieferanten l&ouml;schen' />
+        </a>
+      ";
+    } else {
+      echo "
+        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+          href=\"javascript:window.open('index.php?window=editLieferant&ro=1&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
+          <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' title='Details zum Lieferanten' />
+        </a>
+      ";
     }
-    echo "</td></tr>";
+    ?> </td></tr> <?
   }
 
 ?>

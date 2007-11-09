@@ -5,7 +5,7 @@
   if( $readonly )
     $ro = 1;
 
-  $ro or nur_fuer_dienst(4,5);
+  ( $dienst == 4 ) or ( $dienst == 5 ) or $ro = 1;
 
   $msg = '';
   $problems = '';
@@ -45,21 +45,24 @@
     , 'kundennummer' => $kundennummer
     , 'url' => $url
     );
-
-    if( $lieferanten_id ) {
-      if( sql_update( 'lieferanten', $lieferanten_id, $values ) ) {
-        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
-        $done = true;
-      } else {
-        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
-      }
+    if( ! $name ) {
+      $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
     } else {
-      if( ( $lieferanten_id = sql_insert( 'lieferanten', $values ) ) ) {
-        $self_fields['lieferanten_id'] = $lieferanten_id;
-        $msg = $msg . "<div class='ok'>Lieferant erfolgreich angelegt:</div>";
-        $done = true;
+      if( $lieferanten_id ) {
+        if( sql_update( 'lieferanten', $lieferanten_id, $values ) ) {
+          $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
+          $done = true;
+        } else {
+          $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        }
       } else {
-        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        if( ( $lieferanten_id = sql_insert( 'lieferanten', $values ) ) ) {
+          $self_fields['lieferanten_id'] = $lieferanten_id;
+          $msg = $msg . "<div class='ok'>Lieferant erfolgreich angelegt:</div>";
+          $done = true;
+        } else {
+          $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        }
       }
     }
   }
@@ -75,43 +78,43 @@
       <? echo $msg . $problems; ?>
 			  <table>
 			   <tr>
-				    <td><b>Lieferantenname</b></td>
+				    <td><label>Name:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $name; ?>" name='name'></td>
 				 </tr>
 			   <tr>
-				    <td><b>Adresse</b></td>
+				    <td><label>Adresse:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $adresse; ?>" name='adresse'></td>
 				 </tr>				 
 			   <tr>
-				    <td><b>AnsprechpartnerIn</b></td>
+				    <td><label>AnsprechpartnerIn:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $ansprechpartner; ?>" name='ansprechpartner'></td>
 				 </tr>				 
 			   <tr>
-				    <td><b>Telefonnummer</b></td>
+				    <td><label>Telefonnummer:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $telefon; ?>" name='telefon'></td>
 				 </tr>
 			   <tr>
-				    <td><b>Faxnummer</b></td>
+				    <td><label>Faxnummer:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $fax; ?>" name='fax'></td>
 				 </tr>				 
 			   <tr>
-				    <td><b>Email-Adresse</b></td>
+				    <td><label>Email-Adresse:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $mail; ?>" name='mail'></td>
 				 </tr>				 
 			   <tr>
-				    <td><b>Liefertage</b></td>
+				    <td><label>Liefertage:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $liefertage; ?>" name='liefertage'></td>
 				 </tr>				
 			   <tr>
-				    <td><b>Bestellmodalitäten</b></td>
+				    <td><label>Bestellmodalitäten:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $bestellmodalitaeten; ?>" name='bestellmodalitaeten'></td>
 				 </tr>				  
 			   <tr>
-				    <td><b>eigene Kundennummer</b></td>
+				    <td><label>eigene Kundennummer:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $kundennummer; ?>" name='kundennummer'></td>
 				 </tr>
 			   <tr>
-				    <td><b>Internetseiten</b></td>
+				    <td><label>Internetseiten:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $url; ?>" name='url'></td>
 				 </tr>			 
 				 <tr>
