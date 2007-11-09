@@ -74,3 +74,9 @@ function select_group(self) {
   window.location.href = self + '&gruppen_id=' + s;
 }
 
+function closeCurrentWindow() {
+  // this function is a workaround for the " 'window.close()' is not a function" -bug
+  // (occurring in  some uses of onClick='window.close();'):
+  window.close();
+}
+
