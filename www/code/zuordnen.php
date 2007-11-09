@@ -1209,26 +1209,17 @@ function sql_bestellung( $id ) {
 function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
   fail_if_readonly();
   nur_fuer_dienst_IV();
-   $sql = "INSERT INTO gesamtbestellungen (name, bestellstart, bestellende, lieferung) 
-           VALUES ('".mysql_escape_string($name)."', '".
-	              mysql_escape_string($startzeit)."', '".
-	              mysql_escape_string($endzeit)."', '".
-		      mysql_escape_string($lieferung)."')";
-  doSql($sql, LEVEL_IMPORTANT, "Konnte Gesamtbestellung nicht aufnehmen.");
+  return sql_insert( 'gesamtbestellungen', array(
+    'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
+  ) );
 }
 
 function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
   fail_if_readonly();
   nur_fuer_dienst_IV();
-  $sql = "
-    UPDATE gesamtbestellungen
-    SET name = '" . mysql_escape_string($name) . "'
-      , bestellstart='$startzeit'
-      , bestellende='$endzeit'
-      , lieferung='$lieferung'
-    WHERE id=$bestell_id
-  ";
-  return doSql($sql, LEVEL_IMPORTANT, "Update Gesamtbestellung fehlgeschlagen");
+  return sql_update( 'gesamtbestellungen', $bestell_id, array(
+    'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
+  ) );
 }
 
 /**
@@ -1845,35 +1836,28 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
  */
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
-  $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="", 
+  $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="",
   $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
   global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
-  ( $transaktionsart == 2 ) or nur_fuer_dienst_IV;
   need( $gruppen_id or $lieferanten_id );
   // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
   // need( $transaktionsart or $bankkonto_id );
 
-  $sql="
-    INSERT INTO gruppen_transaktion (
-      type, gruppen_id, lieferanten_id 
-    , eingabe_zeit, summe
-    , kontoauszugs_jahr, kontoauszugs_nr
-    , kontobewegungs_datum
-    , dienstkontrollblatt_id, notiz
-    , konterbuchung_id
-    ) VALUES (
-	    '$transaktionsart', '$gruppen_id', '$lieferanten_id'
-    , NOW(), '$summe'
-    , '$auszug_jahr', '$auszug_nr'
-    , '$kontobewegungs_datum'
-    , '$dienstkontrollblatt_id', '$notiz'
-    , '$konterbuchung_id'
-    );
-  ";
-  doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktion nicht in DB speichern: ");
-  return mysql_insert_id();
+  return sql_insert( 'gruppen_transaktion', array(
+    'type' => $transaktionsart
+  , 'gruppen_id' => $gruppen_id
+  , 'lieferanten_id' => $lieferanten_id
+  /* , 'eingabe_zeit' => 'NOW()'  klappt so nicht, macht die DB aber sowieso automatisch! */
+  , 'summe' => $summe
+  , 'kontoauszugs_jahr' => $auszug_jahr
+  , 'kontoauszugs_nr' => $auszug_nr
+  , 'kontobewegungsdatum' => $kontobewegungsdatum
+  , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
+  , 'notiz' => $notiz
+  , 'konterbuchung_id' => $konterbuchung_id
+  ) );
 }
 
 function sql_bank_transaktion(
@@ -1885,23 +1869,20 @@ function sql_bank_transaktion(
   need( $konto_id and $auszug_jahr and $auszug_nr );
   need( $dienstkontrollblatt_id and $notiz );
   fail_if_readonly();
-  doSql( "
-    INSERT INTO bankkonto (
-      konto_id, kontoauszug_jahr, kontoauszug_nr
-    , betrag, buchungsdatum, valuta
-    , gruppen_id, lieferanten_id
-    , dienstkontrollblatt_id, kommentar
-    , konterbuchung_id
-    ) VALUES (
-      '$konto_id', '$auszug_jahr', '$auszug_nr'
-    , '$haben', NOW(), '$valuta'
-    , '$gruppen_id', '$lieferanten_id'
-    , '$dienstkontrollblatt_id', '$notiz'
-    , '$konterbuchung_id'
-    ); "
-  , LEVEL_IMPORTANT, "Buchung fehlgeschlagen"
-  );
-  return mysql_insert_id();
+
+  return sql_insert( 'bankkonto', array(
+    'konto_id' => $konto_id
+  , 'kontoauszug_jahr' => $auszug_jahr
+  , 'kontoauszug_nr' => $auszug_nr
+  , 'betrag' => $haben
+  , 'buchungsdatum' => $mysqlheute
+  , 'valuta' => $valuta
+  , 'gruppen_id' => $gruppen_id
+  , 'lieferanten_id' => $lieferanten_id
+  , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
+  , 'kommentar' => $notiz
+  , 'konterbuchung_id' => $konterbuchung_id
+  ) );
 }
 
 function sql_link_transaktion( $soll_id, $haben_id ) {
@@ -2077,12 +2058,12 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
 
   sql_link_transaktion( -$soll_id, $haben_id );
 
-  $sql="
-    UPDATE gruppen_transaktion
-    SET kontoauszugs_nr='$receipt_nr', kontoauszugs_jahr='$receipt_year',
-        dienstkontrollblatt_id='$dienstkontrollblatt_id'
-    WHERE id = '$soll_id'
-  ";
+  sql_update( 'gruppen_transaktion', $soll_id, array(
+    'kontoauszugs_nr' => $receipt_nr
+  , 'kontoauszugs_jahr' => $receipt_year
+  , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
+  ) );
+
   doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren: ");
 }
 
