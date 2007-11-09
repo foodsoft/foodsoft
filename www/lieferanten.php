@@ -5,11 +5,11 @@
   $problems = '';
    
 	 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)
-  get_http_var('action');
+  get_http_var('action','w','');
   if( $action == 'delete' ) {
     fail_if_readonly();
     nur_fuer_dienst(4,5);
-    need_http_var('lieferanten_id');
+    need_http_var('lieferanten_id','u');
     
 			 mysql_query( "DELETE FROM lieferanten WHERE id=".mysql_escape_string($lieferanten_id) )
          or $problems = $problems . "<div class='warn'>Konnte Lieferanten nicht l&ouml;schen: "
@@ -17,36 +17,27 @@
 	}
 
 	 
-  echo "	
-	     <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
-			 <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
-       <? echo self_post(); ?>
-					<input type='hidden' name='action' value='normal'>
-					<input type='hidden' name='lieferanten_id'>
-			 </form>
-	
-				<table class=menu'>
-  ";
+  ?> <table class='menu' style='margin-bottom:2em;'> <?
+
   if( ! $readonly ) {
-    echo "
+    ?>
 				   <tr>
-		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick=\"window.open('index.php?window=insertLieferant','lieferant','width=510,height=500,left=200,top=100').focus()\"></td>
+		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick="window.open('index.php?window=editLieferant','lieferant','width=510,height=500,left=200,top=100').focus();"></td>
 				      <td valign=middle' class='smalfont'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
 					 </tr>
-    ";
+    <?
   }
-  echo "
-           <tr>
-		          <td><input type='button' value='Reload' class='bigbutton' onClick=\"document.forms['reload_form'].submit();\"></td>
-				      <td valign=middle' class='smalfont'>diese Seite aktualisieren...</td>
-					 </tr><tr>
-		          <td><input type='button' value='Beenden' class='bigbutton' onClick=\"self.location.href='index.php'\"></td>
-				      <td valign=middle' class='smalfont'>diesen Bereich verlassen...</td>
-					 </tr>
-				</table>
-				
-				<br><br>
-  ";
+  ?>
+     <tr>
+        <td><input type='button' value='Reload' class='bigbutton' onClick="self.location.href='<? echo self_url(); ?>';"></td>
+        <td valign=middle' class='smalfont'>diese Seite aktualisieren...</td>
+     </tr><tr>
+        <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php'"></td>
+        <td valign=middle' class='smalfont'>diesen Bereich verlassen...</td>
+     </tr>
+  </table>
+  
+  <?
 	$result = mysql_query("SELECT * FROM lieferanten ORDER BY name")
     or $problems = $problems . "<div class='warn'>Konnte LieferantInnen nich aus DB laden: "
                   . mysql_error() . '</div>';
@@ -87,7 +78,7 @@
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
             href=\"javascript:window.open('index.php?window=editLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-            <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' title='Lieferanten editieren' />
+            <img src='img/b_edit.png' border='0' alt='Lieferanten edieren' title='Lieferanten editieren' />
           </a>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
             <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' title='Lieferanten l&ouml;schen' />

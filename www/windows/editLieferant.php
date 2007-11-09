@@ -1,121 +1,120 @@
 <?PHP
   assert( $angemeldet ) or exit();
   nur_fuer_dienst(4,5);
-  need_http_var('lieferanten_id','u');
 
-  need_http_var('lieferanten_id');
+  $msg = '';
   $problems = '';
+  $done = false;
 
-  $onload_str = "";       // befehlsstring der beim laden ausgef¸hrt wird...
+  get_http_var( 'lieferanten_id', 'u', 0, true );
+  if( $lieferanten_id ) {
+    $row = sql_getLieferant( $lieferanten_id );
+  } else {
+    $row = false;
+  }
+  get_http_var('name','F',$row);
+  get_http_var('adresse','F',$row);
+  get_http_var('ansprechpartner','F',$row);
+  get_http_var('telefon','F',$row);
+  get_http_var('fax','F',$row);
+  get_http_var('mail','F',$row);
+  get_http_var('liefertage','F',$row);
+  get_http_var('bestellmodalitaeten','F',$row);
+  get_http_var('kundennummer','F',$row);
+  get_http_var('url','F',$row);
 
-	 // ggf. die neuen Lieferanten hinzuf¸gen
-	 if( get_http_var('newLieferant_name') ) {
-	 
-	    $newName                   = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_name']));
-			$newAdresse               = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_adresse']));
-			$newAnsprechpartner = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_ansprechpartner']));
-			$newTelefon                = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_telefon']));
-			$newFax                      = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_fax']));			
-			$newMail                     = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_mail']));
-			$newKundennummer  = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_kundennummer']));	
-			$newLiefertage                    = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLiefertage']));
-			$newMods                    = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newMods']));
-			$newURL                    = str_replace("'", "", str_replace('"',"",$HTTP_POST_VARS['newLieferant_url']));
-			
-			if ($newName == "")
-        $problems = $problems . "<div class='warn'>Der neue Lieferant $newName/$newLieferant_name mu&szlig; einen Namen haben!</div>";
-			
-			// Wenn keine Fehler, dann aendern...
-			if( ! $problems ) {
-			  if( mysql_query(
-          "UPDATE lieferanten
-          SET name='".mysql_escape_string($newName)."'
-            , adresse='".mysql_escape_string($newAdresse)."'
-            , ansprechpartner='".mysql_escape_string($newAnsprechpartner)."'
-            , telefon='".mysql_escape_string($newTelefon)."'
-            , fax='".mysql_escape_string($newFax)."'
-            , mail='".mysql_escape_string($newMail)."'
-            , url='".mysql_escape_string($newURL)."'
-            , kundennummer='".mysql_escape_string($newKundennummer)."'
-            , liefertage='".mysql_escape_string($newLiefertage)."'
-            , bestellmodalitaeten='".mysql_escape_string($newMods)."'
-          WHERE id=".mysql_escape_string($lieferanten_id)
-        ) ) {
-          $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
-        } else {
-          $problems = $problems . "<div class='warn'>Aenderung fehlgeschlagen: "
-                         . mysql_error() . '</div>';
-        }
-			}
-	 }
-	 
-	 // Lieferantendaten laden..
-	 $result = mysql_query("SELECT * FROM lieferanten WHERE id=".mysql_escape_string($lieferanten_id))
-      or $problems = $problems . "<div class='warn'>Konnte Lieferantendaten nicht laden</div>"
-                     . mysql_error() . '</div>';
-	 $row = mysql_fetch_array($result)
-      or $problems = $problems . "<div class='warn'>Konnte Lieferantendaten nicht laden</div>"
-                     . mysql_error() . '</div>';
-	 
-  $title = "Lieferantendaten edieren";
-  $subtitle = "Lieferantendaten edieren";
-  require_once('head.php');
+  get_http_var( 'action', 'w', '' );
+  if( $action == 'save' ) {
+    $values = array(
+      'name' => $name
+    , 'adresse' => $adresse
+    , 'ansprechpartner' => $ansprechpartner
+    , 'telefon' => $telefon
+    , 'fax' => $fax
+    , 'mail' => $mail
+    , 'liefertage' => $liefertage
+    , 'bestellmodalitaeten' => $bestellmodalitaeten
+    , 'kundennummer' => $kundennummer
+    , 'url' => $url
+    );
 
-  echo "
-	  <form action='editLieferant.php' method='post' class='small_form'>
-		  <input type='hidden' name='lieferanten_id' value='$lieferanten_id'>
-      <fieldset style='width:510px;' class='small_form'>
-      <legend>Stammdaten Lieferant</legend>
-      $msg
-      $problems
-		  <table style='width:500px;'>
+    if( $lieferanten_id ) {
+      if( sql_update( 'lieferanten', $lieferanten_id, $values ) ) {
+        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
+        $done = true;
+      } else {
+        $problems = $problems . "<div class='warn'>√Ñnderung fehlgeschlagen: " . mysql_error() . '</div>';
+      }
+    } else {
+      if( ( $lieferanten_id = sql_insert( 'lieferanten', $values ) ) ) {
+        $self_fields['lieferanten_id'] = $lieferanten_id;
+        $msg = $msg . "<div class='ok'>Lieferant erfolgreich angelegt:</div>";
+        $done = true;
+      } else {
+        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+      }
+    }
+  }
+  
+  ?>
+   <form action='<? echo self_url(); ?>' method='post' class='small_form'>
+   <? echo self_post(); ?>
+   <input type='hidden' name='action' value='save'>
+      <fieldset style='width:470px;' class='small_form'>
+      <legend><? echo ( $lieferanten_id ? 'Stammdaten Lieferant' : 'Neuer Lieferant' ); ?></legend>
+      <? echo $msg . $problems; ?>
+			  <table>
 			   <tr>
-				    <td><label>Lieferantenname:</label></td>
-						<td><input type='input' size='50' name='newLieferant_name' value='{$row['name']}'></td>
+				    <td><b>Lieferantenname</b></td>
+						<td><input type='input' size='50' value="<? echo $name; ?>" name='name'></td>
 				 </tr>
 			   <tr>
-				    <td><label>Adresse:</label></td>
-						<td><input type='input' size='50' name='newLieferant_adresse' value='{$row['adresse']}'></td>
+				    <td><b>Adresse</b></td>
+						<td><input type='input' size='50' value="<? echo $adresse; ?>" name='adresse'></td>
 				 </tr>				 
 			   <tr>
-				    <td><label>AnsprechpartnerIn:</label></td>
-						<td><input type='input' size='50' name='newLieferant_ansprechpartner' value='{$row['ansprechpartner']}'></td>
+				    <td><b>AnsprechpartnerIn</b></td>
+						<td><input type='input' size='50' value="<? echo $ansprechpartner; ?>" name='ansprechpartner'></td>
 				 </tr>				 
 			   <tr>
-				    <td><label>Telefonnummer</label></td>
-						<td><input type='input' size='50' name='newLieferant_telefon'  value='{$row['telefon']}'></td>
+				    <td><b>Telefonnummer</b></td>
+						<td><input type='input' size='50' value="<? echo $telefon; ?>" name='telefon'></td>
 				 </tr>
 			   <tr>
-				    <td><label>Faxnummer</label></td>
-						<td><input type='input' size='50' name='newLieferant_fax' value='{$row['fax']}'></td>
+				    <td><b>Faxnummer</b></td>
+						<td><input type='input' size='50' value="<? echo $fax; ?>" name='fax'></td>
 				 </tr>				 
 			   <tr>
-				    <td><label>Email-Adresse</label></td>
-						<td><input type='input' size='50' name='newLieferant_mail' value='{$row['mail']}'></td>
+				    <td><b>Email-Adresse</b></td>
+						<td><input type='input' size='50' value="<? echo $mail; ?>" name='mail'></td>
 				 </tr>				 
 			   <tr>
-				    <td><label>Liefertage</label></td>
-						<td><input type='input' size='50' name='newLiefertage' value='{$row['liefertage']}'></td>
+				    <td><b>Liefertage</b></td>
+						<td><input type='input' size='50' value="<? echo $liefertage; ?>" name='liefertage'></td>
+				 </tr>				
+			   <tr>
+				    <td><b>Bestellmodalit√§ten</b></td>
+						<td><input type='input' size='50' value="<? echo $bestellmodalitaeten; ?>" name='bestellmodalitaeten'></td>
+				 </tr>				  
+			   <tr>
+				    <td><b>eigene Kundennummer</b></td>
+						<td><input type='input' size='50' value="<? echo $kundennummer; ?>" name='kundennummer'></td>
 				 </tr>
 			   <tr>
-				    <td><label>Bestellmodalit‰ten</label></td>
-						<td><input type='input' size='50' name='newMods' value='{$row['bestellmodalitaeten']}'></td>
-				 </tr>				 
-			   <tr>
-				    <td><label>eigene Kundennummer</label></td>
-						<td><input type='input' size='50' name='newLieferant_kundennummer' value='{$row['kundennummer']}'></td>
-				 </tr>
-			   <tr>
-				    <td><label>Internetseiten</label></td>
-						<td><input type='input' size='50' name='newLieferant_url'  value='{$row['url']}'></td>
+				    <td><b>Internetseiten</b></td>
+						<td><input type='input' size='50' value="<? echo $url; ?>" name='url'></td>
 				 </tr>			 
-			  <tr>
-				    <td colspan='2' align='center'><input type='submit' value='&Auml;ndern'></input></td>
+				 <tr>
+				    <td colspan='2' align='center'>
+            <input type='submit' value='<? echo ( $lieferanten_id ? '√Ñndern' : 'Einf√ºgen'); ?>'>
+            <?  if( $done ) { ?>
+              &nbsp; <input value='Schlie√üen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
+            <? } ?>
 				 </tr>
 			</table>
-      </fieldset>
+    </fieldset>
 	 </form>
-  ";
-?>
+
 </body>
 </html>
+
