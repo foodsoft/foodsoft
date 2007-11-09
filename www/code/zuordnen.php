@@ -32,6 +32,44 @@ function sql_select_single_row( $sql ) {
   return mysql_fetch_array($result);
 }
 
+function sql_update( $table, $id, $values ) {
+  $sql = "UPDATE $table SET";
+  $komma='';
+  foreach( $values as $key => $val ) {
+    $sql .= "$komma $key='" . mysql_escape_string($val) . "'";
+    $komma=',';
+  }
+  $sql .= " WHERE id=$id";
+  // echo "<br>sql_update: $sql<br>";
+  if( doSql( $sql ) )
+    return $id;
+  else
+    return FALSE;
+}
+
+function sql_insert( $table, $values, $on_duplicate_key_update = false ) {
+  $komma='';
+  $cols = '';
+  $vals = '';
+  $update = '';
+  foreach( $values as $key => $val ) {
+    $cols .= "$komma $key";
+    $vals .= "$komma '" . mysql_escape_string($val) . "'";
+    $update .= "$komma $key='" . mysql_escape_string($val) . "'";
+    $komma=',';
+  }
+  $sql = "INSERT INTO $table ( $cols ) VALUES ( $vals )";
+  if( $on_duplicate_key_update ) {
+    $sql .= " ON DUPLICATE KEY UPDATE $update $komma id = LAST_INSERT_ID(id) ";
+  }
+  // echo "<br>sql_insert: $sql<br>";
+  if( doSql( $sql ) )
+    return mysql_insert_id();
+  else
+    return FALSE;
+}
+
+
 function need( $exp, $comment = "Fataler Fehler" ) {
   global $print_on_exit;
   if( ! $exp ) {
@@ -2758,6 +2796,16 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
 function checkvalue( $val, $typ){
 	  $pattern = '';
 	  switch( substr( $typ, 0, 1 ) ) {
+	    case 'F':
+        if( get_magic_quotes_gpc() )
+          $val = stripslashes( $val );
+	      $val = str_replace( '"', "'", $val );
+	      break;
+	    case 'H':
+        if( get_magic_quotes_gpc() )
+          $val = stripslashes( $val );
+	      $val = htmlspecialchars( $val );
+	      break;
 	    case 'M':
 	      $val = mysql_real_escape_string( $val );
 	      break;
@@ -2793,6 +2841,8 @@ function checkvalue( $val, $typ){
 // get_http_var: bisher definierte $typ argumente:
 //   u (default wenn name auf _id endet): positive ganze Zahl
 //   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
+//   F : ersetzt " durch ' (erlaubt ausgabe in <input value="...">)
+//   H : wendet htmlspecialchars an (erlaubt ausgabe in <td>...</td>)
 //   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _
@@ -2802,21 +2852,43 @@ function checkvalue( $val, $typ){
  *
  */
 function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = false ) {
-  global $$name, $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
+  global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
+
+  if( substr( $name, -2 ) == '[]' ) {
+    $want_array = true;
+    $name = substr( $name, strlen($name)-2 );
+  } else {
+    $want_array = false;
+  }
   if( isset( $HTTP_GET_VARS[$name] ) ) {
     $arry = $HTTP_GET_VARS[$name];
   } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
     $arry = $HTTP_POST_VARS[$name];
   } else {
     if( isset( $default ) ) {
-	    //FIXME Allow defaults für arrays
-      $$name = $default;
-      if( $is_self_field ) {
-        $self_fields[$name] = $default;
+      if( is_array( $default ) ) {
+        if( $want_array ) {
+          $GLOBALS[$name] = $default;
+          //FIXME self_fields for arrays?
+        } else if( isset( $default[$name] ) ) {
+          // erlaube initialisierung z.B. aus MySQL-'$row':
+          $GLOBALS[$name] = $default[$name];
+          if( $is_self_field ) {
+            $self_fields[$name] = $default[$name];
+          }
+        } else {
+          unset( $GLOBALS[$name] );
+          return FALSE;
+        }
+      } else {
+        $GLOBALS[$name] = $default;
+        if( $is_self_field ) {
+          $self_fields[$name] = $default;
+        }
       }
       return TRUE;
     } else {
-      unset( $$name );
+      unset( $GLOBALS[$name] );
       return FALSE;
     }
   }
@@ -2829,30 +2901,34 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
 	  }
 
   if(is_array($arry)){
-  foreach($arry as $key => $val){
+    if( ! $want_array ) {
+      unset( $GLOBALS[$name] );
+      return FALSE;
+    }
+    foreach($arry as $key => $val){
       $new = checkvalue($val, $typ);
       if($new===FALSE){
-	      unset( $$name );
+        unset( $GLOBALS[$name] );
 	      return FALSE;
       } else {
 	      $arry[$key]=$new;
       }
-  }
-	     //FIXME self_fields for arrays?
-	  $$name = $arry;
+    }
+	  //FIXME self_fields for arrays?
+	  $GLOBALS[$name] = $arry;
   } else {
       $new = checkvalue($arry, $typ);
       if($new===FALSE){
-	      unset( $$name );
-	      return FALSE;
+        unset( $GLOBALS[$name] );
+        return FALSE;
       } else {
-	  $$name = $new;
-	  if( $is_self_field ) {
-	    $self_fields[$name] = $new;
-	  }
+        $GLOBALS[$name] = $new;
+        if( $is_self_field ) {
+          $self_fields[$name] = $new;
+        }
       }
   }
-     return TRUE;
+  return TRUE;
 }
 
 /**
