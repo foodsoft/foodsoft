@@ -115,9 +115,6 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
   </fieldset>
 
-<?
-
-?>
   <table class='liste'>
     <tr class='legende'>
       <th>Nr</th>
@@ -196,9 +193,7 @@ printf( "
 , $saldo
 );
 
-?> </table> <?
-
-
 ?>
 
+</table>
 

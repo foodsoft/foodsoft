@@ -1,6 +1,11 @@
 <?PHP
   assert( $angemeldet ) or exit();
-  nur_fuer_dienst(4,5);
+
+  get_http_var( 'ro', 'u', 0, true );
+  if( $readonly )
+    $ro = 1;
+
+  $ro or nur_fuer_dienst(4,5);
 
   $msg = '';
   $problems = '';
@@ -23,7 +28,10 @@
   get_http_var('kundennummer','F',$row);
   get_http_var('url','F',$row);
 
-  get_http_var( 'action', 'w', '' );
+  $action = '';
+  if( ! $ro )
+    get_http_var( 'action', 'w', '' );
+
   if( $action == 'save' ) {
     $values = array(
       'name' => $name
@@ -55,7 +63,9 @@
       }
     }
   }
-  
+
+  $ro_tag = ( $ro ? 'readonly' : '' );
+
   ?>
    <form action='<? echo self_url(); ?>' method='post' class='small_form'>
    <? echo self_post(); ?>
@@ -66,49 +76,52 @@
 			  <table>
 			   <tr>
 				    <td><b>Lieferantenname</b></td>
-						<td><input type='input' size='50' value="<? echo $name; ?>" name='name'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $name; ?>" name='name'></td>
 				 </tr>
 			   <tr>
 				    <td><b>Adresse</b></td>
-						<td><input type='input' size='50' value="<? echo $adresse; ?>" name='adresse'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $adresse; ?>" name='adresse'></td>
 				 </tr>				 
 			   <tr>
 				    <td><b>AnsprechpartnerIn</b></td>
-						<td><input type='input' size='50' value="<? echo $ansprechpartner; ?>" name='ansprechpartner'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $ansprechpartner; ?>" name='ansprechpartner'></td>
 				 </tr>				 
 			   <tr>
 				    <td><b>Telefonnummer</b></td>
-						<td><input type='input' size='50' value="<? echo $telefon; ?>" name='telefon'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $telefon; ?>" name='telefon'></td>
 				 </tr>
 			   <tr>
 				    <td><b>Faxnummer</b></td>
-						<td><input type='input' size='50' value="<? echo $fax; ?>" name='fax'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $fax; ?>" name='fax'></td>
 				 </tr>				 
 			   <tr>
 				    <td><b>Email-Adresse</b></td>
-						<td><input type='input' size='50' value="<? echo $mail; ?>" name='mail'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $mail; ?>" name='mail'></td>
 				 </tr>				 
 			   <tr>
 				    <td><b>Liefertage</b></td>
-						<td><input type='input' size='50' value="<? echo $liefertage; ?>" name='liefertage'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $liefertage; ?>" name='liefertage'></td>
 				 </tr>				
 			   <tr>
 				    <td><b>Bestellmodalitäten</b></td>
-						<td><input type='input' size='50' value="<? echo $bestellmodalitaeten; ?>" name='bestellmodalitaeten'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $bestellmodalitaeten; ?>" name='bestellmodalitaeten'></td>
 				 </tr>				  
 			   <tr>
 				    <td><b>eigene Kundennummer</b></td>
-						<td><input type='input' size='50' value="<? echo $kundennummer; ?>" name='kundennummer'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $kundennummer; ?>" name='kundennummer'></td>
 				 </tr>
 			   <tr>
 				    <td><b>Internetseiten</b></td>
-						<td><input type='input' size='50' value="<? echo $url; ?>" name='url'></td>
+						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $url; ?>" name='url'></td>
 				 </tr>			 
 				 <tr>
 				    <td colspan='2' align='center'>
-            <input type='submit' value='<? echo ( $lieferanten_id ? 'Ändern' : 'Einfügen'); ?>'>
-            <?  if( $done ) { ?>
-              &nbsp; <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
+            <?  if( ! $ro ) { ?>
+              <input type='submit' value='<? echo ( $lieferanten_id ? 'Ändern' : 'Einfügen'); ?>'>
+              &nbsp;
+            <? } ?>
+            <?  if( $ro or $done ) { ?>
+              <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
             <? } ?>
 				 </tr>
 			</table>

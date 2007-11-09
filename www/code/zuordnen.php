@@ -2838,7 +2838,9 @@ function checkvalue( $val, $typ){
 
 }
 
-// get_http_var: bisher definierte $typ argumente:
+// get_http_var:
+// - name: wenn name auf [] endet, wird ein array erwartet (aus <input name='bla[]'>)
+// - typ: definierte $typ argumente:
 //   u (default wenn name auf _id endet): positive ganze Zahl
 //   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
 //   F : ersetzt " durch ' (erlaubt ausgabe in <input value="...">)
@@ -2847,6 +2849,9 @@ function checkvalue( $val, $typ){
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _
 //   /.../: regex pattern. Wert wird ausserdem ge-trim()-t
+// - default:
+//   - wenn array erwartet wird, kann der default ein array sein.
+//   - wird kein array erwartet, aber default is ein array, so wird $default[$name] versucht
 //
 /**
  *

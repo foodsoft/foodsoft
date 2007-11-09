@@ -69,7 +69,7 @@
     echo "   </td>
 						 <td>
 						 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-               href=\"javascript:window.open('index.php?window=detailsLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
+               href=\"javascript:window.open('index.php?window=editLieferant&ro=1&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
                <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' title='Details zum Lieferanten' />
              </a>
     ";
