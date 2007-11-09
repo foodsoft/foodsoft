@@ -1,10 +1,7 @@
 <?PHP
+  assert( $angemeldet ) or exit();
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
-	 // Verbindung zur Datenbank herstellen
-   require_once("code/config.php");
-   require_once("$foodsoftpath/code/err_functions.php");
-   require_once("$foodsoftpath/code/login.php");
    fail_if_readonly();
    nur_fuer_dienst_IV();
 	 
@@ -38,8 +35,7 @@
    
 
 <h3>neue Produktkategorie</h3>
-	 <form action="insertProduktkategorie.php">
-		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
+	 <form action="<? echo self_url(); ?>" method='post'>
 		<table class="menu" style="width:240px;">
 		   <tr>
 			    <td><b>Name</b></td>

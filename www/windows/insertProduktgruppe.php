@@ -1,14 +1,12 @@
 <?PHP
-	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+  assert( $angemeldet ) or exit();
 	 
-	 // Verbindung zur Datenbank herstellen
-   require_once("code/config.php");
-   require_once("$foodsoftpath/code/err_functions.php");
-   require_once("$foodsoftpath/code/login.php");
    fail_if_readonly();
    nur_fuer_dienst_IV();
 	 
-	 // ggf. die neues produkt hinzufügen
+	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
+	
+   // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
 	 
 	    $newName        	                            = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newProdukt_name']));
@@ -38,8 +36,7 @@
    
 
 <h3>neue Produktgruppe einfügen</h3>
-	 <form action="insertProduktgruppe.php">
-		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
+	 <form action="<? echo self_url(); ?>" method='post'>
 		<table class="menu" style="width:240px;">
 		   <tr>
 			    <td><b>Name</b></td>

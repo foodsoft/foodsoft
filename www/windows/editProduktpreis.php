@@ -1,15 +1,10 @@
 <?PHP
 //   error_reporting(E_ALL);
 	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-  require_once('../code/login.php');
-      if( ! $angemeldet ) {
-       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-     } 
+  assert( $angemeldet ) or exit();
+  need_http_var('lieferanten_id','u');
+  nur_fuer_dienst_IV();
 
-   nur_fuer_dienst_IV();
    $produkt_id       = $HTTP_GET_VARS['produkt_id'];
    $preis_id = $HTTP_GET_VARS['preis_id'];
 	$bestellnummer = $HTTP_GET_VARS['bestellnummer'];   

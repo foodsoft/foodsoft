@@ -1,17 +1,10 @@
 <?PHP
-		//variablen einlesen 
-   $produkt_id       = $HTTP_GET_VARS['produkt_id'];
-   $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];
+  assert( $angemeldet ) or exit();
+  nur_fuer_dienst_IV();
+  get_http_var('produkt_id','u');
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
-	 // Verbindung zur Datenbank herstellen
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-	 include('../code/connect_MySQL.php');
-	 
-	 // zur Sicherheit das Passwort prüfen..
-	 if ($produkte_pwd != $real_produkte_pwd) exit();
 	 
 	 // ggf. die neues produkt hinzufügen
 	 if (isset($HTTP_GET_VARS['startzeit_tag'])) {
@@ -72,8 +65,8 @@
 
 
 <h3>neuer Produktpreis</h3>
-	 <form name="reload_form" action="insertProduktpreis.php">
-		<input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
+	 <form name="reload_form" action="<? echo self_url(); ?>">
+		<? echo self_post(); ?>
 		<input type="hidden" name="produkt_id" value="<?PHP echo $produkt_id; ?>">
 		<input type="hidden" name="action" value="">
 		

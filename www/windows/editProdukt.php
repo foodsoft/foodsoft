@@ -3,7 +3,7 @@
 
 if(!nur_fuer_dienst(4)){exit();}
 
-   need_http_var('produkt_id','u');
+   need_http_var('produkt_id','u',false,true);
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 
@@ -62,8 +62,8 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 ?>
 
 
-	 <form name="reload_form" action="editProdukt.php">
-		<input type="hidden" name="produkt_id" value="<?PHP echo $produkt_id; ?>">
+	 <form name="reload_form" method='post' action="<? echo self_url(); ?>">
+   <? echo self_post(); ?>
 		<input type="hidden" name="action" value="">
 		<table class="menu" width="390px">
 		   <tr>
@@ -71,7 +71,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					<td><input type="input" size="30" name="newProdukt_name" value="<?PHP echo $produkt_row['name']; ?>"></td>
 			 </tr>
 		   <tr>
-			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php?produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td><b>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?window=insertProduktgruppe','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 						<select name="newProdukt_produktgruppe">
                <?PHP
@@ -107,7 +107,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>				
 		   <tr>
-			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php?produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?window=insertProduktkategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 					
 			    	<select name="newProduk_kategorien[]" size="5" multiple="multiple">

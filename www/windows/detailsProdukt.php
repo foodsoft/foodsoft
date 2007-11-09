@@ -1,5 +1,11 @@
 <?PHP
-   $produkte_pwd = $HTTP_GET_VARS['produkte_pwd'];
+
+   // detailsProdukt.php
+   //
+   // ... skript is momentan unbenutzt und nicht gepflegt:
+   //
+   exit();
+   
 	 $produkt_id       = $HTTP_GET_VARS['produkt_id'];
 	 
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
@@ -10,7 +16,6 @@
 	 include('../code/connect_MySQL.php');
 	 
 	 // zur Sicherheit das Passwort prüfen..
-	 if ($produkte_pwd != $real_produkte_pwd) exit();
 	 
 	// Produktdaten aus DB lesen...
 	$result = mysql_query("SELECT * FROM produkte WHERE id=".mysql_escape_string($produkt_id)) or error(__LINE__,__FILE__,"Konnte Produkt nich aus DB laden..",mysql_error());

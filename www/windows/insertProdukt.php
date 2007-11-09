@@ -46,7 +46,7 @@
 
 
 					
-				 $onload_str = "opener.focus(); opener.document.forms['reload_form'].submit(); window.close(); window.open('showProduktpreise.php?produkte_pwd=".$produkte_pwd."&produkt_id=".$newProdukt_id."','produkteDetails','width=650,height=600,left=200,top=100').focus();";
+				 $onload_str = "opener.focus(); opener.document.forms['reload_form'].submit(); window.close(); window.open('index.php?window=showProduktpreise&produkt_id=".$newProdukt_id."','produkteDetails','width=650,height=600,left=200,top=100').focus();";
 			}
 	 };
 	 
@@ -61,12 +61,13 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 										 
 ?>
 
-<form name="reload_form" action="insertProdukt.php">
-    <input type="hidden" name="produkte_pwd" value="<?PHP echo $produkte_pwd; ?>">
+<form name="reload_form" action="<? echo self_url(); ?>">
+<? echo self_post(); ?>
 </form>
 
 
-	 <form action="insertProdukt.php" class='small_form'>
+	 <form method='post' action="<? echo self_url(); ?>" class='small_form'>
+   <? echo self_post(); ?>
     <fieldset style='width:390px;' class='small_form'>
     <legend>Neues Produkt</legend>
 		<table class="menu" width="390px">
@@ -75,7 +76,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					<td><input type="input" size="40" name="newProdukt_name"></td>
 			 </tr>
 		   <tr>
-			    <td><label>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktgruppe.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></label></td>
+			    <td><label>Produktgruppe  <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?window=insertProduktgruppe','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></label></td>
 					<td>
 						<select name="newProdukt_produktgruppe">
                <?PHP
@@ -112,7 +113,7 @@ $kategorien= mysql_query("SELECT name,id FROM produktkategorien ORDER BY name")
 					</td>
 			 </tr>				
 		   <tr>
-			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('insertProduktkategorie.php','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
+			    <td valign="top"><b>Kategorie <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?insertProduktkategorie','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></b></td>
 					<td>
 					
 			    	<select name="newProduk_kategorien[]" size="5" multiple="multiple">

@@ -1,7 +1,7 @@
 <?PHP
 
   assert( $angemeldet ) or exit();
-  assert( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
+  need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
 
   setWindowSubtitle( 'Bestellgruppe edieren' );
   setWikiHelpTopic( 'foodsoft:bestellgruppe_edieren' );

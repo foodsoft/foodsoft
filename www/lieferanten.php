@@ -1,8 +1,7 @@
 <h1>Lieferanten&uuml;bersicht...</h1>
 
 <?PHP
-  require_once("code/login.php");
-  require_once("code/zuordnen.php");
+  assert( $angemeldet ) or exit();
   $problems = '';
    
 	 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)
@@ -20,8 +19,8 @@
 	 
   echo "	
 	     <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
-			 <form action='index.php' name='reload_form' method='post'>
-			    <input type='hidden' name='area' value='lieferanten'>
+			 <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
+       <? echo self_post(); ?>
 					<input type='hidden' name='action' value='normal'>
 					<input type='hidden' name='lieferanten_id'>
 			 </form>
@@ -31,7 +30,7 @@
   if( ! $readonly ) {
     echo "
 				   <tr>
-		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick=\"window.open('windows/insertLieferant.php','lieferant','width=510,height=500,left=200,top=100').focus()\"></td>
+		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick=\"window.open('index.php?window=insertLieferant','lieferant','width=510,height=500,left=200,top=100').focus()\"></td>
 				      <td valign=middle' class='smalfont'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
 					 </tr>
     ";
@@ -79,7 +78,7 @@
     echo "   </td>
 						 <td>
 						 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-               href=\"javascript:window.open('windows/detailsLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
+               href=\"javascript:window.open('index.php?window=detailsLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
                <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' title='Details zum Lieferanten' />
              </a>
     ";
@@ -87,7 +86,7 @@
       if( $dienst == 4 or $dienst == 5 ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-            href=\"javascript:window.open('windows/editLieferant.php?lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
+            href=\"javascript:window.open('index.php?window=editLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
             <img src='img/b_edit.png' border='0' alt='Lieferanten editieren' title='Lieferanten editieren' />
           </a>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">

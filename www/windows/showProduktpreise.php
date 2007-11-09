@@ -1,13 +1,7 @@
 <?PHP
+  assert( $angemeldet ) or exit();
 	//error_reporting(E_ALL);
-	 include('../code/config.php');
-	 include('../code/err_functions.php');
-  include('../code/connect_MySQL.php');
-  require_once('../code/login.php');
-   $produkt_id       = $HTTP_GET_VARS['produkt_id'];
-      if( ! $angemeldet ) {
-       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-     } 
+  need_http_var('produkt_id','u');
 
 if(!nur_fuer_dienst(4)){exit();}
 	 

@@ -1,14 +1,7 @@
 <?PHP
-	
-   $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-	 
-	 // Verbindung zur Datenbank herstellen
-  require_once('code/config.php');
-  require_once('code/err_functions.php');
-  require_once('code/connect_MySQL.php');
-  require_once('code/login.php');
+  assert( $angemeldet ) or exit();
   nur_fuer_dienst(4,5);
-
+	
   $msg = '';
   $problems = '';
   $done = FALSE;
