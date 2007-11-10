@@ -41,7 +41,7 @@ function sql_update( $table, $id, $values ) {
   }
   $sql .= " WHERE id=$id";
   // echo "<br>sql_update: $sql<br>";
-  if( doSql( $sql ) )
+  if( doSql( $sql, LEVEL_INPORTANT, "Update von Tabelle $table fehlgeschlagen: " ) )
     return $id;
   else
     return FALSE;
@@ -73,7 +73,7 @@ function sql_insert( $table, $values, $update_cols = false ) {
     $sql .= " ON DUPLICATE KEY UPDATE $update $komma id = LAST_INSERT_ID(id) ";
   }
   // echo "<br>sql_insert: $sql<br>";
-  if( doSql( $sql ) )
+  if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: " ) )
     return mysql_insert_id();
   else
     return FALSE;
@@ -799,11 +799,9 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     fail_if_readonly();
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
-    $query= "UPDATE bestellgruppen SET passwort='"
-       . mysql_real_escape_string(crypt($gruppen_pwd,$crypt_salt))
-       . "' WHERE id='$gruppen_id'";
-    doSql($query, LEVEL_IMPORTANT, "Setzen des Gruppenpassworts fehlgeschlagen...");
-
+    return sql_update( 'bestellgruppen', $gruppen_id, array(
+      'passwort' => crypt( $gruppen_pwd, $crypt_salt )
+    ) );
   }
 }
 
@@ -1823,11 +1821,12 @@ function basar_wert_summe() {
 function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
    sql_insert_bestellvorschlaege( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
    $gruppenbestellung_id = sql_create_gruppenbestellung( sql_basar_id(), $bestell_id );
-   $sql = "
-     INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
-     VALUES ( $produkt_id, $gruppenbestellung_id, $bestellmenge, 1)
-   ";
-   return doSql( $sql, LEVEL_IMPORTANT, "zusaetzlicheBestellung fehlgeschlagen: ");
+   return sql_insert( 'bestellzuordnung', array(
+     'produkt_id' => $produkt_id
+   , 'gruppenbestellung_id' => $gruppenbestellung_id
+   , 'menge' => $bestellmenge
+   , 'art' => 1
+   ) );
 }
 
 
@@ -1897,14 +1896,14 @@ function sql_bank_transaktion(
 
 function sql_link_transaktion( $soll_id, $haben_id ) {
   if( $soll_id > 0 )
-    doSql( "UPDATE bankkonto SET konterbuchung_id=$haben_id WHERE id=$soll_id" );
+    sql_update( 'bankkonto', $soll_id, array( 'konterbuchung_id' => $haben_id ) );
   else
-    doSql( "UPDATE gruppen_transaktion SET konterbuchung_id=$haben_id WHERE id=".(-$soll_id) );
+    sql_update( 'gruppen_transaktion', -$soll_id, array( 'konterbuchung_id' => $haben_id ) );
 
   if( $haben_id > 0 )
-    doSql( "UPDATE bankkonto SET konterbuchung_id=$soll_id WHERE id=$haben_id" );
+    sql_update( 'bankkonto', $haben_id, array( 'konterbuchung_id' => $soll_id ) );
   else
-    doSql( "UPDATE gruppen_transaktion SET konterbuchung_id=$soll_id WHERE id=".(-$haben_id) );
+    sql_update( 'gruppen_transaktion', -$haben_id, array( 'konterbuchung_id' => $soll_id ) );
 }
 
 /*
@@ -1965,9 +1964,9 @@ function buchung_gruppe_bank() {
   $gruppen_name = sql_gruppenname( $gruppen_id );
   if( ! $notiz ) {
     if( $betrag < 0 ) {
-      need_http_var( 'notiz', 'M' );
+      need_http_var( 'notiz', 'H' );
     } else {
-      get_http_var( 'notiz', 'M', "Einzahlung Gruppe $gruppen_name" );
+      get_http_var( 'notiz', 'H', "Einzahlung Gruppe $gruppen_name" );
     }
   }
   $day or need_http_var( 'day', 'u' );
@@ -1996,7 +1995,7 @@ function buchung_lieferant_bank() {
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
-  $notiz or need_http_var( 'notiz', 'M' );
+  $notiz or need_http_var( 'notiz', 'H' );
   $konto_id or need_http_var( 'konto_id', 'u' );
   $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
   $auszug_nr or need_http_var( 'auszug_nr', 'u' );
@@ -2018,7 +2017,7 @@ function buchung_gruppe_lieferant() {
   $betrag or need_http_var( 'betrag', 'f' );
   $lieferant_id or need_http_var( 'lieferant_id', 'u' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
-  $notiz or need_http_var( 'notiz', 'M' );
+  $notiz or need_http_var( 'notiz', 'H' );
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
@@ -2036,7 +2035,7 @@ function buchung_gruppe_gruppe() {
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $nach_gruppen_id or need_http_var( 'nach_gruppen_id', 'u' );
-  $notiz or need_http_var( 'notiz', 'M' );
+  $notiz or need_http_var( 'notiz', 'H' );
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
@@ -2068,13 +2067,11 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
 
   sql_link_transaktion( -$soll_id, $haben_id );
 
-  sql_update( 'gruppen_transaktion', $soll_id, array(
+  return sql_update( 'gruppen_transaktion', $soll_id, array(
     'kontoauszugs_nr' => $receipt_nr
   , 'kontoauszugs_jahr' => $receipt_year
   , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
   ) );
-
-  doSql($sql, LEVEL_IMPORTANT, "Konnte Transaktion in DB nicht aktualisieren: ");
 }
 
 
@@ -2426,16 +2423,16 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
  *  now() und null verwendet werden können.
  */
 function sql_insert_produktpreis ($id, $preis, $start,$ende, $bestellnummer, $gebindegroesse){
-	$sql = "INSERT INTO produktpreise 
-		(produkt_id, preis, zeitstart, zeitende, bestellnummer, gebindegroesse) 
-		  VALUES ('".mysql_escape_string($id)."', 
-				 '".mysql_escape_string($preis)."', 
-				 $start, 
-				 $ende, 
-				 '".mysql_escape_string($bestellnummer)."', 
-				 '".mysql_escape_string($gebindgroesse)."')";
-        doSql($sql, LEVEL_IMPORTANT, "Konnte Preis nicht einfügen...");
+  return sql_insert( 'produktpreise', array(
+    'produkt_id' => $id
+  , 'preis' => $preis
+  , 'zeitstart' => $start
+  , 'zeitende' => $ende
+  , 'bestellnummer' => $bestellnummer
+  , 'gebindegroesse' => $gebindegroesse
+  ) );
 }
+
 /**
  *  Setzt einen Preis auf abgelaufen
  */
@@ -2663,15 +2660,13 @@ function getProdukt($produkt_id){
  *  Produktinformationen updaten
  */
 function sql_update_produkt ($id, $name, $lieferant_id, $produktgruppen_id, $einheit, $notiz){
-	 $sql = "UPDATE produkte 
-			SET name='".mysql_escape_string($name)."', 
-			lieferanten_id='".mysql_escape_string($lieferanten_id)."', 
-			produktgruppen_id='".mysql_escape_string($produktgruppen_id)."', 
-			einheit='".mysql_escape_string($einheit)."', 
-			notiz='".mysql_escape_string($notiz)."' 
-			WHERE id=".mysql_escape_string($id);
-
-         doSql($sql, LEVEL_IMPORTANT, "Konnte Produkt nicht in DB ändern...");
+  return sql_update( 'produkte', $id, array(
+    'name' => "$name"
+  , 'lieferanten_id' => $lieferant_id
+  , 'produktgruppen_id' => $produktgruppen_id
+  , 'einheit' => "$einheit"
+  , 'notiz' => "$notiz"
+  ) );
 }
 
 /**
