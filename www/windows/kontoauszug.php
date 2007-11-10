@@ -17,12 +17,6 @@ switch( $action ) {
   case 'zahlung_lieferant':
     buchung_lieferant_bank();
     break;
-//   case 'zahlung_gruppe_lieferant':
-//     buchung_gruppe_lieferant();
-//     break;
-//   case 'umbuchung_gruppegruppe':
-//     buchung_gruppe_gruppe();
-//     break;
 }
 
 if( $action ) {
@@ -58,42 +52,18 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
     <ul style='list-style:none;'>
       <li title='Einzahlung von oder Auszahlung an Gruppe'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('gruppe_form').style.display='block';
-                 document.getElementById('lieferant_form').style.display='none';
-                 document.getElementById('gruppelieferant_form').style.display='none';
-                 document.getElementById('gruppegruppe_form').style.display='none';"
-      ><b>Einzahlung / Auszahlung Gruppe</b>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('gruppe_form').style.display='block';
+                   document.getElementById('lieferant_form').style.display='none';
+        ><b>Einzahlung / Auszahlung Gruppe</b>
       </li>
 
       <li title='Überweisung an oder Lastschrift von Lieferant'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('gruppe_form').style.display='none';
-                 document.getElementById('lieferant_form').style.display='block';
-                 document.getElementById('gruppelieferant_form').style.display='none';
-                 document.getElementById('gruppegruppe_form').style.display='none';"
-      ><b>Überweisung / Lastschrift Lieferant</b>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('gruppe_form').style.display='none';
+                   document.getElementById('lieferant_form').style.display='block';
+        ><b>Überweisung / Lastschrift Lieferant</b>
       </li>
-
-      <!--
-      <li title='Direkte Überweisung einer Gruppe an einen Lieferanten'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('gruppe_form').style.display='none';
-                 document.getElementById('lieferant_form').style.display='none';
-                 document.getElementById('gruppelieferant_form').style.display='block';
-                 document.getElementById('gruppegruppe_form').style.display='none';"
-      ><b>Zahlung Gruppe -> Lieferant</b>
-      </li>
-
-      <li title='überweisung von einer Gruppe an eine andere Gruppe'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('gruppe_form').style.display='none';
-                 document.getElementById('lieferant_form').style.display='none';
-                 document.getElementById('gruppelieferant_form').style.display='none';
-                 document.getElementById('gruppegruppe_form').style.display='block';"
-      ><b>Umbuchung Gruppe -> Gruppe</b>
-      </li>
-      -->
 
     </ul>
 
@@ -103,14 +73,6 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
 
     <div id='lieferant_form' style='display:none;'>
       <? formular_buchung_lieferant_bank( 0, $konto_id, $auszug_jahr, $auszug_nr ); ?>
-    </div>
-
-    <div id='gruppelieferant_form' style='display:none;'>
-      <? formular_buchung_gruppe_lieferant( 0, 0 ); ?>
-    </div>
-
-    <div id='gruppegruppe_form' style='display:none;'>
-      <? formular_buchung_gruppe_gruppe( 0, 0 ); ?>
     </div>
 
   </fieldset>
