@@ -1,67 +1,54 @@
 <?php
-//error_reporting(E_ALL); // alle Fehler anzeigen
-require_once("code/config.php");
-require_once("$foodsoftpath/code/zuordnen.php");
-require_once("$foodsoftpath/code/views.php");
-require_once("$foodsoftpath/code/login.php");
-$pwd_ok = $angemeldet;
-require_once("$foodsoftpath/head.php");
 
+// verteilung.php
+//
 // um die bestellungen nach produkten sortiert zu sehen ....
 
+//error_reporting(E_ALL); // alle Fehler anzeigen
 
-// Übergebene Variablen einlesen...
-    if (isset($HTTP_GET_VARS['bestellungs_id'])) {
-    		$bestell_id = $HTTP_GET_VARS['bestellungs_id'];
-	} else {
-	 	$result = sql_bestellungen( $_SESSION['ALLOWED_ORDER_STATES'][$area] );
-		select_bestellung_view($result, array("Verteiltabelle" => "verteilung"));
-		exit();
-	 }
-  get_http_var('gruppen_id');
-  get_http_var('allGroupsArray');
-  get_http_var('sortierfolge');
+  assert( $angemeldet ) or exit();
 
+  if( get_http_var( 'bestellungs_id', 'u' ) ) {
+    $bestell_id = $bestellungs_id;
+    $self_fields['bestell_id'] = $bestell_id;
+  } else {
+    get_http_var('bestell_id','u',0,true);
+  }
+  if( ! $bestell_id ) {
+    $result = sql_bestellungen( $_SESSION['ALLOWED_ORDER_STATES'][$area] );
+    select_bestellung_view($result, array("Verteiltabelle" => "verteilung"));
+    return;
+	}
 
-     if( ! $angemeldet ) {
-       exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-     } 
+  get_http_var('gruppen_id','u',0);
 
-     if(!nur_fuer_dienst(1,4)){exit();}
+  if(!nur_fuer_dienst(1,4)){exit();}
 
     if (!isset($bestell_id)) {
 	 	$result = sql_bestellungen(array(STATUS_LIEFERANT, STATUS_VERTEILT));
-		select_bestellung_view($result, array("zeigen" => "verteilung") , "Veteilung der Bestellung");
+		select_bestellung_view($result, array("zeigen" => "verteilung") , "Verteilung der Bestellung");
 		exit();
 	 }
 
 	 $basar= sql_basar_id();
-	
-
 
 	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
 	//Tabelle überprüft und eingetragen
 
-         //infos zur gesamtbestellung auslesen 
-         $sql = "SELECT *
-                  FROM gesamtbestellungen
-                  WHERE id = ".$bestell_id."";
-         $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Gesamtbestellungsdaten nich aus DB laden..",mysql_error());
-         $row_gesamtbestellung = mysql_fetch_array($result);               
+  $row_gesamtbestellung = sql_bestellung( $bestell_id );
+
+
+setWikiHelpTopic( "foodsoft:verteilung" );
+
 ?>
 <h1>Bestellungen ansehen...</h1>
-
-	<p>
-<?	wikiLink("foodsoft:verteilung", "Wiki...");
-?>
-        </p>
-
 
 	 <?bestellung_overview($row_gesamtbestellung);?>
 	 <?changeState($bestell_id, "Verteilt")?>
       <br>
       <br>
-         <form action="index.php" method="post">
+         <form action="<? echo self_url(); ?>" method="post">
+         <? echo self_post(); ?>
          <table style="width: 600px;" class='numbers'>
 	    <?distribution_tabellenkopf("Gruppe");?>
 <?php                               
@@ -132,8 +119,9 @@ require_once("$foodsoftpath/head.php");
 					//Nächsten Datensatz 
 					$entry_row = mysql_fetch_array($result);
 				}
-				if(isset($HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID])){
-					$verteil_form =$HTTP_GET_VARS['verteil_'.$produkt_id."_".$gruppenID] / $produkte_row['kan_verteilmult'];
+        $fieldname = 'verteil_'.$produkt_id.'_'.$gruppenID;
+				if( get_http_var( $fieldname, 'f' ) ) {
+					$verteil_form = $$fieldname / $produkte_row['kan_verteilmult'];
 					if($verteil!=$verteil_form){
 						changeVerteilmengen_sql($verteil_form, $gruppenID, $produkt_id, $bestell_id );
 						$verteil=$verteil_form;
@@ -163,8 +151,6 @@ require_once("$foodsoftpath/head.php");
   echo "
      <tr style='border:none'>
   	<td colspan='4' style='border:none;'>
-  	   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
-  	   <input type='hidden' name='area' value='verteilung'>			
   	   <input type='submit' value=' speichern '>
   	   <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
   	</td>
@@ -172,8 +158,6 @@ require_once("$foodsoftpath/head.php");
      </table>                   
      </form>
      <form action='index.php' method='get'>
-  	   <input type='hidden' name='bestellungs_id' value='$bestell_id'>
-  	   <input type='hidden' name='area' value='bestellt'>			
   	   <input type='submit' value='Zur&uuml;ck '>
      </form>
   ";
