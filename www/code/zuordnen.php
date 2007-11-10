@@ -1068,7 +1068,7 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
 ////////////////////////////////////
 
 function getState($bestell_id){
-  $row = mysql_select_single_row( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id" );
+  $row = sql_select_single_row( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id" );
   return $row['state'];
 }
 
@@ -2842,7 +2842,7 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
 
   if( substr( $name, -2 ) == '[]' ) {
     $want_array = true;
-    $name = substr( $name, strlen($name)-2 );
+    $name = substr( $name, 0, strlen($name)-2 );
   } else {
     $want_array = false;
   }

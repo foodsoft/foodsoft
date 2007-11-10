@@ -1,7 +1,6 @@
 <?PHP
 
   assert( $angemeldet ) or exit();
-  need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
 
   setWindowSubtitle( 'Bestellvorlage edieren' );
   setWikiHelpTopic( 'foodsoft:bestellvorlage_edieren' );
@@ -11,27 +10,7 @@
 
   need_http_var( 'bestell_id','u', true );
 
-  $msg = '';
-  $pwmsg = '';
-  $problems = '';
-
-  $result = sql_bestellungen( false, false, $bestell_id );
-  echo "<!-- bestell_id: $bestell_id, rows: " .mysql_num_rows($result) . " -->";
-  if( mysql_num_rows( $result ) != 1 ) {
-    $problems .= "<div class='warn'>Konnte Bestellung nicht aus Gesamtbestellungen laden</div>";
-  }
-
-  if( $problems ) {
-    echo "
-      $problems
-      <div class='warn'>
-        <a href='javascript:if(opener) opener.focus(); self.close();'>Fenster schließen...</a>
-      </div>
-    ";
-    return;
-  }
-
-  $bestellung = mysql_fetch_array( $result );
+  $bestellung = sql_bestellung( $bestell_id );
   $startzeit = $bestellung['bestellstart'];
   $endzeit = $bestellung['bestellende'];
   $lieferung = $bestellung['lieferung'];
@@ -54,7 +33,7 @@
     need_http_var("lieferung_tag",'u');
     need_http_var("lieferung_monat",'u');
     need_http_var("lieferung_jahr",'u');
-    need_http_var("bestellname",'M');
+    need_http_var("bestellname",'H');
 
     $startzeit = "$startzeit_jahr-$startzeit_monat-$startzeit_tag $startzeit_stunde:$startzeit_minute:00";
     $endzeit = "$endzeit_jahr-$endzeit_monat-$endzeit_tag $endzeit_stunde:$endzeit_minute:00";

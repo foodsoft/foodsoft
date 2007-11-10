@@ -1,14 +1,18 @@
 <?PHP
 
   assert( $angemeldet ) or exit();
+  nur_fuer_dienst_IV();
+  fail_if_readonly();
+  $msg = '';
+  $problems = '';
 
   setWindowSubtitle( 'Neue Bestellvorlage anlegen' );
   setWikiHelpTopic( 'foodsoft:bestellvorlage_anlegen' );
 
-  nur_fuer_dienst_IV();
-  fail_if_readonly();
-
-  $errStr = "";
+  get_http_var( 'bestelliste[]','u' );
+  if( ! isset($bestelliste) or count($bestelliste) < 1 ) {
+    $problems .= "<div class='warn'>Keine Produkte ausgew√§hlt!</div>";
+  }
 
   $startzeit = date("Y-m-d H:i:s");
   $endzeit   = date("Y-m-d 20:00:00");
@@ -16,25 +20,10 @@
   $bestellname = "";
   $done = false;
 
-  $bestelliste = array();
-  if( isset( $HTTP_POST_VARS['bestelliste'] ) )
-    $bestelliste = $HTTP_POST_VARS['bestelliste'];
-  if( ! is_array( $bestelliste ) ) {
-    $bestelliste = array();
-  }
-  foreach( $bestelliste as $p ) {
-    if( ! preg_match( '/^\d+$/', $p ) ) {
-      $errStr .= "Fehler in uebergebener Produktliste! ";
-      $bestelliste = array();
-    }
-  }
-
-  if( count($bestelliste) < 1 )
-    $errStr .= "Keine Produkte ausgew√§hlt! ";
-
-  if( $errStr ) {
+  if( $problems ) {
     echo "
-      <div class='warn'>$errStr
+      $problems
+      <div class='warn'>
         <a href='javascript:if(opener) opener.focus(); self.close();'>Schlie√üen...</a>
       </div>
     ";
@@ -64,10 +53,10 @@
     $lieferung = "$lieferung_jahr-$lieferung_monat-$lieferung_tag";
 
     if( $bestellname == "" )
-      $errStr .= "Die Bestellung muﬂ einen Namen bekommen!<br>";
+      $problems .= "Die Bestellung mu√ü einen Namen bekommen!<br>";
 
     // Wenn keine Fehler, dann einf¸gen...
-    if ($errStr == "") {
+    if ($problems == "") {
       sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung);
       $gesamtbestellung_id = mysql_insert_id();
 
@@ -79,8 +68,7 @@
       } //end for - bestellvorschl‰ge f¸llen
       $done = true;
     }
-   }
-
+  }
 
 ?>
 
@@ -94,8 +82,8 @@
       foreach( $bestelliste as $p ) {
         echo "<input type='hidden' name='bestelliste[]' value='$p'>\n";
       }
-      if( $errStr ) 
-        echo "<div class='warn'>$errStr</div>";
+      if( $problems ) 
+        echo "<div class='warn'>$problems</div>";
       if( $done )
         echo "<div class='ok'>Bestellvorlage wurde eingef√ºgt:</div>";
     ?>
