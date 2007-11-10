@@ -46,7 +46,7 @@
     need_http_var("lieferung_tag",'u');
     need_http_var("lieferung_monat",'u');
     need_http_var("lieferung_jahr",'u');
-    need_http_var("bestellname",'M');
+    need_http_var("bestellname",'H');
 
     $startzeit = "$startzeit_jahr-$startzeit_monat-$startzeit_tag $startzeit_stunde:$startzeit_minute:00";
     $endzeit = "$endzeit_jahr-$endzeit_monat-$endzeit_tag $endzeit_stunde:$endzeit_minute:00";

@@ -17,16 +17,16 @@
   } else {
     $row = false;
   }
-  get_http_var('name','F',$row);
-  get_http_var('adresse','F',$row);
-  get_http_var('ansprechpartner','F',$row);
-  get_http_var('telefon','F',$row);
-  get_http_var('fax','F',$row);
-  get_http_var('mail','F',$row);
-  get_http_var('liefertage','F',$row);
-  get_http_var('bestellmodalitaeten','F',$row);
-  get_http_var('kundennummer','F',$row);
-  get_http_var('url','F',$row);
+  get_http_var('name','H',$row);
+  get_http_var('adresse','H',$row);
+  get_http_var('ansprechpartner','H',$row);
+  get_http_var('telefon','H',$row);
+  get_http_var('fax','H',$row);
+  get_http_var('mail','H',$row);
+  get_http_var('liefertage','H',$row);
+  get_http_var('bestellmodalitaeten','H',$row);
+  get_http_var('kundennummer','H',$row);
+  get_http_var('url','H',$row);
 
   $action = '';
   if( ! $ro )
@@ -77,6 +77,10 @@
       <legend><? echo ( $lieferanten_id ? 'Stammdaten Lieferant' : 'Neuer Lieferant' ); ?></legend>
       <? echo $msg . $problems; ?>
 			  <table>
+			   <tr>
+				    <td><label>Name:</label></td>
+						<td><? echo $name; ?></td>
+				 </tr>
 			   <tr>
 				    <td><label>Name:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $name; ?>" name='name'></td>

@@ -2777,12 +2777,8 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
 function checkvalue( $val, $typ){
 	  $pattern = '';
 	  switch( substr( $typ, 0, 1 ) ) {
-	    case 'F':
-        if( get_magic_quotes_gpc() )
-          $val = stripslashes( $val );
-	      $val = str_replace( '"', "'", $val );
-	      break;
 	    case 'H':
+        // FIXME: 'H' zum default machen?
         if( get_magic_quotes_gpc() )
           $val = stripslashes( $val );
 	      $val = htmlspecialchars( $val );
@@ -2790,6 +2786,8 @@ function checkvalue( $val, $typ){
 	    case 'M':
 	      $val = mysql_real_escape_string( $val );
 	      break;
+      case 'R':
+        break;
 	    case 'u':
 		    //FIXME: zahl sollte als zahl zurückgegeben 
 		    //werden, zur Zeit String
@@ -2809,6 +2807,7 @@ function checkvalue( $val, $typ){
 	      $pattern = $typ;
 	       break;
 	    default:
+        return FALSE;
 	  }
 	  if( $pattern ) {
 	    if( ! preg_match( $pattern, $val ) ) {
@@ -2824,8 +2823,8 @@ function checkvalue( $val, $typ){
 // - typ: definierte $typ argumente:
 //   u (default wenn name auf _id endet): positive ganze Zahl
 //   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
-//   F : ersetzt " durch ' (erlaubt ausgabe in <input value="...">)
-//   H : wendet htmlspecialchars an (erlaubt ausgabe in <td>...</td>)
+//   H : wendet htmlspecialchars an (erlaubt sichere und korrekte ausgabe in HTML)
+//   R : raw: keine Einschraenkung, keine Umwandlung
 //   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _

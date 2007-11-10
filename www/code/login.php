@@ -42,10 +42,6 @@
     setcookie( 'foodsoftkeks', '0', 0, '/' );
   }
 
-  require_once( "$foodsoftpath/code/err_functions.php" );
-  require_once( "$foodsoftpath/code/zuordnen.php" );
-  require_once( "$foodsoftpath/code/views.php" );
-  
   init_login();
 
   $telefon ='';
@@ -60,7 +56,7 @@
   if( $action == 'login' ) {
     get_http_var( 'login_gruppen_id', 'u' )
       or $problems = $problems . "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
-    get_http_var( 'passwort' )
+    get_http_var( 'passwort','R' )
       or $problems = $problems . "<div class='warn'>FEHLER: kein Passwort angegeben</div>";
     get_http_var( 'dienst', 'u' )
       or $problems = $problems . "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
@@ -77,12 +73,12 @@
     }
 
     if( $dienst != 0 ) {
-      get_http_var( 'coopie_name', 'M', '' );
+      get_http_var( 'coopie_name', 'H', '' );
       // if( ! $coopie_name || ( strlen( $coopie_name ) < 2 ) ) {
       //  $problems = $problems . "<div class='warn'>FEHLER: kein Name angegeben</div>";
       // }
-      get_http_var( 'telefon', 'M', '' );
-      get_http_var( 'notiz', 'M', '' );
+      get_http_var( 'telefon', 'H', '' );
+      get_http_var( 'notiz', 'H', '' );
     }
 
     if( ! $problems ) {
@@ -105,8 +101,8 @@
 
     // ggf. passwort aendern:
     //
-    get_http_var( 'pwneu1', '' );
-    get_http_var( 'pwneu2', '' );
+    get_http_var( 'pwneu1', 'R', '' );
+    get_http_var( 'pwneu2', 'R', '' );
     if( isset($pwneu1) && ( strlen( $pwneu1 ) >= 1 ) ) {
       if( strlen( $pwneu1 ) < 2 ) {
         $problems = $problems . "<div class='warn'>FEHLER: neues Passwort zu kurz</div>";
@@ -212,9 +208,9 @@
   logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 
   set_privileges(); // im moment: keine...
-  require_once("$foodsoftpath/head.php");
+  require_once("head.php");
 
-  get_http_var( 'area', 'w' );
+  get_http_var( 'area', 'w', '' );
   if( isset( $from_dokuwiki ) && $from_dokuwiki or ( $area == 'wiki' ) ) {
     $form_action="$foodsoftdir/index.php?area=wiki";
   } else {
@@ -231,10 +227,8 @@
   if( "$problems" ) echo "$problems";
   echo "
        <div class='kommentar'>
-         In Zukunft braucht Ihr Euch nur noch einmal pro Sitzung bei der Foodsoft anmelden.
          <br>
-         <br>
-         Und: die gleiche Anmeldung gilt jetzt auch fuers Wiki!
+         Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:
          <br>
        </div>
        <div class='newfield'>
@@ -404,17 +398,14 @@
       exit();
     }
   }
-    
 
-  echo "
+  ?>
     <script type='text/javascript'>
       function dienstform_on() {
         document.getElementById('dienstform').style.display = 'block';
-        document.getElementById('quiz').style.display = 'none';
       }
       function dienstform_off() {
         document.getElementById('dienstform').style.display = 'none';
-        document.getElementById('quiz').style.display = 'block';
       }
       function pwneu_on() {
         document.getElementById('pwneu_knopf').style.display = 'none';
@@ -425,8 +416,8 @@
         document.getElementById('pwneu_form').style.display = 'none';
       }
     </script>
-    $print_on_exit
-  ";
+  <?
+  echo $print_on_exit;
 
 exit();
 

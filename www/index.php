@@ -7,7 +7,7 @@
 	// Funktionen zur Fehlerbehandlung laden
 	require_once('code/err_functions.php');
 	
-  $area = "";
+  get_http_var( 'area','w','' );
   require_once('code/login.php');
   if( ! $angemeldet ) {
     echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
@@ -38,7 +38,6 @@
     exit();
   } else {
 
-    get_http_var( 'area','w' );             // area: anzeige im Hauptfenster (normaler Kopf)
 
     if($area == 'bestellt_faxansicht'){     // TODO: Aufruf per index.php?download=...
     	include("bestellt_faxansicht.php");
