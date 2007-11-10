@@ -36,7 +36,7 @@ function sql_update( $table, $id, $values ) {
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
-    $sql .= "$komma $key='" . mysql_escape_string($val) . "'";
+    $sql .= "$komma $key='" . mysql_real_escape_string($val) . "'";
     $komma=',';
   }
   $sql .= " WHERE id=$id";
@@ -47,19 +47,29 @@ function sql_update( $table, $id, $values ) {
     return FALSE;
 }
 
-function sql_insert( $table, $values, $on_duplicate_key_update = false ) {
+function sql_insert( $table, $values, $update_cols = false ) {
   $komma='';
   $cols = '';
   $vals = '';
   $update = '';
   foreach( $values as $key => $val ) {
     $cols .= "$komma $key";
-    $vals .= "$komma '" . mysql_escape_string($val) . "'";
-    $update .= "$komma $key='" . mysql_escape_string($val) . "'";
+    $vals .= "$komma '" . mysql_real_escape_string($val) . "'";
+    if( $update_cols ) {
+      if( $is_array( $update_cols ) ) {
+        if( isset( $update_cols[$key] ) ) {
+          $update .= "$komma $key='" . mysql_real_escape_string(
+            $update_cols[$key] ? $update_cols[$key] : $val
+          ) . "'";
+        }
+      } else {
+        $update .= "$komma $key='" . mysql_real_escape_string($val) . "'";
+      }
+    }
     $komma=',';
   }
   $sql = "INSERT INTO $table ( $cols ) VALUES ( $vals )";
-  if( $on_duplicate_key_update ) {
+  if( $update_cols ) {
     $sql .= " ON DUPLICATE KEY UPDATE $update $komma id = LAST_INSERT_ID(id) ";
   }
   // echo "<br>sql_insert: $sql<br>";
@@ -804,12 +814,15 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
 ////////////////////////////////////
 
 function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
+  $notiz = mysql_real_escape_string($notiz);
+  $telefon = mysql_real_escape_string($notiz);
+  $name = mysql_real_escape_string($notiz);
   if( $dienstkontrollblatt_id ) {
     mysql_query( "
       UPDATE dienstkontrollblatt SET
         name = " . ( $name ? "'$name'" : "name" ) . "
       , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
-      , notiz = IF( notiz = '$notiz', notiz, CONCAT( notiz, ' --- $notiz' ) )
+      , notiz = " . ( $notiz ? "IF( notiz = '$notiz', notiz, CONCAT( notiz, ' --- $notiz' ) )" : "notiz" ) . "
       WHERE id='$dienstkontrollblatt_id'
     " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
     return $dienstkontrollblatt_id;
@@ -1285,13 +1298,10 @@ function sql_bestellpreis($bestell_id, $produkt_id){
 
 function sql_create_gruppenbestellung($gruppe, $bestell_id){
   fail_if_readonly();
-  $sql = "
-    INSERT INTO gruppenbestellungen (bestellguppen_id, gesamtbestellung_id)
-    VALUES ($gruppe, $bestell_id)
-    ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)
-  ";
-  doSql($sql, LEVEL_IMPORTANT, "Konnte Gruppenbestellung nicht in DB ändern...");
-  return mysql_insert_id();
+  return sql_insert( 'gruppenbestellungen'
+  , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
+  , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurueckgeben */  )
+  );
 }
 
 
