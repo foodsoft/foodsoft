@@ -13,42 +13,105 @@
 
 */
   get_http_var( 'lieferanten_id', 'u', false, true );
-    
-  $edit_all = false;
+
   get_http_var('action','w','');
 
-
+  $edit_all = false;
   if ($action == "edit_all" and !$readonly ) { 
     nur_fuer_dienst(4);
          $edit_all = true;
   }
-                      
-                      
-                      // jetzt wurde er änderung speichern button gedrückt und alle produkte aktualisiert
-                      else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
-                      {
-                        nur_fuer_dienst(4);
 
-                            $prodIds = $HTTP_GET_VARS['prodIds'];
-                           
-                              for ($i=0; $i < count($prodIds); $i++) 
-                              {
-                                    //produkte werden aktualisiert ...
-				      sql_update_produkt($prodIds[$i],
-				                $HTTP_GET_VARS['name_'.$prodIds[$i]],
-						$HTTP_GET_VARS['lieferant_'.$prodIds[$i]],
-						$HTTP_GET_VARS['prodgroup_'.$prodIds[$i]],
-						$HTTP_GET_VARS['einheit_'.$prodIds[$i]],
-						$HTTP_GET_VARS['notiz_'.$prodIds[$i]]
+
+  /////////////////////////////
+  //
+  // tabelle fuer hauptmenue und auswahl lieferanten:
+  //
+  /////////////////////////////
+  ?> <table width='100%' class='layout'><tr> <?
+
+  if( $lieferanten_id ) {
+    ?> <td> <table class='menu'> <?
+    if( !$readonly ) {
+      ?>
+        <tr>
+          <td><input type='button' value='Neues Produkt eintragen' class='bigbutton' onClick="window.open('index.php?window=insertProdukt','insertProdukt','width=450,height=500,left=100,top=100').focus()"></td>
+        </tr><tr>
+          <td><input type='button' value='Alle Produkte bearbeiten' class='bigbutton' onClick="document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();"></td>
+        </tr>
+      <?
+    }
+    ?>
+      <tr>
+        <td><input type='button' value='Seite aktualisieren' class='bigbutton' onClick="document.forms['reload_form'].submit();"></td>
+      </tr><tr>
+        <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php';"></td>
+      </tr>
+      </table>
+    <?
+  }
+
+  ?>
+    <td style='text-align:left;padding:1ex 1em 2em 3em;'>
+    <table style="width:600px;" class="liste">
+      <tr>
+        <th>Lieferanten</th>
+        <th>Produkte</th>
+      </tr>
+  <?
+  $lieferanten = sql_lieferanten();
+  while( $row = mysql_fetch_array($lieferanten) ) {
+    if( $row['id'] != $lieferanten_id ) {
+      echo "
+        <tr>
+          <td><a class='tabelle' href='" . self_url('lieferanten_id') . "&lieferanten_id={$row['id']}'>{$row['name']}</a></td>
+          <td>{$row['anzahl_produkte']}</td>
+        </tr>
+      ";
+    } else {
+      echo "
+        <tr class='active'>
+          <td style='font-weight:bold;'>{$row['name']}</td>
+          <td>{$row['anzahl_produkte']}</td>
+        </tr>
+      ";
+    }
+  }
+  ?>
+        </table>
+      </td>
+    </tr>
+    </table>
+  <?
+
+  if( ! $lieferanten_id )
+    return;
+
+  /////////////////////////////
+  //
+  // aktionen verarbeiten:
+  //
+  /////////////////////////////
+
+  if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) {
+    nur_fuer_dienst(4);
+    fail_if_readonly();
+    get_http_vars( 'prodIds[]', 'u', array() );
+    for ($i=0; $i < count($prodIds); $i++) { //produkte werden aktualisiert ...
+      $pid = $prodIds[$i];
+      sql_update_produkt( $prodIds[$i],
+				    $HTTP_GET_VARS['name_'.$pid],
+						$HTTP_GET_VARS['lieferant_'.$pid],
+						$HTTP_GET_VARS['prodgroup_'.$pid],
+						$HTTP_GET_VARS['einheit_'.$pid],
+						$HTTP_GET_VARS['notiz_'.$pid]
 					      );
-                                  
-                                     // ggf. die Preise updaten, welche dann neu in die db geschrieben werden
-                                     
-                                     //den eingegebenen preis auslesen und das komma entfernen !!
-                                     $preis  = str_replace(",",".",$HTTP_GET_VARS['preis_'.$prodIds[$i]]);
-                                     
-                                    //aber erst wird geprüft, ob es aktuelle preise für das produkt gibt
-              			    $result2 =  sql_produktpreise($prodIds[$i],0, "NOW()","NOW()");
+      // ggf. neuen Preiseintrag schreiben:
+      $fname = 'preis_'.$pid;
+      get_http_var( $fname, 'f' );
+      $preis = $$fname;
+      //aber erst wird geprüft, ob es aktuelle preise für das produkt gibt
+      $result2 =  sql_produktpreise($prodIds[$i],0, "NOW()","NOW()");
                                     
                                        if (mysql_num_rows($result2) == 1) // wenn eine zeile mit gültigem preis existiert ...
                                        {         
@@ -82,16 +145,21 @@
                                        
                                        } //end preise aktualisieren 
                                                                       
-                              } // end for ($i=0; $i < count($prodIds); $i++) produkte aktualisieren 
+    } // end for ($i=0; $i < count($prodIds); $i++) produkte aktualisieren 
                          
-                      } // end else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
+  } // end else if ($action == "change_all" && isset($HTTP_GET_VARS['prodIds'])) 
                       
       
   
       //überprüfen ob ein lieferant schon ausgewählt wurde, ansonsten asuwahlfenster anzeigen:
            
             
-      if ($lieferanten_id !="") {
+  /////////////////////////////
+  //
+  // Produkttabelle anzeigen:
+  //
+  /////////////////////////////
+  
         echo "
           <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
           <form action='index.php' name='reload_form'>
@@ -100,37 +168,8 @@
                <input type='hidden' name='action' value='normal'>
                <input type='hidden' name='produkt_id'>
           </form>
+        ";
    
-            <table class='menu'>
-        ";
-        if( !$readonly ) {
-          echo "
-               <tr>
-               <td><input type='button' value='Neues Produkt' class='bigbutton' onClick=\"window.open('index.php?window=insertProdukt','insertProdukt','width=450,height=500,left=100,top=100').focus()\"></td>
-                  <td valign='middle' class='smalfont'>Einen neues Produkt hinzufügen...</td>
-                </tr><tr>
-                <td><input type='button' value='alle Bearbeiten' class='bigbutton' onClick=\"document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();\"></td>
-                  <td valign='middle' class='smalfont'>die gesamte Produktliste bearbeiten...</td>
-                </tr>
-          ";
-        }
-        echo "
-                <tr>                
-                <td><input type='button' value='Reload' class='bigbutton' onClick=\"document.forms['reload_form'].submit();\"></td>
-                  <td valign='middle' class='smalfont'>diese Seite aktualisieren...</td>
-                </tr><tr>
-                <td><input type='button' value='Lieferant wechseln' class='bigbutton' onClick=\"document.forms['reload_form'].lieferanten_id.value = ''; document.forms['reload_form'].submit();\"></td>
-                  <td valign='middle' class='smalfont'>anderen Lieferanten auswählen</td>
-                </tr><tr>
-                <td><input type='button' value='Beenden' class='bigbutton' onClick=\"self.location.href='index.php';\"></td>
-                  <td valign='middle' class='smalfont'>diesen Bereich verlassen...</td>
-                </tr>
-            </table>
-            
-            <br><br>
-        ";
-         
-     
 		    if ($edit_all) {
 		?>
 		   <form action="index.php" name="editAllForm" method="POST">
@@ -428,52 +467,4 @@
            </form>
             </table>            
 
-  <?PHP
-            
-      } else { //wenn KEINE lieferanten id übergeben wurde, dann auswahlfenster für den lieferanten anzeigen...
-      
-      ?>
-      <form action="index.php">
-                                <input type="hidden" name="area" value="produkte">
-                <table class="menu">
-                   <tr>
-                      <th colspan="2">Anderen Lieferanten auswählen</th>
-                   </tr>
-                  <tr>
-                     <td>Lieferanten auswählen</td>
-                     <td>
-                           <select name="lieferanten_id">
-                              <option value="">[auswählen]</option>
-                                  <?PHP
-                                  //lieferanten ausspucken
-                                    $sql = "SELECT id, name
-                                                   FROM lieferanten
-                                                   ORDER BY name";            
-                                    $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Bestellgruppendaten nich aus DB laden..",mysql_error());
-                                    
-                                    while ($row = mysql_fetch_array($result)) 
-                                    {
-                                       //jetzt die anzahl der produkte zählen
-                                       $sql = "SELECT id
-                                                   FROM produkte
-                                                   WHERE lieferanten_id=".$row['id']."";
-                                       $res = mysql_query($sql);
-                                       $num = mysql_num_rows($res);
-                                       
-                                       echo "<option value='".$row['id']."'>".$row['name']." (".$num.")</option>\n";
-                                    } //end while
-                                    ?>
-                                 <option value="0">- Alle Lieferanten -</option>
-                           </select>
-                     </td>                  
-                  </tr>       
-                   <tr>
-                      <td colspan="2" align="right"><input type="submit" value="ok"></td>
-                   </tr>
-                </table>               
-             </form>
-            <?php
-      } //end if
-
-?>
 
