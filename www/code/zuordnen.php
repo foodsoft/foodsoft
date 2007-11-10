@@ -33,6 +33,7 @@ function sql_select_single_row( $sql ) {
 }
 
 function sql_update( $table, $id, $values ) {
+  fail_if_readonly();
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
@@ -48,6 +49,7 @@ function sql_update( $table, $id, $values ) {
 }
 
 function sql_insert( $table, $values, $update_cols = false ) {
+  fail_if_readonly();
   $komma='';
   $cols = '';
   $vals = '';
@@ -2800,7 +2802,7 @@ function checkvalue( $val, $typ){
 	      $pattern = '/^\d+$/';
 	      break;
 	    case 'f':
-	      $val = trim($val);
+	      $val = str_replace( ',', '.' , trim($val) );
 	      $pattern = '/^[-\d.]+$/';
 	      break;
 	    case 'w':
