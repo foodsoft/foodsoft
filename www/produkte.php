@@ -3,25 +3,10 @@
 <?PHP
   assert( $angemeldet ) or exit();
 
-/* wie das skript funktioniert:
-
-   1. variablen einlesen, passwort prüfen
-   2. über die action variable wird geprüft, welcher button gedrückt wurde
-      2.1. action = delete -> produkt wird gelöscht
-      2.2. action = edit_all ->  die alle bearbeiten seite wird angezeigt
-      2.3. action = change_all -> die preise werden ggf. aktualisiert .. 
-
-*/
   get_http_var( 'lieferanten_id', 'u', false, true );
 
   $editable = ( ! $readonly and ( $dienst == 4 ) );
-  
-  get_http_var('action','w','');
 
-  $edit_all = false;
-  if( $action == "edit_all" and $editable ) { 
-    $edit_all = true;
-  }
 
 
   /////////////////////////////
@@ -79,6 +64,8 @@
     </table>
   <?
 
+  // ab hier muss ein Lieferant ausgewaehlt sein, sonst Ende:
+  //
   if( ! $lieferanten_id )
     return;
 
@@ -92,6 +79,13 @@
   //
   /////////////////////////////
 
+  get_http_var('action','w','');
+
+  $edit_all = false;
+  if( $action == "edit_all" and $editable ) { 
+    $edit_all = true;
+  }
+
   if( ($action == "change_all") and $editable ) {
     get_http_vars( 'prodIds[]', 'u', array() );
     foreach( $prodIds as $pid ) {
@@ -100,8 +94,8 @@
       need_http_var( "einheit_$pid", 'H' );
       need_http_var( "notiz_$pid", 'H' );
       need_http_var( "preis_$pid", 'f' );
-      need_http_var( "bestellnummer_$pid", 'f' );
-      need_http_var( "gebindegroesse_$pid", 'f' );
+      need_http_var( "bestellnummer_$pid", 'H' );
+      need_http_var( "gebindegroesse_$pid", 'H' );
       sql_update_produkt( $pid, ${"name_$pid"}, ${"prodgroup_$pid"}, ${"einheit_$pid"}, ${"notiz_$pid"} );
 
       $preis = ${"preis_$pid"};
@@ -130,21 +124,18 @@
   //
   /////////////////////////////
   
-  echo "
+  ?>
     <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
-    <form action='index.php' name='reload_form'>
-       <input type='hidden' name='area' value='produkte'>
-         <input type='hidden' name='lieferanten_id' value='$lieferanten_id'>
-         <input type='hidden' name='action' value='normal'>
-         <input type='hidden' name='produkt_id'>
+    <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
+      <? echo self_post(); ?>
     </form>
-  ";
+  <?
 
   if ($edit_all) {
     ?>
-       <form action="<? echo self_url(); ?>" name="editAllForm" method="POST">
-       <? echo self_post(); ?>
-       <input type="hidden" name="action" value="change_all">
+      <form action="<? echo self_url(); ?>" name="editAllForm" method="POST">
+      <? echo self_post(); ?>
+      <input type="hidden" name="action" value="change_all">
     <?
   } else {
     ?>
@@ -153,8 +144,7 @@
     <?
   }
 
-
-  if (!$edit_all) {  					// für die normalansicht
+  if (!$edit_all) {   // für die normalansicht
     ?>
       <table class="liste">
         <tr>
@@ -261,7 +251,7 @@
         ?>
           <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
           <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=400,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten Ã¤ndern'  titel='Produktdaten Ã¤ndern'/></a>
-          <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt
+          <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benötigt:
             <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe löschen' titel='Gruppe löschen'/></a>
           -->
         <?

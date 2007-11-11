@@ -2410,20 +2410,6 @@ function sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt = "NOW()" ){
   return doSql($sql, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 
-/* sql_aktueller_produktpreis_id:
- *  liefert id des aktuellsten preises zu $produkt_id,
- *  oder 0 falls es NOW() keinen gueltigen preis gibt:
- */
-function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
-  $result = sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt );
-  $n = mysql_num_rows($result);
-  echo "<!-- aktueller_produktpreis: $n -->";
-  if( mysql_num_rows( $result ) < 1 )
-    return 0;
-  $row = mysql_fetch_array( $result );
-  return $row['id'];
-}
-
 function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
   $result = sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt );
   $n = mysql_num_rows($result);
@@ -2432,6 +2418,15 @@ function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
     return false;
   $row = mysql_fetch_array( $result );
   return $row;
+}
+
+/* sql_aktueller_produktpreis_id:
+ *  liefert id des aktuellsten preises zu $produkt_id,
+ *  oder 0 falls es NOW() keinen gueltigen preis gibt:
+ */
+function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
+  $row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
+  return $row ? $row['id'] : 0;
 }
 
 /**

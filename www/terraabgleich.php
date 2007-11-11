@@ -48,138 +48,136 @@ if( $detail ) {
     fail_if_readonly();
     nur_fuer_dienst_IV();
     need_http_var('preis_id','u');
-    need_http_var('zeitende','M');
-    $result = mysql_query( "UPDATE  produktpreise SET zeitende='$zeitende' WHERE id='$preis_id'" )
-      or error( __LINE__, __FILE__, "Setzen Zeitende in Preishistorie fehlgeschlagen" );
-    }
+    need_http_var('zeitende','H');
+    sql_update( 'produktpreise', $preis_id, array( 'zeitende' => $zeitende ) );
+  }
 
-    if( $bestell_id ) {
+  if( $bestell_id ) {
 
-      if( $action == 'preiseintrag_waehlen' ) {
-        fail_if_readonly();
-        nur_fuer_dienst_IV();
-        need_http_var( 'preis_id','u' );
-        $result = mysql_query(
-          "UPDATE bestellvorschlaege
-           SET produktpreise_id='$preis_id'
-           WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produktid' " )
-          or error ( __LINE__, __FILE__, "Setzen des neuen Preiseintrags fehlgeschlagen" );
-      }
-
+    if( $action == 'preiseintrag_waehlen' ) {
+      fail_if_readonly();
+      nur_fuer_dienst_IV();
+      need_http_var( 'preis_id','u' );
       $result = mysql_query(
-        "SELECT * FROM bestellvorschlaege
-         WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produktid"
-      ) or error ( __LINE__, __FILE__, "Suche nach Bestellvorschlag fehlgeschlagen" );
-      $row = mysql_fetch_array( $result )
-        or error ( __LINE__, __FILE__, "Bestellvorschlag nicht gefunden" );
-      $preisid_in_bestellvorschlag = $row['produktpreise_id'];
-
-      $result = mysql_query( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" )
-        or error ( __LINE__, __FILE__, "Suche nach Gesamtbestellung fehlgeschlagen" );
-      $row = mysql_fetch_array( $result )
-        or error ( __LINE__, __FILE__, "Gesamtbestellung nicht gefunden" );
-      $bestellung_name = $row['name'];
-
+        "UPDATE bestellvorschlaege
+         SET produktpreise_id='$preis_id'
+         WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produktid' " )
+        or error ( __LINE__, __FILE__, "Setzen des neuen Preiseintrags fehlgeschlagen" );
     }
 
-    // eventuell neuen preiseintrag vornehmen:
-    //
-  
-    if( $action == 'neuer_preiseintrag' ) {
-      fail_if_readonly();
-      nur_fuer_dienst_IV();
+    $result = mysql_query(
+      "SELECT * FROM bestellvorschlaege
+       WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produktid"
+    ) or error ( __LINE__, __FILE__, "Suche nach Bestellvorschlag fehlgeschlagen" );
+    $row = mysql_fetch_array( $result )
+      or error ( __LINE__, __FILE__, "Bestellvorschlag nicht gefunden" );
+    $preisid_in_bestellvorschlag = $row['produktpreise_id'];
 
-      need_http_var('newfcmult','f');
-      need_http_var('newfceinheit','M');
-      need_http_var('newfcgebindegroesse','u');
-      need_http_var('newfcmwst','f');
-      need_http_var('newfcpfand','f');
-      need_http_var('newfcpreis','f');
-      need_http_var('newfcname','M');
-      need_http_var('newfcbnummer','M');
-      need_http_var('newfczeitstart','M');
-      need_http_var('newliefermult','u');
-      need_http_var('newliefereinheit','M');
-      get_http_var('newnotiz','M') or $newnotiz = '';
-
-      ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produktid" ) )
-        || error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-
-      ( $terrapreise = mysql_query( "SELECT * FROM produktpreise WHERE produkt_id=$produktid ORDER BY zeitstart" ) )
-        || error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
-
-      if( mysql_query( "UPDATE produkte SET einheit='$newfcmult $newfceinheit' WHERE id=$produktid" ) ) {
-        // echo "<div class='ok'>neue Einheit: $newfcmult $newfceinheit</div>";
-      } else {
-        echo "<div class='warn'>FEHLGESCHLAGEN: neue Einheit: $newfcmult $newfceinheit</div>";
-      }
-      if( mysql_query( "UPDATE produkte SET name='$newfcname' WHERE id=$produktid" ) ) {
-        // echo "<div class='ok'>neue Bezeichnung: $newfcname</div>";
-      } else {
-        echo "<div class='warn'>FEHLGESCHLAGEN: neue Bezeichnung: $newfcname</div>";
-      }
-      if( mysql_query( "UPDATE produkte SET notiz='$newnotiz' WHERE id=$produktid" ) ) {
-        // echo "<div class='ok'>neue Notiz: $newnotiz</div>";
-      } else {
-        echo "<div class='warn'>FEHLGESCHLAGEN: neue Notiz: $newnotiz</div>";
-      }
-    
-      $pr0 = false;
-      while( $pr1 = mysql_fetch_array($terrapreise) ) {
-        $pr0 = $pr1;
-      }
-      if( $pr0 ) {
-        if( ( ! $pr0['zeitende'] ) or ( $pr0['zeitende'] > $newfczeitstart ) ) {
-          if( mysql_query( "UPDATE produktpreise SET zeitende='$newfczeitstart' WHERE id=" . $pr0['id'] ) ) {
-            // echo "<div class='ok'>letzter Preiseintrag ausgelaufen ab: $newfczeitstart</div>";
-          } else {
-            echo "<div class='warn'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
-          }
-        }
-      }
-      if( mysql_query( "
-            INSERT INTO produktpreise
-            ( produkt_id
-            , preis
-            , zeitstart
-            , zeitende
-            , bestellnummer
-            , gebindegroesse
-            , mwst
-            , pfand
-            , liefereinheit
-            , verteileinheit )
-            VALUES (
-              $produktid
-            , '$newfcpreis'
-            , '$newfczeitstart'
-            , NULL
-            , '$newfcbnummer'
-            , '$newfcgebindegroesse'
-            , '$newfcmwst'
-            , '$newfcpfand'
-            , '$newliefermult $newliefereinheit'
-            , '$newfcmult $newfceinheit'
-            )"
-          )
-       ) {
-        // echo "<div class='ok'>neuer Preiseintrag gespreichert</div>";
-      } else {
-        echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN: " . mysql_error() . "</div>";
-      }
-    }
-
-    // eventuell neue Artikelnummer setzen:
-    //
-    if( $action == 'artikelnummer_setzen' ) {
-      fail_if_readonly();
-      nur_fuer_dienst_IV();
-      need_http_var( 'anummer','M' );
-      if( ! mysql_query( "UPDATE produkte SET artikelnummer='$anummer' WHERE id='$produktid' " ) )
-        echo "<div class='warn'>Setzen der neuen Artikelnummer FEHLGESCHLAGEN</div>";
-    }
+    $result = mysql_query( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" )
+      or error ( __LINE__, __FILE__, "Suche nach Gesamtbestellung fehlgeschlagen" );
+    $row = mysql_fetch_array( $result )
+      or error ( __LINE__, __FILE__, "Gesamtbestellung nicht gefunden" );
+    $bestellung_name = $row['name'];
 
   }
+
+  // eventuell neuen preiseintrag vornehmen:
+  //
+
+  if( $action == 'neuer_preiseintrag' ) {
+    fail_if_readonly();
+    nur_fuer_dienst_IV();
+
+    need_http_var('newfcmult','f');
+    need_http_var('newfceinheit','M');
+    need_http_var('newfcgebindegroesse','u');
+    need_http_var('newfcmwst','f');
+    need_http_var('newfcpfand','f');
+    need_http_var('newfcpreis','f');
+    need_http_var('newfcname','M');
+    need_http_var('newfcbnummer','M');
+    need_http_var('newfczeitstart','M');
+    need_http_var('newliefermult','u');
+    need_http_var('newliefereinheit','M');
+    get_http_var('newnotiz','M') or $newnotiz = '';
+
+    ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produktid" ) )
+      || error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
+
+    ( $terrapreise = mysql_query( "SELECT * FROM produktpreise WHERE produkt_id=$produktid ORDER BY zeitstart" ) )
+      || error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
+
+    if( mysql_query( "UPDATE produkte SET einheit='$newfcmult $newfceinheit' WHERE id=$produktid" ) ) {
+      // echo "<div class='ok'>neue Einheit: $newfcmult $newfceinheit</div>";
+    } else {
+      echo "<div class='warn'>FEHLGESCHLAGEN: neue Einheit: $newfcmult $newfceinheit</div>";
+    }
+    if( mysql_query( "UPDATE produkte SET name='$newfcname' WHERE id=$produktid" ) ) {
+      // echo "<div class='ok'>neue Bezeichnung: $newfcname</div>";
+    } else {
+      echo "<div class='warn'>FEHLGESCHLAGEN: neue Bezeichnung: $newfcname</div>";
+    }
+    if( mysql_query( "UPDATE produkte SET notiz='$newnotiz' WHERE id=$produktid" ) ) {
+      // echo "<div class='ok'>neue Notiz: $newnotiz</div>";
+    } else {
+      echo "<div class='warn'>FEHLGESCHLAGEN: neue Notiz: $newnotiz</div>";
+    }
+  
+    $pr0 = false;
+    while( $pr1 = mysql_fetch_array($terrapreise) ) {
+      $pr0 = $pr1;
+    }
+    if( $pr0 ) {
+      if( ( ! $pr0['zeitende'] ) or ( $pr0['zeitende'] > $newfczeitstart ) ) {
+        if( mysql_query( "UPDATE produktpreise SET zeitende='$newfczeitstart' WHERE id=" . $pr0['id'] ) ) {
+          // echo "<div class='ok'>letzter Preiseintrag ausgelaufen ab: $newfczeitstart</div>";
+        } else {
+          echo "<div class='warn'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
+        }
+      }
+    }
+    if( mysql_query( "
+          INSERT INTO produktpreise
+          ( produkt_id
+          , preis
+          , zeitstart
+          , zeitende
+          , bestellnummer
+          , gebindegroesse
+          , mwst
+          , pfand
+          , liefereinheit
+          , verteileinheit )
+          VALUES (
+            $produktid
+          , '$newfcpreis'
+          , '$newfczeitstart'
+          , NULL
+          , '$newfcbnummer'
+          , '$newfcgebindegroesse'
+          , '$newfcmwst'
+          , '$newfcpfand'
+          , '$newliefermult $newliefereinheit'
+          , '$newfcmult $newfceinheit'
+          )"
+        )
+     ) {
+      // echo "<div class='ok'>neuer Preiseintrag gespreichert</div>";
+    } else {
+      echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN: " . mysql_error() . "</div>";
+    }
+  }
+
+  // eventuell neue Artikelnummer setzen:
+  //
+  if( $action == 'artikelnummer_setzen' ) {
+    fail_if_readonly();
+    nur_fuer_dienst_IV();
+    need_http_var( 'anummer','H' );
+    sql_update( 'produkte', $produktid, array( 'artikelnummer' => $anummer ) );
+  }
+
+}
 
   // get_http_var( 'order_by','w' ) or $order_by = 'name';
   $order_by = 'name';
