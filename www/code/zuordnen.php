@@ -1028,7 +1028,12 @@ function optionen_gruppen(
 
 function sql_lieferanten( $id = false ) {
   $where = ( $id ? "WHERE id=$id" : "" );
-  return doSql( "SELECT * FROM lieferanten $where", LEVEL_ALL, "Suche nach Lieferanten fehlgeschlagen: " );
+  return doSql( "
+    SELECT *
+    , ( SELECT count(*) FROM produkte WHERE produkte.lieferanten_id = lieferanten.id ) as anzahl_produkte
+    FROM lieferanten $where"
+    , LEVEL_ALL, "Suche nach Lieferanten fehlgeschlagen: "
+  );
 }
 
 /**
@@ -2419,6 +2424,16 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
   return $row['id'];
 }
 
+function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
+  $result = sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt );
+  $n = mysql_num_rows($result);
+  echo "<!-- aktueller_produktpreis: $n -->";
+  if( mysql_num_rows( $result ) < 1 )
+    return false;
+  $row = mysql_fetch_array( $result );
+  return $row;
+}
+
 /**
  *  Erzeugt einen Produktpreiseintrag
  *  Achtung, $start und $ende selbst escapen, damit
@@ -2661,10 +2676,9 @@ function getProdukt($produkt_id){
 /**
  *  Produktinformationen updaten
  */
-function sql_update_produkt ($id, $name, $lieferant_id, $produktgruppen_id, $einheit, $notiz){
+function sql_update_produkt ($id, $name, $produktgruppen_id, $einheit, $notiz){
   return sql_update( 'produkte', $id, array(
     'name' => "$name"
-  , 'lieferanten_id' => $lieferant_id
   , 'produktgruppen_id' => $produktgruppen_id
   , 'einheit' => "$einheit"
   , 'notiz' => "$notiz"
