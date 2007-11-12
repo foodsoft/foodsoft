@@ -2530,22 +2530,26 @@ function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
 
 /**
  *  Erzeugt einen Produktpreiseintrag
- *  Achtung, $start und $ende selbst escapen, damit
- *  now() und null verwendet werden können.
  */
 function sql_insert_produktpreis (
-  $produkt_id, $preis, $start, $ende, $bestellnummer, $gebindegroesse
+  $produkt_id, $preis, $start, $bestellnummer, $gebindegroesse
+, $mwst, $pfand, $liefereinheit, $verteileinheit
 ) {
   sql_expire_produktpreise( $produkt_id, $start );
+
   return sql_insert( 'produktpreise', array(
     'produkt_id' => $produkt_id
   , 'preis' => $preis
   , 'zeitstart' => $start
-  , 'zeitende' => $ende
   , 'bestellnummer' => $bestellnummer
   , 'gebindegroesse' => $gebindegroesse
+  , 'mwst' => $mwst
+  , 'pfand' => $pfand
+  , 'liefereinheit' => $liefereinheit
+  , 'verteileinheit' => $verteileinheit
   ) );
 }
+
 
 /**
  * Prüft, ob ein Preis noch gültig ist
