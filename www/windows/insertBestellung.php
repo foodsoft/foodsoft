@@ -62,9 +62,9 @@
 
       foreach( $bestelliste as $produkt_id ) {
         // preis, gebinde, und bestellnummer auslesen:
-        $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+        $preis_row = sql_aktueller_produktpreis( $produkt_id );
         // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
-        sql_insert_bestellvorschlaege( $produkt_id, $gesamtbestellung_id, $preis_id );
+        sql_insert_bestellvorschlaege( $produkt_id, $gesamtbestellung_id, $preis_row['id'] );
       } //end for - bestellvorschläge füllen
       $done = true;
     }

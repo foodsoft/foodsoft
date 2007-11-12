@@ -53,6 +53,9 @@
     $foodsoftdir = ereg_replace( '/wiki$', '/foodsoft', $foodsoftdir );
   }
 
+  // $mysqljetzt: Alternative zu NOW(), Vorteile:
+  //  - kann quotiert werden
+  //  - in einem Skriptlauf wird garantiert immer dieselbe Zeit verwendet
   $mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
   $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
 

@@ -70,7 +70,7 @@
     return;
 
   $lieferant_name = lieferant_name($lieferanten_id);
-  $produkte = getProdukteVonLieferant($lieferanten_id);
+  $produkte = sql_produkte_von_lieferant_ids($lieferanten_id);
 
 
   /////////////////////////////
@@ -146,9 +146,9 @@
 
   if (!$edit_all) {   // f¸r die normalansicht
     ?>
-      <table class="liste">
+      <table class='numbers'>
         <tr>
-          <th colspan="8"><h3>Produkt√ºbersicht von
+          <th colspan="10"><h3>Produkt√ºbersicht von
               <?php
                 echo $lieferant_name;
                 if ( $lieferant_name == "Terra" ) {
@@ -161,19 +161,20 @@
 
           </h3></th>
         </tr><tr>
-          <th></th>
-          <th>Name</th>
+          <th> </th>
+          <th title='generische Produktbezeichnung'>Name</th>
           <th>Produktgruppe</th>
-          <th>Einheit</th>
-          <th>Notiz</th>
-          <th>Kategorien</th>
-          <th>Preis</th>
+          <th title='aktuelle Details zum Produkt'>Notiz</th>
+          <th>Gebindegroesse</th>
+          <!-- <th>Kategorien</th> -->
+          <th colspan='2' title='Lieferanten-Preis (ohne Pfand, ohne MWSt)'>L-Nettopreis</th>
+          <th colspan='2' title='Verbraucher-Preis mit Pfand und MWSt'>V-Endpreis</th>
           <th>Optionen</th>
         </tr>
     <?
   } else {  //f¸r die alle ¸berarbeiten ansicht
     ?>
-      <table>
+      <table class='numbers'>
         <tr>
           <th colspan="7"><h3>Produkt√ºbersicht von <?php echo $lieferant_name?></h3></th>
         </tr><tr>
@@ -188,76 +189,44 @@
     <?
   }
 
-  // jetzt werden die produkte aus der datenbank gelesen ....
-
-
-  if ($edit_all) { // hier im falle der "alle ¸berarbeiten" ansicht
-	
-      $result = sql_produktgruppen();
-            while ($row = mysql_fetch_array($result)) 
-                $prodgroup_id2name[$row['id']] = $row['name'];
-
-          $result = sql_lieferanten(); 
-            while ($row = mysql_fetch_array($result)) 
-                $lieferanten_id2name[$row['id']] = $row['name'];
-
-  } else {         // hier f¸r die standardansicht
-       
-//                             $sql = "SELECT produkte.*, produkte.id as prodId, lieferanten.name as lname, produktgruppen.name as pname
-//                                     FROM produkte,lieferanten,produktgruppen
-//                                     WHERE lieferanten.id ='$lieferanten_id'
-//                                     AND produkte.produktgruppen_id = produktgruppen.id
-//                                     AND produkte.lieferanten_id = lieferanten.id
-//                                     ORDER BY produkte.lieferanten_id, produkte.produktgruppen_id, produkte.name";
-//                         $result = mysql_query($sql) or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
-//
-//                          } else {
-//
-//                    $result = mysql_query("SELECT produkte.*, produkte.id as prodId, lieferanten.name as lname, produktgruppen.name as pname
-//                                                                  FROM produkte,lieferanten,produktgruppen
-//                                                                                     WHERE produkte.lieferanten_id = lieferanten.id
-//                                                                                       AND produkte.produktgruppen_id = produktgruppen.id
-//                                                                                       ORDER BY produkte.lieferanten_id, produkte.produktgruppen_id, produkte.name") or error(__LINE__,__FILE__,"Konnte Produkte nich aus DB laden..",mysql_error());
-  }
-
   while( $row = mysql_fetch_array($produkte) ) {
+    $id = $row['id'];
+    $produkt = sql_produkt_details( $id );
+
     if (!$edit_all) { 
       ?>
         <tr>
-          <td valign="top"><input type="checkbox" name="bestelliste[]" value="<? echo $row['id']; ?>"></td>
-          <td valign="top"><b><? echo $row['name']; ?></b></td>
-          <td valign="top"><? echo $row['produktgruppen_name']; ?></td>
-          <td valign="top"><? echo $row['einheit']; ?></td>
-          <td valign="top" align="middle"><?PHP echo $row['notiz']; ?></td>
-          <td valign="top" align="middle">
-      <?
-      $kat_result = mysql_query("SELECT produktkategorien.name FROM produktkategorien, kategoriezuordnung WHERE kategoriezuordnung.produkt_id = ".mysql_escape_string($row['id'])." AND kategoriezuordnung.kategorien_id = produktkategorien.id;") or error(__LINE__,__FILE__,"Konnte Kategorien nich aus DB laden..",mysql_error());
-      $kategorien_str = "";
-      while ($kat_row = mysql_fetch_array($kat_result)) {
-        $kategorien_str .= $kat_row['name'];
-      }
-      echo $kategorien_str ? $kategorien_str : "-";
-      ?>
-        </td>
-        <td valign='top' align='middle'>
-      <?
-      $preis_row = sql_aktueller_produktpreis($row['id']);
-      echo $preis_row['preis'];
-      ?>
-        </td>
-        <td valign='top'>
-      <?
-      if( $editable ) {
-        ?>
-          <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
-          <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=400,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten √§ndern'  titel='Produktdaten √§ndern'/></a>
-          <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benˆtigt:
-            <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe lˆschen' titel='Gruppe lˆschen'/></a>
-          -->
-        <?
-      }
-      ?>
-        </td>
+          <td valign="top"><input type="checkbox" name="bestelliste[]" value="<? echo $id; ?>"></td>
+          <td valign="top"><b><? echo $produkt['name']; ?></b></td>
+          <td valign="top"><? echo $produkt['produktgruppen_name']; ?></td>
+          <td valign="top"><? echo $produkt['notiz']; ?></td>
+      <? if( $produkt['zeitstart'] ) { ?>
+          <td class='number'><?
+            printf(
+              "%d * (%s %s)"
+            , $produkt['gebindegroesse'], $produkt['kan_verteilmult'], $produkt['kan_verteileinheit']
+            );
+          ?></td>
+          <td class='mult'><?  printf( "%.2lf", $produkt['nettopreis'] ); ?></td>
+          <td class='unit'><?  printf( "/ %s", $produkt['preiseinheit'] ); ?></td>
+          <td class='mult'><?  printf( "%.2lf", $produkt['endpreis'] ); ?></td>
+          <td class='unit'><?
+            printf( "/ %s %s"
+            , $produkt['kan_verteilmult'], $produkt['kan_verteileinheit']
+            );
+          ?></td>
+      <?  } else { ?>
+        <td colspan='5' style='text-align:center'>(kein aktueller Preiseintrag)</td>
+      <? } ?>
+          <td valign='top'>
+          <? if( $editable ) { ?>
+            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
+            <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=400,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten √§ndern'  titel='Produktdaten √§ndern'/></a>
+            <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten benˆtigt:
+              <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe lˆschen' titel='Gruppe lˆschen'/></a>
+            -->
+          <? } ?>
+          </td>
         </tr>
       <?
     } else { //  alle bearbeiten ansicht ...
@@ -321,4 +290,14 @@
 
     </form>
  </table>
+
+<?
+// "produktkategorien" im moment unbenutzt:
+//          $kat_result = mysql_query("SELECT produktkategorien.name FROM produktkategorien, kategoriezuordnung WHERE kategoriezuordnung.produkt_id = ".mysql_escape_string($row['id'])." AND kategoriezuordnung.kategorien_id = produktkategorien.id;") or error(__LINE__,__FILE__,"Konnte Kategorien nich aus DB laden..",mysql_error());
+//          $kategorien_str = "";
+//          while ($kat_row = mysql_fetch_array($kat_result)) {
+//            $kategorien_str .= $kat_row['name'];
+//          }
+//          echo $kategorien_str ? $kategorien_str : "-";
+?>
 

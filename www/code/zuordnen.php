@@ -2394,26 +2394,24 @@ function sockel_gruppen_summe() {
 //
 /////////////////////////////////////////////
 
-function sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt = "NOW()" ){
+
+/* sql_aktueller_produktpreis:
+ *  liefert aktuellsten preis zu $produkt_id,
+ *  oder false falls es keinen gueltigen preis gibt:
+ */
+function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
   if( $zeitpunkt ) {
     $zeitfilter = " AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
                     AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = "";
   }
-  $sql = "SELECT id
+  $sql = "SELECT *
           FROM produktpreise 
           WHERE produkt_id = $produkt_id $zeitfilter
           ORDER BY zeitende DESC";
   // aktuellster preis ist immer vorn (auch NULL!)
-
-  return doSql($sql, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
-}
-
-function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
-  $result = sql_aktuelle_produktpreise( $produkt_id, $zeitpunkt );
-  $n = mysql_num_rows($result);
-  echo "<!-- aktueller_produktpreis: $n -->";
+  $result = doSql( $sql, LEVEL_ALL, "Lesen der Produktpreise fehlgeschlagen: " );
   if( mysql_num_rows( $result ) < 1 )
     return false;
   $row = mysql_fetch_array( $result );
@@ -2429,14 +2427,33 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
   return $row ? $row['id'] : 0;
 }
 
+
+function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
+  if( $zeitende )
+    $zeitende = mysql_real_escape_string( $zeitende );
+  else
+    $zeitende = '$mysqljetzt';
+  $query="
+    UPDATE produktpreise
+    SET zeitende='$zeitende'
+    WHERE id=$produkt_id
+          AND ISNULL(zeitende) OR ( zeitende > '$zeitende' )
+  ";
+  return doSql( $query, LEVEL_IMPORTANT, "sql_expire_produktpreise() fehlgeschlagen: " );
+}
+
+
 /**
  *  Erzeugt einen Produktpreiseintrag
  *  Achtung, $start und $ende selbst escapen, damit
  *  now() und null verwendet werden können.
  */
-function sql_insert_produktpreis ($id, $preis, $start,$ende, $bestellnummer, $gebindegroesse){
+function sql_insert_produktpreis (
+  $produkt_id, $preis, $start, $ende, $bestellnummer, $gebindegroesse
+) {
+  sql_expire_produktpreise( $produkt_id, $start );
   return sql_insert( 'produktpreise', array(
-    'produkt_id' => $id
+    'produkt_id' => $produkt_id
   , 'preis' => $preis
   , 'zeitstart' => $start
   , 'zeitende' => $ende
@@ -2445,13 +2462,6 @@ function sql_insert_produktpreis ($id, $preis, $start,$ende, $bestellnummer, $ge
   ) );
 }
 
-/**
- *  Setzt einen Preis auf abgelaufen
- */
-function sql_expire_produktpreis ($id){
-	$query="UPDATE produktpreise SET zeitende=NOW() WHERE id=".$id;
-        doSql($query, LEVEL_IMPORTANT, "Konnte Preis nicht in löschen...");
-}
 
 /**
  * Prüft, ob ein Preis noch gültig ist
@@ -2462,6 +2472,7 @@ function is_expired_produktpreis($id){
    $result = doSql($sql, LEVEL_ALL, "Konnte Preisdaten nicht aus DB laden..");
    return (mysql_num_rows($result) == 0);
 }
+
 /**
  *
  */
@@ -2668,6 +2679,62 @@ function getProdukt($produkt_id){
     return mysql_fetch_array($result);
 }
 
+function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
+  $produkt_row = sql_select_single_row( "
+    SELECT produkte.id
+         , produkte.artikelnummer
+         , produkte.name
+         , produkte.lieferanten_id
+         , produkte.notiz
+         , produktgruppen.name as produktgruppen_name
+    FROM produkte
+    LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
+    WHERE produkte.id=$produkt_id
+  " );
+  $preis_row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
+  if( $preis_row ) {
+    preisdatenSetzen( & $preis_row );
+    //
+    // definierten Satz von Werten umkopieren:
+    //
+    // V-Mult V-einheit: Vielfache davon bestellen die Gruppen:
+    $produkt_row['kan_verteileinheit'] = $preis_row['kan_verteileinheit'];
+    $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
+    //
+    // L-Mult L-einheit: Vielfache davon nennen wir in der Bestellung beim Lieferanten:
+    $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
+    $produkt_row['kan_liefermult'] = $preis_row['kan_liefermult'];
+    //
+    // Gebindegroesse: wieviele V-Einheiten muessen jeweils bestellt werden:
+    $produkt_row['gebindegroesse'] = $preis_row['gebindegroesse'];
+    //
+    // Preise pro V-Mult * V-Einheit:
+    $produkt_row['nettopreis'] = $preis_row['nettopreis'];
+    $produkt_row['bruttopreis'] = $preis_row['bruttopreis'];  // mit MWSt.
+    $produkt_row['endpreis'] = $preis_row['endpreis'];        // mit MWSt. und Pfand
+    //
+    // Preiseinheit: Menge fuer die der Katalogpreis des Lieferanten angegeben ist:
+    //               (enthaelt masszahl und einheit, nur zur Ausgabe gedacht!)
+    // mengenfaktor: faktor zwischen V-Mult V-Einheit und Preis-Einheit
+    //               (zur Umrechnung (Konsumenten-)Nettopreis -> (Lieferanten-)Katalogpreis)
+    $produkt_row['preiseinheit'] = $preis_row['preiseinheit'];
+    $produkt_row['mengenfaktor'] = $preis_row['mengenfaktor'];
+    //
+    $produkt_row['pfand'] = $preis_row['pfand'];  // in Euro
+    $produkt_row['mwst'] = $preis_row['mwst'];    // in Prozent
+    //
+    $produkt_row['bestellnummer'] = $preis_row['bestellnummer'];
+    //
+    $produkt_row['zeitstart'] = $preis_row['zeitstart'];
+    $produkt_row['zeitende'] = $preis_row['zeitende'];
+  } else {
+    // flag: kein gueltiger preis:
+    $produkt_row['zeitstart'] = false;
+  }
+  return $produkt_row;
+}
+
+
 /**
  *  Produktinformationen updaten
  */
@@ -2683,13 +2750,15 @@ function sql_update_produkt ($id, $name, $produktgruppen_id, $einheit, $notiz){
 /**
  * Alle Produkte von einem Lieferanten, auch mit ungültigem Preis
  */
-function getAlleProdukteVonLieferant ($lieferant_id){
-	  $sql = "SELECT produkte.*, produkte.id as prodId 
-			 FROM produkte
-			 WHERE produkte.lieferanten_id = '$lieferanten_id'
-			 ORDER BY produkte.lieferanten_id, produkte.produktgruppen_id, produkte.name";
-    $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nicht aus DB laden..");
-    return $result;
+function sql_produkte_von_lieferant_ids( $lieferanten_id ) {
+  $sql = "
+    SELECT produkte.id as id
+    FROM produkte
+    LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
+    WHERE lieferanten_id = '$lieferanten_id'
+    ORDER BY produktgruppen.name, produkte.name
+  ";
+  return doSql($sql, LEVEL_ALL, "Konnte Produkte nicht aus DB laden..");
 }
 
 /**
