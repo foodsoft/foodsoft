@@ -42,7 +42,7 @@ function sql_update( $table, $id, $values ) {
   }
   $sql .= " WHERE id=$id";
   // echo "<br>sql_update: $sql<br>";
-  if( doSql( $sql, LEVEL_INPORTANT, "Update von Tabelle $table fehlgeschlagen: " ) )
+  if( doSql( $sql, LEVEL_IMPORTANT, "Update von Tabelle $table fehlgeschlagen: " ) )
     return $id;
   else
     return FALSE;
@@ -1104,6 +1104,7 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	   }
 	  }
 }
+
 ////////////////////////////////////
 //
 // lieferanten-funktionen:
@@ -2546,7 +2547,6 @@ function sql_insert_produktpreis (
   ) );
 }
 
-
 /**
  * Prüft, ob ein Preis noch gültig ist
  */
@@ -2754,6 +2754,28 @@ function sql_produktgruppen(){
     return $result;
 	
 }
+
+function optionen_produktgruppen( $selected = 0 ) {
+  $produktgruppen = sql_produktgruppen();
+  $output = "";
+  while( $pg = mysql_fetch_array($produktgruppen) ) {
+    echo "pg name: {$pg['name']}<br>";
+    $id = $pg['id'];
+    $output .= "<option value='$id'";
+    if( $selected == $id ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">{$pg['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    $output = "<option value='0' selected>(bitte Produktgruppe wählen)</option>" . $output;
+  }
+  return $output;
+}
+
+
+
 /**
  *  Produktinformationen abfragen
  */
@@ -2763,6 +2785,15 @@ function getProdukt($produkt_id){
     return mysql_fetch_array($result);
 }
 
+function references_produkt( $produkt_id ) {
+  $row = sql_select_single_row( " SELECT (
+     ( SELECT count(*) FROM bestellvorschlaege WHERE produkt_id=$produkt_id )
+   + ( SELECT count(*) FROM bestellzuordnung WHERE produkt_id=$produkt_id )
+  ) as count
+  " );
+  return $row['count'];
+}
+
 function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
   $produkt_row = sql_select_single_row( "
     SELECT produkte.id
@@ -2770,6 +2801,7 @@ function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
          , produkte.name
          , produkte.lieferanten_id
          , produkte.notiz
+         , produktgruppen.id as produktgruppen_id
          , produktgruppen.name as produktgruppen_name
     FROM produkte
     LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
@@ -2818,6 +2850,12 @@ function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
   return $produkt_row;
 }
 
+function sql_delete_produkt( $produkt_id ) {
+  $count = references_produkt( $produkt_id );
+  need( $count == 0, 'Produkteintrag nicht löschbar, da in Bestellungen oder -vorlagen benutzt!' );
+  doSql( "DELETE FROM produktpreise WHERE produkt_id=$produkt_id" );
+  doSql( "DELETE FROM produkte WHERE id=$produkt_id" );
+}
 
 /**
  *  Produktinformationen updaten
