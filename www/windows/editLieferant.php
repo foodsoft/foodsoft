@@ -79,10 +79,6 @@
 			  <table>
 			   <tr>
 				    <td><label>Name:</label></td>
-						<td><? echo $name; ?></td>
-				 </tr>
-			   <tr>
-				    <td><label>Name:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $name; ?>" name='name'></td>
 				 </tr>
 			   <tr>
@@ -130,11 +126,9 @@
             <?  if( $ro or $done ) { ?>
               <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
             <? } ?>
+            </td>
 				 </tr>
 			</table>
     </fieldset>
 	 </form>
-
-</body>
-</html>
 
