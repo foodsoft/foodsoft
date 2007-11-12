@@ -81,16 +81,11 @@
       <legend><? echo ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ); ?></legend>
       <? echo $msg . $problems; ?>
 			  <table>
-         <tr>
+          <tr>
            <td><label>Lieferant:</label></td>
            <td><? echo $lieferant_name; ?></td>
-			   <tr>
-		   <tr>
-			    <td valign="top"><label>Artikelnummer:</label></td>
-					<td>
-						 <input <? echo $ro_tag; ?> name="artikelnummer" type='text' size='10' value='<? echo $artikelnummer; ?>'> (falls bekannt)
-					</td>
-			 </tr>	 
+			    </tr>
+         <tr>
 				    <td><label>Bezeichnung:</label></td>
 						<td><input <? echo $ro_tag; ?> type='text' size='52' value="<? echo $name; ?>" name='name'
        <? if( $produkt_id ) { ?>
@@ -98,7 +93,13 @@
                 onBlur="document.getElementById('name_change_warning').style.display='none';"
        <? } ?>
                 ></td>
-				 </tr>
+         </tr>
+		     <tr>
+			    <td valign="top"><label>Artikelnummer:</label></td>
+					<td>
+						 <input <? echo $ro_tag; ?> name="artikelnummer" type='text' size='10' value='<? echo $artikelnummer; ?>'>
+					</td>
+			   </tr>	 
 		     <tr>
 			     <td><label>Produktgruppe <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?window=insertProduktgruppe','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></label></td>
 					<td>

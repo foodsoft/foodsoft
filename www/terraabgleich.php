@@ -7,15 +7,15 @@
 // macht ggf. verbesserungsvorschlaege und erlaubt aenderungen
 //
 // ausgabe wird durch folgende variable bestimmt:
-// - produktid: fuer detailanzeige ein produkt
+// - produkt_id: fuer detailanzeige ein produkt
 // - bestell_id: erlaubt auswahl preiseintrag fuer diese bestellung (nur mit produktid)
 // - lieferanten_id: anzeige aller produkte eines lieferanten
 
 assert( $angemeldet ) or exit();
 
-// nur_fuer_dienst(4,5);   // alle anschauen lassen (aber aktionen sind eingeschraenkt!)
+$editable = ( ! $readonly and ( $dienst == 4 ) );
 
-$detail = get_http_var('produktid','u',NULL,true);
+$detail = get_http_var('produkt_id','u',NULL,true);
 
 get_http_var('bestell_id','u',false,true);
 
@@ -30,23 +30,22 @@ setWindowSubtitle( $subtitle );
 setWikiHelpTopic( "foodsoft:datenbankabgleich" );
 
 if( $detail ) {
-  $result = mysql_query( "SELECT * FROM produkte WHERE id='$produktid'" )
-    or error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-  $row = mysql_fetch_array($result)
-    or error ( __LINE__, __FILE__, "Produkt nicht gefunden" );
-  $lieferanten_id = $row['lieferanten_id'];
+  $produkt = sql_produkt_details( $produkt_id );
+  $lieferanten_id = $produkt['lieferanten_id'];
 } else {
-  need_http_var( 'lieferanten_id','u',false,true );
+  need_http_var( 'lieferanten_id','u',true );
+}
+
+if( $editable ) {
+  get_http_var( 'action','w','' );
+} else {
+  $action = '';
 }
 
 
 if( $detail ) {
 
-  get_http_var( 'action','w' );
-
   if( $action == 'zeitende_setzen' ) {
-    fail_if_readonly();
-    nur_fuer_dienst_IV();
     need_http_var('preis_id','u');
     need_http_var('zeitende','H');
     sql_update( 'produktpreise', $preis_id, array( 'zeitende' => $zeitende ) );
@@ -55,38 +54,34 @@ if( $detail ) {
   if( $bestell_id ) {
 
     if( $action == 'preiseintrag_waehlen' ) {
-      fail_if_readonly();
-      nur_fuer_dienst_IV();
       need_http_var( 'preis_id','u' );
-      $result = mysql_query(
-        "UPDATE bestellvorschlaege
+      doSql ( "UPDATE bestellvorschlaege
          SET produktpreise_id='$preis_id'
-         WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produktid' " )
-        or error ( __LINE__, __FILE__, "Setzen des neuen Preiseintrags fehlgeschlagen" );
+         WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produkt_id'
+      ", LEVEL_IMPORTANT, "Auswahl Preiseintrag fehlgeschlagen: " );
     }
 
-    $result = mysql_query(
-      "SELECT * FROM bestellvorschlaege
-       WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produktid"
-    ) or error ( __LINE__, __FILE__, "Suche nach Bestellvorschlag fehlgeschlagen" );
-    $row = mysql_fetch_array( $result )
-      or error ( __LINE__, __FILE__, "Bestellvorschlag nicht gefunden" );
-    $preisid_in_bestellvorschlag = $row['produktpreise_id'];
+    $bestellvorschlag = sql_select_single_row( "
+      SELECT * FROM bestellvorschlaege
+      WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produkt_id
+    ", LEVEL_IMPORTANT, "Bestellvorschlag nicht gefunden: " );
+    $preisid_in_bestellvorschlag = $bestellvorschlag['produktpreise_id'];
 
-    $result = mysql_query( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" )
-      or error ( __LINE__, __FILE__, "Suche nach Gesamtbestellung fehlgeschlagen" );
-    $row = mysql_fetch_array( $result )
-      or error ( __LINE__, __FILE__, "Gesamtbestellung nicht gefunden" );
-    $bestellung_name = $row['name'];
+    $gesamtbestellung = sql_bestellung( $bestell_id );
+    $bestellung_name = $gesamtbestellung['name'];
+  }
 
+  // eventuell neue Artikelnummer setzen:
+  //
+  if( $action == 'artikelnummer_setzen' ) {
+    need_http_var( 'anummer', 'H' );
+    sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
   }
 
   // eventuell neuen preiseintrag vornehmen:
   //
 
   if( $action == 'neuer_preiseintrag' ) {
-    fail_if_readonly();
-    nur_fuer_dienst_IV();
 
     need_http_var('newfcmult','f');
     need_http_var('newfceinheit','M');
@@ -101,23 +96,23 @@ if( $detail ) {
     need_http_var('newliefereinheit','M');
     get_http_var('newnotiz','M') or $newnotiz = '';
 
-    ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produktid" ) )
+    ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produkt_id" ) )
       || error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
 
-    ( $terrapreise = mysql_query( "SELECT * FROM produktpreise WHERE produkt_id=$produktid ORDER BY zeitstart" ) )
+    ( $terrapreise = mysql_query( "SELECT * FROM produktpreise WHERE produkt_id=$produkt_id ORDER BY zeitstart" ) )
       || error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
 
-    if( mysql_query( "UPDATE produkte SET einheit='$newfcmult $newfceinheit' WHERE id=$produktid" ) ) {
+    if( mysql_query( "UPDATE produkte SET einheit='$newfcmult $newfceinheit' WHERE id=$produkt_id" ) ) {
       // echo "<div class='ok'>neue Einheit: $newfcmult $newfceinheit</div>";
     } else {
       echo "<div class='warn'>FEHLGESCHLAGEN: neue Einheit: $newfcmult $newfceinheit</div>";
     }
-    if( mysql_query( "UPDATE produkte SET name='$newfcname' WHERE id=$produktid" ) ) {
+    if( mysql_query( "UPDATE produkte SET name='$newfcname' WHERE id=$produkt_id" ) ) {
       // echo "<div class='ok'>neue Bezeichnung: $newfcname</div>";
     } else {
       echo "<div class='warn'>FEHLGESCHLAGEN: neue Bezeichnung: $newfcname</div>";
     }
-    if( mysql_query( "UPDATE produkte SET notiz='$newnotiz' WHERE id=$produktid" ) ) {
+    if( mysql_query( "UPDATE produkte SET notiz='$newnotiz' WHERE id=$produkt_id" ) ) {
       // echo "<div class='ok'>neue Notiz: $newnotiz</div>";
     } else {
       echo "<div class='warn'>FEHLGESCHLAGEN: neue Notiz: $newnotiz</div>";
@@ -149,7 +144,7 @@ if( $detail ) {
           , liefereinheit
           , verteileinheit )
           VALUES (
-            $produktid
+            $produkt_id
           , '$newfcpreis'
           , '$newfczeitstart'
           , NULL
@@ -168,15 +163,6 @@ if( $detail ) {
     }
   }
 
-  // eventuell neue Artikelnummer setzen:
-  //
-  if( $action == 'artikelnummer_setzen' ) {
-    fail_if_readonly();
-    nur_fuer_dienst_IV();
-    need_http_var( 'anummer','H' );
-    sql_update( 'produkte', $produktid, array( 'artikelnummer' => $anummer ) );
-  }
-
 }
 
   // get_http_var( 'order_by','w' ) or $order_by = 'name';
@@ -190,7 +176,7 @@ if( $detail ) {
 
   $filter = "lieferanten_id='$lieferanten_id'";
   if( $detail ) {
-    $filter = "$filter AND id='$produktid'";
+    $filter = "$filter AND id='$produkt_id'";
   }
   // echo 'filter: ' . $filter;
   $produkte = mysql_query( "SELECT * FROM produkte WHERE $filter ORDER BY $order_by" )
@@ -237,7 +223,7 @@ if( $detail ) {
   // das dieses Skript neu aufruft und dabei einen beliebigen SQL-befehl uebergibt
   //
   function mysql_repair_link( $fields, $kommentar, $domid = '' ) {
-    global $produktid, $self_fields;
+    global $produkt_id, $self_fields;
     echo "
       <div class='warn' style='padding:0.1ex 1em 0.1ex 2em;'>
         <form method='post' action='" . self_url() . "'>" . self_post() . "
@@ -258,7 +244,7 @@ if( $detail ) {
     echo "\n<tr id='row$outerrow'>";
     $anummer = $artikel['artikelnummer'];
     $name = $artikel['name'];
-    $produktid = $artikel['id'];
+    $produkt_id = $artikel['id'];
     $notiz = $artikel['notiz'];
 
     // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
@@ -282,15 +268,15 @@ if( $detail ) {
 
     ?> <th class='outer' style='vertical-align:top;'> <?
     if( $detail ) {
-      echo "$anummer<br>id:&nbsp;$produktid";
+      echo "$anummer<br>id:&nbsp;$produkt_id";
     } else {
       echo "
         <a class='blocklink'
         href=\"javascript:neuesfenster('" . self_url()
-          . "&produktid=$produktid','produktdetails')\"
+          . "&produkt_id=$produkt_id','produktdetails')\"
         title='Details...'
         onclick=\"document.getElementById('row$outerrow').className='modified';\"
-        >$anummer<br>id:&nbsp;$produktid</a>
+        >$anummer<br>id:&nbsp;$produkt_id</a>
       ";
     }
     ?> </th><td class="outer" style="padding-bottom:1ex;"> <?
@@ -299,7 +285,7 @@ if( $detail ) {
     // produktpreise abfragen und (ggf.) anzeigen:
     //
     $produktpreise = mysql_query(
-      "SELECT * FROM produktpreise WHERE produkt_id='$produktid' ORDER BY produkt_id,zeitstart"
+      "SELECT * FROM produktpreise WHERE produkt_id='$produkt_id' ORDER BY produkt_id,zeitstart"
     ) or error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
 
     if( $detail ) {
@@ -572,7 +558,7 @@ if( $detail ) {
                 <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
                  onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
                  >
-                <input type='hidden' name='produktid' value='$produktid'>
+                <input type='hidden' name='produkt_id' value='$produkt_id'>
                 <input type='hidden' name='produktname' value='$name'>
               </form>
             </td>
