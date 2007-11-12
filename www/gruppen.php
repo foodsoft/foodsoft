@@ -5,30 +5,30 @@
 assert( $angemeldet ) or exit();
 
 // ggf. Aktionen durchf¸hren (z.B. Gruppe lˆschen...)
-get_http_var('action','w');
-if( $action == 'delete' ) {
-  fail_if_readonly();
-  nur_fuer_dienst(5);
-  need_http_var('gruppen_id','u');
-
-  $row = sql_gruppendaten( $gruppen_id );
-
-  $kontostand = kontostand( $row['id'] );
-  if( abs($kontostand) > 0.005 ) {
-    ?>
-      <div class='warn'>Kontostand (<? echo $kontostand; ?> EUR) ist nicht null: L&ouml;schen nicht m&ouml;glich!</div>
-    <?
-  } elseif( $row['mitgliederzahl'] != 0 ) {
-    ?>
-      <div class='warn'>Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich (Sockelbetrag!)</div>
-      <div class='warn'>(bitte erst auf null setzen, um Sockelbetrag zu verbuchen!)</div>
-    <?
-  } else {
-    $sql = "UPDATE bestellgruppen SET aktiv=0 WHERE id='$gruppen_id'";
-	doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellgruppe nicht l&ouml;schen");
-  }
+if(get_http_var('action','w')){
+   if( $action == 'delete' ) {
+     fail_if_readonly();
+     nur_fuer_dienst(5);
+     need_http_var('gruppen_id','u');
+   
+     $row = sql_gruppendaten( $gruppen_id );
+   
+     $kontostand = kontostand( $row['id'] );
+     if( abs($kontostand) > 0.005 ) {
+       ?>
+         <div class='warn'>Kontostand (<? echo $kontostand; ?> EUR) ist nicht null: L&ouml;schen nicht m&ouml;glich!</div>
+       <?
+     } elseif( $row['mitgliederzahl'] != 0 ) {
+       ?>
+         <div class='warn'>Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich (Sockelbetrag!)</div>
+         <div class='warn'>(bitte erst auf null setzen, um Sockelbetrag zu verbuchen!)</div>
+       <?
+     } else {
+       $sql = "UPDATE bestellgruppen SET aktiv=0 WHERE id='$gruppen_id'";
+   	doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellgruppe nicht l&ouml;schen");
+     }
+   }
 }
-
   // Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu kˆnnen
   ?>
     <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
@@ -41,20 +41,55 @@ if( $action == 'delete' ) {
 
   if( $hat_dienst_V and ! $readonly ) {
     ?>
-      <tr>
-        <td>
-          <input type='button' value='Neue Gruppe' class='bigbutton'
-          onClick="window.open('index.php?window=insertGroup','insertGroup','width=390,height=420,left=200,top=100').focus();"></td>
-        <td valign='middle' class='smallfont'>Eine neue Bestellgruppe hinzuf√ºgen...</td>
-      </tr>
+    <div id='transaction_button' style='padding-bottom:1em;'>
+    <span class='button'
+      onclick="document.getElementById('transaction_form').style.display='block';
+               document.getElementById('transaction_button').style.display='none';"
+      >Neue Gruppe...</span>
+    </div>
+
+    <div id='transaction_form' style='display:none;padding-bottom:1em;'>
+      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+      <? echo self_post(); ?>
+      <fieldset>
+      <legend>
+        <img src='img/close_black_trans.gif' class='button'
+        onclick="document.getElementById('transaction_button').style.display='block';
+                 document.getElementById('transaction_form').style.display='none';">
+	Neue Gruppe
+      </legend>
+      Nr: <input type="text" size="4" name="newNumber"/>
+      Name: <input type="text" size="12" name="newName"/>
+      <input type="submit" value="Anlegen"/>
+      </fieldset>
+      </form>
+    </div>
+
     <?
+	  if(get_http_var('newNumber', 'u')){
+		  $problems="";
+		  $msg="";
+		  get_http_var('newName');
+		      // vorl‰ufiges Passwort f¸r die Bestellgruppe erzeugen...
+		      $pwd = strval(rand(1010,9999));
+
+		      if(sql_insert_group($newNumber, $newName, $pwd)){
+			//ToDo Forward to corresponding 
+			      //gruppen_mitglieder
+			$msg = $msg . "
+			  <div class='ok'>Gruppe erfolgreich angelegt</div>
+			  <div class='ok'>Vorl&auml;ufiges Passwort: <b>$pwd</b> (bitte notieren!)</div>
+			";
+		      }
+              echo $problems; echo $msg; 
+	  }
+
   }
 
 // Hier ‰ndern. Code in views verschieben, details in editGroup verschieben
    $show_member_details=FALSE;
 
   ?>
-    </table>
 
  
  

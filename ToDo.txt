@@ -1,3 +1,8 @@
+Fehler: Wenn Bestellung ohne gültiges Produkt (alle ohne Preis)
+erzeugt wird, macht die Foodsoft blödsinn.
+
+Diverses Warnungen beim Eintragen neuer Lieferanten und Produkte.
+
 Wenn ein Formular sich selbst wieder aufrufen soll, self_url()
 verwenden.
 

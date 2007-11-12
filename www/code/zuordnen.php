@@ -1019,7 +1019,91 @@ function optionen_gruppen(
   }
   return $output;
 }
+/**
+ * Überprüft, ob die gewählte Gruppennummer verfügbar ist.
+ * suche $id = $newNummer + n * 1000
+ * dabei pruefen, ob noch aktive gruppe derselben nummer existiert
+ *
+ * Rückgabe= $newNummer + n * 1000
+ *
+ * Wenn etwas nicht klappt, enthält Problems eine entsprechende
+ * html-Warnung
+ */
+function check_new_group_nr($newNummer){
+    global $problems;
+    if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
+      $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
+    }
+    $id = $newNummer;
+    while( true ) {
+	    $sql="SELECT * FROM bestellgruppen WHERE id='$id'" ;
+	    $result=doSql($sql, LEVEL_ALL, "Suche in Bestellgruppen fehlgeschlagen");
+      if( ! $result ) {
+        $problems = $problems . "<div class='warn'>Suche in bestellgruppen fehlgeschlagen: </div>";
+        break;
+      }
+      $row = mysql_fetch_array( $result );
+      if( ! $row )
+        break;
+      if( $row['aktiv'] > '0' )
+        $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
+      $id = $id + 1000;
+    }
+    if($problems!=""){
+	    return FALSE;
+    } else {
+	    return $id;
+    }
 
+}
+
+/**
+ * Legt neue Gruppe an
+ * macht aber erst ein paar checks
+ *
+ * Bitte zuvor $problems und $msg initialisieren
+ *
+ * Wenn etwas nicht stimmt, ist $problems gesetzt und
+ * die Funktion gibt false zurück.
+ *
+ * $msg könnte auch Hinweise enthalten
+ */
+
+function sql_insert_group($newNumber, $newName, $pwd){
+	global $problems, $msg, $crypt_salt;
+
+	  $newNumber = check_new_group_nr($newNumber) ;
+
+	  if($newNumber!==FALSE){
+
+	    if ($newName == "")
+	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
+
+	    // bis auf weiteres: Gruppenname beginnt mit Gruppennummer:
+	    //
+	    sscanf( $newName, "%d %s", &$n, &$s );
+	    if( ( ! $s ) || ( $n != $newNumber ) ) {
+	      $newName = "$newNumber $newName";
+	      $msg = $msg . "<div class='warn'>Gruppennummer wurde in Namen eingef&uuml;gt</div>";
+	    }
+
+		    // Wenn keine Fehler, dann einfügen...
+	    if( ! $problems ) {
+
+
+		$sql= "INSERT INTO bestellgruppen 
+				 (id, aktiv, name, passwort)
+				 VALUES ( $newNumber
+					  , 1 
+					  , '".mysql_escape_string($newName)."'
+					  , '".crypt($pwd,$crypt_salt)."')";
+		doSql($sql,LEVEL_IMPORTANT, "Eintragen einer neuen Gruppe fehlgeschlagen");
+		return TRUE;
+	   } else {
+		   return FALSE;
+	   }
+	  }
+}
 ////////////////////////////////////
 //
 // lieferanten-funktionen:
