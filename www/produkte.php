@@ -21,10 +21,12 @@
     if( $editable ) {
       ?>
         <tr>
-          <td><input type='button' value='Neues Produkt eintragen' class='bigbutton' onClick="window.open('index.php?window=insertProdukt','insertProdukt','width=450,height=500,left=100,top=100').focus()"></td>
-        </tr><tr>
+          <td><input type='button' value='Neues Produkt eintragen' class='bigbutton' onClick="window.open('index.php?window=editProdukt&lieferanten_id=<? echo $lieferanten_id; ?>','editProdukt','width=500,height=500,left=100,top=100').focus()"></td>
+        </tr><!-- momentan ausser Betrieb (Einheiten nicht korrekt implementiert!)
+          <tr>
           <td><input type='button' value='Alle Produkte bearbeiten' class='bigbutton' onClick="document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();"></td>
         </tr>
+        -->
       <?
     }
     ?>
@@ -47,11 +49,10 @@
   <?
   $lieferanten = sql_lieferanten();
   while( $row = mysql_fetch_array($lieferanten) ) {
-    ?> <tr><td style='font-weight:bold;'> <?
     if( $row['id'] != $lieferanten_id ) {
-      echo "<a class='tabelle' href='" . self_url('lieferanten_id') . "&lieferanten_id={$row['id']}'>{$row['name']}</a>";
+      echo "<tr><td><a class='tabelle' href='" . self_url('lieferanten_id') . "&lieferanten_id={$row['id']}'>{$row['name']}</a>";
     } else {
-      echo $row['name'];
+      echo "<tr class='active'><td>{$row['name']}";
     }
     ?>  </td><td> <? echo $row['anzahl_produkte']; ?> </td>
       </tr>
@@ -69,9 +70,6 @@
   if( ! $lieferanten_id )
     return;
 
-  $lieferant_name = lieferant_name($lieferanten_id);
-  $produkte = sql_produkte_von_lieferant_ids($lieferanten_id);
-
 
   /////////////////////////////
   //
@@ -84,6 +82,11 @@
   $edit_all = false;
   if( $action == "edit_all" and $editable ) { 
     $edit_all = true;
+  }
+
+  if( $action == 'delete' and $editable ) {
+    need_http_var('produkt_id','u');
+    sql_delete_produkt( $produkt_id );
   }
 
   if( ($action == "change_all") and $editable ) {
@@ -123,11 +126,16 @@
   // Produkttabelle anzeigen:
   //
   /////////////////////////////
-  
+
+  $lieferant_name = lieferant_name($lieferanten_id);
+  $produkte = sql_produkte_von_lieferant_ids($lieferanten_id);
+
   ?>
     <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu k�nnen -->
     <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
       <? echo self_post(); ?>
+      <input type='hidden' name='action' value=''>
+      <input type='hidden' name='produkt_id' value='0'>
     </form>
   <?
 
@@ -162,7 +170,7 @@
           </h3></th>
         </tr><tr>
           <th> </th>
-          <th title='generische Produktbezeichnung'>Name</th>
+          <th title='generische Produktbezeichnung'>Bezeichnung</th>
           <th>Produktgruppe</th>
           <th title='aktuelle Details zum Produkt'>Notiz</th>
           <th>Gebindegroesse</th>
@@ -178,7 +186,7 @@
         <tr>
           <th colspan="7"><h3>Produktübersicht von <?php echo $lieferant_name?></h3></th>
         </tr><tr>
-          <th>Name</th>
+          <th>Bezeichnung</th>
           <th>Produktgruppe</th>
           <th>Einheit</th>
           <th>Notiz</th>
@@ -192,6 +200,7 @@
   while( $row = mysql_fetch_array($produkte) ) {
     $id = $row['id'];
     $produkt = sql_produkt_details( $id );
+    $references = references_produkt( $id );
 
     if (!$edit_all) { 
       ?>
@@ -221,10 +230,10 @@
           <td valign='top'>
           <? if( $editable ) { ?>
             <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
-            <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=400,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
-            <!-- Produkte nicht loeschen, da dynamische Abrechnung Daten ben�tigt:
-              <a class='png' href=\"javascript:deleteProdukt({$row['id']})\"><img src='img/b_drop.png' border='0' alt='Gruppe l�schen' titel='Gruppe l�schen'/></a>
-            -->
+            <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=500,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
+            <? if( $references == 0 ) { ?>
+              <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0' alt='Produkt löschen' title='Produkt löschen'/></a>
+            <? } ?>
           <? } ?>
           </td>
         </tr>
@@ -273,12 +282,12 @@
     ?> <tr> <?
     if ($edit_all) {
       ?>
-        <th colspan="8">
+        <th colspan="9">
         <input type="submit" value="Änderungen speichern"> &nbsp;| <a href="#" class="tabelle">nach oben</a>
       <?
     } else {
       ?>
-        <th colspan="9">
+        <th colspan="10">
           <input type="button" value="neue Bestellung" onClick="window.open('','insertBestellung','width=400,height=450,left=200,top=100').focus() ; document.forms['newBestellungForm'].submit();">
           &nbsp;| <a href="javascript:checkAll('newBestellungForm','',true)" class="tabelle">alle Produkte auswählen</a>
           &nbsp;| <a href="#" class="tabelle">nach oben</a>

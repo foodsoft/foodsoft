@@ -14,7 +14,7 @@
 			
 	    function deleteProdukt(produktID)
 			{
- 	       if (confirm('Soll das Produkt wirklich GELÖSCHT werden?')) { 
+ 	       if (confirm('Soll das Produkt wirklich GELÃ–SCHT werden?')) { 
 				    document.forms['reload_form'].action.value="delete";
 						document.forms['reload_form'].produkt_id.value=produktID;
 						document.forms['reload_form'].submit();
