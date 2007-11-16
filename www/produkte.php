@@ -205,7 +205,11 @@
     if (!$edit_all) { 
       ?>
         <tr>
+      <? if( $produkt['zeitstart'] ) { ?>
           <td valign="top"><input type="checkbox" name="bestelliste[]" value="<? echo $id; ?>"></td>
+      <?  } else { ?>
+          <td valign='top'> - </td>
+      <?  } ?>
           <td valign="top"><b><? echo $produkt['name']; ?></b></td>
           <td valign="top"><? echo $produkt['produktgruppen_name']; ?></td>
           <td valign="top"><? echo $produkt['notiz']; ?></td>

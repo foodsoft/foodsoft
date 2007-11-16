@@ -2568,7 +2568,7 @@ function sql_produktpreise2($produkt_id){
 	$query = "SELECT * FROM produktpreise 
 		WHERE produkt_id=".mysql_escape_string($produkt_id).
 		" ORDER BY zeitstart, zeitende, gebindegroesse";
-	return doSql($query, LEVEL_ALL, "Konnte Gebindegroessen nich aus DB laden..");
+	return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 /**
  *
@@ -3421,6 +3421,26 @@ function move_html( $id, $into_id ) {
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
 
+////////////////////////////////////
+//
+// Katalogsuche
+//
+////////////////////////////////////
+
+$ldap_handle = false;
+
+function ldap_bind() {
+  global $ldap_handle;
+  if( ! $ldap_handle ) {
+    $h = ldap_connect( $ldapuri );
+    if( not ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) )
+      return false;
+    if( not ldap_bind( $h ) )
+      return false;
+    $ldap_handle = $h
+  }
+  return $ldap_handle;
+}
 
 
 ////////////////////////////////////

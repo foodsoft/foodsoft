@@ -35,6 +35,9 @@ if( $detail ) {
 } else {
   need_http_var( 'lieferanten_id','u',true );
 }
+$lieferanten_name = lieferanten_name( $lieferanten_id );
+$is_terra = ( $row['name'] == 'Terra' );
+
 
 if( $editable ) {
   get_http_var( 'action','w','' );
@@ -162,57 +165,34 @@ if( $detail ) {
       echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN: " . mysql_error() . "</div>";
     }
   }
-
 }
 
   // get_http_var( 'order_by','w' ) or $order_by = 'name';
-  $order_by = 'name';
+  // $order_by = 'name';
 
-  $result = mysql_query( "SELECT * FROM lieferanten WHERE id='$lieferanten_id'" )
-    or error ( __LINE__, __FILE__, "Suche nach Lieferant fehlgeschlagen" );
-  $row = mysql_fetch_array($result)
-    or error ( __LINE__, __FILE__, "Lieferant nicht gefunden" );
-  $is_terra = ( $row['name'] == 'Terra' );
-
-  $filter = "lieferanten_id='$lieferanten_id'";
   if( $detail ) {
-    $filter = "$filter AND id='$produkt_id'";
+    $produkt_ids = array( $produkt_id );
+  } else {
+    $result = sql_produkte_von_lieferant_ids( $lieferanten_id ) {
+    $produkt_ids = mysql2array( $result, 'id', 'id' );
   }
-  // echo 'filter: ' . $filter;
-  $produkte = mysql_query( "SELECT * FROM produkte WHERE $filter ORDER BY $order_by" )
-    or error ( __LINE__, __FILE__, "Suche nach Produkten fehlgeschlagen" );
 
   if( $is_terra and $ldapuri != '' ) {
-    // echo "<br>connecting... ";
-    $ldaphandle = ldap_connect( $ldapuri );
-    // echo " result is: " . $ldaphandle  . " <br>";
-
-    // echo "<br>setting protocol version 3...";
-    $rv = ldap_set_option( $ldaphandle, LDAP_OPT_PROTOCOL_VERSION, 3 );
-    // echo " result is: " . $rv  . " <br>";
-
-    // echo "<br>binding to server...";
-    $rv = ldap_bind( $ldaphandle );
-    // echo " result is: " . $rv  . " <br>";
-  } else {
-    $ldaphandle = false;
+    ldap_bind();
   }
 
   ?>
     <table width="100%">
-      <colgroup>
-        <col width="7%">
-        <col>
-      </colgroup>
+      <colgroup> <col width="7%"> <col> </colgroup>
       <tr>
-        <th class="outer">A-Nr.</th>
-        <th class="outer">Artikeldaten</th>
+        <th class="outer">A-Nr.</th> <th class="outer">Artikeldaten</th>
       </tr>
   <?
 
   $outerrow=0;
-  while ( ++$outerrow < 9999 && ( $artikel = mysql_fetch_array( $produkte ) ) ) {
-    do_artikel();
+  foreach( $produkt_ids as $produkt_id ) {
+    $outerrow++;
+    do_artikel( $produkt_id );
   }
 
   ?> </table> <?
@@ -223,33 +203,44 @@ if( $detail ) {
   // das dieses Skript neu aufruft und dabei einen beliebigen SQL-befehl uebergibt
   //
   function mysql_repair_link( $fields, $kommentar, $domid = '' ) {
-    global $produkt_id, $self_fields;
-    echo "
+    ?>
       <div class='warn' style='padding:0.1ex 1em 0.1ex 2em;'>
-        <form method='post' action='" . self_url() . "'>" . self_post() . "
-          $self_fields
-          $fields
-          <input type='submit' name='submit' value='$kommentar'
-      " . ( $domid ? "onclick=\"document.getElementById('$domid').className='modified';\"" : "" ) 
-      . "></form></div>";
+        <form method='post' action='<? echo self_url(); ?>'>
+          <? echo self_post(); echo $fields; ?>
+          <input type='submit' name='submit' value='<? echo $kommentar; ?>'
+          <?
+            if( $domid )
+              echo " onclick=\"document.getElementById('$domid').className='modified';\";
+          ?>
+          >
+        </form>
+      </div>
+    <?
   }
 
   // do_artikel
   // wird aus der hauptschleife aufgerufen, um einen artikel aus der Produktliste anzuzeigen
   //
-  function do_artikel() {
+  function do_artikel( $produkt_id ) {
     global $outerrow, $ldaphandle, $ldapbase, $artikel, $detail, $mysqljetzt, $is_terra
-         , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag, $self_fields;
+         , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag;
 
     echo "\n<tr id='row$outerrow'>";
+
+    $artikel = sql_produkt_details( $produkt_id );
+    $preise = sql_produktpreise( $produkt_id );
+
     $anummer = $artikel['artikelnummer'];
     $name = $artikel['name'];
-    $produkt_id = $artikel['id'];
     $notiz = $artikel['notiz'];
 
     // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
     //
     $neednewprice = FALSE;
+
+    // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
+    //
+    $neednewarticlenumber = FALSE;
 
     // werte fuer neuen preiseintrag initialisieren:
     //
@@ -261,10 +252,6 @@ if( $detail ) {
     $newfc['bnummer'] = FALSE;
     $newfc['mwst'] = FALSE;
     $newfc['pfand'] = FALSE;
-
-    // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
-    //
-    $neednewarticlenumber = FALSE;
 
     ?> <th class='outer' style='vertical-align:top;'> <?
     if( $detail ) {
@@ -281,12 +268,9 @@ if( $detail ) {
     }
     ?> </th><td class="outer" style="padding-bottom:1ex;"> <?
 
+    ////////////////////////
+    // Preishistorie:
     //
-    // produktpreise abfragen und (ggf.) anzeigen:
-    //
-    $produktpreise = mysql_query(
-      "SELECT * FROM produktpreise WHERE produkt_id='$produkt_id' ORDER BY produkt_id,zeitstart"
-    ) or error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
 
     if( $detail ) {
       ?>
@@ -296,9 +280,10 @@ if( $detail ) {
           </img>
       <?
       if( $bestell_id ) {
-        echo "Preiseintrag w&auml;hlen f&uuml;r Bestellung $bestellung_name:";
+        ?> Preiseintrag wählen für Bestellung <?
+        echo "$bestellung_name:";
       } else {
-        echo "Preis-Historie:";
+        ?> Preis-Historie: <?
       }
       ?>
         </div>
@@ -309,16 +294,16 @@ if( $detail ) {
               <th>B-Nr</th>
               <th>von</th>
               <th>bis</th>
-              <th title='Liefer-Einheit: f&uuml;rs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
+              <th title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
               <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
               <th title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
-              <th title='Gebindegr&ouml;&szlig;e in V-Einheiten'>Gebinde</th>
+              <th title='Gebindegröße in V-Einheiten'>Gebinde</th>
               <th>MWSt</th>
               <th title='Pfand je V-Einheit'>Pfand</th>
               <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
       <?
       if( $bestell_id ) {
-        echo "<th title='Preiseintrag f&uuml;r Bestellung $bestellung_name'>Aktiv</th>";
+        echo "<th title='Preiseintrag für Bestellung $bestellung_name'>Aktiv</th>";
       }
       ?> </tr> <?
       while( $pr1 = mysql_fetch_array($produktpreise) ) {
@@ -338,9 +323,9 @@ if( $detail ) {
               <input type='hidden' name='action' value='zeitende_setzen'>
               <input type='hidden' name='zeitende' value='$mysqljetzt'>
               <input type='hidden' name='preis_id' value='{$pr1['id']}'>
-              <input type='submit' name='submit' value='Abschliessen'
+              <input type='submit' name='submit' value='Abschließen'
                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
-                title='Preisintervall abschliessen (z.B. falls Artikel nicht lieferbar!)'>
+                title='Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)'>
             </form>
           ";
         }
@@ -374,7 +359,7 @@ if( $detail ) {
                 <input type='hidden' name='preis_id' value='<? echo $pr1['id']; ?>'>
                 <input type='submit' name='setzen' value='setzen' class='buttonup'
                   style='width:5em;'
-                  title='diesen Preiseintrag f&uuml;r Bestellung <? echo $bestellung_name; ?> w&auml;hlen'>
+                  title='diesen Preiseintrag für Bestellung <? echo $bestellung_name; ?> auswählen'>
               </form>
             <?
           }
