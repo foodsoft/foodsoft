@@ -36,7 +36,7 @@ if( $detail ) {
   need_http_var( 'lieferanten_id','u',true );
 }
 $lieferanten_name = lieferanten_name( $lieferanten_id );
-$is_terra = ( $row['name'] == 'Terra' );
+$is_terra = ( $lieferanten_name == 'Terra' );
 
 
 if( $editable ) {
@@ -48,10 +48,19 @@ if( $editable ) {
 
 if( $detail ) {
 
+  // formulare verarbeiten:
+
   if( $action == 'zeitende_setzen' ) {
     need_http_var('preis_id','u');
     need_http_var('zeitende','H');
     sql_update( 'produktpreise', $preis_id, array( 'zeitende' => $zeitende ) );
+  }
+  if( $action == 'artikelnummer_setzen' ) {
+    need_http_var( 'anummer', 'H' );
+    sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
+  }
+  if( $action == 'neuer_preiseintrag' ) {
+    action_form_preiseintrag();
   }
 
   if( $bestell_id ) {
@@ -64,107 +73,13 @@ if( $detail ) {
       ", LEVEL_IMPORTANT, "Auswahl Preiseintrag fehlgeschlagen: " );
     }
 
-    $bestellvorschlag = sql_select_single_row( "
-      SELECT * FROM bestellvorschlaege
-      WHERE gesamtbestellung_id=$bestell_id AND produkt_id=$produkt_id
-    ", LEVEL_IMPORTANT, "Bestellvorschlag nicht gefunden: " );
-    $preisid_in_bestellvorschlag = $bestellvorschlag['produktpreise_id'];
+    $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
+    $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
 
     $gesamtbestellung = sql_bestellung( $bestell_id );
     $bestellung_name = $gesamtbestellung['name'];
   }
 
-  // eventuell neue Artikelnummer setzen:
-  //
-  if( $action == 'artikelnummer_setzen' ) {
-    need_http_var( 'anummer', 'H' );
-    sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
-  }
-
-  // eventuell neuen preiseintrag vornehmen:
-  //
-
-  if( $action == 'neuer_preiseintrag' ) {
-
-    need_http_var('newfcmult','f');
-    need_http_var('newfceinheit','M');
-    need_http_var('newfcgebindegroesse','u');
-    need_http_var('newfcmwst','f');
-    need_http_var('newfcpfand','f');
-    need_http_var('newfcpreis','f');
-    need_http_var('newfcname','M');
-    need_http_var('newfcbnummer','M');
-    need_http_var('newfczeitstart','M');
-    need_http_var('newliefermult','u');
-    need_http_var('newliefereinheit','M');
-    get_http_var('newnotiz','M') or $newnotiz = '';
-
-    ( $terraprodukt = mysql_query( "SELECT * FROM produkte WHERE id=$produkt_id" ) )
-      || error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-
-    ( $terrapreise = mysql_query( "SELECT * FROM produktpreise WHERE produkt_id=$produkt_id ORDER BY zeitstart" ) )
-      || error ( __LINE__, __FILE__, "Suche nach Produktpreisen fehlgeschlagen" );
-
-    if( mysql_query( "UPDATE produkte SET einheit='$newfcmult $newfceinheit' WHERE id=$produkt_id" ) ) {
-      // echo "<div class='ok'>neue Einheit: $newfcmult $newfceinheit</div>";
-    } else {
-      echo "<div class='warn'>FEHLGESCHLAGEN: neue Einheit: $newfcmult $newfceinheit</div>";
-    }
-    if( mysql_query( "UPDATE produkte SET name='$newfcname' WHERE id=$produkt_id" ) ) {
-      // echo "<div class='ok'>neue Bezeichnung: $newfcname</div>";
-    } else {
-      echo "<div class='warn'>FEHLGESCHLAGEN: neue Bezeichnung: $newfcname</div>";
-    }
-    if( mysql_query( "UPDATE produkte SET notiz='$newnotiz' WHERE id=$produkt_id" ) ) {
-      // echo "<div class='ok'>neue Notiz: $newnotiz</div>";
-    } else {
-      echo "<div class='warn'>FEHLGESCHLAGEN: neue Notiz: $newnotiz</div>";
-    }
-  
-    $pr0 = false;
-    while( $pr1 = mysql_fetch_array($terrapreise) ) {
-      $pr0 = $pr1;
-    }
-    if( $pr0 ) {
-      if( ( ! $pr0['zeitende'] ) or ( $pr0['zeitende'] > $newfczeitstart ) ) {
-        if( mysql_query( "UPDATE produktpreise SET zeitende='$newfczeitstart' WHERE id=" . $pr0['id'] ) ) {
-          // echo "<div class='ok'>letzter Preiseintrag ausgelaufen ab: $newfczeitstart</div>";
-        } else {
-          echo "<div class='warn'>FEHLGESCHLAGEN: konnte letzten Preiseintrag nicht abschliessen</div>";
-        }
-      }
-    }
-    if( mysql_query( "
-          INSERT INTO produktpreise
-          ( produkt_id
-          , preis
-          , zeitstart
-          , zeitende
-          , bestellnummer
-          , gebindegroesse
-          , mwst
-          , pfand
-          , liefereinheit
-          , verteileinheit )
-          VALUES (
-            $produkt_id
-          , '$newfcpreis'
-          , '$newfczeitstart'
-          , NULL
-          , '$newfcbnummer'
-          , '$newfcgebindegroesse'
-          , '$newfcmwst'
-          , '$newfcpfand'
-          , '$newliefermult $newliefereinheit'
-          , '$newfcmult $newfceinheit'
-          )"
-        )
-     ) {
-      // echo "<div class='ok'>neuer Preiseintrag gespreichert</div>";
-    } else {
-      echo "<div class='warn'>neuer Preiseintrag FEHLGESCHLAGEN: " . mysql_error() . "</div>";
-    }
-  }
 }
 
   // get_http_var( 'order_by','w' ) or $order_by = 'name';
@@ -175,10 +90,6 @@ if( $detail ) {
   } else {
     $result = sql_produkte_von_lieferant_ids( $lieferanten_id ) {
     $produkt_ids = mysql2array( $result, 'id', 'id' );
-  }
-
-  if( $is_terra and $ldapuri != '' ) {
-    ldap_bind();
   }
 
   ?>
@@ -379,7 +290,7 @@ if( $detail ) {
     //  - warnen, wenn kein aktuell gueltiger preis vorhanden
     //
     $pr0 = FALSE;
-    $prgueltig = FALSE; // flag: wir haben einen akzeptablen preiseintrag fuer diesen artikel
+    $prgueltig = FALSE; // aktuell gueltiger preiseintrag, oder FALSE
     while( $pr1 = mysql_fetch_array($produktpreise) ) {
       if( $pr0 ) {
         if( $pr0['zeitende'] == '' ) {
@@ -418,6 +329,7 @@ if( $detail ) {
     } else {
       $prgueltig = $pr0;
     }
+
 
     if( $prgueltig ) {
       preisdatenSetzen( &$prgueltig );
@@ -492,22 +404,14 @@ if( $detail ) {
         <td class='number'>" . sprintf( "%8.2lf", $fcpreis ) . " / $kan_fcmult $kan_fceinheit</td>
       ";
     } else {
-      ?>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-        <td><div class='warn' style='text-align:center;'>-</div></td>
-      <?
+      ?> <td colspan='7'><div class='warn' style='text-align:center;'> - - - </div></td> <?
     }
     ?> </tr></table> <?
 
-    //
     // Artikeldaten aus Katalog suchen und ggf anzeigen:
     //
-    if( $is_terra and $ldaphandle ) {
+    if( ( $katalogeintraege = katalogsuche( $artikel ) ) ) {
+      $katalogtreffer = $katalogeintraege['count'];
 
       $brutto = NULL;
       $mwst = NULL;
@@ -516,8 +420,6 @@ if( $detail ) {
       $kan_terraeinheit = NULL;
       $kan_terramult = NULL;
 
-      $katalogergebnis = ldap_search( $ldaphandle, $ldapbase, "(&(objectclass=terraartikel)(terraartikelnummer=$anummer))" );
-      $katalogeintraege = ldap_get_entries( $ldaphandle, $katalogergebnis );
 
       $anummer_form = "
         <table>

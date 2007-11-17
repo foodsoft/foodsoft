@@ -2551,6 +2551,36 @@ function sql_insert_produktpreis (
 }
 
 
+function action_form_produktpreis() {
+  global $verteilmult, $verteileinheit, $liefermult, $liefereinheit, $gebindegroesse, $produkt_id;
+
+  need_http_var('produkt_id','u');
+  need_http_var('verteilmult','f');
+  need_http_var('verteileinheit','w');
+  need_http_var('liefermult','u');
+  need_http_var('liefereinheit','w');
+  need_http_var('gebindegroesse','u');
+  need_http_var('mwst','f');
+  need_http_var('pfand','f');
+  need_http_var('preis','f');
+  need_http_var('name','H');
+  get_http_var('bestellnummer','H','');
+  need_http_var('zeitstart','H');
+  get_http_var('notiz','H','');
+
+  $produkt = sql_produkt_details( $produkt_id );
+
+  if( "$name" != $produkt['name'] or "$notiz" != $produkt['notiz'] ) {
+    sql_update( 'produkte', $produkt_id, array( 'name' => $name, 'notiz' => $notiz ) );
+  }
+
+  sql_insert_produktpreis(
+    $produkt_id, $preis, $zeitstart, $bestellnummer, $gebindegroesse, $mwst, $pfand
+  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit"
+  );
+}
+
+
 /**
  * Prüft, ob ein Preis noch gültig ist
  */
@@ -3429,17 +3459,56 @@ function move_html( $id, $into_id ) {
 
 $ldap_handle = false;
 
-function ldap_bind() {
-  global $ldap_handle;
+function init_ldap_handle() {
+  global $ldap_handle, $ldapuri;
+
   if( ! $ldap_handle ) {
-    $h = ldap_connect( $ldapuri );
-    if( not ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) )
+    echo "ldapuri: $ldapuri<br>";
+
+    if( ! $ldapuri ) {
       return false;
-    if( not ldap_bind( $h ) )
-      return false;
-    $ldap_handle = $h
+    }
+
+   $h = ldap_connect( $ldapuri );
+   if( ! ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) ) {
+     return false;
+   }
+   if( ! ldap_bind( $h ) ) {
+     return false;
+   }
+    $ldap_handle = $h;
   }
   return $ldap_handle;
+}
+
+// katalogsuche: sucht im lieferantenkatalog nach $produkt.
+// bisher nur fuer Terra.
+// $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
+//
+function katalogsuche( $produkt ) {
+  global $ldap_handle;
+  if( is_numeric( $produkt ) ) {
+    $produkt = sql_produkt_details( $produkt );
+  }
+  
+  $lieferant_name = lieferant_name( $lieferanten_id );
+  switch( $lieferant_name ) {
+    case 'Terra' :
+      if( ! ( $artikelnumner = $produkt['artikelnummer'] ) )
+        return false;
+      if( ! $ldap_handle ) {
+        init_ldap_handle();
+      }
+      if( $ldap_handle ) {
+        $katalogergebnis = ldap_search( $ldaphandle, $ldapbase, "(&(objectclass=terraartikel)(terraartikelnummer=$artikelnummer))" );
+        $katalogeintraege = ldap_get_entries( $ldaphandle, $katalogergebnis );
+        return $katalogeintraege;
+      }
+    break;
+    default:
+      return false;
+  }
+  return false;
 }
 
 
@@ -3469,15 +3538,6 @@ function ldap_bind() {
 // /**
 //  *
 //  */
-// function sql_bestellvorschlag($bestell_id, $produkt_id){
-// 	$query="SELECT produktpreis_id FROM bestellvorschlaege 
-// 	  	WHERE gesamtbestellung_id = ".$bestell_id.
-// 		"AND produkt_Id = ".$produkt_id;
-// 	$result = doSql($query, LEVEL_ALL, "Konnte Bestellpreis nicht laden");
-// 	$row = mysql_fetch_array($result);
-// 	return $row;
-// }
-// 
 // function nichtGeliefert($bestell_id, $produkt_id){
 //     $sql = "UPDATE bestellzuordnung INNER JOIN gruppenbestellungen 
 // 	    ON gruppenbestellung_id = gruppenbestellungen.id 

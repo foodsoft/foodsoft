@@ -1346,6 +1346,47 @@ function formular_buchung_gruppe_gruppe(
   return true;
 }
 
+function formular_artikelnummer( $default_display = '' ) {
+  ?>
+    <div style='display:none;' id='anummer_form' class='small_form'>
+      <form>
+        <fieldset class='small_form'>
+          <legend>
+            <img class='button' src='img/close_black_trans.gif' title='Ausblenden' onclick='anummer_off();'></img>
+            Artikelnummer &auml;ndern:
+          </legend>
+      <table>
+        <tr>
+          <td>
+            neue Artikel-Nr. setzen:
+          </td>
+          <td>
+            <form method='post' action='" . self_url() . "'>" . self_post() . "
+              <input type='hidden' name='action' value='artikelnummer_setzen'>
+              <input type='text' size='20' name='anummer' value='$anummer'>&nbsp;
+              <input type='submit' name='Submit' value='OK'
+               onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
+              >
+            </form>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            ...oder: Katalogsuche nach:
+          </td>
+          <td><form action='index.php?window=artikelsuche' method='post'>
+              <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
+               onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
+               >
+              <input type='hidden' name='produkt_id' value='$produkt_id'>
+              <input type='hidden' name='produktname' value='$name'>
+            </form>
+          </td>
+        </tr>
+      </table>
+  <?
+}
+
 /**
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)
