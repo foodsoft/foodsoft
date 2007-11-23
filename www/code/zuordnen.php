@@ -2479,24 +2479,33 @@ function sockel_gruppen_summe() {
 //
 /////////////////////////////////////////////
 
-
-/* sql_aktueller_produktpreis:
- *  liefert aktuellsten preis zu $produkt_id,
- *  oder false falls es keinen gueltigen preis gibt:
+/**
+ *
  */
-function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
+function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
   if( $zeitpunkt ) {
     $zeitfilter = " AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
                     AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = "";
   }
-  $sql = "SELECT *
-          FROM produktpreise 
-          WHERE produkt_id = $produkt_id $zeitfilter
-          ORDER BY zeitende DESC";
+  $query = "
+    SELECT produktpreise.*
+         , produkte.notiz
+    FROM produktpreise 
+    JOIN produkte ON produkte.id = produktpreise.produkt_id
+    WHERE produkt_id= $produkt_id $zeitfilter
+    ORDER BY zeitende, zeitstart DESC";
   // aktuellster preis ist immer vorn (auch NULL!)
-  $result = doSql( $sql, LEVEL_ALL, "Lesen der Produktpreise fehlgeschlagen: " );
+  return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
+}
+
+/* sql_aktueller_produktpreis:
+ *  liefert aktuellsten preis zu $produkt_id,
+ *  oder false falls es keinen gueltigen preis gibt:
+ */
+function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
+  $result = sql_produktpreise2( $produkt_id, $zeitpunkt );
   if( mysql_num_rows( $result ) < 1 )
     return false;
   $row = mysql_fetch_array( $result );
@@ -2591,15 +2600,6 @@ function is_expired_produktpreis($id){
    return (mysql_num_rows($result) == 0);
 }
 
-/**
- *
- */
-function sql_produktpreise2($produkt_id){
-	$query = "SELECT * FROM produktpreise 
-		WHERE produkt_id=".mysql_escape_string($produkt_id).
-		" ORDER BY zeitstart, zeitende, gebindegroesse";
-	return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
-}
 /**
  *
  */
@@ -2828,7 +2828,7 @@ function references_produkt( $produkt_id ) {
   return $row['count'];
 }
 
-function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
+function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
   $produkt_row = sql_select_single_row( "
     SELECT produkte.id
          , produkte.artikelnummer
@@ -2841,7 +2841,11 @@ function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
     LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
     WHERE produkte.id=$produkt_id
   " );
-  $preis_row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
+  if( $preis_id ) {
+    $preis_row = sql_select_single_row( "SELECT * FROM produktpreise WHERE id=$preis_id" );
+  } else {
+    $preis_row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
+  }
   if( $preis_row ) {
     preisdatenSetzen( & $preis_row );
     //
@@ -2869,6 +2873,7 @@ function sql_produkt_details( $produkt_id, $zeitpunkt = false ) {
     //               (zur Umrechnung (Konsumenten-)Nettopreis -> (Lieferanten-)Katalogpreis)
     $produkt_row['preiseinheit'] = $preis_row['preiseinheit'];
     $produkt_row['mengenfaktor'] = $preis_row['mengenfaktor'];
+    $produkt_row['nettolieferpreis'] = $preis_row['nettopreis'] * $preis_row['mengenfaktor'];
     //
     $produkt_row['pfand'] = $preis_row['pfand'];  // in Euro
     $produkt_row['mwst'] = $preis_row['mwst'];    // in Prozent
