@@ -1346,44 +1346,94 @@ function formular_buchung_gruppe_gruppe(
   return true;
 }
 
-function formular_artikelnummer( $default_display = '' ) {
+function mod_onclick( $id ) {
+  return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
+}
+
+function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on = false, $mod_id = false ) {
+  $produkt = get_produkt_details( $produkt_id );
+  $anummer = $produkt['artikelnummer'];
+  $can_toggle or $default_on = true;
+  if( $can_toggle ) {
+    if( $default_on ) {
+      $form_display = ''; $button_display = 'none';
+    } else {
+      $form_display = 'none'; $button_display = '';
+    }
+    ?>
+      <span class='button' id='anummer_button' style='display:<? echo $button_display; ?>;'
+        onclick="document.getElementById('anummer_button').style.display = 'none';
+                 document.getElementById('anummer_form').style.display = 'block';"
+      >Artikelnummer &auml;ndern...</span>
+    <?
+  } else {
+    $form_display = '';
+  }
   ?>
-    <div style='display:none;' id='anummer_form' class='small_form'>
-      <form>
-        <fieldset class='small_form'>
-          <legend>
-            <img class='button' src='img/close_black_trans.gif' title='Ausblenden' onclick='anummer_off();'></img>
-            Artikelnummer &auml;ndern:
-          </legend>
-      <table>
-        <tr>
-          <td>
-            neue Artikel-Nr. setzen:
-          </td>
-          <td>
-            <form method='post' action='" . self_url() . "'>" . self_post() . "
-              <input type='hidden' name='action' value='artikelnummer_setzen'>
-              <input type='text' size='20' name='anummer' value='$anummer'>&nbsp;
-              <input type='submit' name='Submit' value='OK'
-               onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
-              >
-            </form>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            ...oder: Katalogsuche nach:
-          </td>
-          <td><form action='index.php?window=artikelsuche' method='post'>
-              <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
-               onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
-               >
-              <input type='hidden' name='produkt_id' value='$produkt_id'>
-              <input type='hidden' name='produktname' value='$name'>
-            </form>
-          </td>
-        </tr>
-      </table>
+    <div style='display:<? echo $form_display; ?>;' id='anummer_form' class='small_form'>
+      <!-- <form> -->
+      <fieldset class='small_form'>
+        <legend>
+          <?
+            if( $can_toggle ) {
+              ?>
+                <img class='button' src='img/close_black_trans.gif' title='Ausblenden'
+                  onclick='document.getElementById("anummer_button").style.display = "inline";
+                  document.getElementById("anummer_form").style.display = "none";
+                >
+              <?
+            }
+          ?>
+          Artikelnummer &auml;ndern:
+        </legend>
+        <table>
+          <tr>
+            <td> neue Artikel-Nr. setzen: </td>
+            <td>
+              <form method='post' action='<? echo self_url(); ?>'> 
+                <? echo self_post(); ?>
+                <input type='hidden' name='action' value='artikelnummer_setzen'>
+                <input type='text' size='20' name='anummer' value='<? echo $anummer; ?>'>&nbsp;
+                <input type='submit' name='Submit' value='OK' <? echo mod_onclick( $mod_id ); ?>>
+              </form>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              ...oder: Katalogsuche nach:
+            </td>
+            <td>
+              <form action='index.php?window=artikelsuche' method='post'>
+                <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
+                  <? echo mod_onclick( $mod_id ); ?> >
+                <input type='hidden' name='produkt_id' value='$produkt_id'>
+              </form>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+      <!-- </form> -->
+    </div>
+  <?
+}
+
+function action_button( $label, $title, $fields, $mod_id = false ) {
+  ?>
+    <div class='warn' style='padding:0.1ex 1em 0.1ex 2em;'>
+      <form method='post' action='<? echo self_url(); ?>'>
+        <?
+          echo self_post();
+          foreach( $fields as $name => $value )
+            echo "<input type='hidden' name='$name' value='$value'>";
+          echo "<input type='submit' name='submit' value='$label'";
+          if( $mod_id )
+            echo " onclick=\"document.getElementById('$mod_id').className='modified';\"";
+          if( $title )
+            echo " title='$title'";
+        ?>
+        >
+      </form>
+    </div>
   <?
 }
 
