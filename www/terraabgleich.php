@@ -15,11 +15,10 @@ assert( $angemeldet ) or exit();
 
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
-$detail = get_http_var('produkt_id','u',NULL,true);
+$detail = get_http_var('produkt_id','u',0,true);
+get_http_var('bestell_id','u',0,true);
 
-get_http_var('bestell_id','u',false,true);
-
-$subtitle = 'Produktdaten';
+$subtitle = 'Produktddetails';
 if( $detail ) {
   if( $bestell_id )
     $subtitle = $subtitle . " - Auswahl Preiseintrag";
@@ -38,17 +37,11 @@ if( $detail ) {
 $lieferanten_name = lieferanten_name( $lieferanten_id );
 $is_terra = ( $lieferanten_name == 'Terra' );
 
-
-if( $editable ) {
-  get_http_var( 'action','w','' );
-} else {
-  $action = '';
-}
-
+get_http_var( 'action','w','' );
+$editable or $action = '';
 
 if( $detail ) {
-
-  // formulare verarbeiten:
+  $produkt_ids = array( $produkt_id );
 
   if( $action == 'zeitende_setzen' ) {
     need_http_var('preis_id','u');
@@ -73,753 +66,682 @@ if( $detail ) {
       ", LEVEL_IMPORTANT, "Auswahl Preiseintrag fehlgeschlagen: " );
     }
 
-    $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
-    $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
-
     $gesamtbestellung = sql_bestellung( $bestell_id );
     $bestellung_name = $gesamtbestellung['name'];
   }
-
+} else {
+  $result = sql_produkte_von_lieferant_ids( $lieferanten_id ) {
+  $produkt_ids = mysql2array( $result, 'id', 'id' );
 }
 
-  // get_http_var( 'order_by','w' ) or $order_by = 'name';
-  // $order_by = 'name';
+?>
+  <table width="100%">
+    <colgroup> <col width="7%"> <col> </colgroup>
+    <tr>
+      <th class="outer">A-Nr.</th> <th class="outer">Artikeldaten</th>
+    </tr>
+    <?
+      $outerrow = 0;
+      foreach( $produkt_ids as $produkt_id ) {
+        $outerrow++;
+        do_artikel( $produkt_id, $detail );
+      }
+    ?>
+  </table>
+<?
 
-  if( $detail ) {
-    $produkt_ids = array( $produkt_id );
-  } else {
-    $result = sql_produkte_von_lieferant_ids( $lieferanten_id ) {
-    $produkt_ids = mysql2array( $result, 'id', 'id' );
+
+// preishistorie:
+//  - kann preishistorie anzeigen
+//  - kann preisauswahl fuer eine bestellung erlauben
+//
+function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
+  need( $produkt_id );
+  if( $bestell_id ) {
+    $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
+    $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
   }
 
   ?>
-    <table width="100%">
-      <colgroup> <col width="7%"> <col> </colgroup>
-      <tr>
-        <th class="outer">A-Nr.</th> <th class="outer">Artikeldaten</th>
-      </tr>
-  <?
-
-  $outerrow=0;
-  foreach( $produkt_ids as $produkt_id ) {
-    $outerrow++;
-    do_artikel( $produkt_id );
-  }
-
-  ?> </table> <?
-
-
-  // mysql_repair_link:
-  // erzeugt kleines formular, alle felder "hidden", nur submit-knopf sichtbar,
-  // das dieses Skript neu aufruft und dabei einen beliebigen SQL-befehl uebergibt
-  //
-  function mysql_repair_link( $fields, $kommentar, $domid = '' ) {
-    ?>
-      <div class='warn' style='padding:0.1ex 1em 0.1ex 2em;'>
-        <form method='post' action='<? echo self_url(); ?>'>
-          <? echo self_post(); echo $fields; ?>
-          <input type='submit' name='submit' value='<? echo $kommentar; ?>'
-          <?
-            if( $domid )
-              echo " onclick=\"document.getElementById('$domid').className='modified';\";
-          ?>
-          >
-        </form>
-      </div>
-    <?
-  }
-
-  // do_artikel
-  // wird aus der hauptschleife aufgerufen, um einen artikel aus der Produktliste anzuzeigen
-  //
-  function do_artikel( $produkt_id ) {
-    global $outerrow, $ldaphandle, $ldapbase, $artikel, $detail, $mysqljetzt, $is_terra
-         , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag;
-
-    echo "\n<tr id='row$outerrow'>";
-
-    $artikel = sql_produkt_details( $produkt_id );
-    $preise = sql_produktpreise( $produkt_id );
-
-    $anummer = $artikel['artikelnummer'];
-    $name = $artikel['name'];
-    $notiz = $artikel['notiz'];
-
-    // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
-    //
-    $neednewprice = FALSE;
-
-    // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
-    //
-    $neednewarticlenumber = FALSE;
-
-    // werte fuer neuen preiseintrag initialisieren:
-    //
-    unset( $newfc );
-    $newfc['verteileinheit'] = FALSE;
-    $newfc['liefereinheit'] = FALSE;
-    $newfc['gebindegroesse'] = FALSE;
-    $newfc['preis'] = FALSE;
-    $newfc['bnummer'] = FALSE;
-    $newfc['mwst'] = FALSE;
-    $newfc['pfand'] = FALSE;
-
-    ?> <th class='outer' style='vertical-align:top;'> <?
-    if( $detail ) {
-      echo "$anummer<br>id:&nbsp;$produkt_id";
-    } else {
-      echo "
-        <a class='blocklink'
-        href=\"javascript:neuesfenster('" . self_url()
-          . "&produkt_id=$produkt_id','produktdetails')\"
-        title='Details...'
-        onclick=\"document.getElementById('row$outerrow').className='modified';\"
-        >$anummer<br>id:&nbsp;$produkt_id</a>
-      ";
-    }
-    ?> </th><td class="outer" style="padding-bottom:1ex;"> <?
-
-    ////////////////////////
-    // Preishistorie:
-    //
-
-    if( $detail ) {
-      ?>
-        <div class='untertabelle'>
-          <img id='preishistorie_knopf' class='button' src='img/close_black_trans.gif'
-            onclick='preishistorie_toggle();' title='Ausblenden'>
-          </img>
-      <?
-      if( $bestell_id ) {
-        ?> Preiseintrag wählen für Bestellung <?
-        echo "$bestellung_name:";
-      } else {
-        ?> Preis-Historie: <?
-      }
-      ?>
-        </div>
-        <div id='preishistorie'>
-          <table width='100%' class='numbers'>
-            <tr>
-              <th>id</th>
-              <th>B-Nr</th>
-              <th>von</th>
-              <th>bis</th>
-              <th title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
-              <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-              <th title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
-              <th title='Gebindegröße in V-Einheiten'>Gebinde</th>
-              <th>MWSt</th>
-              <th title='Pfand je V-Einheit'>Pfand</th>
-              <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
-      <?
-      if( $bestell_id ) {
-        echo "<th title='Preiseintrag für Bestellung $bestellung_name'>Aktiv</th>";
-      }
-      ?> </tr> <?
-      while( $pr1 = mysql_fetch_array($produktpreise) ) {
-        preisdatenSetzen( &$pr1 );
-        echo "
-          <tr>
-            <td>{$pr1['id']}</td>
-            <td>{$pr1['bestellnummer']}</td>
-            <td>{$pr1['zeitstart']}</td>
-            <td>
-        ";
-        if( $pr1['zeitende'] ) {
-          echo "{$pr1['zeitende']}";
+    <script type="text/javascript">
+      preishistorie_status = 1;
+      function preishistorie_toggle() {
+        preishistorie_status = ! preishistorie_status;
+        if( preishistorie_status ) {
+          document.getElementById("preishistorie").style.display = "block";
+          document.getElementById("preishistorie_knopf").src = "img/close_black_trans.gif";
+          document.getElementById("preishistorie_knopf").title = "Ausblenden";
         } else {
-          echo "
-            <form method='post' action='" . self_url() . "'>" . self_post() . "
-              <input type='hidden' name='action' value='zeitende_setzen'>
-              <input type='hidden' name='zeitende' value='$mysqljetzt'>
-              <input type='hidden' name='preis_id' value='{$pr1['id']}'>
-              <input type='submit' name='submit' value='Abschließen'
-                onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
-                title='Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)'>
-            </form>
-          ";
-        }
-        echo "
-            </td>
-            <td class='mult'>{$pr1['kan_liefermult']}</td>
-            <td class='unit'>{$pr1['kan_liefereinheit']}</td>
-            <td class='mult'>" . sprintf( "%8.2lf", $pr1['lieferpreis'] ) . "</td>
-            <td class='unit'>/ {$pr1['preiseinheit']}</td>
-            <td class='mult'>{$pr1['kan_verteilmult']}</td>
-            <td class='unit'>{$pr1['kan_verteileinheit']}</td>
-            <td class='number'>{$pr1['gebindegroesse']}</td>
-            <td class='number'>{$pr1['mwst']}</td>
-            <td class='number'>{$pr1['pfand']}</td>
-            <td class='mult'>" . sprintf( "%8.2lf", $pr1['preis'] ) . "</td>
-            <td class='unit'> / {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}</td>
-        ";
-        if( $bestell_id ) {
-          ?> <td> <?
-          if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
-            ?>
-              <input type='submit' name='aktiv' value='aktiv' class='buttondown'
-              style='width:5em;'
-              title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>
-            <?
-          } else {
-            ?>
-              <form action='<? echo self_url(); ?>' method='post'>
-                <? echo self_post(); ?>
-                <input type='hidden' name='action' value='preiseintrag_waehlen'>
-                <input type='hidden' name='preis_id' value='<? echo $pr1['id']; ?>'>
-                <input type='submit' name='setzen' value='setzen' class='buttonup'
-                  style='width:5em;'
-                  title='diesen Preiseintrag für Bestellung <? echo $bestellung_name; ?> auswählen'>
-              </form>
-            <?
-          }
-          ?> </td> <?
-        }
-        ?> </tr> <?
-      }
-      if( mysql_num_rows( $produktpreise ) > 0 ) {
-        mysql_data_seek( $produktpreise, 0 );
-      }
-      ?> </table></div> <?
-    }
-
-    // produktpreise: test auf konsistenz:
-    //  - alle intervalle bis auf das letzte muessen abgeschlossen sein
-    //  - intervalle duerfen nicht ueberlappen
-    //  - warnen, wenn kein aktuell gueltiger preis vorhanden
-    //
-    $pr0 = FALSE;
-    $prgueltig = FALSE; // aktuell gueltiger preiseintrag, oder FALSE
-    while( $pr1 = mysql_fetch_array($produktpreise) ) {
-      if( $pr0 ) {
-        if( $pr0['zeitende'] == '' ) {
-          echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
-          $detail && mysql_repair_link(
-            "<input type='hidden' name='action' value='zeitende_setzen'>
-             <input type='hidden' name='zeitende' value='{$pr1['zeitstart']}'>
-             <input type='hidden' name='preis_id' value='{$pr0['id']}'>"
-          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
-          , "row$outerrow"
-          );
-        } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
-          echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
-          $detail && mysql_repair_link(
-            "<input type='hidden' name='action' value='zeitende_setzen'>
-             <input type='hidden' name='zeitende' value='{$pr1['zeitstart']}'>
-             <input type='hidden' name='preis_id' value='{$pr0['id']}'>"
-          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
-          , "row$outerrow"
-          );
+          document.getElementById("preishistorie").style.display = "none";
+          document.getElementById("preishistorie_knopf").src = "img/open_black_trans.gif";
+          document.getElementById("preishistorie_knopf").title = "Einblenden";
         }
       }
-      $pr0 = $pr1;
-    }
-    if( ! $pr0 ) {
-      ?> <div class='warn'>WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div> <?
-    } else if ( $pr0['zeitende'] != '' ) {
-      if ( $pr0['zeitende'] < $mysqljetzt ) {
-        ?> <div class='warn'>WARNUNG: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div> <?
-        // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
-      } else {
-        ?> <div class='warn'>WARNUNG: aktueller Preis l&auml;uft aus!</div> <?
-        // echo '&nbsp; letzter eintrag: ab: '. $pr0['zeitstart'] . ' bis: ' . $pr0['zeitende'] . ' preis: ' . $pr0['preis'] . '<br>';
-        $prgueltig = $pr0;  // kann man noch zulassen...
-      }
-    } else {
-      $prgueltig = $pr0;
-    }
-
-
-    if( $prgueltig ) {
-      preisdatenSetzen( &$prgueltig );
-      $fcbnummer = $prgueltig['bestellnummer'];
-      $fcgebindegroesse = $prgueltig['gebindegroesse'];
-      $fcpreis = $prgueltig['preis'];
-      $fcpfand = $prgueltig['pfand'];
-      $fcmwst = $prgueltig['mwst'];
-      $fclieferpreis = $prgueltig['lieferpreis'];
-      $fcpreiseinheit = $prgueltig['preiseinheit'];
-      $fcmengenfaktor = $prgueltig['mengenfaktor'];
-      $kan_fcmult = $prgueltig['kan_verteilmult'];
-      $kan_fceinheit = $prgueltig['kan_verteileinheit'];
-      $kan_liefermult = $prgueltig['kan_liefermult'];
-      $kan_liefereinheit = $prgueltig['kan_liefereinheit'];
-      if( ! $kan_liefereinheit ) {
-        ?> <div class='warn'>FEHLER: keine gueltige Liefereinheit</div> <?
-        $neednewprice = TRUE;
-      }
-    } else {
-      $fcbnummer = NULL;
-      $fcgebindegroesse = NULL;
-      $fcpreis = NULL;
-      $fcpfand = NULL;
-      $fcmwst = NULL;
-      $fclieferpreis = NULL;
-      $fcpreiseinheit = NULL;
-      $fcmengenfaktor = NULL;
-      $kan_fcmult = NULL;
-      $kan_fceinheit = NULL;
-      $kan_liefermult = NULL;
-      $kan_liefereinheit = NULL;
-    }
-
-
-    //
-    // Artikeldaten aus foodsoft-Datenbank anzeigen:
-    //
-
-    ?>
-      <div class='untertabelle' id='foodsoftdatenbank'>Foodsoft-Datenbank:</div>
+    </script>
+    <div class='untertabelle'>
+      <img id='preishistorie_knopf' class='button' src='img/close_black_trans.gif'
+        onclick='preishistorie_toggle();' title='Ausblenden'>
+  <?
+  if( $bestell_id ) {
+    ?> Preiseintrag wählen für Bestellung <?
+    echo "$bestellung_name:";
+  } else {
+    ?> Preis-Historie: <?
+  }
+  ?>
+    </div>
+    <div id='preishistorie'>
       <table width='100%' class='numbers'>
         <tr>
-          <th>B-Nr.</th>
-          <th>Name</th>
-          <th title='Liefer-Einheit: fuers Bestellen beim Lieferanten'>L-Einheit</th>
-          <th title='Nettopreis beim Lieferanten'>L-Preis</th>
-          <th title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns'>V-Einheit</th>
-          <th title='V-Einheiten pro Gebinde'>Gebinde</th>
-          <th title='MWSt in Prozent'>MWSt</th>
+          <th title='Interne eindeutige ID-Nummer des Preiseintrags'>id</th>
+          <th title='Bestellnummer'>B-Nr</th>
+          <th title='Preiseintrag gültig ab'>von</th>
+          <th title='Preiseintrag gültig bis'>bis</th>
+          <th title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
+          <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
+          <th title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
+          <th title='Gebindegröße in V-Einheiten'>Gebinde</th>
+          <th>MWSt</th>
           <th title='Pfand je V-Einheit'>Pfand</th>
-          <th title='Endpreis je V-Einheit'>V-Preis</th>
-        </tr>
-        <tr>
+          <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
+  <?
+  if( $bestell_id )
+    echo "<th title='Preiseintrag für Bestellung $bestellung_name'>Aktiv</th>";
+  ?> </tr> <?
+
+  $produktpreise = sql_produktpreise2( $produkt_id );
+  while( $pr1 = mysql_fetch_array($produktpreise) ) {
+    preisdatenSetzen( &$pr1 );
+    ?>
+      <tr>
+        <td><? echo $pr1['id']; ?></td>
+        <td><? echo $pr1['bestellnummer']; ?></td>
+        <td><? echo $pr1['zeitstart']; ?></td>
+        <td>
     <?
- 
-    if( $prgueltig ) {
-      echo "<td>$fcbnummer</td>";
+    if( $pr1['zeitende'] ) {
+      echo "{$pr1['zeitende']}";
     } else {
-      ?> <td><div class="warn" style="text-align:center;">keine</div></td> <?
+      if( $editable )
+        action_button( "Abschließzen"
+        , "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)"
+        , array( 'action' => 'zeitende_setzen', 'preis_id' => $pr1['id'], 'zeitende' => $mysqljetzt, 'preis_id' => $pr1['id'] )
+        , "row$outerrow"
+        );
+      else
+        echo " - ";
     }
+    ?>
+        </td>
+        <td class='mult'><? echo $pr1['kan_liefermult']; ?></td>
+        <td class='unit'><? echo $pr1['kan_liefereinheit']; ?></td>
+        <td class='mult'><? printf( "%8.2lf", $pr1['lieferpreis'] ); ?></td>
+        <td class='unit'>/ <? echo $pr1['preiseinheit']; ?></td>
+        <td class='mult'><? echo $pr1['kan_verteilmult']; ?></td>
+        <td class='unit'><? echo $pr1['kan_verteileinheit']; ?></td>
+        <td class='number'><? echo $pr1['gebindegroesse']; ?></td>
+        <td class='number'><? echo $pr1['mwst']; ?></td>
+        <td class='number'><? echo $pr1['pfand']; ?></td>
+        <td class='mult'><? printf( "%8.2lf", $pr1['preis'] ); ?></td>
+        <td class='unit'><? / echo "{$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}"; ?></td>
+    <?
+    if( $bestell_id ) {
+      ?> <td> <?
+      if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
+        ?>
+          <input type='submit' name='aktiv' value='aktiv' class='buttondown'
+          style='width:5em;'
+          title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>
+        <?
+      } else {
+        if( $editable ) {
+          action_button( "setzen", "
+          , "diesen Preiseintrag für Bestellung $bestellung_name auswählen"
+          , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] )
+          );
+        } else {
+          echo " - ";
+        }
+      }
+      ?> </td> <?
+    }
+    ?> </tr> <?
+  }
+  ?> </table></div> <?
+}
 
-    echo "<td>$name</td>";
-    if( $prgueltig ) {
-      echo "
-        <td class='number'>$kan_liefermult $kan_liefereinheit</td>
-        <td class='number'>" . sprintf( "%8.2lf", $fclieferpreis ) . " / $fcpreiseinheit</td>
-        <td class='number'>$kan_fcmult $kan_fceinheit</td>
-        <td class='number'>$fcgebindegroesse</td>
-        <td class='number'>$fcmwst</td>
-        <td class='number'>$fcpfand</td>
-        <td class='number'>" . sprintf( "%8.2lf", $fcpreis ) . " / $kan_fcmult $kan_fceinheit</td>
-      ";
+// produktpreise: test auf konsistenz:
+//  - alle intervalle bis auf das letzte muessen abgeschlossen sein
+//  - intervalle duerfen nicht ueberlappen
+//  - warnen, wenn kein aktuell gueltiger preis vorhanden
+//
+function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false ) {
+  need( $produkt_id );
+  $produktpreise = sql_produktpreise2( $produkt_id );
+  $pr0 = FALSE;
+  $prgueltig = FALSE; // aktuell gueltiger preiseintrag, oder FALSE
+  while( $pr1 = mysql_fetch_array($produktpreise) ) {
+    if( $pr0 ) {
+      if( $pr0['zeitende'] == '' ) {
+        echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
+        $editable && action_button(
+          "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
+        , $mod_id
+        );
+      } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
+        echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
+        $editable && action_button(
+          "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
+        , $mod_id
+        );
+      }
+    }
+    $pr0 = $pr1;
+  }
+  if( ! $pr0 ) {
+    ?> <div class='warn'>WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+  } else if ( $pr0['zeitende'] != '' ) {
+    if ( $pr0['zeitende'] < $mysqljetzt ) {
+      ?> <div class='warn'>WARNUNG: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div> <?
     } else {
-      ?> <td colspan='7'><div class='warn' style='text-align:center;'> - - - </div></td> <?
+      ?> <div class='warn'>WARNUNG: aktueller Preis l&auml;uft aus!</div> <?
+      $prgueltig = $pr0;  // kann man noch zulassen...
     }
-    ?> </tr></table> <?
-
-    // Artikeldaten aus Katalog suchen und ggf anzeigen:
-    //
-    if( ( $katalogeintraege = katalogsuche( $artikel ) ) ) {
-      $katalogtreffer = $katalogeintraege['count'];
-
-      $brutto = NULL;
-      $mwst = NULL;
-      $terragebindegroesse = NULL;
-      $terrabnummer = NULL;
-      $kan_terraeinheit = NULL;
-      $kan_terramult = NULL;
+  } else {
+    $prgueltig = $pr0;
+  }
+  return $prgueltig;
+}
 
 
-      $anummer_form = "
-        <table>
+// do_artikel
+// wird aus der hauptschleife aufgerufen, um einen artikel aus der Produktliste anzuzeigen
+//
+function do_artikel( $produkt_id, $detail ) {
+  static $outerrow;
+  global $mysqljetzt, $is_terra
+       , $bestell_id, $bestellung_name, $preisid_in_bestellvorschlag;
+
+  isset( $outerrow ) or $outerrow = 0;
+  ++$outerrow;
+  echo "\n<tr id='row$outerrow'>";
+
+  $artikel = sql_produkt_details( $produkt_id );
+
+  $anummer = $artikel['artikelnummer'];
+  $name = $artikel['name'];
+  $notiz = $artikel['notiz'];
+
+  // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
+  //
+  $neednewprice = FALSE;
+
+  // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
+  //
+  $neednewarticlenumber = FALSE;
+
+  // werte fuer neuen preiseintrag initialisieren:
+  //
+  unset( $newfc );
+  $newfc['verteileinheit'] = FALSE;
+  $newfc['liefereinheit'] = FALSE;
+  $newfc['gebindegroesse'] = FALSE;
+  $newfc['preis'] = FALSE;
+  $newfc['bnummer'] = FALSE;
+  $newfc['mwst'] = FALSE;
+  $newfc['pfand'] = FALSE;
+
+  ?> <th class='outer' style='vertical-align:top;'> <?
+  if( $detail ) {
+    echo "$anummer<br>id:&nbsp;$produkt_id";
+  } else {
+    echo "
+      <a class='blocklink'
+      href=\"javascript:neuesfenster('" . self_url()
+        . "&produkt_id=$produkt_id','produktdetails')\"
+      title='Details...'
+      onclick=\"document.getElementById('row$outerrow').className='modified';\"
+      >$anummer<br>id:&nbsp;$produkt_id</a>
+    ";
+  }
+  ?> </th><td class="outer" style="padding-bottom:1ex;"> <?
+
+  ////////////////////////
+  // Preishistorie:
+  //
+
+  if( $detail ) {
+    preishistorie_view( $produkt_id, $bestell_id, $editable );
+
+  $preishistorie_konsistenztest( $produkt_id, $editable, "row$outerrow" );
+
+  if( $artikel['zeitstart'] ) {
+    $prgueltig = true;
+    if( ! $artikel['kan_liefereinheit'] ) {
+      ?> <div class='warn'>FEHLER: keine gueltige Liefereinheit</div> <?
+      $neednewprice = TRUE;
+    }
+  } else {
+    $prgueltig = false;
+  }
+
+//   if( $prgueltig ) {
+//     $fc_produkt = sql_produkt_details( $produkt_id, $prgueltig['id'] );
+//     preisdatenSetzen( &$prgueltig );
+//     $fc_bnummer = $prgueltig['bestellnummer'];
+//     $fc_gebindegroesse = $prgueltig['gebindegroesse'];
+//     $fc_preis = $prgueltig['preis'];
+//     $fc_pfand = $prgueltig['pfand'];
+//     $fc_mwst = $prgueltig['mwst'];
+//     $fc_lieferpreis = $prgueltig['lieferpreis'];
+//     $fc_preiseinheit = $prgueltig['preiseinheit'];
+//     $fc_mengenfaktor = $prgueltig['mengenfaktor'];
+//     $fc_kan_fcmult = $prgueltig['kan_verteilmult'];
+//     $kan_fceinheit = $prgueltig['kan_verteileinheit'];
+//     $kan_liefermult = $prgueltig['kan_liefermult'];
+//     $kan_liefereinheit = $prgueltig['kan_liefereinheit'];
+//     if( ! $kan_liefereinheit ) {
+//       ?> <div class='warn'>FEHLER: keine gueltige Liefereinheit</div> <?
+//       $neednewprice = TRUE;
+//     }
+//   } else {
+//     $fc_produkt = sql_produkt_details( $produkt_id );
+//     $fc_produkt = false;
+//     $fcbnummer = NULL;
+//     $fcgebindegroesse = NULL;
+//     $fcpreis = NULL;
+//     $fcpfand = NULL;
+//     $fcmwst = NULL;
+//     $fclieferpreis = NULL;
+//     $fcpreiseinheit = NULL;
+//     $fcmengenfaktor = NULL;
+//     $kan_fcmult = NULL;
+//     $kan_fceinheit = NULL;
+//     $kan_liefermult = NULL;
+//     $kan_liefereinheit = NULL;
+//   }
+
+
+  //
+  // Artikeldaten aus foodsoft-Datenbank anzeigen:
+  //
+
+  ?>
+    <div class='untertabelle' id='foodsoftdatenbank'>Foodsoft-Datenbank:</div>
+    <table width='100%' class='numbers'>
+      <tr>
+        <th>B-Nr.</th>
+        <th>Name</th>
+        <th title='Liefer-Einheit: fuers Bestellen beim Lieferanten'>L-Einheit</th>
+        <th title='Nettopreis beim Lieferanten'>L-Preis</th>
+        <th title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns'>V-Einheit</th>
+        <th title='V-Einheiten pro Gebinde'>Gebinde</th>
+        <th title='MWSt in Prozent'>MWSt</th>
+        <th title='Pfand je V-Einheit'>Pfand</th>
+        <th title='Endpreis je V-Einheit'>V-Preis</th>
+      </tr>
+      <tr>
+  <?
+
+  if( $prgueltig ) {
+    echo "<td>$artikel['bestellnummer']</td>";
+  } else {
+    ?> <td><div class="warn" style="text-align:center;">keine</div></td> <?
+  }
+
+  echo "<td>{$artikel['name']}</td>";
+  if( $prgueltig ) {
+    ?>
+      <td class='number'><? echo "{$artikel['kan_liefermult']} {$artikel['kan_liefereinheit']}"; ?></td>
+      <td class='number'><? printf( "%8.2lf / %s", $artikel['nettolieferpreis'], $artikel['preiseinheit'] ); ?></td>
+      <td class='number'><? echo "{$artikel['kan_fcmult']} {$artikel['kan_fceinheit']}"; ?></td>
+      <td class='number'><? echo $artikel['gebindegroesse']; ?></td>
+      <td class='number'><? echo $artikel['mwst']; ?></td>
+      <td class='number'><? printf( "%.2lf", $artikel['pfand'] ); ?></td>
+      <td class='number'><?
+        printf( "%8.2lf / %s", $artikel['preis'], $artikel['kan_verteilmult', $artikel['kan_verteileinheit'] ); ?>
+      </td>
+    <?
+  } else {
+    ?> <td colspan='7'><div class='warn' style='text-align:center;'> - - - </div></td> <?
+  }
+  ?> </tr></table> <?
+
+  // Artikeldaten aus Katalog suchen und ggf. anzeigen:
+  //
+  if( ( $katalogeintraege = katalogsuche( $artikel ) ) ) {
+    $katalogtreffer = $katalogeintraege['count'];
+
+    $brutto = NULL;
+    $mwst = NULL;
+    $terragebindegroesse = NULL;
+    $terrabnummer = NULL;
+    $kan_terraeinheit = NULL;
+    $kan_terramult = NULL;
+
+    if( ! $katalogtreffer ) {
+
+      ?> <div class='warn'>Katalogsuche: Artikelnummer nicht gefunden!</div> <?
+      if( $detail )
+        formular_artikelnummer( $produkt_id, false, true );
+
+    } else {
+
+      ?>
+        <div class='untertabelle'>
+          Artikelnummer gefunden in Katalog <? echo $katalogeintraege[0]['terradatum'][0]; ?>
+      <?
+
+      if( $detail ) {
+        formular_artikelnummer( $produkt_id, true, false );
+
+      ?>
+        </div>
+
+        <table width='100%' class='numbers'>
           <tr>
-            <td>
-              neue Artikel-Nr. setzen:
-            </td>
-            <td>
-              <form method='post' action='" . self_url() . "'>" . self_post() . "
-                <input type='hidden' name='action' value='artikelnummer_setzen'>
-                <input type='text' size='20' name='anummer' value='$anummer'>&nbsp;
-                <input type='submit' name='Submit' value='OK'
-                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
-                >
-              </form>
-            </td>
+            <th>B-Nr.</th>
+            <th>Bezeichnung</th>
+            <th>Einheit</th>
+            <th>Gebinde</th>
+            <th>Land</th>
+            <th>Verband</th>
+            <th>Netto</th>
+            <th>MWSt</th>
+            <th>Brutto</th>
           </tr>
+      <?
+
+      $katalog_bnummer = $katalogeintraege[0]["terrabestellnummer"][0];
+      $katalog_name = $katalogeintraege[0]["cn"][0];
+      $katalog_einheit = $katalogeintraege[0]["terraeinheit"][0];
+      $katalog_gebindegroesse = $katalogeintraege[0]["terragebindegroesse"][0];
+      $katalog_herkunft =  $katalogeintraege[0]["terraherkunft"][0];
+      $katalog_verband = $katalogeintraege[0]["terraverband"][0];
+      $katalog_netto = $katalogeintraege[0]["terranettopreisincents"][0] / 100.0;
+      $katalog_mwst = $katalogeintraege[0]["terramwst"][0];
+      $katalog_brutto = $netto * (1 + $mwst / 100.0 );
+
+      ?>
           <tr>
-            <td>
-              ...oder: Katalogsuche nach:
-            </td>
-            <td><form action='index.php?window=artikelsuche' method='post'>
-                <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
-                 onclick='document.getElementById(\"row$outerrow\").className=\"modified\";'
-                 >
-                <input type='hidden' name='produkt_id' value='$produkt_id'>
-                <input type='hidden' name='produktname' value='$name'>
-              </form>
-            </td>
+            <td><? echo $katalog_bnummer; ?></td>
+            <td><? echo $katalog_name; ?></td>
+            <td><? echo $katalog_einheit; ?></td>
+            <td><? echo $katalog_gebindegroesse; ?></td>
+            <td><? echo $katalog_herkunft; ?></td>
+            <td><? echo $katalog_verband; ?></td>
+            <td><? echo $katalog_netto; ?></td>
+            <td><? echo $katalog_netto; ?></td>
+            <td><? echo $katalog_mwst; ?></td>
+            <td><? echo $katalog_brutto; ?></td>
           </tr>
         </table>
-      ";
+      <?
 
-      if( ( ! $katalogeintraege ) || ( $katalogeintraege['count'] < 1 ) ) {
-  
-        ?> <div class='warn'>Katalogsuche: Artikelnummer nicht gefunden!</div> <?
-        if( $detail ) {
-          echo "
-            <div id='anummer_form' class='small_form'>
-              <form>
-                <fieldset>
-                  <legend>
-                    Artikelnummer &auml;ndern:
-                  </legend>
-                  $anummer_form
-                </fieldset>
-              </form>
-            </div>
-          ";
-        }
-  
-      } else {
-  
-        if( $detail ) {
-          echo "
-            <div style='display:none;' id='anummer_form' class='small_form'>
-              <form>
-                <fieldset>
-                  <legend>
-                    <img class='button' src='img/close_black_trans.gif' title='Ausblenden' onclick='anummer_off();'></img>
-                    Artikelnummer &auml;ndern:
-                  </legend>
-                  $anummer_form
-                </fieldset>
-              </form>
-            </div>
-          ";
+      kanonische_einheit( $katalog_einheit, &$kan_katalogeinheit, &$kan_katalogmult );
+
+      if( $prgueltig ) {
+        // echo "<br>Foodsoft: Einheit: $kan_fcmult * $kan_fceinheit Gebinde: $fcgebindegroesse";
+        // echo "<br>Terra: Einheit: $kan_terramult * $kan_terraeinheit Gebinde: $terragebindegroesse";
+
+        $newfc['liefereinheit'] = $terragebindegroesse * $kan_terramult . " $kan_terraeinheit";
+        if( $newfc['liefereinheit'] != "$kan_liefermult $kan_liefereinheit" ) {
+          $neednewprice = TRUE;
+          echo "<div class='warn'>Problem: L-Einheit stimmt nicht:
+                 <p class='li'>Terra: <kbd>" . $terragebindegroesse * $kan_terramult . " $kan_terraeinheit</kbd></p>
+                 <p class='li'>Foodsoft: <kbd>$kan_liefermult $kan_liefereinheit</kbd></p></div>";
         }
 
-        echo "
-          <div class='untertabelle'>
-            Artikelnummer gefunden in Katalog {$katalogeintraege[0]['terradatum'][0]}:
-        ";
-        if( $detail ) {
-          ?> <span class='button' id='anummer_an_knopf' onclick='anummer_on();'
-             >Artikelnummer &auml;ndern...</span>
-          <?
+        $newfc['mwst'] = $mwst;
+        if( abs( $fcmwst - $mwst ) > 0.005 ) {
+          $neednewprice = TRUE;
+          echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
+                    <p class='li'>Terra: <kbd>$mwst</kbd></p>
+                    <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
         }
-        ?>
-          </div>
 
-          <table width='100%' class='numbers'>
-            <tr>
-              <th>B-Nr.</th>
-              <th>Bezeichnung</th>
-              <th>Einheit</th>
-              <th>Gebinde</th>
-              <th>Land</th>
-              <th>Verband</th>
-              <th>Netto</th>
-              <th>MWSt</th>
-              <th>Brutto</th>
-            </tr>
-        <?
-
-        $terraeinheit = $katalogeintraege[0]["terraeinheit"][0];
-        $netto = $katalogeintraege[0]["terranettopreisincents"][0] / 100.0;
-        $mwst = $katalogeintraege[0]["terramwst"][0];
-        $brutto = $netto * (1 + $mwst / 100.0 );
-        $terragebindegroesse = $katalogeintraege[0]["terragebindegroesse"][0];
-        $terrabnummer = $katalogeintraege[0]["terrabestellnummer"][0];
-
-        echo "
-            <tr>
-              <td>{$katalogeintraege[0]['terrabestellnummer'][0]}</td>
-              <td>{$katalogeintraege[0]['cn'][0]}</td>
-              <td>$terraeinheit</td>
-              <td>$terragebindegroesse</td>
-              <td>{$katalogeintraege[0]['terraherkunft'][0]}</td>
-              <td>{$katalogeintraege[0]['terraverband'][0]}</td>
-              <td>$netto</td>
-              <td>$mwst</td>
-              <td>$brutto</td>
-            </tr>
-          </table>
-        ";
-
-        kanonische_einheit( $terraeinheit, &$kan_terraeinheit, &$kan_terramult );
-
-        if( $prgueltig ) {
-          // echo "<br>Foodsoft: Einheit: $kan_fcmult * $kan_fceinheit Gebinde: $fcgebindegroesse";
-          // echo "<br>Terra: Einheit: $kan_terramult * $kan_terraeinheit Gebinde: $terragebindegroesse";
-
-          $newfc['liefereinheit'] = $terragebindegroesse * $kan_terramult . " $kan_terraeinheit";
-          if( $newfc['liefereinheit'] != "$kan_liefermult $kan_liefereinheit" ) {
+        if( $kan_terraeinheit == 'KI' and $kan_fceinheit == 'ST' ) {
+          // spezialfall: KIste mit vielen STueck inhalt ist ok!
+          $newfc['verteileinheit'] = "$kan_fcmult ST";
+          $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
+          $newfc['preis'] = $brutto * $terragebindegroesse / $newfc['gebindegroesse'] + $fcpfand;
+        } else {
+          if( $kan_terraeinheit != $kan_fceinheit ) {
             $neednewprice = TRUE;
-            echo "<div class='warn'>Problem: L-Einheit stimmt nicht:
-                   <p class='li'>Terra: <kbd>" . $terragebindegroesse * $kan_terramult . " $kan_terraeinheit</kbd></p>
-                   <p class='li'>Foodsoft: <kbd>$kan_liefermult $kan_liefereinheit</kbd></p></div>";
-          }
-
-          $newfc['mwst'] = $mwst;
-          if( abs( $fcmwst - $mwst ) > 0.005 ) {
-            $neednewprice = TRUE;
-            echo "<div class='warn'>Problem: MWSt-Satz stimmt nicht:
-                      <p class='li'>Terra: <kbd>$mwst</kbd></p>
-                      <p class='li'>Foodsoft: <kbd>$fcmwst</kbd></p></div>";
-          }
-
-          if( $kan_terraeinheit == 'KI' and $kan_fceinheit == 'ST' ) {
-            // spezialfall: KIste mit vielen STueck inhalt ist ok!
-            $newfc['verteileinheit'] = "$kan_fcmult ST";
             $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
+            echo "<div class='warn'>Problem: Einheit inkompatibel:
+                    <p class='li'>Lieferant: <kbd>$kan_terraeinheit</kbd></p>
+                    <p class='li'>Verteilung: <kbd>$kan_fceinheit</kbd></p></div>";
+            $newfc['verteileinheit']
+              = $terragebindegroesse * $kan_terramult / $newfc['gebindegroesse'] . " $kan_terraeinheit";
             $newfc['preis'] = $brutto * $terragebindegroesse / $newfc['gebindegroesse'] + $fcpfand;
           } else {
-            if( $kan_terraeinheit != $kan_fceinheit ) {
+            $newfc['verteileinheit'] = "$kan_fcmult $kan_fceinheit";
+            $newfc['gebindegroesse'] = $terragebindegroesse * $kan_terramult / $kan_fcmult;
+            $newfc['preis'] = $brutto / $kan_terramult * $kan_fcmult + $fcpfand;
+            if( abs( $kan_terramult * $terragebindegroesse - $kan_fcmult * $fcgebindegroesse ) > 0.001 ) {
               $neednewprice = TRUE;
-              $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 0.001 ) ? $fcgebindegroesse : 1 );
-              echo "<div class='warn'>Problem: Einheit inkompatibel:
-                      <p class='li'>Lieferant: <kbd>$kan_terraeinheit</kbd></p>
-                      <p class='li'>Verteilung: <kbd>$kan_fceinheit</kbd></p></div>";
-              $newfc['verteileinheit']
-                = $terragebindegroesse * $kan_terramult / $newfc['gebindegroesse'] . " $kan_terraeinheit";
-              $newfc['preis'] = $brutto * $terragebindegroesse / $newfc['gebindegroesse'] + $fcpfand;
-            } else {
-              $newfc['verteileinheit'] = "$kan_fcmult $kan_fceinheit";
-              $newfc['gebindegroesse'] = $terragebindegroesse * $kan_terramult / $kan_fcmult;
-              $newfc['preis'] = $brutto / $kan_terramult * $kan_fcmult + $fcpfand;
-              if( abs( $kan_terramult * $terragebindegroesse - $kan_fcmult * $fcgebindegroesse ) > 0.001 ) {
-                $neednewprice = TRUE;
-                echo "<div class='warn'>Problem: Gebindegroessen stimmen nicht: 
-                          <p class='li'>Terra: <kbd>$terragebindegroesse * $kan_terramult $kan_terraeinheit</kbd></p>
-                          <p class='li'>Foodsoft: <kbd>$fcgebindegroesse * $kan_fcmult $kan_fceinheit</kbd></p></div>";
-              }
-              if( abs( ($fcpreis - $fcpfand) * $kan_terramult / $kan_fcmult - $brutto ) > 0.01 ) {
-                $neednewprice = TRUE;
-                echo "<div class='warn'>Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
-                          <p class='li'>Terra: <kbd>$brutto je $kan_terramult $kan_terraeinheit</kbd></p>
-                          <p class='li'>Foodsoft: <kbd>"
-                            . ($fcpreis-$fcpfand) * $kan_terramult / $kan_fcmult
-                            . " je $kan_terramult $kan_terraeinheit </kbd></p></div>";
-              }
+              echo "<div class='warn'>Problem: Gebindegroessen stimmen nicht: 
+                        <p class='li'>Terra: <kbd>$terragebindegroesse * $kan_terramult $kan_terraeinheit</kbd></p>
+                        <p class='li'>Foodsoft: <kbd>$fcgebindegroesse * $kan_fcmult $kan_fceinheit</kbd></p></div>";
+            }
+            if( abs( ($fcpreis - $fcpfand) * $kan_terramult / $kan_fcmult - $brutto ) > 0.01 ) {
+              $neednewprice = TRUE;
+              echo "<div class='warn'>Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
+                        <p class='li'>Terra: <kbd>$brutto je $kan_terramult $kan_terraeinheit</kbd></p>
+                        <p class='li'>Foodsoft: <kbd>"
+                          . ($fcpreis-$fcpfand) * $kan_terramult / $kan_fcmult
+                          . " je $kan_terramult $kan_terraeinheit </kbd></p></div>";
             }
           }
-
-          $newfc['bnummer'] = $terrabnummer;
-          if( $terrabnummer != $fcbnummer ) {
-            $neednewprice = TRUE;
-            echo "<div class='warn'>Problem: Bestellnummern stimmen nicht:
-                      <p class='li'>Terra: <kbd>$terrabnummer</kbd></p>
-                      <p class='li'>Foodsoft: <kbd>$fcbnummer</kbd></p></div>";
-          }
-
-          // echo "<br>Verteil: new: Einheit: $newfcmult * $newfceinheit Gebinde: $newfcgebindegroesse";
-          // echo "<br>Liefer: new: Einheit: $newliefermult * $newliefereinheit";
-        } else {
-          $neednewprice = TRUE;
-          $newfc['liefereinheit'] = $kan_terramult * $terragebindegroesse . " $kan_terraeinheit";
-          $newfc['verteileinheit'] = $kan_terramult . " $kan_terraeinheit";
-          $newfc['gebindegroesse'] = $terragebindegroesse;
-          $newfc['mwst'] = $mwst;
-          $newfc['pfand'] = $fcpfand;
-          $newfc['bnummer'] = $terrabnummer;
-          $newfc['preis'] = $brutto / $terragebindegroesse + $fcpfand;
         }
 
-      }
+        $newfc['bnummer'] = $terrabnummer;
+        if( $terrabnummer != $fcbnummer ) {
+          $neednewprice = TRUE;
+          echo "<div class='warn'>Problem: Bestellnummern stimmen nicht:
+                    <p class='li'>Terra: <kbd>$terrabnummer</kbd></p>
+                    <p class='li'>Foodsoft: <kbd>$fcbnummer</kbd></p></div>";
+        }
 
-    } // if( $is_terra ) { ... katalogvergleich ... }
-
-    if( $detail ) {
-
-      //
-      // vorlage fuer neuen preiseintrag berechnen:
-      //
-
-      if( ! $newfc['gebindegroesse'] ) {
-        $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 1 ) ? $fcgebindegroesse : 1 );
-      }
-
-      if( ! $newfc['verteileinheit'] ) {
-        $newfc['verteileinheit'] =
-          ( ( $kan_fcmult > 0.0001 ) ? $kan_fcmult : 1 )
-          . ( $kan_fceinheit ? " $kan_fceinheit" : ' ST' );
-      }
-
-      if( ! $newfc['liefereinheit'] ) {
-        if( $kan_liefereinheit and ( $kan_liefermult > 0.0001 ) )
-          $newfc['liefereinheit'] = "$kan_liefermult $kan_liefereinheit";
-        else
-          $newfc['liefereinheit'] = $newfc['verteileinheit'];
-      }
-
-      if( ! $newfc['mwst'] ) {
-        $newfc['mwst'] = ( $fcmwst ? $fcmwst : 7.0 );
-      }
-
-      if( ! $newfc['pfand'] ) {
-         $newfc['pfand'] = ( $fcpfand ? $fcpfand : 0.00 );
-      }
-
-      if( ! $newfc['preis'] ) {
-        $newfc['preis'] = ( $fcpreis ? $fcpreis : 0.00 );
-      }
-
-      if( ! $newfc['bnummer'] ) {
-        $newfc['bnummer'] = $fcbnummer;
-      }
-
-      // echo "newverteileinheit: {$newfc['verteileinheit']}";
-      // echo "newliefereinheit: {$newfc['liefereinheit']}";
-
-      // restliche felder automatisch berechnen:
-      //
-      preisdatenSetzen( & $newfc );
-
-      if( $neednewprice ) {
-        echo "
-          <div style='padding:1ex;' id='preiseintrag_form' class='small_form'>
-            <form name='Preisform' method='post' action='" . self_url() . "'>" . self_post() . "
-            <fieldset>
-              <legend>Vorschlag neuer Preiseintrag:</legend>
-        ";
+        // echo "<br>Verteil: new: Einheit: $newfcmult * $newfceinheit Gebinde: $newfcgebindegroesse";
+        // echo "<br>Liefer: new: Einheit: $newliefermult * $newliefereinheit";
       } else {
-        echo "
-          <div class='untertabelle'>
-            <div id='preiseintrag_an_knopf'>
-              <span class='button'
-                onclick='preiseintrag_on();' >Neuer Preiseintrag...</span>
-            </div>
-          </div>
-          <div style='display:none;' id='preiseintrag_form' class='small_form'>
-            <form name='Preisform' method='post' action='" . self_url() . "'>" . self_post() . "
-            <fieldset>
-              <legend>
-                <img class='button' title='Ausblenden' src='img/close_black_trans.gif'
-                 onclick='preiseintrag_off();'></img> Neuer Preiseintrag:</legend>
-        ";
+        $neednewprice = TRUE;
+        $newfc['liefereinheit'] = $kan_terramult * $terragebindegroesse . " $kan_terraeinheit";
+        $newfc['verteileinheit'] = $kan_terramult . " $kan_terraeinheit";
+        $newfc['gebindegroesse'] = $terragebindegroesse;
+        $newfc['mwst'] = $mwst;
+        $newfc['pfand'] = $fcpfand;
+        $newfc['bnummer'] = $terrabnummer;
+        $newfc['preis'] = $brutto / $terragebindegroesse + $fcpfand;
       }
-
-      echo "
-        <table id='preisform'>
-          <tr>
-            <td><label>Name:</label></td>
-            <td><input type='text' size='42' name='newfcname' value='$name'
-             title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'>
-              <label>Notiz:</label> <input type='text' size='42' name='newnotiz' value='$notiz'
-             title='Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant'>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Bestell-Nr:</label></td>
-            <td>
-              <input type='text' size='8' name='newfcbnummer' value='{$newfc['bnummer']}'
-                title='Bestellnummer (die, die sich bei Terra st&auml;ndig &auml;ndert!)'>
-
-              <label>MWSt:</label>
-                <input type='text' size='4' name='newfcmwst' id='newfcmwst' value='${newfc['mwst']}'
-                   title='MWSt-Satz in Prozent'
-                   onchange='preisberechnung_rueckwaerts();'
-                   >
-
-              <label>Pfand:</label> <input type='text' size='4' name='newfcpfand' id='newfcpfand' value='{$newfc['pfand']}'
-                title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
-                onchange='preisberechnung_rueckwaerts();'
-                >
-            </td>
-          </tr>
-            <td><label>Verteil-Einheit:</label></td>
-            <td>
-              <input type='text' size='4' name='newfcmult' id='newfcmult' value='${newfc['kan_verteilmult']}'
-               title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
-               onchange='preisberechnung_fcmult();'
-               >
-              <select size='1' name='newfceinheit' id='newfceinheit'
-               onchange='preisberechnung_default();'
-              >
-      " . optionen_einheiten( $newfc['kan_verteileinheit'] ) . "
-              </select>
-              <label>Endpreis:</label>
-                <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='newfcpreis'
-                value='${newfc['preis']}' onchange='preisberechnung_vorwaerts();'
-                >
-                / <span id='newfcendpreiseinheit'>{$newfc['kan_verteilmult']}
-                    {$newfc['kan_verteileinheit']}</span>
-
-              <label>Gebinde:</label>
-                <input type='text' size='4' name='newfcgebindegroesse' id='newfcgebindegroesse' value='${newfc['gebindegroesse']}'
-                 title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
-                 onchange='preisberechnung_gebinde();'
-                 >
-                * <span id='newfcgebindeeinheit']>{$newfc['kan_verteilmult']}
-                    {$newfc['kan_verteileinheit']}</span>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Liefer-Einheit:</label></td>
-            <td>
-              <input type='text' size='4' name='newliefermult' id='newliefermult' value='${newfc['kan_liefermult']}'
-               title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
-               onchange='preisberechnung_default();'
-               >
-              <select size='1' name='newliefereinheit' id='newliefereinheit'
-               onchange='preisberechnung_default();'
-              >
-      " . optionen_einheiten( $newfc['kan_liefereinheit'] ) . "
-              </select>
-
-                 <label>Lieferpreis:</label>
-                    <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='newfclieferpreis'
-                    value='${newfc['lieferpreis']}'
-                    onchange='preisberechnung_rueckwaerts();'
-                    >
-                    / <span id='newfcpreiseinheit'>{$newfc['preiseinheit']}</span>
-                </td>
-              </tr>
-              <tr>
-                <td><label>ab:</label></td>
-                  <td><input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'>
-
-
-                  <label>&nbsp;</label>
-                  <input type='submit' name='submit' value='OK'
-                          onclick=\"document.getElementById('row$outerrow').className='modified';\";
-                          title='Neuen Preiseintrag vornehmen (und letzten ggf. abschliessen)'
-                  >
-
-                  <label>&nbsp;</label>
-                  <label>Dynamische Neuberechnung:</label>
-                  <input name='dynamischberechnen' type='checkbox' value='yes'
-                  title='Dynamische Berechnung anderer Felder bei &Auml;nderung eines Eintrags' checked>
-
-                </td>
-              </tr>
-            </table>
-          </fieldset>
-          <input type='hidden' name='action' value='neuer_preiseintrag'>
-          </form>
-        </div>
-      ";
 
     }
-    ?> </td></tr> <?
 
-  } // function do_artikel
+  } // if( $is_terra ) { ... katalogvergleich ... }
+
+  if( $detail ) {
+
+    //
+    // vorlage fuer neuen preiseintrag berechnen:
+    //
+
+    if( ! $newfc['gebindegroesse'] ) {
+      $newfc['gebindegroesse'] = ( ( $fcgebindegroesse > 1 ) ? $fcgebindegroesse : 1 );
+    }
+
+    if( ! $newfc['verteileinheit'] ) {
+      $newfc['verteileinheit'] =
+        ( ( $kan_fcmult > 0.0001 ) ? $kan_fcmult : 1 )
+        . ( $kan_fceinheit ? " $kan_fceinheit" : ' ST' );
+    }
+
+    if( ! $newfc['liefereinheit'] ) {
+      if( $kan_liefereinheit and ( $kan_liefermult > 0.0001 ) )
+        $newfc['liefereinheit'] = "$kan_liefermult $kan_liefereinheit";
+      else
+        $newfc['liefereinheit'] = $newfc['verteileinheit'];
+    }
+
+    if( ! $newfc['mwst'] ) {
+      $newfc['mwst'] = ( $fcmwst ? $fcmwst : 7.0 );
+    }
+
+    if( ! $newfc['pfand'] ) {
+       $newfc['pfand'] = ( $fcpfand ? $fcpfand : 0.00 );
+    }
+
+    if( ! $newfc['preis'] ) {
+      $newfc['preis'] = ( $fcpreis ? $fcpreis : 0.00 );
+    }
+
+    if( ! $newfc['bnummer'] ) {
+      $newfc['bnummer'] = $fcbnummer;
+    }
+
+    // echo "newverteileinheit: {$newfc['verteileinheit']}";
+    // echo "newliefereinheit: {$newfc['liefereinheit']}";
+
+    // restliche felder automatisch berechnen:
+    //
+    preisdatenSetzen( & $newfc );
+
+    if( $neednewprice ) {
+      echo "
+        <div style='padding:1ex;' id='preiseintrag_form' class='small_form'>
+          <form name='Preisform' method='post' action='" . self_url() . "'>" . self_post() . "
+          <fieldset>
+            <legend>Vorschlag neuer Preiseintrag:</legend>
+      ";
+    } else {
+      echo "
+        <div class='untertabelle'>
+          <div id='preiseintrag_an_knopf'>
+            <span class='button'
+              onclick='preiseintrag_on();' >Neuer Preiseintrag...</span>
+          </div>
+        </div>
+        <div style='display:none;' id='preiseintrag_form' class='small_form'>
+          <form name='Preisform' method='post' action='" . self_url() . "'>" . self_post() . "
+          <fieldset>
+            <legend>
+              <img class='button' title='Ausblenden' src='img/close_black_trans.gif'
+               onclick='preiseintrag_off();'></img> Neuer Preiseintrag:</legend>
+      ";
+    }
+
+    echo "
+      <table id='preisform'>
+        <tr>
+          <td><label>Name:</label></td>
+          <td><input type='text' size='42' name='newfcname' value='$name'
+           title='Produktbezeichnung; bei abgepackten Sachen bitte auch die Menge angeben!'>
+            <label>Notiz:</label> <input type='text' size='42' name='newnotiz' value='$notiz'
+           title='Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant'>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Bestell-Nr:</label></td>
+          <td>
+            <input type='text' size='8' name='newfcbnummer' value='{$newfc['bnummer']}'
+              title='Bestellnummer (die, die sich bei Terra st&auml;ndig &auml;ndert!)'>
+
+            <label>MWSt:</label>
+              <input type='text' size='4' name='newfcmwst' id='newfcmwst' value='${newfc['mwst']}'
+                 title='MWSt-Satz in Prozent'
+                 onchange='preisberechnung_rueckwaerts();'
+                 >
+
+            <label>Pfand:</label> <input type='text' size='4' name='newfcpfand' id='newfcpfand' value='{$newfc['pfand']}'
+              title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
+              onchange='preisberechnung_rueckwaerts();'
+              >
+          </td>
+        </tr>
+          <td><label>Verteil-Einheit:</label></td>
+          <td>
+            <input type='text' size='4' name='newfcmult' id='newfcmult' value='${newfc['kan_verteilmult']}'
+             title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+             onchange='preisberechnung_fcmult();'
+             >
+            <select size='1' name='newfceinheit' id='newfceinheit'
+             onchange='preisberechnung_default();'
+            >
+    " . optionen_einheiten( $newfc['kan_verteileinheit'] ) . "
+            </select>
+            <label>Endpreis:</label>
+              <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='newfcpreis'
+              value='${newfc['preis']}' onchange='preisberechnung_vorwaerts();'
+              >
+              / <span id='newfcendpreiseinheit'>{$newfc['kan_verteilmult']}
+                  {$newfc['kan_verteileinheit']}</span>
+
+            <label>Gebinde:</label>
+              <input type='text' size='4' name='newfcgebindegroesse' id='newfcgebindegroesse' value='${newfc['gebindegroesse']}'
+               title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
+               onchange='preisberechnung_gebinde();'
+               >
+              * <span id='newfcgebindeeinheit']>{$newfc['kan_verteilmult']}
+                  {$newfc['kan_verteileinheit']}</span>
+          </td>
+        </tr>
+        <tr>
+          <td><label>Liefer-Einheit:</label></td>
+          <td>
+            <input type='text' size='4' name='newliefermult' id='newliefermult' value='${newfc['kan_liefermult']}'
+             title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+             onchange='preisberechnung_default();'
+             >
+            <select size='1' name='newliefereinheit' id='newliefereinheit'
+             onchange='preisberechnung_default();'
+            >
+    " . optionen_einheiten( $newfc['kan_liefereinheit'] ) . "
+            </select>
+
+               <label>Lieferpreis:</label>
+                  <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='newfclieferpreis'
+                  value='${newfc['lieferpreis']}'
+                  onchange='preisberechnung_rueckwaerts();'
+                  >
+                  / <span id='newfcpreiseinheit'>{$newfc['preiseinheit']}</span>
+              </td>
+            </tr>
+            <tr>
+              <td><label>ab:</label></td>
+                <td><input type='text' size='18' name='newfczeitstart' value='$mysqljetzt'>
+
+
+                <label>&nbsp;</label>
+                <input type='submit' name='submit' value='OK'
+                        onclick=\"document.getElementById('row$outerrow').className='modified';\";
+                        title='Neuen Preiseintrag vornehmen (und letzten ggf. abschliessen)'
+                >
+
+                <label>&nbsp;</label>
+                <label>Dynamische Neuberechnung:</label>
+                <input name='dynamischberechnen' type='checkbox' value='yes'
+                title='Dynamische Berechnung anderer Felder bei &Auml;nderung eines Eintrags' checked>
+
+              </td>
+            </tr>
+          </table>
+        </fieldset>
+        <input type='hidden' name='action' value='neuer_preiseintrag'>
+        </form>
+      </div>
+    ";
+
+  }
+  ?> </td></tr> <?
+
+} // function do_artikel
 
 ?>
 
 <script type="text/javascript">
-  preishistorie = 1;
-  function preishistorie_toggle() {
-    preishistorie = ! preishistorie;
-    if( preishistorie ) {
-      document.getElementById("preishistorie").style.display = "block";
-      document.getElementById("preishistorie_knopf").src = "img/close_black_trans.gif";
-      document.getElementById("preishistorie_knopf").title = "Ausblenden";
-    } else {
-      document.getElementById("preishistorie").style.display = "none";
-      document.getElementById("preishistorie_knopf").src = "img/open_black_trans.gif";
-      document.getElementById("preishistorie_knopf").title = "Einblenden";
-    }
-  }
-  function anummer_on() {
-    document.getElementById("anummer_an_knopf").style.display = "none";
-    document.getElementById("anummer_form").style.display = "block";
-  }
-  function anummer_off() {
-    document.getElementById("anummer_an_knopf").style.display = "inline";
-    document.getElementById("anummer_form").style.display = "none";
-  }
   function preiseintrag_on() {
     document.getElementById("preiseintrag_an_knopf").style.display = "none";
     document.getElementById("preiseintrag_form").style.display = "block";
