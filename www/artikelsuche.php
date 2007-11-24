@@ -25,8 +25,9 @@ $terramaxpreis and $filter = $filter . '(terranettopreisincents<='.$terramaxprei
 get_http_var( 'terrakatalog', 'M', '' );
 $terrakatalog and $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
 
-// produktid: wenn gesetzt, erlaube update der artikelnummer!
-if( get_http_var( 'produktid', 'u', NULL, true ) ) {
+// produkt_id: wenn gesetzt, erlaube update der artikelnummer!
+get_http_var( 'produkt_id', 'u', 0, true );
+if( $produkt_id ) {
   need_http_var( 'produktname', 'M', true );
 }
 
@@ -35,7 +36,7 @@ echo "
     <fieldset class='small_form'>
     <legend>
   ";
-  if( $produktid ) {
+  if( $produkt_id ) {
     echo "Katalogsuche nach Artikelnummer fuer <i>$produktname</i>:";
   } else {
     echo "Artikelsuche";
@@ -94,7 +95,7 @@ echo "
     </form>
   ";
 
-  if( ( ! $produktid ) && ( $hat_dienst_IV or $hat_dienst_V ) ) {
+  if( ( ! $produkt_id ) && ( $hat_dienst_IV or $hat_dienst_V ) ) {
     echo "
       <br>
       <form class='small_form' action='index.php?window=terrakatalog_upload' method='post' enctype='multipart/form-data'>
@@ -121,7 +122,7 @@ echo "
     ";
   }
 
-  if( $produktid > 0 ) {
+  if( $produkt_id > 0 ) {
     ?> <b>Zur Uebernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b> <?
   }
 
@@ -169,9 +170,9 @@ echo "
         </tr>
     ";
 
-    if ( $produktid > 0 ) {
+    if ( $produkt_id > 0 ) {
       echo "
-        <form action='index.php?window=terraabgleich&produktid=$produktid' method='post'>
+        <form action='index.php?window=terraabgleich&produkt_id=$produktid' method='post'>
         <input type='hidden' name='action' value='artikelnummer_setzen'>
       ";
     }
@@ -179,7 +180,7 @@ echo "
     for( $i=0; $i < $max; $i++ ) {
       echo "<tr>";
       echo "  <td>";
-      if ( $produktid > 0 ) {
+      if ( $produkt_id > 0 ) {
         echo "<input type='submit' name='anummer' value='{$entries[$i]['terraartikelnummer'][0]}'>";
       } else {
         echo "{$entries[$i]['terraartikelnummer'][0]}";
@@ -203,7 +204,7 @@ echo "
       ";
     }
 
-    if ( $produktid > 0 ) {
+    if ( $produkt_id > 0 ) {
       ?> </form> <?
     }
 
