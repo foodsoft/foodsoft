@@ -1437,6 +1437,124 @@ function action_button( $label, $title, $fields, $mod_id = false ) {
   <?
 }
 
+// preishistorie_view:
+//  - kann preishistorie anzeigen
+//  - kann preisauswahl fuer eine bestellung erlauben
+//
+function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
+  need( $produkt_id );
+  if( $bestell_id ) {
+    $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
+    $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
+  }
+
+  ?>
+    <script type="text/javascript">
+      preishistorie_status = 1;
+      function preishistorie_toggle() {
+        preishistorie_status = ! preishistorie_status;
+        if( preishistorie_status ) {
+          document.getElementById("preishistorie").style.display = "block";
+          document.getElementById("preishistorie_knopf").src = "img/close_black_trans.gif";
+          document.getElementById("preishistorie_knopf").title = "Ausblenden";
+        } else {
+          document.getElementById("preishistorie").style.display = "none";
+          document.getElementById("preishistorie_knopf").src = "img/open_black_trans.gif";
+          document.getElementById("preishistorie_knopf").title = "Einblenden";
+        }
+      }
+    </script>
+    <div class='untertabelle'>
+      <img id='preishistorie_knopf' class='button' src='img/close_black_trans.gif'
+        onclick='preishistorie_toggle();' title='Ausblenden'>
+  <?
+  if( $bestell_id ) {
+    ?> Preiseintrag wählen für Bestellung <?
+    echo "$bestellung_name:";
+  } else {
+    ?> Preis-Historie: <?
+  }
+  ?>
+    </div>
+    <div id='preishistorie'>
+      <table width='100%' class='numbers'>
+        <tr>
+          <th title='Interne eindeutige ID-Nummer des Preiseintrags'>id</th>
+          <th title='Bestellnummer'>B-Nr</th>
+          <th title='Preiseintrag gültig ab'>von</th>
+          <th title='Preiseintrag gültig bis'>bis</th>
+          <th title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
+          <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
+          <th title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
+          <th title='Gebindegröße in V-Einheiten'>Gebinde</th>
+          <th>MWSt</th>
+          <th title='Pfand je V-Einheit'>Pfand</th>
+          <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
+  <?
+  if( $bestell_id )
+    echo "<th title='Preiseintrag für Bestellung $bestellung_name'>Aktiv</th>";
+  ?> </tr> <?
+
+  $produktpreise = sql_produktpreise2( $produkt_id );
+  while( $pr1 = mysql_fetch_array($produktpreise) ) {
+    preisdatenSetzen( &$pr1 );
+    ?>
+      <tr>
+        <td><? echo $pr1['id']; ?></td>
+        <td><? echo $pr1['bestellnummer']; ?></td>
+        <td><? echo $pr1['zeitstart']; ?></td>
+        <td>
+    <?
+    if( $pr1['zeitende'] ) {
+      echo "{$pr1['zeitende']}";
+    } else {
+      if( $editable )
+        action_button( "Abschließzen"
+        , "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)"
+        , array( 'action' => 'zeitende_setzen', 'preis_id' => $pr1['id'], 'zeitende' => $mysqljetzt, 'preis_id' => $pr1['id'] )
+        , "row$outerrow"
+        );
+      else
+        echo " - ";
+    }
+    ?>
+        </td>
+        <td class='mult'><? echo $pr1['kan_liefermult']; ?></td>
+        <td class='unit'><? echo $pr1['kan_liefereinheit']; ?></td>
+        <td class='mult'><? printf( "%8.2lf", $pr1['lieferpreis'] ); ?></td>
+        <td class='unit'>/ <? echo $pr1['preiseinheit']; ?></td>
+        <td class='mult'><? echo $pr1['kan_verteilmult']; ?></td>
+        <td class='unit'><? echo $pr1['kan_verteileinheit']; ?></td>
+        <td class='number'><? echo $pr1['gebindegroesse']; ?></td>
+        <td class='number'><? echo $pr1['mwst']; ?></td>
+        <td class='number'><? echo $pr1['pfand']; ?></td>
+        <td class='mult'><? printf( "%8.2lf", $pr1['preis'] ); ?></td>
+        <td class='unit'> / <? echo "{$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}"; ?></td>
+    <?
+    if( $bestell_id ) {
+      ?> <td> <?
+      if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
+        ?>
+          <input type='submit' name='aktiv' value='aktiv' class='buttondown'
+          style='width:5em;'
+          title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>
+        <?
+      } else {
+        if( $editable ) {
+          action_button( "setzen"
+          , "diesen Preiseintrag für Bestellung $bestellung_name auswählen"
+          , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] )
+          );
+        } else {
+          echo " - ";
+        }
+      }
+      ?> </td> <?
+    }
+    ?> </tr> <?
+  }
+  ?> </table></div> <?
+}
 /**
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)
