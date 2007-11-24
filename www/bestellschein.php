@@ -11,9 +11,7 @@
 error_reporting(E_ALL);
 //$_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
-if( ! $angemeldet ) {
-  exit( "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div>");
-} 
+assert( $angemeldet ) or exit();
 
 if( get_http_var( 'bestellungs_id', 'u' ) ) {
   $bestell_id = $bestellungs_id;
@@ -77,8 +75,7 @@ if( ! $bestell_id ) {
   }
   $result = sql_bestellungen( $state );
   select_bestellung_view($result, 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
-  echo "$print_on_exit";
-  exit();
+  return;
 }
 
 get_http_var( 'gruppen_id', 'u', 0, true );
@@ -130,8 +127,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
     break;
   default: 
     ?> <div class='warn'>Keine Detailanzeige verfügbar</div> <?
-    echo "$print_on_exit";
-    exit();
+    return;
 }
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
