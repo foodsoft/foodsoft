@@ -2521,7 +2521,6 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
   return $row ? $row['id'] : 0;
 }
 
-
 function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
   if( $zeitende )
     $zeitende = mysql_real_escape_string( $zeitende );
@@ -2534,6 +2533,51 @@ function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
           AND ISNULL(zeitende) OR ( zeitende > '$zeitende' )
   ";
   return doSql( $query, LEVEL_IMPORTANT, "sql_expire_produktpreise() fehlgeschlagen: " );
+}
+
+// produktpreise_konsistenztest:
+//  - alle zeitintervalle bis auf das letzte muessen abgeschlossen sein
+//  - intervalle duerfen nicht ueberlappen
+//  - warnen, wenn kein aktuell gueltiger preis vorhanden
+// rueckgabe: true, falls keine probleme, sonst false
+//
+function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false ) {
+  need( $produkt_id );
+  $rv = true;
+  $produktpreise = sql_produktpreise2( $produkt_id );
+  $pr0 = FALSE;
+  while( $pr1 = mysql_fetch_array($produktpreise) ) {
+    if( $pr0 ) {
+      if( $pr0['zeitende'] == '' ) {
+        echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
+        $editable && action_button(
+          "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
+        , $mod_id
+        );
+        $rv = false;
+      } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
+        echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
+        $editable && action_button(
+          "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
+        , $mod_id
+        );
+        $rv = false;
+      }
+    }
+    $pr0 = $pr1;
+  }
+  if( ! $pr0 ) {
+    ?> <div class='warn'>WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+  } else if ( $pr0['zeitende'] != '' ) {
+    if ( $pr0['zeitende'] < $mysqljetzt ) {
+      ?> <div class='warn'>WARNUNG: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+    } else {
+      ?> <div class='warn'>WARNUNG: aktueller Preis l&auml;uft aus!</div> <?
+    }
+  }
+  return $rv;
 }
 
 
