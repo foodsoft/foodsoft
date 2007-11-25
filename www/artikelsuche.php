@@ -172,7 +172,7 @@ echo "
 
     if ( $produkt_id > 0 ) {
       echo "
-        <form action='index.php?window=terraabgleich&produkt_id=$produktid' method='post'>
+        <form action='index.php?window=terraabgleich&produkt_id=$produkt_id' method='post'>
         <input type='hidden' name='action' value='artikelnummer_setzen'>
       ";
     }

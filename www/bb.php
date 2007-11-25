@@ -102,7 +102,7 @@
           <td><a href='$self&produkt_id={$produkt['id']}'>{$produkt['id']}</a></td>
           <td><a href='$self&produkt_id={$produkt['id']}'>{$produkt['name']}</a></td>
           <td>
-          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid={$produkt['id']}&bestell_id=$bestell_id','foodsoftdetail');\"
+          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produkt_id={$produkt['id']}&bestell_id=$bestell_id','foodsoftdetail');\"
           >{$vorschlag['produktpreise_id']}</a></td>
           <td>{$vorschlag['bestellmenge']}</td>
           <td>{$vorschlag['liefermenge']}</td>
@@ -171,7 +171,7 @@
           <td class='mult'>" . $zuordnung['menge'] * $zuordnung['kan_verteilmult'] . "</td>
           <td class='unit'>{$zuordnung['kan_verteileinheit']}</td>
           <td class='number'>
-          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produktid=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
+          <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produkt_id=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
           >{$zuordnung['preis']}</a></td>
           <td class='number'>" . $zuordnung['preis'] * $zuordnung['menge'] . "</td>
         </tr>

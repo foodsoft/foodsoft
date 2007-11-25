@@ -233,7 +233,7 @@
       <? } ?>
           <td valign='top'>
           <? if( $editable ) { ?>
-            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
+            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
             <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=500,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
             <? if( $references == 0 ) { ?>
               <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0' alt='Produkt löschen' title='Produkt löschen'/></a>

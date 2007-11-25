@@ -1024,7 +1024,7 @@
                             ";
                           }
                           echo "
-                            ><a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
+                            ><a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produkt_id={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
                              ".sprintf("%.02f",$preise_row['preis'])."
                              </a>
                             </td>
@@ -1035,7 +1035,7 @@
                             <td class='warn' colspan='4'
                             title='...kann bedeuten: Artikel nicht (mehr) lieferbar!'
                             >Kein aktueller
-                              <a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\"
+                              <a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produkt_id={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\"
                               >Preiseintrag</a>
                             </td>
                           ";

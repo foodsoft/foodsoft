@@ -43,7 +43,7 @@ $gruppen = sql_gruppen($bestell_id, $produkt_id);
     <tr>
       <th>Produkt:</th>
       <td>
-        <a href="javascript:neuesfenster('index.php?window=terraabgleich&produktid=<? echo $produkt_id; ?>','produktdetails');"
+        <a href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $produkt_id; ?>','produktdetails');"
           title='zu den Produktdetails...' ><? echo $vorschlag['produkt_name']; ?></a>
       </td>
     </tr>
