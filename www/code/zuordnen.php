@@ -2542,6 +2542,7 @@ function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
 // rueckgabe: true, falls keine probleme, sonst false
 //
 function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false ) {
+  global $mysqljetzt;
   need( $produkt_id );
   $rv = true;
   $produktpreise = sql_produktpreise2( $produkt_id );
@@ -2550,16 +2551,16 @@ function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false )
     if( $pr0 ) {
       if( $pr0['zeitende'] == '' ) {
         echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
-        $editable && action_button(
-          "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+        $editable && action_button( "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
           , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
         , $mod_id
         );
         $rv = false;
       } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
         echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
-        $editable && action_button(
-          "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+        $editable && action_button( "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
+          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
           , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
         , $mod_id
         );
@@ -2608,6 +2609,8 @@ function action_form_produktpreis() {
   global $verteilmult, $verteileinheit, $liefermult, $liefereinheit, $gebindegroesse, $produkt_id;
 
   need_http_var('produkt_id','u');
+
+  get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
   need_http_var('verteilmult','f');
   need_http_var('verteileinheit','w');
   need_http_var('liefermult','u');
@@ -2616,15 +2619,17 @@ function action_form_produktpreis() {
   need_http_var('mwst','f');
   need_http_var('pfand','f');
   need_http_var('preis','f');
-  need_http_var('name','H');
   get_http_var('bestellnummer','H','');
   need_http_var('zeitstart','H');
   get_http_var('notiz','H','');
 
   $produkt = sql_produkt_details( $produkt_id );
 
-  if( "$name" != $produkt['name'] or "$notiz" != $produkt['notiz'] ) {
-    sql_update( 'produkte', $produkt_id, array( 'name' => $name, 'notiz' => $notiz ) );
+  if( "$name" and ( "$name" != $produkt['name'] ) ) {
+    sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
+  }
+  if( "$notiz" != $produkt['notiz'] ) {
+    sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
   }
 
   sql_insert_produktpreis(
@@ -3512,11 +3517,8 @@ function init_ldap_handle() {
   global $ldap_handle, $ldapuri;
 
   if( ! $ldap_handle ) {
-    echo "ldapuri: $ldapuri<br>";
-
-    if( ! $ldapuri ) {
+    if( ! $ldapuri )
       return false;
-    }
 
    $h = ldap_connect( $ldapuri );
    if( ! ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) ) {
@@ -3535,22 +3537,24 @@ function init_ldap_handle() {
 // $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
 //
 function katalogsuche( $produkt ) {
-  global $ldap_handle;
+  global $ldap_handle, $ldapbase;
   if( is_numeric( $produkt ) ) {
     $produkt = sql_produkt_details( $produkt );
   }
   
-  $lieferant_name = lieferant_name( $lieferanten_id );
+  $lieferant_name = lieferant_name( $produkt['lieferanten_id'] );
   switch( $lieferant_name ) {
     case 'Terra' :
-      if( ! ( $artikelnumner = $produkt['artikelnummer'] ) )
+      if( ! ( $artikelnummer = $produkt['artikelnummer'] ) )
         return false;
       if( ! $ldap_handle ) {
         init_ldap_handle();
       }
       if( $ldap_handle ) {
-        $katalogergebnis = ldap_search( $ldaphandle, $ldapbase, "(&(objectclass=terraartikel)(terraartikelnummer=$artikelnummer))" );
-        $katalogeintraege = ldap_get_entries( $ldaphandle, $katalogergebnis );
+        $katalogergebnis = ldap_search( $ldap_handle, $ldapbase
+        , "(&(objectclass=terraartikel)(terraartikelnummer=$artikelnummer))"
+        );
+        $katalogeintraege = ldap_get_entries( $ldap_handle, $katalogergebnis );
         return $katalogeintraege;
       }
     break;

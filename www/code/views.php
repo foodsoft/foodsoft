@@ -649,7 +649,7 @@ function products_overview(
       echo "<td class='mult'>";
       if($editPrice){
         echo "<a
-          href=\"javascript:neuesfenster('index.php?window=terraabgleich&produktid=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
+          href=\"javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
           onclick=\"
             document.getElementById('row$produkt_id').className='modified';
             document.getElementById('row_total').className='modified';\"
@@ -1351,7 +1351,7 @@ function mod_onclick( $id ) {
 }
 
 function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on = false, $mod_id = false ) {
-  $produkt = get_produkt_details( $produkt_id );
+  $produkt = sql_produkt_details( $produkt_id );
   $anummer = $produkt['artikelnummer'];
   $can_toggle or $default_on = true;
   if( $can_toggle ) {
@@ -1441,7 +1441,8 @@ function action_button( $label, $title, $fields, $mod_id = false ) {
 //  - kann preishistorie anzeigen
 //  - kann preisauswahl fuer eine bestellung erlauben
 //
-function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
+function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $mod_id = false ) {
+  global $mysqljetzt;
   need( $produkt_id );
   if( $bestell_id ) {
     $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
@@ -1509,10 +1510,10 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       echo "{$pr1['zeitende']}";
     } else {
       if( $editable )
-        action_button( "Abschließzen"
+        action_button( "Abschließen"
         , "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)"
         , array( 'action' => 'zeitende_setzen', 'preis_id' => $pr1['id'], 'zeitende' => $mysqljetzt, 'preis_id' => $pr1['id'] )
-        , "row$outerrow"
+        , $mod_id
         );
       else
         echo " - ";
