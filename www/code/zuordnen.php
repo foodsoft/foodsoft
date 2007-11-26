@@ -2563,8 +2563,8 @@ function references_produktpreise( $preis_id ) {
  */
 function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
   if( $zeitpunkt ) {
-    $zeitfilter = " AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
-                    AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))";
+    $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
+                    AND (zeitstart <= '$zeitpunkt' OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = "";
   }
@@ -2574,7 +2574,7 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
     FROM produktpreise 
     JOIN produkte ON produkte.id = produktpreise.produkt_id
     WHERE produkt_id= $produkt_id $zeitfilter
-    ORDER BY zeitstart, zeitende";
+    ORDER BY IFNULL(zeitende,'9999-12-31'), id";
   return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 
@@ -2621,7 +2621,7 @@ function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
 //  - warnen, wenn kein aktuell gueltiger preis vorhanden
 // rueckgabe: true, falls keine probleme, sonst false
 //
-function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false ) {
+function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id = false ) {
   global $mysqljetzt;
   need( $produkt_id );
   $rv = true;
@@ -2634,7 +2634,7 @@ function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false )
         $editable && action_button( "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
           , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
           , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
-        , $mod_id
+        , $mod_id, 'warn'
         );
         $rv = false;
       } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
@@ -2642,7 +2642,7 @@ function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false )
         $editable && action_button( "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
           , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
           , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
-        , $mod_id
+        , $mod_id, 'warn'
         );
         $rv = false;
       }
@@ -2650,12 +2650,12 @@ function produktpreise_konsistenztest( $produkt_id, $editable, $mod_id = false )
     $pr0 = $pr1;
   }
   if( ! $pr0 ) {
-    ?> <div class='warn'>WARNUNG: kein Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+    ?> <div class='alert'>HINWEIS: kein Preiseintrag fuer diesen Artikel vorhanden!</div> <?
   } else if ( $pr0['zeitende'] != '' ) {
     if ( $pr0['zeitende'] < $mysqljetzt ) {
-      ?> <div class='warn'>WARNUNG: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+      ?> <div class='alert'>HINWEIS: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div> <?
     } else {
-      ?> <div class='warn'>WARNUNG: aktueller Preis l&auml;uft aus!</div> <?
+      ?> <div class='alert'>HINWEIS: aktueller Preis l&auml;uft aus!</div> <?
     }
   }
   return $rv;
@@ -3590,66 +3590,6 @@ function move_html( $id, $into_id ) {
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
-
-////////////////////////////////////
-//
-// Katalogsuche
-//
-////////////////////////////////////
-
-$ldap_handle = false;
-
-function init_ldap_handle() {
-  global $ldap_handle, $ldapuri;
-
-  if( ! $ldap_handle ) {
-    if( ! $ldapuri )
-      return false;
-
-   $h = ldap_connect( $ldapuri );
-   if( ! ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) ) {
-     return false;
-   }
-   if( ! ldap_bind( $h ) ) {
-     return false;
-   }
-    $ldap_handle = $h;
-  }
-  return $ldap_handle;
-}
-
-// katalogsuche: sucht im lieferantenkatalog nach $produkt.
-// bisher nur fuer Terra.
-// $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
-//
-function katalogsuche( $produkt ) {
-  global $ldap_handle, $ldapbase;
-  if( is_numeric( $produkt ) ) {
-    $produkt = sql_produkt_details( $produkt );
-  }
-  
-  $lieferant_name = lieferant_name( $produkt['lieferanten_id'] );
-  switch( $lieferant_name ) {
-    case 'Terra' :
-      if( ! ( $artikelnummer = $produkt['artikelnummer'] ) )
-        return false;
-      if( ! $ldap_handle ) {
-        init_ldap_handle();
-      }
-      if( $ldap_handle ) {
-        $katalogergebnis = ldap_search( $ldap_handle, $ldapbase
-        , "(&(objectclass=terraartikel)(terraartikelnummer=$artikelnummer))"
-        );
-        $katalogeintraege = ldap_get_entries( $ldap_handle, $katalogergebnis );
-        return $katalogeintraege;
-      }
-    break;
-    default:
-      return false;
-  }
-  return false;
-}
-
 
 ////////////////////////////////////
 //

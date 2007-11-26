@@ -1417,10 +1417,10 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
   <?
 }
 
-function action_button( $label, $title, $fields, $mod_id = false ) {
+function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) {
   ?>
-    <div class='warn' style='padding:0.1ex 1em 0.1ex 2em;'>
-      <form method='post' action='<? echo self_url(); ?>'>
+    <div class='<? echo $class; ?>' style='padding:0.5ex 1em 0.5ex 1em;'>
+      <form style='margin:0ex;' method='post' action='<? echo self_url(); ?>'>
         <?
           echo self_post();
           foreach( $fields as $name => $value )
@@ -1499,9 +1499,10 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   $produktpreise = sql_produktpreise2( $produkt_id );
   while( $pr1 = mysql_fetch_array($produktpreise) ) {
     preisdatenSetzen( &$pr1 );
+    $references = references_produktpreise( $pr1['id'] );
     ?>
       <tr>
-        <td><? echo $pr1['id']; ?></td>
+        <td><? echo $pr1['id']; echo "($references)"; ?></td>
         <td><? echo $pr1['bestellnummer']; ?></td>
         <td><? echo $pr1['zeitstart']; ?></td>
         <td>

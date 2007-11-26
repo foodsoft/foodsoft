@@ -289,6 +289,16 @@ tr.posten td.rednumber, tr.ersterposten td.rednumber {
   font-weight:bold;
 }
 
+tr.groupofrows_top td {
+  border-bottom-style:none;
+}
+table.numbers tr.groupofrows_bottom td {
+  padding:0pt;
+  margin:0pt;
+  height:0pt;
+  border-top-style:none;
+}
+
 
 .bigbutton		{
 	width:200px;
@@ -341,6 +351,14 @@ padding: 2px 2px 2px 5px;
 
 th.warn, td.warn, div.warn, span.warn {
   background-color:#ffaaaa;
+  color:#000000;
+  font-weight:bold;
+  padding-top:2px;
+  padding-bottom:2px;
+}
+
+th.alert, td.alert, div.alert, span.alert {
+  background-color:#ffffa0;
   color:#000000;
   font-weight:bold;
   padding-top:2px;

@@ -4,6 +4,7 @@
 	
   require_once('code/views.php');
   require_once('code/zuordnen.php');
+  require_once('code/katalogsuche.php');
 	// Funktionen zur Fehlerbehandlung laden
 	require_once('code/err_functions.php');
 	

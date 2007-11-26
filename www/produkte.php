@@ -4,9 +4,11 @@
   assert( $angemeldet ) or exit();
 
   get_http_var( 'lieferanten_id', 'u', false, true );
+  define( 'OPTION_KATALOGABGLEICH', 1 );
+  define( 'OPTION_PREISKONSISTENZTEST', 2 );
+  get_http_var( 'optionen', 'u', OPTION_PREISKONSISTENZTEST, true );
 
   $editable = ( ! $readonly and ( $dienst == 4 ) );
-
 
 
   /////////////////////////////
@@ -34,6 +36,28 @@
         <td><input type='button' value='Seite aktualisieren' class='bigbutton' onClick="document.forms['reload_form'].submit();"></td>
       </tr><tr>
         <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php';"></td>
+      </tr>
+      <tr>
+        <td>
+          <input type='checkbox'
+            <? if( $optionen & OPTION_PREISKONSISTENZTEST ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_PREISKONSISTENZTEST);
+            ?>';"
+            title='Soll die Preishistorie aller Einträege auf Inkonsistenzen geprüft werden?'
+          > Preiskonsistenztest
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input type='checkbox'
+            <? if( $optionen & OPTION_KATALOGABGLEICH ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_KATALOGABGLEICH);
+            ?>';"
+            title='Sollen alle Einträge mit dem Lieferantenkatalog verglichen werden?'
+          > Abgleich mit Lieferantenkatalog
+        </td>
       </tr>
       </table>
     <?
@@ -162,9 +186,9 @@
                 if ( $lieferant_name == "Terra" ) {
                  ?> <a class="button" href="javascript:neuesfenster('index.php?window=artikelsuche','artikelsuche');">Katalogsuche</a> <?
                 }
-                 // if( $hat_dienst_IV ) {
+                if( 0 ) {
                    ?> <a class="button" href="javascript:neuesfenster('index.php?window=terraabgleich&lieferanten_id=<? echo $lieferanten_id; ?>','terraabgleich;');">Datenbankabgleich</a> <?
-                 // }
+                }
               ?>
 
           </h3></th>
@@ -199,12 +223,12 @@
 
   while( $row = mysql_fetch_array($produkte) ) {
     $id = $row['id'];
-    $produkt = sql_produkt_details( $id );
+    $produkt = sql_produkt_details( $id, 0, $mysqljetzt );
     $references = references_produkt( $id );
 
     if (!$edit_all) { 
       ?>
-        <tr>
+        <tr class='groupofrows_top'>
       <? if( $produkt['zeitstart'] ) { ?>
           <td valign="top"><input type="checkbox" name="bestelliste[]" value="<? echo $id; ?>"></td>
       <?  } else { ?>
@@ -212,8 +236,8 @@
       <?  } ?>
           <td valign="top"><b><? echo $produkt['name']; ?></b></td>
           <td valign="top"><? echo $produkt['produktgruppen_name']; ?></td>
-          <td valign="top"><? echo $produkt['notiz']; ?></td>
       <? if( $produkt['zeitstart'] ) { ?>
+          <td valign="top"><? echo $produkt['notiz']; ?></td>
           <td class='number'><?
             printf(
               "%d * (%s %s)"
@@ -229,16 +253,27 @@
             );
           ?></td>
       <?  } else { ?>
-        <td colspan='5' style='text-align:center'>(kein aktueller Preiseintrag)</td>
+        <td colspan='6' style='text-align:center'>(kein aktueller Preiseintrag)</td>
       <? } ?>
           <td valign='top'>
           <? if( $editable ) { ?>
-            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $row['id'] ?>','produktdetails');"><img src='img/euro.png' border='0' alt='Preise' titel='Preise'></a>
             <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=500,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
+            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $row['id'] ?>','produktdetails');"><img src='img/b_browse.png' border='0' alt='Details und Preise' titel='Preise'></a>
             <? if( $references == 0 ) { ?>
               <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0' alt='Produkt löschen' title='Produkt löschen'/></a>
             <? } ?>
           <? } ?>
+          </td>
+        </tr>
+        <tr class='groupofrows_bottom'>
+          <td colspan='1'></td>
+          <td colspan='9'>
+            <?
+              if( $optionen & OPTION_PREISKONSISTENZTEST )
+                produktpreise_konsistenztest( $id );
+              if( $optionen & OPTION_KATALOGABGLEICH )
+                katalogabgleich( $id );
+            ?>
           </td>
         </tr>
       <?

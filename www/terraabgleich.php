@@ -15,7 +15,8 @@ assert( $angemeldet ) or exit();
 
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
-$detail = get_http_var('produkt_id','u',0,true);
+get_http_var('produkt_id','u',0,true);
+$detail = $produkt_id;
 get_http_var('bestell_id','u',0,true);
 
 $subtitle = 'Produktddetails';
@@ -254,9 +255,6 @@ function do_artikel( $produkt_id, $detail, $editable ) {
         </table>
       <?
 
-      if( $detail )
-        formular_artikelnummer( $produkt_id, true, false );
-
       kanonische_einheit( $katalog_einheit, &$kan_katalogeinheit, &$kan_katalogmult );
 
       ////////////////////////////////
@@ -334,7 +332,7 @@ function do_artikel( $produkt_id, $detail, $editable ) {
               echo "<div class='warn'>Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
                         <p class='li'>Katalog: <kbd>$katalog_brutto / $kan_katalogmult $kan_katalogeinheit</kbd></p>
                         <p class='li'>Foodsoft: <kbd>"
-                          . ( $artikel['preis'] - $artikel['pfand'] ) * $kan_katalogmult / $artikel['kan_verteilmult']
+                          . ( $artikel['endpreis'] - $artikel['pfand'] ) * $kan_katalogmult / $artikel['kan_verteilmult']
                           . " / $kan_katalogmult $kan_katalogeinheit</kbd></p></div>";
             }
           }
@@ -347,6 +345,7 @@ function do_artikel( $produkt_id, $detail, $editable ) {
                     <p class='li'>Katalog: <kbd>$katalog_bestellnummer</kbd></p>
                     <p class='li'>Foodsoft: <kbd>{$artikel['bestellnummer']}</kbd></p></div>";
         }
+
 
         // echo "<br>Verteil: new: Einheit: $newfcmult * $newfceinheit Gebinde: $newfcgebindegroesse";
         // echo "<br>Liefer: new: Einheit: $newliefermult * $newliefereinheit";
@@ -362,6 +361,11 @@ function do_artikel( $produkt_id, $detail, $editable ) {
         $preiseintrag_neu['preis'] = $katalog_brutto;
       }
 
+      if( $detail ) {
+        ?> <div style='padding:1ex;'> <?
+        formular_artikelnummer( $produkt_id, true, false );
+        ?> </div> <?
+      }
     }
 
   } //  ... katalogsuche ...
