@@ -7,28 +7,30 @@ setWikiHelpTopic( "foodsoft:katalogsuche" );
 
 $filter = '';
 
-get_http_var( 'terrabnummer', 'w', '' );
+// "default" nutzt hier nichts: die Felder koennen auch leer uebergeben werden!
+get_http_var( 'terrabnummer', 'w' ) or $terrabnummer = '';
 $terrabnummer and $filter = $filter . '(terrabestellnummer='.$terrabnummer.')';
 
-get_http_var( 'terraanummer', 'w', '' );
+get_http_var( 'terraanummer', 'w' ) or $terraanummer = '';
 $terraanummer and $filter = $filter . '(terraartikelnummer='.$terraanummer.')';
 
-get_http_var( 'terracn', 'M', '' );
+get_http_var( 'terracn', 'M', '' ) or $terracn = '';
 $terracn and $filter = $filter . '(cn=*'.$terracn.'*)';
 
-get_http_var( 'terraminpreis', 'f', '' );
+get_http_var( 'terraminpreis', 'f', '' ) or $terraminpreis = '';
 $terraminpreis and $filter = $filter . '(terranettopreisincents>='.$terraminpreis.')';
 
-get_http_var( 'terramaxpreis', 'f', '' );
+get_http_var( 'terramaxpreis', 'f', '' ) or $terramaxpreis = '';
 $terramaxpreis and $filter = $filter . '(terranettopreisincents<='.$terramaxpreis.')';
 
-get_http_var( 'terrakatalog', 'M', '' );
+get_http_var( 'terrakatalog', 'M', '' ) or $terrakatalog = '';
 $terrakatalog and $filter = $filter . '(terradatum=*.'.$terrakatalog.')';
 
 // produkt_id: wenn gesetzt, erlaube update der artikelnummer!
 get_http_var( 'produkt_id', 'u', 0, true );
 if( $produkt_id ) {
-  need_http_var( 'produktname', 'M', true );
+  $produkt = sql_produkt_details( $produkt_id );
+  $produktname = $produkt['name'];
 }
 
 echo "
@@ -122,11 +124,12 @@ echo "
     ";
   }
 
-  if( $produkt_id > 0 ) {
-    ?> <b>Zur Uebernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b> <?
-  }
+  if( $filter != '' ) {
 
-  if ( $filter != '' ) {
+    if( $produkt_id > 0 ) {
+      ?> <b>Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b> <?
+    }
+
     $filter = '(&(objectclass=terraartikel)' . $filter . ')';
     // echo '<br>filter: ' . $filter . '<br>';
 
