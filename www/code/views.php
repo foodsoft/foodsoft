@@ -1378,8 +1378,8 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
             if( $can_toggle ) {
               ?>
                 <img class='button' src='img/close_black_trans.gif' title='Ausblenden'
-                  onclick='document.getElementById("anummer_button").style.display = "inline";
-                  document.getElementById("anummer_form").style.display = "none";
+                  onclick="document.getElementById('anummer_button').style.display='inline';
+                  document.getElementById('anummer_form').style.display = 'none';"
                 >
               <?
             }
@@ -1404,9 +1404,9 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
             </td>
             <td>
               <form action='index.php?window=artikelsuche' method='post'>
-                <input name='terracn' value='$name' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
+                <input name='terracn' value='<? echo $produkt['name']; ?>' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
                   <? echo mod_onclick( $mod_id ); ?> >
-                <input type='hidden' name='produkt_id' value='$produkt_id'>
+                <input type='hidden' name='produkt_id' value='<? echo $produkt_id; ?>'>
               </form>
             </td>
           </tr>
