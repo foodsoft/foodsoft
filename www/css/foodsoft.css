@@ -54,6 +54,9 @@ h1 {
 input:hover, textarea:hover, select:hover {
 	background-color:#f5f5f5;
 }
+input:focus {
+	background-color:#f5f5f5;
+}
 
 /* - Logo bzw. Kopf - */
 

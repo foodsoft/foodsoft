@@ -125,20 +125,18 @@
             <? } ?>
          </td>
 			 </tr>
-       <? if( $produkt_id ) { ?>
-         <tr>
-           <td class='warn' colspan='2'>
-           <span class='warn' id='name_change_warning' style='display:none;'>
-           <p>
-             Warnung: die Produktbezeichnung sollte möglichst nicht geändert werden,
-             da sich Änderungen auch rückwirkend auf alte Abrechnungen auswirken!
-           </p>
-           <p> Aktuelle und veränderliche Angaben bitte als 'Notiz' speichern!  </p>
-           </span>
-           </td>
-         </tr>
-       <? } ?>
 		</table>
+
+    <? if( $produkt_id ) { ?>
+        <div class='warn' id='name_change_warning' style='display:none;'>
+        <p>
+          Warnung: die Produktbezeichnung sollte möglichst nicht geändert werden,
+          da sich Änderungen auch rückwirkend auf alte Abrechnungen auswirken!
+        </p>
+        <p> Aktuelle und veränderliche Angaben bitte als 'Notiz' speichern!  </p>
+        </span>
+        </div>
+    <? } ?>
     </fieldset>
 	 </form>
 
