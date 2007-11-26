@@ -32,6 +32,12 @@ function sql_select_single_row( $sql ) {
   return mysql_fetch_array($result);
 }
 
+function sql_select_single_field( $sql, $field ) {
+  $row = sql_select_single_row( $sql );
+  need( isset( $row[$field] ) );
+  return $row[$field];
+}
+
 function sql_update( $table, $id, $values ) {
   fail_if_readonly();
   $sql = "UPDATE $table SET";
@@ -2545,6 +2551,13 @@ function sockel_gruppen_summe() {
 //
 /////////////////////////////////////////////
 
+function references_produktpreise( $preis_id ) {
+  return sql_select_single_field(
+    "SELECT count(*) as count FROM bestellvorschlaege WHERE produktpreise_id=$preis_id"
+  , "count"
+  );
+}
+
 /**
  *
  */
@@ -2561,7 +2574,7 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
     FROM produktpreise 
     JOIN produkte ON produkte.id = produktpreise.produkt_id
     WHERE produkt_id= $produkt_id $zeitfilter
-    ORDER BY zeitende, zeitstart";
+    ORDER BY zeitstart, zeitende";
   return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 
@@ -2588,15 +2601,16 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
 }
 
 function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
+  global $mysqljetzt;
   if( $zeitende )
     $zeitende = mysql_real_escape_string( $zeitende );
   else
-    $zeitende = '$mysqljetzt';
-  $query="
+    $zeitende = "$mysqljetzt";
+  $query = "
     UPDATE produktpreise
     SET zeitende='$zeitende'
-    WHERE id=$produkt_id
-          AND ISNULL(zeitende) OR ( zeitende > '$zeitende' )
+    WHERE ( produkt_id = '$produkt_id' )
+          AND ( ISNULL(zeitende) OR ( zeitende > '$zeitende' ) )
   ";
   return doSql( $query, LEVEL_IMPORTANT, "sql_expire_produktpreise() fehlgeschlagen: " );
 }
@@ -2672,7 +2686,9 @@ function sql_insert_produktpreis (
 
 
 function action_form_produktpreis() {
-  global $verteilmult, $verteileinheit, $liefermult, $liefereinheit, $gebindegroesse, $produkt_id;
+  global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
+       , $gebindegroesse, $mwst, $pfand, $preis, $bestellnummer
+       , $day, $month, $year, $notiz, $produkt_id;
 
   need_http_var('produkt_id','u');
 
