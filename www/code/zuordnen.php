@@ -2561,8 +2561,7 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
     FROM produktpreise 
     JOIN produkte ON produkte.id = produktpreise.produkt_id
     WHERE produkt_id= $produkt_id $zeitfilter
-    ORDER BY zeitende, zeitstart DESC";
-  // aktuellster preis ist immer vorn (auch NULL!)
+    ORDER BY zeitende, zeitstart";
   return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 
@@ -2572,10 +2571,11 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
  */
 function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
   $result = sql_produktpreise2( $produkt_id, $zeitpunkt );
-  if( mysql_num_rows( $result ) < 1 )
+  $rows = mysql_num_rows( $result );
+  if( $rows < 1 )
     return false;
-  $row = mysql_fetch_array( $result );
-  return $row;
+  mysql_data_seek( $result, $rows - 1 );
+  return mysql_fetch_array( $result );
 }
 
 /* sql_aktueller_produktpreis_id:
@@ -2686,7 +2686,9 @@ function action_form_produktpreis() {
   need_http_var('pfand','f');
   need_http_var('preis','f');
   get_http_var('bestellnummer','H','');
-  need_http_var('zeitstart','H');
+  need_http_var('day','u');
+  need_http_var('month','u');
+  need_http_var('year','u');
   get_http_var('notiz','H','');
 
   $produkt = sql_produkt_details( $produkt_id );
@@ -2699,7 +2701,7 @@ function action_form_produktpreis() {
   }
 
   sql_insert_produktpreis(
-    $produkt_id, $preis, $zeitstart, $bestellnummer, $gebindegroesse, $mwst, $pfand
+    $produkt_id, $preis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
   , "$liefermult $liefereinheit", "$verteilmult $verteileinheit"
   );
 }
@@ -2956,6 +2958,7 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
     WHERE produkte.id=$produkt_id
   " );
+  $produkt_row['lieferanten_name'] = lieferant_name( $produkt_row['lieferanten_id'] );
   if( $preis_id ) {
     $preis_row = sql_select_single_row( "SELECT * FROM produktpreise WHERE id=$preis_id" );
   } else {
@@ -2965,6 +2968,7 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     preisdatenSetzen( & $preis_row );
     //
     // definierten Satz von Werten umkopieren:
+    $produkt_row['preis_id'] = $preis_row['id'];
     //
     // V-Mult V-einheit: Vielfache davon bestellen die Gruppen:
     $produkt_row['kan_verteileinheit'] = $preis_row['kan_verteileinheit'];
