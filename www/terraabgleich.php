@@ -2,14 +2,14 @@
 
 // terraabgleich.php (name ist historisch: nuetzlich auch fuer andere lieferanten!)
 //
-// sucht in produktliste und preishistorie nach inkonsistenzen,
-// und nach unterschieden zum Terra-katalog,
-// macht ggf. verbesserungsvorschlaege und erlaubt aenderungen
+// - sucht in produktliste und preishistorie nach inkonsistenzen,
+// - vergleicht mit Katalog (momentan nur Terra)
+// - macht ggf. verbesserungsvorschlaege und erlaubt neueintrag von preisen
 //
-// ausgabe wird durch folgende variable bestimmt:
-// - produkt_id: fuer detailanzeige ein produkt
+// anzeige wird durch folgende variable bestimmt:
+// - produkt_id: fuer detailanzeige ein produkt (sonst ganze liste eines lieferanten)
+// - lieferanten_id: liste alle produkte des lieferanten (verpflichtend, wenn keine produkt_id)
 // - bestell_id: erlaubt auswahl preiseintrag fuer diese bestellung (nur mit produkt_id)
-// - lieferanten_id: anzeige aller produkte eines lieferanten
 
 assert( $angemeldet ) or exit();
 
@@ -75,7 +75,12 @@ if( $detail ) {
   <table width="100%">
     <colgroup> <col width="7%"> <col> </colgroup>
     <tr> <th class="outer">A-Nr.</th>
-         <th class="outer">Artikeldaten <? echo $produkt_name; ?></th> </tr>
+         <th class="outer">Artikeldaten
+         <?
+           if( $detail )
+             echo "$produkt_name von $lieferanten_name";
+         ?>
+         </th> </tr>
     <?
       foreach( $produkt_ids as $produkt_id ) {
         do_artikel( $produkt_id, $detail, $editable );
@@ -105,10 +110,10 @@ function do_artikel( $produkt_id, $detail, $editable ) {
   //
   $neednewarticlenumber = FALSE;
 
-  // werte fuer neuen preiseintrag initialisieren:
+  // felder fuer neuen preiseintrag initialisieren:
   //
   $preiseintrag_neu = array();
-  $preiseintrag_neu['verteileinheit'] = '';
+  $preiseintrag_neu['verteileinheit'] = FALSE;
   $preiseintrag_neu['liefereinheit'] = FALSE;
   $preiseintrag_neu['gebindegroesse'] = FALSE;
   $preiseintrag_neu['preis'] = FALSE;
@@ -131,7 +136,7 @@ function do_artikel( $produkt_id, $detail, $editable ) {
   ?> </th><td class="outer" style="padding-bottom:1ex;"> <?
 
   ////////////////////////
-  // Preishistorie: anzeigen, im Detail-Modus, sonst nur Test auf Konsistenz:
+  // Preishistorie: im Detail-Modus anzeigen, sonst nur Test auf Konsistenz:
   //
 
   if( $detail )
@@ -146,7 +151,7 @@ function do_artikel( $produkt_id, $detail, $editable ) {
     if( ! $artikel['kan_liefereinheit'] ) {
       ?> <div class='warn'>FEHLER: keine gültige Liefereinheit:
       .<? echo $artikel['kan_liefereinheit']; ?>.
-      .<? echo $artikel['zeitstart']; ?>.
+      .<? echo "{$artikel['preis_id']}, {$artikel['zeitstart']}"; ?>.
       </div> <?
       $neednewprice = TRUE;
     }
@@ -190,7 +195,7 @@ function do_artikel( $produkt_id, $detail, $editable ) {
       <td class='number'><? echo $artikel['mwst']; ?></td>
       <td class='number'><? printf( "%.2lf", $artikel['pfand'] ); ?></td>
       <td class='number'><?
-        printf( "%8.2lf / %s %s", $artikel['nettopreis'], $artikel['kan_verteilmult'], $artikel['kan_verteileinheit'] ); ?>
+        printf( "%8.2lf / %s %s", $artikel['endpreis'], $artikel['kan_verteilmult'], $artikel['kan_verteileinheit'] ); ?>
       </td>
     <?
   } else {
@@ -406,8 +411,8 @@ function do_artikel( $produkt_id, $detail, $editable ) {
     }
 
     if( ! $preiseintrag_neu['preis'] ) {
-      if( $prgueltig and $artikel['preis'] )
-        $preiseintrag_neu['preis'] = $artikel['preis'];
+      if( $prgueltig and $artikel['endpreis'] )
+        $preiseintrag_neu['preis'] = $artikel['endpreis'];
       else
         $preiseintrag_neu['preis'] = '0.00';
     }
@@ -417,6 +422,13 @@ function do_artikel( $produkt_id, $detail, $editable ) {
         $preiseintrag_neu['bestellnummer'] = $artikel['bestellnummer'];
       else
         $preiseintrag_neu['bestellnummer'] = '';
+    }
+
+    if( ! $preiseintrag_neu['notiz'] ) {
+      if( $prgueltig and $artikel['notiz'] )
+        $preiseintrag_neu['notiz'] = $artikel['notiz'];
+      else
+        $preiseintrag_neu['notiz'] = '';
     }
 
     // echo "newverteileinheit: {$preiseintrag_neu['verteileinheit']}";
@@ -456,12 +468,12 @@ function do_artikel( $produkt_id, $detail, $editable ) {
       <input type='hidden' name='action' value='neuer_preiseintrag'>
       <table id='preisform'>
         <tr>
-          <td><label>Name:</label></td>
-          <td><kbd><? echo $name; ?></kbd></td>
+          <td style='padding:1ex 0ex 1ex 0ex;'><label>Produkt:</label></td>
+          <td><kbd> <?  echo "{$artikel['name']} von {$artikel['lieferanten_name']}"; ?> </kbd></td>
         </tr>
         <tr>
           <td><label>Notiz:</label>
-          <td><input type='text' size='42' name='notiz' value='<? echo $notiz; ?>'
+          <td><input type='text' size='42' name='notiz' value='<? echo $preiseintrag_neu['notiz']; ?>'
                title='Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant'>
           </td>
         </tr>
@@ -536,8 +548,8 @@ function do_artikel( $produkt_id, $detail, $editable ) {
         </tr>
         <tr>
           <td><label>ab:</label></td>
-          <td><input type='text' size='18' name='zeitstart' value='$mysqljetzt'>
-
+          <td>
+            <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
             <label>&nbsp;</label>
             <input type='submit' name='submit' value='OK'
              onclick=\"document.getElementById('row$outerrow').className='modified';\";
