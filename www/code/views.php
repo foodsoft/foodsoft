@@ -1557,10 +1557,29 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   ?> </table></div> <?
 }
 /**
+ * Produziert ein neues select-Feld mit den möglichen
+ * Diensten.
+ */
+function dienst_selector($pre_select, $id=""){
+	echo"
+              <select name='newDienst$id'>
+	";
+	    
+	  //var_dump($_SESSION['DIENSTEINTEILUNG']);
+	  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) { 
+	       if ($i == $pre_select) $select_str="selected";
+     	       else $select_str = ""; 
+	       echo "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
+	echo"
+               </select>
+	";
+
+}
+/**
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)
  */
-function membertable_view($rows, $editable=FALSE, $edit_einteilung=FALSE){
+function membertable_view($rows, $editable=FALSE, $super_edit=FALSE){
 ?>
    
     <table class='liste'>
@@ -1570,16 +1589,22 @@ function membertable_view($rows, $editable=FALSE, $edit_einteilung=FALSE){
          <th>Mail</th>
          <th>Telefon</th>
          <th>Diensteinteilung</th>
+<?
+	if($super_edit){
+		echo"
+         <th>Optionen</th> ";
+	}
+?>
       </tr>
 <?     
   while ($row = mysql_fetch_array($rows)) {
    if($editable){
 	echo"
       <tr>
-	 <td><input type='input' size='12' name='newVorname' value='{$row['vorname']}'></td>
-	 <td><input type='input' size='12' name='newName' value='{$row['name']}'></td>
-	 <td><input type='input' size='12' name='newEmail' value='{$row['email']}'></td>
-	 <td><input type='input' size='12' name='newTelefon' value='{$row['telefon']}'></td>
+	 <td><input type='input' size='12' name='newVorname{$row['id']}' value='{$row['vorname']}'></td>
+	 <td><input type='input' size='12' name='newName{$row['id']}' value='{$row['name']}'></td>
+	 <td><input type='input' size='12' name='newEmail{$row['id']}' value='{$row['email']}'></td>
+	 <td><input type='input' size='12' name='newTelefon{$row['id']}' value='{$row['telefon']}'></td>
 	";
    }else {
 	echo"
@@ -1590,19 +1615,21 @@ function membertable_view($rows, $editable=FALSE, $edit_einteilung=FALSE){
         <td>{$row['telefon']}</td>
 	";
    }
-   if($edit_einteilung){
+   if($super_edit){
 	echo"
 	   <td>
-              <select name='newDienst'>
 	";
 	    
-	  var_dump($_SESSION['DIENSTEINTEILUNG']);
-	  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) { 
-	       if ($i == $row['diensteinteilung']) $select_str="selected";
-     	       else $select_str = ""; 
-	       echo "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
+	dienst_selector($row['diensteinteilung'], $row['id']);
 	echo"
-               </select>
+	   </td>
+	   <td>
+             <a class='png' href=\"javascript:if(confirm('Soll die Person wirklich GELÖSCHT werden?')){
+            document.forms['reload_form'].action.value='delete';
+            document.forms['reload_form'].person_id.value='{$row['id']}';
+            document.forms['reload_form'].submit();}\">
+          <img src='img/b_drop.png' border='0' alt='Person löschen' title='Person löschen'/></a>
+
 	   </td>
 	";
 
