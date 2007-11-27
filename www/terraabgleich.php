@@ -96,17 +96,9 @@ $preiseintrag_neu['notiz'] = FALSE;
 
 preishistorie_view( $produkt_id, $bestell_id, $editable );
 
-produktpreise_konsistenztest( $produkt_id, $editable, 0 );
-
 $prgueltig = false;
-if( $produkt['zeitstart'] ) {
+if( $produkt['zeitstart'] )
   $prgueltig = true;
-  if( ! $produkt['kan_liefereinheit'] ) {
-    ?> <div class='warn'>FEHLER: keine gültige Liefereinheit:</div> <?
-    $neednewprice = TRUE;
-  }
-  // FIXME: hier mehr tests machen!
-}
 
 ///////////////////////////
 // Artikeldaten aus foodsoft-Datenbank anzeigen:
@@ -132,11 +124,6 @@ if( $produkt['zeitstart'] ) {
 <?
 
 if( $prgueltig ) {
-} else {
-  ?> <td><div class="warn" style="text-align:center;">keine</div></td> <?
-}
-
-if( $prgueltig ) {
   ?>
     <td class='number'><? echo $produkt['bestellnummer']; ?></td>
     <td class='number'><? echo "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}"; ?></td>
@@ -149,10 +136,21 @@ if( $prgueltig ) {
       printf( "%8.2lf / %s %s", $produkt['endpreis'], $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?>
     </td>
   <?
+
 } else {
-  ?> <td colspan='8'><div class='warn' style='text-align:center;'> - - - </div></td> <?
+  ?> <td colspan='9'><div class='warn' style='text-align:center;'> - - - </div></td> <?
 }
-?> </tr></table></fieldset> <?
+?></tr></table><?
+
+if( $prgueltig ) {
+  if( ! $produkt['kan_liefereinheit'] ) {
+    ?> <div class='warn'>FEHLER: keine gültige Liefereinheit:</div> <?
+    $neednewprice = TRUE;
+  }
+  // FIXME: hier mehr tests machen!
+}
+
+?></fieldset> <?
 
 /////////////////////////////
 // Artikeldaten im Katalog suchen und ggf. anzeigen:

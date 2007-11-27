@@ -1556,7 +1556,11 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     }
     ?> </tr> <?
   }
-  ?> </table></div></fieldset> <?
+  ?></table></div><?
+
+  produktpreise_konsistenztest( $produkt_id, $editable, 0 );
+
+  ?></fieldset><?
 }
 
 /**
