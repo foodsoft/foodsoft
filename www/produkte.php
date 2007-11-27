@@ -44,7 +44,7 @@
             onclick="window.location.href='<?
               echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_PREISKONSISTENZTEST);
             ?>';"
-            title='Soll die Preishistorie aller Einträege auf Inkonsistenzen geprüft werden?'
+            title='Soll die Preishistorie aller Einträge auf Inkonsistenzen geprüft werden?'
           > Preiskonsistenztest
         </td>
       </tr>
@@ -255,12 +255,16 @@
       <?  } else { ?>
         <td colspan='6' style='text-align:center'>(kein aktueller Preiseintrag)</td>
       <? } ?>
-          <td valign='top'>
+          <td valign='top' style='white-space:nowrap;'>
           <? if( $editable ) { ?>
-            <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $row['id'] ?>','editProdukt','width=500,height=450,left=200,top=100'); f.focus();"><img src='img/b_edit.png' border='0' alt='Produktdaten ändern'  titel='Produktdaten ändern'/></a>
-            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $row['id'] ?>','produktdetails');"><img src='img/b_browse.png' border='0' alt='Details und Preise' titel='Preise'></a>
+            <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
+             border='0' alt='Produktdaten ändern' title='Produktdaten ändern'/></a>
+            &nbsp;
+            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $id; ?>','produktdetails');"><img src='img/b_browse.png'
+             border='0' alt='Details und Preise' title='Details und Preise'></a>
             <? if( $references == 0 ) { ?>
-              <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0' alt='Produkt löschen' title='Produkt löschen'/></a>
+              &nbsp; <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0'
+                      alt='Produkt löschen' title='Produkt löschen'/></a>
             <? } ?>
           <? } ?>
           </td>
