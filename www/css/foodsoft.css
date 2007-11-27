@@ -498,6 +498,16 @@ p.li {
   text-align:left;
 }
 
+fieldset.big_form {
+  background-color:#ffffff;
+  margin:1ex;
+  border-style:solid;
+  border-color:#000000;
+  border-width:1px;
+  padding:1ex;
+  margin:1em 1ex 1em 1ex;
+}
+
 fieldset legend {
   font-weight:bold;
   background-color:#ffffff;

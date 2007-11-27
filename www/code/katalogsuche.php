@@ -85,6 +85,7 @@ function katalogabgleich(
   }
   
   $katalog_datum = $katalogeintraege[0]["terradatum"][0];
+  $katalog_artikelnummer = $katalogeintraege[0]["terraartikelnummer"][0];
   $katalog_bestellnummer = $katalogeintraege[0]["terrabestellnummer"][0];
   $katalog_name = $katalogeintraege[0]["cn"][0];
   $katalog_einheit = $katalogeintraege[0]["terraeinheit"][0];
@@ -96,11 +97,13 @@ function katalogabgleich(
   $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
   if( $detail ) {
     ?>
-      <div class='untertabelle'>
-        Artikelnummer gefunden in Katalog <? echo $katalog_datum; ?>
-      </div>
+      <fieldset class='big_form'>
+      <legend>
+        Lieferantenkatalog: Artikel gefunden in Katalog <? echo $katalog_datum; ?>
+      </legend>
       <table width='100%' class='numbers'>
         <tr>
+          <th>A-Nr.</th>
           <th>B-Nr.</th>
           <th>Bezeichnung</th>
           <th>Einheit</th>
@@ -112,6 +115,7 @@ function katalogabgleich(
           <th>Brutto</th>
         </tr>
         <tr>
+          <td><? echo $katalog_artikelnummer; ?></td>
           <td><? echo $katalog_bestellnummer; ?></td>
           <td><? echo $katalog_name; ?></td>
           <td><? echo $katalog_einheit; ?></td>
@@ -214,7 +218,7 @@ function katalogabgleich(
                 <p class='li'>Katalog: <kbd>$katalog_bestellnummer</kbd></p>
                 <p class='li'>Foodsoft: <kbd>{$artikel['bestellnummer']}</kbd></p></div>";
     }
-    return ( $neednewprice ? 1 : 0 );
+    $rv = ( $neednewprice ? 1 : 0 );
 
   } else {
     // kein aktuell gueltiger Preiseintrag: wir erzeugen Vorlage aus Katalogdaten:
@@ -227,8 +231,17 @@ function katalogabgleich(
     $preiseintrag_neu['bestellnummer'] = $katalog_bestellnummer;
     $preiseintrag_neu['preis'] = $katalog_brutto;
 
-    return 1;
+    $rv = 1;
   }
+  if( $detail and $editable ) {
+    ?><div class='untertabelle'><?
+    formular_artikelnummer( $produkt_id, true, false );
+    ?></div><?
+  }
+
+  ?></fieldset><?
+
+  return $rv;
 }
 
 ?>

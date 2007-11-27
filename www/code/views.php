@@ -1364,7 +1364,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
       <span class='button' id='anummer_button' style='display:<? echo $button_display; ?>;'
         onclick="document.getElementById('anummer_button').style.display = 'none';
                  document.getElementById('anummer_form').style.display = 'block';"
-      >Artikelnummer &auml;ndern...</span>
+      >Artikelnummer (<? echo $anummer; ?>) &auml;ndern...</span>
     <?
   } else {
     $form_display = '';
@@ -1384,7 +1384,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
               <?
             }
           ?>
-          Artikelnummer &auml;ndern:
+          Artikelnummer (<? echo $anummer; ?>) &auml;ndern:
         </legend>
         <table>
           <tr>
@@ -1465,7 +1465,8 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
         }
       }
     </script>
-    <div class='untertabelle'>
+    <fieldset class='big_form'>
+    <legend>
       <img id='preishistorie_knopf' class='button' src='img/close_black_trans.gif'
         onclick='preishistorie_toggle();' title='Ausblenden'>
   <?
@@ -1476,7 +1477,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     ?> Preis-Historie: <?
   }
   ?>
-    </div>
+    </legend>
     <div id='preishistorie'>
       <table width='100%' class='numbers'>
         <tr>
@@ -1555,8 +1556,9 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     }
     ?> </tr> <?
   }
-  ?> </table></div> <?
+  ?> </table></div></fieldset> <?
 }
+
 /**
  * Produziert ein neues select-Feld mit den möglichen
  * Diensten.
