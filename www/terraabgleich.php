@@ -37,8 +37,16 @@ $editable or $action = '';
 
 if( $action == 'zeitende_setzen' ) {
   need_http_var('preis_id','u');
-  need_http_var('zeitende','H');
-  sql_update( 'produktpreise', $preis_id, array( 'zeitende' => $zeitende ) );
+  need_http_var('day','u');
+  need_http_var('month','u');
+  need_http_var('year','u');
+  get_http_var('vortag','u',0);
+  if( $vortag ) {
+    $zeitende = "date_add( '$year-$month-$day', interval -1 second )";
+  } else {
+    $zeitende = "'$year-$month-$day 23:59:59'";
+  }
+  sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "$zeitende" ), false );
 }
 if( $action == 'artikelnummer_setzen' ) {
   need_http_var( 'anummer', 'H' );
@@ -46,6 +54,10 @@ if( $action == 'artikelnummer_setzen' ) {
 }
 if( $action == 'neuer_preiseintrag' ) {
   action_form_produktpreis();
+}
+if( $action == 'delete_price' ) {
+  need_http_var('preis_id','u');
+  sql_delete_produktpreis( $preis_id );
 }
 
 if( $bestell_id ) {
@@ -80,6 +92,12 @@ $preiseintrag_neu['pfand'] = FALSE;
 $preiseintrag_neu['notiz'] = FALSE;
 
 ?>
+<form action='<? echo self_url(); ?>' name='reload_form' method='post'>
+  <? echo self_post(); ?>
+  <input type='hidden' name='action' value=''>
+  <input type='hidden' name='preis_id' value='0'>
+</form>
+
 <fieldset class='big_form'>
   <legend>
     <?

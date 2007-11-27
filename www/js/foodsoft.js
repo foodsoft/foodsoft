@@ -20,6 +20,12 @@
 						document.forms['reload_form'].submit();
 				 }
 			}	
+	    function deleteProduktpreis(id)
+			{
+			   document.forms['reload_form'].action.value="delete_price";
+			   document.forms['reload_form'].preis_id.value=id;
+				 document.forms['reload_form'].submit();
+			}	
 			
 					function checkAll(thisForm,elmnt,tf,x) {
 						var o = document.forms[thisForm].elements

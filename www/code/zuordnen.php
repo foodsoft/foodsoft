@@ -38,12 +38,13 @@ function sql_select_single_field( $sql, $field ) {
   return $row[$field];
 }
 
-function sql_update( $table, $id, $values ) {
+function sql_update( $table, $id, $values, $escape_and_quote = true ) {
   fail_if_readonly();
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
-    $sql .= "$komma $key='" . mysql_real_escape_string($val) . "'";
+    $escape_and_quote and $val = "'" . mysql_real_escape_string($val) . "'";
+    $sql .= "$komma $key=$val";
     $komma=',';
   }
   $sql .= " WHERE id=$id";
@@ -2570,11 +2571,17 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
   }
   $query = "
     SELECT produktpreise.*
+         , date(produktpreise.zeitstart) as datum_start
+         , day(produktpreise.zeitstart) as tag_start
+         , month(produktpreise.zeitstart) as monat_start
+         , year(produktpreise.zeitstart) as jahr_start
+         , date(produktpreise.zeitende) as datum_ende
          , produkte.notiz
     FROM produktpreise 
     JOIN produkte ON produkte.id = produktpreise.produkt_id
     WHERE produkt_id= $produkt_id $zeitfilter
-    ORDER BY IFNULL(zeitende,'9999-12-31'), id";
+    ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31'), id";
+  //  ORDER BY IFNULL(zeitende,'9999-12-31'), id";
   return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
 }
 
@@ -2629,23 +2636,29 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
   $pr0 = FALSE;
   while( $pr1 = mysql_fetch_array($produktpreise) ) {
     if( $pr0 ) {
+      $monat = $pr1['monat_start'];
+      $jahr = $pr1['jahr_start'];
+      $tag = $pr1['tag_start'];
+      $show_button = false;
       if( $pr0['zeitende'] == '' ) {
         echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
-        $editable && action_button( "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
-          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
-          , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
-        , $mod_id, 'warn'
-        );
+        $show_button = true;
         $rv = false;
       } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
         echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
-        $editable && action_button( "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
-          , "Zeitende in {$pr0['id']} auf {$pr1['zeitstart']} setzen"
-          , array( 'action' => 'zeitende_setzen', 'zeitende' => $pr1['zeitstart'], 'preis_id' => $pr0['id'] )
-        , $mod_id, 'warn'
-        );
+        $show_button = true;
         $rv = false;
       }
+      $editable && $show_button && action_button( "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
+        , "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
+        , array(
+            'action' => 'zeitende_setzen'
+          , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr"
+          , 'vortag' => '1'
+          , 'preis_id' => $pr0['id']
+          )
+      , $mod_id, 'warn'
+      );
     }
     $pr0 = $pr1;
   }
@@ -2669,7 +2682,15 @@ function sql_insert_produktpreis (
   $produkt_id, $preis, $start, $bestellnummer, $gebindegroesse
 , $mwst, $pfand, $liefereinheit, $verteileinheit
 ) {
-  sql_expire_produktpreise( $produkt_id, $start );
+  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
+  if( $aktueller_preis ) {
+    sql_update( 'produktpreise'
+    , $aktueller_preis['id']
+    , array( 'zeitende' => "date_add( date('$start'), interval -1 second )" )
+    , false
+    );
+  }
+  // sql_expire_produktpreise( $produkt_id, $start );
 
   return sql_insert( 'produktpreise', array(
     'produkt_id' => $produkt_id
@@ -3029,6 +3050,11 @@ function sql_delete_produkt( $produkt_id ) {
   need( $count == 0, 'Produkteintrag nicht löschbar, da in Bestellungen oder -vorlagen benutzt!' );
   doSql( "DELETE FROM produktpreise WHERE produkt_id=$produkt_id" );
   doSql( "DELETE FROM produkte WHERE id=$produkt_id" );
+}
+
+function sql_delete_produktpreis( $preis_id ) {
+  need( references_produktpreise( $preis_id ) == 0 , 'Preiseintrag nicht löschbar, da er benutzt wird!' );
+  doSql( "DELETE FROM produktpreise WHERE id=$preis_id" );
 }
 
 /**

@@ -1503,18 +1503,32 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     $references = references_produktpreise( $pr1['id'] );
     ?>
       <tr>
-        <td><? echo $pr1['id']; echo "($references)"; ?></td>
+        <td style='white-space:nowrap;'><?
+          echo $pr1['id'];
+          if( $editable and ( $references == 0 ) and $pr1['zeitende'] ) {
+            ?>
+              &nbsp; <a class='png'
+                 href="javascript:deleteProduktpreis(<? echo $pr1['id']; ?>);"
+              ><img src='img/b_drop.png' border='0'
+                    alt='Preiseintrag löschen'
+                    title='Dieser Preiseintrag wird nicht verwendet; löschen?'/></a>
+            <?
+          }
+        ?></td>
         <td><? echo $pr1['bestellnummer']; ?></td>
-        <td><? echo $pr1['zeitstart']; ?></td>
+        <td><? echo $pr1['datum_start']; ?></td>
         <td>
     <?
     if( $pr1['zeitende'] ) {
-      echo "{$pr1['zeitende']}";
+      echo "{$pr1['datum_ende']}";
     } else {
       if( $editable )
         action_button( "Abschließen"
         , "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)"
-        , array( 'action' => 'zeitende_setzen', 'preis_id' => $pr1['id'], 'zeitende' => $mysqljetzt, 'preis_id' => $pr1['id'] )
+        , array( 'action' => 'zeitende_setzen'
+          , 'preis_id' => $pr1['id']
+          , 'day' => date('d'), 'month' => date('m'), 'year' => date('Y')
+          )
         , $mod_id
         );
       else
