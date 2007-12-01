@@ -100,7 +100,7 @@ if( $meinkonto ) {
     case 'zahlung_gruppe_lieferant':
       buchung_gruppe_lieferant();
       break;
-    case 'umbuchung_gruppegruppe':
+    case 'umbuchung_gruppe_gruppe':
       buchung_gruppe_gruppe();
       break;
   }
@@ -319,7 +319,7 @@ if( $meinkonto ) {
                     printf( "<td>Überweisung %s %sGruppe %s%s</td>"
                     , ( $konto_row['summe'] > 0 ? 'von' : 'an' )
                     , ( $meinkonto ? '' : "<a href='" .self_url('gruppen_id'). "&gruppen_id=$k_gruppen_id'>" )
-                    , sql_gruppenname( $$k_gruppen_id )
+                    , sql_gruppenname( $k_gruppen_id )
                     , ( $meinkonto ? '' : "</a>" )
                     );
                   } else if ( $k_lieferanten_id > 0 ) {

@@ -1212,9 +1212,8 @@ function formular_buchung_lieferant_bank(
   $lieferanten_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = ''
 ) {
   ?>
-    <form method='post' class='small_form'
-          action='<? echo self_url(array('konto_id','auszug_jahr','auszug_nr','lieferanten_id')); ?>'>
-      <? echo self_post(array('konto_id','auszug_jahr','auszug_nr','lieferanten_id')); ?>
+    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+      <? echo self_post(); ?>
       <input type='hidden' name='action' value='zahlung_lieferant'>
       <fieldset>
         <legend>
@@ -1223,14 +1222,36 @@ function formular_buchung_lieferant_bank(
         <table>
           <tr>
             <td><label>Lieferant:</label></td>
-            <td><select name='lieferant_id'><? echo optionen_lieferanten(); ?></select></td>
+            <td>
+              <? if( $lieferanten_id ) { ?>
+                <kbd>
+                  <? echo lieferanten_name( $lieferanten_id ); ?>
+                  <input type='hidden' name='lieferanten_id' value='<? echo $lieferanten_id; ?>'>
+                </kbd><
+              <? } else { ?>
+                <select name='lieferanten_id'><? echo optionen_lieferanten(); ?></select>
+              <? } ?>
+            </td>
           </tr>
           <tr>
-            <td>label>Konto:</label></td>
-            <td><select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
-              &nbsp; <label>Auszug:</label>
-              <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
-              <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+            <td><label>Konto:</label></td>
+            <td>
+              <? if( $konto_id ) { ?>
+                <kbd><? echo sql_kontoname( $konto_id ); ?>
+                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
+                </kbd>
+              <? } else { ?>
+                <select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+              <? } ?>
+               &nbsp; <label>Auszug:</label>
+              <? if( $auszug_nr ) { ?>
+                <kbd><? echo "$auszug_jahr / $auszug_nr"; ?></kbd>
+                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
+                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              <? } else { ?>
+                  <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
+                  <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              <? } ?>
             </td>
           </tr>
           <tr>
@@ -1276,7 +1297,7 @@ function formular_buchung_gruppe_lieferant(
           </tr>
           <tr>
             <td><label>an Lieferant:</label></td>
-            <td><select name='lieferant_id'><? echo optionen_lieferanten( $lieferanten_id ); ?></select></td>
+            <td><select name='lieferanten_id'><? echo optionen_lieferanten( $lieferanten_id ); ?></select></td>
           </tr>
           <tr>
             <td><label>Valuta:</label></td>
@@ -1418,23 +1439,19 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
 }
 
 function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) {
-  ?>
-    <div class='<? echo $class; ?>' style='padding:0.5ex 1em 0.5ex 1em;'>
-      <form style='margin:0ex;' method='post' action='<? echo self_url(); ?>'>
+  ?><div class='<? echo $class; ?>' style='white-space:nowrap;padding:0.1ex 1ex 0.1ex 1ex;'>
+      <form style='margin:0ex;padding:0ex;' method='post' action='<? echo self_url(); ?>'>
         <?
           echo self_post();
           foreach( $fields as $name => $value )
             echo "<input type='hidden' name='$name' value='$value'>";
-          echo "<input type='submit' name='submit' value='$label'";
+          echo "<input style='padding:0ex;margin:0ex;' type='submit' name='submit' value='$label'";
           if( $mod_id )
             echo " onclick=\"document.getElementById('$mod_id').className='modified';\"";
           if( $title )
             echo " title='$title'";
         ?>
-        >
-      </form>
-    </div>
-  <?
+        ></form></div><?
 }
 
 // preishistorie_view:
@@ -1516,8 +1533,8 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
           }
         ?></td>
         <td><? echo $pr1['bestellnummer']; ?></td>
-        <td><? echo $pr1['datum_start']; ?></td>
-        <td>
+        <td style='text-align:center;'><? echo $pr1['datum_start']; ?></td>
+        <td style='text-align:center;'>
     <?
     if( $pr1['zeitende'] ) {
       echo "{$pr1['datum_ende']}";

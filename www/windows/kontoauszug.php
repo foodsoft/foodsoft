@@ -20,7 +20,7 @@ switch( $action ) {
 }
 
 if( $action ) {
-  reload_immediately( self_url() );
+  // reload_immediately( self_url() );
 }
 
 $auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
@@ -54,14 +54,14 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
       <li title='Einzahlung von oder Auszahlung an Gruppe'>
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('gruppe_form').style.display='block';
-                   document.getElementById('lieferant_form').style.display='none';
+                   document.getElementById('lieferant_form').style.display='none';"
         ><b>Einzahlung / Auszahlung Gruppe</b>
       </li>
 
       <li title='Überweisung an oder Lastschrift von Lieferant'>
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('gruppe_form').style.display='none';
-                   document.getElementById('lieferant_form').style.display='block';
+                   document.getElementById('lieferant_form').style.display='block';"
         ><b>Überweisung / Lastschrift Lieferant</b>
       </li>
 
@@ -134,7 +134,7 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       $lieferanten_id=$konterbuchung['lieferanten_id'];
       if( $gruppen_id ) {
         echo "
-          <p><a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id');\"
+          <p><a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id','kontoblatt');\"
           >Gruppenkonto $gruppen_name</a></p>
         ";
       }

@@ -28,7 +28,9 @@ function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfeh
 }
 function sql_select_single_row( $sql ) {
   $result = doSql( $sql );
-  need( mysql_num_rows($result) == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig" );
+  $rows = mysql_num_rows($result);
+  need( $rows > 0, "Kein Treffer bei Datenbanksuche" );
+  need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig" );
   return mysql_fetch_array($result);
 }
 
@@ -2015,6 +2017,7 @@ function sql_gruppen_transaktion(
 ) {
   global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
+  echo "gruppen_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
   need( $gruppen_id or $lieferanten_id );
   // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
   // need( $transaktionsart or $bankkonto_id );
@@ -2040,6 +2043,8 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
+  global $mysqlheute;
+  echo "bank_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
   need( $konto_id and $auszug_jahr and $auszug_nr );
   need( $dienstkontrollblatt_id and $notiz );
   fail_if_readonly();
@@ -2076,8 +2081,10 @@ function sql_link_transaktion( $soll_id, $haben_id ) {
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   global $dienstkontrollblatt_id;
+  echo "doppelte_transaktion 1<br>";
   nur_fuer_dienst_IV();
-  need( $dienstkontrollblatt_id and $notiz );
+  need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
+  need( $notiz, 'Bitte Notiz angeben!' );
   need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
   if( $soll['konto_id'] == -1 and $haben['konto_id'] == -1 )
     $typ = 1;
@@ -2098,6 +2105,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
+  echo "doppelte_transaktion 2<br>";
   if( $haben['konto_id'] == -1 ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
@@ -2112,7 +2120,9 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
+  echo "doppelte_transaktion 3<br>";
   sql_link_transaktion( $soll_id, $haben_id );
+  echo "doppelte_transaktion 4<br>";
 
   return;
 }
@@ -2122,12 +2132,18 @@ function sql_groupGlass($gruppe, $menge){
 	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
 }
 
+
+/*
+ * buchung_gruppe_bank: wertet formular zu einhabe eine einzahlung einer
+ * gruppe auf ein bankkonto aus.
+ */
 function buchung_gruppe_bank() {
   global $betrag, $gruppen_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
+  // echo "buchung_gruppe_bank: 1";
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $gruppen_name = sql_gruppenname( $gruppen_id );
-  if( ! $notiz ) {
+  if( ! isset( $notiz ) ) {
     if( $betrag < 0 ) {
       need_http_var( 'notiz', 'H' );
     } else {
@@ -2154,9 +2170,10 @@ function buchung_gruppe_bank() {
 }
 
 function buchung_lieferant_bank() {
-  global $betrag, $lieferant_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
+  global $betrag, $lieferanten_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
+  echo "buchung_lieferant_bank: 1<br>";
   $betrag or need_http_var( 'betrag', 'f' );
-  $lieferant_id or need_http_var( 'lieferant_id', 'u' );
+  $lieferanten_id or need_http_var( 'lieferanten_id', 'u' );
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
@@ -2164,12 +2181,16 @@ function buchung_lieferant_bank() {
   $konto_id or need_http_var( 'konto_id', 'u' );
   $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
   $auszug_nr or need_http_var( 'auszug_nr', 'u' );
+  $notiz or get_http_var( 'notiz', 'H' );
+  echo "buchung_lieferant_bank: 2: lieferant: $lieferanten_id ($notiz)<br>";
+  get_http_var( 'notiz', 'H' );
+  echo "buchung_lieferant_bank: 3: lieferant: $lieferanten_id ($notiz)<br>";
   sql_doppelte_transaktion(
     array(
-      'konto_id' => $konto_id, 'lieferant_id' => $lieferant_id
+      'konto_id' => $konto_id, 'lieferanten_id' => $lieferanten_id
     , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
   , array(
-      'konto_id' => -1, 'lieferant_id' => $lieferant_id
+      'konto_id' => -1, 'lieferanten_id' => $lieferanten_id
     , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
   , $betrag
   , "$year-$month-$day"
@@ -2178,17 +2199,19 @@ function buchung_lieferant_bank() {
 }
 
 function buchung_gruppe_lieferant() {
-  global $betrag, $lieferant_id, $gruppen_id, $notiz, $day, $month, $year;
+  global $betrag, $lieferanten_id, $gruppen_id, $notiz, $day, $month, $year;
+  echo "buchung_gruppe_lieferant: 1<br>";
   $betrag or need_http_var( 'betrag', 'f' );
-  $lieferant_id or need_http_var( 'lieferant_id', 'u' );
+  $lieferanten_id or need_http_var( 'lieferanten_id', 'u' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $notiz or need_http_var( 'notiz', 'H' );
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
+  echo "buchung_gruppe_lieferant: 2";
   sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , array( 'konto_id' => -1, 'lieferant_id' => $lieferant_id )
+  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
   , $betrag
   , "$year-$month-$day"
   , "$notiz"
@@ -2197,6 +2220,7 @@ function buchung_gruppe_lieferant() {
 
 function buchung_gruppe_gruppe() {
   global $betrag, $gruppen_id, $nach_gruppen_id, $notiz, $day, $month, $year;
+  // echo "buchung_gruppe_gruppe: 1";
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $nach_gruppen_id or need_http_var( 'nach_gruppen_id', 'u' );
