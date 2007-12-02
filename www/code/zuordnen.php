@@ -1084,7 +1084,7 @@ function check_new_group_nr($newNummer){
  * Argument: personen_id
  */
 function sql_delete_group_member($person_id, $gruppen_id){
-	global $problems, $msg, $sockelbetrag, $muell_id;
+	global $problems, $msg, $sockelbetrag, $muell_id, $mysqlheute;
   need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
   need( $muell_id );
              $sql = "DELETE FROM gruppenmitglieder WHERE id=".mysql_escape_string($person_id);
@@ -1113,7 +1113,7 @@ function sql_delete_group_member($person_id, $gruppen_id){
  * Vorname, Name, Mail, Telefon und Diensteinteilung des Neumitgliedes
  */
 function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDiensteinteilung){
-	global $problems, $msg, $sockelbetrag, $muell_id;
+	global $problems, $msg, $sockelbetrag, $muell_id, $mysqlheute;
   need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
   need( $muell_id );
   sql_insert( 'gruppenmitglieder', array(
@@ -2137,8 +2137,18 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
 }
 
 function sql_groupGlass($gruppe, $menge){
-	$pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
-	sql_gruppen_transaktion(2, $gruppe, ($pfand_preis*$menge),"NULL" , "NULL", 'Glasrueckgabe');
+  global $muell_id, $mysqlheute;
+  need( $muell_id );
+  $pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
+  if( $menge <= 0 )
+    return;
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppe )
+  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+  , $pfand_preis * $menge
+  , $mysqlheute
+  , "Pfandrueckgabe $menge Stueck"
+  );
 }
 
 

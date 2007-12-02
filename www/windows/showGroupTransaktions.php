@@ -79,86 +79,88 @@ if( $meinkonto ) {
     return;
   $gruppen_name = sql_gruppenname( $gruppen_id );
 
-  get_http_var( 'action', 'w', '' );
-  switch( $action ) {
-    case 'finish_transaction':
-      need_http_var( 'trans_nr', 'u' );
-      need_http_var( 'auszug_jahr', 'u' );
-      need_http_var( 'auszug_nr', 'u' );
-      need_http_var( 'konto_id', 'u' );
-      need_http_var( 'year', 'u' );
-      need_http_var( 'month', 'u' );
-      need_http_var( 'day', 'u' );
-      sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, "$year-$month-$day", 'gebuchte Einzahlung' );
-      break;
-    case 'zahlung_gruppe':
-      buchung_gruppe_bank();
-      break;
-    case 'zahlung_gruppe_lieferant':
-      buchung_gruppe_lieferant();
-      break;
-    case 'umbuchung_gruppe_gruppe':
-      buchung_gruppe_gruppe();
-      break;
-  }
-
-  ?>
-
-    <div id='transactions_button' style='padding-bottom:1em;'>
-    <span class='button'
-      onclick="document.getElementById('transactions_menu').style.display='block';
-               document.getElementById('transactions_button').style.display='none';"
-      >Transaktionen...</span>
-    </div>
-
-    <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
-      <legend>
-        <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-        onclick="document.getElementById('transactions_button').style.display='block';
-                 document.getElementById('transactions_menu').style.display='none';">
-        Transaktionen
-      </legend>
+  if( ! $readonly ) {
+    get_http_var( 'action', 'w', '' );
+    switch( $action ) {
+      case 'finish_transaction':
+        need_http_var( 'trans_nr', 'u' );
+        need_http_var( 'auszug_jahr', 'u' );
+        need_http_var( 'auszug_nr', 'u' );
+        need_http_var( 'konto_id', 'u' );
+        need_http_var( 'year', 'u' );
+        need_http_var( 'month', 'u' );
+        need_http_var( 'day', 'u' );
+        sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, "$year-$month-$day", 'gebuchte Einzahlung' );
+        break;
+      case 'zahlung_gruppe':
+        buchung_gruppe_bank();
+        break;
+      case 'zahlung_gruppe_lieferant':
+        buchung_gruppe_lieferant();
+        break;
+      case 'umbuchung_gruppe_gruppe':
+        buchung_gruppe_gruppe();
+        break;
+    }
   
-      Art der Transaktion:
-      <span style='padding-left:1em;' title='Einzahlung auf oder Auszahlung von Bankkonto der Foodcoop'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('einzahlung_form').style.display='block';
-                 document.getElementById('gruppegruppe_form').style.display='none';
-                 document.getElementById('gruppelieferant_form').style.display='none';"
-      ><b>Einzahlung</b>
-      </span>
-
-      <span style='padding-left:1em;' title='überweisung auf ein anderes Gruppenkonto'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('einzahlung_form').style.display='none';
-                 document.getElementById('gruppegruppe_form').style.display='block';
-                 document.getElementById('gruppelieferant_form').style.display='none';"
-      ><b>Transfer an andere Gruppe</b>
-      </span>
-
-      <span style='padding-left:1em;' title='überweisung von Gruppe an Lieferant'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('einzahlung_form').style.display='none';
-                 document.getElementById('gruppegruppe_form').style.display='none';
-                 document.getElementById('gruppelieferant_form').style.display='block';"
-      ><b>Überweisung von Gruppe an Lieferant</b>
-      </span>
-
-      <div id='einzahlung_form' style='display:none;'>
-        <? formular_buchung_gruppe_bank( $gruppen_id ); ?>
+    ?>
+  
+      <div id='transactions_button' style='padding-bottom:1em;'>
+      <span class='button'
+        onclick="document.getElementById('transactions_menu').style.display='block';
+                 document.getElementById('transactions_button').style.display='none';"
+        >Transaktionen...</span>
       </div>
-
-      <div id='gruppegruppe_form' style='display:none;'>
-        <? formular_buchung_gruppe_gruppe( $gruppen_id, 0 ); ?>
-      </div>
-
-      <div id='gruppelieferant_form' style='display:none;'>
-        <? formular_buchung_gruppe_lieferant( $gruppen_id, 0 ); ?>
-      </div>
-
-    </fieldset>
-
-  <?
+  
+      <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
+        <legend>
+          <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+          onclick="document.getElementById('transactions_button').style.display='block';
+                   document.getElementById('transactions_menu').style.display='none';">
+          Transaktionen
+        </legend>
+    
+        Art der Transaktion:
+        <span style='padding-left:1em;' title='Einzahlung auf oder Auszahlung von Bankkonto der Foodcoop'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('einzahlung_form').style.display='block';
+                   document.getElementById('gruppegruppe_form').style.display='none';
+                   document.getElementById('gruppelieferant_form').style.display='none';"
+        ><b>Einzahlung</b>
+        </span>
+  
+        <span style='padding-left:1em;' title='überweisung auf ein anderes Gruppenkonto'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('einzahlung_form').style.display='none';
+                   document.getElementById('gruppegruppe_form').style.display='block';
+                   document.getElementById('gruppelieferant_form').style.display='none';"
+        ><b>Transfer an andere Gruppe</b>
+        </span>
+  
+        <span style='padding-left:1em;' title='überweisung von Gruppe an Lieferant'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('einzahlung_form').style.display='none';
+                   document.getElementById('gruppegruppe_form').style.display='none';
+                   document.getElementById('gruppelieferant_form').style.display='block';"
+        ><b>Überweisung von Gruppe an Lieferant</b>
+        </span>
+  
+        <div id='einzahlung_form' style='display:none;'>
+          <? formular_buchung_gruppe_bank( $gruppen_id ); ?>
+        </div>
+  
+        <div id='gruppegruppe_form' style='display:none;'>
+          <? formular_buchung_gruppe_gruppe( $gruppen_id, 0 ); ?>
+        </div>
+  
+        <div id='gruppelieferant_form' style='display:none;'>
+          <? formular_buchung_gruppe_lieferant( $gruppen_id, 0 ); ?>
+        </div>
+  
+      </fieldset>
+  
+    <?
+  }
 }
 
   $kontostand = kontostand($gruppen_id);
@@ -247,7 +249,7 @@ if( $meinkonto ) {
                   echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
                   break;
                 case 1:
-                  echo "Transfer";
+                  echo "Verrechnung";
                   break;
                 case 2:
                   echo "Sonstiges";
@@ -298,12 +300,24 @@ if( $meinkonto ) {
                 $k_gruppen_id = $k_row['gruppen_id'];
                 $k_lieferanten_id = $k_row['lieferanten_id'];
                 if( $k_gruppen_id > 0 ) {
+                  if( $k_gruppen_id == $muell_id ) {
+                    if( $meinkonto ) {
+                      ?> Verrechnung mit FC-Konto 'Müll' <?
+                    } else {
+                      ?>
+                        Verrechnung mit
+                        <a href='<? echo self_url('gruppen_id')."&gruppen_id=$muell_id"; ?>'
+                        >FC-Konto 'Müll'</a>
+                      <?
+                    }
+                  } else {
                     printf( "Überweisung %s %sGruppe %s%s</td>"
                     , ( $konto_row['summe'] > 0 ? 'von' : 'an' )
                     , ( $meinkonto ? '' : "<a href='" .self_url('gruppen_id'). "&gruppen_id=$k_gruppen_id'>" )
                     , sql_gruppenname( $k_gruppen_id )
                     , ( $meinkonto ? '' : "</a>" )
                     );
+                  }
                 } else if ( $k_lieferanten_id > 0 ) {
                     ?> 
                       Überweisung an Lieferant
