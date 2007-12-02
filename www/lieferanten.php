@@ -68,7 +68,7 @@
       echo "-";
     ?>
       </td>
-      <td>
+      <td style='white-space:nowrap;'>
     <?
     if( ( ! $readonly ) and ( $dienst == 4 or $dienst == 5 ) ) {
       echo "
@@ -88,6 +88,12 @@
         </a>
       ";
     }
+    echo "
+      <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+        href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id={$row['id']}','lieferantenkonto');\">
+       <img src='img/chart.png' border='0' title='Finanzielles' alt='Finanzielles'/>
+      </a>
+    ";
     ?> </td></tr> <?
   }
 
