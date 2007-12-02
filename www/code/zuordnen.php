@@ -19,6 +19,18 @@ $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
  define('LEVEL_NONE',  0);
  $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
+function debug_args( $args, $tag = '' ) {
+  echo "<br>";
+  $i = 1;
+  foreach( $args as $a ) {
+    echo "$tag: $i:";
+    print_r( $a );
+    echo "<br>";
+    $i++;
+  }
+}
+
+    
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
 	$result = mysql_query($sql) or
@@ -2015,6 +2027,7 @@ function sql_gruppen_transaktion(
   $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="",
   $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
+  debug_args( func_get_args(), 'sql_gruppen_transaktion' );
   global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
   echo "gruppen_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
@@ -2043,6 +2056,7 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
+  debug_args( func_get_args(), 'sql_bank_transaktion' );
   global $mysqlheute;
   echo "bank_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
   need( $konto_id and $auszug_jahr and $auszug_nr );
@@ -2064,7 +2078,8 @@ function sql_bank_transaktion(
   ) );
 }
 
-function sql_link_transaktion( $soll_id, $haben_id ) {
+function sql_link_transaction( $soll_id, $haben_id ) {
+  debug_args( func_get_args(), 'sql_link_transaction' );
   if( $soll_id > 0 )
     sql_update( 'bankkonto', $soll_id, array( 'konterbuchung_id' => $haben_id ) );
   else
@@ -2080,6 +2095,7 @@ function sql_link_transaktion( $soll_id, $haben_id ) {
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
+  debug_args( func_get_args(), 'sql_doppelte_transaktion' );
   global $dienstkontrollblatt_id;
   echo "doppelte_transaktion 1<br>";
   nur_fuer_dienst_IV();
@@ -2121,7 +2137,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   }
 
   echo "doppelte_transaktion 3<br>";
-  sql_link_transaktion( $soll_id, $haben_id );
+  sql_link_transaction( $soll_id, $haben_id );
   echo "doppelte_transaktion 4<br>";
 
   return;
@@ -2143,7 +2159,7 @@ function buchung_gruppe_bank() {
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
   $gruppen_name = sql_gruppenname( $gruppen_id );
-  if( ! isset( $notiz ) ) {
+  if( ! $notiz ) {
     if( $betrag < 0 ) {
       need_http_var( 'notiz', 'H' );
     } else {
@@ -2254,7 +2270,7 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
   , $dienstkontrollblatt_id, $notiz, 0
   );
 
-  sql_link_transaktion( -$soll_id, $haben_id );
+  sql_link_transaction( -$soll_id, $haben_id );
 
   return sql_update( 'gruppen_transaktion', $soll_id, array(
     'kontoauszugs_nr' => $receipt_nr
@@ -2279,6 +2295,22 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
   ";
   // LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
+}
+
+function sql_get_lieferant_transactions( $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
+  $sql = "
+    SELECT id, type, summe, kontobewegungs_datum
+         , konterbuchung_id, notiz
+         , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
+         , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
+         , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%Y%m%d') AS valuta_kan
+    FROM gruppen_transaktion
+    WHERE ( lieferanten_id = $lieferanten_id )
+        " . ( $from_date ? " AND ( kontobewegungs_datum >= '$from_date' ) " : "" ) . "
+        " . ( $to_date ? " AND ( kontobewegungs_datum <= '$to_date' ) " : "" ) . "
+    ORDER BY valuta_kan DESC
+  ";
+  return doSql( $sql, LEVEL_IMPORTANT, "Konnte Lieferantenntransaktionen nicht lesen ");
 }
 
 function sql_get_transaction( $id ) {
@@ -2550,6 +2582,23 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
   return $result;
 }
 
+function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
+  $query = "
+    SELECT gesamtbestellungen.id as gesamtbestellung_id
+         , gesamtbestellungen.name
+         , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
+         , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
+         , (" .select_bestellungen_haben_lieferant( array('lieferanten','gesamtbestellungen') ). ") as haben
+    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
+    JOIN lieferanten
+      ON lieferanten.id = $lieferanten_id
+    HAVING haben <> 0
+  ";
+  return $doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
+}
+
+
+
 function kontostand($gruppen_id){
 	//FIXME: zu langsam auf Gruppenview wenn Dienst5
   $row = sql_select_single_row( "
@@ -2567,6 +2616,15 @@ function sockel_gruppen_summe() {
     FROM (".select_aktive_bestellgruppen().") AS bestellgruppen
   " );
   return $row['soll'];
+}
+
+function lieferantenkontostand( $lieferanten_id ) {
+  $row = sql_select_single_row( "
+    SELECT (".select_haben_lieferanten('lieferanten').") as haben
+    FROM lieferanten
+    WHERE lieferanten.id = $lieferanten_id
+  " );
+  return $row['haben'];
 }
 
 

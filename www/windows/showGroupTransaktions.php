@@ -157,11 +157,11 @@ if( $meinkonto ) {
       </span>
 
       <div id='einzahlung_form' style='display:none;'>
-        <? echo formular_buchung_gruppe_bank( $gruppen_id ); ?>
+        <? formular_buchung_gruppe_bank( $gruppen_id ); ?>
       </div>
 
       <div id='gruppegruppe_form' style='display:none;'>
-        <? echo formular_buchung_gruppe_gruppe( $gruppen_id, 0 ); ?>
+        <? formular_buchung_gruppe_gruppe( $gruppen_id, 0 ); ?>
       </div>
 
       <div id='gruppelieferant_form' style='display:none;'>

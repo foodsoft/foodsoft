@@ -80,6 +80,12 @@ function select_group(self) {
   window.location.href = self + '&gruppen_id=' + s;
 }
 
+function select_lieferant(self) {
+  i = document.getElementById('select_lieferant').selectedIndex;
+  s = document.getElementById('select_lieferant').options[i].value;
+  window.location.href = self + '&lieferanten_id=' + s;
+}
+
 function closeCurrentWindow() {
   // this function is a workaround for the " 'window.close()' is not a function" -bug
   // (occurring in  some uses of onClick='window.close();'):

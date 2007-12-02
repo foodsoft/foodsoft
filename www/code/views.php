@@ -1158,7 +1158,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 
 
 function formular_buchung_gruppe_bank(
-  $gruppen_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = ''
+  $gruppen_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = '', $notiz = 'Einzahlung'
 ) {
   ?>
     <form method='post' class='small_form'
@@ -1172,14 +1172,36 @@ function formular_buchung_gruppe_bank(
         <table>
           <tr>
             <td><label>Gruppe:</label></td>
-            <td><select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select></td>
+            <td>
+            <? if ( $gruppen_id ) { ?>
+              <kbd>
+                <? echo sql_gruppenname( $gruppen_id ); ?>
+                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
+              </kbd>
+            <? } else { ?>
+              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select>
+            <? } ?>
+            </td>
           </tr>
           <tr>
             <td><label>Konto:</label></td>
-            <td><select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
-              &nbsp; <label>Auszug:</label>
-              <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
-              <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+            <td>
+              <? if( $konto_id ) { ?>
+                <kbd><? echo sql_kontoname( $konto_id ); ?>
+                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
+                </kbd>
+              <? } else { ?>
+                <select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+              <? } ?>
+               &nbsp; <label>Auszug:</label>
+              <? if( $auszug_nr ) { ?>
+                <kbd><? echo "$auszug_jahr / $auszug_nr"; ?></kbd>
+                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
+                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              <? } else { ?>
+                  <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
+                  <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              <? } ?>
             </td>
           </tr>
           <tr>
@@ -1196,7 +1218,7 @@ function formular_buchung_gruppe_bank(
           <tr>
             <td>Notiz:</td>
             <td>
-              <input type="text" size="60" name="notiz">
+              <input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
               &nbsp;
               <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
@@ -1210,6 +1232,7 @@ function formular_buchung_gruppe_bank(
 
 function formular_buchung_lieferant_bank(
   $lieferanten_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = ''
+, $notiz = 'Abbuchung Lieferant'
 ) {
   ?>
     <form method='post' class='small_form' action='<? echo self_url(); ?>'>
@@ -1267,7 +1290,7 @@ function formular_buchung_lieferant_bank(
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz">
+            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
               &nbsp;
               <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
@@ -1280,7 +1303,7 @@ function formular_buchung_lieferant_bank(
 }
 
 function formular_buchung_gruppe_lieferant(
-  $gruppen_id = 0, $lieferanten_id = 0
+  $gruppen_id = 0, $lieferanten_id = 0, $notiz = 'Direktzahlung von Gruppe an Lieferant'
 ) {
   ?>
     <form method='post' class='small_form' action='<? echo self_url(array('gruppen_id','lieferanten_id')); ?>'>
@@ -1293,11 +1316,29 @@ function formular_buchung_gruppe_lieferant(
         <table>
           <tr>
             <td><label>von Gruppe:</label></td>
-            <td><select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select></td>
+            <td>
+            <? if ( $gruppen_id ) { ?>
+              <kbd>
+                <? echo sql_gruppenname( $gruppen_id ); ?>
+                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
+              </kbd>
+            <? } else { ?>
+              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select>
+            <? } ?>
+            </td>
           </tr>
           <tr>
             <td><label>an Lieferant:</label></td>
-            <td><select name='lieferanten_id'><? echo optionen_lieferanten( $lieferanten_id ); ?></select></td>
+            <td>
+              <? if( $lieferanten_id ) { ?>
+                <kbd>
+                  <? echo lieferanten_name( $lieferanten_id ); ?>
+                  <input type='hidden' name='lieferanten_id' value='<? echo $lieferanten_id; ?>'>
+                </kbd><
+              <? } else { ?>
+                <select name='lieferanten_id'><? echo optionen_lieferanten(); ?></select>
+              <? } ?>
+            </td>
           </tr>
           <tr>
             <td><label>Valuta:</label></td>
@@ -1311,7 +1352,7 @@ function formular_buchung_gruppe_lieferant(
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz">
+            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
               &nbsp;
               <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
@@ -1324,7 +1365,7 @@ function formular_buchung_gruppe_lieferant(
 }
 
 function formular_buchung_gruppe_gruppe(
-  $gruppen_id = 0, $nach_gruppen_id = 0
+  $gruppen_id = 0, $nach_gruppen_id = 0, $notiz = 'Umbuchung von Gruppe an Gruppe'
 ) {
   ?>
     <form method='post' class='small_form' action='<? echo self_url('gruppen_id'); ?>'>
@@ -1337,7 +1378,16 @@ function formular_buchung_gruppe_gruppe(
         <table>
           <tr>
             <td><label>von Gruppe:</label></td>
-            <td><select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select></td>
+            <td>
+            <? if ( $gruppen_id ) { ?>
+              <kbd>
+                <? echo sql_gruppenname( $gruppen_id ); ?>
+                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
+              </kbd>
+            <? } else { ?>
+              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select>
+            <? } ?>
+            </td>
           </tr>
           <tr>
             <td><label>an Gruppe:</label></td>
@@ -1355,7 +1405,7 @@ function formular_buchung_gruppe_gruppe(
           </tr>
           <tr>
             <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz">
+            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
               &nbsp;
               <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
