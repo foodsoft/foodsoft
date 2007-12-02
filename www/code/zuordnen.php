@@ -2588,13 +2588,13 @@ function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
          , gesamtbestellungen.name
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , (" .select_bestellungen_haben_lieferant( array('lieferanten','gesamtbestellungen') ). ") as haben
+         , (" .select_bestellungen_haben_lieferanten( array('lieferanten','gesamtbestellungen') ). ") as haben
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
     HAVING haben <> 0
   ";
-  return $doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
+  return doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
 }
 
 

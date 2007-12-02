@@ -93,8 +93,7 @@ switch( $action ) {
 
     </fieldset>
 
-  <?
-}
+<?
 
   $kontostand = lieferantenkontostand($lieferanten_id);
 
@@ -165,7 +164,7 @@ switch( $action ) {
               echo "Auszug: <a href=\"javascript:neuesfenster(
                  'index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
                 ,'kontoauszug'
-                );\">$auszug_jahr / $auszug_nr ({$bank_row['kontoname']})</a>
+                );\">$auszug_jahr / $auszug_nr ({$k_row['kontoname']})</a>
               ";
             } else {  // zahlung durch gruppe
               $gruppen_id = $k_row['gruppen_id'];
@@ -178,20 +177,20 @@ switch( $action ) {
             }
           ?>
             </td>
-            <td class='mult'><b><? printf("%.2lf" , -$konto_row['summe']); ?></b></td>
+            <td class='mult'><b><? printf("%.2lf" , $konto_row['summe']); ?></b></td>
             <td class='unit'>&nbsp;</td>
             <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
             </tr>
           <?
-          $summe += $konto_row['summe'];
+          $summe -= $konto_row['summe'];
           $konto_row = mysql_fetch_array($result);
         }
       }
-      ?>
+?>
+
         <tr class='summe'>
           <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Startsaldo:</td>
           <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
         </tr>
-      <?
    </table>
 
