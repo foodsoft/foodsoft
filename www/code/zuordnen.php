@@ -2028,10 +2028,10 @@ function sql_gruppen_transaktion(
   $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="",
   $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
-  debug_args( func_get_args(), 'sql_gruppen_transaktion' );
+  // debug_args( func_get_args(), 'sql_gruppen_transaktion' );
   global $dienstkontrollblatt_id, $hat_dienst_IV;
   fail_if_readonly();
-  echo "gruppen_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
+  // echo "gruppen_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
   need( $gruppen_id or $lieferanten_id );
   // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
   // need( $transaktionsart or $bankkonto_id );
@@ -2057,9 +2057,9 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
-  debug_args( func_get_args(), 'sql_bank_transaktion' );
+  // debug_args( func_get_args(), 'sql_bank_transaktion' );
   global $mysqlheute;
-  echo "bank_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
+  // echo "bank_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
   need( $konto_id and $auszug_jahr and $auszug_nr );
   need( $dienstkontrollblatt_id and $notiz );
   fail_if_readonly();
@@ -2080,7 +2080,7 @@ function sql_bank_transaktion(
 }
 
 function sql_link_transaction( $soll_id, $haben_id ) {
-  debug_args( func_get_args(), 'sql_link_transaction' );
+  // debug_args( func_get_args(), 'sql_link_transaction' );
   if( $soll_id > 0 )
     sql_update( 'bankkonto', $soll_id, array( 'konterbuchung_id' => $haben_id ) );
   else
@@ -2096,9 +2096,9 @@ function sql_link_transaction( $soll_id, $haben_id ) {
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
-  debug_args( func_get_args(), 'sql_doppelte_transaktion' );
+  // debug_args( func_get_args(), 'sql_doppelte_transaktion' );
   global $dienstkontrollblatt_id;
-  echo "doppelte_transaktion 1<br>";
+  // echo "doppelte_transaktion 1<br>";
   nur_fuer_dienst_IV();
   need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
   need( $notiz, 'Bitte Notiz angeben!' );
@@ -2122,7 +2122,6 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
-  echo "doppelte_transaktion 2<br>";
   if( $haben['konto_id'] == -1 ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
@@ -2137,10 +2136,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
-  echo "doppelte_transaktion 3<br>";
   sql_link_transaction( $soll_id, $haben_id );
-  echo "doppelte_transaktion 4<br>";
-
   return;
 }
 
@@ -2156,6 +2152,7 @@ function sql_groupGlass($gruppe, $menge){
  */
 function buchung_gruppe_bank() {
   global $betrag, $gruppen_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
+  $problems = false;
   // echo "buchung_gruppe_bank: 1";
   $betrag or need_http_var( 'betrag', 'f' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
@@ -2173,17 +2170,32 @@ function buchung_gruppe_bank() {
   $konto_id or need_http_var( 'konto_id', 'u' );
   $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
   $auszug_nr or need_http_var( 'auszug_nr', 'u' );
-  sql_doppelte_transaktion(
-    array(
-      'konto_id' => -1, 'gruppen_id' => $gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array(
-      'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , $betrag
-  , "$year-$month-$day"
-  , "$notiz"
-  );
+  if( ! $notiz ) {
+    ?> <div class='warn'>Bitte Notiz eingeben!</div> <?
+    $problems = true;
+  }
+  if( ! $konto_id ) {
+    ?> <div class='warn'>Bitte Konto wählen!</div> <?
+    $problems = true;
+  }
+  if( ! $gruppen_id ) {
+    ?> <div class='warn'>Bitte Gruppe wählen!</div> <?
+    $problems = true;
+  }
+
+  if( ! $problems ) {
+    sql_doppelte_transaktion(
+      array(
+        'konto_id' => -1, 'gruppen_id' => $gruppen_id
+      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , array(
+        'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
+      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , $betrag
+    , "$year-$month-$day"
+    , "$notiz"
+    );
+  }
 }
 
 function buchung_lieferant_bank() {

@@ -298,7 +298,7 @@ if( $meinkonto ) {
                 $k_gruppen_id = $k_row['gruppen_id'];
                 $k_lieferanten_id = $k_row['lieferanten_id'];
                 if( $k_gruppen_id > 0 ) {
-                    printf( "<td>Überweisung %s %sGruppe %s%s</td>"
+                    printf( "Überweisung %s %sGruppe %s%s</td>"
                     , ( $konto_row['summe'] > 0 ? 'von' : 'an' )
                     , ( $meinkonto ? '' : "<a href='" .self_url('gruppen_id'). "&gruppen_id=$k_gruppen_id'>" )
                     , sql_gruppenname( $k_gruppen_id )
