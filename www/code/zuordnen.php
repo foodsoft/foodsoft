@@ -1084,27 +1084,25 @@ function check_new_group_nr($newNummer){
  * Argument: personen_id
  */
 function sql_delete_group_member($person_id, $gruppen_id){
-	global $problems, $msg, $sockelbetrag;
+	global $problems, $msg, $sockelbetrag, $muell_id;
   need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
+  need( $muell_id );
              $sql = "DELETE FROM gruppenmitglieder WHERE id=".mysql_escape_string($person_id);
    	     doSql($sql, LEVEL_IMPORTANT, "Konnte Person nicht l&ouml;schen");
 
           //Den Sockelbetrag ändern
-          $sockeldiff = - $sockelbetrag;
-          if( sql_gruppen_transaktion(
-              2
-            , $gruppen_id
-            , $sockeldiff
-            , "NULL"
-            , "NULL"
-            , "Korrektur Sockelbetrag für zusätzliches Mitglied"
-            , "NOW()"
-          ) ) {
-            $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
-          } else {
-            $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                                       . mysql_error() . "</div>";
-          }
+  if( sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , $sockeldiff
+  , $mysqlheute
+  , "Korrektur Sockelbetrag für ausgetretenes Mitglied"
+  ) ) {
+    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
+  } else {
+    $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
+                               . mysql_error() . "</div>";
+  }
 }
 
 
@@ -1115,34 +1113,32 @@ function sql_delete_group_member($person_id, $gruppen_id){
  * Vorname, Name, Mail, Telefon und Diensteinteilung des Neumitgliedes
  */
 function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDiensteinteilung){
-	global $problems, $msg, $sockelbetrag;
+	global $problems, $msg, $sockelbetrag, $muell_id;
   need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
-		$sql= "INSERT INTO gruppenmitglieder
-				 (vorname, name, gruppen_id, email, telefon, diensteinteilung)
-				 VALUES ( '".mysql_escape_string($newVorname)."'
-					  , '".mysql_escape_string($newName)."'
-					  , '".mysql_escape_string($gruppen_id)."'
-					  , '".mysql_escape_string($newMail)."'
-					  , '".mysql_escape_string($newTelefon)."'
-					  , '".mysql_escape_string($newDiensteinteilung)."')";
-		doSql($sql,LEVEL_IMPORTANT, "Eintragen einer neuen Gruppe fehlgeschlagen");
+  need( $muell_id );
+  sql_insert( 'gruppenmitglieder', array(
+    'vorname' => $newVorname
+  , 'name' => $newName
+  , 'gruppen_id' => $gruppen_id
+  , 'email' => $newMail
+  , 'telefon' => $newTelefon
+  , 'diensteinteilung' => $newDiensteinteilung
+  ) );
 
-          //Den Sockelbetrag ändern
-          $sockeldiff = $sockelbetrag;
-          if( sql_gruppen_transaktion(
-              2
-            , $gruppen_id
-            , $sockeldiff
-            , "NULL"
-            , "NULL"
-            , "Korrektur Sockelbetrag für zusätzliches Mitglied"
-            , "NOW()"
-          ) ) {
-            $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
-          } else {
-            $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
+  //Den Sockelbetrag ändern
+  $sockeldiff = $sockelbetrag;
+  if( sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+  , $sockeldiff
+  , $mysqlheute
+  , "Korrektur Sockelbetrag für zusätzliches Mitglied"
+  ) ) {
+    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
+  } else {
+    $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
                                        . mysql_error() . "</div>";
-          }
+  }
 }
 
 /**

@@ -21,7 +21,7 @@ if(get_http_var('action','w')){
 	     fail_if_readonly();
 	     nur_fuer_dienst(5);
 	     need_http_var('person_id','u');
-	     sql_delete_group_member($person_id $gruppen_id);
+	     sql_delete_group_member($person_id, $gruppen_id);
 
 	     //Sockelbetrag.
 	}
