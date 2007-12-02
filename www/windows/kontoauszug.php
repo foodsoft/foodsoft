@@ -1,6 +1,7 @@
 <?PHP
 
 assert($angemeldet) or exit();
+$editable = ( ! $readonly and ( $dienst == 4 ) );
  
 setWindowSubtitle( 'Kontoauszug' );
 setWikiHelpTopic( 'foodsoft:kontoauszug' );
@@ -9,30 +10,18 @@ need_http_var( 'konto_id', 'u', true );
 need_http_var( 'auszug_jahr', 'u', true );
 need_http_var( 'auszug_nr', 'u', true );
 
-get_http_var( 'action', 'w', false );
-switch( $action ) {
-  case 'zahlung_gruppe':
-    buchung_gruppe_bank();
-    break;
-  case 'zahlung_lieferant':
-    buchung_lieferant_bank();
-    break;
-}
+if( $editable ) {
+  get_http_var( 'action', 'w', false );
+  switch( $action ) {
+    case 'zahlung_gruppe':
+      buchung_gruppe_bank();
+      break;
+    case 'zahlung_lieferant':
+      buchung_lieferant_bank();
+      break;
+  }
 
-if( $action ) {
-  // reload_immediately( self_url() );
-}
-
-$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
-
-$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
-$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
-
-$kontoname = sql_kontoname($konto_id);
-
-echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
-
-?>
+  ?>
   <div id='transactions_button' style='padding-bottom:1em;'>
   <span class='button'
     onclick="document.getElementById('transactions_menu').style.display='block';
@@ -76,6 +65,19 @@ echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
     </div>
 
   </fieldset>
+  <?
+}
+
+$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
+
+$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
+$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
+
+$kontoname = sql_kontoname($konto_id);
+
+echo "<h1>Kontoauszug: $kontoname - $auszug_jahr / $auszug_nr</h1>";
+
+?>
 
   <table class='liste'>
     <tr class='legende'>
@@ -98,25 +100,14 @@ printf( "
 $n=0;
 while( $row = mysql_fetch_array( $auszug ) ) {
   $n++;
+  $kommentar = $row['kommentar'];
+  $konterbuchung_id = $row['konterbuchung_id'];
   echo "
     <tr>
       <td class='number'>$n</td>
       <td class='number'>{$row['valuta']}</td>
-      <td>
+      <td>$kommentar<br>
   ";
-  $gid = $row['gruppen_id'];
-  $lid = $row['lieferanten_id'];
-  $kommentar = $row['kommentar'];
-  $konterbuchung_id = $row['konterbuchung_id'];
-  if( $gid ) {
-    printf( "<p>Überweisung Gruppe %d (%s)</p>" , $gid % 1000, sql_gruppenname( $gid ) );
-  }
-  if( $lid ) {
-    printf( "<p>Überweisung Lieferant %s</p>" , lieferant_name( $lid ) );
-  }
-  if( $kommentar ) {
-    echo "<p>$kommentar</p>";
-  }
   if( $konterbuchung_id ) {
     $konterbuchung = sql_get_transaction( $konterbuchung_id );
     if( $konterbuchung_id > 0 ) {
@@ -130,13 +121,23 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       ";
     } else {
       $gruppen_id = $konterbuchung['gruppen_id'];
-      $gruppen_name = sql_gruppenname( $gruppen_id );
       $lieferanten_id=$konterbuchung['lieferanten_id'];
       if( $gruppen_id ) {
+        $gruppen_name = sql_gruppenname( $gruppen_id );
         echo "
-          <p><a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id','kontoblatt');\"
-          >Gruppenkonto $gruppen_name</a></p>
+          <p>Überweisung Gruppe
+          <a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id','kontoblatt');\"
+          >$gruppen_name</a></p>
         ";
+      } else if ( $lieferanten_id ) {
+        $lieferanten_name = lieferant_name( $lieferanten_id );
+        echo "
+          <p>Überweisung/Lastschrift Lieferant
+          <a href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id=$lieferanten_id','lieferantenkonto');\"
+          >$lieferanten_name</a></p>
+        ";
+      } else {
+        ?> <div class='warn'>unültige Buchung</div> <?
       }
     }
   } else {

@@ -41,6 +41,7 @@ function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfeh
 function sql_select_single_row( $sql ) {
   $result = doSql( $sql );
   $rows = mysql_num_rows($result);
+  // echo "<br>$sql<br>rows: $rows<br>";
   need( $rows > 0, "Kein Treffer bei Datenbanksuche" );
   need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig" );
   return mysql_fetch_array($result);
@@ -2314,7 +2315,7 @@ function sql_get_lieferant_transactions( $lieferanten_id, $from_date = NULL, $to
 }
 
 function sql_get_transaction( $id ) {
-  // echo "sql_get_transaction: $id<br>";
+  // debug_args( func_get_args(), 'sql_get_transaction' );
   if( $id > 0 ) {
     $sql = "
       SELECT kontoauszug_jahr, kontoauszug_nr
