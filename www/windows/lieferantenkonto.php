@@ -19,7 +19,7 @@
   return 0;
  }
 
-nur_fuer_dienst(4,5);
+$editable = ( ! $readonly and ( $dienst == 4 ) );
 get_http_var( 'lieferanten_id', 'u', 0, true );
 
 ?>
@@ -41,59 +41,60 @@ if( ! $lieferanten_id )
 
 $lieferanten_name = lieferant_name( $lieferanten_id );
 
-get_http_var( 'action', 'w', '' );
-switch( $action ) {
-  case 'zahlung_lieferant':
-    buchung_lieferant_bank();
-    break;
- case 'zahlung_gruppe_lieferant':
-   buchung_gruppe_lieferant();
-   break;
+if( $editable ) {
+  get_http_var( 'action', 'w', '' );
+  switch( $action ) {
+    case 'zahlung_lieferant':
+      buchung_lieferant_bank();
+      break;
+   case 'zahlung_gruppe_lieferant':
+     buchung_gruppe_lieferant();
+     break;
+  }
+
+  ?>
+    <div id='transactions_button' style='padding-bottom:1em;'>
+    <span class='button'
+      onclick="document.getElementById('transactions_menu').style.display='block';
+               document.getElementById('transactions_button').style.display='none';"
+      >Transaktionen...</span>
+    </div>
+
+    <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
+      <legend>
+        <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+        onclick="document.getElementById('transactions_button').style.display='block';
+                 document.getElementById('transactions_menu').style.display='none';">
+        Transaktionen
+      </legend>
+
+      Art der Transaktion:
+        <span style='padding-left:1em;' title='Überweisung oder Abbuchung von Bankkonto der Foodcoop'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('zahlungbank_form').style.display='block';
+                   document.getElementById('zahlunggruppe_form').style.display='none';"
+        ><b>Überweisung/Lastschrift</b>
+        </span>
+
+        <span style='padding-left:1em;' title='Direktzahlung von Gruppe an Lieferant'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('zahlungbank_form').style.display='none';
+                   document.getElementById('zahlunggruppe_form').style.display='block';"
+        ><b>Direktzahlung durch Gruppe</b>
+        </span>
+
+        <div id='zahlungbank_form' style='display:none;'>
+          <? formular_buchung_lieferant_bank( $lieferanten_id ); ?>
+        </div>
+
+        <div id='zahlunggruppe_form' style='display:none;'>
+          <? formular_buchung_gruppe_lieferant( 0, $lieferanten_id ); ?>
+        </div>
+
+     </fieldset>
+
+  <?
 }
-
-
-?>
-  <div id='transactions_button' style='padding-bottom:1em;'>
-  <span class='button'
-    onclick="document.getElementById('transactions_menu').style.display='block';
-             document.getElementById('transactions_button').style.display='none';"
-    >Transaktionen...</span>
-  </div>
-
-  <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
-    <legend>
-      <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-      onclick="document.getElementById('transactions_button').style.display='block';
-               document.getElementById('transactions_menu').style.display='none';">
-      Transaktionen
-    </legend>
-  
-    Art der Transaktion:
-      <span style='padding-left:1em;' title='Überweisung oder Abbuchung von Bankkonto der Foodcoop'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('zahlungbank_form').style.display='block';
-                 document.getElementById('zahlunggruppe_form').style.display='none';"
-      ><b>Überweisung/Lastschrift</b>
-      </span>
-
-      <span style='padding-left:1em;' title='Direktzahlung von Gruppe an Lieferant'>
-      <input type='radio' name='transaktionsart'
-        onclick="document.getElementById('zahlungbank_form').style.display='none';
-                 document.getElementById('zahlunggruppe_form').style.display='block';"
-      ><b>Direktzahlung durch Gruppe</b>
-      </span>
-
-      <div id='zahlungbank_form' style='display:none;'>
-        <? formular_buchung_lieferant_bank( $lieferanten_id ); ?>
-      </div>
-
-      <div id='zahlungruppe_form' style='display:none;'>
-        <? formular_buchung_gruppe_lieferant( 0, $lieferanten_id ); ?>
-      </div>
-
-    </fieldset>
-
-<?
 
   $kontostand = lieferantenkontostand($lieferanten_id);
 

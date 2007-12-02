@@ -108,7 +108,11 @@ rubrik( "Einlagen der Gruppen" );
 $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
 rubrik( "Verbindlichkeiten" );
   while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-    posten( $vkeit['name'], $vkeit['soll'] );
+    posten( "
+      <a href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id={$vkeit['lieferanten_id']}','lieferantenkonto');\"
+      >{$vkeit['name']}</a>"
+    , $vkeit['soll']
+    );
   }
 
 $passiva = $seitensumme;

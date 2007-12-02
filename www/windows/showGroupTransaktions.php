@@ -94,9 +94,6 @@ if( $meinkonto ) {
     case 'zahlung_gruppe':
       buchung_gruppe_bank();
       break;
-//    case 'zahlung_lieferant':
-//      buchung_lieferant_bank();
-//      break;
     case 'zahlung_gruppe_lieferant':
       buchung_gruppe_lieferant();
       break;
@@ -105,15 +102,6 @@ if( $meinkonto ) {
       break;
   }
 
-//   if( get_http_var( 'summe_sonstiges', 'f' ) ) {
-//     need_http_var( 'day', 'u' );
-//     need_http_var( 'month', 'u' );
-//     need_http_var( 'year', 'u' );
-//     need_http_var( 'notiz', 'M' );
-//     sqlGroupTransaction( '2', $gruppen_id, $summe_sonstiges, NULL, NULL,  $notiz, "$year-$month-$day" );
-//     // TODO: Transaktionart?
-//   }
-  
   ?>
 
     <div id='transactions_button' style='padding-bottom:1em;'>
@@ -182,6 +170,7 @@ if( $meinkonto ) {
 	// wieviele Kontenbewegungen werden ab wo angezeigt...
 	if (isset($HTTP_GET_VARS['start_pos'])) $start_pos = $HTTP_GET_VARS['start_pos']; else $start_pos = 0;
 	//Funktioniert erstmal mit der Mischung aus Automatischer Berechung und manuellen Eintr�gen nicht
+  //FIXME: vielleicht ggf. start/enddatum waehlbar machen? oder immer ganze jahre?
 	$size          = 2000;
 	 
 	
@@ -248,9 +237,11 @@ if( $meinkonto ) {
 					    }
 
             } else {
-              echo "
-                <tr>
-                  <td valign='top'><b>";
+              // eintrag aus gruppen_transaktion anzeigen:
+              //
+              ?> <tr>
+                  <td valign='top'><b>
+              <?
               switch( $konto_row['type'] ) {
                 case 0:
                   echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
@@ -265,77 +256,73 @@ if( $meinkonto ) {
               echo "</td>
                   <td>{$konto_row['valuta_trad']}</td>
                   <td>{$konto_row['date']}</td>
+                  <td>{$konto_row['notiz']}<br>
               ";
-              if ($konto_row['type'] == 0) {
-                ?>
-                  <td>
-                    <table style='font-size:10pt' class='inner'>
-                      <tr><td>Auszug:</td><td>
-                <?
-                if( $konto_row['konterbuchung_id'] > 0 ) {
-                  $bank_row = sql_get_transaction( $konto_row['konterbuchung_id'] );
-                  $konto_id = $bank_row['konto_id'];
-                  $auszug_nr = $bank_row['kontoauszug_nr'];
-                  $auszug_jahr = $bank_row['kontoauszug_jahr'];
-                  echo "<a href=\"javascript:neuesfenster(
+              $k_id = $konto_row['konterbuchung_id'];
+              if( $k_id > 0 ) { // bank-transaktion
+                ?> Auszug: <?
+                $bank_row = sql_get_transaction( $k_id );
+                $konto_id = $bank_row['konto_id'];
+                $auszug_nr = $bank_row['kontoauszug_nr'];
+                $auszug_jahr = $bank_row['kontoauszug_jahr'];
+                echo "<a href=\"javascript:neuesfenster(
                       'index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
                       ,'kontoauszug'
                     );\">$auszug_jahr / $auszug_nr ({$bank_row['kontoname']})</a>
                   ";
+              } else if( $k_id == 0 ) { // bank-transaktion, noch unvollstaendig!
+                if( $meinkonto ) {
+                  ?> <div class='alert'>noch nich verbucht</div> <?
                 } else {
-                  if( $meinkonto ) {
-                    ?> <div class='warn'>noch nich verbucht</div> <?
-                  } else {
-                    ?>
-                      <form action='<? echo self_url(); ?>' method="post">
-                        <? echo self_post(); ?>
-                        <input type="hidden" name="action" value="finish_transaction">
-                        <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
-                      <select name='konto_id' size='1'>
-                        <? echo optionen_konten(); ?>
-                        </select>
-                      <br>
-                        Jahr: <?  number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
-                        / Nr: <input type="text" size='6' name='auszug_nr' />
-                      <br>
-                        <label>Valuta:</label>
-                        <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
-                        &nbsp;
-                        <input type="submit" value="Bestätigen ">
-                      </form>
-                    <?
-                  }
+                  ?>
+                    <form action='<? echo self_url(); ?>' method="post">
+                      <? echo self_post(); ?>
+                      <input type="hidden" name="action" value="finish_transaction">
+                      <input type="hidden" name="trans_nr" value="<?PHP echo $konto_row['id'] ?>">
+                    <select name='konto_id' size='1'>
+                      <? echo optionen_konten(); ?>
+                      </select>
+                    <br>
+                      Jahr: <?  number_selector( 'auszug_jahr', 2004, 2011, date('Y') ,"%04d"); ?>
+                      / Nr: <input type="text" size='6' name='auszug_nr' />
+                    <br>
+                      <label>Valuta:</label>
+                      <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
+                      &nbsp;
+                      <input type="submit" value="Bestätigen ">
+                    </form>
+                  <?
                 }
-                ?> </td></tr> </table> </td> <?
-              } else if ($konto_row['type'] == 1) {
-                $k_id = $konto_row['konterbuchung_id'];
-                if( ! ( $k_id < 0 ) ) {
-                  echo "<td class='warn'>Fehler: Buchung unvollständig</td>";
-                } else {
-                  $k_row = sql_get_transaction( $k_id );
-                  $k_gruppen_id = $k_row['gruppen_id'];
-                  $k_lieferanten_id = $k_row['lieferanten_id'];
-                  if( $k_gruppen_id > 0 ) {
+              } else { // gruppen-gruppen oder gruppen-lieferanten-transaktion:
+                $k_row = sql_get_transaction( $k_id );
+                $k_gruppen_id = $k_row['gruppen_id'];
+                $k_lieferanten_id = $k_row['lieferanten_id'];
+                if( $k_gruppen_id > 0 ) {
                     printf( "<td>Überweisung %s %sGruppe %s%s</td>"
                     , ( $konto_row['summe'] > 0 ? 'von' : 'an' )
                     , ( $meinkonto ? '' : "<a href='" .self_url('gruppen_id'). "&gruppen_id=$k_gruppen_id'>" )
                     , sql_gruppenname( $k_gruppen_id )
                     , ( $meinkonto ? '' : "</a>" )
                     );
-                  } else if ( $k_lieferanten_id > 0 ) {
-                    echo "<td>Überweisung Lieferant " . lieferant_name( $k_lieferanten_id );
-                  }
+                } else if ( $k_lieferanten_id > 0 ) {
+                    ?> 
+                      Überweisung an Lieferant
+                      <a href="javascript:neuesfenster(
+                          'index.php?window=lieferantenkonto&lieferanten_id=<? echo $k_lieferanten_id; ?>'
+                        , 'lieferantenkonto')"
+                      ><? echo lieferant_name( $k_lieferanten_id ); ?></a>
+                    <?
+                } else {
+                  ?> <div class='warn'>Keine gültige Transaktion</div> <?
                 }
-              } else if ($konto_row['type'] == 2) {
-                echo "<td>".$konto_row['notiz']."</td>";
               }
-							
               ?>
-							  <td class='mult'>
+                </td>
+                <td class='mult'>
                   <b><? printf("%.2lf",$konto_row['summe']); ?></b></td>
                   <td class='unit'>&nbsp;</td>
-					      <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
-							</tr>
+                  <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+                </tr>
               <?
               $summe -= $konto_row['summe'];
 				 	    $konto_row = mysql_fetch_array($result);

@@ -1250,7 +1250,7 @@ function formular_buchung_lieferant_bank(
                 <kbd>
                   <? echo lieferant_name( $lieferanten_id ); ?>
                   <input type='hidden' name='lieferanten_id' value='<? echo $lieferanten_id; ?>'>
-                </kbd><
+                </kbd>
               <? } else { ?>
                 <select name='lieferanten_id'><? echo optionen_lieferanten(); ?></select>
               <? } ?>
@@ -1334,7 +1334,7 @@ function formular_buchung_gruppe_lieferant(
                 <kbd>
                   <? echo lieferant_name( $lieferanten_id ); ?>
                   <input type='hidden' name='lieferanten_id' value='<? echo $lieferanten_id; ?>'>
-                </kbd><
+                </kbd>
               <? } else { ?>
                 <select name='lieferanten_id'><? echo optionen_lieferanten(); ?></select>
               <? } ?>
