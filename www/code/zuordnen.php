@@ -49,7 +49,7 @@ function sql_select_single_row( $sql ) {
 
 function sql_select_single_field( $sql, $field ) {
   $row = sql_select_single_row( $sql );
-  need( isset( $row[$field] ) );
+  need( isset( $row[$field] ), "Feld $field nicht gesetzt" );
   return $row[$field];
 }
 
@@ -71,30 +71,34 @@ function sql_update( $table, $id, $values, $escape_and_quote = true ) {
 }
 
 function sql_insert( $table, $values, $update_cols = false ) {
+  debug_args( func_get_args(), 'sql_insert' );
   fail_if_readonly();
   $komma='';
+  $update_komma='';
   $cols = '';
   $vals = '';
   $update = '';
   foreach( $values as $key => $val ) {
     $cols .= "$komma $key";
     $vals .= "$komma '" . mysql_real_escape_string($val) . "'";
-    if( $update_cols ) {
-      if( $is_array( $update_cols ) ) {
+    if( $update_cols or is_array($update_cols) ) {
+      if( is_array( $update_cols ) ) {
         if( isset( $update_cols[$key] ) ) {
-          $update .= "$komma $key='" . mysql_real_escape_string(
+          $update .= "$update_komma $key='" . mysql_real_escape_string(
             $update_cols[$key] ? $update_cols[$key] : $val
           ) . "'";
+          $update_komma=',';
         }
       } else {
-        $update .= "$komma $key='" . mysql_real_escape_string($val) . "'";
+        $update .= "$update_komma $key='" . mysql_real_escape_string($val) . "'";
+        $update_komma=',';
       }
     }
     $komma=',';
   }
   $sql = "INSERT INTO $table ( $cols ) VALUES ( $vals )";
-  if( $update_cols ) {
-    $sql .= " ON DUPLICATE KEY UPDATE $update $komma id = LAST_INSERT_ID(id) ";
+  if( $update_cols or is_array( $update_cols ) ) {
+    $sql .= " ON DUPLICATE KEY UPDATE $update $update_komma id = LAST_INSERT_ID(id) ";
   }
   // echo "<br>sql_insert: $sql<br>";
   if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: " ) )
@@ -1094,11 +1098,11 @@ function sql_delete_group_member($person_id, $gruppen_id){
   if( sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
   , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , $sockeldiff
+  , $sockelbetrag
   , $mysqlheute
   , "Korrektur Sockelbetrag für ausgetretenes Mitglied"
   ) ) {
-    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
+    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockelbetrag Euro wurden verbucht.</div>";
   } else {
     $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
                                . mysql_error() . "</div>";
@@ -1126,15 +1130,14 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
   ) );
 
   //Den Sockelbetrag ändern
-  $sockeldiff = $sockelbetrag;
   if( sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
   , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
-  , $sockeldiff
+  , $sockelbetrag
   , $mysqlheute
   , "Korrektur Sockelbetrag für zusätzliches Mitglied"
   ) ) {
-    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockeldiff Euro wurden verbucht.</div>";
+    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockelbetrag Euro wurden verbucht.</div>";
   } else {
     $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
                                        . mysql_error() . "</div>";
@@ -1255,8 +1258,7 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
 ////////////////////////////////////
 
 function getState($bestell_id){
-  $row = sql_select_single_row( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id" );
-  return $row['state'];
+  return sql_select_single_field( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id", 'state' );
 }
 
 /**
@@ -2206,7 +2208,6 @@ function buchung_gruppe_bank() {
 
 function buchung_lieferant_bank() {
   global $betrag, $lieferanten_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
-  echo "buchung_lieferant_bank: 1<br>";
   $betrag or need_http_var( 'betrag', 'f' );
   $lieferanten_id or need_http_var( 'lieferanten_id', 'u' );
   $day or need_http_var( 'day', 'u' );
@@ -2217,9 +2218,7 @@ function buchung_lieferant_bank() {
   $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
   $auszug_nr or need_http_var( 'auszug_nr', 'u' );
   $notiz or get_http_var( 'notiz', 'H' );
-  echo "buchung_lieferant_bank: 2: lieferant: $lieferanten_id ($notiz)<br>";
   get_http_var( 'notiz', 'H' );
-  echo "buchung_lieferant_bank: 3: lieferant: $lieferanten_id ($notiz)<br>";
   sql_doppelte_transaktion(
     array(
       'konto_id' => $konto_id, 'lieferanten_id' => $lieferanten_id
@@ -2235,7 +2234,6 @@ function buchung_lieferant_bank() {
 
 function buchung_gruppe_lieferant() {
   global $betrag, $lieferanten_id, $gruppen_id, $notiz, $day, $month, $year;
-  echo "buchung_gruppe_lieferant: 1<br>";
   $betrag or need_http_var( 'betrag', 'f' );
   $lieferanten_id or need_http_var( 'lieferanten_id', 'u' );
   $gruppen_id or need_http_var( 'gruppen_id', 'u' );
@@ -2243,7 +2241,6 @@ function buchung_gruppe_lieferant() {
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
-  echo "buchung_gruppe_lieferant: 2";
   sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
   , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
@@ -2750,16 +2747,17 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
         $show_button = true;
         $rv = false;
       }
-      $editable && $show_button && action_button( "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
-        , "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
-        , array(
-            'action' => 'zeitende_setzen'
-          , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr"
-          , 'vortag' => '1'
-          , 'preis_id' => $pr0['id']
-          )
-      , $mod_id, 'warn'
-      );
+      if( $editable && $show_button )
+        echo action_button( "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
+          , "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
+          , array(
+              'action' => 'zeitende_setzen'
+            , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr"
+            , 'vortag' => '1'
+            , 'preis_id' => $pr0['id']
+            )
+        , $mod_id, 'warn'
+        );
     }
     $pr0 = $pr1;
   }
