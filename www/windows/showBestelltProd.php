@@ -8,9 +8,10 @@ setWikiHelpTopic( "foodsoft:Produktverteilung" );  // TODO: das ganze Skript umb
 need_http_var('bestell_id', 'u', true);
 need_http_var('produkt_id', 'u', true);
 
-get_http_var('action','w');
+get_http_var('action','w','');
 
-$editAmounts = $hat_dienst_IV;
+$editAmounts = ( $hat_dienst_IV and ! $readonly );
+$editAmounts or $action = '';
 
 // TODO: wird bisher von nirgendwo ausgeloest, wird das gebraucht?
 // if( $action == 'zuteilung_loeschen' ) {

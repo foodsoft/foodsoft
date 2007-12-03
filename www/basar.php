@@ -48,7 +48,7 @@ if( $editable ) {
     need_http_var( 'bestellung', 'u' );
     need_http_var( 'menge', 'f' );
     need( $muell_id );
-    echo "Schwundbuchung: $produkt_id, $bestellung, $menge<br>";
+    // echo "Schwundbuchung: $produkt_id, $bestellung, $menge<br>";
     sql_basar2group( $muell_id, $produkt_id, $bestellung, $menge );
   }
 }
