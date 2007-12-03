@@ -213,12 +213,12 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 
   if( $editAmounts ) {
     echo "<form action='" . self_url() . "' method='post'>" . self_post();
-    $cols=9;
+    $cols=11;
   } else {
-    $cols=8;
+    $cols=9;
   }
 
-  ?> <table style='width: 600px;' class='numbers'> <?
+  ?> <table class='numbers'> <?
 
   if( $editAmounts ) {
     ?>
@@ -226,7 +226,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
         <td colspan='2'> Gruppe: 
           <select name='gruppe'>
           <option value='' selected>(Gruppe w&auml;hlen)</option>
-          <? echo optionen_gruppen( false, false, false, false, false, $specialgroups ); ?>
+          <? echo optionen_gruppen( false, false, false, false, false ); ?>
           </select>
         </td>
         <td colspan='<? echo $cols-2; ?>' style='text-align:right;padding-bottom:1ex;'>
@@ -245,20 +245,22 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
       title='Sortieren nach Lieferdatum'>Lieferdatum</a></th>"
   , "<th colspan='2'>Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
-  , ( $editAmounts ? "<th>Zuteilung</th>" : "" )
+  , "<th title='Wert incl. MWSt. und Pfand'>Wert</th>"
+  , ( $editAmounts ? "<th>Aktionen</th>" : "" )
+  , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   switch( $order ) {
     case 'bestellung':
-      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s';
+      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s%7$s%8$s';
       $keyfield=1;
       break;
     case 'datum':
-      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s';
+      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s%7$s%8$s';
       $keyfield=2;
       break;
     default:
     case 'produktname':
-      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s';
+      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s%7$s%8$s';
       $keyfield=0;
       break;
   }
@@ -270,11 +272,14 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   $row_index=0;
   $js = '';
   $fieldcount=0;
+  $gesamtwert = 0;
   while  ($basar_row = mysql_fetch_array($result)) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
      $menge=$basar_row['basar'];
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
      $menge *= $kan_verteilmult;
+     $wert = $basar_row['basar'] * $basar_row['preis'];
+     $gesamtwert += $wert;
 
      $row = array( 
        "<td>{$basar_row['produkt_name']}</td>"
@@ -285,19 +290,31 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['preis'] ) . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
      , "<td class='mult'><b>$menge</b></td>
-        <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>"
-     , "<td style='border-left-style:none;'><a 
+        <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
+        <td style='border-left-style:none;'><a 
             href=\"javascript:neuesfenster('index.php?window=showBestelltProd&bestell_id={$basar_row['gesamtbestellung_id']}&produkt_id={$basar_row['produkt_id']}','produktverteilung');\"
             ><img src='img/b_browse.png' border='0' title='Details zur Verteilung' alt='Details zur Verteilung'
             ></a></td>
          "
-         . ( $editAmounts ?
-             "<td class='unit'>
-              <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
-              <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
-              <input name='menge$fieldcount' type='text' size='5' /> $kan_verteileinheit</td>"
-           : ""
-           )
+     , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
+     , ( $editAmounts ?
+         "<td>". action_button(
+           ( ($menge > 0) ?  "abschreiben" : "vereinnahmen" )
+         , "$menge $kan_verteileinheit "
+            . ( ($menge > 0) ? "als Schwund abschreiben?" : "als Verlustausgleich vereinnahmen?" )
+         , array( 'action' => 'schwund', 'menge' => $basar_row['basar']
+             , 'produkt_id' => $basar_row['produkt_id'], 'bestellung' => $basar_row['gesamtbestellung_id'] )
+         ) ."</td>"
+       : "<td>&nbsp;</td>"
+       )
+     , ( $editAmounts ?
+         "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
+          <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
+          <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
+          <input name='menge$fieldcount' type='text' size='5'></td>
+          <td class='unit'>$kan_verteileinheit</td>"
+       : ""
+       )
      );
      $fieldcount++;
 
@@ -321,6 +338,12 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      }
      vprintf( "<tr>$rowformat</tr>\n", $row );
   }
+  ?>
+    <tr class='summe'>
+      <td colspan='8' style='text-align:right'>Summe:</td>
+      <td class='number'><? printf( "%8.2lf", $gesamtwert ); ?></td>
+    </tr>
+  <?
   echo $js;
 
   if( $editAmounts ) {
@@ -1489,19 +1512,17 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
 }
 
 function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) {
-  ?><div class='<? echo $class; ?>' style='white-space:nowrap;padding:0.1ex 1ex 0.1ex 1ex;'>
-      <form style='margin:0ex;padding:0ex;' method='post' action='<? echo self_url(); ?>'>
-        <?
-          echo self_post();
-          foreach( $fields as $name => $value )
-            echo "<input type='hidden' name='$name' value='$value'>";
-          echo "<input style='padding:0ex;margin:0ex;' type='submit' name='submit' value='$label'";
-          if( $mod_id )
-            echo " onclick=\"document.getElementById('$mod_id').className='modified';\"";
-          if( $title )
-            echo " title='$title'";
-        ?>
-        ></form></div><?
+  $s = "<div class='<? echo $class; ?>' style='white-space:nowrap;padding:0.1ex 1ex 0.1ex 1ex;'>
+      <form style='margin:0ex;padding:0ex;' method='post' action='" . self_url() . "'>" . self_post();
+  foreach( $fields as $name => $value )
+     $s .= "<input type='hidden' name='$name' value='$value'>";
+  $s .= "<input style='padding:0ex;margin:0ex;' type='submit' name='submit' value='$label'";
+  if( $mod_id )
+    $s .= " onclick=\"document.getElementById('$mod_id').className='modified';\"";
+  if( $title )
+    $s .= " title='$title'";
+  $s  .= "></form></div>";
+  return $s;
 }
 
 // preishistorie_view:
