@@ -71,7 +71,7 @@ function sql_update( $table, $id, $values, $escape_and_quote = true ) {
 }
 
 function sql_insert( $table, $values, $update_cols = false ) {
-  debug_args( func_get_args(), 'sql_insert' );
+  // debug_args( func_get_args(), 'sql_insert' );
   fail_if_readonly();
   $komma='';
   $update_komma='';
