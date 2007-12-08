@@ -4,7 +4,7 @@
 //
 	assert( $angemeldet ) or exit();
 
-  get_http_var('action','w');
+  get_http_var('action','w','');
 
   if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
 
