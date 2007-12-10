@@ -125,11 +125,6 @@ if(get_http_var('action','w')){
       <tr>
         <td>$nr</td>
         <td>{$row['name']}</td>
-	 <!--
-        <td>{$row['ansprechpartner']}</td>
-        <td>{$row['email']}</td>
-        <td>{$row['telefon']}</td>
-         -->
 	";
       if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
         echo "<td align='right'>$kontostand</td>";
@@ -139,9 +134,6 @@ if(get_http_var('action','w')){
 	}
     echo"
         <td>{$row['mitgliederzahl']}</td>
-	 <!--
-        <td>{$row['diensteinteilung']}</td>
-         -->
         <td>
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=gruppen_mitglieder&gruppen_id=$id'>
            <img src='img/b_browse.png' border='0' title='Personen' alt='Personen'/>
@@ -164,9 +156,11 @@ if(get_http_var('action','w')){
       }
       if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
         ?>
+     <!-- nicht mehr da, da Formular veraltet ToDo: Gruppennamen hier editierbar machen
           <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-          href="javascript:window.open('index.php?window=editGroup&gruppen_id=<? echo $row['id']; ?>','insertGroup','width=390,height=420,left=200,top=100').focus();">
+          href="javascript:window.open('index.php?window=editGroup&gruppen_id=<?// echo $row['id']; ?>','insertGroup','width=390,height=420,left=200,top=100').focus();">
           <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' title='Gruppendaten ändern'/></a>
+      -->
         <?
       }
       // loeschen nur wenn

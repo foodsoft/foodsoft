@@ -98,6 +98,7 @@
        <h1>Dienstliste</h1>
 
 	<p>
+        Zum Abtauschen von Diensten: Beide Gruppen klicken auf "kann doch nicht" und übernehmen anschliessend den von der andern Gruppe entstandenen offen Dienst. 
 <?	wikiLink("foodsoft:dienstplan", "Mehr Infos im Wiki...");
 ?>
         </p>
@@ -131,12 +132,14 @@
                    } else {
 		   //Nicht bestätigten Dienst: Confirmation
 		       ?>
-		       <form action="index.php">
+                       <form action="index.php">
 		       <input type="hidden" name="area" value="dienstplan">
 		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $command[1]?>">
 		       <input type="hidden" name="confirmed" value="confirmed">
-		       <b>Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren Versuchen (Telefon und Email) nicht erreichbar </b>
+		       <div class='warn'>
+		       Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren Versuchen (Telefon und Email) nicht erreichbar 
 		       <input  type="submit" value="Klar">  
+                       </div>
 		       </form>
 		       <br>
 		       <?

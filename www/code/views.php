@@ -80,7 +80,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        }
        switch($row["Status"]){
        case "Vorgeschlagen":
-	    if($gruppe == $row["GruppenID"]){
+	    if($gruppe == $row["gruppen_id"]){
 	    ?>
 	       <font color="<?echo $color_not_accepted?>"> Dieser Dienst ist euch zugeteilt <br>
 	       <?if($show_buttons){?>
@@ -105,7 +105,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 		    Noch nicht akzeptiert
 		    
 		    <?
-                    echo "(".$row["name"].")</font>";
+                    echo "(Gruppe".($row["gruppen_id"] % 1000).": ".$row["name"].")</font>";
 	            if( $soon){
 
 		       ?>
@@ -136,7 +136,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	       }
        	    break;
        case "Geleistet":
-            echo "<font color=".$color_norm.">".$row["name"]." ".$row["telefon"]."</font>";
+            echo "<font color=".$color_norm.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
        	    break;
        case "Akzeptiert":
             $color_use = $color_not_confirmed;
@@ -145,8 +145,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
             if(!isset($color_use)){
 	    	$color_use = $color_norm;
 	    }
-            echo "<font color=".$color_use.">".$row["name"]." ".$row["telefon"]."</font>";
-       	    if($gruppe == $row["GruppenID"]){
+            echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+       	    if($gruppe == $row["gruppen_id"]){
 	    ?>
 	       <?if($show_buttons){?>
 	       <form action="index.php" >
@@ -192,7 +192,7 @@ function rotationsplanView($row){
        <?echo $row['rotationsplanposition']?>
        </b>
        </td><td>
-       <?echo $row['name']?>
+       <?echo "Gruppe ".($row['gruppen_id'] % 1000).":".$row['name']?>
        </td><td>
        <?if($row['rotationsplanposition']>1){?>
 	<input type="submit" width="80" value="UP" name="up_<? echo $row['id']?>" > 
@@ -1671,7 +1671,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
  */
 function dienst_selector($pre_select, $id=""){
 	echo"
-              <select name='newDienst$id'>
+              <select name='newDienst[$id]'>
 	";
 	    
 	  //var_dump($_SESSION['DIENSTEINTEILUNG']);
@@ -1690,6 +1690,7 @@ function dienst_selector($pre_select, $id=""){
  */
 function membertable_view($rows, $editable=FALSE, $super_edit=FALSE){
 ?>
+  <form method='post' class='big_form' action='<? echo self_url(); ?>'>
    
     <table class='liste'>
       <tr>
@@ -1710,10 +1711,10 @@ function membertable_view($rows, $editable=FALSE, $super_edit=FALSE){
    if($editable){
 	echo"
       <tr>
-	 <td><input type='input' size='12' name='newVorname{$row['id']}' value='{$row['vorname']}'></td>
-	 <td><input type='input' size='12' name='newName{$row['id']}' value='{$row['name']}'></td>
-	 <td><input type='input' size='12' name='newEmail{$row['id']}' value='{$row['email']}'></td>
-	 <td><input type='input' size='12' name='newTelefon{$row['id']}' value='{$row['telefon']}'></td>
+	 <td><input type='input' size='12' name='nVorname[{$row['id']}]' value='{$row['vorname']}'></td>
+	 <td><input type='input' size='12' name='nName[{$row['id']}]' value='{$row['name']}'></td>
+	 <td><input type='input' size='12' name='nEmail[{$row['id']}]' value='{$row['email']}'></td>
+	 <td><input type='input' size='12' name='nTelefon[{$row['id']}]' value='{$row['telefon']}'></td>
 	";
    }else {
 	echo"
@@ -1755,5 +1756,14 @@ function membertable_view($rows, $editable=FALSE, $super_edit=FALSE){
           
       </tr>
     </table>
+<? if($super_edit or $editable)
+   {
+?>
+     
+      <input type="submit" value="Speichern"/>
+<?
+   }
+?>
+   </form>
 <?
 }

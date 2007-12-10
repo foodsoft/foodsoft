@@ -2,7 +2,7 @@
 <?PHP
   
 assert( $angemeldet ) or exit();
- $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
+// $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
 need_http_var('gruppen_id','u');
           //set variables for submit-button
@@ -15,7 +15,18 @@ need_http_var('gruppen_id','u');
 
 echo "<h1>Gruppenmitglieder f&uuml;r Gruppe $gruppen_id </h1> ";
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
-var_dump($HTTP_POST_VARS);
+
+global $login_gruppen_id ;
+
+//FIXME: remove trim when http_get_var correctly returns integer
+if( trim($login_gruppen_id) == $gruppen_id and ! $readonly){
+	  $edit_names = TRUE;
+}
+  if( $hat_dienst_V and ! $readonly ) {
+	  $edit_names = TRUE;
+	  $edit_dienst_einteilung=TRUE;
+  }
+
 if(get_http_var('action','w')){
 	if( $action == 'delete' ) {
 	     fail_if_readonly();
@@ -23,9 +34,44 @@ if(get_http_var('action','w')){
 	     need_http_var('person_id','u');
 	     sql_delete_group_member($person_id, $gruppen_id);
 
-	     //Sockelbetrag.
 	}
 }
+
+// Änderungen von Gruppenmitgliedern speichern
+
+	get_http_var("nVorname[]", 'M');
+	get_http_var("nEmail[]", 'M');
+	get_http_var("nTelefon[]", 'M');
+	get_http_var("newDienst[]", 'M');
+	if(get_http_var("nName[]", 'M')){
+	
+	   foreach($nName as $change_id => $name){
+		fail_if_readonly();
+		if($edit_names!= TRUE){
+		    echo " <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div> ";
+		} else {
+
+		    $record = sql_gruppen_members($gruppen_id, $change_id);
+		    if($record['name']!= $nName[$change_id] or
+		       $record['vorname']!= $nVorname[$change_id] or
+		       $record['email']!= $nEmail[$change_id] or
+		       $record['telefon']!= $nTelefon[$change_id] or
+	               $record['diensteinteilung']!=$newDienst[$change_id]){
+			       //nur dienst 5 darf diensteinteilung ändern
+			       if($edit_dienst_einteilung==TRUE){
+				       sql_update_gruppen_member($change_id, $nName[$change_id] , $nVorname[$change_id] , $nEmail[$change_id] , $nTelefon[$change_id], $newDienst[$change_id]);
+			       } else {
+				       sql_update_gruppen_member($change_id, $nName[$change_id] , $nVorname[$change_id] , $nEmail[$change_id] , $nTelefon[$change_id], $record['diensteinteilung']);
+			       }
+		    }
+		    
+
+
+
+		}
+
+   	   }
+	}
 
   // Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können
   ?>
@@ -36,15 +82,7 @@ if(get_http_var('action','w')){
     </form>
     <table class='menu'>
   <?
-global $login_gruppen_id ;
-
-//FIXME: remove trim when http_get_var correctly returns integer
-if( trim($login_gruppen_id) == $gruppen_id){
-	  $edit_names = TRUE;
-}
-  if( $hat_dienst_V and ! $readonly ) {
-	  $edit_names = TRUE;
-	  $edit_dienst_einteilung=TRUE;
+  if( $edit_dienst_einteilung ) {
     ?>
     <div id='transaction_button' style='padding-bottom:1em;'>
     <span class='button'
@@ -84,8 +122,8 @@ if( trim($login_gruppen_id) == $gruppen_id){
 		  get_http_var('newName', 'w');
 		  get_http_var('newMail', 'R');
 		  get_http_var('newTelefon', 'R');
-		  get_http_var('newDienst', 'R');
-		  sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst);
+		  get_http_var('newDienst[]', 'R');
+		  sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst[0]);
 	  }
   }
 
@@ -97,5 +135,4 @@ if( trim($login_gruppen_id) == $gruppen_id){
 
 	<?  membertable_view(sql_gruppen_members($gruppen_id), $edit_names , $edit_dienst_einteilung); ?>
 
-</table>
 
