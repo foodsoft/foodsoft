@@ -72,7 +72,7 @@
 
    $downloadname = "foodsoft.$foodsoftserver." . date('Ymd.Hi') . ".sql.gz" ;
 
-   get_http_var( 'action', 'w' );
+   get_http_var( 'action', 'w', '' );
 
    function datenbank_sperren() {
      if( mysql_query( 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
