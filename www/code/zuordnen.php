@@ -840,8 +840,8 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
 
 function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
   $notiz = mysql_real_escape_string($notiz);
-  $telefon = mysql_real_escape_string($notiz);
-  $name = mysql_real_escape_string($notiz);
+  $telefon = mysql_real_escape_string($telefon);
+  $name = mysql_real_escape_string($name);
   if( $dienstkontrollblatt_id ) {
     mysql_query( "
       UPDATE dienstkontrollblatt SET
