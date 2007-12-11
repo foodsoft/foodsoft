@@ -959,12 +959,9 @@ function sql_gruppenname($gruppen_id){
 function select_aktive_bestellgruppen() {
   return "
     SELECT *
+    , ( SELECT count(*) FROM gruppenmitglieder
+        WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id ) as mitgliederzahl
     FROM bestellgruppen
-			LEFT JOIN (
-				SELECT gruppen_id, count( gruppen_id ) AS mitgliederzahl
-				FROM gruppenmitglieder
-				GROUP BY gruppen_id
-			) AS gruppen_mitglieder_zahl ON ( bestellgruppen.id = gruppen_id )
     WHERE (bestellgruppen.aktiv = 1)
           AND NOT (bestellgruppen.id IN ( ".sql_basar_id().", ".sql_muell_id()." ) )
 			ORDER BY ( bestellgruppen.id %1000)
@@ -3572,7 +3569,7 @@ CREATE TABLE `bankkonten` (
 
 		$sql = " INSERT INTO gruppenmitglieder 
 			(gruppen_id, name, telefon, email, diensteinteilung, rotationsplanposition)
-			SELECT id, ansprechpartner, telefon, email, diensteinteilung, rotationsplanposition 
+			SELECT d, ansprechpartner, telefon, email, diensteinteilung, rotationsplanposition 
 			FROM bestellgruppen;
 			";
 		doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht mit Werten fuellen");
