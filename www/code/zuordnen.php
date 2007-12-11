@@ -1273,6 +1273,10 @@ function getState($bestell_id){
   return sql_select_single_field( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id", 'state' );
 }
 
+function bestellung_name($bestell_id){
+  return sql_select_single_field( "SELECT name FROM gesamtbestellungen WHERE id=$bestell_id", 'name' );
+}
+
 /**
  *
  */
