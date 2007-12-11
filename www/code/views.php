@@ -1559,6 +1559,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
         onclick='preishistorie_toggle();' title='Ausblenden'>
   <?
   if( $bestell_id ) {
+    $bestellung_name = bestellung_name( $bestell_id );
     ?> Preiseintrag wählen für Bestellung <?
     echo "$bestellung_name:";
   } else {
@@ -1610,8 +1611,8 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     if( $pr1['zeitende'] ) {
       echo "{$pr1['datum_ende']}";
     } else {
-      if( $editable )
-        action_button( "Abschließen"
+      if( $editable ) {
+        echo action_button( "Abschließen"
         , "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)"
         , array( 'action' => 'zeitende_setzen'
           , 'preis_id' => $pr1['id']
@@ -1619,8 +1620,9 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
           )
         , $mod_id
         );
-      else
+      } else {
         echo " - ";
+      }
     }
     ?>
         </td>
@@ -1646,7 +1648,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
         <?
       } else {
         if( $editable ) {
-          action_button( "setzen"
+          echo action_button( "setzen"
           , "diesen Preiseintrag für Bestellung $bestellung_name auswählen"
           , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] )
           );
