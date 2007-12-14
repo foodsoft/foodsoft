@@ -36,7 +36,6 @@ if(get_http_var('action','w')){
       <input type='hidden' name='gruppen_id' value=''>
       <input type='hidden' name='action' value=''>
     </form>
-    <table class='menu'>
   <?
 
   if( $hat_dienst_V and ! $readonly ) {
@@ -48,19 +47,19 @@ if(get_http_var('action','w')){
       >Neue Gruppe...</span>
     </div>
 
-    <div id='transaction_form' style='display:none;padding-bottom:1em;'>
+    <div id='transaction_form' style='display:none;'>
       <form method='post' class='small_form' action='<? echo self_url(); ?>'>
       <? echo self_post(); ?>
-      <fieldset>
+      <fieldset class='small_form'>
       <legend>
         <img src='img/close_black_trans.gif' class='button'
-        onclick="document.getElementById('transaction_button').style.display='block';
-                 document.getElementById('transaction_form').style.display='none';">
+        onclick="document.getElementById('transaction_form').style.display='none';
+                 document.getElementById('transaction_button').style.display='block';">
 	Neue Gruppe
       </legend>
-      Nr: <input type="text" size="4" name="newNumber"/>
-      Name: <input type="text" size="12" name="newName"/>
-      <input type="submit" value="Anlegen"/>
+      Nr: <input type="text" size="4" name="newNumber" />
+      Name: <input type="text" size="12" name="newName" />
+      <input type="submit" value="Anlegen" />
       </fieldset>
       </form>
     </div>
