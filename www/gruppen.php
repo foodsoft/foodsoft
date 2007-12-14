@@ -134,7 +134,8 @@ if(get_http_var('action','w')){
     echo"
         <td>{$row['mitgliederzahl']}</td>
         <td>
-          <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=gruppen_mitglieder&gruppen_id=$id'>
+          <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+            href=\"javascript:neuesfenster('index.php?window=gruppen_mitglieder&gruppen_id=$id','gruppenmitglieder');\">
            <img src='img/b_browse.png' border='0' title='Personen' alt='Personen'/>
           </a>
     ";

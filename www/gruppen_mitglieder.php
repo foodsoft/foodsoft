@@ -80,7 +80,6 @@ if(get_http_var('action','w')){
       <input type='hidden' name='person_id' value=''>
       <input type='hidden' name='action' value=''>
     </form>
-    <table class='menu'>
   <?
   if( $edit_dienst_einteilung ) {
     ?>
