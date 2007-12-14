@@ -3569,7 +3569,7 @@ CREATE TABLE `bankkonten` (
 
 		$sql = " INSERT INTO gruppenmitglieder 
 			(gruppen_id, name, telefon, email, diensteinteilung, rotationsplanposition)
-			SELECT d, ansprechpartner, telefon, email, diensteinteilung, rotationsplanposition 
+			SELECT id, ansprechpartner, telefon, email, diensteinteilung, rotationsplanposition 
 			FROM bestellgruppen;
 			";
 		doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht mit Werten fuellen");
