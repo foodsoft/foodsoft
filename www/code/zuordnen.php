@@ -924,9 +924,6 @@ function sql_muell_id(){
 }
 
 
-function sql_gruppendaten( $gruppen_id ) {
-  return sql_select_single_row( "SELECT * FROM bestellgruppen WHERE id='$gruppen_id'" );
-}
 
 function sql_gruppen_members( $gruppen_id, $member_id = FALSE){ 
   $sql = "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' and gruppen_id = ".mysql_escape_string($gruppen_id);
@@ -956,16 +953,33 @@ function sql_gruppenname($gruppen_id){
   return $row['name'];
 }
 
-function select_aktive_bestellgruppen() {
+function select_gruppen( $gruppen_id = 0, $aktiv = true ) {
+  $where = "NOT (bestellgruppen.id IN ( ".sql_basar_id().", ".sql_muell_id()." ) )";
+  if( $aktiv )
+    $where .= " AND ( bestellgruppen.aktiv = 1 )";
+  if( $gruppen_id )
+    $where .= " AND ( bestellgruppen.id = '$gruppen_id' )";
   return "
     SELECT *
     , ( SELECT count(*) FROM gruppenmitglieder
-        WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id ) as mitgliederzahl
+        WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
+              AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
     FROM bestellgruppen
-    WHERE (bestellgruppen.aktiv = 1)
-          AND NOT (bestellgruppen.id IN ( ".sql_basar_id().", ".sql_muell_id()." ) )
-			ORDER BY ( bestellgruppen.id %1000)
+    WHERE $where
+    ORDER BY ( bestellgruppen.id %1000)
   ";
+}
+
+function select_aktive_bestellgruppen() {
+  return select_gruppen( 0, true );
+}
+
+function sql_gruppendaten( $gruppen_id ) {
+  return sql_select_single_row( select_gruppen( $gruppen_id, false ) );
+}
+
+function sql_bestellgruppen( $gruppen_id = 0, $aktiv = true ) {
+  return doSql( select_gruppen( $gruppen_id, $aktiv ) );
 }
 
 /*
@@ -975,8 +989,6 @@ function select_aktive_bestellgruppen() {
  * - alle an bestellung/zuteilung eines produktes einer gesamtbestellung beteligten gruppen
  *
  */
-
-
 function sql_gruppen($bestell_id=FALSE, $produkt_id=FALSE){
         if($bestell_id===FALSE && $produkt_id===FALSE){
 		$query= select_aktive_bestellgruppen() ;
@@ -1185,16 +1197,12 @@ function sql_insert_group($newNumber, $newName, $pwd){
 
 		    // Wenn keine Fehler, dann einfügen...
 	    if( ! $problems ) {
-
-
-		$sql= "INSERT INTO bestellgruppen 
-				 (id, aktiv, name, passwort)
-				 VALUES ( $newNumber
-					  , 1 
-					  , '".mysql_escape_string($newName)."'
-					  , '".crypt($pwd,$crypt_salt)."')";
-		doSql($sql,LEVEL_IMPORTANT, "Eintragen einer neuen Gruppe fehlgeschlagen");
-		return TRUE;
+		  return sql_insert( 'bestellgruppen', array(
+          'id' => $newNumber
+        , 'aktiv' => 1
+        , 'name' => $newName
+        , 'password' => crypt( $pwd, $crypt_salt )
+        ) );
 	   } else {
 		   return FALSE;
 	   }

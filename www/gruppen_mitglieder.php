@@ -117,11 +117,11 @@ if(get_http_var('action','w')){
     <?
 
 	  //Einfügen des neuen Datensatzes
-	  if(get_http_var('newVorname', 'w')){
-		  get_http_var('newName', 'w');
-		  get_http_var('newMail', 'R');
-		  get_http_var('newTelefon', 'R');
-		  get_http_var('newDienst[]', 'R');
+	  if(get_http_var('newVorname', 'H')){
+		  get_http_var('newName', 'H');
+		  get_http_var('newMail', 'H');
+		  get_http_var('newTelefon', 'H');
+		  get_http_var('newDienst[]', 'H');
 		  sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst[0]);
 	  }
   }
