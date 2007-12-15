@@ -1080,6 +1080,7 @@ function check_new_group_nr($newNummer){
     global $problems;
     if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
       $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
+      return FALSE;
     }
     $id = $newNummer;
     while( true ) {
@@ -1092,7 +1093,7 @@ function check_new_group_nr($newNummer){
       $row = mysql_fetch_array( $result );
       if( ! $row )
         break;
-      if( $row['aktiv'] > '0' )
+      if( $row['aktiv'] > 0 )
         $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
       $id = $id + 1000;
     }
@@ -1180,9 +1181,9 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
 function sql_insert_group($newNumber, $newName, $pwd){
 	global $problems, $msg, $crypt_salt;
 
-	  $newNumber = check_new_group_nr($newNumber) ;
+	  $new_id = check_new_group_nr($newNumber) ;
 
-	  if($newNumber!==FALSE){
+	  if( $new_id > 0 ) {
 
 	    if ($newName == "")
 	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
@@ -1198,10 +1199,10 @@ function sql_insert_group($newNumber, $newName, $pwd){
 		    // Wenn keine Fehler, dann einfügen...
 	    if( ! $problems ) {
 		  return sql_insert( 'bestellgruppen', array(
-          'id' => $newNumber
+          'id' => $new_id
         , 'aktiv' => 1
         , 'name' => $newName
-        , 'password' => crypt( $pwd, $crypt_salt )
+        , 'passwort' => crypt( $pwd, $crypt_salt )
         ) );
 	   } else {
 		   return FALSE;
