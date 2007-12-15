@@ -39,11 +39,11 @@ if(get_http_var('action','w')){
 
 // Änderungen von Gruppenmitgliedern speichern
 
-	get_http_var("nVorname[]", 'M');
-	get_http_var("nEmail[]", 'M');
-	get_http_var("nTelefon[]", 'M');
-	get_http_var("newDienst[]", 'M');
-	if(get_http_var("nName[]", 'M')){
+	get_http_var("nVorname[]", 'H');
+	get_http_var("nEmail[]", 'H');
+	get_http_var("nTelefon[]", 'H');
+	get_http_var("newDienst[]", 'H');
+	if(get_http_var("nName[]", 'H')){
 	
 	   foreach($nName as $change_id => $name){
 		fail_if_readonly();
