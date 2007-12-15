@@ -964,9 +964,10 @@ function select_gruppen( $gruppen_id = 0, $aktiv = true ) {
     , ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
+    , bestellgruppen.id % 1000 as gruppennummer
     FROM bestellgruppen
     WHERE $where
-    ORDER BY ( bestellgruppen.id %1000)
+    ORDER BY gruppennummer
   ";
 }
 
@@ -1058,7 +1059,7 @@ function optionen_gruppen(
       $output = $output . " selected";
       $selected = -1;
     }
-    $output = $output . ">{$gruppe['name']}</option>";
+    $output = $output . ">{$gruppe['gruppennummer']} {$gruppe['name']}</option>";
   }
   if( $selected >=0 ) {
     // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:
@@ -1118,8 +1119,8 @@ function sql_delete_group_member($person_id, $gruppen_id){
 
           //Den Sockelbetrag ändern
   if( sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
-  , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
   , $sockelbetrag
   , $mysqlheute
   , "Korrektur Sockelbetrag für ausgetretenes Mitglied"
@@ -1153,8 +1154,8 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
 
   //Den Sockelbetrag ändern
   if( sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+    array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
   , $sockelbetrag
   , $mysqlheute
   , "Korrektur Sockelbetrag für zusätzliches Mitglied"
