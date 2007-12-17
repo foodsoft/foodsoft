@@ -72,7 +72,7 @@
 			    include('bestellschein.php');
 			    break;
 		    case "wiki":
-          reload_immediately( '$foodsoftdir/../wiki/doku.php?do=show' );
+          reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
 			    break;
         case "":
 	        include('menu.php');
