@@ -139,7 +139,7 @@ $readonly and $action = '';
       </tr>
   <?
 
-  $result = sql_bestellgruppen(0, ! ( $optionen & OPTION_INAKTIV ) );
+  $result = ( $optionen & OPTION_INAKTIV ? sql_bestellgruppen() : sql_aktive_bestellgruppen() );
   while ($row = mysql_fetch_array($result)) {
     $id = $row['id'];
     if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
