@@ -1172,13 +1172,12 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	    if ($newName == "")
 	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
-	    // bis auf weiteres: Gruppenname beginnt mit Gruppennummer:
-	    //
-	    sscanf( $newName, "%d %s", &$n, &$s );
-	    if( ( ! $s ) || ( $n != $newNumber ) ) {
-	      $newName = "$newNumber $newName";
-	      $msg = $msg . "<div class='warn'>Gruppennummer wurde in Namen eingef&uuml;gt</div>";
-	    }
+	    // Gruppennummer in Gruppenname brauchen wir nicht mehr:
+      // 	    sscanf( $newName, "%d %s", &$n, &$s );
+      // 	    if( ( ! $s ) || ( $n != $newNumber ) ) {
+      // 	      $newName = "$newNumber $newName";
+      // 	      $msg = $msg . "<div class='warn'>Gruppennummer wurde in Namen eingef&uuml;gt</div>";
+      // 	    }
 
 		    // Wenn keine Fehler, dann einfügen...
 	    if( ! $problems ) {
