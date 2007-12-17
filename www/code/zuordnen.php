@@ -1042,7 +1042,7 @@ function optionen_gruppen(
       $output = $output . " selected";
       $selected = -1;
     }
-    $output = $output . ">{$gruppe['gruppennummer']} {$gruppe['name']}</option>";
+    $output = $output . ">{$gruppe['name']} ({$gruppe['gruppennummer']})</option>";
   }
   if( $selected >=0 ) {
     // $selected stand nicht zur Auswahl; vermeide zufaellige Anzeige:

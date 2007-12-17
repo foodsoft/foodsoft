@@ -28,9 +28,7 @@ $basar_id = sql_basar_id();
 $basar_festmenge = 0;
 $basar_toleranzmenge = 0;
 
-// alle an dieser bestellung (und verteilung) dieses produktes beteiligten gruppen ermitteln:
-//
-$gruppen = sql_gruppen($bestell_id, $produkt_id);
+$gruppen = sql_beteiligte_bestellgruppen($bestell_id, $produkt_id);
 
 ?>
   <table class='liste' style='margin-bottom:2em;'>
