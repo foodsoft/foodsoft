@@ -1144,16 +1144,17 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
                      <td><?PHP echo $row['bestellende']; ?></td>
                 </tr>                
 		<?
-		if($showGroup){
+    if( $showGroup and $gruppen_id ){
+      $gruppendaten = sql_gruppendaten( $gruppen_id );
 		?>
 		<tr>
 		    <th> Gruppe: </th>
 		  <td>
                 <?PHP
-                  if( $gruppen_id == 99 )
+                  if( $gruppen_id == sql_basar_id() )
                     echo "<span class='warn'> BASAR </span>";
                   else
-                    echo sql_gruppenname($gruppen_id);
+                    echo "{$gruppendaten['name']} ({$gruppendaten['gruppennummer']})";
                 ?>
                 </td>
 	      </tr>	
