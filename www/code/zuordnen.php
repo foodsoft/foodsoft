@@ -54,7 +54,7 @@ function sql_select_single_field( $sql, $field ) {
 }
 
 function sql_update( $table, $id, $values, $escape_and_quote = true ) {
-  $table = 'leitvariable' or fail_if_readonly();
+  $table == 'leitvariable' or fail_if_readonly();
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
@@ -72,7 +72,7 @@ function sql_update( $table, $id, $values, $escape_and_quote = true ) {
 
 function sql_insert( $table, $values, $update_cols = false ) {
   // debug_args( func_get_args(), 'sql_insert' );
-  $table = 'leitvariable' or fail_if_readonly();
+  $table == 'leitvariable' or fail_if_readonly();
   $komma='';
   $update_komma='';
   $cols = '';
