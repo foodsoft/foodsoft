@@ -246,21 +246,20 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   , "<th colspan='2'>Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
   , "<th title='Wert incl. MWSt. und Pfand'>Wert</th>"
-  , ( $editAmounts ? "<th>Aktionen</th>" : "" )
   , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   switch( $order ) {
     case 'bestellung':
-      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s%7$s%8$s';
+      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s%7$s';
       $keyfield=1;
       break;
     case 'datum':
-      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s%7$s%8$s';
+      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s%7$s';
       $keyfield=2;
       break;
     default:
     case 'produktname':
-      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s%7$s%8$s';
+      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s%7$s';
       $keyfield=0;
       break;
   }
@@ -297,16 +296,6 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
             ></a></td>
          "
      , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
-     , ( $editAmounts ?
-         "<td>". action_button(
-           ( ($menge > 0) ?  "abschreiben" : "vereinnahmen" )
-         , "$menge $kan_verteileinheit "
-            . ( ($menge > 0) ? "als Schwund abschreiben?" : "als Verlustausgleich vereinnahmen?" )
-         , array( 'action' => 'schwund', 'menge' => $basar_row['basar']
-             , 'produkt_id' => $basar_row['produkt_id'], 'bestellung' => $basar_row['gesamtbestellung_id'] )
-         ) ."</td>"
-       : "<td>&nbsp;</td>"
-       )
      , ( $editAmounts ?
          "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
           <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
