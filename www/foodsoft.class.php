@@ -65,7 +65,7 @@ class auth_foodsoft extends auth_basic {
       $this->cando['getUsers']     = false;
       $this->cando['getUserCount'] = false;
       $this->cando['external']     = true;
-      // echo "<!-- auth_foodsoft: $angemeldet, $login_gruppen_name -->";
+      // echo "<h1>auth_foodsoft: $foodsoftdir, $foodsoftpath</h1>";
       $this->success = true;
       return true;
     }
@@ -82,6 +82,7 @@ class auth_foodsoft extends auth_basic {
     function trustExternal($user,$pass,$sticky=false){
       global $USERINFO, $angemeldet, $login_gruppen_name;
       global $foodsoftdir, $foodsoftpath, $from_dokuwiki;
+      
       if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
         $dir = getcwd();
         chdir( FOODSOFT_PATH );
@@ -99,6 +100,12 @@ class auth_foodsoft extends auth_basic {
           $_SERVER['REMOTE_USER'] = $login_gruppen_name;
           $_SESSION[DOKU_COOKIE]['auth']['user'] = $login_gruppen_name;
           $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+          // echo "<h2 class='warn'>trustExternal: angemeldet: [$angemeldet,$login_gruppen_name]</h2>";
+          $i = posix_getpwuid( posix_geteuid() );
+          $g = posix_getgrgid( posix_getegid() );
+          // echo "<h2 class='warn'>" . posix_geteuid() . ':' . posix_getegid() . "</h2>";
+          // echo "<h2 class='warn'>{$i['name']}</h2>";
+          // echo "<h2 class='warn'>{$g['name']}</h2>";
           return true;
         }
       }
@@ -119,6 +126,7 @@ class auth_foodsoft extends auth_basic {
      */
     function getUserData($user){
       global $login_gruppen_name;
+      echo "<h1 class='warn'>getUserData: $user</h1>";
       $info = false;
       if( $angemeldet ) {
         $info['name'] = $login_gruppen_name;
