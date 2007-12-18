@@ -16,10 +16,10 @@ if( $editable ) {
   //
   get_http_var('gruppe','u', false, false );
   if( $gruppe > 0 ) {
+
     // glassrueckgabe bearbeiten:
     //
-    get_http_var('menge_glas','u', false, false);
-    if( $menge_glas > 0 ) {
+    if( get_http_var('menge_glas','u', 0, false) ) {
       fail_if_readonly();
       nur_fuer_dienst(4);
       sql_groupGlass( $gruppe, $menge_glas );
