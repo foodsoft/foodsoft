@@ -1,13 +1,7 @@
 <?php
   // Konfigurationsdatei einlesen
 	require_once('code/config.php');
-	
-  require_once('code/views.php');
-  require_once('code/zuordnen.php');
-  require_once('code/katalogsuche.php');
-	// Funktionen zur Fehlerbehandlung laden
-	require_once('code/err_functions.php');
-	
+
   get_http_var( 'area','w','' );
   require_once('code/login.php');
   if( ! $angemeldet ) {

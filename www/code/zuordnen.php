@@ -119,7 +119,7 @@ function need( $exp, $comment = "Fataler Fehler" ) {
 
 
 function fail_if_readonly() {
-  global $readonly;
+  global $readonly, $print_on_exit;
   if( $readonly ) {
     echo "
       <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div>
@@ -960,12 +960,16 @@ function select_bestellgruppen( $filter = '' ) {
   " . ( $filter ? "WHERE ($filter) " : '' );
 }
 
+function select_aktive_bestellgruppen() {
+  return select_bestellgruppen( 'bestellgruppen.aktiv' );
+}
+
 function sql_bestellgruppen( $filter = '' ) {
   return doSql( select_bestellgruppen( $filter ) . " ORDER BY gruppennummer" );
 }
 
 function sql_aktive_bestellgruppen() {
-  return sql_bestellgruppen( 'bestellgruppen.aktiv' );
+  return doSql( select_aktive_bestellgruppen() . " ORDER BY gruppennummer" );
 }
 
 function sql_gruppendaten( $gruppen_id ) {
@@ -3441,6 +3445,7 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
  *
  */
 function reload_immediately( $url ) {
+  global $print_on_exit;
   echo "
     <form action='$url' name='reload_now_form' method='post'></form>
     <script type='text/javascript'>document.forms['reload_now_form'].submit();</script>

@@ -17,6 +17,8 @@
     echo "<html><body><h1>Datenbankfehler!</h1>Konnte keine Verbindung zur Datenbank herstellen... Bitte später nochmal versuchen.</body></html>";
     exit();
   }
+
+  // echo "running config.php...";
   
   // die restliche konfiguration koennen wir aus der leitvariablen-tabelle lesen
   // (skripte koennen dann persistente variable einfach speichern, aendern, und
@@ -29,6 +31,7 @@
   }
   while( $row = mysql_fetch_array( $leitvariable ) ) {
     global $$row['name'];
+    // echo "setting: leitvariable: {$row['name']}->{$row['value']}<br>";
     $$row['name'] = "{$row['value']}";
   }
   $foodsoftserver or $foodsoftserver = "unbekannt";
@@ -60,17 +63,21 @@
   $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
 
   // gruppen mit sonderbedeutung merken:
+  global $specialgroups, $basar_id, $muell_id;
   $specialgroups = array();
   if( isset( $basar_id ) )
     $specialgroups[] = $basar_id;
   if( isset( $muell_id ) )
     $specialgroups[] = $muell_id;
 
+  global $print_on_exit;
   $print_on_exit = '';
 
   // databaseversion
   $database_version or $database_version = 0;
   require_once('code/err_functions.php');
+  require_once('code/views.php');
   require_once('code/zuordnen.php');
+  require_once('code/katalogsuche.php');
   update_database($database_version);
   ?>
