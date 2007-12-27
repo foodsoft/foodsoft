@@ -1430,6 +1430,60 @@ function formular_buchung_gruppe_gruppe(
   return true;
 }
 
+function formular_buchung_bank_bank(
+  $konto_id = 0, $nach_konto_id = 0, $notiz = 'Überweisung von Konto zu Konto'
+) {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url('konto_id'); ?>'>
+      <? echo self_post('konto_id'); ?>
+      <input type='hidden' name='action' value='ueberweisung_konto_konto'>
+      <fieldset>
+        <legend>
+          Überweisung von Konto zu Konto
+        </legend>
+        <table>
+          <tr>
+            <td><label>von Konto:</label></td>
+            <td>
+            <? if ( $konto_id ) { ?>
+              <kbd>
+                <? echo sql_kontoname( $konto_id ); ?>
+                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
+              </kbd>
+            <? } else { ?>
+              <select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
+            <? } ?>
+            </td>
+          </tr>
+          <tr>
+            <td><label>an Konto:</label></td>
+            <td><select name='nach_konto_id'><? echo optionen_konten( $nach_konto_id ); ?></select></td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label>Betrag:</label></td>
+            <td>
+              <input type="text" name="betrag" value="">
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
+
 function mod_onclick( $id ) {
   return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
 }

@@ -2278,6 +2278,25 @@ function buchung_gruppe_gruppe() {
   );
 }
 
+function buchung_bank_bank() {
+  global $betrag, $konto_id, $nach_konto_id, $notiz, $day, $month, $year;
+  // echo "buchung_bank_bank: 1";
+  $betrag or need_http_var( 'betrag', 'f' );
+  $konto_id or need_http_var( 'konto_id', 'u' );
+  $nach_konto_id or need_http_var( 'nach_konto_id', 'u' );
+  $notiz or need_http_var( 'notiz', 'H' );
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => $konto_id, 'gruppen_id' => -1 )
+  , array( 'konto_id' => $nach_konto_id, 'gruppen_id' => -1 )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
+  );
+}
+
 
 /**
  *
