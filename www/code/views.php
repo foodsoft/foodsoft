@@ -1298,7 +1298,6 @@ function formular_buchung_lieferant_bank(
             <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Betrag:</label></td>
             <td>
               <input type="text" name="betrag" value="">
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
             </td>
           </tr>
           <tr>

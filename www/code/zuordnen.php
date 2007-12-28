@@ -2203,7 +2203,7 @@ function buchung_gruppe_bank() {
   if( ! $problems ) {
     sql_doppelte_transaktion(
       array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-    , array( 'konto_id' => $konto_id, , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
     , $betrag
     , "$year-$month-$day"
     , "$notiz"
@@ -2225,7 +2225,7 @@ function buchung_lieferant_bank() {
   $notiz or get_http_var( 'notiz', 'H' );
   get_http_var( 'notiz', 'H' );
   sql_doppelte_transaktion(
-    array( 'konto_id' => $konto_id, , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
   , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
   , $betrag
   , "$year-$month-$day"
