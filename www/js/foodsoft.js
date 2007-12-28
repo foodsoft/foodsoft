@@ -86,6 +86,12 @@ function select_lieferant(self) {
   window.location.href = self + '&lieferanten_id=' + s;
 }
 
+function select_auszug(self) {
+  i = document.getElementById('select_auszug').selectedIndex;
+  s = document.getElementById('select_auszug').options[i].value;
+  window.location.href = self + '&auszug=' + s;
+}
+
 function closeCurrentWindow() {
   // this function is a workaround for the " 'window.close()' is not a function" -bug
   // (occurring in  some uses of onClick='window.close();'):
