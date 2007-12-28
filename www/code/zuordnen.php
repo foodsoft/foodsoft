@@ -2202,12 +2202,8 @@ function buchung_gruppe_bank() {
 
   if( ! $problems ) {
     sql_doppelte_transaktion(
-      array(
-        'konto_id' => -1, 'gruppen_id' => $gruppen_id
-      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-    , array(
-        'konto_id' => $konto_id, 'gruppen_id' => $gruppen_id
-      , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+    , array( 'konto_id' => $konto_id, , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
     , $betrag
     , "$year-$month-$day"
     , "$notiz"
@@ -2229,12 +2225,8 @@ function buchung_lieferant_bank() {
   $notiz or get_http_var( 'notiz', 'H' );
   get_http_var( 'notiz', 'H' );
   sql_doppelte_transaktion(
-    array(
-      'konto_id' => $konto_id, 'lieferanten_id' => $lieferanten_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array(
-      'konto_id' => -1, 'lieferanten_id' => $lieferanten_id
-    , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    array( 'konto_id' => $konto_id, , 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
   , $betrag
   , "$year-$month-$day"
   , "$notiz"
@@ -2279,18 +2271,25 @@ function buchung_gruppe_gruppe() {
 }
 
 function buchung_bank_bank() {
-  global $betrag, $konto_id, $nach_konto_id, $notiz, $day, $month, $year;
+  global $betrag, $konto_id, $auszug_jahr, $auszug_nr
+       , $nach_konto_id
+       , $nach_auszug_jahr, $nach_auszug_nr
+       , $notiz, $day, $month, $year;
   // echo "buchung_bank_bank: 1";
   $betrag or need_http_var( 'betrag', 'f' );
   $konto_id or need_http_var( 'konto_id', 'u' );
+  $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
+  $auszug_nr or need_http_var( 'auszug_nr', 'u' );
   $nach_konto_id or need_http_var( 'nach_konto_id', 'u' );
+  $nach_auszug_jahr or need_http_var( 'nach_auszug_jahr', 'u' );
+  $nach_auszug_nr or need_http_var( 'nach_auszug_nr', 'u' );
   $notiz or need_http_var( 'notiz', 'H' );
   $day or need_http_var( 'day', 'u' );
   $month or need_http_var( 'month', 'u' );
   $year or need_http_var( 'year', 'u' );
   sql_doppelte_transaktion(
-    array( 'konto_id' => $konto_id, 'gruppen_id' => -1 )
-  , array( 'konto_id' => $nach_konto_id, 'gruppen_id' => -1 )
+    array( 'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr )
+  , array( 'konto_id' => $nach_konto_id, 'auszug_jahr' => $nach_auszug_jahr, 'auszug_nr' => $nach_auszug_nr )
   , $betrag
   , "$year-$month-$day"
   , "$notiz"

@@ -1431,10 +1431,10 @@ function formular_buchung_gruppe_gruppe(
 }
 
 function formular_buchung_bank_bank(
-  $konto_id = 0, $nach_konto_id = 0, $notiz = 'Überweisung von Konto zu Konto'
+  $konto_id, $auszug_jahr, $auszug_nr, $notiz = 'Überweisung von Konto zu Konto'
 ) {
   ?>
-    <form method='post' class='small_form' action='<? echo self_url('konto_id'); ?>'>
+    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
       <? echo self_post('konto_id'); ?>
       <input type='hidden' name='action' value='ueberweisung_konto_konto'>
       <fieldset>
@@ -1445,19 +1445,25 @@ function formular_buchung_bank_bank(
           <tr>
             <td><label>von Konto:</label></td>
             <td>
-            <? if ( $konto_id ) { ?>
               <kbd>
                 <? echo sql_kontoname( $konto_id ); ?>
                 <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
               </kbd>
-            <? } else { ?>
-              <select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
-            <? } ?>
+              &nbsp; Auszug:
+              <kbd>
+                <? echo "$auszug_jahr / $auszug_nr"; ?>
+                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
+                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              </kbd>
             </td>
           </tr>
           <tr>
             <td><label>an Konto:</label></td>
-            <td><select name='nach_konto_id'><? echo optionen_konten( $nach_konto_id ); ?></select></td>
+            <td><select name='nach_konto_id'><? echo optionen_konten( $nach_konto_id ); ?></select>
+               &nbsp; <label>Auszug:</label>
+                  <input type='text' size='4' name='nach_auszug_jahr' value=''> /
+                  <input ty[e='text' size='2' name='nach_auszug_nr' value=''>
+            </td>
           </tr>
           <tr>
             <td><label>Valuta:</label></td>
