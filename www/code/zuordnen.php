@@ -2394,6 +2394,7 @@ function sql_get_transaction( $id ) {
       WHERE gruppen_transaktion.id = ".(-$id)."
     ";
   }
+  // echo "sql_get_transaction: $sql";
   return sql_select_single_row( $sql );
 }
 

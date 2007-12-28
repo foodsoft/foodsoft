@@ -262,6 +262,7 @@ if( $meinkonto ) {
               ";
               $k_id = $konto_row['konterbuchung_id'];
               if( $k_id > 0 ) { // bank-transaktion
+                // echo "k_id: $k_id";
                 ?> Auszug: <?
                 $bank_row = sql_get_transaction( $k_id );
                 $konto_id = $bank_row['konto_id'];
@@ -296,6 +297,7 @@ if( $meinkonto ) {
                   <?
                 }
               } else { // gruppen-gruppen oder gruppen-lieferanten-transaktion:
+                // echo "k_id: $k_id";
                 $k_row = sql_get_transaction( $k_id );
                 $k_gruppen_id = $k_row['gruppen_id'];
                 $k_lieferanten_id = $k_row['lieferanten_id'];
