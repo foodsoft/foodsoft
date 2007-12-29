@@ -176,7 +176,7 @@ if( $meinkonto ) {
 	$size          = 2000;
 	 
 	
-   $cols = 7;
+   $cols = 6;
    ?>
 	 <table class="numbers">
 	    <tr>
@@ -184,7 +184,7 @@ if( $meinkonto ) {
 				 <th>Valuta</th>
 				 <th>Buchung</th>
 				 <th>Informationen</th>
-				 <th colspan='2'>Betrag</th>
+				 <th>Betrag</th>
 				 <th>Summe</th>
 			</tr>
       <tr class='summe'>
@@ -211,24 +211,27 @@ if( $meinkonto ) {
 				    //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
             if(compare_date($konto_row, $vert_row)==1 && !$no_more_vert){
 				    		//Eintrag in Konto ist Älter -> Verteil ausgeben
-					    echo "<tr>\n";
-					    echo "   <td valign='top'><b>Bestell Abrechnung</b></td>\n";
-					    echo "   <td>".$vert_row['valuta_trad']."</td>\n";
-					    echo "   <td> </td>\n";
-					    echo "   <td>Bestellung: ".$vert_row['name']." </td>";
-					    echo "   <td class='mult'> <b> ".sprintf("%.2lf", -$vert_row['soll'])."</b></td>";
               $details_url = "index.php?window=bestellschein"
               . "&gruppen_id=$gruppen_id"
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
-					    ?>
-                <td class='unit'>
+              ?>
+					      <tr>
+					      <td valign='top'><b>Bestell Abrechnung</b></td>
+					      <td><? echo $vert_row['valuta_trad']; ?></td>
+					      <td><? echo $vert_row['lieferdatum_trad']; ?></td>
+					      <td>Bestellung: <a
+                  href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
+                  ><? echo $vert_row['name']; ?></a></td>
+					      <td class='mult'><b><? printf("%.2lf", -$vert_row['soll']); ?></b></td>
+                <!-- <td class='unit'>
                  <a class='png' style='padding:0pt 1ex 0pt 1ex;'
                    href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
                   <img src='img/b_browse.png' border='0' title='Details zur Bestellung' alt='Details zur Bestellung'/>
                  </a>
                   </td>
+                 -->
                   <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
                 </tr>
               <?
@@ -304,12 +307,12 @@ if( $meinkonto ) {
                 if( $k_gruppen_id > 0 ) {
                   if( $k_gruppen_id == $muell_id ) {
                     if( $meinkonto ) {
-                      ?> Verrechnung mit FC-Konto 'MÃ¼ll' <?
+                      ?> Verrechnung mit FC-Verrechnungskonto (Gruppe <? echo $muell_id; ?>) <?
                     } else {
                       ?>
                         Verrechnung mit
                         <a href='<? echo self_url('gruppen_id')."&gruppen_id=$muell_id"; ?>'
-                        >FC-Konto 'MÃ¼ll'</a>
+                        >FC-Konto FC-Verrechnungskonto (Gruppe <? echo $muell_id; ?>) </a>
                       <?
                     }
                   } else {
@@ -336,7 +339,7 @@ if( $meinkonto ) {
                 </td>
                 <td class='mult'>
                   <b><? printf("%.2lf",$konto_row['summe']); ?></b></td>
-                  <td class='unit'>&nbsp;</td>
+                  <!-- <td class='unit'>&nbsp;</td> -->
                   <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
                 </tr>
               <?

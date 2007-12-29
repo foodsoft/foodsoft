@@ -2614,6 +2614,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
+         , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
          , (" .select_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). ") as soll
