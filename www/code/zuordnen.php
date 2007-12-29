@@ -2103,9 +2103,9 @@ function sql_link_transaction( $soll_id, $haben_id ) {
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
-  // debug_args( func_get_args(), 'sql_doppelte_transaktion' );
+  debug_args( func_get_args(), 'sql_doppelte_transaktion' );
   global $dienstkontrollblatt_id;
-  // echo "doppelte_transaktion 1<br>";
+  echo "doppelte_transaktion 1<br>";
   nur_fuer_dienst(4,5);
   need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
   need( $notiz, 'Bitte Notiz angeben!' );
@@ -2115,6 +2115,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   else
     $typ = 0;
 
+  echo "doppelte_transaktion 2<br>";
   if( $soll['konto_id'] == -1 ) {
     $soll_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
@@ -2129,6 +2130,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
+  echo "doppelte_transaktion 3<br>";
   if( $haben['konto_id'] == -1 ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
@@ -2143,6 +2145,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
+  echo "doppelte_transaktion 4<br>";
   sql_link_transaction( $soll_id, $haben_id );
   return;
 }
@@ -2637,6 +2640,7 @@ function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
     HAVING haben <> 0
+    ORDER BY valuta_kan DESC;
   ";
   return doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
 }
