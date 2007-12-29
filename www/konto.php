@@ -290,7 +290,7 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       $k_auszug_nr = $konterbuchung['auszug_nr'];
       echo "
         <p>Gegenbuchung:
-        <a href='index.php?window=kontoauszug&konto_id=$k_konto_id&auszus_jahr=$k_kontoauszug_jahr&$k_kontoauszug_nr'
+        <a href='index.php?window=konto&konto_id=$k_konto_id&auszus_jahr=$k_kontoauszug_jahr&$k_kontoauszug_nr'
         >{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr</a></p>
       ";
     } else {

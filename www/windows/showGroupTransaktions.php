@@ -218,7 +218,7 @@ if( $meinkonto ) {
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
               ?>
 					      <tr>
-					      <td valign='top'><b>Bestell Abrechnung</b></td>
+					      <td valign='top'><b>Bestellung</b></td>
 					      <td><? echo $vert_row['valuta_trad']; ?></td>
 					      <td><? echo $vert_row['lieferdatum_trad']; ?></td>
 					      <td>Bestellung: <a
@@ -272,8 +272,8 @@ if( $meinkonto ) {
                 $auszug_nr = $bank_row['kontoauszug_nr'];
                 $auszug_jahr = $bank_row['kontoauszug_jahr'];
                 echo "<a href=\"javascript:neuesfenster(
-                      'index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
-                      ,'kontoauszug'
+                      'index.php?window=konto&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
+                      ,'konto'
                     );\">$auszug_jahr / $auszug_nr ({$bank_row['kontoname']})</a>
                   ";
               } else if( $k_id == 0 ) { // bank-transaktion, noch unvollstaendig!

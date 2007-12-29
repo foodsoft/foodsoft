@@ -163,8 +163,8 @@ if( $editable ) {
               $auszug_nr = $k_row['kontoauszug_nr'];
               $auszug_jahr = $k_row['kontoauszug_jahr'];
               echo "Auszug: <a href=\"javascript:neuesfenster(
-                 'index.php?window=kontoauszug&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
-                ,'kontoauszug'
+                 'index.php?window=konto&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
+                ,'konto'
                 );\">$auszug_jahr / $auszug_nr ({$k_row['kontoname']})</a>
               ";
             } else {  // zahlung durch gruppe
