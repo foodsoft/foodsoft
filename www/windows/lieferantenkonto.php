@@ -98,7 +98,7 @@ if( $editable ) {
 
   $kontostand = lieferantenkontostand($lieferanten_id);
 
-  $cols = 7;
+  $cols = 6;
   ?>
 	 <table class="numbers">
 	    <tr>
@@ -106,7 +106,7 @@ if( $editable ) {
 				 <th>Valuta</th>
 				 <th>Buchung</th>
 				 <th>Informationen</th>
-				 <th colspan='2'>Betrag</th>
+				 <th>Betrag</th>
 				 <th>Summe</th>
 			</tr>
       <tr class='summe'>
@@ -125,23 +125,27 @@ if( $editable ) {
       while( $konto_row or $vert_row ) {
         if( compare_date($konto_row, $vert_row) == 1 ) {
           //Eintrag in Konto ist Älter -> Verteil ausgeben
-          echo "<tr>\n";
-          echo "   <td valign='top'><b>Bestellung</b></td>\n";
-          echo "   <td>".$vert_row['valuta_trad']."</td>\n";
-          echo "   <td> </td>\n";
-          echo "   <td>".$vert_row['name']."</td>";
-          echo "   <td class='mult'> <b> ".sprintf("%.2lf", $vert_row['haben'])."</b></td>";
           $details_url = "index.php?window=bestellschein&gruppen_id=0"
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
           ?>
+            <tr>
+              <td style='vertical-align:top;font-weight:bold;'>Bestellung</td>
+              <td><? echo $vert_row['valuta_trad']; ?></td>
+              <td><? echo $vert_row['lieferdatum_trad']; ?></td>
+              <td>Bestellung: <a
+                  href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
+                  ><? echo $vert_row['name']; ?></a></td>
+              <td class='mult'><b><? printf("%.2lf", $vert_row['haben']); ?></b></td>
+          <!--
             <td class='unit'>
               <a class='png' style='padding:0pt 1ex 0pt 1ex;'
                 href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
                   <img src='img/b_browse.png' border='0' title='Details zur Bestellung' alt='Details zur Bestellung'/>
               </a>
             </td>
+         -->
             <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
             </tr>
           <?
@@ -179,7 +183,6 @@ if( $editable ) {
           ?>
             </td>
             <td class='mult'><b><? printf("%.2lf" , $konto_row['summe']); ?></b></td>
-            <td class='unit'>&nbsp;</td>
             <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
             </tr>
           <?
