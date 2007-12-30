@@ -5,7 +5,7 @@
 
 assert( $angemeldet ) or exit();
 
-?> <h1>Bilanz - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink></h1> <?
+?> <h1>Bilanz <!-- - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink> --></h1> <?
 
 // aktiva berechnen:
 //
@@ -19,7 +19,7 @@ if( ! isset( $inventur_pfandwert ) )
 $row = sql_select_single_row( "
   SELECT sum( summe ) as summe
   FROM gruppen_transaktion
-  WHERE (type=0) and (kontoauszugs_nr<=0)
+  WHERE (gruppen_id>0) and (konterbuchung_id=0)
 " );
 $gruppen_einzahlungen_ungebucht = $row['summe'];
 
@@ -78,11 +78,11 @@ rubrik( "Bankguthaben" );
   posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
 
 rubrik( "Umlaufvermögen" );
-  posten( "Warenbestand Basar", basar_wert_summe() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=basar','basar');\">Warenbestand Basar</a>", basar_wert_summe() );
   posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
 
 rubrik( "Forderungen" );
-  posten( "Forderungen an Gruppen", forderungen_gruppen_summe() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_SCHULDEN . "','gruppen');\">Forderungen an Gruppen</a>", forderungen_gruppen_summe() );
 
 
 $aktiva = $seitensumme;
@@ -103,7 +103,7 @@ $seitensumme = 0;
 
 rubrik( "Einlagen der Gruppen" );
   posten( "Sockeleinlagen", sockel_gruppen_summe() );
-  posten( "Kontoguthaben", guthaben_gruppen_summe() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_GUTHABEN . "','gruppen');\">Kontoguthaben</a>", guthaben_gruppen_summe() );
 
 $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
 rubrik( "Verbindlichkeiten" );
@@ -129,7 +129,7 @@ echo "
     </tr>
 ";
 
-printf ("
+printf( "
     <tr class='summe'>
       <td class='number'>%.2lf</td>
       <td class='number'>%.2lf</td>
