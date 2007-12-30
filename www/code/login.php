@@ -74,9 +74,9 @@
 
     if( $dienst != 0 ) {
       get_http_var( 'coopie_name', 'H', '' );
-      // if( ! $coopie_name || ( strlen( $coopie_name ) < 2 ) ) {
-      //  $problems = $problems . "<div class='warn'>FEHLER: kein Name angegeben</div>";
-      // }
+      if( ! $coopie_name || ( strlen( $coopie_name ) < 2 ) ) {
+        $problems = $problems . "<div class='warn'>FEHLER: kein Name angegeben</div>";
+      }
       get_http_var( 'telefon', 'H', '' );
       get_http_var( 'notiz', 'H', '' );
     }

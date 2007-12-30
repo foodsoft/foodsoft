@@ -2318,13 +2318,16 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
 
 function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = NULL ) {
   $sql = "
-    SELECT id, type, summe, kontobewegungs_datum
-         , konterbuchung_id, notiz
-         , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') AS date
+    SELECT gruppen_transaktion.id, type, summe, kontobewegungs_datum
+         , konterbuchung_id, gruppen_transaktion.notiz
+         , dienstkontrollblatt_id
+         , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
          , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
          , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%Y%m%d') AS valuta_kan
+         , dienstkontrollblatt.name as dienst_name
     FROM gruppen_transaktion
-    WHERE ( gruppen_id = $gruppen_id )
+    LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
+    WHERE ( gruppen_transaktion.gruppen_id = $gruppen_id )
         " . ( $from_date ? " AND ( kontobewegungs_datum >= '$from_date' ) " : "" ) . "
         " . ( $to_date ? " AND ( kontobewegungs_datum <= '$to_date' ) " : "" ) . "
     ORDER BY valuta_kan DESC
@@ -2335,13 +2338,17 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
 
 function sql_get_lieferant_transactions( $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
   $sql = "
-    SELECT id, type, summe, kontobewegungs_datum
-         , konterbuchung_id, notiz
+    SELECT gruppen_transaktion.id
+           , type, summe, kontobewegungs_datum
+         , konterbuchung_id, gruppen_transaktion.notiz
+         , dienstkontrollblatt_id
          , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
          , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
          , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%Y%m%d') AS valuta_kan
+         , dienstkontrollblatt.name as dienst_name
     FROM gruppen_transaktion
-    WHERE ( lieferanten_id = $lieferanten_id )
+    LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
+    WHERE ( gruppen_transaktion.lieferanten_id = $lieferanten_id )
         " . ( $from_date ? " AND ( kontobewegungs_datum >= '$from_date' ) " : "" ) . "
         " . ( $to_date ? " AND ( kontobewegungs_datum <= '$to_date' ) " : "" ) . "
     ORDER BY valuta_kan DESC

@@ -258,11 +258,12 @@ if( $meinkonto ) {
                   echo "Sonstiges";
                   break;
               }
-              echo "</td>
-                  <td>{$konto_row['valuta_trad']}</td>
-                  <td>{$konto_row['date']}</td>
-                  <td>{$konto_row['notiz']}<br>
-              ";
+              ?> </td>
+                 <td><? echo $konto_row['valuta_trad']; ?></td>
+                 <td><div><? echo $konto_row['date']; ?></div>
+                     <div style='font-size:1;'><? echo $konto_row['dienst_name']; ?></div></td>
+                  <td><? echo $konto_row['notiz']; ?><br>
+              <?
               $k_id = $konto_row['konterbuchung_id'];
               if( $k_id > 0 ) { // bank-transaktion
                 // echo "k_id: $k_id";
