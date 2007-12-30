@@ -91,8 +91,6 @@
             2
           , $id
           , $sockelbetrag
-          , "NULL"
-          , "NULL"
           , "Sockelbetrag neue Gruppe $newNummer"
           , "NOW()"
         ) ) {

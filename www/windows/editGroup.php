@@ -72,8 +72,6 @@
               2
             , $gruppen_id
             , $sockeldiff
-            , "NULL"
-            , "NULL"
             , "Korrektur Sockelbetrag bei Änderung Mitgliederzahl {$row['mitgliederzahl']} -> $newMitgliederzahl"
             , "NOW()"
           ) ) {

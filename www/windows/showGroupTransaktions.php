@@ -54,7 +54,7 @@ if( $meinkonto ) {
     <?
 
     if( get_http_var( 'amount', 'f' ) ) {
-      sql_gruppen_transaktion( 0, $login_gruppen_id, $amount, NULL, NULL, "Einzahlung" );
+      sql_gruppen_transaktion( 0, $login_gruppen_id, $amount, "Einzahlung" );
     }
   }
 

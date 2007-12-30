@@ -2032,7 +2032,7 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
  */
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
-  $auszug_nr = "NULL", $auszug_jahr = "NULL", $notiz ="",
+  $notiz ="",
   $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
   // debug_args( func_get_args(), 'sql_gruppen_transaktion' );
@@ -2049,8 +2049,6 @@ function sql_gruppen_transaktion(
   , 'lieferanten_id' => $lieferanten_id
   /* , 'eingabe_zeit' => 'NOW()'  klappt so nicht, macht die DB aber sowieso automatisch! */
   , 'summe' => $summe
-  , 'kontoauszugs_jahr' => $auszug_jahr
-  , 'kontoauszugs_nr' => $auszug_nr
   , 'kontobewegungs_datum' => $kontobewegungs_datum
   , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
   , 'notiz' => $notiz
@@ -2060,7 +2058,7 @@ function sql_gruppen_transaktion(
 
 function sql_bank_transaktion(
   $konto_id, $auszug_jahr, $auszug_nr
-, $haben, $valuta, $gruppen_id, $lieferanten_id
+, $haben, $valuta
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
@@ -2078,8 +2076,6 @@ function sql_bank_transaktion(
   , 'betrag' => $haben
   , 'buchungsdatum' => $mysqlheute
   , 'valuta' => $valuta
-  , 'gruppen_id' => $gruppen_id
-  , 'lieferanten_id' => $lieferanten_id
   , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
   , 'kommentar' => $notiz
   , 'konterbuchung_id' => $konterbuchung_id
@@ -2103,9 +2099,9 @@ function sql_link_transaction( $soll_id, $haben_id ) {
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
-  debug_args( func_get_args(), 'sql_doppelte_transaktion' );
+  // debug_args( func_get_args(), 'sql_doppelte_transaktion' );
   global $dienstkontrollblatt_id;
-  echo "doppelte_transaktion 1<br>";
+  // echo "doppelte_transaktion 1<br>";
   nur_fuer_dienst(4,5);
   need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
   need( $notiz, 'Bitte Notiz angeben!' );
@@ -2115,37 +2111,33 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   else
     $typ = 0;
 
-  echo "doppelte_transaktion 2<br>";
+  // echo "doppelte_transaktion 2<br>";
   if( $soll['konto_id'] == -1 ) {
     $soll_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
-    , adefault( $soll, 'auszug_nr', '' ), adefault( $soll, 'auszug_jahr', '' ), $notiz
-    , $valuta, adefault( $soll, 'lieferanten_id', 0 )
+    , $notiz, $valuta, adefault( $soll, 'lieferanten_id', 0 )
     );
   } else {
     $soll_id = sql_bank_transaktion(
       $soll['konto_id'], adefault( $soll, 'auszug_jahr', '' ), adefault( $soll, 'auszug_nr', '' )
-    , -$betrag, $valuta, adefault( $soll, 'gruppen_id', 0 ), adefault( $soll, 'lieferanten_id', 0 )
-    , $dienstkontrollblatt_id, $notiz, 0
+    , -$betrag, $valuta, $dienstkontrollblatt_id, $notiz, 0
     );
   }
 
-  echo "doppelte_transaktion 3<br>";
+  // echo "doppelte_transaktion 3<br>";
   if( $haben['konto_id'] == -1 ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
-    , adefault( $haben, 'auszug_nr', '' ), adefault( $haben, 'auszug_jahr', '' ), $notiz
-    , $valuta, adefault( $haben, 'lieferanten_id', 0 )
+    , $notiz, $valuta, adefault( $haben, 'lieferanten_id', 0 )
     );
   } else {
     $haben_id = sql_bank_transaktion(
       $haben['konto_id'], adefault( $haben, 'auszug_jahr', '' ), adefault( $haben, 'auszug_nr', '' )
-    , $betrag, $valuta, adefault( $haben, 'gruppen_id', 0 ), adefault( $haben, 'lieferanten_id', 0 )
-    , $dienstkontrollblatt_id, $notiz, 0
+    , $betrag, $valuta, $dienstkontrollblatt_id, $notiz, 0
     );
   }
 
-  echo "doppelte_transaktion 4<br>";
+  // echo "doppelte_transaktion 4<br>";
   sql_link_transaction( $soll_id, $haben_id );
   return;
 }
@@ -2312,16 +2304,14 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
 
   $haben_id = sql_bank_transaktion(
     $konto_id, $receipt_year, $receipt_nr
-  , $row['summe'], $valuta, $row['gruppen_id'], $row['lieferanten_id']
+  , $row['summe'], $valuta
   , $dienstkontrollblatt_id, $notiz, 0
   );
 
   sql_link_transaction( -$soll_id, $haben_id );
 
   return sql_update( 'gruppen_transaktion', $soll_id, array(
-    'kontoauszugs_nr' => $receipt_nr
-  , 'kontoauszugs_jahr' => $receipt_year
-  , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
+    'dienstkontrollblatt_id' => $dienstkontrollblatt_id
   ) );
 }
 
@@ -2371,8 +2361,6 @@ function sql_get_transaction( $id ) {
            , bankkonto.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
            , bankkonten.id as konto_id
-           , gruppen_id
-           , lieferanten_id
       FROM bankkonto
       JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
       WHERE bankkonto.id = $id
@@ -3630,6 +3618,20 @@ CREATE TABLE `bankkonten` (
 			WHERE name = 'database_version' ;
                ";
 		doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
+  case 3:
+    $sql = " ALTER TABLE gruppen_transaktion
+      DROP kontoauszugs_nr,
+      DROP kontoauszugs_jahr,
+      ADD KEY `tertiary` (`lieferanten_id`,`kontobewegungs_datum`)
+    ";
+    //  doSql($sql, LEVEL_IMPORTANT, "Update Tabelle gruppen_transaktion fehlgeschlagen");
+    $sql = " ALTER TABLE bankkonto
+      DROP gruppen_id,
+      DROP lieferanten_id
+    ";
+    doSql($sql, LEVEL_IMPORTANT, "Update Tabelle bankkonto fehlgeschlagen");
+    $sql="UPDATE leitvariable set value = 4 WHERE name = 'database_version'; ";
+    doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
 /*
 	case n:
 		$sql = "
