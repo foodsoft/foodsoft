@@ -388,6 +388,9 @@ a.button:hover, span.button:hover {
   text-decoration:underline;
   background-color:#ffffd0;
 }
+span.radiooption {
+  padding-right:1em;
+}
 
 a.blocklink {
   font-size:12pt;

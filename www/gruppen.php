@@ -7,15 +7,12 @@ $problems="";
 $msg="";
 
 
-define( 'OPTION_INAKTIV', 1 );
 get_http_var( 'optionen', 'u', 0, true );
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
 get_http_var('action','w','');
 $readonly and $action = '';
 
-
-  // Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können
   ?>
     <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
       <? echo self_post(); ?>
@@ -30,14 +27,44 @@ $readonly and $action = '';
       <tr>
         <td>
           <input type='checkbox'
-            <? if( $optionen & OPTION_INAKTIV ) echo " checked"; ?>
+            <? if( $optionen & GRUPPEN_OPT_INAKTIV ) echo " checked"; ?>
             onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_INAKTIV);
+              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_INAKTIV);
             ?>';"
             title='Auch inaktive/gelÃ¶schte Gruppen anzeigen?'
           > inaktive Gruppen zeigen
         </td>
       </tr>
+      <? if( $dienst == 4 or $dienst == 5 ) { ?>
+      <tr>
+        <td>
+          <span class='radiooption'>
+            <input type='radio' name='schuldoderguthaben'
+            <? if( ( $optionen & (GRUPPEN_OPT_SCHULDEN | GRUPPEN_OPT_GUTHABEN) ) == 0 ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen & ~(GRUPPEN_OPT_SCHULDEN | GRUPPEN_OPT_GUTHABEN) );
+            ?>';"
+            > alle
+          </span>
+          <span class='radiooption'>
+            <input type='radio' name='schuldoderguthaben'
+            <? if( $optionen & GRUPPEN_OPT_SCHULDEN ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", (($optionen | GRUPPEN_OPT_SCHULDEN) & ~ GRUPPEN_OPT_GUTHABEN);
+            ?>';"
+            > Gruppen mit Schulden
+          </span>
+          <span class='radiooption'>
+            <input type='radio' name='schuldoderguthaben'
+            <? if( $optionen & GRUPPEN_OPT_GUTHABEN ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", (($optionen | GRUPPEN_OPT_GUTHABEN) & ~GRUPPEN_OPT_SCHULDEN);
+            ?>';"
+            > Gruppen mit Guthaben
+          </span>
+        </td>
+      </tr>
+      <? } ?>
     </table>
     </div>
 
@@ -139,11 +166,20 @@ $readonly and $action = '';
       </tr>
   <?
 
-  $result = ( $optionen & OPTION_INAKTIV ? sql_bestellgruppen() : sql_aktive_bestellgruppen() );
+  $summe = 0;
+  $mitglieder_summe = 0;
+  $result = ( $optionen & GRUPPEN_OPT_INAKTIV ? sql_bestellgruppen() : sql_aktive_bestellgruppen() );
   while ($row = mysql_fetch_array($result)) {
     $id = $row['id'];
     if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
       $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
+      if( $optionen & GRUPPEN_OPT_SCHULDEN )
+        if( $kontostand >= 0 )
+          continue;
+      if( $optionen & GRUPPEN_OPT_GUTHABEN )
+        if( $kontostand <= 0 )
+          continue;
+      $summe += $kontostand;
     }
     $nr = $row['gruppennummer'];
     echo "
@@ -158,9 +194,10 @@ $readonly and $action = '';
         echo "<td></td>";
 	}
     echo"
-      <td>{$row['mitgliederzahl']}</td>
+      <td class='number'>{$row['mitgliederzahl']}</td>
       <td>
     ";
+    $mitglieder_summe += $row['mitgliederzahl'];
     if( $row['aktiv'] > 0 ) {
       echo"
             <a class='png' style='padding:0pt 1ex 0pt 1ex;'
@@ -223,6 +260,17 @@ $readonly and $action = '';
          <td/>
 <?
     }
+  }
+
+  if( $dienst == 4 or $dienst == 5 ) {
+    ?>
+      <tr class='summe'>
+        <td colspan='2' style='text-align:right;'>Summe:</td>
+        <td class='number'><? printf( "%.2lf", $summe ); ?></td>
+        <td class='number'><? echo $mitglieder_summe; ?></td>
+        <td colspan='1'>&nbsp;</td>
+      </tr>
+    <?
   }
 ?>
 

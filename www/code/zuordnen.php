@@ -1197,6 +1197,11 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	  }
 }
 
+define( 'GRUPPEN_OPT_INAKTIV', 1 );
+define( 'GRUPPEN_OPT_SCHULDEN', 2 );
+define( 'GRUPPEN_OPT_GUTHABEN', 4 );
+
+
 ////////////////////////////////////
 //
 // lieferanten-funktionen:
