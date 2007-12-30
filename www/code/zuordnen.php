@@ -1032,14 +1032,24 @@ function optionen_gruppen(
     }
     $output = $output . ">$option_0</option>";
   }
+  foreach( $additionalgroups as $id ) {
+    $output = "$output
+      <option value='$id'";
+        if( $selected == $id ) {
+          $output = $output . " selected";
+          $selected = -1;
+        }
+        $output = $output . ">" . sql_gruppenname( $id ) . "</option>";
+  }
   while($gruppe = mysql_fetch_array($gruppen)){
     $id = $gruppe['id'];
-    if( ! in_array( $id, $additionalgroups ) ) {
-      if( in_array( $id, $specialgroups ) )
-        continue;
-      if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
-        continue;
-    }
+    if( in_array( $id, $additionalgroups ) )
+      continue;
+    if( in_array( $id, $specialgroups ) )
+      continue;
+    if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
+      continue;
+
     $output = "$output
       <option value='$id'";
     if( $selected == $id ) {
