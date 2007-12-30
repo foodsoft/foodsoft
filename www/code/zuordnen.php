@@ -2400,10 +2400,10 @@ function sql_bankkonto_salden() {
   " );
 }
 
-function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
+function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = FALSE ) {
   $where = "WHERE (konto_id=$konto_id)";
   if( $auszug_jahr ) {
-    if( $auszug_nr ) {
+    if( $auszug_nr !== FALSE ) {
       $where .= (
         ( $where ? " AND " : " WHERE " )
           . "( (kontoauszug_jahr<$auszug_jahr) or ((kontoauszug_jahr=$auszug_jahr) and (kontoauszug_nr<=$auszug_nr)) )"
@@ -2414,6 +2414,7 @@ function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
       );
     }
   }
+  // echo "sql_bankkonto_saldo: [$where]<br>";
   $row = sql_select_single_row( "
     SELECT IFNULL(sum( betrag ),0.0) as saldo
     FROM bankkonto
@@ -2475,8 +2476,12 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
     SELECT *
     , bankkonto.id as id
     , bankkonto.kommentar as kommentar
+    , DATE_FORMAT(valuta,'%d.%m.%Y') as valuta_trad
+    , DATE_FORMAT(buchungsdatum,'%d.%m.%Y') as buchungsdatum_trad
+    , dienstkontrollblatt.name as dienst_name
     FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id
+    LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
     $where
     $groupby
     ORDER BY konto_id, kontoauszug_jahr, kontoauszug_nr

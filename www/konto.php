@@ -41,6 +41,7 @@ get_http_var( 'konto_id', 'u', $konto_id, true );
       <th>Name</th>
       <th>BLZ</th>
       <th>Konto-Nr</th>
+      <th>Saldo</th>
       <th>Online-Banking</th>
       <th>Kommentar</th>
     </tr>
@@ -58,6 +59,7 @@ while( $row = mysql_fetch_array($konten) ) {
       <td class='number'>{$row['blz']}</td>
       <td class='number'>{$row['kontonr']}</td>
   ";
+  printf( "<td class='number'>%.2lf</td>", sql_bankkonto_saldo( $row['id'] ) );
   if( ( $url = $row['url'] ) ) {
     echo "<td><a href=\"javascript:neuesfenster('$url','onlinebanking');\">$url</a></td>";
   } else {
@@ -155,25 +157,11 @@ echo $options;
   </td>
   </tr>
   </table>
-
-  <!-- <table class='liste'>
-    <tr class='legende'>
-      <th>Jahr</th>
-      <th>Nr</th>
-      <th>Anzahl Posten</th>
-      <th>Saldo</th>
-    </tr>
-  -->
 <?
 
 
 if( ! $auszug_jahr or ! $auszug_nr )
   return;
-
-$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
-
-$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
-$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
 
 $kontoname = sql_kontoname($konto_id);
 echo "<h3>$kontoname - Auszug $auszug_jahr / $auszug_nr</h3>";
@@ -186,6 +174,9 @@ if( $editable ) {
       break;
     case 'zahlung_lieferant':
       buchung_lieferant_bank();
+      break;
+    case 'ueberweisung_konto_konto':
+      buchung_bank_bank();
       break;
   }
 
@@ -250,21 +241,25 @@ if( $editable ) {
   <?
 }
 
+$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
+$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
+$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
 
 ?>
 
   <table class='liste'>
     <tr class='legende'>
-      <th>Nr</th>
+      <th>Posten</th>
       <th>Valuta</th>
-      <th>Text</th>
+      <th>Buchung</th>
+      <th>Kommentar</th>
       <th>Betrag</th>
     </tr>
 <?
 
 printf( "
     <tr class='summe'>
-      <td colspan='3' style='text-align:right;'>Startsaldo:</td>
+      <td colspan='4' style='text-align:right;'>Startsaldo:</td>
       <td class='number'>%.2lf</td>
     </tr>
   "
@@ -276,22 +271,26 @@ while( $row = mysql_fetch_array( $auszug ) ) {
   $n++;
   $kommentar = $row['kommentar'];
   $konterbuchung_id = $row['konterbuchung_id'];
-  echo "
+  ?>
     <tr>
-      <td class='number'>$n</td>
-      <td class='number'>{$row['valuta']}</td>
-      <td>$kommentar<br>
-  ";
+      <td class='number'><? echo $n; ?></td>
+      <td class='number'><? echo $row['valuta_trad']; ?></td>
+      <td class='number'>
+        <div><? echo $row['buchungsdatum_trad']; ?></div>
+        <div style='font-size:1;'><? echo $row['dienst_name']; ?></div>
+      </td>
+      <td><div><? echo $kommentar; ?></div>
+  <?
   if( $konterbuchung_id ) {
     $konterbuchung = sql_get_transaction( $konterbuchung_id );
     if( $konterbuchung_id > 0 ) {
       $k_konto_id = $konterbuchung['konto_id'];
-      $k_auszug_jahr = $konterbuchung['auszug_jahr'];
-      $k_auszug_nr = $konterbuchung['auszug_nr'];
+      $k_auszug_jahr = $konterbuchung['kontoauszug_jahr'];
+      $k_auszug_nr = $konterbuchung['kontoauszug_nr'];
       echo "
-        <p>Gegenbuchung:
-        <a href='index.php?window=konto&konto_id=$k_konto_id&auszus_jahr=$k_kontoauszug_jahr&$k_kontoauszug_nr'
-        >{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr</a></p>
+        <div>Gegenbuchung:
+        <a href='index.php?window=konto&konto_id=$k_konto_id&auszug_jahr=$k_auszug_jahr&auszug_nr=$k_auszug_nr'
+        >{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr</a></div>
       ";
     } else {
       $gruppen_id = $konterbuchung['gruppen_id'];
@@ -299,31 +298,31 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       if( $gruppen_id ) {
         $gruppen_name = sql_gruppenname( $gruppen_id );
         echo "
-          <p>Überweisung Gruppe
+          <div>Überweisung Gruppe
           <a href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id','kontoblatt');\"
-          >$gruppen_name</a></p>
+          >$gruppen_name</a></div>
         ";
       } else if ( $lieferanten_id ) {
         $lieferanten_name = lieferant_name( $lieferanten_id );
         echo "
-          <p>Überweisung/Lastschrift Lieferant
+          <div>Überweisung/Lastschrift Lieferant
           <a href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id=$lieferanten_id','lieferantenkonto');\"
-          >$lieferanten_name</a></p>
+          >$lieferanten_name</a></div>
         ";
       } else {
-        ?> <div class='warn'>unültige Buchung</div> <?
+        ?> <div class='warn'>fehlerhafte Buchung</div> <?
       }
     }
   } else {
-    echo "<div class='warn'>einfache Buchung</div>";
+    ?> <div class='warn'>einfache Buchung</div> <?
   }
   printf( "<td class='number' style='vertical-align:bottom;'>%.2lf</td>", $row['betrag'] );
-  echo "</tr>";
+  ?> </tr> <?
 }
 
 printf( "
     <tr class='summe'>
-      <td colspan='3' style='text-align:right;'>Saldo:</td>
+      <td colspan='4' style='text-align:right;'>Saldo:</td>
       <td class='number'>%.2lf</td>
     </tr>
   "

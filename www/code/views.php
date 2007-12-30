@@ -1434,7 +1434,7 @@ function formular_buchung_bank_bank(
 ) {
   ?>
     <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post('konto_id'); ?>
+      <? echo self_post(); ?>
       <input type='hidden' name='action' value='ueberweisung_konto_konto'>
       <fieldset>
         <legend>
