@@ -92,11 +92,19 @@ if( $auszug ) {
 
 $auszuege = sql_kontoauszug( $konto_id );
 
+$ungebuchte_einzahlungen = sql_ungebuchte_einzahlungen();
+
 ?>
   <table>
-  <tr><td>
+  <tr><td colspan='2'>
     <h3>Erfasste Auszüge:</h3>
-  </td></tr>
+  </td>
+<? if( $editable and mysql_num_rows( $ungebuchte_einzahlungen ) > 0 ) { ?>
+  <td>
+    <h3>Ungebuchte Einzahlungen:</h3>
+  </td>
+<? } ?>
+  </tr>
   <tr><td>
       <select id='select_auszug'
        onchange='select_auszug("<? echo self_url( array( 'auszug_jahr', 'auszug_nr' ) ); ?>");'>
@@ -155,10 +163,64 @@ echo $options;
   </div>
 
   </td>
+
+  <? if( $editable and mysql_num_rows( $ungebuchte_einzahlungen ) > 0 ) { ?>
+    <td>
+      <table>
+        <tr>
+          <th>Datum</th>
+          <th>Gruppe</th>
+          <th>Betrag</th>
+          <th>Optionen</th>
+        </tr>
+        <? while( $trans = mysql_fetch_array( $ungebuchte_einzahlungen ) ) { ?>
+          <tr>
+            <td><? echo $trans['eingabedatum_trad']; ?></td>
+            <td><? echo sql_gruppenname( $trans['gruppen_id'] ); ?></td>
+            <td><? printf( "%.2lf", $trans['summe'] ); ?></td>
+            <td>
+              <? if( $editable and $auszug_jahr and $auszug_nr ) { ?>
+                <form method='post' action='<? echo self_url(); ?>'>
+                  <input type='hidden' name='transaction_id' value='<? echo $trans['id']; ?>'>
+                  <input type='hidden' name='action' value='confirm_payment'>
+                  <label>Valuta:</label>
+                    <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
+                  <input type='submit' class='button' name='Bestätigen' value='Bestätigen'
+                   title='Bestätigen: diese Gutschrift ist auf Auszug <? echo "$auszug_jahr / $auszug_nr"; ?> verbucht'
+                  >
+                </form>
+                <hr>
+              <? } ?>
+              <? if( $editable ) { ?>
+                <form method='post' action='<? echo self_url(); ?>'>
+                  <input type='hidden' name='transaction_id' value='<? echo $trans['id']; ?>'>
+                  <input type='hidden' name='action' value='cancel_payment'>
+                  <input type='submit' class='button' name='Löschen' value='Löschen'
+                   title='diese ungebuchte Gutschrift stornieren'>
+                </form>
+              <? } ?>
+            </td>
+          </tr>
+        <? } ?>
+      </table>
+    </td>
+  <? } ?>
+
   </tr>
   </table>
 <?
 
+get_http_var( 'action', 'w', false );
+if( $editable ) {
+  switch( $action ) {
+    case 'cancel_payment':
+      need_http_var( 'transaction_id', 'u' );
+      doSql( "DELETE FROM gruppen_transaktion WHERE id=$transaction_id" );
+      reload_immediately( self_url() );
+      break;
+      need_http_var( 'transaction_id', 'u' );
+  }
+}
 
 if( ! $auszug_jahr or ! $auszug_nr )
   return;
@@ -167,7 +229,6 @@ $kontoname = sql_kontoname($konto_id);
 echo "<h3>$kontoname - Auszug $auszug_jahr / $auszug_nr</h3>";
 
 if( $editable ) {
-  get_http_var( 'action', 'w', false );
   switch( $action ) {
     case 'zahlung_gruppe':
       buchung_gruppe_bank();
@@ -177,6 +238,14 @@ if( $editable ) {
       break;
     case 'ueberweisung_konto_konto':
       buchung_bank_bank();
+      break;
+    case 'confirm_payment':
+      need_http_var( 'transaction_id', 'u' );
+      need_http_var( 'year', 'u' );
+      need_http_var( 'month', 'u' );
+      need_http_var( 'day', 'u' );
+      sql_finish_transaction( $transaction_id, $konto_id, $auszug_nr, $auszug_jahr, "$year-$month-$day", 'gebuchte Einzahlung' );
+      reload_immediately( self_url() );
       break;
   }
 

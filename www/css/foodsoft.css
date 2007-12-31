@@ -382,6 +382,7 @@ a.button, span.button {
   border-color:#000000;
   font-weight:bold;
   font-size:11pt;
+  white-space:nowrap;
 }
 a.button:hover, span.button:hover {
   font-weight:bold;
