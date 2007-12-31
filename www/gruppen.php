@@ -17,10 +17,13 @@ $readonly and $action = '';
     <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
       <? echo self_post(); ?>
       <input type='hidden' name='gruppen_id' value=''>
+      <input type='hidden' name='transaction_id' value=''>
       <input type='hidden' name='action' value=''>
     </form>
     <div style='padding-bottom:2em;'>
-    <table class='menu' style='padding-bottom:2em;'>
+
+    <? if( $dienst == 4 or $dienst == 5 ) { ?>
+      <table class='menu' style='padding-bottom:2em;'>
       <tr>
         <th>Optionen</th>
       </tr>
@@ -35,7 +38,17 @@ $readonly and $action = '';
           > inaktive Gruppen zeigen
         </td>
       </tr>
-      <? if( $dienst == 4 or $dienst == 5 ) { ?>
+      <tr>
+        <td>
+          <input type='checkbox'
+            <? if( $optionen & GRUPPEN_OPT_UNGEBUCHT ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_UNGEBUCHT );
+            ?>';"
+            title='Nur Gruppen mit ungebuchten Einzahlungen anzeigen?'
+          > nur ungebuchte Einzahlungen
+        </td>
+      </tr>
       <tr>
         <td>
           <span class='radiooption'>
@@ -64,8 +77,8 @@ $readonly and $action = '';
           </span>
         </td>
       </tr>
-      <? } ?>
-    </table>
+      </table>
+    <? } ?>
     </div>
 
   <?
@@ -134,8 +147,17 @@ $readonly and $action = '';
 			";
 		      }
 	  }
-
   }
+
+if( $action == 'cancel_payment' ) {
+  need_http_var( 'transaction_id', 'u' );
+  // echo "id: $gruppen_id, trans: $transaction_id <br>";
+  $trans = sql_get_transaction( -$transaction_id );
+  if( $trans['gruppen_id'] != $login_gruppen_id )
+    nur_guer_dienst(4,5);
+  doSql( "DELETE FROM gruppen_transaktion WHERE id=$transaction_id" );
+}
+
 
 // Hier �ndern. Code in views verschieben, details in editGroup verschieben
    $show_member_details=FALSE;
@@ -178,6 +200,10 @@ $readonly and $action = '';
           continue;
       if( $optionen & GRUPPEN_OPT_GUTHABEN )
         if( $kontostand <= 0 )
+          continue;
+      $offene_einzahlungen = sql_ungebuchte_einzahlungen( $id );
+      if( $optionen & GRUPPEN_OPT_UNGEBUCHT )
+        if( mysql_num_rows($offene_einzahlungen) < 1 )
           continue;
       $summe += $kontostand;
     }
@@ -228,6 +254,29 @@ $readonly and $action = '';
             <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' title='Gruppendaten ändern'/></a>
         -->
           <?
+          if( mysql_num_rows($offene_einzahlungen) > 0 ) {
+            ?>
+              <table>
+                <tr>
+                  <th colspan='3'>ungebuchte Einzahlungen:</th>
+                </tr>
+              <? while( $trans = mysql_fetch_array( $offene_einzahlungen ) ) { ?>
+                <tr>
+                  <td><? echo $trans['eingabedatum_trad']; ?></td>
+                  <td><? printf( "%.2lf", $trans['summe'] ); ?></td>
+                  <td>
+                  <a class='png' href="javascript:
+                    document.forms['reload_form'].action.value='cancel_payment';
+                    document.forms['reload_form'].gruppen_id.value='<? echo $id; ?>';
+                    document.forms['reload_form'].transaction_id.value='<? echo $trans['id']; ?>';
+                    document.forms['reload_form'].submit();">
+                    <img src='img/b_drop.png' border='0' alt='Löschen?' title='Löschen?'/></a>
+                  </td>
+                </tr>
+              <? } ?>
+              </table>
+            <?
+          }
         }
         // loeschen nur wenn
         // - kontostand 0

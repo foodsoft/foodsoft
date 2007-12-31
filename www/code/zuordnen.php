@@ -1207,9 +1207,13 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	  }
 }
 
+// optionsflags fuer anzeige in gruppen.php
+// (hier definiert, um bei aufruf aus anderem fenster optionen setzen zu koennen):
+//
 define( 'GRUPPEN_OPT_INAKTIV', 1 );
 define( 'GRUPPEN_OPT_SCHULDEN', 2 );
 define( 'GRUPPEN_OPT_GUTHABEN', 4 );
+define( 'GRUPPEN_OPT_UNGEBUCHT', 8 );
 
 
 ////////////////////////////////////
@@ -2511,7 +2515,7 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
 }
 
 /* select_bestellungen_soll_gruppen:
- *   liefert schuld von gruppen aus bestellungen
+ *   liefert als skalarer subquery schuld von gruppen aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
 */
@@ -2537,7 +2541,7 @@ function select_bestellungen_soll_gruppen( $using = array() ) {
 }
 
 /* select_bestellungen_haben_lieferanten:
- *   liefert forderung von lieferanten aus bestellungen
+ *   liefert als skalarer subquery forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'lieferanten'
 */
@@ -2559,6 +2563,10 @@ function select_bestellungen_haben_lieferanten( $using = array() ) {
     ) );
 }
 
+/*  select_transaktionen_haben_gruppen:
+ *   liefert als skalarer subquery forderung von gruppen aus gruppen_transaktion
+ *   aus $using werden verwendet: 'bestellgruppen'
+ */
 function select_transaktionen_haben_gruppen( $using = array() ) {
   return "
     SELECT IFNULL( sum( summe ), 0.0 )
@@ -2568,6 +2576,10 @@ function select_transaktionen_haben_gruppen( $using = array() ) {
   ) );
 }
 
+/*  select_transaktionen_haben_gruppen:
+ *   liefert als skalarer subquery schuld von lieferanten aus gruppen_transaktion
+ *   aus $using werden verwendet: 'lieferanten'
+ */
 function select_transaktionen_soll_lieferanten( $using = array() ) {
   return "
     SELECT IFNULL( sum( -summe ), 0.0 )
@@ -2662,8 +2674,6 @@ function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
   return doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
 }
 
-
-
 function kontostand($gruppen_id){
 	//FIXME: zu langsam auf Gruppenview wenn Dienst5
   $row = sql_select_single_row( "
@@ -2692,6 +2702,17 @@ function lieferantenkontostand( $lieferanten_id ) {
   return $row['haben'];
 }
 
+
+function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
+  return doSql( "
+    SELECT *
+      , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
+      , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS eingabedatum_trad
+    FROM gruppen_transaktion
+    WHERE (konterbuchung_id = 0)
+      and ( gruppen_id " . ( $gruppen_id ? "=$gruppen_id" : ">0" ) . ")
+  " );
+}
 
 /////////////////////////////////////////////
 //

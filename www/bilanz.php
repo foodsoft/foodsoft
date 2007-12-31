@@ -75,7 +75,7 @@ rubrik( "Bankguthaben" );
     );
   }
   
-  posten( "Ungebuchte Einzahlungen", $gruppen_einzahlungen_ungebucht );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_UNGEBUCHT . "','gruppen');\">Ungebuchte Einzahlungen</a>", $gruppen_einzahlungen_ungebucht );
 
 rubrik( "Umlaufvermögen" );
   posten( "<a href=\"javascript:neuesfenster('index.php?window=basar','basar');\">Warenbestand Basar</a>", basar_wert_summe() );
