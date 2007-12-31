@@ -22,6 +22,7 @@
 $meinkonto = ( $area == 'meinkonto' );
 
 if( $meinkonto ) {
+  setWikiHelpTopic( 'foodsoft:MeinKonto' );
   $gruppen_id = $login_gruppen_id;
   $self_fields['gruppen_id'] = $gruppen_id;
   $gruppen_name = sql_gruppenname( $gruppen_id );
@@ -60,6 +61,7 @@ if( $meinkonto ) {
 
 } else {
   nur_fuer_dienst(4,5);
+  setWikiHelpTopic( 'foodsoft:kontoblatt' );
   get_http_var( 'gruppen_id', 'u', 0, true );
   ?>
   <h1>Kontoblatt</h1>
