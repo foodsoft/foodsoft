@@ -3652,7 +3652,7 @@ CREATE TABLE `bankkonten` (
       DROP kontoauszugs_jahr,
       ADD KEY `tertiary` (`lieferanten_id`,`kontobewegungs_datum`)
     ";
-    //  doSql($sql, LEVEL_IMPORTANT, "Update Tabelle gruppen_transaktion fehlgeschlagen");
+    doSql($sql, LEVEL_IMPORTANT, "Update Tabelle gruppen_transaktion fehlgeschlagen");
     $sql = " ALTER TABLE bankkonto
       DROP gruppen_id,
       DROP lieferanten_id
