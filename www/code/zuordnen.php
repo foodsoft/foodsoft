@@ -2045,9 +2045,8 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 
 
 /**
- * transaktionsart: 0 : gruppen_transaktion / bankkonto
- *                  1 : gruppen_transaktion / gruppen_transaktion
- *                  2 : gruppen_transaktion / (FIXME)
+ * transaktionsart: 0 : normal
+ *                  1 : pfand
  */
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
@@ -2125,15 +2124,11 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
   need( $notiz, 'Bitte Notiz angeben!' );
   need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
-  if( $soll['konto_id'] == -1 and $haben['konto_id'] == -1 )
-    $typ = 1;
-  else
-    $typ = 0;
 
   // echo "doppelte_transaktion 2<br>";
   if( $soll['konto_id'] == -1 ) {
     $soll_id = -1 * sql_gruppen_transaktion(
-      $typ, adefault( $soll, 'gruppen_id', 0 ), $betrag
+      adefault( $soll, 'transaktionsart', 0 ), adefault( $soll, 'gruppen_id', 0 ), $betrag
     , $notiz, $valuta, adefault( $soll, 'lieferanten_id', 0 )
     );
   } else {
@@ -2146,7 +2141,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   // echo "doppelte_transaktion 3<br>";
   if( $haben['konto_id'] == -1 ) {
     $haben_id = -1 * sql_gruppen_transaktion(
-      $typ, adefault( $haben, 'gruppen_id', 0 ), -$betrag
+      adefault( $haben, 'transaktionsart', 0 ), adefault( $haben, 'gruppen_id', 0 ), -$betrag
     , $notiz, $valuta, adefault( $haben, 'lieferanten_id', 0 )
     );
   } else {
@@ -2168,8 +2163,8 @@ function sql_groupGlass($gruppe, $menge){
   if( $menge <= 0 )
     return;
   sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $gruppe )
-  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppe, 'transaktionsart' => 1 )
+  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
   , $pfand_preis * $menge
   , $mysqlheute
   , "Pfandrueckgabe $menge Stueck"
@@ -2339,6 +2334,7 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
   $sql = "
     SELECT gruppen_transaktion.id, type, summe, kontobewegungs_datum
          , konterbuchung_id, gruppen_transaktion.notiz
+         , summe * IF( type=1, 1, 0 ) as pfand
          , dienstkontrollblatt_id
          , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
          , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
@@ -2540,6 +2536,27 @@ function select_bestellungen_soll_gruppen( $using = array() ) {
     ) );
 }
 
+function select_bestellungen_pfand( $using = array() ) {
+  return "
+    SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.pfand ), 0.0 )
+    FROM gruppenbestellungen
+  " . need_joins( $using, array(
+      'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
+                               ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
+    ) ) . "
+    JOIN bestellzuordnung
+      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+    JOIN bestellvorschlaege
+      ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
+         AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
+    JOIN produktpreise
+      ON produktpreise.id = bestellvorschlaege.produktpreise_id
+    WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
+      'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
+    , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
+    ) );
+}
+
 /* select_bestellungen_haben_lieferanten:
  *   liefert als skalarer subquery forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
@@ -2576,7 +2593,17 @@ function select_transaktionen_haben_gruppen( $using = array() ) {
   ) );
 }
 
-/*  select_transaktionen_haben_gruppen:
+function select_transaktionen_pfand( $using = array() ) {
+  return "
+    SELECT IFNULL( sum( summe * IF( type=1, 1, 0 ) ), 0.0 )
+      FROM gruppen_transaktion
+     WHERE ( gruppen_transaktion.gruppen_id > 0 ) " . use_filters( $using, array(
+        'bestellgruppen' => 'bestellgruppen.id = gruppen_transaktion.gruppen_id'
+      , 'lieferanten' => 'lieferanten.id = gruppen_transaktion.lieferanten_id'
+  ) );
+}
+
+/*  select_transaktionen_soll_lieferanten:
  *   liefert als skalarer subquery schuld von lieferanten aus gruppen_transaktion
  *   aus $using werden verwendet: 'lieferanten'
  */
@@ -2601,6 +2628,16 @@ function select_kontostand_gruppen( $using = array() ) {
     SELECT ( (".select_transaktionen_haben_gruppen($using).")
            - (".select_bestellungen_soll_gruppen($using).") ) as haben
   ";
+}
+
+function select_pfandkontostand_gruppen( $using = array() ) {
+  return "
+    SELECT ( (".select_transaktionen_pfand($using).")
+           - (".select_bestellungen_pfand($using).") ) as pfand
+  ";
+//  return "
+//    SELECT ( - (".select_bestellungen_pfand($using).") ) as pfand
+//  ";
 }
 
 function sql_verbindlichkeiten_lieferanten() {
@@ -2645,6 +2682,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
          , (" .select_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). ") as soll
+         , (" .select_bestellungen_pfand( array('bestellgruppen','gesamtbestellungen') ). ") as pfand
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
@@ -2684,6 +2722,15 @@ function kontostand($gruppen_id){
   return $row['haben'];
 }
 
+function pfandkontostand($gruppen_id) {
+  $row = sql_select_single_row( "
+    SELECT (".select_pfandkontostand_gruppen('bestellgruppen').") as pfand
+    FROM bestellgruppen
+    WHERE bestellgruppen.id = $gruppen_id
+  " );
+  return $row['pfand'];
+}
+
 function sockel_gruppen_summe() {
   global $sockelbetrag;
   $row = sql_select_single_row( "
@@ -2701,7 +2748,6 @@ function lieferantenkontostand( $lieferanten_id ) {
   " );
   return $row['haben'];
 }
-
 
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
   return doSql( "

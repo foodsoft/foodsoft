@@ -166,6 +166,7 @@ if( $meinkonto ) {
 }
 
   $kontostand = kontostand($gruppen_id);
+  $pfandkontostand = pfandkontostand($gruppen_id);
 
   // aktuelle Gruppendaten laden
 	$result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Gruppendaten nicht lesen.",mysql_error());
@@ -178,7 +179,7 @@ if( $meinkonto ) {
 	$size          = 2000;
 	 
 	
-   $cols = 6;
+   $cols = 8;
    ?>
 	 <table class="numbers">
 	    <tr>
@@ -186,12 +187,13 @@ if( $meinkonto ) {
 				 <th>Valuta</th>
 				 <th>Buchung</th>
 				 <th>Informationen</th>
-				 <th>Betrag</th>
-				 <th>Summe</th>
+				 <th colspan='2'>Betrag (Pfand)</th>
+				 <th colspan='2'>Summe</th>
 			</tr>
       <tr class='summe'>
-        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Kontostand:</td>
-        <td class='number'><? printf( "%8.2lf", $kontostand ); ?></td>
+        <td colspan='<? echo $cols-2; ?>' style='text-align:right;'>Kontostand:</td>
+        <td class='mult'><? printf( "%8.2lf", $kontostand ); ?></td>
+        <td class='unit'><? printf( "(%8.2lf)", $pfandkontostand ); ?></td>
       </tr>
 			<?PHP
 
@@ -201,6 +203,7 @@ if( $meinkonto ) {
 
          $vert_result = sql_bestellungen_soll_gruppe($gruppen_id);
          $summe = $kontostand;
+         $pfandsumme = $pfandkontostand;
 				 $no_more_vert = false;
 				 $no_more_konto=false;
 				 $konto_row = mysql_fetch_array($result);
@@ -218,6 +221,7 @@ if( $meinkonto ) {
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+              $pfand = -$vert_row['pfand'];
               ?>
 					      <tr>
 					      <td valign='top'><b>Bestellung</b></td>
@@ -227,6 +231,9 @@ if( $meinkonto ) {
                   href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
                   ><? echo $vert_row['name']; ?></a></td>
 					      <td class='mult'><b><? printf("%.2lf", -$vert_row['soll']); ?></b></td>
+					      <td class='unit'> <?
+                  if( abs($pfand) >= 0.005 )
+                    printf("(%.2lf)", $pfand); ?></td>
                 <!-- <td class='unit'>
                  <a class='png' style='padding:0pt 1ex 0pt 1ex;'
                    href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
@@ -234,10 +241,12 @@ if( $meinkonto ) {
                  </a>
                   </td>
                  -->
-                  <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+                  <td class='mult'><? printf( "%8.2lf", $summe ); ?></td>
+                  <td class='unit'><? printf( "(%8.2lf)", $pfandsumme ); ?></td>
                 </tr>
               <?
               $summe += $vert_row['soll'];
+              $pfandsumme -= $pfand;
 				 	    $vert_row = mysql_fetch_array($vert_result);
 					    if(!$vert_row){
 					    	$no_more_vert = true;
@@ -249,16 +258,10 @@ if( $meinkonto ) {
               ?> <tr>
                   <td valign='top'><b>
               <?
-              switch( $konto_row['type'] ) {
-                case 0:
-                  echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
-                  break;
-                case 1:
-                  echo "Verrechnung";
-                  break;
-                case 2:
-                  echo "Sonstiges";
-                  break;
+              if( $konto_row['konterbuchung_id'] >= 0 ) {
+                echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
+              } else {
+                echo "Verrechnung";
               }
               ?> </td>
                  <td><? echo $konto_row['valuta_trad']; ?></td>
@@ -338,15 +341,20 @@ if( $meinkonto ) {
                   ?> <div class='warn'>Keine gültige Transaktion</div> <?
                 }
               }
+              $pfand = $konto_row['pfand'];
               ?>
                 </td>
                 <td class='mult'>
                   <b><? printf("%.2lf",$konto_row['summe']); ?></b></td>
-                  <!-- <td class='unit'>&nbsp;</td> -->
-                  <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+					        <td class='unit'> <?
+                  if( abs($pfand) > 0.005 )
+                    printf("(%.2lf)", $pfand); ?></td>
+                  <td class='mult'><? printf( "%.2lf", $summe ); ?></td>
+					      <td class='unit'><? printf("(%.2lf)", $pfandsumme); ?></td>
                 </tr>
               <?
               $summe -= $konto_row['summe'];
+              $pfandsumme -= $pfand;
 				 	    $konto_row = mysql_fetch_array($result);
 					    if(!$konto_row){
 					    	$no_more_konto = true;
@@ -356,8 +364,9 @@ if( $meinkonto ) {
 				 }
 			?>
       <tr class='summe'>
-        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Startsaldo:</td>
-        <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+        <td colspan='<? echo $cols-2; ?>' style='text-align:right;'>Startsaldo:</td>
+        <td class='mult'><? printf( "%8.2lf", $summe ); ?></td>
+        <td class='unit'><? printf( "(%8.2lf)", $pfandsumme ); ?></td>
       </tr>
 	 </table>
 
