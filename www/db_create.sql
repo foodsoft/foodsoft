@@ -127,6 +127,8 @@ CREATE TABLE `gesamtbestellungen` (
   `lieferung` date default NULL,
   `bezahlung` datetime default NULL,
   `state` enum('bestellen','beimLieferanten','Verteilt','archiviert') NOT NULL default 'bestellen',
+  `rechnungssumme` decimal(10,2) NOT NULL default '0.00',
+  `abrechnung_dienstkontrollblatt_id` int(11) NOT NULL default 0,
   PRIMARY KEY  (`id`),
   KEY `state` (`state`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='ausgang = Zeitpunkt der\nBestellung beim Lieferanten';
@@ -140,14 +142,12 @@ CREATE TABLE `gesamtbestellungen` (
 DROP TABLE IF EXISTS `gruppen_transaktion`;
 CREATE TABLE `gruppen_transaktion` (
   `id` int(11) NOT NULL auto_increment,
-  `kontoauszugs_jahr` smallint(4) unsigned NOT NULL,
   `dienstkontrollblatt_id` int(11) NOT NULL default '0',
   `type` tinyint(1) NOT NULL default '0',
   `gruppen_id` int(11) NOT NULL default '0',
   `lieferanten_id` int(11) NOT NULL default '0',
   `eingabe_zeit` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `summe` decimal(10,2) NOT NULL default '0.00',
-  `kontoauszugs_nr` int(11) NOT NULL default '0',
   `notiz` text NOT NULL,
   `kontobewegungs_datum` date NOT NULL default '0000-00-00',
   `konterbuchung_id` INT NOT NULL default '0',
@@ -296,7 +296,6 @@ CREATE TABLE `bankkonto` (
  `kontoauszug_jahr` SMALLINT NOT NULL, 
  `kontoauszug_nr` SMALLINT NOT NULL, 
  `eingabedatum` DATE NOT NULL, 
- `gruppen_id` INT NOT NULL,
  `lieferanten_id` INT NOT NULL,
  `dienstkontrollblatt_id` INT NOT NULL,
  `betrag` DECIMAL(10,2) NOT NULL,
@@ -312,6 +311,8 @@ CREATE TABLE `bankkonten` (
 `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
 `name` TEXT NOT NULL ,
 `kontonr` TEXT NOT NULL ,
-`blz` TEXT NOT NULL
+`blz` TEXT NOT NULL,
+`letzter_auszug_jahr` SMALLINT NOT NULL default 0,
+`letzter_auszug_nr` SMALLINT NOT NULL default 0
 ) ENGINE = MYISAM ;
 

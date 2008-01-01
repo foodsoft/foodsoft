@@ -3680,7 +3680,20 @@ CREATE TABLE `bankkonten` (
     ";
     doSql($sql, LEVEL_IMPORTANT, "Update Tabelle bankkonto fehlgeschlagen");
     $sql="UPDATE leitvariable set value = 4 WHERE name = 'database_version'; ";
-    doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
+    doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht auf 4 hochsetzen");
+  case 4:
+    $sql = " ALTER TABLE gesamtbestellungen
+      ADD `rechnungssumme` decimal(10,2) NOT NULL default '0.00' COMMENT 'wahre Rechnungssumme (kann wegen Pfand von berechneter abweichen!)',
+      ADD `abrechnung_dienstkontrollblatt_id` int(11) NOT NULL default 0
+    ";
+    doSql($sql, LEVEL_IMPORTANT, "Update Tabelle gesamtbestellungen fehlgeschlagen");
+    $sql = " ALTER TABLE bankkonten
+      ADD `letzter_auszug_jahr` SMALLINT NOT NULL default 0,
+      ADD `letzter_auszug_nr` SMALLINT NOT NULL default 0
+    ";
+    doSql($sql, LEVEL_IMPORTANT, "Update Tabelle bankkonten fehlgeschlagen");
+    $sql="UPDATE leitvariable set value = 5 WHERE name = 'database_version'; ";
+    doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht auf 5 hochsetzen");
 /*
 	case n:
 		$sql = "
