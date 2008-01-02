@@ -115,7 +115,7 @@ if( $editable ) {
       </tr>
 			<?PHP
 
-		  $result = sql_get_lieferant_transactions( $lieferanten_id );
+		  $result = sql_get_group_transactions( 0, $lieferanten_id );
       $num_rows = mysql_num_rows($result);
 
       $vert_result = sql_bestellungen_haben_lieferant($lieferanten_id);

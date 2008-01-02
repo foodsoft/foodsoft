@@ -132,7 +132,6 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
-
   // liefermengen aktualisieren:
 //  Hier werden die vom Formular übergebenen Werte ausgewertet
 //  FIXME in obiges switch-statement integrieren
@@ -159,8 +158,18 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
     	}
     }
   }
-         //infos zur gesamtbestellung auslesen 
-	 $result = sql_bestellungen(FALSE,FALSE,$bestell_id);
+
+  //infos zur gesamtbestellung auslesen 
+  $bestellung = sql_bestellung($bestell_id);
+
+  if( $state == STATUS_VERTEILT and $dienst == 4 and ! $bestellung['abrechnung_dienstkontrollblatt_id'] ) {
+    
+
+
+  }
+
+
+
 	
        //Formular ausgeben
 
@@ -171,7 +180,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
       <tr>
         <td style='text-align:left;padding-bottom:1em;'>
          <?
-         bestellung_overview(mysql_fetch_array($result),$gruppen_id,$gruppen_id);
+         bestellung_overview($bestellung,$gruppen_id,$gruppen_id);
          ?>
         </td>
         <td style='text-align:right;padding-bottom:1em;' id='option_menu'>

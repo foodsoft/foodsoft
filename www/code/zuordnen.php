@@ -2330,7 +2330,25 @@ function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_y
 }
 
 
-function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = NULL ) {
+function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
+  $filter = "";
+  $and = "WHERE";
+  if( $gruppen_id ) {
+    $filter .= " $and ( gruppen_transaktion.gruppen_id = $gruppen_id )";
+    $and = "AND";
+  }
+  if( $lieferanten_id ) {
+    $filter .= " $and ( gruppen_transaktion.lieferanten_id = $lieferanten_id )";
+    $and = "AND";
+  }
+  if( $from_date ) {
+    $filter .= " $and ( kontobewegungs_datum >= '$from_date' )";
+    $and = "AND";
+  }
+  if( $to_date ) {
+    $filter .= " $and ( kontobewegungs_datum <= '$to_date' )";
+    $and = "AND";
+  }
   $sql = "
     SELECT gruppen_transaktion.id, type, summe, kontobewegungs_datum
          , konterbuchung_id, gruppen_transaktion.notiz
@@ -2342,34 +2360,13 @@ function sql_get_group_transactions( $gruppen_id, $from_date = NULL, $to_date = 
          , dienstkontrollblatt.name as dienst_name
     FROM gruppen_transaktion
     LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
-    WHERE ( gruppen_transaktion.gruppen_id = $gruppen_id )
-        " . ( $from_date ? " AND ( kontobewegungs_datum >= '$from_date' ) " : "" ) . "
-        " . ( $to_date ? " AND ( kontobewegungs_datum <= '$to_date' ) " : "" ) . "
+    $filter
     ORDER BY valuta_kan DESC
   ";
   // LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
 }
 
-function sql_get_lieferant_transactions( $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
-  $sql = "
-    SELECT gruppen_transaktion.id
-           , type, summe, kontobewegungs_datum
-         , konterbuchung_id, gruppen_transaktion.notiz
-         , dienstkontrollblatt_id
-         , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
-         , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
-         , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%Y%m%d') AS valuta_kan
-         , dienstkontrollblatt.name as dienst_name
-    FROM gruppen_transaktion
-    LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
-    WHERE ( gruppen_transaktion.lieferanten_id = $lieferanten_id )
-        " . ( $from_date ? " AND ( kontobewegungs_datum >= '$from_date' ) " : "" ) . "
-        " . ( $to_date ? " AND ( kontobewegungs_datum <= '$to_date' ) " : "" ) . "
-    ORDER BY valuta_kan DESC
-  ";
-  return doSql( $sql, LEVEL_IMPORTANT, "Konnte Lieferantenntransaktionen nicht lesen ");
-}
 
 function sql_get_transaction( $id ) {
   // debug_args( func_get_args(), 'sql_get_transaction' );
@@ -2536,27 +2533,6 @@ function select_bestellungen_soll_gruppen( $using = array() ) {
     ) );
 }
 
-function select_bestellungen_pfand( $using = array() ) {
-  return "
-    SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.pfand ), 0.0 )
-    FROM gruppenbestellungen
-  " . need_joins( $using, array(
-      'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
-                               ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
-    ) ) . "
-    JOIN bestellzuordnung
-      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-    JOIN bestellvorschlaege
-      ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
-         AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
-    JOIN produktpreise
-      ON produktpreise.id = bestellvorschlaege.produktpreise_id
-    WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
-      'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
-    , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
-    ) );
-}
-
 /* select_bestellungen_haben_lieferanten:
  *   liefert als skalarer subquery forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
@@ -2579,6 +2555,28 @@ function select_bestellungen_haben_lieferanten( $using = array() ) {
     , 'gesamtbestellungen' => 'bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id'
     ) );
 }
+
+function select_bestellungen_pfand( $using = array() ) {
+  return "
+    SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.pfand ), 0.0 )
+    FROM gruppenbestellungen
+  " . need_joins( $using, array(
+      'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
+                               ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
+    ) ) . "
+    JOIN bestellzuordnung
+      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+    JOIN bestellvorschlaege
+      ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
+         AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
+    JOIN produktpreise
+      ON produktpreise.id = bestellvorschlaege.produktpreise_id
+    WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
+      'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
+    , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
+    ) );
+}
+
 
 /*  select_transaktionen_haben_gruppen:
  *   liefert als skalarer subquery forderung von gruppen aus gruppen_transaktion
@@ -2638,6 +2636,13 @@ function select_pfandkontostand_gruppen( $using = array() ) {
 //  return "
 //    SELECT ( - (".select_bestellungen_pfand($using).") ) as pfand
 //  ";
+}
+
+function select_pfandkontostand_lieferanten( $using = array() ) {
+  return "
+    SELECT ( (" .select_bestellungen_pfand($using). ")
+            - (" .select_transaktionen_pfand($using). ") ) as haben
+  ";
 }
 
 function sql_verbindlichkeiten_lieferanten() {
@@ -2703,6 +2708,7 @@ function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
          , (" .select_bestellungen_haben_lieferanten( array('lieferanten','gesamtbestellungen') ). ") as haben
+         , (" .select_bestellungen_pfand( array('lieferanten','gesamtbestellungen') ). ") as pfand
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
@@ -2747,6 +2753,15 @@ function lieferantenkontostand( $lieferanten_id ) {
     WHERE lieferanten.id = $lieferanten_id
   " );
   return $row['haben'];
+}
+
+function lieferantenpfandkontostand( $lieferanten_id ) {
+  $row = sql_select_single_row( "
+    SELECT (".select_pfandkontostand_lieferanten('lieferanten').") as pfand
+    FROM lieferanten
+    WHERE lieferanten.id = $lieferanten_id
+  " );
+  return $row['pfand'];
 }
 
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
