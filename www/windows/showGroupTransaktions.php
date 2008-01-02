@@ -187,8 +187,8 @@ if( $meinkonto ) {
 				 <th>Valuta</th>
 				 <th>Buchung</th>
 				 <th>Informationen</th>
-				 <th colspan='1'><div>Betrag</div><div style='font-size:smaller'>(Pfand)</div></th>
-				 <th colspan='1'><div>Summe</div></div style='font-size:smaller'>(Pfand)</div></th>
+				 <th colspan='1'><div>Betrag</div><div style='font-size:smaller;'>(Pfand)</div></th>
+				 <th colspan='1'><div>Summe</div><div style='font-size:smaller;'>(Pfand)</div></th>
 			</tr>
       <tr class='summe'>
         <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Kontostand:</td>
