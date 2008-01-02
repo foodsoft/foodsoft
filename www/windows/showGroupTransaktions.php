@@ -179,7 +179,7 @@ if( $meinkonto ) {
 	$size          = 2000;
 	 
 	
-   $cols = 8;
+   $cols = 6;
    ?>
 	 <table class="numbers">
 	    <tr>
@@ -187,13 +187,17 @@ if( $meinkonto ) {
 				 <th>Valuta</th>
 				 <th>Buchung</th>
 				 <th>Informationen</th>
-				 <th colspan='2'>Betrag (Pfand)</th>
-				 <th colspan='2'>Summe</th>
+				 <th colspan='1'><div>Betrag</div><div style='font-size:smaller'>(Pfand)</div></th>
+				 <th colspan='1'><div>Summe</div></div style='font-size:smaller'>(Pfand)</div></th>
 			</tr>
       <tr class='summe'>
-        <td colspan='<? echo $cols-2; ?>' style='text-align:right;'>Kontostand:</td>
-        <td class='mult'><? printf( "%8.2lf", $kontostand ); ?></td>
-        <td class='unit'><? printf( "(%8.2lf)", $pfandkontostand ); ?></td>
+        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Kontostand:</td>
+        <td class='number'>
+          <div><? printf( "%8.2lf", $kontostand ); ?></div>
+          <div style='font-size:smaller;'>
+            <? printf( "(%8.2lf)", $pfandkontostand ); ?>
+          </div>
+        </td>
       </tr>
 			<?PHP
 
@@ -230,19 +234,19 @@ if( $meinkonto ) {
 					      <td>Bestellung: <a
                   href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
                   ><? echo $vert_row['name']; ?></a></td>
-					      <td class='mult'><b><? printf("%.2lf", -$vert_row['soll']); ?></b></td>
-					      <td class='unit'> <?
-                  if( abs($pfand) >= 0.005 )
-                    printf("(%.2lf)", $pfand); ?></td>
-                <!-- <td class='unit'>
-                 <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-                   href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
-                  <img src='img/b_browse.png' border='0' title='Details zur Bestellung' alt='Details zur Bestellung'/>
-                 </a>
-                  </td>
-                 -->
-                  <td class='mult'><? printf( "%8.2lf", $summe ); ?></td>
-                  <td class='unit'><? printf( "(%8.2lf)", $pfandsumme ); ?></td>
+					      <td class='number'>
+                  <div style='font-weight:bold'>
+                    <? printf("%.2lf", -$vert_row['soll']); ?>
+                  </div>
+					        <? if( abs($pfand) >= 0.005 )
+                    printf("<div style='font-size:smaller'>(%.2lf)</div>", $pfand);
+                  ?>
+                </td>
+                <td class='number'>
+                  <div><? printf( "%8.2lf", $summe ); ?></div>
+                  <? if( abs($pfand) >= 0.005 )
+                    printf( "<div style='font-size:smaller;'>(%8.2lf)</div>", $pfandsumme ); ?>
+                </td>
                 </tr>
               <?
               $summe += $vert_row['soll'];
@@ -344,13 +348,18 @@ if( $meinkonto ) {
               $pfand = $konto_row['pfand'];
               ?>
                 </td>
-                <td class='mult'>
-                  <b><? printf("%.2lf",$konto_row['summe']); ?></b></td>
-					        <td class='unit'> <?
-                  if( abs($pfand) > 0.005 )
-                    printf("(%.2lf)", $pfand); ?></td>
-                  <td class='mult'><? printf( "%.2lf", $summe ); ?></td>
-					      <td class='unit'><? printf("(%.2lf)", $pfandsumme); ?></td>
+                <td class='number'>
+                  <div style='font-weight:bold'>
+                    <? printf("%.2lf",$konto_row['summe']); ?>
+                  </div>
+                  <?  if( abs($pfand) > 0.005 )
+                    printf("<div style='font-size:smaller;'>(%.2lf)</div>", $pfand); ?>
+                </td>
+					      <td class='number'>
+                  <div><? printf( "%.2lf", $summe ); ?></div>
+                  <?  if( abs($pfand) > 0.005 )
+                    printf("<div style='font-size:smaller;'>(%.2lf)</div>", $pfandsumme); ?>
+					      </td>
                 </tr>
               <?
               $summe -= $konto_row['summe'];
@@ -364,9 +373,11 @@ if( $meinkonto ) {
 				 }
 			?>
       <tr class='summe'>
-        <td colspan='<? echo $cols-2; ?>' style='text-align:right;'>Startsaldo:</td>
-        <td class='mult'><? printf( "%8.2lf", $summe ); ?></td>
-        <td class='unit'><? printf( "(%8.2lf)", $pfandsumme ); ?></td>
+        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Startsaldo:</td>
+        <td class='number'>
+          <div><? printf( "%8.2lf", $summe ); ?></div>
+          <div style='font-size:smaller;'><? printf( "(%8.2lf)", $pfandsumme ); ?></div>
+        </td>
       </tr>
 	 </table>
 
