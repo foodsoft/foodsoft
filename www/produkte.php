@@ -244,7 +244,7 @@
             , $produkt['gebindegroesse'], $produkt['kan_verteilmult'], $produkt['kan_verteileinheit']
             );
           ?></td>
-          <td class='mult'><?  printf( "%.2lf", $produkt['nettopreis'] ); ?></td>
+          <td class='mult'><?  printf( "%.2lf", $produkt['nettolieferpreis'] ); ?></td>
           <td class='unit'><?  printf( "/ %s", $produkt['preiseinheit'] ); ?></td>
           <td class='mult'><?  printf( "%.2lf", $produkt['endpreis'] ); ?></td>
           <td class='unit'><?
