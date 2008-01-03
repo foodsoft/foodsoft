@@ -1168,6 +1168,16 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 
 		<?
 		}
+    if( $id = $row['abrechnung_dienstkontrollblatt_id' ] ) {
+      ?>
+        <tr>
+          <th>Abgeschlossen:</th><td><? echo dienstkontrollblatt_name( $id ); ?></td>
+        </tr>
+        <tr>
+          <th>Summe:</th><td><? printf( '%.2lf', $row['rechnungssumme'] ); ?></td>
+        </tr>
+      <?
+    }
 		?>
             </table>
 	    <br/>

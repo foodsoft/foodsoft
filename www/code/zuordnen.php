@@ -904,6 +904,10 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
   return $result;
 }
 
+function dienstkontrollblatt_name( $id ) {
+  return sql_select_single_field( "SELECT name FROM dienstkontrollblatt WHERE id=$id", 'name' );
+}
+
 
 ////////////////////////////////////
 //
