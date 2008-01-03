@@ -122,6 +122,12 @@ if( $produkt['zeitstart'] )
 // Artikeldaten aus foodsoft-Datenbank anzeigen:
 //
 
+// neu laden (falls durch $action geaendert):
+//
+$produkt = sql_produkt_details( $produkt_id );
+$lieferanten_id = $produkt['lieferanten_id'];
+$produkt_name = $produkt['name'];
+
 ?>
   <fieldset class='big_form'>
   <legend>Foodsoft-Datenbank:</legend>
