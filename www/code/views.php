@@ -1119,11 +1119,16 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
                    <th> Bestellung: </th>
                      <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row['name']; 
 		     if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
-		     	  ?><br> <b>Vorsicht:</b> <a href=index.php?area=dienstplan>Dienstegruppen abwesend?</a>
-		     <? } ?>
+		     	  ?><br> <b>Vorsicht:</b> <a href=index.php?area=dienstplan>Dienstegruppen abwesend?</a> <?
+         }
+         ?>
 
 		     </td>
                 </tr>
+           <tr>
+             <th>Lieferant:</th>
+             <td><? echo lieferant_name( $row['lieferanten_id'] ); ?></td>
+           </tr>
                <tr>
                    <th> Bestellbeginn: </th>
                      <td><?PHP echo $row['bestellstart']; ?></td>

@@ -9,6 +9,7 @@
   setWindowSubtitle( 'Neue Bestellvorlage anlegen' );
   setWikiHelpTopic( 'foodsoft:bestellvorlage_anlegen' );
 
+  need_http_var( 'lieferanten_id', 'u', true );
   get_http_var( 'bestelliste[]','u' );
   if( ! isset($bestelliste) or count($bestelliste) < 1 ) {
     $problems .= "<div class='warn'>Keine Produkte ausgew√§hlt!</div>";
@@ -57,7 +58,7 @@
 
     // Wenn keine Fehler, dann einf¸gen...
     if ($problems == "") {
-      sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung);
+      sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id );
       $gesamtbestellung_id = mysql_insert_id();
 
       foreach( $bestelliste as $produkt_id ) {
@@ -89,6 +90,10 @@
     ?>
 
     <table style="width:350px;">
+      <tr>
+        <td><label>Lieferant:</label></td>
+        <td><kbd><? echo lieferant_name( $lieferanten_id ); ?></kbd></td>
+      </tr>
       <tr>
         <td><label>Name:</label></td>
         <td><input type="text" name="bestellname" size="35" value="<? echo "$bestellname"; ?>"></td>

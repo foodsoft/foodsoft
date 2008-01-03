@@ -1293,18 +1293,10 @@ function bestellung_name($bestell_id){
  *
  */
 function getProduzentBestellID($bestell_id){
-    if($bestell_id==0) {error(__LINE__,__FILE__,"Do not call getProduzentBestellID with bestell_id null)", "bla");}
-    $sql="SELECT DISTINCT lieferanten_id FROM bestellvorschlaege 
-		INNER JOIN produkte ON (produkt_id = produkte.id)
-		WHERE gesamtbestellung_id = ".$bestell_id;
-    $result = doSql($sql, LEVEL_ALL, "Konnte Preise nicht aus DB laden..");
-    if (mysql_num_rows($result) > 1)
-	    echo error(__LINE__,__FILE__,"Mehr als ein Lieferant fuer Bestellung ".$bestell_id);
-	 else {
-	    $row = mysql_fetch_array($result);
-	    return $row['lieferanten_id'];
-
-	 }
+  return sql_select_single_field(
+    "SELECT lieferanten_id FROM gesamtbestellungen WHERE id=$bestell_id"
+  , 'lieferanten_id'
+  );
 }
 
 /**
@@ -1423,11 +1415,12 @@ function sql_bestellung( $id ) {
 /**
  *  Gesamtbestellung einfügen
  */
-function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung){
+function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $lieferanten_id ){
   fail_if_readonly();
   nur_fuer_dienst_IV();
   return sql_insert( 'gesamtbestellungen', array(
-    'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
+    'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
+  , 'lieferung' => $lieferung, 'lieferanten_id' => $lieferanten_id
   ) );
 }
 
@@ -3776,6 +3769,8 @@ CREATE TABLE `bankkonten` (
   case 4:
     $sql = " ALTER TABLE gesamtbestellungen
       ADD `rechnungssumme` decimal(10,2) NOT NULL default '0.00' COMMENT 'wahre Rechnungssumme (kann wegen Pfand von berechneter abweichen!)',
+      ADD `lieferanten_id` int(11) NOT NULL,
+      ADD `rechnungsnummer` text NOT NULL COMMENT 'Rechnungsnummer des Lieferanten',
       ADD `abrechnung_dienstkontrollblatt_id` int(11) NOT NULL default 0
     ";
     doSql($sql, LEVEL_IMPORTANT, "Update Tabelle gesamtbestellungen fehlgeschlagen");
