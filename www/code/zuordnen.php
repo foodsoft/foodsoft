@@ -2051,15 +2051,16 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
   $notiz ="",
-  $kontobewegungs_datum ="NOW()", $lieferanten_id = 0, $konterbuchung_id = 0
+  $kontobewegungs_datum = 0, $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
   // debug_args( func_get_args(), 'sql_gruppen_transaktion' );
-  global $dienstkontrollblatt_id, $hat_dienst_IV;
+  global $dienstkontrollblatt_id, $hat_dienst_IV, $mysqlheute;
   fail_if_readonly();
   // echo "gruppen_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
   need( $gruppen_id or $lieferanten_id );
   // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
   // need( $transaktionsart or $bankkonto_id );
+  $kontobewegungs_datum or $kontobewegungs_datum = $mysqlheute;
 
   return sql_insert( 'gruppen_transaktion', array(
     'type' => $transaktionsart
@@ -2157,8 +2158,8 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
 }
 
 function sql_groupGlass($gruppe, $menge){
-  global $muell_id, $mysqlheute;
-  need( $muell_id );
+  global $mysqlheute;
+  $muell_id = sql_muell_id();
   $pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
   if( $menge <= 0 )
     return;
@@ -2167,7 +2168,18 @@ function sql_groupGlass($gruppe, $menge){
   , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
   , $pfand_preis * $menge
   , $mysqlheute
-  , "Pfandrueckgabe $menge Stueck"
+  , "Pfand: Rueckgabe $menge Stueck"
+  );
+}
+
+function sql_lieferant_glass( $lieferanten_id, $gutschrift, $valuta ) {
+  $muell_id = sql_muell_id();
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id, 'transaktionsart' => 1 )
+  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id, 'transaktionsart' => 1 )
+  , $gutschrift
+  , $valuta
+  , "Pfand: Gutschrift durch Lieferanten"
   );
 }
 
@@ -2717,6 +2729,25 @@ function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
   ";
   return doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
 }
+
+function sql_bestellung_rechnungssumme( $bestell_id ) {
+  return sql_select_single_field( "
+    SELECT (" .select_bestellungen_haben_lieferanten( array('gesamtbestellungen') ). ") as summe
+    FROM gesamtbestellungen
+    WHERE gesamtbestellungen.id = $bestell_id
+  ", 'summe'
+  );
+}
+
+function sql_bestellung_pfandsumme( $bestell_id ) {
+  return sql_select_single_field( "
+    SELECT (" .select_bestellungen_pfand( array('gesamtbestellungen') ). ") as pfand
+    FROM gesamtbestellungen
+    WHERE gesamtbestellungen.id = $bestell_id
+  ", 'pfand'
+  );
+}
+
 
 function kontostand($gruppen_id){
 	//FIXME: zu langsam auf Gruppenview wenn Dienst5
