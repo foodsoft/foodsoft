@@ -97,6 +97,7 @@ if( $editable ) {
 }
 
   $kontostand = lieferantenkontostand($lieferanten_id);
+  $pfandkontostand = lieferantenpfandkontostand($lieferanten_id);
 
   $cols = 6;
   ?>
@@ -111,7 +112,12 @@ if( $editable ) {
 			</tr>
       <tr class='summe'>
         <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Kontostand:</td>
-        <td class='number'><? printf( "%8.2lf", $kontostand ); ?></td>
+        <td class='number'>
+          <div><? printf( "%8.2lf", $kontostand ); ?></div>
+          <div style='font-size:smaller;'>
+            <? printf( "(%8.2lf)", $pfandkontostand ); ?>
+          </div>
+        </td>
       </tr>
 			<?PHP
 
@@ -120,6 +126,7 @@ if( $editable ) {
 
       $vert_result = sql_bestellungen_haben_lieferant($lieferanten_id);
       $summe = $kontostand;
+      $pfandsumme = $pfandkontostand;
       $konto_row = mysql_fetch_array($result);
       $vert_row = mysql_fetch_array($vert_result);
       while( $konto_row or $vert_row ) {
@@ -129,6 +136,7 @@ if( $editable ) {
               . "&bestell_id={$vert_row['gesamtbestellung_id']}"
               . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS
                                 | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+          $pfand = $vert_row['pfand'];
           ?>
             <tr>
               <td style='vertical-align:top;font-weight:bold;'>Bestellung</td>
@@ -137,56 +145,81 @@ if( $editable ) {
               <td>Bestellung: <a
                   href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
                   ><? echo $vert_row['name']; ?></a></td>
-              <td class='mult'><b><? printf("%.2lf", $vert_row['haben']); ?></b></td>
-          <!--
-            <td class='unit'>
-              <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-                href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');">
-                  <img src='img/b_browse.png' border='0' title='Details zur Bestellung' alt='Details zur Bestellung'/>
-              </a>
+              <td class='mult'>
+                <div style='font-weight:bold;'>
+                  <? printf("%.2lf", $vert_row['haben']); ?>
+                </div>
+					      <? if( abs($pfand) >= 0.005 )
+                  printf("<div style='font-size:smaller'>(%.2lf)</div>", $pfand);
+                ?>
+              </td>
+            <td class='number'>
+              <div><? printf( "%8.2lf", $summe ); ?></div>
+              <? if( abs($pfand) >= 0.005 )
+                printf( "<div style='font-size:smaller;'>(%8.2lf)</div>", $pfandsumme ); ?>
             </td>
-         -->
-            <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
             </tr>
           <?
           $summe -= $vert_row['haben'];
+          $pfandsumme -= $pfand;
           $vert_row = mysql_fetch_array($vert_result);
         } else {
           ?>
             <tr>
-              <td valign='top'><b>Zahlung</b></td>
+              <td valign='top' style='font-weight:bold;'>
+          <?
+          if( $konto_row['konterbuchung_id'] >= 0 ) {
+            echo 'Zahlung';
+          } else {
+            echo 'Verrechnung';
+          }
+          ?>
+              </td>
               <td><? echo $konto_row['valuta_trad']; ?></td>
               <td><? echo $konto_row['date']; ?></td>
-              <td> <? echo $konto_row['notiz']; ?>
-                <br>
+              <td><div><? echo $konto_row['notiz']; ?></div>
+                <div>
           <?
-            $k_id = $konto_row['konterbuchung_id'];
-            $k_row = sql_get_transaction( $k_id );
-            if( $k_id > 0 ) { // bankueberweisung oder lastschrift
-              $konto_id = $k_row['konto_id'];
-              $auszug_nr = $k_row['kontoauszug_nr'];
-              $auszug_jahr = $k_row['kontoauszug_jahr'];
-              echo "Auszug: <a href=\"javascript:neuesfenster(
-                 'index.php?window=konto&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
-                ,'konto'
-                );\">$auszug_jahr / $auszug_nr ({$k_row['kontoname']})</a>
-              ";
-            } else {  // zahlung durch gruppe
-              $gruppen_id = $k_row['gruppen_id'];
-              $gruppen_name = sql_gruppenname($gruppen_id);
-              echo "Zahlung durch Gruppe: <a href=\"javascript:neuesfenster(
-              'index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id'
-              , 'kontoblatt'
-              );\">$gruppen_name</a>
-              ";
-            }
+          $k_id = $konto_row['konterbuchung_id'];
+          $k_row = sql_get_transaction( $k_id );
+          if( $k_id > 0 ) { // bankueberweisung oder lastschrift
+            $konto_id = $k_row['konto_id'];
+            $auszug_nr = $k_row['kontoauszug_nr'];
+            $auszug_jahr = $k_row['kontoauszug_jahr'];
+            echo "Auszug: <a href=\"javascript:neuesfenster(
+               'index.php?window=konto&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
+              ,'konto'
+              );\">$auszug_jahr / $auszug_nr ({$k_row['kontoname']})</a>
+            ";
+          } else {  // zahlung durch gruppe
+            $gruppen_id = $k_row['gruppen_id'];
+            $gruppen_name = sql_gruppenname($gruppen_id);
+            echo "Zahlung durch Gruppe: <a href=\"javascript:neuesfenster(
+            'index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id'
+            , 'kontoblatt'
+            );\">$gruppen_name</a>
+            ";
+          }
+          $pfand = $konto_row['pfand'];
           ?>
+            </div>
             </td>
-            <td class='mult'><b><? printf("%.2lf" , $konto_row['summe']); ?></b></td>
-            <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+            <td class='mult'>
+              <div style='font-weight:bold;'>
+                <? printf("%.2lf" , $konto_row['summe']); ?>
+              </div>
+              <?  if( abs($pfand) > 0.005 )
+                printf("<div style='font-size:smaller;'>(%.2lf)</div>", $pfand); ?>
+            </td>
+            <td class='number'>
+              <div><? printf( "%8.2lf", $summe ); ?></div>
+              <?  if( abs($pfand) > 0.005 )
+                printf("<div style='font-size:smaller;'>(%.2lf)</div>", $pfandsumme); ?>
+            </td>
             </tr>
           <?
           $summe -= $konto_row['summe'];
+          $pfandsumme -= $pfand;
           $konto_row = mysql_fetch_array($result);
         }
       }
@@ -194,7 +227,10 @@ if( $editable ) {
 
         <tr class='summe'>
           <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Startsaldo:</td>
-          <td class='number'><? printf( "%8.2lf", $summe ); ?></td>
+          <td class='number'>
+            <div><? printf( "%8.2lf", $summe ); ?></div>
+            <div style='font-size:smaller;'><? printf( "(%8.2lf)", $pfandsumme ); ?></div>
+          </td>
         </tr>
    </table>
 

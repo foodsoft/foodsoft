@@ -2582,6 +2582,7 @@ function select_bestellungen_pfand( $using = array() ) {
       ON produktpreise.id = bestellvorschlaege.produktpreise_id
     WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
       'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
+    , 'lieferanten' => 'gesamtbestellungen.lieferanten_id = lieferanten.id'
     , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
     ) );
 }
@@ -2642,9 +2643,6 @@ function select_pfandkontostand_gruppen( $using = array() ) {
     SELECT ( (".select_transaktionen_pfand($using).")
            - (".select_bestellungen_pfand($using).") ) as pfand
   ";
-//  return "
-//    SELECT ( - (".select_bestellungen_pfand($using).") ) as pfand
-//  ";
 }
 
 function select_pfandkontostand_lieferanten( $using = array() ) {
