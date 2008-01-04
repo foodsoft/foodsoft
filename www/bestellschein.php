@@ -309,7 +309,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
                   </tr>
                   <tr>
                     <td>Kommentar:</td>
-                    <td><kbd>Verlust: <? $bestellung['name']; ?>: <input type='text' size='40' name='kommentar' value=''></kbd></td>
+                    <td><kbd>Verlust: <? $bestellung['name']; ?>: <input type='text' size='40' name='abschluss_kommentar' value=''></kbd></td>
                   </tr>
                 <? } else if( $fehl < 0 ) { ?>
                   <tr>
@@ -318,7 +318,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
                   </tr>
                   <tr>
                     <td>Kommentar:</td>
-                    <td><kbd>Ruecklage: <? echo $bestellung['name']; ?>: <input type='text' size='40' name='abschluss_kommentar' value=''></kbd></td>
+                    <td><kbd>Rueckstellung: <? echo $bestellung['name']; ?>: <input type='text' size='40' name='abschluss_kommentar' value=''></kbd></td>
                   </tr>
                 <? } else { ?>
                   <tr>
@@ -360,7 +360,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
           , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id() )
           , $abschluss_fehl
           , $bestellung['lieferung']
-          , "Verlust: {$bestellung['name']}: " . $kommentar
+          , "Verlust: {$bestellung['name']}: " . $abschluss_kommentar
           );
         } else if ( $abschluss_fehl < -0.005 ) {
           sql_doppelte_transaktion(
@@ -368,7 +368,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
           , array( 'konto_id' => -1, 'lieferanten_id' => $bestellung['lieferanten_id'] )
           , -$abschluss_fehl
           , $bestellung['lieferung']
-          , "Ruecklage: {$bestellung['name']}: " . $abschluss_kommentar
+          , "Rueckstellung: {$bestellung['name']}: " . $abschluss_kommentar
           );
         }
         if( abs($abschluss_pfandgutschrift) > 0.005 ) {
