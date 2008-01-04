@@ -316,3 +316,8 @@ CREATE TABLE `bankkonten` (
 `letzter_auszug_nr` SMALLINT NOT NULL default 0
 ) ENGINE = MYISAM ;
 
+CREATE TABLE `transactions` (
+`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`used` tinyint(1) NOT NULL default '0'
+) ENGINE = MYISAM ;
+

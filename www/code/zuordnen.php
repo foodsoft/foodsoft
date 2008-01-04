@@ -38,17 +38,21 @@ function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfeh
 	return $result;
 
 }
-function sql_select_single_row( $sql ) {
+function sql_select_single_row( $sql, $allownull = false ) {
   $result = doSql( $sql );
   $rows = mysql_num_rows($result);
   // echo "<br>$sql<br>rows: $rows<br>";
+  if( $allownull and ( $rows == 0 ) )
+    return NULL;
   need( $rows > 0, "Kein Treffer bei Datenbanksuche" );
   need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig" );
   return mysql_fetch_array($result);
 }
 
-function sql_select_single_field( $sql, $field ) {
-  $row = sql_select_single_row( $sql );
+function sql_select_single_field( $sql, $field, $allownull = false ) {
+  $row = sql_select_single_row( $sql, $allownull );
+  if( $allownull and ! $row )
+    return NULL;
   need( isset( $row[$field] ), "Feld $field nicht gesetzt" );
   return $row[$field];
 }
@@ -3501,6 +3505,26 @@ function checkvalue( $val, $typ){
  */
 function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = false ) {
   global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
+  global $postform_id;
+
+  if( $_SERVER['REQUEST_METHOD'] != 'POST' ) {
+    $HTTP_POST_VARS = array();
+  }
+  if( ! isset( $postform_id ) ) {
+    if( isset( $HTTP_POST_VARS['postform_id'] ) ) {
+      $postform_id = $HTTP_POST_VARS['postform_id'];
+      $used = sql_select_single_field( "SELECT used FROM transactions WHERE id=$postform_id", 'used', true );
+      if( $used ) {
+        // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
+        $HTTP_POST_VARS = array();
+        echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
+      } else {
+        // id ist noch unverbraucht: jetzt entwerten:
+        sql_update( 'transactions', $postform_id, array( 'used' => 1 ) );
+        // echo "<div class='ok'>postform_id entwertet: $postform_id</div>";
+      }
+    }
+  }
 
   if( substr( $name, -2 ) == '[]' ) {
     $want_array = true;
@@ -3783,6 +3807,20 @@ CREATE TABLE `bankkonten` (
     doSql($sql, LEVEL_IMPORTANT, "Update Tabelle bankkonten fehlgeschlagen");
     $sql="UPDATE leitvariable set value = 5 WHERE name = 'database_version'; ";
     doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht auf 5 hochsetzen");
+  case 5:
+    $sql="
+        DROP TABLE IF EXISTS `transactions`;
+    ";
+    doSql($sql, LEVEL_IMPORTANT, "Loeschen Tabelle transactions fehlgeschlagen");
+    $sql="
+         CREATE TABLE `transactions` (
+        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+        `used` tinyint(1) NOT NULL default '0'
+        ) ENGINE = MYISAM ;
+    ";
+    doSql($sql, LEVEL_IMPORTANT, "Anlegen Tabelle transactions fehlgeschlagen");
+    $sql="UPDATE leitvariable set value = 6 WHERE name = 'database_version'; ";
+    doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht auf 5 hochsetzen");
 /*
 	case n:
 		$sql = "
@@ -3857,7 +3895,9 @@ function self_url( $exclude = array() ) {
 function self_post( $exclude = array() ) {
   global $self_fields;
 
-  $output = '';
+  $newid = sql_insert( 'transactions', array( 'used' => 0 ) );
+  $output = "<input type='hidden' name='postform_id' value='$newid'>";
+
   if( ! $exclude ) {
     $exclude = array();
   } elseif( is_string( $exclude ) ) {
