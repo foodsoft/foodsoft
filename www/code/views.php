@@ -212,7 +212,10 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   global $self_fields, $gruppe, $pfand, $specialgroups, $muell_id;
 
   if( $editAmounts ) {
-    echo "<form action='" . self_url() . "' method='post'>" . self_post();
+    ?> <form action='<? echo self_url(); ?>' method='post'>
+       <? echo self_post(); ?>
+       <input type='hidden' name='action' value='basarzuteilung'>
+    <?
     $cols=11;
   } else {
     $cols=9;

@@ -10,12 +10,13 @@ get_http_var( 'bestell_id', 'u' , 0, true );
 
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
-if( $editable ) {
+get_http_var( 'action','w','' );
+if( $editable and $action ) {
 
   // aktionen:
   //
-  get_http_var('gruppe','u', false, false );
-  if( $gruppe > 0 ) {
+  if( $action == 'basarzuteilung' ) {
+    need_http_var('gruppe','u', false, false );
 
     // glassrueckgabe bearbeiten:
     //
@@ -42,7 +43,6 @@ if( $editable ) {
       }
     }
   }
-  get_http_var( 'action','w','' );
   if( $action == 'schwund' ) {
     need_http_var( 'produkt_id', 'u' );
     need_http_var( 'bestellung', 'u' );
@@ -51,6 +51,7 @@ if( $editable ) {
     // echo "Schwundbuchung: $produkt_id, $bestellung, $menge<br>";
     sql_basar2group( $muell_id, $produkt_id, $bestellung, $menge );
   }
+
 }
 
 
