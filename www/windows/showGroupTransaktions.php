@@ -208,17 +208,15 @@ if( $meinkonto ) {
          $vert_result = sql_bestellungen_soll_gruppe($gruppen_id);
          $summe = $kontostand;
          $pfandsumme = $pfandkontostand;
-				 $no_more_vert = false;
-				 $no_more_konto=false;
 				 $konto_row = mysql_fetch_array($result);
 				 $vert_row = mysql_fetch_array($vert_result);
 				 //Gehe zum ersten Eintrag in Bestellzuordnung, der nach dem Eintrag in Konto liegt
 				 //while(compare_date($konto_row, $vert_row)==+1){
 				 	//$vert_row = mysql_fetch_array($vert_result);
 				 //}
-				 while (!($no_more_vert && $no_more_konto)) {
+				 while( $vert_row or $konto_row ) {
 				    //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
-            if(compare_date($konto_row, $vert_row)==1 && !$no_more_vert){
+            if( compare_date($konto_row, $vert_row)==1 ){
 				    		//Eintrag in Konto ist Älter -> Verteil ausgeben
               $details_url = "index.php?window=bestellschein"
               . "&gruppen_id=$gruppen_id"
@@ -252,15 +250,12 @@ if( $meinkonto ) {
               $summe += $vert_row['soll'];
               $pfandsumme -= $pfand;
 				 	    $vert_row = mysql_fetch_array($vert_result);
-					    if(!$vert_row){
-					    	$no_more_vert = true;
-					    }
 
             } else {
               // eintrag aus gruppen_transaktion anzeigen:
               //
               ?> <tr>
-                  <td valign='top'><b>
+                  <td valign='top' style='font-weight:bold;'>
               <?
               if( $konto_row['konterbuchung_id'] >= 0 ) {
                 echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
@@ -271,7 +266,8 @@ if( $meinkonto ) {
                  <td><? echo $konto_row['valuta_trad']; ?></td>
                  <td><div><? echo $konto_row['date']; ?></div>
                      <div style='font-size:1;'><? echo $konto_row['dienst_name']; ?></div></td>
-                  <td><? echo $konto_row['notiz']; ?><br>
+                  <td><div><? echo $konto_row['notiz']; ?></div>
+                    <div>
               <?
               $k_id = $konto_row['konterbuchung_id'];
               if( $k_id > 0 ) { // bank-transaktion
@@ -347,6 +343,7 @@ if( $meinkonto ) {
               }
               $pfand = $konto_row['pfand'];
               ?>
+                </div>
                 </td>
                 <td class='number'>
                   <div style='font-weight:bold'>
@@ -365,10 +362,6 @@ if( $meinkonto ) {
               $summe -= $konto_row['summe'];
               $pfandsumme -= $pfand;
 				 	    $konto_row = mysql_fetch_array($result);
-					    if(!$konto_row){
-					    	$no_more_konto = true;
-					    }
-
 				 	}
 				 }
 			?>
