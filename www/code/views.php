@@ -1158,9 +1158,9 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 			// überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
 			$kontostand = kontostand($gruppen_id);
 			if ($kontostand < "0") { 
-				echo "<span style=\"color:red; font-weight:bold\">".sprintf("%.02f",$kontostand)."</span>"; 
+				echo "<span style=\"color:red; font-weight:bold;\">".sprintf("%.02f",$kontostand)."</span>"; 
 			} else {
-				echo "<span style=\"color:green; font-weight:normal\">".sprintf("%.02f",$kontostand)."</span>"; 
+				echo "<span style=\"color:green; font-weight:normal;\">".sprintf("%.02f",$kontostand)."</span>"; 
 			}	
 	      	      ?>
 		 </td>
@@ -1171,10 +1171,12 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
     if( $id = $row['abrechnung_dienstkontrollblatt_id' ] ) {
       ?>
         <tr>
-          <th>Abgeschlossen:</th><td><? echo dienstkontrollblatt_name( $id ); ?></td>
-        </tr>
-        <tr>
-          <th>Summe:</th><td><? printf( '%.2lf', $row['rechnungssumme'] ); ?></td>
+          <th>Abgeschlossen:</th>
+          <td class='number'>
+            <div><? echo $row['rechnungsnummer']; ?></div>
+            <div><? printf( '%.2lf', $row['rechnungssumme'] ); ?></div>
+            <div class='small'><? echo dienstkontrollblatt_name( $id ); ?></div>
+          </td>
         </tr>
       <?
     }

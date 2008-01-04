@@ -20,6 +20,10 @@ div.payload, div.payloadro {
   font-family: verdana, arial, sans-serif;
 }
 
+.small {
+  font-size:smaller;
+}
+
 div.payload, table.footer td {
   background:#ffffff;
 }
