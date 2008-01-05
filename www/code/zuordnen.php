@@ -3500,6 +3500,9 @@ function checkvalue( $val, $typ){
 //   - wenn array erwartet wird, kann der default ein array sein.
 //   - wird kein array erwartet, aber default is ein array, so wird $default[$name] versucht
 //
+// per POST uebergebene variable werden nur beruecksichtigt, wenn zugleich eine
+// unverbrauchte transaktionsnummer 'postform_id' uebergeben wird (als Sicherung
+// gegen mehrfache Absendung desselben Formulars per "Reload" Knopfs des Browsers)
 /**
  *
  */
@@ -3507,23 +3510,26 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
   global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
   global $postform_id;
 
-  if( $_SERVER['REQUEST_METHOD'] != 'POST' ) {
-    $HTTP_POST_VARS = array();
-  }
-  if( ! isset( $postform_id ) ) {
-    if( isset( $HTTP_POST_VARS['postform_id'] ) ) {
-      $postform_id = $HTTP_POST_VARS['postform_id'];
-      $used = sql_select_single_field( "SELECT used FROM transactions WHERE id=$postform_id", 'used', true );
-      if( $used ) {
-        // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
-        $HTTP_POST_VARS = array();
-        echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
+  if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+    if( ! isset( $postform_id ) ) {
+      if( isset( $HTTP_POST_VARS['postform_id'] ) ) {
+        $postform_id = $HTTP_POST_VARS['postform_id'];
+        $used = sql_select_single_field( "SELECT used FROM transactions WHERE id=$postform_id", 'used', true );
+        if( $used ) {
+          // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
+          $HTTP_POST_VARS = array();
+          echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
+        } else {
+          // id ist noch unverbraucht: jetzt entwerten:
+          sql_update( 'transactions', $postform_id, array( 'used' => 1 ) );
+          // echo "<div class='ok'>postform_id entwertet: $postform_id</div>";
+        }
       } else {
-        // id ist noch unverbraucht: jetzt entwerten:
-        sql_update( 'transactions', $postform_id, array( 'used' => 1 ) );
-        // echo "<div class='ok'>postform_id entwertet: $postform_id</div>";
+        // TODO: warnung ausgeben: formular hatte keine Transaktionsnummer!
       }
     }
+  } else {
+    $HTTP_POST_VARS = array();
   }
 
   if( substr( $name, -2 ) == '[]' ) {
@@ -3891,12 +3897,17 @@ function self_url( $exclude = array() ) {
 // self_post:
 // liefert 'hidden' input elemente, zum neuladen derselben seite per post, zu allen
 // variablen in global $self_fields, mit ausnahme der variablen in $exclude:
+//
+// in jedem Formular wird automatisch eine Transaktionsnummer postform_id eingefuegt.
 // 
 function self_post( $exclude = array() ) {
-  global $self_fields;
+  global $self_fields, $new_post_id;
 
-  $newid = sql_insert( 'transactions', array( 'used' => 0 ) );
-  $output = "<input type='hidden' name='postform_id' value='$newid'>";
+  // bei bedarf neue nummer ziehen, aber nur einmal pro script:
+  //
+  if( ! isset( $self_fields['postform_id'] ) ) {
+    $self_fields['postform_id'] = sql_insert( 'transactions', array( 'used' => 0 ) );
+  }
 
   if( ! $exclude ) {
     $exclude = array();
