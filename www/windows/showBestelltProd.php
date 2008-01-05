@@ -71,24 +71,6 @@ $verteilt = 0;
 while( $gruppe = mysql_fetch_array($gruppen) ) {
   $gruppen_id = $gruppe['id'];
 
-  // bestellte mengen ermitteln:
-  // TODO: mit sql_bestellmengen zusammenfassen
-  // DONE: sql_bestellprodukte liefert alle infos
-  //   $bestellungen = mysql_query(
-  //     "SELECT SUM( menge * IF(art=0,1,0) ) as festmenge
-  //           , SUM( menge * IF(art=1,1,0) ) as toleranzmenge
-  //       FROM bestellzuordnung
-  //       INNER JOIN gruppenbestellungen
-  //               ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
-  //       WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
-  //             AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
-  //             AND bestellzuordnung.produkt_id='$produkt_id'
-  //             AND (art=0 OR art=1)
-  //       GROUP BY gruppenbestellungen.bestellguppen_id,bestellzuordnung.produkt_id
-  //     "
-  //   ) or error ( __LINE__, __FILE__,
-  //     "Suche nach bestellungen fehlgeschlagen: " . mysql_error() );
-
   $bestellungen = sql_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id );
 
   switch( $rows = mysql_num_rows($bestellungen) ) {
@@ -118,7 +100,7 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
 
   echo "
     <tr>
-      <td>${gruppe['name']}</td>
+      <td>${gruppe['name']} (${gruppe['gruppennummer']})</td>
       <td class='mult'>" . $festmenge * $vorschlag['kan_verteilmult']
         . " (" . $toleranzmenge * $vorschlag['kan_verteilmult']  . ")</td>
       <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
