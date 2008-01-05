@@ -165,10 +165,10 @@ $basar = $vorschlag['liefermenge'] - $verteilt;
   <tr class='summe'>
     <td><a href="javascript:neuesfenster('index.php?window=basar','basar');"
       title='Basar anzeigen...'>Basar:</a></td>
-    <td class='mult'><? echo $basar_festmenge * $vorschlag['kan_verteilmult']; ?>
-       (<? echo $basar_toleranzmenge * $vorschlag['kan_verteilmult']; ?>)</td>
+    <td class='mult'><? printf( '%d', $basar_festmenge * $vorschlag['kan_verteilmult'] ); ?>
+       (<? printf( '%d', $basar_toleranzmenge * $vorschlag['kan_verteilmult'] ); ?>)</td>
     <td class='unit'><? echo $vorschlag['kan_verteileinheit'] ?></td>
-    <td class='mult'><? echo $basar * $vorschlag['kan_verteilmult']; ?></td>
+    <td class='mult'><? printf( '%d', $basar * $vorschlag['kan_verteilmult'] ); ?></td>
     <td class='unit'><? echo $vorschlag['kan_verteileinheit']; ?></td>
     <td class='mult'><? echo $vorschlag['preis_rund']; ?></td>
     <td class='unit'>/ <? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></td>
