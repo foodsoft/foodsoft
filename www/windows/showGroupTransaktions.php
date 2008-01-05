@@ -20,6 +20,7 @@
  }
 
 $meinkonto = ( $area == 'meinkonto' );
+$muell_id = sql_muell_id();
 
 if( $meinkonto ) {
   setWikiHelpTopic( 'foodsoft:MeinKonto' );
