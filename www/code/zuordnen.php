@@ -3909,6 +3909,7 @@ function self_post( $exclude = array() ) {
     $self_fields['postform_id'] = sql_insert( 'transactions', array( 'used' => 0 ) );
   }
 
+  $output = '';
   if( ! $exclude ) {
     $exclude = array();
   } elseif( is_string( $exclude ) ) {
