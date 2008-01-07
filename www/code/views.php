@@ -1212,7 +1212,7 @@ function formular_buchung_gruppe_bank(
                 <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
               </kbd>
             <? } else { ?>
-              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select>
+              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id, false, false, sql_muell_id() ); ?></select>
             <? } ?>
             </td>
           </tr>
@@ -1355,7 +1355,7 @@ function formular_buchung_gruppe_lieferant(
                 <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
               </kbd>
             <? } else { ?>
-              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id ); ?></select>
+              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id, false, false, sql_muell_id() ); ?></select>
             <? } ?>
             </td>
           </tr>
