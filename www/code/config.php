@@ -12,6 +12,22 @@
   $db_user   = "nahrungskette";
   $db_pwd    = "leckerpotsdam"; 
 
+  // schinke-server fuer (Terra-)kataloge
+  // (bisher nicht sinnvoll, da keine bestellnummern geliefert werden!)
+  //
+  $katalog_db_server = 'nahrungskette.fcschinke09.de';
+  $katalog_db_name = 'sharedLists';
+  $katalog_db_user = 'sharedLists_read';
+  $katalog_db_pwd = 'XXXXXXXX';
+
+  // verbindung zum katalog-server zuerst aufbauen (die _zuletzt_ geoeffnete verbindung ist default!):
+  //
+  // $mysql_katalog_handle = mysql_connect( $katalog_db_server, $katalog_db_user, $katalog_db_pwd );
+
+  if( $mysql_katalog_handle ) {
+    mysql_select_db( $katalog_db_name, $mysql_katalog_handle ) or $mysql_katalog_handle = false;
+  }
+
   // verbindung gleich aufbauen:
   if (!($db = mysql_connect($db_server,$db_user,$db_pwd)) || !@MYSQL_SELECT_DB($db_name)) {
     echo "<html><body><h1>Datenbankfehler!</h1>Konnte keine Verbindung zur Datenbank herstellen... Bitte später nochmal versuchen.</body></html>";

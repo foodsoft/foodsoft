@@ -3,21 +3,25 @@
 $ldap_handle = false;
 
 function init_ldap_handle() {
-  global $ldap_handle, $ldapuri;
+  global $ldap_handle, $ldapuri, $ldapbase;
 
   if( ! $ldap_handle ) {
     if( ! $ldapuri )
       return false;
 
+   // echo "ldapuri: [$ldapuri] ldapbase: [$ldapbase]";
    $h = ldap_connect( $ldapuri );
    if( ! ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) ) {
      return false;
    }
-   if( ! ldap_bind( $h ) ) {
+   if( ! ldap_bind( $h, "cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de" , "leckerpotsdam" ) ) {
+     echo "error: [" . ldap_error( $h ) . "]";
+     exit();
      return false;
    }
     $ldap_handle = $h;
   }
+
   return $ldap_handle;
 }
 
