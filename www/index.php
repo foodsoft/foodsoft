@@ -52,8 +52,10 @@
         $self_fields['area'] = $area;
 		    switch($area){
 		    case "bestellen":
+			   if ( !( $dienst == 4 ) 
+               and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 )
+         ) {
 			   //darf nur bestellen, wenn Dienste akzeptiert
-			   if (mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0){
 			       echo "<h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2>";
 			       include('dienstplan.php');
 			   } else {
