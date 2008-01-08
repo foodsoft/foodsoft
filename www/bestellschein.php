@@ -17,7 +17,7 @@ if( get_http_var( 'bestellungs_id', 'u' ) ) {
   $bestell_id = $bestellungs_id;
   $self_fields['bestell_id'] = $bestell_id;
 } else {
-  get_http_var( 'bestell_id', 'u', false, true );
+  get_http_var( 'bestell_id', 'u', 0, true );
 }
 
 get_http_var( 'action', 'w', '' );
@@ -60,7 +60,7 @@ switch( $action ) {
 
 if( ! $bestell_id ) {
   // auswahl praesentieren, abhaengig von $state oder $area:
-  if( ! get_http_var( 'state', 'w', false, true ) ) {
+  if( ! get_http_var( 'state', 'w', NULL, true ) ) {
     switch( $area ) {
       case 'lieferschein':
         $state = STATUS_VERTEILT;
