@@ -8,6 +8,8 @@
   nur_fuer_dienst_IV();
   fail_if_readonly();
 
+  $msg = '';
+
   need_http_var( 'bestell_id','u', true );
 
   $bestellung = sql_bestellung( $bestell_id );
