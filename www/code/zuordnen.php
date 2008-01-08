@@ -957,13 +957,14 @@ function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dien
 
 }
 
-function select_bestellgruppen( $filter = '' ) {
+function select_bestellgruppen( $filter = '', $more_select = '' ) {
   return "
     SELECT bestellgruppen.*
     , ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
     , bestellgruppen.id % 1000 as gruppennummer
+  " . ( $more_select ? ", $more_select" : '' ) . "
     FROM bestellgruppen
   " . ( $filter ? "WHERE ($filter) " : '' );
 }
@@ -995,7 +996,7 @@ function sql_gruppenname($gruppen_id){
  *
  */
 function sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id = FALSE ){
-  $query = select_bestellgruppen()
+  $query = select_bestellgruppen( '', 'gruppenbestellungen.id as gruppenbestellungen_id' )
   . " INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.bestellguppen_id = bestellgruppen.id )";
   if( $produkt_id ) {
