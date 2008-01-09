@@ -208,7 +208,9 @@
   logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 
   set_privileges(); // im moment: keine...
+  // setWikiHelpTopic( ':' );
   require_once("head.php");
+  setWikiHelpTopic( ':' );
 
   get_http_var( 'area', 'w', '' );
   if( isset( $from_dokuwiki ) && $from_dokuwiki or ( $area == 'wiki' ) ) {

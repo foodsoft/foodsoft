@@ -3888,6 +3888,7 @@ function self_url( $exclude = array() ) {
   } elseif( is_string( $exclude ) ) {
     $exclude = array( $exclude );
   }
+  $exclude[] = 'postform_id';
   foreach( $self_fields as $key => $value ) {
     if( ! in_array( $key, $exclude ) )
       $output = $output . "&$key=$value";
