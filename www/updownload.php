@@ -63,6 +63,7 @@
        // spezielle tabellen nicht uebertragen und sperren:
        case 'leitvariable':
        case 'log':
+       case 'transactions':
          break;
        default:
          $tables = "$tables {$row[0]}";
@@ -70,7 +71,7 @@
      }
    }
 
-   $downloadname = "foodsoft.$foodsoftserver." . date('Ymd.Hi') . ".sql.gz" ;
+   $downloadname = "foodsoft.$foodsoftserver." . date('Ymd.Hi') . ".sql" ;
 
    get_http_var( 'action', 'w', '' );
 
@@ -111,10 +112,11 @@
        echo "<div class='warn'>Keine Datei uebergeben!</div>";
        exit();
      }
-     // exitcode 2 ist bei gzip auch erfolgreich!
-     $command = "
-       $gzip -dc $tmpfile | $mysql -h $db_server -u $db_user -p$db_pwd $db_name ;
-     " . 'a="${PIPESTATUS[*]}"; [ "$a" == "0 0" -o "$a" == "2 0" ]';
+//    exitcode 2 ist bei gzip auch erfolgreich!
+//     $command = "
+//       $gzip -dc $tmpfile | $mysql -h $db_server -u $db_user -p$db_pwd $db_name ;
+//     " . 'a="${PIPESTATUS[*]}"; [ "$a" == "0 0" -o "$a" == "2 0" ]';
+     $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name -T 2>&1 < $tmpfile";
      system( $command, &$return );
      if( $return != 0 ) {
        echo "<div class='warn'>Hochladen fehlgeschlagen: $return $mysql $gzip</div>";
@@ -166,16 +168,20 @@
           ( \"upload_ursprung\", \"$foodsoftserver\", 1, \"Server auf dem das zuletzt hochgeladene Dump erzeugt wurde\" )
          ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
      ";
+//       $command = "
+//         {
+//           $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 &&
+//           echo '
+//             $leit_sql
+//           ';
+//         } | $gzip ;
+//       " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
+     //
      $command = "
-       {
-         $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 &&
-         echo '
-           $leit_sql
-         ';
-       } | $gzip ;
-     " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
+       $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
+     ";
      // echo "command: <pre>$command</pre>";
-     header("Content-Type: application/gzip");
+     header("Content-Type: application/data");
      header("Content-Disposition: filename=$downloadname");
      system( $command, &$return );
      if( $return != 0 ) {
