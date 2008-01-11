@@ -69,6 +69,7 @@
     <table style="width:600px;" class="liste">
       <tr>
         <th>Name</th>
+        <th>Lieferant</th>
         <th>Beginn</th>
         <th>Ende</th>
         <th>Produkte</th>
@@ -86,6 +87,7 @@
       echo "
         <tr>
           <td><a class='tabelle' href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>{$row['name']}</a></td>
+          <td>" . lieferant_name($row['lieferanten_id']) . "</td>
           <td>{$row['bestellstart']}</td>
           <td>{$row['bestellende']}</td>
           <td>$num</td>
@@ -95,6 +97,7 @@
       echo "
         <tr class='active'>
           <td style='font-weight:bold;'>{$row['name']}</td>
+          <td>" . lieferant_name($row['lieferanten_id']) . "</td>
           <td>{$row['bestellstart']}</td>
           <td>{$row['bestellende']}</td>
           <td>$num</td>
