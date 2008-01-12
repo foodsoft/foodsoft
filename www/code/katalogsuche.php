@@ -77,8 +77,10 @@ function katalogabgleich(
   $neednewprice = false;
 
   $katalogeintraege = katalogsuche( $artikel );
-  if( ! $katalogeintraege )
+  if( ! $katalogeintraege ) {
+    formular_artikelnummer( $produkt_id, false, true );
     return 3;
+  }
 
   $katalogtreffer = $katalogeintraege['count'];
   if( ! $katalogtreffer ) {
