@@ -528,10 +528,8 @@
 	
 								<!-- Bestelltabelle Anfang -->
 								
-	      <form name="bestellForm" action="index.php" method="POST">
-				   <input type="hidden" name="area" value="bestellen">
-					 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-					 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+	      <form name="bestellForm" action="<? echo self_url(); ?>" method="post">
+           <? echo self_post(); ?>
 					 <input type="hidden" name="isChanged">
 					 <input type="hidden" name="action">
 				<table class='numbers' width='100%' style="margin:40px 0 0 0;">
@@ -1066,7 +1064,7 @@
 													}
 											 ?>
 											<tr>
-													<td align="left">
+													<td style='text-align:left;white-space:nowrap;'>
 													<input type="button" value="<" onClick="changeMenge('<?PHP echo $produkt_row['id']; ?>',-1,0)">
 													<input type="button" value=">" onClick="changeMenge('<?PHP echo $produkt_row['id']; ?>',1,0)"></td>
 											 </tr>
@@ -1095,7 +1093,7 @@
 											}
 									 ?>
 										<tr>
-											<td align="left">
+											<td style='text-align:left;white-space:nowrap;'>
 												<input type="button" value="<" onClick="changeMenge('<?PHP echo $produkt_row['id']; ?>',-1,1)">
 												<input type="button" value=">" onClick="changeMenge('<?PHP echo $produkt_row['id']; ?>',1,1)">
 											</td>
@@ -1161,10 +1159,9 @@
 		    </form>
  
 <?php if( ! $readonly ) {  ?>
-   <h3> Zusätzlich Produkt in Bestellvorlage aufnehmen </h3>
-   <form method='post' action='index.php?area=bestellen'>
-	 <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-	 <input type="hidden" name="bestellungs_id" value="<?PHP echo $bestell_id; ?>">
+   <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
+   <form method='post' action='<? echo self_url(); ?>'>
+	 <? echo self_post(); ?>
 	     <?php
 	     	    select_products_not_in_list($bestell_id);
 	     ?>
@@ -1177,17 +1174,19 @@
 						 // prüfe ob sich durch zwischenzeitliche Bestellungen der anderen Bestellgruppen etwas geändert hatt und bereite den Hinweistext vor...
 						 if (isset($action) && $action == "bestellen") {
 								
-							 if (((double)$gesamt_preis - (double)$HTTP_GET_VARS['gesamt_preis']) >= 0.01) {
-							    $bestellungDurchfuehren = false;
-							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, leider ist die Bestellung dadurch teurer geworden!\\n Bitte die aktualisierte Bestellung nochmal prüfen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
-							 } else if (! $bestellungDurchfuehren) {	
-							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, die aktuelle Bestellung wurde geändert!\\n Bitte die aktualisierte Bestellung nochmal prüfen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
-						   } else if ($kontostand < $max_gesamt_preis) {
+// 							 if (((double)$gesamt_preis - (double)$HTTP_GET_VARS['gesamt_preis']) >= 0.01) {
+// 							    $bestellungDurchfuehren = false;
+// 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, leider ist die Bestellung dadurch teurer geworden!\\n Bitte die aktualisierte Bestellung nochmal prüfen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
+// 							 } else if (! $bestellungDurchfuehren) {	
+// 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, die aktuelle Bestellung wurde geändert!\\n Bitte die aktualisierte Bestellung nochmal prüfen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
+// 						   } else
+               if ($kontostand < $max_gesamt_preis) {
 							    $bestellungDurchfuehren = false;
 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Das Gruppenkonto weist kein ausreichendes Guthaben für diese Bestellung auf. Die Bestellungsdaten werden so NICHT AKTUALISIERT!!\\n Bitte die Bestellung ändern.');\n  geandert=true; \n--> \n</script>\n";
-							} else if (((double)$HTTP_GET_VARS['gesamt_preis'] - (double)$gesamt_preis) >= 0.01) {
-							   echo "<script type='text/javascript'>\n <!--\n alert('Andere Bestellgruppen haben in der Zwischenzeit bestellt. Der Preis der Bestellung hat sich verbessert!!\\n Die Bestellung wurde aufgenommen.');\n  geandert=false; \n--> \n</script>\n";
 							}
+//               else if (((double)$HTTP_GET_VARS['gesamt_preis'] - (double)$gesamt_preis) >= 0.01) {
+// 							   echo "<script type='text/javascript'>\n <!--\n alert('Andere Bestellgruppen haben in der Zwischenzeit bestellt. Der Preis der Bestellung hat sich verbessert!!\\n Die Bestellung wurde aufgenommen.');\n  geandert=false; \n--> \n</script>\n";
+// 							}
 								
 					 }
 		
