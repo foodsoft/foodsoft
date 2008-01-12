@@ -152,7 +152,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 
     }
     // Als nicht geliefert markierte Produkte löschen
-    if(get_http_var( 'nichtGeliefert')){
+    if(get_http_var( 'nichtGeliefert[]','u')){
     	foreach($nichtGeliefert as $p_id){
     		nichtGeliefert($bestell_id, $p_id);
     	}
