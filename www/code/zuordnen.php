@@ -3054,7 +3054,7 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 }
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
