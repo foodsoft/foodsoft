@@ -82,7 +82,9 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        case "Vorgeschlagen":
 	    if($gruppe == $row["gruppen_id"]){
 	    ?>
-	       <font color="<?echo $color_not_accepted?>"> Dieser Dienst ist euch zugeteilt <br>
+	       <b><font color="<?echo $color_not_accepted?>">
+                <? echo "(Gruppe".($row["gruppen_id"] % 1000).": ".$row["name"].")";?>
+                Dieser Dienst ist euch zugeteilt</b> <br>
 	       <?if($show_buttons){?>
 	       <form action="index.php">
 	       <input type="hidden" name="area" value=<?echo $area?>>

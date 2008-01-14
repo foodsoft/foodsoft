@@ -163,7 +163,7 @@
 		           sql_dienst_wird_offen($command[1]);
 		       } else {
 		           ?> 
-			   Bitte Ausweichdatum auswählen:
+			   <div class='warn'>Bitte Ausweichdatum auswählen:</div>
 			   <form name=tauschdatum" action="index.php" method="post">
 		            <input type="hidden" name="aktion" value="abtauschen_<?echo $command[1]?>">
 	                   <input type="hidden" name="area" value="dienstplan">	
