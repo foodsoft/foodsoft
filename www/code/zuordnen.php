@@ -1084,9 +1084,13 @@ function optionen_gruppen(
  * html-Warnung
  */
 function check_new_group_nr($newNummer){
-    global $problems;
+    global $problems, $specialgroups;
     if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
       $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
+      return FALSE;
+    }
+    if( in_array( $newNummer, $specialgroups ) ) {
+      $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer (reserviert fuer Basar oder Muell)</div>";
       return FALSE;
     }
     $id = $newNummer;
