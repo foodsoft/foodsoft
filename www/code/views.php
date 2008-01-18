@@ -1080,14 +1080,15 @@ function distribution_tabellenkopf($name){
  
   <?
 }
-function distribution_view($name, $festmenge, $toleranz, $verteilmenge, $verteilmult, $verteileinheit, $preis
+function distribution_view($gruppen_id, $festmenge, $toleranz, $verteilmenge, $verteilmult, $verteileinheit, $preis
   , $inputbox_name = false, $summenzeile = false ){
+  $gruppe = sql_gruppendaten( $gruppen_id );
   if( $summenzeile )
     echo "<tr class='summe'>";
   else
     echo "<tr>";
   echo "
-      <td>$name</td>
+      <td>{$gruppe['gruppennummer']} {$gruppe['name']}</td>
       <td class='mult'><b>" . $festmenge * $verteilmult . " </b> (" . $toleranz * $verteilmult . ")</td>
       <td class='unit'>$verteileinheit</td>
       <td class='mult'>

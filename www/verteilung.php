@@ -20,8 +20,6 @@
     return;
 	}
 
-  get_http_var('gruppen_id','u',0);
-
   if(!nur_fuer_dienst(1,4)){exit();}
 
     if (!isset($bestell_id)) {
@@ -88,7 +86,6 @@ setWikiHelpTopic( "foodsoft:verteilung" );
 		  $entry_row = mysql_fetch_array($result);
 		  while ($entry_row) {
 			$gruppenID=$entry_row['bestellguppen_id'];
-		  	$gruppenname=sql_gruppenname($gruppenID);
 		  	if($entry_row['art']==0){
 				$festmenge = 0;
 				while($entry_row['art']==0 and $entry_row['bestellguppen_id']==$gruppenID){
@@ -133,7 +130,7 @@ setWikiHelpTopic( "foodsoft:verteilung" );
 			
 
        if($gruppenID != $basar){
-		       distribution_view($gruppenname, $festmenge, $toleranz, $verteil,
+		       distribution_view($gruppenID, $festmenge, $toleranz, $verteil,
              $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit'],
              $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
        }
