@@ -55,7 +55,7 @@ function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr){
     number_selector($jahr_feld, 2004, 2011, $jahr,"%04d");
 }
 function time_selector($stunde_feld, $stunde, $minute_feld, $minute){
-    number_selector($stunde_feld, 0, 24, $stunde,"%02d");
+    number_selector($stunde_feld, 0, 23, $stunde,"%02d");
     echo ":";
     number_selector($minute_feld,0, 59, $minute,"%02d");
 }
