@@ -176,7 +176,8 @@ echo $options;
         <? while( $trans = mysql_fetch_array( $ungebuchte_einzahlungen ) ) { ?>
           <tr>
             <td><? echo $trans['eingabedatum_trad']; ?></td>
-	    <td><? echo sql_gruppenname( $trans['gruppen_id'] )."<ul>";
+	    <td><? echo sql_gruppenname( $trans['gruppen_id'] )
+           . " (".sql_gruppennummer( $trans['gruppen_id'] ).")<ul>";
                    $members=sql_gruppen_members($trans['gruppen_id']);
                    while($pers = mysql_fetch_array($members)){
 			   echo "<li>".$pers["vorname"]." ".$pers["name"]."</li>";

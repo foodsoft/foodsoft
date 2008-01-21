@@ -991,6 +991,10 @@ function sql_gruppenname($gruppen_id){
   return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ) , 'name' );
 }
 
+function sql_gruppennummer($gruppen_id){
+  return $gruppen_id % 1000;
+}
+
 /*
  * sql_beteiligte_gruppen: SELECT
  * - alle an einer gesamtbestellung beteiligten (durch bestellung oder zuordnung!) gruppen,
