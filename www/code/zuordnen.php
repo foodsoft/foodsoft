@@ -242,9 +242,9 @@ function sql_dienst_akzeptieren($dienst){
 function sql_dienst_wird_offen($dienst){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
-  if($row["GruppenID"]!=$login_gruppen_id || 
+  if($row["gruppen_id"]!=$login_gruppen_id || 
          ($row["Status"]!="Vorgeschlagen" && $row["Status"]!="Bestaetigt" && $row["Status"]!="Akzeptiert")){
-       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["GruppenID"].") oder falscher Status ".$row["Status"]);
+       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
   //OK, wir dürfen den Dienst ändern
   $sql = "UPDATE Dienste SET Status = 'Offen' WHERE ID = ".$dienst;
@@ -258,7 +258,7 @@ function sql_dienst_abtauschen($dienst, $bevorzugt){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
   if($row["gruppen_id"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
-       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["GruppenID"].") oder falscher Status ".$row["Status"]);
+       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
   $sql = "SELECT * from Dienste 
           WHERE Lieferdatum = '".$bevorzugt.
@@ -297,7 +297,9 @@ function sql_dienst_uebernehmen($dienst){
        $status = "Akzeptiert";
   }
 
-  sql_create_dienst2($login_gruppen_id,$row["Dienst"], "'".$row["Lieferdatum"]."'", $status);
+  $personen = sql_gruppen_members($login_gruppen_id);
+  $person = mysql_fetch_array($personen);
+  sql_create_dienst2($person["id"],$row["Dienst"], "'".$row["Lieferdatum"]."'", $status);
 
 }
 
