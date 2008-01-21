@@ -176,7 +176,12 @@ echo $options;
         <? while( $trans = mysql_fetch_array( $ungebuchte_einzahlungen ) ) { ?>
           <tr>
             <td><? echo $trans['eingabedatum_trad']; ?></td>
-            <td><? echo sql_gruppenname( $trans['gruppen_id'] ); ?></td>
+	    <td><? echo sql_gruppenname( $trans['gruppen_id'] )."<ul>";
+                   $members=sql_gruppen_members($trans['gruppen_id']);
+                   while($pers = mysql_fetch_array($members)){
+			   echo "<li>".$pers["vorname"]." ".$pers["name"]."</li>";
+                   }
+                ?></ul></td>
             <td><? printf( "%.2lf", $trans['summe'] ); ?></td>
             <td>
               <? if( $editable and $auszug_jahr and $auszug_nr ) { ?>
