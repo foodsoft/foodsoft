@@ -929,6 +929,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       <th>Lieferung</th>
         <!-- <th>Ausgang</th>
         <th>Bezahlung</th> -->
+      <th> Summe </th>
       <th> Detailansicht </th>
 <?
   if( $changeState || $editDates )
@@ -959,6 +960,17 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       <td><? echo $row['bestellstart']; ?></td>
       <td><? echo $row['bestellende']; ?></td>
       <td><? echo $row['lieferung']; ?></td>
+      <td><?
+        $id = $row['abrechnung_dienstkontrollblatt_id'];
+        if( $id ) {
+          printf( "<div>%.2lf</div><div style='font-size:smaller;'>%s</div"
+          , $row['rechnungssumme']
+          , dienstkontrollblatt_name( $id )
+          );
+        } else {
+          echo "-";
+        }
+      ?></td>
   <!--
       <td><? echo $row['ausgang']; ?></td>
       <td><? echo $row['bezahlung']; ?></td>
