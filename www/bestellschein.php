@@ -309,7 +309,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
                   </tr>
                   <tr>
                     <td>Kommentar:</td>
-                    <td><kbd>Verlust: <? $bestellung['name']; ?>: <input type='text' size='40' name='abschluss_kommentar' value=''></kbd></td>
+                    <td><kbd>Verlust: <? echo $bestellung['name']; ?>: <input type='text' size='40' name='abschluss_kommentar' value=''></kbd></td>
                   </tr>
                 <? } else if( $fehl < 0 ) { ?>
                   <tr>
