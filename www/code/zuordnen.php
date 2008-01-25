@@ -2187,7 +2187,7 @@ function sql_groupGlass($gruppe, $menge){
 function sql_lieferant_glass( $lieferanten_id, $gutschrift, $valuta ) {
   $muell_id = sql_muell_id();
   sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id, 'transaktionsart' => 1 )
+    array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
   , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id, 'transaktionsart' => 1 )
   , $gutschrift
   , $valuta
