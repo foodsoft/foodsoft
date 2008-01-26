@@ -115,7 +115,13 @@ function sql_insert( $table, $values, $update_cols = false ) {
 function need( $exp, $comment = "Fataler Fehler" ) {
   global $print_on_exit;
   if( ! $exp ) {
-    echo "<div class='warn'>$comment</div>$print_on_exit";
+    ?>
+      <div class='warn'>
+        <? echo $comment; ?>
+        <a href='<? echo self_url(); ?>'>weiter...</a>
+      </div>
+    <?
+    echo "$print_on_exit";
     exit();
   }
   return true;
@@ -2247,14 +2253,14 @@ function buchung_gruppe_bank() {
 function buchung_lieferant_bank() {
   global $betrag, $lieferanten_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
   $betrag or need_http_var( 'betrag', 'f' );
-  $lieferanten_id or need_http_var( 'lieferanten_id', 'u' );
-  $day or need_http_var( 'day', 'u' );
-  $month or need_http_var( 'month', 'u' );
-  $year or need_http_var( 'year', 'u' );
+  $lieferanten_id or need_http_var( 'lieferanten_id', 'U' );
+  $day or need_http_var( 'day', 'U' );
+  $month or need_http_var( 'month', 'U' );
+  $year or need_http_var( 'year', 'U' );
   $notiz or need_http_var( 'notiz', 'H' );
-  $konto_id or need_http_var( 'konto_id', 'u' );
-  $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
-  $auszug_nr or need_http_var( 'auszug_nr', 'u' );
+  $konto_id or need_http_var( 'konto_id', 'U' );
+  $auszug_jahr or need_http_var( 'auszug_jahr', 'U' );
+  $auszug_nr or need_http_var( 'auszug_nr', 'U' );
   $notiz or get_http_var( 'notiz', 'H' );
   get_http_var( 'notiz', 'H' );
   sql_doppelte_transaktion(
@@ -2269,12 +2275,12 @@ function buchung_lieferant_bank() {
 function buchung_gruppe_lieferant() {
   global $betrag, $lieferanten_id, $gruppen_id, $notiz, $day, $month, $year;
   $betrag or need_http_var( 'betrag', 'f' );
-  $lieferanten_id or need_http_var( 'lieferanten_id', 'u' );
-  $gruppen_id or need_http_var( 'gruppen_id', 'u' );
+  $lieferanten_id or need_http_var( 'lieferanten_id', 'U' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'U' );
   $notiz or need_http_var( 'notiz', 'H' );
-  $day or need_http_var( 'day', 'u' );
-  $month or need_http_var( 'month', 'u' );
-  $year or need_http_var( 'year', 'u' );
+  $day or need_http_var( 'day', 'U' );
+  $month or need_http_var( 'month', 'U' );
+  $year or need_http_var( 'year', 'U' );
   sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
   , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
@@ -2288,12 +2294,12 @@ function buchung_gruppe_gruppe() {
   global $betrag, $gruppen_id, $nach_gruppen_id, $notiz, $day, $month, $year;
   // echo "buchung_gruppe_gruppe: 1";
   $betrag or need_http_var( 'betrag', 'f' );
-  $gruppen_id or need_http_var( 'gruppen_id', 'u' );
-  $nach_gruppen_id or need_http_var( 'nach_gruppen_id', 'u' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'U' );
+  $nach_gruppen_id or need_http_var( 'nach_gruppen_id', 'U' );
   $notiz or need_http_var( 'notiz', 'H' );
-  $day or need_http_var( 'day', 'u' );
-  $month or need_http_var( 'month', 'u' );
-  $year or need_http_var( 'year', 'u' );
+  $day or need_http_var( 'day', 'U' );
+  $month or need_http_var( 'month', 'U' );
+  $year or need_http_var( 'year', 'U' );
   sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id )
   , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
@@ -2310,16 +2316,16 @@ function buchung_bank_bank() {
        , $notiz, $day, $month, $year;
   // echo "buchung_bank_bank: 1";
   $betrag or need_http_var( 'betrag', 'f' );
-  $konto_id or need_http_var( 'konto_id', 'u' );
-  $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
-  $auszug_nr or need_http_var( 'auszug_nr', 'u' );
-  $nach_konto_id or need_http_var( 'nach_konto_id', 'u' );
-  $nach_auszug_jahr or need_http_var( 'nach_auszug_jahr', 'u' );
-  $nach_auszug_nr or need_http_var( 'nach_auszug_nr', 'u' );
+  $konto_id or need_http_var( 'konto_id', 'U' );
+  $auszug_jahr or need_http_var( 'auszug_jahr', 'U' );
+  $auszug_nr or need_http_var( 'auszug_nr', 'U' );
+  $nach_konto_id or need_http_var( 'nach_konto_id', 'U' );
+  $nach_auszug_jahr or need_http_var( 'nach_auszug_jahr', 'U' );
+  $nach_auszug_nr or need_http_var( 'nach_auszug_nr', 'U' );
   $notiz or need_http_var( 'notiz', 'H' );
-  $day or need_http_var( 'day', 'u' );
-  $month or need_http_var( 'month', 'u' );
-  $year or need_http_var( 'year', 'u' );
+  $day or need_http_var( 'day', 'U' );
+  $month or need_http_var( 'month', 'U' );
+  $year or need_http_var( 'year', 'U' );
   sql_doppelte_transaktion(
     array( 'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr )
   , array( 'konto_id' => $nach_konto_id, 'auszug_jahr' => $nach_auszug_jahr, 'auszug_nr' => $nach_auszug_nr )
@@ -3466,6 +3472,10 @@ function checkvalue( $val, $typ){
 	      break;
       case 'R':
         break;
+	    case 'U':
+	      $val = trim($val);
+	      $pattern = '/^\d*[1-9]\d*$/';
+	      break;
 	    case 'u':
 		    //FIXME: zahl sollte als zahl zurückgegeben 
 		    //werden, zur Zeit String
@@ -3499,7 +3509,8 @@ function checkvalue( $val, $typ){
 // get_http_var:
 // - name: wenn name auf [] endet, wird ein array erwartet (aus <input name='bla[]'>)
 // - typ: definierte $typ argumente:
-//   u (default wenn name auf _id endet): positive ganze Zahl
+//   u (default wenn name auf _id endet): nicht-negative ganze Zahl
+//   U positive ganze Zahl (also echt groesser als NULL)
 //   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
 //   H : wendet htmlspecialchars an (erlaubt sichere und korrekte ausgabe in HTML)
 //   R : raw: keine Einschraenkung, keine Umwandlung
@@ -3624,10 +3635,7 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
  *
  */
 function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
-  if( ! get_http_var( $name, $typ, NULL, $is_self_field ) ) {
-    error( __FILE__, __LINE__, "variable $name nicht uebergeben" );
-    exit();
-  }
+  need( get_http_var( $name, $typ, NULL, $is_self_field ), "variable $name nicht uebergeben" );
   return TRUE;
 }
 /**
