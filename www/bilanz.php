@@ -36,6 +36,7 @@ function rubrik( $name ) {
 }
 function posten( $name, $wert ) {
   global $erster_posten, $seitensumme;
+  $wert += 0.00499;
   $class = ( $wert < 0 ? 'rednumber' : 'number' );
   printf( "
     <tr class='%s'>

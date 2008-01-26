@@ -86,8 +86,8 @@ if( $auszug ) {
   $self_fields['auszug_jahr'] = $auszug_jahr;
   $self_fields['auszug_nr'] = $auszug_nr;
 } else {
-  get_http_var( 'auszug_jahr', 'u', 0, true );
-  get_http_var( 'auszug_nr', 'u', 0, true );
+  get_http_var( 'auszug_jahr', 'u', 0, true ) or $auszug_jahr = 0;
+  get_http_var( 'auszug_nr', 'u', 0, true ) or $auszug_nr = 0;
 }
 
 $auszuege = sql_kontoauszug( $konto_id );
