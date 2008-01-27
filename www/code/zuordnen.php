@@ -185,11 +185,7 @@ function use_filters( $using, $rules ) {
   return $filters;
 }
 
-/*
-ALTER TABLE `gesamtbestellungen` ADD `state` ENUM( 'bestellen', 'beimLieferanten', 'Verteilt', 'archiviert' ) NOT NULL DEFAULT 'bestellen';
 
-ALTER TABLE `gesamtbestellungen` ADD INDEX ( `state` ) ;
-*/
  define('STATUS_BESTELLEN', "bestellen");
  define('STATUS_LIEFERANT', "beimLieferanten");
  define('STATUS_VERTEILT', "Verteilt");
@@ -1345,9 +1341,10 @@ function changeState($bestell_id, $state){
   $changes = "state = '$state'";
   switch( "$current,$state" ){
     case STATUS_BESTELLEN . "," . STATUS_LIEFERANT:
+      need( $bestellung['bestellende'] < $mysqljetzt , "Fehler: Bestellung läuft noch!" );
       $do_verteilmengen_zuweisen = true;  // erst nach statuswechsel ausfuehren!
-      if( $bestellung['bestellende'] > $mysqljetzt )
-        $changes .= ", bestellende=NOW()";
+      // if( $bestellung['bestellende'] > $mysqljetzt )
+      //   $changes .= ", bestellende=NOW()";
       break;
     case STATUS_LIEFERANT . "," . STATUS_BESTELLEN:
       verteilmengenLoeschen( $bestell_id );

@@ -13,8 +13,8 @@
     $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
     echo "<h1>Bestellen f&uuml;r den Basar</h1>";
   } else {
-    //Nur aktuell gültige Bestellungen
-    $useDate = TRUE;
+    // Neu: alle duerfen weiter bestellen, solange STATUS_BESTELLEN besteht:
+    $useDate = FALSE;
     $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
     echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
   }
@@ -84,15 +84,17 @@
     $res = mysql_query($sql);
     $num = mysql_num_rows($res);
     if( $row['id'] != $bestell_id ) {
-      echo "
+      ?>
         <tr>
-          <td><a class='tabelle' href='" . self_url('bestell_id') . "&bestell_id={$row['id']}'>{$row['name']}</a></td>
-          <td>" . lieferant_name($row['lieferanten_id']) . "</td>
-          <td>{$row['bestellstart']}</td>
-          <td>{$row['bestellende']}</td>
-          <td>$num</td>
+          <td><a class='tabelle' href='<? echo self_url('bestell_id'); ?>&bestell_id=<? echo $row['id']; ?>'
+              ><? echo $row['name']; ?></a></td>
+          <td><? echo lieferant_name($row['lieferanten_id']); ?></td>
+          <td><? echo $row['bestellstart']; ?></td>
+          <td <? if( $row['bestellende'] < $mysqljetzt ) echo "class='rednumber'"; ?>
+             ><? echo $row['bestellende']; ?></td>
+          <td><? echo $num; ?></td>
         </tr>
-      ";
+      <?
     } else {
       echo "
         <tr class='active'>
@@ -113,6 +115,9 @@
   <?
 
   if( ! $bestell_id )
+    return;
+
+  if( getState($bestell_id) != STATUS_BESTELLEN )
     return;
 
 

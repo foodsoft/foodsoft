@@ -288,7 +288,7 @@ tr.ersterposten td {
 tr.posten td.number, tr.ersterposten td.number {
   font-weight:bold;
 }
-tr.posten td.rednumber, tr.ersterposten td.rednumber {
+tr.posten td.rednumber, tr.ersterposten td.rednumber, td.rednumber {
   color:#ff0000;
   font-weight:bold;
 }

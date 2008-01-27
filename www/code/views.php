@@ -915,7 +915,7 @@ function areas_in_head($area){
  * Liste zur Auswahl einer Bestellung via Link
  */
 function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:", $editDates = false, $changeState = false ) {
-  global $self, $self_fields, $foodsoftdir, $dienst, $login_gruppen_id, $hat_dienst_IV;
+  global $self, $self_fields, $foodsoftdir, $dienst, $login_gruppen_id, $hat_dienst_IV, $mysqljetzt;
 
   if( $head )
     echo "<h1 style='margin-bottom:2em;'>$head</h1>";
@@ -988,16 +988,18 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         if( $editDates )
           $aktionen .= "<li>$edit_link</li>";
         if( $changeState ) {
-          if( $dienst == 4 ) {
-            $aktionen .= "<li>$self_form
-              <input type='hidden' name='action' value='changeState'>
-              <input type='hidden' name='change_id' value='$id'>
-              <input type='hidden' name='change_to' value='beimLieferanten'>
-              <input type='submit' class='button' name='submit'
-                title='Jetzt Bestellschein für Lieferanten fertigmachen?'
-                value='> Bestellschein fertigmachen >'>
-              </form></li>
-            ";
+          if( $dienst == 4 )  {
+            if ( $row['bestellende'] < $mysqljetzt ) {
+              $aktionen .= "<li>$self_form
+                <input type='hidden' name='action' value='changeState'>
+                <input type='hidden' name='change_id' value='$id'>
+                <input type='hidden' name='change_to' value='beimLieferanten'>
+                <input type='submit' class='button' name='submit'
+                  title='Jetzt Bestellschein für Lieferanten fertigmachen?'
+                  value='> Bestellschein fertigmachen >'>
+                </form></li>
+              ";
+            }
           }
         }
         break;
