@@ -88,24 +88,21 @@
         <tr>
           <td><a class='tabelle' href='<? echo self_url('bestell_id'); ?>&bestell_id=<? echo $row['id']; ?>'
               ><? echo $row['name']; ?></a></td>
-          <td><? echo lieferant_name($row['lieferanten_id']); ?></td>
-          <td><? echo $row['bestellstart']; ?></td>
-          <td <? if( $row['bestellende'] < $mysqljetzt ) echo "class='rednumber'"; ?>
-             ><? echo $row['bestellende']; ?></td>
-          <td><? echo $num; ?></td>
-        </tr>
       <?
     } else {
-      echo "
+      ?>
         <tr class='active'>
-          <td style='font-weight:bold;'>{$row['name']}</td>
-          <td>" . lieferant_name($row['lieferanten_id']) . "</td>
-          <td>{$row['bestellstart']}</td>
-          <td>{$row['bestellende']}</td>
-          <td>$num</td>
-        </tr>
-      ";
+          <td style='font-weight:bold;'><? echo $row['name']; ?></td>
+      <?
     }
+    ?>
+      <td><? echo lieferant_name($row['lieferanten_id']); ?></td>
+      <td><? echo $row['bestellstart']; ?></td>
+      <td <? if( $row['bestellende'] < $mysqljetzt ) echo "style='font-weight:bold;'"; ?>
+         ><? echo $row['bestellende']; ?></td>
+      <td><? echo $num; ?></td>
+      </tr>
+    <?
   }
   ?>
         </table>

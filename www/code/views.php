@@ -999,6 +999,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
                   value='> Bestellschein fertigmachen >'>
                 </form></li>
               ";
+            } else {
+              $aktionen .= "<li style='font-weight:bold;'>Bestellung läuft noch!</li>";
             }
           }
         }
