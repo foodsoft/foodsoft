@@ -520,11 +520,6 @@
             assert( $bestell_id ) and  // TODO: sollte hier immer erfuellt sein?
             sql_insert_bestellvorschlaege( $produkt_id, $bestell_id );
 					}
-					  // jetzt werden die anderen bestellungen angezeigt...
-					 				// aber nur wenn es mehrere gibt ...
-					 				
-					 				// die aktuellen bestellungen werden ausgelesen ...
-					$result = sql_bestellungen( STATUS_BESTELLEN, $useDate);
 					
 		 ?>
 	
