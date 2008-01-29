@@ -937,35 +937,35 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
   echo "</tr>";
 
   while ($row = mysql_fetch_array($result)) {
-    $id = $row['id'];
+    $bestell_id = $row['id'];
     $detail_url = "javascript:neuesfenster('"
            . "$foodsoftdir/index.php?window=bestellschein"
-           . "&bestell_id=$id"
+           . "&bestell_id=$bestell_id"
            . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
            . "','bestellschein');";
-    $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$id','bestellfax');";
-    $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestellungs_id=$id','Verteil-Liste');";
+    $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$bestell_id','bestellfax');";
+    $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestellungs_id=$bestell_id','Verteil-Liste');";
     $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
     $edit_link = "<a class='png' style='padding:0pt 1ex 0pt 1ex;'
-      href=\"javascript:window.open('index.php?window=editBestellung&bestell_id=$id','editBestellung','width=400,height=420,left=100,top=100').focus();\">
+      href=\"javascript:window.open('index.php?window=editBestellung&bestell_id=$bestell_id','editBestellung','width=400,height=420,left=100,top=100').focus();\">
       <img src='img/b_edit.png' border='0' alt='Daten der Bestellung ändern' title='Daten der Bestellung ändern'>
       edieren...</a>
     ";
     $aktionen = "";
 
     ?>
-      <tr id='row<?echo $id; ?>'>
+      <tr id='row<?echo $bestell_id; ?>'>
       <td><?echo $row['name']?></td>
       <td><? echo $row['state']; ?></td>
       <td><? echo $row['bestellstart']; ?></td>
       <td><? echo $row['bestellende']; ?></td>
       <td><? echo $row['lieferung']; ?></td>
       <td><?
-        $id = $row['abrechnung_dienstkontrollblatt_id'];
-        if( $id ) {
+        $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
+        if( $abrechnung_dienstkontrollblatt_id ) {
           printf( "<div>%.2lf</div><div style='font-size:smaller;'>%s</div"
           , $row['rechnungssumme']
-          , dienstkontrollblatt_name( $id )
+          , dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id )
           );
         } else {
           echo "-";
@@ -992,7 +992,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
             if ( $row['bestellende'] < $mysqljetzt ) {
               $aktionen .= "<li>$self_form
                 <input type='hidden' name='action' value='changeState'>
-                <input type='hidden' name='change_id' value='$id'>
+                <input type='hidden' name='change_id' value='$bestell_id'>
                 <input type='hidden' name='change_to' value='beimLieferanten'>
                 <input type='submit' class='button' name='submit'
                   title='Jetzt Bestellschein für Lieferanten fertigmachen?'
@@ -1021,7 +1021,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           if( $hat_dienst_IV ) {
             $aktionen .= "<li>$self_form
               <input type='hidden' name='action' value='changeState'>
-              <input type='hidden' name='change_id' value='$id'>
+              <input type='hidden' name='change_id' value='$bestell_id'>
               <input type='hidden' name='change_to' value='bestellen'>
               <input type='submit' class='button' name='submit'
                 title='Bestellung nochmal zum Bestellen freigeben?'
@@ -1032,7 +1032,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           if( $dienst > 0 ) {
             $aktionen .= "<li>$self_form
               <input type='hidden' name='action' value='changeState'>
-              <input type='hidden' name='change_id' value='$id'>
+              <input type='hidden' name='change_id' value='$bestell_id'>
               <input type='hidden' name='change_to' value='Verteilt'>
               <input type='submit' class='button' name='submit'
                 title='Bestellung wurde geliefert, Lieferschein abgleichen?'

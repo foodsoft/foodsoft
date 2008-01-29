@@ -1428,7 +1428,7 @@ function select_gesamtbestellungen_schuldverhaeltnis() {
 function sql_bestellung( $id ) {
   $result = sql_bestellungen( false, false, $id );
   if( ! $result or mysql_num_rows( $result ) != 1 ) {
-    error( __LINE__, __FILE__, "Lesen der Gesamtbestellung fehlgeschlagen" );
+    error( __LINE__, __FILE__, "Lesen der Gesamtbestellung $id fehlgeschlagen" );
     exit();
   }
   return mysql_fetch_array( $result );
