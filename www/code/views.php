@@ -82,8 +82,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        case "Vorgeschlagen":
 	    if($gruppe == $row["gruppen_id"]){
 	    ?>
-	       <b><font color="<?echo $color_not_accepted?>">
-                <? echo "(Gruppe".($row["gruppen_id"] % 1000).": ".$row["name"].")";?>
+	       <b>
+                <?    show_dienst_gruppe($row, $color_not_accepted); ?>
                 Dieser Dienst ist euch zugeteilt</b> <br>
 	       <?if($show_buttons){?>
 	       <form action="index.php">
@@ -103,11 +103,11 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	    <?
 	    } else {
 		    ?>
-		    <font color="<?echo $color_not_accepted?>">
-		    Noch nicht akzeptiert
+		    Noch nicht akzeptiert (
 		    
 		    <?
-                    echo "(Gruppe".($row["gruppen_id"] % 1000).": ".$row["name"].")</font>";
+	            show_dienst_gruppe($row, $color_not_accepted);
+		    echo ")";
 	            if( $soon){
 
 		       ?>
@@ -138,7 +138,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	       }
        	    break;
        case "Geleistet":
-            echo "<font color=".$color_norm.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+	       show_dienst_gruppe($row, $color_norm);
        	    break;
        case "Akzeptiert":
             $color_use = $color_not_confirmed;
@@ -147,7 +147,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
             if(!isset($color_use)){
 	    	$color_use = $color_norm;
 	    }
-            echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+	    show_dienst_gruppe($row, $color_use);
        	    if($gruppe == $row["gruppen_id"]){
 	    ?>
 	       <?if($show_buttons){?>
@@ -173,6 +173,11 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	    
 	    break;
        }
+}
+
+function show_dienst_gruppe($row, $color_use){
+     echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+
 }
 /**
  *  Zeigt ein Produkt als Bestellungsübersicht
@@ -1782,11 +1787,12 @@ function dienst_selector($pre_select, $id=""){
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)
  */
-function membertable_view($rows, $editable=FALSE, $super_edit=FALSE){
+function membertable_view($rows, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
 ?>
   <form method='post' class='big_form' action='<? echo self_url(); ?>'>
    
     <table class='liste'>
+  <?if($head){?>
       <tr>
          <th>Vorname</th>
          <th>Name</th>
@@ -1798,6 +1804,7 @@ function membertable_view($rows, $editable=FALSE, $super_edit=FALSE){
 		echo"
          <th>Optionen</th> ";
 	}
+    }
 ?>
       </tr>
 <?     

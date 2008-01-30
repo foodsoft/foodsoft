@@ -1,3 +1,14 @@
+Neue Gruppen: Das Passwort wird nicht angezeigt (und nicht angelegt?)
+
+Werden Personen gelöscht, wird der Sockelbetrag abgezogen, nicht
+gutgeschrieben.
+
+Neue Gruppen anlegen: Man kann noch spezielle/reservierte Gruppennr.
+verwenden.
+
+Gruppen: gelöschte Gruppen entsprechend hervorheben, im Moment ist
+nicht klar, ob eine Gruppe gelöscht ist.
+
 Fehler: Wenn Bestellung ohne gültiges Produkt (alle ohne Preis)
 erzeugt wird, macht die Foodsoft blödsinn.
 

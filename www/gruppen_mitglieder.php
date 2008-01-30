@@ -27,6 +27,7 @@ if( trim($login_gruppen_id) == $gruppen_id and ! $readonly){
 	  $edit_dienst_einteilung=TRUE;
   }
 
+
 if(get_http_var('action','w')){
 	if( $action == 'delete' ) {
 	     fail_if_readonly();
@@ -34,6 +35,18 @@ if(get_http_var('action','w')){
 	     need_http_var('person_id','u');
 	     sql_delete_group_member($person_id, $gruppen_id);
 
+	}
+	if ($action == "new_pwd") {
+		 need_http_var('newPass', 'w');
+		 need_http_var('newPass2', 'w');
+		 if($newPass==$newPass2){
+		 //$pwd = strval(rand(1000,9999));
+                     set_password( $gruppen_id, $newPass );
+		     $pwmsg =  "<div class='ok' style='padding:1em;'>Das neu angelegte Gruppenpasswort wurde gesetzt </div>";
+		 } else {
+		     $pwmsg =  "<div class='warn' style='padding:1em;'>Eingaben nicht identisch, Gruppenpasswort wurde nicht gändert </div>";
+
+		 }
 	}
 }
 
@@ -124,6 +137,29 @@ if(get_http_var('action','w')){
 		  get_http_var('newDienst[]', 'H');
 		  sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst[0]);
 	  }
+  }
+  if( $edit_names ) {
+    ?>
+      <form action='<? echo self_url(); ?>' name='optionen' class='small_form' method='post'>
+      <? echo self_post(); ?>
+			 <input type='hidden' name='action' value=''>
+       <fieldset style='width:350px;' class='small_form'>
+	  	   <legend>Passwort</legend>
+         <? if(isset($pwmsg)) echo $pwmsg; ?>
+         <table style='width:350px;' class='menu'>
+			     <tr>
+		 <td><input type='password' size='24' name='newPass'></td>
+		 <td><input type='password' size='24' name='newPass2'></td>
+				<td>
+                 <input type='button' value='Passwort &auml;ndern'
+                onClick="document.forms['optionen'].action.value='new_pwd';
+                document.forms['optionen'].submit();">
+              </td>
+			     </tr>
+	        </table>
+       </fieldset>
+      </form>
+    <?
   }
 
 

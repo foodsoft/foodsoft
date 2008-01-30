@@ -1235,6 +1235,7 @@ define( 'GRUPPEN_OPT_INAKTIV', 1 );
 define( 'GRUPPEN_OPT_SCHULDEN', 2 );
 define( 'GRUPPEN_OPT_GUTHABEN', 4 );
 define( 'GRUPPEN_OPT_UNGEBUCHT', 8 );
+define( 'GRUPPEN_OPT_DETAIL', 16 );
 
 
 ////////////////////////////////////

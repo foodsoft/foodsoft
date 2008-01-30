@@ -1,5 +1,4 @@
 <h1>Gruppenverwaltung...</h1>
-
 <?PHP
   
 assert( $angemeldet ) or exit();
@@ -8,7 +7,20 @@ $msg="";
 
 
 get_http_var( 'optionen', 'u', 0, true );
+$show_member_details= $optionen & GRUPPEN_OPT_DETAIL
+	
 
+?>
+<form action="input_checkbox.htm">
+          <input type='checkbox'
+            <? if( $optionen & GRUPPEN_OPT_DETAIL ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_DETAIL );
+            ?>';"
+            title='Details f&uuml;r Gruppenmitglieder anzeigen'
+          > Details f&uuml;r Gruppenmitglieder anzeigen
+</form>
+<?
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
 get_http_var('action','w','');
 $readonly and $action = '';
@@ -160,7 +172,7 @@ if( $action == 'cancel_payment' ) {
 
 
 // Hier ändern. Code in views verschieben, details in editGroup verschieben
-   $show_member_details=FALSE;
+   //$show_member_details=TRUE;
 
   echo $problems; echo $msg; 
 
@@ -305,7 +317,7 @@ if( $action == 'cancel_payment' ) {
 	<tr>
           <td/>
           <td colspan="4">
-	<?  membertable_view(sql_gruppen_members($id)); ?>
+	<?  membertable_view(sql_gruppen_members($id), FALSE,FALSE, FALSE); ?>
          <td/>
 <?
     }
