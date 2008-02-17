@@ -1083,7 +1083,7 @@ function select_products_not_in_list($bestell_id){
 	   $produkte=getProdukteVonLieferant(getProduzentBestellID($bestell_id), $bestell_id);
 	   while($prod = mysql_fetch_array($produkte)){
 		echo "<option value=\"".$prod['produkt_id']."\">".
-			$prod['name']." (".$prod['einheit'].") "."</option>\n";
+			$prod['name']." (".$prod['verteileinheit'].") "."</option>\n";
 	   }
 	 }
 	 echo "  </select>\n";
