@@ -158,7 +158,7 @@
     <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können -->
     <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
       <? echo self_post(); ?>
-      <input type='hidden' name='action' value=''>
+      <input type='hidden' name='action' value='nop'>
       <input type='hidden' name='produkt_id' value='0'>
     </form>
   <?
