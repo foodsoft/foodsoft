@@ -101,7 +101,7 @@
 					</td>
 			   </tr>	 
 		     <tr>
-			     <td><label>Produktgruppe <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?window=insertProduktgruppe','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></label></td>
+			    <td><label>Produktgruppe <a style="font-size:10pt; text-decoration:none;" href="javascript:window.open('index.php?window=insertProduktgruppe','produkteKategorie','width=250,height=350,left=200,top=100').focus()"> - neu</a></label></td>
 					<td>
 						<select <? echo $ro_tag; ?> name="produktgruppen_id">
             <? echo optionen_produktgruppen( isset( $produktgruppen_id ) ? $produktgruppen_id : 0 ); ?>
@@ -114,8 +114,10 @@
 						 <input <? echo $ro_tag; ?> name="notiz" type='text' size='52' value='<? echo $notiz; ?>'>
 					</td>
 			 </tr>	 
-			 <tr>
-			   <td colspan='2' align='center'>
+     </table>
+     <table width='100%'>
+       <tr>
+			   <td style='text-align:left;white-space:nowrap;'>
          <? if( ! $ro ) { ?>
            <input type='submit' value='<? echo ( $produkt_id ? 'Ändern' : 'Einfügen'); ?>'>
            &nbsp;
@@ -123,6 +125,14 @@
             <?  if( $ro or $done ) { ?>
               <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
             <? } ?>
+         </td>
+         <td style='text-align:right;'>
+           <? if( $produkt_id > 0 ) { ?>
+            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $produkt_id; ?>','produktdetails');"><img src='img/b_browse.png'
+              border='0' alt='Details und Preise' title='Details und Preise'>
+              Details und Preise...
+            </a>
+           <? } ?>
          </td>
 			 </tr>
 		</table>
