@@ -114,9 +114,6 @@ $preiseintrag_neu['notiz'] = FALSE;
 
 preishistorie_view( $produkt_id, $bestell_id, $editable );
 
-$prgueltig = false;
-if( $produkt['zeitstart'] )
-  $prgueltig = true;
 
 ///////////////////////////
 // Artikeldaten aus foodsoft-Datenbank anzeigen:
@@ -125,6 +122,9 @@ if( $produkt['zeitstart'] )
 // neu laden (falls durch $action geaendert):
 //
 $produkt = sql_produkt_details( $produkt_id );
+$prgueltig = false;
+if( $produkt['zeitstart'] )
+  $prgueltig = true;
 $lieferanten_id = $produkt['lieferanten_id'];
 $produkt_name = $produkt['name'];
 
