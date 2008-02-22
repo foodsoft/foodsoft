@@ -780,7 +780,10 @@ $areas[] = array("area" => "index.php?area=bilanz",
 if($hat_dienst_IV){
 	$areas[] = array("area" => "index.php?area=produkte",
 	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
-} 
+} else {
+	$areas[] = array("area" => "index.php?area=produkte",
+	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produktdatenbank");	 
+}
 	$areas[] = array("area" => "index.php?area=gruppen",
 	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
 	"title" => "Gruppen");		
