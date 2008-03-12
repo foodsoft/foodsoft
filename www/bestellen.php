@@ -117,6 +117,11 @@
   if( getState($bestell_id) != STATUS_BESTELLEN )
     return;
 
+  $gesamtbestellung = sql_bestellung( $bestell_id );
+  if( $gesamtbestellung['bestellende'] < $mysqljetzt ) {
+
+  }
+
 
   // ab hier: eigentliches bestellformular:
 

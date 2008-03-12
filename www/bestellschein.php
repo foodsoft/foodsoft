@@ -21,7 +21,6 @@ if( get_http_var( 'bestellungs_id', 'u' ) ) {
 }
 
 get_http_var( 'action', 'w', '' );
-echo "<!-- action: $action -->";
 switch( $action ) {
   case 'changeState':
     fail_if_readonly();

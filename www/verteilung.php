@@ -66,6 +66,7 @@ setWikiHelpTopic( "foodsoft:verteilung" );
 				     2, //art
 	 			     false, //gruppen_id
 				     false); //sortByDate
+
 	 if(mysql_num_rows($result)>0){
 	 	$result = sql_bestellmengen($bestell_id,
 	 			     $produkt_id, 
