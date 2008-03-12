@@ -18,8 +18,10 @@ if( $editable and $action ) {
   if( $action == 'basarzuteilung' ) {
     need_http_var('gruppe','u', false, false );
 
-    $gruppendaten = sql_gruppendaten( $gruppe );
-    need( $gruppendaten['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );
+    if( $gruppe != sql_muell_id() ) {
+      $gruppendaten = sql_gruppendaten( $gruppe );
+      need( $gruppendaten['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );
+    }
 
     // glassrueckgabe bearbeiten:
     //
