@@ -18,8 +18,8 @@ need_http_var( 'terrakw', 'w' );
 
   $n=1;
   foreach ( $klines as $line ) {
-    if( $n++ > 100 )
-      break;
+    // if( $n++ > 100 )
+    //   break;
 
     if( ! $tag ) {
       echo "analyzing line: $line<br>";

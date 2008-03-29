@@ -115,13 +115,16 @@ $preiseintrag_neu['notiz'] = FALSE;
 preishistorie_view( $produkt_id, $bestell_id, $editable );
 
 
+
 ///////////////////////////
 // Artikeldaten aus foodsoft-Datenbank anzeigen:
 //
 
+
 // neu laden (falls durch $action geaendert):
 //
 $produkt = sql_produkt_details( $produkt_id );
+
 $prgueltig = false;
 if( $produkt['zeitstart'] )
   $prgueltig = true;

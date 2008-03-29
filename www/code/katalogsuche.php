@@ -35,26 +35,15 @@ function katalogsuche( $produkt ) {
     $produkt = sql_produkt_details( $produkt );
   }
   
-  $lieferant_name = lieferant_name( $produkt['lieferanten_id'] );
-  switch( $lieferant_name ) {
-    case 'Terra' :
-      if( ! ( $artikelnummer = $produkt['artikelnummer'] ) )
-        return false;
-      if( ! $ldap_handle ) {
-        init_ldap_handle();
-      }
-      if( $ldap_handle ) {
-        $katalogergebnis = ldap_search( $ldap_handle, $ldapbase
-        , "(&(objectclass=terraartikel)(terraartikelnummer=$artikelnummer))"
-        );
-        $katalogeintraege = ldap_get_entries( $ldap_handle, $katalogergebnis );
-        return $katalogeintraege;
-      }
-    break;
-    default:
-      return false;
-  }
-  return false;
+  $lieferanten_id = $produkt['lieferanten_id'];
+  if( ! ( $artikelnummer = $produkt['artikelnummer'] ) )
+    return false;
+
+  return sql_select_single_row(
+    "SELECT * FROM lieferantenkatalog
+     WHERE artikelnummer='$artikelnummer' AND lieferanten_id='$lieferanten_id' "
+  , true
+  );
 }
 
 
@@ -76,30 +65,24 @@ function katalogabgleich(
   $prgueltig = $artikel['zeitstart'];
   $neednewprice = false;
 
-  $katalogeintraege = katalogsuche( $artikel );
-  if( $detail and ! $katalogeintraege ) {
-    formular_artikelnummer( $produkt_id, false, true );
-    return 3;
-  }
-
-  $katalogtreffer = $katalogeintraege['count'];
-  if( ! $katalogtreffer ) {
+  $katalogeintrag = katalogsuche( $artikel );
+  if( ! $katalogeintrag ) {
     ?> <div class='warn'>Katalogsuche: Artikelnummer nicht gefunden!</div> <?
     if( $detail and $editable )
       formular_artikelnummer( $produkt_id, false, true );
     return 2;
   }
   
-  $katalog_datum = $katalogeintraege[0]["terradatum"][0];
-  $katalog_artikelnummer = $katalogeintraege[0]["terraartikelnummer"][0];
-  $katalog_bestellnummer = $katalogeintraege[0]["terrabestellnummer"][0];
-  $katalog_name = $katalogeintraege[0]["cn"][0];
-  $katalog_einheit = $katalogeintraege[0]["terraeinheit"][0];
-  $katalog_gebindegroesse = $katalogeintraege[0]["terragebindegroesse"][0];
-  $katalog_herkunft =  $katalogeintraege[0]["terraherkunft"][0];
-  $katalog_verband = $katalogeintraege[0]["terraverband"][0];
-  $katalog_netto = $katalogeintraege[0]["terranettopreisincents"][0] / 100.0;
-  $katalog_mwst = $katalogeintraege[0]["terramwst"][0];
+  $katalog_datum = $katalogeintrag["katalogdatum"];
+  $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
+  $katalog_bestellnummer = $katalogeintrag["bestellnummer"];
+  $katalog_name = $katalogeintrag["name"];
+  $katalog_einheit = $katalogeintrag["liefereinheit"];
+  $katalog_gebindegroesse = $katalogeintrag["gebinde"];
+  $katalog_herkunft =  $katalogeintrag["herkunft"];
+  $katalog_verband = $katalogeintrag["verband"];
+  $katalog_netto = $katalogeintrag["preis"];
+  $katalog_mwst = $katalogeintrag["mwst"];
   $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
   if( $detail ) {
     ?>
