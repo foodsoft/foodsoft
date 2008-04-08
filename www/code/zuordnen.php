@@ -1252,6 +1252,7 @@ function sql_lieferanten( $id = false ) {
   return doSql( "
     SELECT *
     , ( SELECT count(*) FROM produkte WHERE produkte.lieferanten_id = lieferanten.id ) as anzahl_produkte
+    , ( SELECT count(*) FROM pfandverpackungen WHERE pfandverpackungen.lieferanten_id = lieferanten.id ) as anzahl_pfandverpackungen
     FROM lieferanten $where"
     , LEVEL_ALL, "Suche nach Lieferanten fehlgeschlagen: "
   );
