@@ -139,7 +139,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
     $produkte = sql_bestellprodukte($bestell_id);
     while  ($produkte_row = mysql_fetch_array($produkte)) {
       $produkt_id =$produkte_row['produkt_id'];
-      if( get_http_var( 'liefermenge'.$produkt_id ) ) {
+      if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
         preisdatenSetzen( & $produkte_row );
         $mengenfaktor = $produkte_row['mengenfaktor'];
         $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
@@ -192,7 +192,9 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
       , $specialgroups
       ) . " </select></td>"
   );
+
   $abschluss_option = ""; // ggf. erst als letzte Option ausgeben (s.u.)!
+  $pfand_option = "";
 
   if( $state == STATUS_VERTEILT
       and $dienst == 4
@@ -200,6 +202,14 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
       and ! $readonly
       and ! $bestellung['abrechnung_dienstkontrollblatt_id']
   ) {
+
+    $pfand_option = "
+      <td>Pfandabrechnung:</td>
+      <td class='number'><input type='button' class='button' name='zum Pfandzettel' value='zum Pfandzettel'
+        onclick='neuesfenster(\"index.php?window=pfandverpackungen&bestell_id=$bestell_id\",\"pfandzettel\");'
+        >
+      </td>
+    ";
 
     $abschluss_option = "
       <td>Rechnungsabschluss:</td>
@@ -210,6 +220,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
          >
       </form></td>
     ";
+
     switch( $action ) {
       case 'abschluss1':
         ?>
@@ -415,9 +426,8 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
       break;
   }
 
-  if( $abschluss_option ) {
-    option_menu_row( $abschluss_option );
-  }
+  $pfand_option and option_menu_row( $pfand_option );
+  $abschluss_option and option_menu_row( $abschluss_option );
 
 ?>
 

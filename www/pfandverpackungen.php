@@ -1,7 +1,5 @@
 <?PHP
 
-?> <h1>Pfandverpackungen</h1> <?
-
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
@@ -26,9 +24,10 @@ if( $bestell_id ) {
 ?> <table width='100%' class='layout'><tr> <?
 
 if( $bestell_id ) {
-  ?> <h2>Pfandabrechunng: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h2> <?
+  ?> <h2>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h2> <?
 } else {
   ?>
+    <h2>Pfandverpackungen</h2>
     <td style='text-align:left;padding:1ex 1em 2em 3em;'>
     <table style="width:600px;" class="liste">
       <tr>
@@ -84,6 +83,7 @@ $lieferant_name = lieferant_name( $lieferanten_id );
 <?
 
 
+
 /////////////////////////////
 //
 // aktionen verarbeiten:
@@ -94,10 +94,15 @@ get_http_var('action','w','');
 $editable or $action = '';
 
 if( $bestell_id and ( $action == 'save' ) ) {
-
-
-
+  $verpackungen = sql_pfandverpackungen( $lieferanten_id, $bestell_id );
+  while( $row = mysql_fetch_array($verpackungen)) {
+    $id = $row['verpackung_id'];
+    if( get_http_var( "anzahl_kauf$id", 'u' ) and get_http_var( "anzahl_rueckgabe$id", 'u' ) ) {
+      sql_pfandzuordnung( $bestell_id, $id, ${"anzahl_kauf$id"}, ${"anzahl_rueckgabe$id"} );
+    }
+  }
 }
+
 
 //   if( $action == 'delete' and $editable ) {
 //     need_http_var('pfandverpackung_id','u');
@@ -113,14 +118,16 @@ if( $bestell_id and ( $action == 'save' ) ) {
 /////////////////////////////
 
 
-$sql = "SELECT *, pfandverpackungen.id as verpackung_id, pfandzuordnung.id as zuordnung_id FROM pfandverpackungen ";
-$where = "WHERE lieferanten_id=$lieferanten_id ";
-if( $bestell_id ) {
-  $sql .= " LEFT JOIN pfandzuordnung
-            ON pfandzuordnung.bestell_id = $bestell_id AND pfandzuordnung.verpackung_id = pfandverpackungen.id ";
-}
 
-$verpackungen = doSql( $sql . $where );
+$verpackungen = sql_pfandverpackungen( $lieferanten_id, $bestell_id );
+
+if( $bestell_id ) {
+  ?>
+  <form method='post' action='<? echo self_url(); ?>'>
+  <? echo self_post(); ?>
+  <input type='hidden' name='action' value='save'>
+  <?
+}
 
 ?>
   <table class='numbers'>
@@ -145,10 +152,10 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       <td class='number'><? printf( "%.2lf", $row['mwst'] ); ?></td>
       <? if( $bestell_id ) { ?>
         <td class='number'>
-          <input type=text' size='6' name='anzahl_kauf' value='<? printf( "%d", $row['anzahl_kauf'] ); ?>'>
+          <input type=text' size='6' name='anzahl_kauf<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['anzahl_kauf'] ); ?>'>
         </td>
         <td class='number'>
-          <input type=text' size='6' name='anzahl_rueckgabe' value='<? printf( "%d", $row['anzahl_rueckgabe'] ); ?>'>
+          <input type=text' size='6' name='anzahl_rueckgabe<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['anzahl_rueckgabe'] ); ?>'>
         </td>
       <? } ?>
       <td>
@@ -166,8 +173,11 @@ if( $bestell_id ) {
         <input type='submit' class='button' value='Speichern'>
       </td>
     </tr>
+  </table>
+  </form>
   <?
+} else {
+  ?> </table> <?
 }
 
-?> </table> <?
 

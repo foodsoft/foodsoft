@@ -1531,6 +1531,49 @@ function sql_create_gruppenbestellung($gruppe, $bestell_id){
 
 ////////////////////////////////////
 //
+// Pfandverpackungen
+//
+////////////////////////////////////
+
+function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0 ) {
+  if( $bestell_id ) {
+    $sql = "
+      SELECT *, pfandverpackungen.id as verpackung_id, pfandzuordnung.id as zuordnung_id
+      FROM pfandverpackungen
+      LEFT JOIN pfandzuordnung
+        ON pfandzuordnung.bestell_id = $bestell_id AND pfandzuordnung.verpackung_id = pfandverpackungen.id
+      WHERE lieferanten_id=$lieferanten_id
+    ";
+  } else {
+    $sql = "
+      SELECT *, pfandverpackungen.id as verpackung_id
+      FROM pfandverpackungen
+      WHERE lieferanten_id=$lieferanten_id
+    ";
+  }
+  return doSql( $sql );
+}
+
+function sql_pfandzuordnung( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
+  if( $kauf > 0 or $rueckgabe > 0 ) {
+    sql_insert( 'pfandzuordnung'
+    , array(
+        'verpackung_id' => $verpackung_id
+      , 'bestell_id' => $bestell_id
+      , 'anzahl_kauf' => $kauf
+      , 'anzahl_rueckgabe' => $rueckgabe
+      )
+    , true
+    );
+  } else {
+    doSql( "DELETE FROM pfandzuordnung WHERE bestell_id=$bestell_id AND verpackung_id=$verpackung_id" ); 
+  }
+}
+
+
+
+////////////////////////////////////
+//
 // funktionen fuer bestellmengen und verteil/liefermengen
 //
 ////////////////////////////////////

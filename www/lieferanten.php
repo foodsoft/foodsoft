@@ -87,8 +87,10 @@ if( $action == 'delete' ) {
     echo "
       <a class='png' style='padding:0pt 1ex 0pt 1ex;'
         href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id={$row['id']}','lieferantenkonto');\">
-       <img src='img/chart.png' border='0' title='Finanzielles' alt='Finanzielles'/>
-      </a>
+       <img src='img/chart.png' border='0' title='Finanzielles' alt='Finanzielles'/></a>
+      <a class='png' style='padding:0pt 1ex 0pt 1ex;'
+        href=\"javascript:neuesfenster('index.php?window=pfandverpackungen&lieferanten_id={$row['id']}','pfandzettel');\">
+       <img src='img/fant.gif' border='0' title='Fantkram' alt='Fantkram'/></a>
     ";
     if( ( ! $readonly ) and ( $dienst == 4 or $dienst == 5 ) ) {
       echo "
