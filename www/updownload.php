@@ -39,8 +39,8 @@
    // echo "<pre>mysql: $mysql</pre>";
    // echo "<pre>gzip: $gzip</pre>";
 
-   echo "<div class='warn'>Upload/Download zur Zeit ausser Betrieb!</div>";
-   exit();
+   // echo "<div class='warn'>Upload/Download zur Zeit ausser Betrieb!</div>";
+   // exit();
    
    if( ! $mysqldump ) {
      echo "<div class='warn'>FEHLER: Programm mysqldump nicht gefunden!</div>";
