@@ -218,6 +218,20 @@
   } else {
     $form_action="$foodsoftdir/index.php";
   }
+
+?>
+       <div class='kommentar'>
+  <h2> Erstmal „Hallo“ an alle, </h2>
+	   die sicherlich nicht ohne Grund auf dieser Seite gelandet sind. Aber auch allen Wellenreiter des Internets, die zufällig hier gestrandet sind ein „Herzliches Willkommen“ !
+<br>
+Ihr interessiert euch auch für den kleinen Geldbeutel erschwingliche, biologisch und wenn möglich regional erzeugte Lebensmittel!
+<br>
+Dann seid ihr hier richtig! Genau aus diesem Grund wurde unsere Gruppe 2003 aus der Taufe gehoben!
+<br>
+<a href=/wiki>mehr Informationen...</a>
+
+</div>
+<?
   echo "
     <form action='$form_action' method='post' class='small_form'>
       <input type='hidden' name='action' value='login'>
