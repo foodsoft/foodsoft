@@ -321,3 +321,43 @@ CREATE TABLE `transactions` (
 `used` tinyint(1) NOT NULL default '0'
 ) ENGINE = MYISAM ;
 
+
+CREATE TABLE `lieferantenkatalog` (
+  `id` int(11) NOT NULL auto_increment,
+  `lieferanten_id` int(11) NOT NULL,
+  `name` text NOT NULL,
+  `artikelnummer` bigint(20) NOT NULL,
+  `bestellnummer` text NOT NULL,
+  `liefereinheit` text NOT NULL,
+  `gebinde` text NOT NULL,
+  `mwst` decimal(4,2) NOT NULL,
+  `pfand` decimal(6,2) NOT NULL,
+  `verband` text NOT NULL,
+  `herkunft` text NOT NULL,
+  `preis` decimal(8,2) NOT NULL,
+  `katalogdatum` text NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `secondary` (`lieferanten_id`,`artikelnummer`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=235 ;
+
+
+CREATE TABLE `pfandverpackungen` (
+  `id` int(11) NOT NULL auto_increment,
+  `lieferanten_id` int(11) NOT NULL,
+  `name` text NOT NULL,
+  `wert` decimal(8,2) NOT NULL,
+  `mwst` decimal(6,2) NOT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
+
+CREATE TABLE `pfandzuordnung` (
+  `id` int(11) NOT NULL auto_increment,
+  `verpackung_id` int(11) NOT NULL,
+  `bestell_id` int(11) NOT NULL,
+  `anzahl_kauf` int(11) NOT NULL default '0',
+  `anzahl_rueckgabe` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `secondary` (`bestell_id`,`verpackung_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=9 ;
+
+

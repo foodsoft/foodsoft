@@ -9,7 +9,7 @@
   // fail_if_readonly();
   $editable = ( $dienst == 4 and ! $readonly );
 
-  need_http_var( 'buchnung_id','u', true );
+  need_http_var( 'buchung_id','u', true );
 
   $buchung = sql_get_transaction( $buchung_id ); 
   $k_id = $buchung['konterbuchung_id'];
@@ -22,8 +22,9 @@
   $editable or $action = '';
 
   if( $action == 'update' ) {
-    need_http_var("startzeit_tag",'u');
-    need_http_var("startzeit_monat",'u');
+    need_http_var("id",'u');
+    
+      need_http_var("startzeit_monat",'u');
     need_http_var("startzeit_jahr",'u');
     need_http_var("startzeit_stunde",'u');
     need_http_var("startzeit_minute",'u');
