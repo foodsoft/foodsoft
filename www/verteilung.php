@@ -39,124 +39,110 @@
 setWikiHelpTopic( "foodsoft:verteilung" );
 
 ?>
-<h1>Bestellungen ansehen...</h1>
+<h1>Verteilliste</h1>
 
-	 <?bestellung_overview($row_gesamtbestellung);?>
-	 <?changeState($bestell_id, "Verteilt")?>
-      <br>
-      <br>
-         <form action="<? echo self_url(); ?>" method="post">
-         <? echo self_post(); ?>
-         <table style="width: 600px;" class='numbers'>
-	    <?distribution_tabellenkopf("Gruppe");?>
-<?php                               
-      //produkte und preise zur aktuellen bestellung auslesen
-      $result1 = sql_bestellprodukte($bestell_id);
+<? bestellung_overview($row_gesamtbestellung); ?>
 
-      //jetzt die namen und preis zu den produkten auslesen
-      while  ($produkte_row = mysql_fetch_array($result1)) {
-         // nettopreis, Masseinheiten, ... ausrechnen:
-         preisdatenSetzen( $produkte_row );
-      	 $produkt_id =$produkte_row['produkt_id'];
-	 
-	 //Wenn genügend bestellt wurde, gibt es mindestens einen
-	 //Eintrag mit art=2
-	 $result = sql_bestellmengen($bestell_id,
-	 			     $produkt_id, 
-				     2, //art
-	 			     false, //gruppen_id
-				     false); //sortByDate
+<br>
+<br>
+<form action="<? echo self_url(); ?>" method="post"><? echo self_post(); ?>
+<table style="width: 600px;" class='numbers'>
 
-	 if(mysql_num_rows($result)>0){
-	 	$result = sql_bestellmengen($bestell_id,
-	 			     $produkt_id, 
-				     false, //art
-	 			     false, //gruppen_id
-				     false); //sortByDate
-	 	
-		  echo " <tr> <th colspan='8'><span
-		  style='font-size:1.2em; margin:5px;'> ".$produkte_row['produkt_name']."</span>
-					 <span style='font-size:0.8em'>(".$produkte_row['verteileinheit']." | 
-					 ".$produkte_row['gebindegroesse']." | 
-					 ".$produkte_row['preis']." | 
-					 ".$produkte_row['produktgruppen_name'].")";
-		  echo "</span>";
-		  echo "</th> </tr>";
+<?
+distribution_tabellenkopf("Gruppe"); 
 
-	 
-		  $entry_row = mysql_fetch_array($result);
-		  while ($entry_row) {
-			$gruppenID=$entry_row['bestellguppen_id'];
-		  	if($entry_row['art']==0){
-				$festmenge = 0;
-				while($entry_row['art']==0 and $entry_row['bestellguppen_id']==$gruppenID){
-					//Festbestellmenge einlesen
-					$festmenge += $entry_row['menge'];
-					//Nächsten Datensatz
-					$entry_row = mysql_fetch_array($result);
-				}
-			} else {
-				$festmenge = 0;
-			}
-		  	if($entry_row['art']==1 and $entry_row['bestellguppen_id']==$gruppenID ){
-				$toleranz = 0;
-				while($entry_row['art']==1 and $entry_row['bestellguppen_id']==$gruppenID){
-					//Toleranzmenge einlesen
-					$toleranz += $entry_row['menge'];
-					//Nächsten Datensatz
-					$entry_row = mysql_fetch_array($result);
-				}
-			} else {
-				$toleranz = 0;
-			}
-		  	if($entry_row['art']==2 and $entry_row['bestellguppen_id']==$gruppenID ){
-				$verteil = 0;
-				while($entry_row['art']==2 and $entry_row['bestellguppen_id']==$gruppenID){
-					//Verteilmenge einlesen
-					$verteil += $entry_row['menge'];
-					//Nächsten Datensatz 
-					$entry_row = mysql_fetch_array($result);
-				}
-        $fieldname = 'verteil_'.$produkt_id.'_'.$gruppenID;
-				if( get_http_var( $fieldname, 'f' ) ) {
-					$verteil_form = $$fieldname / $produkte_row['kan_verteilmult'];
-					if($verteil!=$verteil_form){
-						changeVerteilmengen_sql($verteil_form, $gruppenID, $produkt_id, $bestell_id );
-						$verteil=$verteil_form;
-					}
-				}
-			} else {
-				$verteil = 0;
-			}
-			
+$result1 = sql_bestellprodukte($bestell_id);
 
-       if($gruppenID != $basar){
-		       distribution_view($gruppenID, $festmenge, $toleranz, $verteil,
+while  ($produkte_row = mysql_fetch_array($result1)) {
+  // nettopreis, Masseinheiten, ... ausrechnen:
+  preisdatenSetzen( $produkte_row );
+  $produkt_id =$produkte_row['produkt_id'];
+  // echo "produkt_id: $produkt_id<br>";
+
+  // Wenn genügend bestellt wurde, gibt es mindestens einen  Eintrag mit art=2
+  $result = sql_bestellmengen($bestell_id,
+     $produkt_id, 
+     2, //art
+     false, //gruppen_id
+     false); //sortByDate
+
+  if( mysql_num_rows($result) > 0 ) {
+    $result = sql_bestellmengen($bestell_id,
+      $produkt_id, 
+      false, //art
+      false, //gruppen_id
+      false); // false heisst: ORDER BY gruppenbestellung_id, art
+
+   ?>
+     <tr><th colspan='6'>
+       <span style='font-size:1.2em; margin:5px;'> <? echo $produkte_row['produkt_name']; ?> </span>
+       <span style='font-size:0.8em'>
+       <? printf( "Preis: %.2lf / %s, Produktgruppe: %s"
+         , $produkte_row['preis']
+         , $produkte_row['verteileinheit']
+         , $produkte_row['produktgruppen_name']
+         );
+       ?>
+       </span>
+     </th></tr>
+   <?
+
+   $entry_row = mysql_fetch_array($result);
+   while ($entry_row) {
+     $gruppenID=$entry_row['bestellguppen_id'];
+     $festmenge = 0;
+     while( $entry_row['art']==0 and $entry_row['bestellguppen_id']==$gruppenID ) {
+       $festmenge += $entry_row['menge'];
+       $entry_row = mysql_fetch_array($result);
+     }
+     $toleranz = 0;
+     while( $entry_row['art']==1 and $entry_row['bestellguppen_id']==$gruppenID){
+      $toleranz += $entry_row['menge'];
+      $entry_row = mysql_fetch_array($result);
+    }
+    $verteil = 0;
+    while($entry_row['art']==2 and $entry_row['bestellguppen_id']==$gruppenID){
+      $verteil += $entry_row['menge'];
+      $entry_row = mysql_fetch_array($result);
+    }
+    $fieldname = 'verteil_'.$produkt_id.'_'.$gruppenID;
+    if( get_http_var( $fieldname, 'f' ) ) {
+      $verteil_form = $$fieldname / $produkte_row['kan_verteilmult'];
+      if($verteil!=$verteil_form){
+        changeVerteilmengen_sql($verteil_form, $gruppenID, $produkt_id, $bestell_id );
+        $verteil=$verteil_form;
+      }
+    }
+
+    if( $gruppenID != $basar ) {
+      distribution_view( $gruppenID, $festmenge, $toleranz, $verteil,
              $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit'],
              $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
-       }
-		     
-	 } //end while gruppen array
-	 
-     echo "<tr style='border:none'>
-		 <td colspan='4' style='border:none'></td>
-	      </tr>";
-   
-   } //end if ... reichen die bestellten mengen? dann weiter im text
-   
-} //end while produkte array            
+    }
 
-  echo "
+  } //end while gruppen array
+
+  ?>
      <tr style='border:none'>
-  	<td colspan='4' style='border:none;'>
-  	   <input type='submit' value=' speichern '>
-  	   <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
-  	</td>
+     <td colspan='6' style='border:none'></td>
      </tr>
-     </table>                   
-     </form>
-     <form action='index.php' method='get'>
-  	   <input type='submit' value='Zur&uuml;ck '>
-     </form>
-  ";
+   <?
+
+   } //end if ... reichen die bestellten mengen?
+
+} //end while produkte array
+
 ?>
+  <tr style='border:none'>
+    <td colspan='6' style='border:none;'>
+      <input type='submit' value=' speichern '>
+      <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
+    </td>
+  </tr>
+</table>
+</form>
+<form action='index.php' method='get'>
+  <input type='submit' value='Zur&uuml;ck '>
+</form>
+
+
