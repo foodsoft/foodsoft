@@ -16,7 +16,7 @@ if( $editable and $action ) {
   // aktionen:
   //
   if( $action == 'basarzuteilung' ) {
-    need_http_var('gruppe','u', false, false );
+    need_http_var('gruppe','u', false );
 
     if( $gruppe != sql_muell_id() ) {
       $gruppendaten = sql_gruppendaten( $gruppe );

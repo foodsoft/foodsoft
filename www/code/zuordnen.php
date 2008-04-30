@@ -44,7 +44,7 @@ function sql_select_single_row( $sql, $allownull = false ) {
   // echo "<br>$sql<br>rows: $rows<br>";
   if( $allownull and ( $rows == 0 ) )
     return NULL;
-  need( $rows > 0, "Kein Treffer bei Datenbanksuche" );
+  need( $rows > 0, "Kein Treffer bei Datenbanksuche: $sql" );
   need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig" );
   return mysql_fetch_array($result);
 }
@@ -186,10 +186,10 @@ function use_filters( $using, $rules ) {
 }
 
 
- define('STATUS_BESTELLEN', "bestellen");
- define('STATUS_LIEFERANT', "beimLieferanten");
- define('STATUS_VERTEILT', "Verteilt");
- define('STATUS_ARCHIVIERT', "archiviert");
+define('STATUS_BESTELLEN', "bestellen");
+define('STATUS_LIEFERANT', "beimLieferanten");
+define('STATUS_VERTEILT', "Verteilt");
+define('STATUS_ARCHIVIERT', "archiviert");
 
 
 ////////////////////////////////////
@@ -1591,25 +1591,26 @@ function select_verteilmenge() {
 }
 
 function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
-	$query = "SELECT  *, gruppenbestellungen.id as gruppenbest_id,
-	bestellzuordnung.id as bestellzuordnung_id
-	FROM gruppenbestellungen INNER JOIN bestellzuordnung 
-	ON (bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
-	WHERE gruppenbestellungen.gesamtbestellung_id = ".mysql_escape_string($bestell_id)." 
-	AND bestellzuordnung.produkt_id = ".mysql_escape_string($produkt_id);
-	if($gruppen_id!==false){
-		$query = $query." AND gruppenbestellungen.bestellguppen_id = ".mysql_escape_string($gruppen_id);
-	}
-	if($art!==false){
-		$query = $query." AND bestellzuordnung.art=".$art;
-	}
-	if($sortByDate){
-		$query = $query." ORDER BY bestellzuordnung.zeitpunkt;";
-	}else{
-		$query = $query." ORDER BY gruppenbestellung_id, art;";
-	}
-        $result = doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
-	return $result;
+	$query = "
+    SELECT  *, bestellzuordnung.id as bestellzuordnung_id
+    FROM gruppenbestellungen
+    INNER JOIN bestellzuordnung
+       ON (bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
+    WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id 
+      AND bestellzuordnung.produkt_id = $produkt_id
+  ";
+  if($gruppen_id!==false){
+    $query = $query." AND gruppenbestellungen.bestellguppen_id = $gruppen_id";
+  }
+  if($art!==false){
+    $query = $query." AND bestellzuordnung.art=".$art;
+  }
+  if($sortByDate){
+    $query = $query." ORDER BY bestellzuordnung.zeitpunkt;";
+  }else{
+    $query = $query." ORDER BY gruppenbestellung_id, art;";
+  }
+  return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 }
 
 function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false ){

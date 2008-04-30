@@ -1095,7 +1095,6 @@ function distribution_tabellenkopf($name){
                <th><?echo $name?></th>
                <th colspan='2'>bestellt (toleranz)</th>
                <th colspan='2'>geliefert</th>
-               <th colspan='2'>Einzelpreis</th>
                <th>Gesamtpreis</th>
             </tr>
  
@@ -1117,14 +1116,12 @@ function distribution_view($gruppen_id, $festmenge, $toleranz, $verteilmenge, $v
   if($inputbox_name===false){
       echo $verteilmenge * $verteilmult;
   }else{
-      echo "<input name='$inputbox_name' type='text' size='5'
+      echo "<input name='$inputbox_name' type='text' size='5' style='text-align:right;'
             value='" . $verteilmenge * $verteilmult . "' />";
   }
   echo "
       </td>
       <td class='unit'>$verteileinheit</td> 
-      <td class='mult'>$preis</td>
-      <td class='unit'>/ $verteilmult $verteileinheit</td>
       <td class='number'>" . sprintf( "%8.2lf", $verteilmenge * $preis ) . " </td>
     </tr>
   ";
