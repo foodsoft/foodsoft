@@ -4,7 +4,6 @@
   $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 
   $editable = ( ! $readonly and ( $dienst == 4 ) );
-  $editable = true;
 
   $msg = "";
   $problems = "";

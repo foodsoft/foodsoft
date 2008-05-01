@@ -3,8 +3,6 @@
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
-$editable = true;
-
 get_http_var( 'bestell_id', 'u', 0, true );
 if( $bestell_id ) {
   $bestellung_name = bestellung_name( $bestell_id );
