@@ -102,6 +102,39 @@ if( $bestell_id and ( $action == 'save' ) ) {
     }
   }
 }
+if( $action == 'moveup' ) {
+  need_http_var( 'verpackung_id', 'u' );
+  $verpackungen = sql_pfandverpackungen( $lieferanten_id );
+  $prev = false;
+  while( $row = mysql_fetch_array( $verpackungen ) ) {
+    if( $row['verpackung_id'] == $verpackung_id ) {
+      if( ! $prev )
+        break;
+      // echo "prev: {$prev['id']}/{$prev['sort_id']}, row: {$row['id']}/{$row['sort_id']}<br>";
+      $h = $prev['sort_id'];
+      sql_update( 'pfandverpackungen', $prev['id'], array( 'sort_id' => $row['sort_id'] ) );
+      sql_update( 'pfandverpackungen', $row['id'], array( 'sort_id' => $h ) );
+      break;
+    }
+    $prev = $row;
+  }
+}
+if( $action == 'movedown' ) {
+  need_http_var( 'verpackung_id', 'u' );
+  $verpackungen = sql_pfandverpackungen( $lieferanten_id );
+  while( $row = mysql_fetch_array( $verpackungen ) ) {
+    if( $row['verpackung_id'] == $verpackung_id ) {
+      $next = mysql_fetch_array( $verpackungen );
+      if( ! $next )
+        break;
+      // echo "next: {$next['id']}/{$next['sort_id']}, row: {$row['id']}/{$row['sort_id']}<br>";
+      $h = $row['sort_id'];
+      sql_update( 'pfandverpackungen', $row['id'], array( 'sort_id' => $next['sort_id'] ) );
+      sql_update( 'pfandverpackungen', $next['id'], array( 'sort_id' => $h ) );
+      break;
+    }
+  }
+}
 
 
 //   if( $action == 'delete' and $editable ) {
@@ -161,6 +194,13 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       <td>
         <a class='png' href="javascript:f=window.open('index.php?window=editVerpackung&verpackung_id=<? echo $verpackung_id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
            border='0' alt='Stammdaten ändern' title='Stammdaten ändern'/></a>
+           &nbsp;
+        <? if( $editable ) { ?>
+          <a class='png' href='<? echo self_url() . "&action=moveup&verpackung_id=$verpackung_id"; ?>'>
+            <img style='border:none;' src='img/arrow.up.blue.png' title='Eintrag nach oben schieben'></a>
+          <a class='png' href='<? echo self_url() . "&action=movedown&verpackung_id=$verpackung_id"; ?>'>
+            <img style='border:none;' src='img/arrow.down.blue.png' title='Eintrag nach unten schieben'></a>
+        <? } ?>
       </td>
     </tr>
   <?

@@ -35,6 +35,9 @@
       <tr>
         <td><input type='button' value='Seite aktualisieren' class='bigbutton' onClick="document.forms['reload_form'].submit();"></td>
       </tr><tr>
+        <td><input type='button' value='Katalogsuche' class='bigbutton'
+          onClick="neuesfenster('index.php?window=artikelsuche','artikelsuche');">
+      </tr><tr>
         <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php';"></td>
       </tr>
       <tr>
@@ -183,12 +186,6 @@
           <th colspan="10"><h3>Produktübersicht von
               <?php
                 echo $lieferant_name;
-                if ( $lieferant_name == "Terra" ) {
-                 ?> <a class="button" href="javascript:neuesfenster('index.php?window=artikelsuche','artikelsuche');">Katalogsuche</a> <?
-                }
-                if( 0 ) {
-                   ?> <a class="button" href="javascript:neuesfenster('index.php?window=terraabgleich&lieferanten_id=<? echo $lieferanten_id; ?>','terraabgleich;');">Datenbankabgleich</a> <?
-                }
               ?>
 
           </h3></th>

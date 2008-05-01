@@ -417,6 +417,9 @@ a.blocklink {
 a.blocklink:hover {
   background-color:#ffffd0;
 }
+img {
+  border:none;
+}
 img.button {
   background-color:#f0f0ff;
 }

@@ -1543,12 +1543,14 @@ function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0 ) {
       LEFT JOIN pfandzuordnung
         ON pfandzuordnung.bestell_id = $bestell_id AND pfandzuordnung.verpackung_id = pfandverpackungen.id
       WHERE lieferanten_id=$lieferanten_id
+      ORDER by sort_id
     ";
   } else {
     $sql = "
       SELECT *, pfandverpackungen.id as verpackung_id
       FROM pfandverpackungen
       WHERE lieferanten_id=$lieferanten_id
+      ORDER by sort_id
     ";
   }
   return doSql( $sql );
