@@ -1,36 +1,11 @@
 <?php
 
-$ldap_handle = false;
-
-function init_ldap_handle() {
-  global $ldap_handle, $ldapuri, $ldapbase;
-
-  if( ! $ldap_handle ) {
-    if( ! $ldapuri )
-      return false;
-
-   // echo "ldapuri: [$ldapuri] ldapbase: [$ldapbase]";
-   $h = ldap_connect( $ldapuri );
-   if( ! ldap_set_option( $h, LDAP_OPT_PROTOCOL_VERSION, 3 ) ) {
-     return false;
-   }
-   if( ! ldap_bind( $h, "cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de" , "leckerpotsdam" ) ) {
-     echo "error: [" . ldap_error( $h ) . "]";
-     exit();
-     return false;
-   }
-    $ldap_handle = $h;
-  }
-
-  return $ldap_handle;
-}
 
 // katalogsuche: sucht im lieferantenkatalog nach $produkt.
 // bisher nur fuer Terra.
 // $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
 //
 function katalogsuche( $produkt ) {
-  global $ldap_handle, $ldapbase;
   if( is_numeric( $produkt ) ) {
     $produkt = sql_produkt_details( $produkt );
   }
@@ -74,6 +49,7 @@ function katalogabgleich(
   }
   
   $katalog_datum = $katalogeintrag["katalogdatum"];
+  $katalog_typ = $katalogeintrag["katalogtyp"];
   $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
   $katalog_bestellnummer = $katalogeintrag["bestellnummer"];
   $katalog_name = $katalogeintrag["name"];
@@ -88,7 +64,7 @@ function katalogabgleich(
     ?>
       <fieldset class='big_form'>
       <legend>
-        Lieferantenkatalog: Artikel gefunden in Katalog <? echo $katalog_datum; ?>
+        Lieferantenkatalog: Artikel gefunden in Katalog <? echo "$katalog_typ / $katalog_datum"; ?>
       </legend>
       <table width='100%' class='numbers'>
         <tr>
