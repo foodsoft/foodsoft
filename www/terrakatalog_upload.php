@@ -6,7 +6,6 @@ assert( $angemeldet ) or exit();
 $lieferanten_id = sql_select_single_field( "SELECT id FROM lieferanten WHERE name='Terra'", 'id' );
 need_http_var( 'terrakw', 'w' );
 
-  echo 'Hallo, Welt!';
   echo '<br>files: ' . $_FILES;
   echo '<br>lieferant: ' . $lieferanten_id;
   echo '<br>tmpfile: ' . $_FILES['terrakatalog']['tmp_name'];
@@ -18,23 +17,41 @@ need_http_var( 'terrakw', 'w' );
 
   $n=1;
   foreach ( $klines as $line ) {
-    // if( $n++ > 100 )
-    //   break;
+    if( $n++ > 9999930 )
+      break;
 
     if( ! $tag ) {
       echo "analyzing line: $line<br>";
       // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
       if( preg_match( '&^Art.Nr. *@@Bestell-Nr.@@Milch *@@@@@@Inhalt *@Einh. *@Land *@@IK *@Verband *@@ *Netto-Preis *@@/Einh. *@empf. VK@@MwSt. % *@@EAN-Code *@@@&' , $line ) ) {
         $tag = "Fr";
-        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', 'mwst', '' );
-        $pattern = '/^[[:digit:] ]+@@[[:digit:] ]+@/';
-        echo "detected format: $tag<br>";
+        $splitat = '@+';
+        // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
+        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
+        $pattern = '/^[\d\s]+@@[\d\s]+@/';
       }
       if( preg_match( '&^Art.Nr.@Bestell-Nr.@ZITRUS-FRÜCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
         $tag='OG';
+        $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
-        $pattern = '/^[[:digit:] ]+@[[:digit:] ]+@/';
+        $pattern = '/^[\d\s]+@[\d\s]+@/';
+      }
+      if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
+        $tag='drog';
+        $splitat = '@';
+        $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        $pattern = '/^[\d\s]+@[\d\s]+@/';
+      }
+      if( preg_match( '&^Preisliste\s+Trockensortiment&', $line ) ) {
+        // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Liefera@Land@IK@Netto-Preis@@@MwSt.%@EAN- Code@
+        $tag = 'Tr';
+        $splitat = '@';
+        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        $pattern = '/^[\d\s]+@[\d\s]+@/';
+      }
+      if( $tag ) {
         echo "detected format: $tag<br>";
+        echo "pattern: $pattern<br>";
       }
       continue;
     }
@@ -54,8 +71,9 @@ need_http_var( 'terrakw', 'w' );
     $verband = "";
     $herkunft = "";
     $netto = "0.00";
+    $vpe = "";
 
-    $splitline = split( '@+', $line );
+    $splitline = split( $splitat, $line );
     $i=0;
     foreach( $splitline as $field ) {
       if( isset( $fields[$i] ) and $fields[$i] ) {
@@ -67,6 +85,15 @@ need_http_var( 'terrakw', 'w' );
     $netto = sprintf( "%.2lf", $netto );
     $mwst = sprintf( "%.2lf", $mwst );
     $name = mysql_real_escape_string( $name );
+
+    // drop spurious whitespace from numbers:
+    $anummer = preg_replace( '/\s/', '', $anummer );
+    $bnummer = preg_replace( '/\s/', '', $bnummer );
+
+    if( $vpe ) {
+      $gebinde = sprintf( "%.2lf", $vpe );
+      $einheit =  preg_replace( '/^[[:digit:]]* ([[:alpha:]]*)$/', '${1}', $vpe );
+    }
 
     if( $netto < 0.01 or $mwst < 0.01 ) {
       echo "<div class='warn'>error parsing line: $line</div>";
@@ -88,6 +115,7 @@ need_http_var( 'terrakw', 'w' );
       , herkunft
       , preis
       , katalogdatum
+      , katalogtyp
       ) VALUES (
         '$lieferanten_id'
       , '$anummer'
@@ -101,8 +129,10 @@ need_http_var( 'terrakw', 'w' );
       , '$herkunft'
       , '$netto'
       , '$terrakw'
+      , '$tag'
       ) ON DUPLICATE KEY UPDATE
-        name='$name'
+        bestellnummer='$bnummer'
+      , name='$name'
       , liefereinheit='$einheit'
       , gebinde='$gebinde'
       , mwst='$mwst'
@@ -111,10 +141,11 @@ need_http_var( 'terrakw', 'w' );
       , herkunft='$herkunft'
       , preis='$netto'
       , katalogdatum='$terrakw'
+      , katalogtyp='$tag'
     " );
 
   }
-    
+
   echo '<br>finis.<br>';
 
 ?>
