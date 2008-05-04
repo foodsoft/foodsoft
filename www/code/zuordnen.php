@@ -186,10 +186,38 @@ function use_filters( $using, $rules ) {
 }
 
 
-define('STATUS_BESTELLEN', "bestellen");
-define('STATUS_LIEFERANT', "beimLieferanten");
-define('STATUS_VERTEILT', "Verteilt");
-define('STATUS_ARCHIVIERT', "archiviert");
+// define('STATUS_BESTELLEN', "bestellen");
+// define('STATUS_LIEFERANT', "beimLieferanten");
+// define('STATUS_VERTEILT', "Verteilt");
+// define('STATUS_ARCHIVIERT', "archiviert");
+
+define('STATUS_BESTELLEN', 10 );
+define('STATUS_LIEFERANT', 20 );
+define('STATUS_VERTEILT', 30 );
+define('STATUS_ABGERECHNET', 40 );
+define('STATUS_ARCHIVIERT', 50 );
+
+function rechnung_status_string( $state ) {
+  switch( $state ) {
+    case STATUS_BESTELLEN:
+      return 'Bestellen';
+    case STATUS_LIEFERANT:
+      return 'beim Lieferanten';
+    case STATUS_VERTEILT:
+      return 'geliefert und verteilt';
+    case STATUS_ABGERECHNET:
+      return 'abgerechnet';
+    case STATUS_ARCHIVIERT:
+      return 'archiviert';
+  }
+  return "FEHLER: undefinierter Status: $state";
+}
+
+// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='10' where state='Bestellen'" );
+// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='20' where state='beimLieferanten'" );
+// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='30' where state='Verteilt'" );
+// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='40' where state='Abgerechnet'" );
+// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='50' where state='archiviert'" );
 
 
 ////////////////////////////////////
@@ -1308,7 +1336,7 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
 ////////////////////////////////////
 
 function getState($bestell_id){
-  return sql_select_single_field( "SELECT state FROM gesamtbestellungen WHERE id=$bestell_id", 'state' );
+  return sql_select_single_field( "SELECT status FROM gesamtbestellungen WHERE id=$bestell_id", 'status' );
 }
 
 function bestellung_name($bestell_id){
@@ -1335,7 +1363,7 @@ function changeState($bestell_id, $state){
 
   $bestellung = sql_bestellung( $bestell_id );
 
-  $current = $bestellung['state'];
+  $current = $bestellung['status'];
   if( $current == $state )
     return true;
 
@@ -1357,7 +1385,9 @@ function changeState($bestell_id, $state){
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
       $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
-    case STATUS_VERTEILT . "," . STATUS_ARCHIVIERT:
+    case STATUS_VERTEILT . "," . STATUS_ABGERECHNET:
+      break;
+    case STATUS_ABRECHNET . "," . STATUS_ARCHIVIERT:
       // TODO: tests:
       //   - bezahlt?
       //   - basarreste?
@@ -1367,7 +1397,7 @@ function changeState($bestell_id, $state){
       return false;
   }
   $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
-  $result = doSql($sql, LEVEL_KEY, "Konnte status der Bestellung ändern..");
+  $result = doSql($sql, LEVEL_KEY, "Konnte status der Bestellung nicht ändern..");
   if( $result ) {
     if( $do_verteilmengen_zuweisen )
       verteilmengenZuweisen( $bestell_id );
@@ -1376,47 +1406,31 @@ function changeState($bestell_id, $state){
 }
 
 function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
-	 $query = "SELECT * FROM gesamtbestellungen ";
-	 $where = "";
-	 $add_and = FALSE;
-	 if($use_Date!==FALSE){
-	    $where .= "(NOW() BETWEEN bestellstart AND bestellende)";
-	    $add_and = TRUE;
-	 }
-	 if($state!==FALSE){
-	    $addOR = FALSE;
-	    if($add_and){
-	    	$where .= " AND (";
-	    }
-	    if(!is_array($state)){
-	    	$where .= " state = '".$state."'";
-	    } else {
-		    foreach($state as $st){
-			if($addOR) $where .= " OR ";
-			$where .= " state = '".$st."'";
-			$addOR = TRUE;
-		    }
-	    }
-	    if($add_and){
-	    	$where .= ")";
-	    }
-	    $add_and = TRUE;
-	 }
-	 if($id!==FALSE){
-	    if($add_and){
-	    	$where .= " AND (";
-	    }
-	    $where.= " id =".$id;
-	    if($add_and){
-	    	$where .= ")";
-	    }
-	 }
-	 if($where != "") {
-	 	$query .= " WHERE ".$where;
-	 }
-	 $query .= " ORDER BY bestellende DESC,name";
-	$result = doSql(  $query, LEVEL_ALL,"Konnte Gesamtbestellungen nich aus DB laden.. ");
-	return $result;
+  $where = '';
+  $add_and = ' WHERE ';
+  if($use_Date!==FALSE){
+    $where .= "$add_and (NOW() BETWEEN bestellstart AND bestellende)";
+    $add_and = ' AND ';
+  }
+  if($state!==FALSE){
+    $add_or = '';
+    $where .= "$add_and ( ";
+    if(!is_array($state)){
+      $where .= "rechnungsstatus = $state";
+    } else {
+      foreach($state as $st){
+        $where .= "$add_or (rechnungsstatus = $st)";
+        $add_or = " OR ";
+      }
+    }
+    $where .= ')';
+    $add_and = ' AND ';
+  }
+  if($id!==FALSE){
+    $where.= "$add_and (id =$id)";
+    $add_and = ' AND ';
+  }
+  return doSql( "SELECT * FROM gesamtbestellungen $where ORDER BY bestellende DESC,name" );
 }
 
 /* function select_gesamtbestellungen_schuldverhaeltnis():
@@ -1426,8 +1440,7 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 function select_gesamtbestellungen_schuldverhaeltnis() {
   return "
     SELECT * FROM gesamtbestellungen
-    WHERE state in ('".STATUS_LIEFERANT."','".STATUS_VERTEILT."')
-  ";
+    WHERE status >= " . STATUS_LIEFERANT;
 }
 
 function sql_bestellung( $id ) {
@@ -1536,24 +1549,27 @@ function sql_create_gruppenbestellung($gruppe, $bestell_id){
 ////////////////////////////////////
 
 function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0 ) {
-  if( $bestell_id ) {
-    $sql = "
-      SELECT *, pfandverpackungen.id as verpackung_id, pfandzuordnung.id as zuordnung_id
-      FROM pfandverpackungen
-      LEFT JOIN pfandzuordnung
-        ON pfandzuordnung.bestell_id = $bestell_id AND pfandzuordnung.verpackung_id = pfandverpackungen.id
-      WHERE lieferanten_id=$lieferanten_id
-      ORDER by sort_id
-    ";
-  } else {
-    $sql = "
-      SELECT *, pfandverpackungen.id as verpackung_id
-      FROM pfandverpackungen
-      WHERE lieferanten_id=$lieferanten_id
-      ORDER by sort_id
-    ";
-  }
-  return doSql( $sql );
+  $more_on = "";
+  if( $bestell_id )
+    $more_on = " AND pfandzuordnung.bestell_id = $bestell_id ";
+  return doSql( "
+    SELECT *
+      , pfandverpackungen.id as verpackung_id
+      , pfandzuordnung.id as zuordnung_id
+      , sum( pfandzuordnung.anzahl_kauf ) as anzahl_kauf
+      , sum( pfandzuordnung.anzahl_rueckgabe ) as anzahl_rueckgabe
+      , sum( pfandzuordnung.anzahl_kauf * pfandverpackungen.wert ) as kauf_netto
+      , sum( pfandzuordnung.anzahl_kauf * pfandverpackungen.wert * ( 1 + pfandverpackungen.mwst / 100.0 ) ) as kauf_brutto
+      , sum( pfandzuordnung.anzahl_rueckgabe * pfandverpackungen.wert ) as rueckgabe_netto
+      , sum( pfandzuordnung.anzahl_rueckgabe * pfandverpackungen.wert * ( 1 + pfandverpackungen.mwst / 100.0 ) ) as rueckgabe_brutto
+    FROM pfandverpackungen
+    LEFT JOIN pfandzuordnung
+      ON pfandzuordnung.verpackung_id = pfandverpackungen.id
+      $more_on
+    WHERE lieferanten_id=$lieferanten_id
+    GROUP BY pfandverpackungen.id
+    ORDER BY sort_id
+  " );
 }
 
 function sql_pfandzuordnung( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
@@ -1675,7 +1691,7 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
     ON (gruppenbestellungen.gesamtbestellung_id=$bestell_id)
   INNER JOIN bestellzuordnung
     ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
-        and bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
+        AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
   WHERE bestellvorschlaege.gesamtbestellung_id=$bestell_id
   "
    . ( $gruppen_id ? " and gruppenbestellungen.bestellguppen_id=$gruppen_id " : "" )

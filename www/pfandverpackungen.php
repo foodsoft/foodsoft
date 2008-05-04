@@ -10,7 +10,7 @@ if( $bestell_id ) {
   $lieferant_name = lieferant_name( $lieferanten_id );
 } else {
   $bestellung_name = '';
-  get_http_var( 'lieferanten_id', 'u', false, true );
+  get_http_var( 'lieferanten_id', 'u', 0, true );
 }
 
 
@@ -19,38 +19,20 @@ if( $bestell_id ) {
 //  auswahl lieferanten:
 //
 /////////////////////////////
-?> <table width='100%' class='layout'><tr> <?
+?>
 
-if( $bestell_id ) {
-  ?> <h2>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h2> <?
-} else {
-  ?>
+<table width='100%' class='layout'><tr>
+
+<?  if( $bestell_id ) { ?>
+  <h2>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h2>
+<?  } else { ?>
     <h2>Pfandverpackungen</h2>
     <td style='text-align:left;padding:1ex 1em 2em 3em;'>
-    <table style="width:600px;" class="liste">
-      <tr>
-        <th>Lieferanten</th>
-        <th>Produkte</th>
-      </tr>
-  <?
-  $lieferanten = sql_lieferanten();
-  while( $row = mysql_fetch_array($lieferanten) ) {
-    if( $row['id'] != $lieferanten_id ) {
-      echo "<tr><td><a class='tabelle' href='" . self_url('lieferanten_id') . "&lieferanten_id={$row['id']}'>{$row['name']}</a>";
-    } else {
-      echo "<tr class='active'><td>{$row['name']}";
-    }
-    ?>  </td><td> <? echo $row['anzahl_pfandverpackungen']; ?> </td>
-      </tr>
-    <?
-  }
-  ?>
-        </table>
+  <?  auswahl_lieferant( $lieferanten_id ); ?>
       </td>
     </tr>
     </table>
-  <?
-}
+<? }
 
 // ab hier muss ein Lieferant ausgewaehlt sein, sonst Ende:
 //
@@ -69,11 +51,6 @@ $lieferant_name = lieferant_name( $lieferanten_id );
             <td><input type='button' value='Neue Verpackung eintragen' class='bigbutton' onClick="window.open('index.php?window=editVerpackung&lieferanten_id=<? echo $lieferanten_id; ?>','editProdukt','width=500,height=500,left=100,top=100').focus()"></td>
           </tr>
         <? } ?>
-        <!--
-        <tr>
-          <td><input type='button' value='Seite aktualisieren' class='bigbutton' onClick="document.forms['reload_form'].submit();"></td>
-        </tr>
-        -->
       </table>
     </td>
   </tr>
@@ -112,6 +89,8 @@ if( $action == 'moveup' ) {
       $h = $prev['sort_id'];
       sql_update( 'pfandverpackungen', $prev['id'], array( 'sort_id' => $row['sort_id'] ) );
       sql_update( 'pfandverpackungen', $row['id'], array( 'sort_id' => $h ) );
+      // erzwinge neue index-reihenfolge schon beim naechsten SELECT in diesem script:
+      doSql( 'FLUSH TABLES' );
       break;
     }
     $prev = $row;
@@ -129,6 +108,7 @@ if( $action == 'movedown' ) {
       $h = $row['sort_id'];
       sql_update( 'pfandverpackungen', $row['id'], array( 'sort_id' => $next['sort_id'] ) );
       sql_update( 'pfandverpackungen', $next['id'], array( 'sort_id' => $h ) );
+      doSql( 'FLUSH TABLES' );
       break;
     }
   }
@@ -164,16 +144,25 @@ if( $bestell_id ) {
   <table class='numbers'>
     <tr>
       <th>Bezeichnung</th>
-      <th>Wert (Netto)</th>
+      <th>Einzelwert</th>
       <th>MWSt</th>
-      <? if( $bestell_id ) { ?>
-        <th title'Wieviele wurden in der Rechnung zu <? echo $bestellung_name; ?> in Rechnung gestellt?'>Anzahl geliefert</th>
-        <th title'Wieviele wurden in der Rechnung zu <? echo $bestellung_name; ?> gutgeschrieben?'>Anzahl gutgeschrieben</th>
-      <? } ?>
+      <th class='number'>geliefert</th>
+      <th class='number'>Netto</th>
+      <th class='number'>Brutto</th>
+      <th class='number'>gutgeschrieben</th>
+      <th class='number'>Netto</th>
+      <th class='number'>Brutto</th>
+      <th class='number'>Bestand</th>
+      <th class='number'>Netto</th>
+      <th class='number'>Brutto</th>
       <th>Aktionen</th>
     </tr>
 <?
 
+$summe_kauf_netto = 0;
+$summe_kauf_brutto = 0;
+$summe_rueckgabe_netto = 0;
+$summe_rueckgabe_brutto = 0;
 while( $row = mysql_fetch_array( $verpackungen ) ) {
   $verpackung_id = $row['verpackung_id'];
   ?>
@@ -181,14 +170,41 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       <td><? echo $row['name']; ?></td>
       <td class='number'><? printf( "%.2lf", $row['wert'] ); ?></td>
       <td class='number'><? printf( "%.2lf", $row['mwst'] ); ?></td>
-      <? if( $bestell_id ) { ?>
-        <td class='number'>
+      <td class='mult'>
+        <? if( $editable and $bestell_id ) { ?>
           <input type=text' size='6' name='anzahl_kauf<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['anzahl_kauf'] ); ?>'>
-        </td>
-        <td class='number'>
+        <? } else { ?>
+          <? echo $row['anzahl_kauf']; ?>
+        <? } ?>
+      </td>
+      <td class='number'>
+        <? printf( "%.2lf", $row['kauf_netto'] ); ?>
+      </td>
+      <td class='number'>
+        <? printf( "%.2lf", $row['kauf_brutto'] ); ?>
+      </td>
+      <td class='number'>
+        <? if( $editable and $bestell_id ) { ?>
           <input type=text' size='6' name='anzahl_rueckgabe<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['anzahl_rueckgabe'] ); ?>'>
-        </td>
-      <? } ?>
+        <? } else { ?>
+          <? echo $row['anzahl_rueckgabe']; ?>
+        <? } ?>
+      </td>
+      <td class='number'>
+        <? printf( "%.2lf", $row['rueckgabe_netto'] ); ?>
+      </td>
+      <td class='number'>
+        <? printf( "%.2lf", $row['rueckgabe_brutto'] ); ?>
+      </td>
+      <td class='number'>
+        <? echo ( $row['anzahl_kauf'] - $row['anzahl_rueckgabe'] ); ?>
+      </td>
+      <td class='number'>
+        <? printf( "%.2lf" , $row['kauf_netto'] - $row['rueckgabe_netto'] ); ?>
+      </td>
+      <td class='number'>
+        <? printf( "%.2lf" , $row['kauf_brutto'] - $row['rueckgabe_brutto'] ); ?>
+      </td>
       <td>
         <a class='png' href="javascript:f=window.open('index.php?window=editVerpackung&verpackung_id=<? echo $verpackung_id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
            border='0' alt='Stammdaten ändern' title='Stammdaten ändern'/></a>
@@ -202,7 +218,38 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       </td>
     </tr>
   <?
+  $summe_kauf_netto += $row['kauf_netto'];
+  $summe_rueckgabe_netto += $row['rueckgabe_netto'];
+  $summe_kauf_brutto += $row['kauf_brutto'];
+  $summe_rueckgabe_brutto += $row['rueckgabe_brutto'];
 }
+
+?>
+  <tr class='summe'>
+    <td colspan='4'>Summe:</td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_kauf_netto ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_kauf_brutto ); ?>
+    </td>
+    <td>&nbsp;</td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_rueckgabe_netto ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_rueckgabe_brutto ); ?>
+    </td>
+    <td>&nbsp;</td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_kauf_netto - $summe_rueckgabe_netto ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_kauf_brutto - $summe_rueckgabe_brutto ); ?>
+    </td>
+    <td>&nbsp;</td>
+  </tr>
+<?
 
 if( $bestell_id ) {
   ?>

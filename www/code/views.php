@@ -961,7 +961,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
     ?>
       <tr id='row<?echo $bestell_id; ?>'>
       <td><?echo $row['name']?></td>
-      <td><? echo $row['state']; ?></td>
+      <td><? echo rechnung_status_string( $row['status'] ); ?></td>
       <td><? echo $row['bestellstart']; ?></td>
       <td><? echo $row['bestellende']; ?></td>
       <td><? echo $row['lieferung']; ?></td>
@@ -982,9 +982,9 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
   -->
     <?
   
-    switch( $row['state'] ) {
+    switch( $row['status'] ) {
   
-      case 'bestellen':
+      case STATUS_BESTELLEN:
         ?>
           <td>
             <a href="<? echo "$detail_url"; ?>">Bestellschein (vorl&auml;ufig)</a>
@@ -998,7 +998,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
               $aktionen .= "<li>$self_form
                 <input type='hidden' name='action' value='changeState'>
                 <input type='hidden' name='change_id' value='$bestell_id'>
-                <input type='hidden' name='change_to' value='beimLieferanten'>
+                <input type='hidden' name='change_to' value='".STATUS_LIEFERANT."'>
                 <input type='submit' class='button' name='submit'
                   title='Jetzt Bestellschein für Lieferanten fertigmachen?'
                   value='> Bestellschein fertigmachen >'>
@@ -1011,7 +1011,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         }
         break;
   
-      case 'beimLieferanten':
+      case STATUS_LIEFERANT:
         ?>
           <td>
             <a href="<? echo "$detail_url"; ?>">Bestellschein</a>
@@ -1027,7 +1027,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
             $aktionen .= "<li>$self_form
               <input type='hidden' name='action' value='changeState'>
               <input type='hidden' name='change_id' value='$bestell_id'>
-              <input type='hidden' name='change_to' value='bestellen'>
+              <input type='hidden' name='change_to' value='".STATUS_BESTELLEN."'>
               <input type='submit' class='button' name='submit'
                 title='Bestellung nochmal zum Bestellen freigeben?'
                 value='< Nachbestellen lassen <'>
@@ -1038,7 +1038,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
             $aktionen .= "<li>$self_form
               <input type='hidden' name='action' value='changeState'>
               <input type='hidden' name='change_id' value='$bestell_id'>
-              <input type='hidden' name='change_to' value='Verteilt'>
+              <input type='hidden' name='change_to' value='".STATUS_VERTEILT."'>
               <input type='submit' class='button' name='submit'
                 title='Bestellung wurde geliefert, Lieferschein abgleichen?'
                 value='> Lieferschein erstellen >'>
@@ -1048,18 +1048,22 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         }
         break;
   
-      case 'Verteilt':
+      case STATUS_VERTEILT:
+      case STATUS_ABGERECHNET:
         ?>
           <td>
             <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
             <?  if( $dienst > 0 ) { ?>
               <br><a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a>
             <? } ?>
+            <br>
+            <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=$bestell_id','abrechnung');"
+              title='Zur \"Ubersichtsseite Abrechnung...'>&gt; Abrechnung &gt;</a>
           </td>
         <?
         break;
   
-      case 'archiviert':
+      case STATUS_ARCHIVIERT:
       default:
         ?>
           <td>(keine Details verf&uuml;gbar)</td>
@@ -1760,6 +1764,36 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
 
   ?></fieldset><?
 }
+
+
+function auswahl_lieferant( $selected = 0 ) {
+  ?>
+  <table style="width:600px;" class="liste">
+    <tr>
+      <th>Lieferanten</th>
+      <th>Produkte</th>
+      <th>Pfandverpackungen</th>
+    </tr>
+  <?
+  $lieferanten = sql_lieferanten();
+  while( $row = mysql_fetch_array($lieferanten) ) {
+    if( $row['id'] == $selected ) {
+      echo "<tr class='active'>";
+    } else {
+      echo "<tr>";
+    }
+    echo "
+      <td><a class='tabelle'
+             href='" . self_url('lieferanten_id') . "&lieferanten_id={$row['id']}'>{$row['name']}</a>
+      </td>
+      <td>{$row['anzahl_produkte']}</td>
+      <td>{$row['anzahl_pfandverpackungen']}</td>
+      </tr>
+    ";
+  }
+  ?> </table> <?
+}
+
 
 /**
  * Produziert ein neues select-Feld mit den möglichen
