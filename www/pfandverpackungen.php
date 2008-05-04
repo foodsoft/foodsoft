@@ -13,6 +13,9 @@ if( $bestell_id ) {
   get_http_var( 'lieferanten_id', 'u', 0, true );
 }
 
+get_http_var( 'optionen', 'u', 0, true );
+define( 'OPTION_GRUPPENPFAND', 1 );
+define( 'OPTION_GRUPPEN_INAKTIV', 2 );
 
 /////////////////////////////
 //
@@ -22,17 +25,57 @@ if( $bestell_id ) {
 ?>
 
 <table width='100%' class='layout'><tr>
-
-<?  if( $bestell_id ) { ?>
-  <h2>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h2>
-<?  } else { ?>
-    <h2>Pfandverpackungen</h2>
-    <td style='text-align:left;padding:1ex 1em 2em 3em;'>
-  <?  auswahl_lieferant( $lieferanten_id ); ?>
+<td>
+  <table class='menu'>
+    <tr>
+      <td><h4>Optionen</h4></td>
+    </tr>
+    <tr>
+      <td>
+        <input type='checkbox'
+          <? if( $optionen & OPTION_GRUPPENPFAND ) echo " checked"; ?>
+          onclick="window.location.href='<?
+            echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_GRUPPENPFAND);
+          ?>';"
+          title='Soll die Übersicht über berechnetes und gutgeschriebenes Pfand aller Gruppen angezeigt werden?'
+        > Übersicht Gruppenpfand
       </td>
     </tr>
-    </table>
-<? }
+    <? if( $optionen & OPTION_GRUPPENPFAND ) { ?>
+      <tr>
+        <td>
+          <input style='margin-left:2em;' type='checkbox'
+            <? if( $optionen & OPTION_GRUPPEN_INAKTIV ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_GRUPPEN_INAKTIV );
+            ?>';"
+            title='Auch inaktive Gruppen in Pfandübersicht aufnehmen?'
+          > auch inaktive Gruppen?
+        </td>
+      </tr>
+    <? } ?>
+    <? if( $lieferanten_id) { ?>
+      <tr>
+        <td><input type='button' value='Neue Verpackung eintragen' class='bigbutton' onClick="window.open('index.php?window=editVerpackung&lieferanten_id=<? echo $lieferanten_id; ?>','editProdukt','width=500,height=500,left=100,top=100').focus()"></td>
+      </tr>
+    <? } ?>
+  </table>
+</td>
+
+<td>
+<? if( $bestell_id ) { ?>
+  <h3>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3>
+<? } else { ?>
+   <td style='text-align:left;padding:1ex 1em 2em 3em;'>
+   <h3>Pfandverpackungen</h3>
+     <?  auswahl_lieferant( $lieferanten_id ); ?>
+   </td>
+<? } ?>
+</td>
+
+</tr>
+</table>
+<?
 
 // ab hier muss ein Lieferant ausgewaehlt sein, sonst Ende:
 //
@@ -40,22 +83,6 @@ if( ! $lieferanten_id )
   return;
 
 $lieferant_name = lieferant_name( $lieferanten_id );
-
-?>
-<table width='100%' class='layout'>
-  <tr>
-    <td>
-      <table class='menu'>
-        <? if( $editable ) { ?>
-          <tr>
-            <td><input type='button' value='Neue Verpackung eintragen' class='bigbutton' onClick="window.open('index.php?window=editVerpackung&lieferanten_id=<? echo $lieferanten_id; ?>','editProdukt','width=500,height=500,left=100,top=100').focus()"></td>
-          </tr>
-        <? } ?>
-      </table>
-    </td>
-  </tr>
-</table>
-<?
 
 
 
@@ -265,4 +292,112 @@ if( $bestell_id ) {
   ?> </table> <?
 }
 
+if( ! ( $optionen & OPTION_GRUPPENPFAND ) )
+  return;
+
+?> <h3>Pfandübersicht Bestellgruppen</h3> <?
+
+if( $bestell_id ) {
+  $where = "gesamtbestellungen.id=$bestell_id";
+  ?>
+    <h4>
+    Achtung: Spalte 'Pfand gutgeschrieben' entählt <em>alle</em> Gutschriften,
+    Spalte 'Pfand berechnet' nur Pfand aus Bestellung <? echo $bestellung_name; ?>!
+    </h4>
+  <?
+} else {
+  $where = "gesamtbestellungen.lieferanten_id=$lieferanten_id";
+  ?>
+    <h4>
+    Achtung: Spalte 'Pfand gutgeschrieben' entählt <em>alle</em> Gutschriften,
+    Spalte 'Pfand berechnet' nur Pfand aus Bestellungen bei <? echo $lieferant_name; ?>!
+    </h4>
+  <?
+}
+
+$query = "
+  SELECT
+    bestellgruppen.id as gruppen_id
+  , bestellgruppen.id % 1000 as gruppen_nummer
+  , bestellgruppen.aktiv as aktiv
+  , bestellgruppen.name as gruppen_name
+  , sum( (".select_bestellungen_pfand( array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_haben
+  , (".select_transaktionen_pfand( array( 'bestellgruppen' ) ).") AS pfand_soll
+  FROM bestellgruppen
+  JOIN gesamtbestellungen
+  WHERE $where
+  GROUP BY bestellgruppen.id
+  ORDER BY bestellgruppen.aktiv, bestellgruppen.id
+";
+$gruppen = doSql( $query );
+
+?>
+<table class='numbers'>
+  <tr>
+    <th>Gruppe</th>
+    <th>Nr (Id)</th>
+    <th>aktiv</th>
+    <th>Pfand berechnet</th>
+    <th>Pfand gutgeschrieben</th>
+    <th>Bestand</th>
+  </tr>
+<?
+$summe_pfand_haben = 0;
+$summe_pfand_soll = 0;
+$muell_row = false;
+$basar_row = false;
+while( $row = mysql_fetch_array( $gruppen ) ) {
+  if( $row['gruppen_id'] == $muell_id ) {
+    $muell_row = $row;
+    continue;
+  }
+  if( $row['gruppen_id'] == $basar_id ) {
+    $basar_row = $row;
+    continue;
+  }
+  if( ! ( $row['aktiv'] or ( $optionen & OPTION_GRUPPEN_INAKTIV ) ) )
+    continue;
+  ?>
+    <tr>
+      <td><? echo $row['gruppen_name']; ?></td>
+      <td><? echo "{$row['gruppen_nummer']} ({$row['gruppen_id']})"; ?></td> 
+      <td><? echo $row['aktiv']; ?></td> 
+      <td class='number'><? printf( "%.2lf", $row['pfand_haben'] ); ?></td>
+      <td class='number'><? printf( "%.2lf", $row['pfand_soll'] ); ?></td>
+      <td class='number'><? printf( "%.2lf", $row['pfand_soll'] - $row['pfand_haben'] ); ?></td>
+    </tr>
+  <?
+  $summe_pfand_haben += $row['pfand_haben'];
+  $summe_pfand_soll += $row['pfand_soll'];
+}
+?>
+  <tr class='summe'>
+    <td colspan='3'>Summe:</td>
+    <td class='number'><? printf( "%.2lf", $summe_pfand_haben ); ?></td>
+    <td class='number'><? printf( "%.2lf", $summe_pfand_soll ); ?></td>
+    <td class='number'><? printf( "%.2lf", $summe_pfand_soll - $summe_pfand_haben ); ?></td>
+  </tr>
+<?
+if( $basar_row ) {
+  ?>
+  <tr class='summe'>
+    <td colspan='3'>Basar:</td>
+    <td class='number'><? printf( "%.2lf", $basar_row['pfand_haben'] ); ?></td>
+    <td class='number'><? printf( "%.2lf", $basar_row['pfand_soll'] ); ?></td>
+    <td class='number'><? printf( "%.2lf", $basar_row['pfand_soll'] - $basar_row['pfand_haben'] ); ?></td>
+  </tr>
+  <?
+}
+if( $muell_row ) {
+  ?>
+  <tr class='summe'>
+    <td colspan='3'>internes Verrechnungskonto:</td>
+    <td class='number'><? printf( "%.2lf", $muell_row['pfand_haben'] ); ?></td>
+    <td class='number'><? printf( "%.2lf", $muell_row['pfand_soll'] ); ?></td>
+    <td class='number'><? printf( "%.2lf", $muell_row['pfand_soll'] - $muell_row['pfand_haben'] ); ?></td>
+  </tr>
+  <?
+}
+?>
+</table>
 
