@@ -30,7 +30,7 @@ function debug_args( $args, $tag = '' ) {
   }
 }
 
-    
+
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
 	$result = mysql_query($sql) or
@@ -57,7 +57,7 @@ function sql_select_single_field( $sql, $field, $allownull = false ) {
   return $row[$field];
 }
 
-function sql_update( $table, $id, $values, $escape_and_quote = true ) {
+function sql_update( $table, $where, $values, $escape_and_quote = true ) {
   $table == 'leitvariable' or $table == 'transactions' or fail_if_readonly();
   $sql = "UPDATE $table SET";
   $komma='';
@@ -66,7 +66,15 @@ function sql_update( $table, $id, $values, $escape_and_quote = true ) {
     $sql .= "$komma $key=$val";
     $komma=',';
   }
-  $sql .= " WHERE id=$id";
+  if( is_array( $where ) ) {
+    $and = 'WHERE';
+    foreach( $where as $field => $val ) {
+      $sql .= " $and ($field='$val') ";
+      $and = 'AND';
+    }
+  } else {
+    $sql .= " WHERE id=$where";
+  }
   // echo "<br>sql_update: $sql<br>";
   if( doSql( $sql, LEVEL_IMPORTANT, "Update von Tabelle $table fehlgeschlagen: " ) )
     return $id;
@@ -157,7 +165,7 @@ function mysql2array( $result, $key, $val ) {
 }
 
 /*
- * need_joins: fuer skalare subqueries wie in SELECT x , ( SELECT ... ) as y, z ):
+ * need_joins: fuer skalare subqueries wie in "SELECT x , ( SELECT ... ) as y, z":
  *  erzeugt aus $rules JOIN-anweisungen fuer benoetigte tabellen; in $using koennen
  *  tabellen uebergeben werden, die bereits verfuegbar sind
  */
@@ -172,7 +180,7 @@ function need_joins( $using, $rules ) {
 }
 
 /*
- * use_filters: fuer skalare subqueries wie in SELECT x , ( SELECT ... ) as y, z ):
+ * use_filters: fuer skalare subqueries wie in "SELECT x , ( SELECT ... ) as y, z":
  *  erzeugt optionale filterausdruecke, die bereits verfuegbare tabellen benutzen
  */
 function use_filters( $using, $rules ) {
@@ -842,10 +850,12 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 }
 
 
+//////////////////////////////
 //
 // Passwort-Funktionen:
 //
-//
+//////////////////////////////
+
 function check_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt, $specialgroups;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
@@ -863,7 +873,6 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
 function set_password( $gruppen_id, $gruppen_pwd ) {
   global $crypt_salt, $login_gruppen_id;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-    fail_if_readonly();
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
     return sql_update( 'bestellgruppen', $gruppen_id, array(
       'passwort' => crypt( $gruppen_pwd, $crypt_salt )
@@ -981,15 +990,13 @@ function sql_gruppen_members( $gruppen_id, $member_id = FALSE){
 }
 
 function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dienst){
-	fail_if_readonly();
-	$sql="UPDATE gruppenmitglieder SET name = '".mysql_escape_string($name).
-		"', vorname = '".mysql_escape_string($vorname).
-		"', email = '".mysql_escape_string($email).
-		"', telefon = '".mysql_escape_string($telefon).
-		"', diensteinteilung = '".mysql_escape_string($dienst).
-		"' WHERE id = ".mysql_escape_string($id);
-	doSql($sql, LEVEL_IMPORTANT);
-
+  return sql_update( 'gruppenmitglieder', $id, array(
+    'name' => $name
+  , 'vorname' => $vorname
+  , 'email' => $email
+  , 'telefon' => $telefon
+  , 'diensteinteilung' => $dienst
+  ) );
 }
 
 function select_bestellgruppen( $filter = '', $more_select = '' ) {
@@ -1112,6 +1119,7 @@ function optionen_gruppen(
   }
   return $output;
 }
+
 /**
  * Überprüft, ob die gewählte Gruppennummer verfügbar ist.
  * suche $id = $newNummer + n * 1000
@@ -1238,14 +1246,6 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	    if ($newName == "")
 	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
-	    // Gruppennummer in Gruppenname brauchen wir nicht mehr:
-      // 	    sscanf( $newName, "%d %s", &$n, &$s );
-      // 	    if( ( ! $s ) || ( $n != $newNumber ) ) {
-      // 	      $newName = "$newNumber $newName";
-      // 	      $msg = $msg . "<div class='warn'>Gruppennummer wurde in Namen eingef&uuml;gt</div>";
-      // 	    }
-
-		    // Wenn keine Fehler, dann einfügen...
 	    if( ! $problems ) {
 		  return sql_insert( 'bestellgruppen', array(
           'id' => $new_id
@@ -1335,6 +1335,10 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
 //
 ////////////////////////////////////
 
+function sql_bestellung( $bestell_id ) {
+  return sql_select_single_row( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" );
+}
+
 function getState($bestell_id){
   return sql_select_single_field( "SELECT status FROM gesamtbestellungen WHERE id=$bestell_id", 'status' );
 }
@@ -1343,14 +1347,8 @@ function bestellung_name($bestell_id){
   return sql_select_single_field( "SELECT name FROM gesamtbestellungen WHERE id=$bestell_id", 'name' );
 }
 
-/**
- *
- */
 function getProduzentBestellID($bestell_id){
-  return sql_select_single_field(
-    "SELECT lieferanten_id FROM gesamtbestellungen WHERE id=$bestell_id"
-  , 'lieferanten_id'
-  );
+  return sql_select_single_field( "SELECT lieferanten_id FROM gesamtbestellungen WHERE id=$bestell_id", 'lieferanten_id' );
 }
 
 /**
@@ -1407,28 +1405,28 @@ function changeState($bestell_id, $state){
 
 function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
   $where = '';
-  $add_and = ' WHERE ';
+  $add_and = 'WHERE';
   if($use_Date!==FALSE){
-    $where .= "$add_and (NOW() BETWEEN bestellstart AND bestellende)";
-    $add_and = ' AND ';
+    $where .= " $add_and (NOW() BETWEEN bestellstart AND bestellende)";
+    $add_and = 'AND';
   }
   if($state!==FALSE){
     $add_or = '';
-    $where .= "$add_and ( ";
+    $where .= " $add_and ( ";
     if(!is_array($state)){
       $where .= "rechnungsstatus = $state";
     } else {
       foreach($state as $st){
-        $where .= "$add_or (rechnungsstatus = $st)";
-        $add_or = " OR ";
+        $where .= " $add_or (rechnungsstatus = $st)";
+        $add_or = 'OR';
       }
     }
     $where .= ')';
-    $add_and = ' AND ';
+    $add_and = 'AND';
   }
   if($id!==FALSE){
-    $where.= "$add_and (id =$id)";
-    $add_and = ' AND ';
+    $where.= " $add_and (id =$id)";
+    $add_and = 'AND';
   }
   return doSql( "SELECT * FROM gesamtbestellungen $where ORDER BY bestellende DESC,name" );
 }
@@ -1440,23 +1438,13 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
 function select_gesamtbestellungen_schuldverhaeltnis() {
   return "
     SELECT * FROM gesamtbestellungen
-    WHERE status >= " . STATUS_LIEFERANT;
-}
-
-function sql_bestellung( $id ) {
-  $result = sql_bestellungen( false, false, $id );
-  if( ! $result or mysql_num_rows( $result ) != 1 ) {
-    error( __LINE__, __FILE__, "Lesen der Gesamtbestellung $id fehlgeschlagen" );
-    exit();
-  }
-  return mysql_fetch_array( $result );
+    WHERE rechnungsstatus >= " . STATUS_LIEFERANT;
 }
 
 /**
  *  Gesamtbestellung einfügen
  */
 function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $lieferanten_id ){
-  fail_if_readonly();
   nur_fuer_dienst_IV();
   return sql_insert( 'gesamtbestellungen', array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
@@ -1465,7 +1453,6 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $liefera
 }
 
 function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
-  fail_if_readonly();
   nur_fuer_dienst_IV();
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
@@ -1534,7 +1521,6 @@ function sql_bestellpreis($bestell_id, $produkt_id){
 }
 
 function sql_create_gruppenbestellung($gruppe, $bestell_id){
-  fail_if_readonly();
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurueckgeben */  )
@@ -1549,7 +1535,7 @@ function sql_create_gruppenbestellung($gruppe, $bestell_id){
 ////////////////////////////////////
 
 function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0 ) {
-  $more_on = "";
+  $more_on = '';
   if( $bestell_id )
     $more_on = " AND pfandzuordnung.bestell_id = $bestell_id ";
   return doSql( "
@@ -1596,17 +1582,6 @@ function sql_pfandzuordnung( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
 //
 ////////////////////////////////////
 
-function select_verteilmenge() {
-  return "
-    SELECT IFNULL(sum(menge),0.0) as verteilmenge
-    FROM bestellzuordnung
-    JOIN gruppenbestellungen
-      ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-    WHERE (art = 2)
-      AND (produkte.id = bestellzuordnung.produkt_id)
-      AND (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
-  ";
-}
 
 function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
 	$query = "
@@ -1984,64 +1959,40 @@ function verteilmengenZuweisen($bestell_id){
 	// changeState($bestell_id, STATUS_LIEFERANT);
 }
 
-/**
- *
- */
-function changeLieferpreis_sql($preis_id, $produkt_id, $bestellung_id){
-	$query = "UPDATE bestellvorschlaege 
-		  SET produktpreise_id = ".mysql_escape_string($preis_id)."
-		  WHERE produkt_id = ".mysql_escape_string($produkt_id)."
-		  AND gesamtbestellung_id = ".mysql_escape_string($bestellung_id).";";
-	//echo $query."<br>";
-	doSql($query, LEVEL_IMPORTANT,"Konnte Lieferpreis nicht in DB ändern...");
+function changeLieferpreis_sql($preis_id, $produkt_id, $bestell_id){
+  return sql_update( 'bestellvorschlaege'
+  , array( 'produkt_id' => $produkt_id, 'gesamtbestellung_id' => $bestell_id )
+  , array( 'produktpreise_id' => $preis_id )
+  );
 }
-/**
- *
- */
-function changeLiefermengen_sql($menge, $produkt_id, $bestellung_id){
-  fail_if_readonly();
+
+function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
   nur_fuer_dienst(1,3,4);
-	$query = "UPDATE bestellvorschlaege 
-		  SET liefermenge = ".mysql_escape_string($menge)."
-		  WHERE produkt_id = ".mysql_escape_string($produkt_id)."
-		  AND gesamtbestellung_id = ".mysql_escape_string($bestellung_id).";";
-        doSql($query, LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB ändern...");
+  return sql_update( 'bestellvorschlaege'
+  , array( 'produkt_id' => $produkt_id, 'gesamtbestellung_id' => $bestell_id )
+  , array( 'liefermenge' => $menge )
+  );
 }
-/**
- *
- */
-function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestellung_id){
-	$where_clause = " WHERE art = 2 AND produkt_id = ".mysql_escape_string($produkt_id)."
-			 AND gruppenbestellung_id IN
-		  	(SELECT id FROM gruppenbestellungen
-				 WHERE bestellguppen_id = ".mysql_escape_string($gruppen_id)."
-				 AND gesamtbestellung_id =
-				 ".mysql_escape_string($bestellung_id).") ";
 
-	$query = "SELECT * FROM bestellzuordnung ".$where_clause;
-        $result = doSql($query, LEVEL_ALL, "Konnte Verteilmengen nicht von DB laden...");
-	$toDelete = mysql_num_rows($result) - 1 ;
-	if($toDelete > 0){
-		$query = "DELETE FROM bestellzuordnung
-			".$where_clause." LIMIT ".$toDelete;
-                doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern...");
-	}
-
-	$query = "UPDATE bestellzuordnung 
-		  SET menge = ".mysql_escape_string($menge).$where_clause;
-        doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern...");
+function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestell_id){
+  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
+  doSql( "DELETE * FROM bestellzuordnung
+          WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
+  return sql_insert( 'bestellzuordnung', array(
+    'produkt_id' => $produkt_id
+  , 'menge' => $menge
+  , 'gruppenbestellung_id' => $gruppenbestellung_id
+  , 'art' => 2
+  ) );
 }
 
 function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
-
-      $id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
-      //                   ^ ist idempotent!
-
-	    $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
-        VALUES ('$produkt','$id','$menge', 2)
-        ON DUPLICATE KEY UPDATE menge = menge + $menge
-      ";
-            doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
+  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
+  $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
+     VALUES ('$produkt','$gruppenbestellung_id','$menge', 2)
+     ON DUPLICATE KEY UPDATE menge = menge + $menge
+   ";
+  return doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
 }
 
 
@@ -2071,18 +2022,27 @@ function sql_basar($bestell_id=0,$order='produktname'){
  *
  */
 function select_basar() {
+  $subselect_verteilmenge = "
+    SELECT IFNULL(sum(menge),0.0) as verteilmenge
+    FROM bestellzuordnung
+    JOIN gruppenbestellungen
+      ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
+    WHERE (art = 2)
+      AND (produkte.id = bestellzuordnung.produkt_id)
+      AND (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
+  ";
   return "
     SELECT produkte.name as produkt_name
          , gesamtbestellungen.name as bestellung_name
          , gesamtbestellungen.lieferung as lieferung
-         , produktpreise.preis
+        , produktpreise.preis
          , produktpreise.verteileinheit
          , bestellvorschlaege.produkt_id
          , bestellvorschlaege.gesamtbestellung_id
          , bestellvorschlaege.produktpreise_id
          , bestellvorschlaege.liefermenge
          , bestellvorschlaege.bestellmenge
-         , ( bestellvorschlaege.liefermenge - ( ".select_verteilmenge()." ) ) as basar
+         , ( bestellvorschlaege.liefermenge - ( $subselect_verteilmenge ) ) as basar
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
     JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
@@ -2091,13 +2051,12 @@ function select_basar() {
   " ;
 }
 
-
 function basar_wert_summe() {
-  $row = sql_select_single_row( "
-    SELECT IFNULL(sum( basar.basar * basar.preis ), 0.0 ) as wert
-    FROM ( " .select_basar(). " ) as basar
-  " );
-  return $row['wert'];
+  return sql_select_single_field(
+    " SELECT IFNULL(sum( basar.basar * basar.preis ), 0.0 ) as wert
+      FROM ( " .select_basar(). " ) as basar "
+  , 'wert'
+  );
 }
 
 /**
@@ -2135,13 +2094,9 @@ function sql_gruppen_transaktion(
   $notiz ="",
   $kontobewegungs_datum = 0, $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
-  // debug_args( func_get_args(), 'sql_gruppen_transaktion' );
   global $dienstkontrollblatt_id, $hat_dienst_IV, $mysqlheute;
-  fail_if_readonly();
-  // echo "gruppen_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
+
   need( $gruppen_id or $lieferanten_id );
-  // art=0 ohne konto wird fuer vorlaeufige buchungen benutzt:
-  // need( $transaktionsart or $bankkonto_id );
   $kontobewegungs_datum or $kontobewegungs_datum = $mysqlheute;
 
   return sql_insert( 'gruppen_transaktion', array(
@@ -2163,12 +2118,10 @@ function sql_bank_transaktion(
 , $dienstkontrollblatt_id, $notiz
 , $konterbuchung_id
 ) {
-  // debug_args( func_get_args(), 'sql_bank_transaktion' );
   global $mysqlheute;
-  // echo "bank_transaktion: gruppen_id:$gruppen_id, lieferanten_id:$lieferanten_id";
+
   need( $konto_id and $auszug_jahr and $auszug_nr );
   need( $dienstkontrollblatt_id and $notiz );
-  fail_if_readonly();
 
   return sql_insert( 'bankkonto', array(
     'konto_id' => $konto_id
@@ -2184,7 +2137,6 @@ function sql_bank_transaktion(
 }
 
 function sql_link_transaction( $soll_id, $haben_id ) {
-  // debug_args( func_get_args(), 'sql_link_transaction' );
   if( $soll_id > 0 )
     sql_update( 'bankkonto', $soll_id, array( 'konterbuchung_id' => $haben_id ) );
   else
@@ -2200,15 +2152,13 @@ function sql_link_transaction( $soll_id, $haben_id ) {
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
-  // debug_args( func_get_args(), 'sql_doppelte_transaktion' );
   global $dienstkontrollblatt_id;
-  // echo "doppelte_transaktion 1<br>";
+
   nur_fuer_dienst(4,5);
   need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
   need( $notiz, 'Bitte Notiz angeben!' );
   need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
 
-  // echo "doppelte_transaktion 2<br>";
   if( $soll['konto_id'] == -1 ) {
     $soll_id = -1 * sql_gruppen_transaktion(
       adefault( $soll, 'transaktionsart', 0 ), adefault( $soll, 'gruppen_id', 0 ), $betrag
@@ -2221,7 +2171,6 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
-  // echo "doppelte_transaktion 3<br>";
   if( $haben['konto_id'] == -1 ) {
     $haben_id = -1 * sql_gruppen_transaktion(
       adefault( $haben, 'transaktionsart', 0 ), adefault( $haben, 'gruppen_id', 0 ), -$betrag
@@ -2234,7 +2183,6 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
     );
   }
 
-  // echo "doppelte_transaktion 4<br>";
   sql_link_transaction( $soll_id, $haben_id );
   return;
 }
