@@ -62,10 +62,9 @@
   if( ! isset( $foodsoftdir ) ) {
     $foodsoftdir = ereg_replace( '/[^/]+$', '', $_SERVER['SCRIPT_NAME'] );
     //
-    // (ausnahme: einige in ../windows/ werden direkt aufgerufen; ggf. abschneiden:)
-    // (todo: aufrufe aller skripte in ../windows/ auf index.php?window=... umstellen!)
-    //
-    $foodsoftdir = ereg_replace( '/windows$', '', $foodsoftdir );
+    // ausnahme: einige in ../windows/ wurden direkt aufgerufen, aber das
+    // sollte jetzt nicht mehr vorkommen:
+    /// $foodsoftdir = ereg_replace( '/windows$', '', $foodsoftdir );
     //
     // (noch'ne ausnahme: aufruf aus dem wiki heraus...)
     //
