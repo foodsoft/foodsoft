@@ -112,14 +112,16 @@ if( $bestell_id ) {
 <?
 $summe_pfand_haben = 0;
 $summe_pfand_soll = 0;
+$summe_anzahl_rueckgabe = 0;
 $muell_row = false;
 $basar_row = false;
 while( $row = mysql_fetch_array( $gruppen ) ) {
-  if( $row['gruppen_id'] == $muell_id ) {
+  $gruppen_id = $row['gruppen_id'];
+  if( $gruppen_id == $muell_id ) {
     $muell_row = $row;
     continue;
   }
-  if( $row['gruppen_id'] == $basar_id ) {
+  if( $gruppen_id == $basar_id ) {
     $basar_row = $row;
     continue;
   }
@@ -128,7 +130,7 @@ while( $row = mysql_fetch_array( $gruppen ) ) {
   ?>
     <tr>
       <td><? echo $row['gruppen_name']; ?></td>
-      <td><? echo "{$row['gruppen_nummer']} ({$row['gruppen_id']})"; ?></td> 
+      <td><? echo "{$row['gruppen_nummer']} ($gruppen_id)"; ?></td> 
       <td><? echo $row['aktiv']; ?></td> 
       <td class='number'><? printf( "%.2lf", $row['pfand_haben'] ); ?></td>
       <td class='number'>
@@ -136,7 +138,7 @@ while( $row = mysql_fetch_array( $gruppen ) ) {
           <input type=text' size='6' name='anzahl_rueckgabe<? echo $gruppen_id; ?>'
                  value='<? printf( "%u", $row['anzahl_rueckgabe'] ); ?>'>
         <? } else { ?>
-          <? printf( "%u", $row['rueckgabe_anzahl'] ); ?>
+          <? printf( "%u", $row['anzahl_rueckgabe'] ); ?>
         <? } ?>
       </td>
       <td class='number'><? printf( "%.2lf", $row['pfand_soll'] ); ?></td>
@@ -144,12 +146,14 @@ while( $row = mysql_fetch_array( $gruppen ) ) {
     </tr>
   <?
   $summe_pfand_haben += $row['pfand_haben'];
+  $summe_anzahl_rueckgabe += $row['anzahl_rueckgabe'];
   $summe_pfand_soll += $row['pfand_soll'];
 }
 ?>
   <tr class='summe'>
     <td colspan='3'>Summe:</td>
     <td class='number'><? printf( "%.2lf", $summe_pfand_haben ); ?></td>
+    <td class='number'><? printf( "%u", $summe_anzahl_rueckgabe ); ?></td>
     <td class='number'><? printf( "%.2lf", $summe_pfand_soll ); ?></td>
     <td class='number'><? printf( "%.2lf", $summe_pfand_haben - $summe_pfand_soll ); ?></td>
   </tr>
@@ -159,6 +163,7 @@ if( $basar_row ) {
   <tr class='summe'>
     <td colspan='3'>Basar:</td>
     <td class='number'><? printf( "%.2lf", $basar_row['pfand_haben'] ); ?></td>
+    <td class='number'><? printf( "%u", $row['anzahl_rueckgabe'] ); ?></td>
     <td class='number'><? printf( "%.2lf", $basar_row['pfand_soll'] ); ?></td>
     <td class='number'><? printf( "%.2lf", $basar_row['pfand_haben'] - $basar_row['pfand_soll'] ); ?></td>
   </tr>
@@ -169,6 +174,7 @@ if( $muell_row ) {
   <tr class='summe'>
     <td colspan='3'>internes Verrechnungskonto:</td>
     <td class='number'><? printf( "%.2lf", $muell_row['pfand_haben'] ); ?></td>
+    <td class='number'><? printf( "%u", $row['anzahl_rueckgabe'] ); ?></td>
     <td class='number'><? printf( "%.2lf", $muell_row['pfand_soll'] ); ?></td>
     <td class='number'><? printf( "%.2lf", $muell_row['pfand_haben'] - $muell_row['pfand_soll'] ); ?></td>
   </tr>

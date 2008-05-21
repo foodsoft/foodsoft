@@ -77,7 +77,7 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
   }
   // echo "<br>sql_update: $sql<br>";
   if( doSql( $sql, LEVEL_IMPORTANT, "Update von Tabelle $table fehlgeschlagen: " ) )
-    return $id;
+    return $where;
   else
     return FALSE;
 }
@@ -1534,54 +1534,54 @@ function sql_create_gruppenbestellung($gruppe, $bestell_id){
 //
 ////////////////////////////////////
 
-function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0 ) {
+function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0, $group_by = "pfandverpackungen.id" ) {
   $more_on = '';
   if( $bestell_id )
-    $more_on = " AND pfandzuordnung.bestell_id = $bestell_id ";
+    $more_on = " AND lieferantenpfand.bestell_id = $bestell_id ";
   return doSql( "
     SELECT *
       , pfandverpackungen.id as verpackung_id
-      , pfandzuordnung.id as zuordnung_id
-      , sum( pfandzuordnung.anzahl_kauf ) as anzahl_kauf
-      , sum( pfandzuordnung.anzahl_rueckgabe ) as anzahl_rueckgabe
-      , sum( pfandzuordnung.anzahl_kauf * pfandverpackungen.wert ) as kauf_netto
-      , sum( pfandzuordnung.anzahl_kauf * pfandverpackungen.wert * ( 1 + pfandverpackungen.mwst / 100.0 ) ) as kauf_brutto
-      , sum( pfandzuordnung.anzahl_rueckgabe * pfandverpackungen.wert ) as rueckgabe_netto
-      , sum( pfandzuordnung.anzahl_rueckgabe * pfandverpackungen.wert * ( 1 + pfandverpackungen.mwst / 100.0 ) ) as rueckgabe_brutto
+      , lieferantenpfand.id as zuordnung_id
+      , sum( lieferantenpfand.anzahl_kauf ) as anzahl_kauf
+      , sum( lieferantenpfand.anzahl_rueckgabe ) as anzahl_rueckgabe
+      , sum( lieferantenpfand.anzahl_kauf * pfandverpackungen.wert ) as pfand_soll_netto
+      , sum( lieferantenpfand.anzahl_kauf * pfandverpackungen.wert * ( 1 + pfandverpackungen.mwst / 100.0 ) ) as pfand_soll_brutto
+      , sum( lieferantenpfand.anzahl_rueckgabe * pfandverpackungen.wert ) as pfand_haben_netto
+      , sum( lieferantenpfand.anzahl_rueckgabe * pfandverpackungen.wert * ( 1 + pfandverpackungen.mwst / 100.0 ) ) as pfand_haben_brutto
     FROM pfandverpackungen
-    LEFT JOIN pfandzuordnung
-      ON pfandzuordnung.verpackung_id = pfandverpackungen.id
+    LEFT JOIN lieferantenpfand
+      ON lieferantenpfand.verpackung_id = pfandverpackungen.id
       $more_on
     WHERE lieferanten_id=$lieferanten_id
-    GROUP BY pfandverpackungen.id
+    GROUP BY $group_by
     ORDER BY sort_id
   " );
 }
 
-function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0 ) {
+function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0, $group_by = "bestellgruppen.id" ) {
   if( $bestell_id ) {
-    $filter = "WHERE gesamtbestellungen.id = $bestell_id";
+    $filter = "gesamtbestellungen.id = $bestell_id";
   } else {
-    $filter = "WHERE gesamtbestellungen.lieferanten_id = $lieferanten_id";
+    $filter = "gesamtbestellungen.lieferanten_id = $lieferanten_id";
   }
-  $query = "
+  return doSql( "
     SELECT
       bestellgruppen.id as gruppen_id
     , bestellgruppen.aktiv as aktiv
     , bestellgruppen.name as gruppen_name
     , bestellgruppen.id % 1000 as gruppen_nummer
     , sum( (".select_bestellungen_pfand( array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_haben
-    , sum( pfandrueckgabe.anzahl_rueckgabe ) as anzahl_rueckgabe
-    , sum( pfandrueckgabe.anzahl_rueckgabe * pfandrueckgabe.pfandwert ) as pfand_soll
+    , sum( gruppenpfand.anzahl_rueckgabe ) as anzahl_rueckgabe
+    , sum( gruppenpfand.anzahl_rueckgabe * gruppenpfand.pfand_wert ) as pfand_soll
     FROM bestellgruppen
     JOIN gesamtbestellungen
-    LEFT JOIN pfandrueckgabe
-      ON pfandrueckgabe.bestell_id = gesamtbestellungen.id
-         AND pfandrueckgabe.gruppen_id = bestellgruppen.id
+    LEFT JOIN gruppenpfand
+      ON gruppenpfand.bestell_id = gesamtbestellungen.id
+         AND gruppenpfand.gruppen_id = bestellgruppen.id
     WHERE $filter
-    GROUP BY bestellgruppen.id
+    GROUP BY $group_by
     ORDER BY bestellgruppen.aktiv, bestellgruppen.id
-  ";
+  " );
 }
 
 // pfandzuordnung_{lieferant,gruppe}:
@@ -1590,7 +1590,7 @@ function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0 ) {
 //
 function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
   if( $kauf > 0 or $rueckgabe > 0 ) {
-    sql_insert( 'pfandzuordnung' , array(
+    sql_insert( 'lieferantenpfand' , array(
         'verpackung_id' => $verpackung_id
       , 'bestell_id' => $bestell_id
       , 'anzahl_kauf' => $kauf
@@ -1599,22 +1599,22 @@ function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $kauf, $ruec
     , true
     );
   } else {
-    doSql( "DELETE FROM pfandzuordnung WHERE bestell_id=$bestell_id AND verpackung_id=$verpackung_id" ); 
+    doSql( "DELETE FROM lieferantenpfand WHERE bestell_id=$bestell_id AND verpackung_id=$verpackung_id" ); 
   }
 }
 
 function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_rueckgabe ) {
   if( $anzahl_rueckgabe > 0 ) {
-    return sql_insert( 'pfandrueckgabe', array(
+    return sql_insert( 'gruppenpfand', array(
         'gruppen_id' => $gruppen_id
       , 'bestell_id' => $bestell_id
       , 'anzahl_rueckgabe' => $anzahl_rueckgabe
-      , 'pfandwert' => 0.16
+      , 'pfand_wert' => 0.16
       )
     , true
     );
   } else {
-    return doSql( "DELETE FROM pfandrueckgabe  WHERE bestell_id=$bestell_id AND gruppen_id=$gruppen_id" ); 
+    return doSql( "DELETE FROM gruppenpfand  WHERE bestell_id=$bestell_id AND gruppen_id=$gruppen_id" ); 
   }
 }
 
@@ -2230,32 +2230,6 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   return;
 }
 
-// 
-// function sql_groupGlass($gruppe, $menge){
-//   global $mysqlheute;
-//   $muell_id = sql_muell_id();
-//   $pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
-//   if( $menge <= 0 )
-//     return;
-//   sql_doppelte_transaktion(
-//     array( 'konto_id' => -1, 'gruppen_id' => $gruppe, 'transaktionsart' => 1 )
-//   , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
-//   , $pfand_preis * $menge
-//   , $mysqlheute
-//   , "Pfand: Rueckgabe $menge Stueck"
-//   );
-// }
-// 
-// function sql_lieferant_glass( $lieferanten_id, $gutschrift, $valuta ) {
-//   $muell_id = sql_muell_id();
-//   sql_doppelte_transaktion(
-//     array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
-//   , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id, 'transaktionsart' => 1 )
-//   , $gutschrift
-//   , $valuta
-//   , "Pfand: Gutschrift durch Lieferanten"
-//   );
-// }
 
 
 /*

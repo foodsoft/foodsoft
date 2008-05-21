@@ -161,10 +161,10 @@ if( $bestell_id ) {
     </tr>
 <?
 
-$summe_kauf_netto = 0;
-$summe_kauf_brutto = 0;
-$summe_rueckgabe_netto = 0;
-$summe_rueckgabe_brutto = 0;
+$summe_soll_netto = 0;
+$summe_soll_brutto = 0;
+$summe_haben_netto = 0;
+$summe_haben_brutto = 0;
 while( $row = mysql_fetch_array( $verpackungen ) ) {
   $verpackung_id = $row['verpackung_id'];
   ?>
@@ -180,10 +180,10 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
         <? } ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['kauf_netto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_soll_netto'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['kauf_brutto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_soll_brutto'] ); ?>
       </td>
       <td class='number'>
         <? if( $editable and $bestell_id ) { ?>
@@ -193,19 +193,19 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
         <? } ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['rueckgabe_netto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_haben_netto'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['rueckgabe_brutto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_haben_brutto'] ); ?>
       </td>
       <td class='number'>
         <? echo ( $row['anzahl_kauf'] - $row['anzahl_rueckgabe'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf" , $row['kauf_netto'] - $row['rueckgabe_netto'] ); ?>
+        <? printf( "%.2lf" , $row['pfand_soll_netto'] - $row['pfand_haben_netto'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf" , $row['kauf_brutto'] - $row['rueckgabe_brutto'] ); ?>
+        <? printf( "%.2lf" , $row['pfand_soll_brutto'] - $row['pfand_haben_brutto'] ); ?>
       </td>
       <td>
         <a class='png' href="javascript:f=window.open('index.php?window=editVerpackung&verpackung_id=<? echo $verpackung_id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
@@ -220,34 +220,34 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       </td>
     </tr>
   <?
-  $summe_kauf_netto += $row['kauf_netto'];
-  $summe_rueckgabe_netto += $row['rueckgabe_netto'];
-  $summe_kauf_brutto += $row['kauf_brutto'];
-  $summe_rueckgabe_brutto += $row['rueckgabe_brutto'];
+  $summe_soll_netto += $row['pfand_soll_netto'];
+  $summe_haben_netto += $row['pfand_haben_netto'];
+  $summe_soll_brutto += $row['pfand_soll_brutto'];
+  $summe_haben_brutto += $row['pfand_haben_brutto'];
 }
 
 ?>
   <tr class='summe'>
     <td colspan='4'>Summe:</td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_kauf_netto ); ?>
+      <? printf( "%.2lf", $summe_soll_netto ); ?>
     </td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_kauf_brutto ); ?>
-    </td>
-    <td>&nbsp;</td>
-    <td class='number'>
-      <? printf( "%.2lf", $summe_rueckgabe_netto ); ?>
-    </td>
-    <td class='number'>
-      <? printf( "%.2lf", $summe_rueckgabe_brutto ); ?>
+      <? printf( "%.2lf", $summe_soll_brutto ); ?>
     </td>
     <td>&nbsp;</td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_kauf_netto - $summe_rueckgabe_netto ); ?>
+      <? printf( "%.2lf", $summe_haben_netto ); ?>
     </td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_kauf_brutto - $summe_rueckgabe_brutto ); ?>
+      <? printf( "%.2lf", $summe_haben_brutto ); ?>
+    </td>
+    <td>&nbsp;</td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_soll_netto - $summe_haben_netto ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_soll_brutto - $summe_haben_brutto ); ?>
     </td>
     <td>&nbsp;</td>
   </tr>
