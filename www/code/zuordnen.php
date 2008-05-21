@@ -2125,6 +2125,8 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 //
 // funktionen fuer gruppen-, lieferanten-, und bankkonto
 //
+// "soll" und "haben" sind immer (wo nicht anders angegeben) aus sicht der FC
+//
 ////////////////////////////////////
 
 
@@ -2412,7 +2414,6 @@ function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = 
   $sql = "
     SELECT gruppen_transaktion.id, type, summe, kontobewegungs_datum
          , konterbuchung_id, gruppen_transaktion.notiz
-         , summe * IF( type=1, 1, 0 ) as pfand
          , dienstkontrollblatt_id
          , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
          , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
@@ -2567,14 +2568,50 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
   " );
 }
 
+define( 'OPTION_NETTO_SOLL', 1 );
+define( 'OPTION_BRUTTO_SOLL', 2 );
+define( 'OPTION_ENDPREIS_SOLL', 3 );
+define( 'OPTION_PFAND_VOLL_SOLL', 4 );   /* schuld aus kauf voller pfandverpackungen */
+define( 'OPTION_PFAND_LEER_SOLL', 5 );   /* schuld aus rueckgabe leerer pfandverpackungen */
+
 /* select_bestellungen_soll_gruppen:
- *   liefert als skalarer subquery schuld von gruppen aus bestellungen
- *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
- *   erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
+ *   liefert als skalarer subquery schuld an gruppen aus bestellungen
+ *   - $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
+ *     erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
+ *   - $art ist eine der optionen oben; SOLL immer aus sicht der FC
 */
-function select_bestellungen_soll_gruppen( $using = array() ) {
+function select_bestellungen_soll_gruppen( $art, $using = array() ) {
+  switch( $art ) {
+    case OPTION_ENDPREIS_SOLL:
+      expr = "(produktpreise.preis)";
+      break;
+    case OPTION_BRUTTO_SOLL:
+      expr = "(produktpreise.preis - produktpreise.pfand)";
+      break;
+    case OPTION_NETTO_SOLL:
+      expr = "( (produktpreise.preis - produktpreise.pfand) / ( 1.0 + produktpreise.mwst / 100.0 ) )";
+      break;
+    case OPTION_PFAND_VOLL_SOLL:
+      expr = "(produktpreise.pfand)";
+      break;
+    case OPTION_PFAND_LEER_SOLL:
+      return "
+        SELECT IFNULL( sum( gruppenpfand.anzahl_rueckgabe * gruppenpfand.pfand_wert ), 0.0 )
+        FROM gruppenpfand
+        " . need_joins( $using, array(
+            'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
+                                     ON gesamtbestellungen.id = gruppenpfand.bestell_id'
+          ) ) . "
+        WHERE 1 . use_filters( $using, array(
+          'bestellgruppen' => 'gruppenpfand.gruppen_id = bestellgruppen.id'
+        , 'gesamtbestellungen' => 'gruppenpfand.bestell_id = gesamtbestellungen.id'
+        ) );
+      break;
+    default:
+      error(__LINE__,__FILE__, "select_bestellungen_soll_gruppen: bitte Funktionsaufruf portieren!", debug_backtrace());
+  }
   return "
-    SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.preis ), 0.0 )
+    SELECT -1.0 * IFNULL( sum( bestellzuordnung.menge * $expr ), 0.0 )
     FROM gruppenbestellungen
   " . need_joins( $using, array(
       'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
@@ -2593,12 +2630,41 @@ function select_bestellungen_soll_gruppen( $using = array() ) {
     ) );
 }
 
-/* select_bestellungen_haben_lieferanten:
+/* select_bestellungen_soll_lieferanten:
  *   liefert als skalarer subquery forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *   erlaubte werte: 'gesamtbestellungen', 'lieferanten'
 */
-function select_bestellungen_haben_lieferanten( $using = array() ) {
+function select_bestellungen_haben_lieferanten( $art, $using = array() ) {
+  switch( $art ) {
+    case OPTION_ENDPREIS_SOLL:
+      expr = "(produktpreise.preis)";
+      break;
+    case OPTION_BRUTTO_SOLL:
+      expr = "(produktpreise.preis - produktpreise.pfand)";
+      break;
+    case OPTION_NETTO_SOLL:
+      expr = "( (produktpreise.preis - produktpreise.pfand) / ( 1.0 + produktpreise.mwst / 100.0 ) )";
+      break;
+    case OPTION_PFAND_VOLL_SOLL:
+      expr = "(produktpreise.pfand)";
+      break;
+    case OPTION_PFAND_LEER_SOLL:
+      return "
+        SELECT IFNULL( sum( lieferantenpfand.anzahl_voll * pfandverpackungen.pfand_wert ), 0.0 )
+        FROM gruppenpfand
+        " . need_joins( $using, array(
+            'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
+                                     ON gesamtbestellungen.id = gruppenpfand.bestell_id'
+          ) ) . "
+        WHERE 1 . use_filters( $using, array(
+          'bestellgruppen' => 'gruppenpfand.gruppen_id = bestellgruppen.id'
+        , 'gesamtbestellungen' => 'gruppenpfand.bestell_id = gesamtbestellungen.id'
+        ) );
+      break;
+    default:
+      error(__LINE__,__FILE__, "select_bestellungen_soll_gruppen: bitte Funktionsaufruf portieren!", debug_backtrace());
+  }
   return "
     SELECT IFNULL( sum( bestellvorschlaege.liefermenge * produktpreise.preis ), 0.0 )
       FROM bestellvorschlaege
@@ -2677,7 +2743,7 @@ function select_transaktionen_soll_lieferanten( $using = array() ) {
 
 function select_haben_lieferanten( $using = array() ) {
   return "
-    SELECT ( (" .select_bestellungen_haben_lieferanten($using). ")
+    SELECT ( (" .select_bestellungen_soll_lieferanten($using). ")
             - (" .select_transaktionen_soll_lieferanten($using). ") ) as haben
   ";
 }
@@ -2685,7 +2751,7 @@ function select_haben_lieferanten( $using = array() ) {
 function select_kontostand_gruppen( $using = array() ) {
   return "
     SELECT ( (".select_transaktionen_haben_gruppen($using).")
-           - (".select_bestellungen_soll_gruppen($using).") ) as haben
+           + (".select_bestellungen_soll_gruppen(OPTION_ENDPREIS_SOLL,$using).") ) as haben
   ";
 }
 
@@ -2744,8 +2810,9 @@ function sql_bestellungen_soll_gruppe( $gruppen_id ) {
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , (" .select_bestellungen_soll_gruppen( array('bestellgruppen','gesamtbestellungen') ). ") as soll
-         , (" .select_bestellungen_pfand( array('bestellgruppen','gesamtbestellungen') ). ") as pfand
+         , (" .select_bestellungen_soll_gruppen( OPTION_ENDPREIS_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_voll_soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_leer_soll
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
@@ -2765,7 +2832,7 @@ function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , (" .select_bestellungen_haben_lieferanten( array('lieferanten','gesamtbestellungen') ). ") as haben
+         , (" .select_bestellungen_soll_lieferanten( array('lieferanten','gesamtbestellungen') ). ") as soll
          , (" .select_bestellungen_pfand( array('lieferanten','gesamtbestellungen') ). ") as pfand
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN lieferanten
