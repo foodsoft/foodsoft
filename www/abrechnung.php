@@ -19,6 +19,13 @@ need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
 
+$result = sql_gruppenpfand( $lieferant_id, $bestell_id, "gruppenpfand.bestell_id" );
+$gruppenpfand = mysql_fetch_array( $result );
+
+$result = sql_pfandverpackungen( $lieferant_id, $bestell_id, "lieferantenpfand.bestell_id" );
+$lieferantenpfand = mysql_fetch_array( $result );
+
+
 $query_by_produkt = "
   SELECT gesamtbestellungen.id as bestell_id
        , bestellvorschlaege.produkt_id as produkt_id
@@ -62,7 +69,7 @@ $query_by_produkt = "
 <?echo self_post(); ?>
   <input type='hidden' name='action' value='abschluss'>
 
-  <table>
+  <table class='numbers'>
     <tr>
       <th>Abrechnungsschritt</th>
       <th>Details</th>
@@ -93,7 +100,16 @@ $query_by_produkt = "
         <div class='small'>(falls zutreffend, etwa bei Terra!)</div>
       </td>
       <td>
-        (kommt noch)
+        <table class='inner'>
+          <tr>
+            <td>in Rechnung gestellt:</td>
+            <td class='number'><b><? printf( "%.2lf", $lieferantenpfand['pfand_soll_brutto'] ); ?></b></td>
+          </tr>
+          <tr>
+            <td>gutgeschrieben:</td>
+            <td class='number'><b><? printf( "%.2lf", $lieferantenpfand['pfand_haben_brutto'] ); ?></b></td>
+          </tr>
+        </table>
       </td>
       <td>
         <a href="javascript:neuesfenster('index.php?window=pfandverpackungen&bestell_id=<? echo $bestell_id; ?>','pfandzettel');"
@@ -103,9 +119,10 @@ $query_by_produkt = "
         ok: <input type='checkbox' name='pfandzettel_ok' value='yes'>
       </td>
     </tr>
-    <tr>
-      <th colspan='4'>Bestellgruppen: </th>
-    </tr>
+
+<tr>
+  <th colspan='4'>Bestellgruppen: </th>
+</tr>
     <tr>
       <td>
         Verteilmengen erfassen und abgleichen
@@ -143,11 +160,20 @@ $query_by_produkt = "
         <div class='small'>(nur bei Terra!)</div>
       </td>
       <td>
-        (kommt noch)
+        <table class='inner'>
+          <tr>
+            <td>in Rechnung gestellt:</td>
+            <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_haben'] ); ?></b></td>
+          </tr>
+          <tr>
+            <td>gutgeschrieben:</td>
+            <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_soll'] ); ?></b></td>
+          </tr>
+        </table>
       </td>
       <td>
         <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=<? echo $bestell_id; ?>','gruppenpfand');"
-        >Pfandabrechnung Bestellgruppen...</a>
+        >zur Pfandabrechnung...</a>
       </td>
       <td>
         ok: <input type='checkbox' name='gruppenpfand_ok' value='yes'>

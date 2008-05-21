@@ -232,6 +232,8 @@ table.layout, table.layout td, table.inner, table.inner td {
 }
 table.inner td {
 	padding:1px;
+  padding-left:0.5ex;
+  padding-right:0.5ex;
 }
 th.menge, th.toleranz {
 	width: 70px;
