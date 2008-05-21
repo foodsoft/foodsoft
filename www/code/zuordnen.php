@@ -1558,10 +1558,39 @@ function sql_pfandverpackungen( $lieferanten_id, $bestell_id = 0 ) {
   " );
 }
 
-function sql_pfandzuordnung( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
+function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0 ) {
+  if( $bestell_id ) {
+    $filter = "WHERE gesamtbestellungen.id = $bestell_id";
+  } else {
+    $filter = "WHERE gesamtbestellungen.lieferanten_id = $lieferanten_id";
+  }
+  $query = "
+    SELECT
+      bestellgruppen.id as gruppen_id
+    , bestellgruppen.aktiv as aktiv
+    , bestellgruppen.name as gruppen_name
+    , bestellgruppen.id % 1000 as gruppen_nummer
+    , sum( (".select_bestellungen_pfand( array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_haben
+    , sum( pfandrueckgabe.anzahl_rueckgabe ) as anzahl_rueckgabe
+    , sum( pfandrueckgabe.anzahl_rueckgabe * pfandrueckgabe.pfandwert ) as pfand_soll
+    FROM bestellgruppen
+    JOIN gesamtbestellungen
+    LEFT JOIN pfandrueckgabe
+      ON pfandrueckgabe.bestell_id = gesamtbestellungen.id
+         AND pfandrueckgabe.gruppen_id = bestellgruppen.id
+    WHERE $filter
+    GROUP BY bestellgruppen.id
+    ORDER BY bestellgruppen.aktiv, bestellgruppen.id
+  ";
+}
+
+// pfandzuordnung_{lieferant,gruppe}:
+// schreibe _gesamtmenge_ fuer eine (bestellung,verpackung) oder (bestellung,gruppe),
+// _ersetzt_ fruehere zuordnungen (nicht additiv!)
+//
+function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
   if( $kauf > 0 or $rueckgabe > 0 ) {
-    sql_insert( 'pfandzuordnung'
-    , array(
+    sql_insert( 'pfandzuordnung' , array(
         'verpackung_id' => $verpackung_id
       , 'bestell_id' => $bestell_id
       , 'anzahl_kauf' => $kauf
@@ -1574,6 +1603,20 @@ function sql_pfandzuordnung( $bestell_id, $verpackung_id, $kauf, $rueckgabe ) {
   }
 }
 
+function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_rueckgabe ) {
+  if( $anzahl_rueckgabe > 0 ) {
+    return sql_insert( 'pfandrueckgabe', array(
+        'gruppen_id' => $gruppen_id
+      , 'bestell_id' => $bestell_id
+      , 'anzahl_rueckgabe' => $anzahl_rueckgabe
+      , 'pfandwert' => 0.16
+      )
+    , true
+    );
+  } else {
+    return doSql( "DELETE FROM pfandrueckgabe  WHERE bestell_id=$bestell_id AND gruppen_id=$gruppen_id" ); 
+  }
+}
 
 
 ////////////////////////////////////
@@ -2187,31 +2230,32 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
   return;
 }
 
-function sql_groupGlass($gruppe, $menge){
-  global $mysqlheute;
-  $muell_id = sql_muell_id();
-  $pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
-  if( $menge <= 0 )
-    return;
-  sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $gruppe, 'transaktionsart' => 1 )
-  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
-  , $pfand_preis * $menge
-  , $mysqlheute
-  , "Pfand: Rueckgabe $menge Stueck"
-  );
-}
-
-function sql_lieferant_glass( $lieferanten_id, $gutschrift, $valuta ) {
-  $muell_id = sql_muell_id();
-  sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
-  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id, 'transaktionsart' => 1 )
-  , $gutschrift
-  , $valuta
-  , "Pfand: Gutschrift durch Lieferanten"
-  );
-}
+// 
+// function sql_groupGlass($gruppe, $menge){
+//   global $mysqlheute;
+//   $muell_id = sql_muell_id();
+//   $pfand_preis = 0.16; // TODO: aus leitvariablen oder variable nach produkten machen?
+//   if( $menge <= 0 )
+//     return;
+//   sql_doppelte_transaktion(
+//     array( 'konto_id' => -1, 'gruppen_id' => $gruppe, 'transaktionsart' => 1 )
+//   , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
+//   , $pfand_preis * $menge
+//   , $mysqlheute
+//   , "Pfand: Rueckgabe $menge Stueck"
+//   );
+// }
+// 
+// function sql_lieferant_glass( $lieferanten_id, $gutschrift, $valuta ) {
+//   $muell_id = sql_muell_id();
+//   sql_doppelte_transaktion(
+//     array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => 1 )
+//   , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id, 'transaktionsart' => 1 )
+//   , $gutschrift
+//   , $valuta
+//   , "Pfand: Gutschrift durch Lieferanten"
+//   );
+// }
 
 
 /*
@@ -3492,6 +3536,8 @@ function checkvalue( $val, $typ){
 		    //FIXME: zahl sollte als zahl zurückgegeben 
 		    //werden, zur Zeit String
 	      $val = trim($val);
+        // eventuellen nachkommateil (und sonstigen Muell) abschneiden:
+        $val = preg_replace( '/[^\d].*$/', '', $val );
 	      $pattern = '/^\d+$/';
 	      break;
 	    case 'f':
