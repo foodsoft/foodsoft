@@ -79,9 +79,10 @@ $query_by_produkt = "
       <td>
         (kommt noch)
       </td>
-        <a href="javascript:neuesfenster('index.php?window=bestellschein&bestell_id=$bestell_id','bestellschein');"
-        >zum Lieferschein...</a>
       <td>
+        <a href="javascript:neuesfenster('index.php?window=bestellschein&bestell_id=<? echo $bestell_id; ?>','bestellschein');"
+        >zum Lieferschein...</a>
+      </td>
       <td>
         ok: <input type='checkbox' name='lieferschein_ok' value='yes'>
       </td>
@@ -94,9 +95,10 @@ $query_by_produkt = "
       <td>
         (kommt noch)
       </td>
-        <a href="javascript:neuesfenster('index.php?window=pfandverpackungen&bestell_id=$bestell_id','pfandzettel');"
-        >zum Pfandzettel...</a>
       <td>
+        <a href="javascript:neuesfenster('index.php?window=pfandverpackungen&bestell_id=<? echo $bestell_id; ?>','pfandzettel');"
+        >zum Pfandzettel...</a>
+      </td>
       <td>
         ok: <input type='checkbox' name='pfandzettel_ok' value='yes'>
       </td>
@@ -112,9 +114,10 @@ $query_by_produkt = "
       <td>
         (kommt noch)
       </td>
-        <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=$bestell_id','verteilliste');"
-        >zur Verteilliste...</a>
       <td>
+        <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=<? echo $bestell_id; ?>','verteilliste');"
+        >zur Verteilliste...</a>
+      </td>
       <td>
         ok: <input type='checkbox' name='veteilung_ok' value='yes'>
       </td>
@@ -126,9 +129,10 @@ $query_by_produkt = "
       <td>
         (kommt noch)
       </td>
+      <td>
         <a href="javascript:neuesfenster('index.php?window=basar','basar');"
         >zum Basar...</a>
-      <td>
+      </td>
       <td>
         ok: <input type='checkbox' name='basar_ok' value='yes'>
       </td>
@@ -141,9 +145,10 @@ $query_by_produkt = "
       <td>
         (kommt noch)
       </td>
-        <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=$bestell_id','gruppenpfand');"
-        >Pfandabrechnung Bestellgruppen...</a>
       <td>
+        <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=<? echo $bestell_id; ?>','gruppenpfand');"
+        >Pfandabrechnung Bestellgruppen...</a>
+      </td>
       <td>
         ok: <input type='checkbox' name='gruppenpfand_ok' value='yes'>
       </td>

@@ -72,7 +72,7 @@ $editable or $action = '';
 
 if( $bestell_id and ( $action == 'save' ) ) {
   $gruppen = sql_bestellgruppen();
-  while( $row = mysql_fetch_array( $gruppen ) {
+  while( $row = mysql_fetch_array( $gruppen ) ) {
     $id = $row['id'];
     if( get_http_var( "anzahl_rueckgabe$id", 'u' ) ) {
       sql_pfandzuordnung_gruppe( $bestell_id, $id, ${"anzahl_rueckgabe$id"} );
@@ -174,7 +174,6 @@ if( $muell_row ) {
   </tr>
   <?
 }
-?>
 
 if( $bestell_id ) {
   ?>
