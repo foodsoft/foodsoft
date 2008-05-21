@@ -11,6 +11,11 @@ $lieferant_name = lieferant_name( $lieferanten_id );
 
 get_http_var( 'optionen', 'u', 0, true );
 define( 'OPTION_GRUPPEN_INAKTIV', 1 );
+define( 'OPTION_ALLE_BESTELLUNGEN', 2 );
+if( $optionen & OPTION_ALLE_BESTELLUNGEN ) {
+  $bestell_id = 0;
+  $editable = false;
+}
 
 ?>
 <table width='100%' class='layout'>
@@ -31,10 +36,25 @@ define( 'OPTION_GRUPPEN_INAKTIV', 1 );
           > auch inaktive Gruppen anzeigen?
         </td>
       </tr>
+      <tr>
+        <td>
+          <input style='margin-left:2em;' type='checkbox'
+            <? if( $optionen & OPTION_ALLE_BESTELLUNGEN ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_ALLE_BESTELLUNGEN );
+            ?>';"
+            title='Pfandsumme ueber alle Bestellungen bei <? echo $lieferant_name; ?> anzeigen'
+          > Summe aller Bestellungen anzeigen?
+        </td>
+      </tr>
     </table>
   </td>
   <td>
-    <h3>Gruppenpfand: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3>
+    <? if( $bestell_id ) { ?>
+      <h3>Gruppenpfand: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3>
+    <? } else { ?>
+      <h3>Gruppenpfand: alle Bestellungen bei <? echo "$lieferant_name"; ?></h3>
+    <? } ?>
   </td>
 </tr>
 </table>
@@ -50,16 +70,16 @@ define( 'OPTION_GRUPPEN_INAKTIV', 1 );
 get_http_var('action','w','');
 $editable or $action = '';
 
-// if( $bestell_id and ( $action == 'save' ) ) {
-//   $verpackungen = sql_pfandverpackungen( $lieferanten_id, $bestell_id );
-//   while( $row = mysql_fetch_array($verpackungen)) {
-//     $id = $row['verpackung_id'];
-//     if( get_http_var( "anzahl_kauf$id", 'u' ) and get_http_var( "anzahl_rueckgabe$id", 'u' ) ) {
-//       sql_pfandzuordnung_lieferant( $bestell_id, $id, ${"anzahl_kauf$id"}, ${"anzahl_rueckgabe$id"} );
-//     }
-//   }
-// }
-// 
+if( $bestell_id and ( $action == 'save' ) ) {
+  $gruppen = sql_bestellgruppen();
+  while( $row = mysql_fetch_array( $gruppen ) {
+    $id = $row['id'];
+    if( get_http_var( "anzahl_rueckgabe$id", 'u' ) ) {
+      sql_pfandzuordnung_gruppe( $bestell_id, $id, ${"anzahl_rueckgabe$id"} );
+    }
+  }
+}
+
 
 /////////////////////////////
 //
@@ -69,6 +89,14 @@ $editable or $action = '';
 
 
 $gruppen = sql_gruppenpfand( $lieferanten_id, $bestell_id );
+
+if( $bestell_id ) {
+  ?>
+  <form method='post' action='<? echo self_url(); ?>'>
+  <? echo self_post(); ?>
+  <input type='hidden' name='action' value='save'>
+  <?
+}
 
 ?>
 <table class='numbers'>
@@ -103,6 +131,14 @@ while( $row = mysql_fetch_array( $gruppen ) ) {
       <td><? echo "{$row['gruppen_nummer']} ({$row['gruppen_id']})"; ?></td> 
       <td><? echo $row['aktiv']; ?></td> 
       <td class='number'><? printf( "%.2lf", $row['pfand_haben'] ); ?></td>
+      <td class='number'>
+        <? if( $editable and $bestell_id ) { ?>
+          <input type=text' size='6' name='anzahl_rueckgabe<? echo $gruppen_id; ?>'
+                 value='<? printf( "%u", $row['anzahl_rueckgabe'] ); ?>'>
+        <? } else { ?>
+          <? printf( "%u", $row['rueckgabe_anzahl'] ); ?>
+        <? } ?>
+      </td>
       <td class='number'><? printf( "%.2lf", $row['pfand_soll'] ); ?></td>
       <td class='number'><? printf( "%.2lf", $row['pfand_haben'] - $row['pfand_soll'] ); ?></td>
     </tr>
@@ -139,5 +175,18 @@ if( $muell_row ) {
   <?
 }
 ?>
-</table>
+
+if( $bestell_id ) {
+  ?>
+    <tr>
+      <td colspan='6'>
+        <input type='submit' class='button' value='Speichern'>
+      </td>
+    </tr>
+  </table>
+  </form>
+  <?
+} else {
+  ?> </table> <?
+}
 
