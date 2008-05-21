@@ -6,27 +6,10 @@
 
 //error_reporting(E_ALL); // alle Fehler anzeigen
 
-  assert( $angemeldet ) or exit();
+assert( $angemeldet ) or exit();
+need_http_var('bestell_id','u',true);
 
-  if( get_http_var( 'bestellungs_id', 'u' ) ) {
-    $bestell_id = $bestellungs_id;
-    $self_fields['bestell_id'] = $bestell_id;
-  } else {
-    get_http_var('bestell_id','u',0,true);
-  }
-  if( ! $bestell_id ) {
-    $result = sql_bestellungen( $_SESSION['ALLOWED_ORDER_STATES'][$area] );
-    select_bestellung_view($result, array("Verteiltabelle" => "verteilung"));
-    return;
-	}
-
-  if(!nur_fuer_dienst(1,4)){exit();}
-
-    if (!isset($bestell_id)) {
-	 	$result = sql_bestellungen(array(STATUS_LIEFERANT, STATUS_VERTEILT));
-		select_bestellung_view($result, array("zeigen" => "verteilung") , "Verteilung der Bestellung");
-		exit();
-	 }
+if(!nur_fuer_dienst(1,4)){exit();}
 
 	 $basar= sql_basar_id();
 

@@ -949,7 +949,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
            . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
            . "','bestellschein');";
     $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$bestell_id','bestellfax');";
-    $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestellungs_id=$bestell_id','Verteil-Liste');";
+    $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestell_id=$bestell_id','Verteil-Liste');";
     $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
     $edit_link = "<a class='png' style='padding:0pt 1ex 0pt 1ex;'
       href=\"javascript:window.open('index.php?window=editBestellung&bestell_id=$bestell_id','editBestellung','width=400,height=420,left=100,top=100').focus();\">
