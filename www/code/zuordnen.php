@@ -1634,6 +1634,53 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
   return $result;
 }
 
+function select_liefermenge( $bestell_id, $produkt_id ) {
+  return "( SELECT bestellvorschlaege.liefermenge
+    FROM bestellvorschlaege
+    WHERE bestellvorschlaege.gesamtbestellung_id = $bestell_id
+      AND bestellvorschlaege.produkt_id = $produkt_id
+  )";
+}
+
+function sql_liefermenge( $bestell_id, $produkt_id ) {
+  return sql_select_single_field( "SELECT ".select_liefermenge( $bestell_id, $produkt_id )." AS liefermenge", 'liefermenge' );
+}
+
+function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
+  if( $gruppen_id ) {
+    $more_where = 'AND (gruppenbestellung.bestellguppen_id = $gruppen_id )';
+  } else {
+    $more_where = 'AND (gruppenbestellung.bestellguppen_id != $muell_id) AND (gruppenbestellung.bestellguppen_id != $basar_id)';
+  }
+  $muell_id = sql_muell_id();
+  $basar_id = sql_basar_id();
+  return "( SELECT IFNULL( sum( bestellzuordnung.menge ), 0.0 ) as verteilmenge
+    FROM bestellzuordnung
+    JOIN gruppenbestellung
+      ON gruppenbestellung.gesamtbestellung_id = $bestell_id
+         AND gruppenbestellung.id = bestellzuordnung.gruppenbestellung_id
+    WHERE ( bestellzuordnung.art = 2 ) AND ( bestellzuordnung.produkt_id = $produkt_id )
+         $more_where
+  ) ";
+}
+
+# function select_basarmenge( $bestell_id, $produkt_id ) {
+#
+#
+# }
+
+
+function sql_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
+  return sql_select_single_field( "SELECT ".select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id )." AS verteilmenge", 'verteilmenge' );
+}
+
+function sql_muellmenge( $bestell_id, $produkt_id ) {
+  return sql_verteilmenge( $bestell_id, $produkt_id, sql_muell_id() );
+}
+
+
+
+
 /**
  * verteilmengenLoeschen:
  *  - Verteilmengen nochmal löschen bei statuswechsel LIEFERANT -> BESTELLEN
@@ -1974,7 +2021,7 @@ function sql_basar($bestell_id=0,$order='produktname'){
 /**
  *
  */
-function select_basar() {
+function select_basar( $bestell_id ) {
   $subselect_verteilmenge = "
     SELECT IFNULL(sum(menge),0.0) as verteilmenge
     FROM bestellzuordnung

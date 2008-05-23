@@ -104,7 +104,10 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
                               + $lieferanten_soll['pfand_voll_netto_soll']  ); ?>
       </td>
       <td class='number'><? printf( "%.2lf", sql_bestellung_rechnungssumme( $bestell_id ) ); ?> </td>
-      <td colspan='2'>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>
+        ok: <input type='checkbox' name='rechnungssumme_ok' value='yes'>
+      </td>
     </tr>
 
 <tr>
@@ -112,11 +115,14 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 </tr>
     <tr>
       <td>
-        Verteilmengen erfassen und abgleichen
-        <div class='small'>(sofern noch nicht geschehen!)</div>
+        Verteilmengen abgleichen
       </td>
-      <td colspan='3'>
-        (kommt noch)
+      <td>
+        Warenwert Gruppen:
+      </td>
+      <td class='number'>
+      </td>
+      <td class='number'>
       </td>
       <td style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=<? echo $bestell_id; ?>','verteilliste');"

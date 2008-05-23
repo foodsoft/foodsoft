@@ -87,34 +87,6 @@ if( $bestell_id and ( $action == 'save' ) ) {
 //
 /////////////////////////////
 
-$result = doSql(
-  "SELECT sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) as anzahl
-        , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) as wert
-  FROM bestellgruppen
-  JOIN gesamtbestellungen
-    ON gesamtbestellungen.id = $bestell_id
-       AND gesamtbestellungen.lieferanten_id = $lieferanten_id
-  LEFT JOIN gruppenpfand
-      ON gruppenpfand.bestell_id = gesamtbestellungen.id
-         AND gruppenpfand.gruppen_id = bestellgruppen.id
-  GROUP by gesamtbestellungen.id
-" );
-
-while( $row = mysql_fetch_array( $result ) ) {
-  echo "<br>ROW:<br>";
-  print_r( $row );
-}
-
-$result = sql_gruppenpfand( $lieferanten_id, $bestell_id , 'bestell_id' );
-$gruppenpfand = mysql_fetch_array( $result );
-echo "
-  gruppenpfand:
-  <br> anzahl: {$gruppenpfand['pfand_leer_anzahl']}
-  <br> leer: {$gruppenpfand['pfand_leer_brutto_soll']}
-  <br> voll: {$gruppenpfand['pfand_voll_brutto_soll']}
-  <br>
-";
-
 $gruppen = sql_gruppenpfand( $lieferanten_id, $bestell_id );
 
 if( $bestell_id ) {
