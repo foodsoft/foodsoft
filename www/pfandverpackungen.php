@@ -43,7 +43,7 @@ get_http_var( 'optionen', 'u', 0, true );
 <? } else { ?>
    <td style='text-align:left;padding:1ex 1em 2em 3em;'>
    <h3>Pfandverpackungen</h3>
-     <?  auswahl_lieferant( $lieferanten_id ); ?>
+     <? auswahl_lieferant( $lieferanten_id ); ?>
    </td>
 <? } ?>
 </td>
@@ -71,17 +71,17 @@ get_http_var('action','w','');
 $editable or $action = '';
 
 if( $bestell_id and ( $action == 'save' ) ) {
-  $verpackungen = sql_pfandverpackungen( $lieferanten_id, $bestell_id );
+  $verpackungen = sql_lieferantenpfand( $lieferanten_id, $bestell_id );
   while( $row = mysql_fetch_array($verpackungen)) {
     $id = $row['verpackung_id'];
-    if( get_http_var( "anzahl_kauf$id", 'u' ) and get_http_var( "anzahl_rueckgabe$id", 'u' ) ) {
-      sql_pfandzuordnung_lieferant( $bestell_id, $id, ${"anzahl_kauf$id"}, ${"anzahl_rueckgabe$id"} );
+    if( get_http_var( "anzahl_voll$id", 'u' ) and get_http_var( "anzahl_leer$id", 'u' ) ) {
+      sql_pfandzuordnung_lieferant( $bestell_id, $id, ${"anzahl_voll$id"}, ${"anzahl_leer$id"} );
     }
   }
 }
 if( $action == 'moveup' ) {
   need_http_var( 'verpackung_id', 'u' );
-  $verpackungen = sql_pfandverpackungen( $lieferanten_id );
+  $verpackungen = sql_lieferantenpfand( $lieferanten_id );
   $prev = false;
   while( $row = mysql_fetch_array( $verpackungen ) ) {
     if( $row['verpackung_id'] == $verpackung_id ) {
@@ -100,7 +100,7 @@ if( $action == 'moveup' ) {
 }
 if( $action == 'movedown' ) {
   need_http_var( 'verpackung_id', 'u' );
-  $verpackungen = sql_pfandverpackungen( $lieferanten_id );
+  $verpackungen = sql_lieferantenpfand( $lieferanten_id );
   while( $row = mysql_fetch_array( $verpackungen ) ) {
     if( $row['verpackung_id'] == $verpackung_id ) {
       $next = mysql_fetch_array( $verpackungen );
@@ -116,12 +116,10 @@ if( $action == 'movedown' ) {
   }
 }
 
-
 //   if( $action == 'delete' and $editable ) {
 //     need_http_var('pfandverpackung_id','u');
 //     sql_delete_pfandverpackung( $pfandverpackung_id );
 //   }
-
 
 
 /////////////////////////////
@@ -131,8 +129,7 @@ if( $action == 'movedown' ) {
 /////////////////////////////
 
 
-
-$verpackungen = sql_pfandverpackungen( $lieferanten_id, $bestell_id );
+$verpackungen = sql_lieferantenpfand( $lieferanten_id, $bestell_id );
 
 if( $bestell_id ) {
   ?>
@@ -161,10 +158,10 @@ if( $bestell_id ) {
     </tr>
 <?
 
-$summe_soll_netto = 0;
-$summe_soll_brutto = 0;
-$summe_haben_netto = 0;
-$summe_haben_brutto = 0;
+$summe_voll_netto = 0;
+$summe_voll_brutto = 0;
+$summe_leer_netto = 0;
+$summe_leer_brutto = 0;
 while( $row = mysql_fetch_array( $verpackungen ) ) {
   $verpackung_id = $row['verpackung_id'];
   ?>
@@ -174,38 +171,38 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       <td class='number'><? printf( "%.2lf", $row['mwst'] ); ?></td>
       <td class='mult'>
         <? if( $editable and $bestell_id ) { ?>
-          <input type=text' size='6' name='anzahl_kauf<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['anzahl_kauf'] ); ?>'>
+          <input type=text' size='6' name='anzahl_voll<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['pfand_voll_anzahl'] ); ?>'>
         <? } else { ?>
-          <? echo $row['anzahl_kauf']; ?>
+          <? echo $row['pfand_voll_anzahl']; ?>
         <? } ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['pfand_soll_netto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_voll_netto_soll'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['pfand_soll_brutto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_voll_brutto_soll'] ); ?>
       </td>
       <td class='number'>
         <? if( $editable and $bestell_id ) { ?>
-          <input type=text' size='6' name='anzahl_rueckgabe<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['anzahl_rueckgabe'] ); ?>'>
+          <input type=text' size='6' name='anzahl_leer<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['pfand_leer_anzahl'] ); ?>'>
         <? } else { ?>
-          <? echo $row['anzahl_rueckgabe']; ?>
+          <? echo $row['pfand_leer_anzahl']; ?>
         <? } ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['pfand_haben_netto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_leer_netto_soll'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf", $row['pfand_haben_brutto'] ); ?>
+        <? printf( "%.2lf", $row['pfand_leer_brutto_soll'] ); ?>
       </td>
       <td class='number'>
-        <? echo ( $row['anzahl_kauf'] - $row['anzahl_rueckgabe'] ); ?>
+        <? echo ( $row['pfand_voll_anzahl'] - $row['pfand_leer_anzahl'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf" , $row['pfand_soll_netto'] - $row['pfand_haben_netto'] ); ?>
+        <? printf( "%.2lf" , $row['pfand_voll_netto_soll'] + $row['pfand_leer_netto_soll'] ); ?>
       </td>
       <td class='number'>
-        <? printf( "%.2lf" , $row['pfand_soll_brutto'] - $row['pfand_haben_brutto'] ); ?>
+        <? printf( "%.2lf" , $row['pfand_voll_brutto_soll'] + $row['pfand_leer_brutto_soll'] ); ?>
       </td>
       <td>
         <a class='png' href="javascript:f=window.open('index.php?window=editVerpackung&verpackung_id=<? echo $verpackung_id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
@@ -220,34 +217,34 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       </td>
     </tr>
   <?
-  $summe_soll_netto += $row['pfand_soll_netto'];
-  $summe_haben_netto += $row['pfand_haben_netto'];
-  $summe_soll_brutto += $row['pfand_soll_brutto'];
-  $summe_haben_brutto += $row['pfand_haben_brutto'];
+  $summe_voll_netto += $row['pfand_voll_netto_soll'];
+  $summe_voll_brutto += $row['pfand_voll_brutto_soll'];
+  $summe_leer_netto += $row['pfand_leer_netto_soll'];
+  $summe_leer_brutto += $row['pfand_leer_brutto_soll'];
 }
 
 ?>
   <tr class='summe'>
     <td colspan='4'>Summe:</td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_soll_netto ); ?>
+      <? printf( "%.2lf", $summe_voll_netto ); ?>
     </td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_soll_brutto ); ?>
-    </td>
-    <td>&nbsp;</td>
-    <td class='number'>
-      <? printf( "%.2lf", $summe_haben_netto ); ?>
-    </td>
-    <td class='number'>
-      <? printf( "%.2lf", $summe_haben_brutto ); ?>
+      <? printf( "%.2lf", $summe_voll_brutto ); ?>
     </td>
     <td>&nbsp;</td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_soll_netto - $summe_haben_netto ); ?>
+      <? printf( "%.2lf", $summe_leer_netto ); ?>
     </td>
     <td class='number'>
-      <? printf( "%.2lf", $summe_soll_brutto - $summe_haben_brutto ); ?>
+      <? printf( "%.2lf", $summe_leer_brutto ); ?>
+    </td>
+    <td>&nbsp;</td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_voll_netto + $summe_leer_netto ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", $summe_voll_brutto + $summe_leer_brutto ); ?>
     </td>
     <td>&nbsp;</td>
   </tr>

@@ -19,38 +19,14 @@ need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
 
-$result = sql_gruppenpfand( $lieferant_id, $bestell_id, "gruppenpfand.bestell_id" );
+$result = sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" );
 $gruppenpfand = mysql_fetch_array( $result );
 
-$result = sql_pfandverpackungen( $lieferant_id, $bestell_id, "lieferantenpfand.bestell_id" );
-$lieferantenpfand = mysql_fetch_array( $result );
+// $result = sql_pfandverpackungen( $lieferant_id, $bestell_id, "lieferantenpfand.bestell_id" );
+// $lieferantenpfand = mysql_fetch_array( $result );
 
+$lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 
-$query_by_produkt = "
-  SELECT gesamtbestellungen.id as bestell_id
-       , bestellvorschlaege.produkt_id as produkt_id
-       , bestellvorschlaege.liefermente as liefermenge
-       , produkte.name as produkt_name
-       , sum( 
-  FROM gesamtbestellungen
-  INNER JOIN bestellvorschlaege
-     ON bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id
-  INNER JOIN produkte
-     ON produkte.id = bestellvorschlaege.produkt_id
-  INNER JOIN produktgruppen
-     ON produktgruppen.id=produkte.produktgruppen_id
-  INNER JOIN produktpreise
-     ON produktpreise.id = bestellvorschlaege.produktpreise_id
-  INNER JOIN gruppenbestellungen
-     ON gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id
-  INNER JOIN bestellzuordnung
-     ON bestellzuordnung.produkt_id = bestellvorschlaege.produkt_id
-        AND bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-        AND bestellzuordnung.art = 2
-  WHERE gesamtbestellungen.id = $bestell_id 
-  GROUP BY bestellvorschlaege.produkt_id
-  ORDER BY produktgruppen.id, produkte.name
-";
 
 
 /////////////////////////////
@@ -60,6 +36,9 @@ $query_by_produkt = "
 /////////////////////////////
 
 // ...
+
+
+
 
 
 ?>
@@ -73,69 +52,77 @@ $query_by_produkt = "
     <tr>
       <th>Abrechnungsschritt</th>
       <th>Details</th>
+      <th>Netto</th>
+      <th>Brutto</th>
       <th>Aktionen</th>
       <th>erledigt?</th>
     </tr>
     <tr>
-      <th colspan='4'>Lieferant <? echo $lieferant_name; ?>: </th>
+      <th colspan='6' style='padding-top:2em;'>Lieferant <? echo $lieferant_name; ?>: </th>
     </tr>
     <tr>
       <td>
         Liefermengen und -preise abgleichen:
       </td>
-      <td>
-        (kommt noch)
-      </td>
-      <td>
+      <td style='text-align:right;'>Warenwert:</td>
+      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll'] ); ?></b></td>
+      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['waren_brutto_soll'] ); ?></b></td>
+      <td style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=bestellschein&bestell_id=<? echo $bestell_id; ?>','bestellschein');"
         >zum Lieferschein...</a>
       </td>
-      <td>
+      <td style='vertical-align:bottom;'>
         ok: <input type='checkbox' name='lieferschein_ok' value='yes'>
       </td>
     </tr>
     <tr>
-      <td>
+      <td rowspan='2'>
         Pfandabrechnung Lieferant:
         <div class='small'>(falls zutreffend, etwa bei Terra!)</div>
       </td>
-      <td>
-        <table class='inner'>
-          <tr>
-            <td>in Rechnung gestellt:</td>
-            <td class='number'><b><? printf( "%.2lf", $lieferantenpfand['pfand_soll_brutto'] ); ?></b></td>
-          </tr>
-          <tr>
-            <td>gutgeschrieben:</td>
-            <td class='number'><b><? printf( "%.2lf", $lieferantenpfand['pfand_haben_brutto'] ); ?></b></td>
-          </tr>
-        </table>
+      <td style='text-align:right;'>berechnet (Kauf):</td>
+      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_netto_soll'] ); ?></b></td>
+      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ); ?></b></td>
       </td>
-      <td>
+      <td rowspan='2' style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=pfandverpackungen&bestell_id=<? echo $bestell_id; ?>','pfandzettel');"
         >zum Pfandzettel...</a>
       </td>
-      <td>
+      <td rowspan='2' style='vertical-align:bottom;'>
         ok: <input type='checkbox' name='pfandzettel_ok' value='yes'>
       </td>
     </tr>
+    <tr>
+      <td style='text-align:right;'>gutgeschrieben (Rückgabe):</td>
+      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_netto_soll'] ); ?></b></td>
+      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ); ?></b></td>
+    </tr>
+    <tr class='summe'>
+      <td colspan='2'>Summe:</td>
+      <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll']
+                              + $lieferanten_soll['pfand_leer_netto_soll']
+                              + $lieferanten_soll['pfand_voll_netto_soll']  ); ?>
+      </td>
+      <td class='number'><? printf( "%.2lf", sql_bestellung_rechnungssumme( $bestell_id ) ); ?> </td>
+      <td colspan='2'>&nbsp;</td>
+    </tr>
 
 <tr>
-  <th colspan='4'>Bestellgruppen: </th>
+  <th colspan='6' style='padding-top:2em;'>Bestellgruppen: </th>
 </tr>
     <tr>
       <td>
         Verteilmengen erfassen und abgleichen
         <div class='small'>(sofern noch nicht geschehen!)</div>
       </td>
-      <td>
+      <td colspan='3'>
         (kommt noch)
       </td>
-      <td>
+      <td style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=<? echo $bestell_id; ?>','verteilliste');"
         >zur Verteilliste...</a>
       </td>
-      <td>
+      <td style='vertical-align:bottom;'>
         ok: <input type='checkbox' name='veteilung_ok' value='yes'>
       </td>
     </tr>
@@ -143,41 +130,37 @@ $query_by_produkt = "
       <td>
         Basarkäufe eintragen:
       </td>
-      <td>
+      <td colspan='3'>
         (kommt noch)
       </td>
-      <td>
+      <td style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=basar','basar');"
         >zum Basar...</a>
       </td>
-      <td>
+      <td style='vertical-align:bottom;'>
         ok: <input type='checkbox' name='basar_ok' value='yes'>
       </td>
     </tr>
     <tr>
-      <td>
+      <td rowspan='2'>
         Pfandabrechnung Bestellgruppen:
         <div class='small'>(nur bei Terra!)</div>
       </td>
-      <td>
-        <table class='inner'>
-          <tr>
-            <td>in Rechnung gestellt:</td>
-            <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_haben'] ); ?></b></td>
-          </tr>
-          <tr>
-            <td>gutgeschrieben:</td>
-            <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_soll'] ); ?></b></td>
-          </tr>
-        </table>
-      </td>
-      <td>
+      <td style='text-align:right;'>berechnet (Kauf):</td>
+      <td>&nbsp;</td>
+      <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_voll_brutto_soll'] ); ?></b></td>
+      <td rowspan='2' style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=<? echo $bestell_id; ?>','gruppenpfand');"
         >zur Pfandabrechnung...</a>
       </td>
-      <td>
+      <td rowspan='2' style='vertical-align:bottom;'>
         ok: <input type='checkbox' name='gruppenpfand_ok' value='yes'>
       </td>
+    </tr>
+    <tr>
+      <td style='text-align:right;'>gutgeschrieben (Rückgabe):</td>
+      <td>&nbsp;</td>
+      <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_leer_brutto_soll'] ); ?></b></td>
     </tr>
   </table>
 
