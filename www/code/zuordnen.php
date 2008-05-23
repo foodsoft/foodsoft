@@ -1268,21 +1268,6 @@ define( 'GRUPPEN_OPT_GUTHABEN', 4 );
 define( 'GRUPPEN_OPT_UNGEBUCHT', 8 );
 define( 'GRUPPEN_OPT_DETAIL', 16 );
 
-// optionen fuer kontoabfragen:
-//
-// betraege werden immer als 'soll' der fc, also schuld der fc
-// (an gruppen, lieferanten oder bank) zurueckgegeben (ggf. also negativ)
-//
-define( 'OPTION_NETTO_SOLL', 1 );
-define( 'OPTION_BRUTTO_SOLL', 2 );
-define( 'OPTION_ENDPREIS_SOLL', 3 );
-define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 4 );   /* schuld aus kauf voller pfandverpackungen */
-define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 5 );
-define( 'OPTION_PFAND_VOLL_ANZAHL', 6 );
-define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 7 );   /* schuld aus rueckgabe leerer pfandverpackungen */
-define( 'OPTION_PFAND_LEER_NETTO_SOLL', 8 ); 
-define( 'OPTION_PFAND_LEER_ANZAHL', 9 );
-
 
 ////////////////////////////////////
 //
@@ -2521,6 +2506,8 @@ function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll
 
 function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
   if( $anzahl_rueckgabe > 0 ) {
+    // pfandrueckgabe ist jetzt an eine gesamtbestellung gebunden, und wir brauchen eine gruppenbestellung:
+    sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
     return sql_insert( 'gruppenpfand', array(
         'gruppen_id' => $gruppen_id
       , 'bestell_id' => $bestell_id
@@ -2540,11 +2527,27 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 //
 ////////////////////////////////////////////
 
+// optionen fuer kontoabfragen:
+//
+// betraege werden immer als 'soll' der fc, also schuld der fc
+// (an gruppen, lieferanten oder bank) zurueckgegeben (ggf. also negativ)
+//
+define( 'OPTION_WAREN_NETTO_SOLL', 1 );         /* waren ohne pfand */
+define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );
+define( 'OPTION_ENDPREIS_SOLL', 3 );            /* waren brutto inclusive pfand (nur gruppenseitig sinnvoll) */
+define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 4 );   /* schuld aus kauf voller pfandverpackungen */
+define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 5 );
+define( 'OPTION_PFAND_VOLL_ANZAHL', 6 );
+define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 7 );   /* schuld aus rueckgabe leerer pfandverpackungen */
+define( 'OPTION_PFAND_LEER_NETTO_SOLL', 8 ); 
+define( 'OPTION_PFAND_LEER_ANZAHL', 9 );
+
+
 /* select_bestellungen_soll_gruppen:
  *   liefert als skalarer subquery schuld der FC an gruppen aus bestellungen, und zugehoeriger
  *   pfandbewegungen (auch rueckgabe der betreffenden woche!)
  *   - $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
- *     erlaubte werte: 'gesamtbestellungen', 'bestellgruppen'
+ *     auswirkungen haben: 'gesamtbestellungen', 'bestellgruppen'
  *   - $art ist eine der optionen oben; SOLL immer aus sicht der FC
 */
 function select_bestellungen_soll_gruppen( $art, $using = array() ) {
@@ -2553,11 +2556,11 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
       $expr = "( -1.0 * bestellzuordnung.menge * produktpreise.preis)";
       $query = 'waren';
       break;
-    case OPTION_BRUTTO_SOLL:
+    case OPTION_WAREN_BRUTTO_SOLL:
       $expr = "( bestellzuordnung.menge * ( produktpreise.pfand - produktpreise.preis ) )";
       $query = 'waren';
       break;
-    case OPTION_NETTO_SOLL:
+    case OPTION_WAREN_NETTO_SOLL:
       $expr = "( bestellzuordnung.menge * ( produktpreise.pfand - produktpreise.preis ) / ( 1.0 + produktpreise.mwst / 100.0 ) )";
       $query = 'waren';
       break;
@@ -2604,7 +2607,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
             'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
                                      ON gesamtbestellungen.id = gruppenpfand.bestell_id'
           ) ) . "
-        WHERE 1 . use_filters( $using, array(
+        WHERE 1 " . use_filters( $using, array(
           'bestellgruppen' => 'gruppenpfand.gruppen_id = bestellgruppen.id'
         , 'gesamtbestellungen' => 'gruppenpfand.bestell_id = gesamtbestellungen.id'
         ) );
@@ -2614,21 +2617,17 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
 /* select_bestellungen_soll_lieferanten:
  *   liefert als skalarer subquery forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
- *   erlaubte werte: 'gesamtbestellungen', 'lieferanten'
+ *   auswirkung haben: 'gesamtbestellungen', 'lieferanten'
 */
 function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
   switch( $art ) {
-    case OPTION_ENDPREIS_SOLL:
-      $expr = "( bestellvorschlaege.liefermenge * produktpreise.preis )";
-      $query = 'waren;
-      break;
-    case OPTION_BRUTTO_SOLL:
+    case OPTION_WAREN_BRUTTO_SOLL:
       $expr = "( bestellvorschlaege.liefermenge * ( produktpreise.preis - produktpreise.pfand ) )";
-      $query = 'waren;
+      $query = 'waren';
       break;
-    case OPTION_NETTO_SOLL:
+    case OPTION_WAREN_NETTO_SOLL:
       $expr = "( bestellvorschlaege.liefermenge * ( (produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) )";
-      $query = 'waren;
+      $query = 'waren';
       break;
     case OPTION_PFAND_VOLL_NETTO_SOLL:
       $expr = "( lieferantenpfand.anzahl_voll * pfandverpackungen.pfand_wert )";
@@ -2647,11 +2646,11 @@ function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
       $query = 'pfand';
       break;
     case OPTION_PFAND_VOLL_ANZAHL:
-      $expr = "( lieferantenpfand.anzahl_voll );
+      $expr = "( lieferantenpfand.anzahl_voll )";
       $query = 'pfand';
       break;
     case OPTION_PFAND_LEER_ANZAHL:
-      $expr = "( lieferantenpfand.anzahl_leer );
+      $expr = "( lieferantenpfand.anzahl_leer )";
       $query = 'pfand';
       break;
     default:
@@ -2682,68 +2681,12 @@ function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
             'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
                                      ON gesamtbestellungen.id = lieferantenpfand.bestell_id'
           ) ) . "
-        WHERE 1 . use_filters( $using, array(
+        WHERE 1 " . use_filters( $using, array(
           'lieferanten' => 'lieferantenpfand.lieferanten_id = lieferanten.id'
         , 'gesamtbestellungen' => 'lieferantenpfand.bestell_id = gesamtbestellungen.id'
         ) );
   }
 }
-
-function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0, $group_by = "bestellgruppen.id" ) {
-  $more_on = '';
-  if( $bestell_id ) {
-    $more_on = "AND gesamtbestellungen.id = $bestell_id";
-  }
-  return doSql( "
-    SELECT
-      bestellgruppen.id as gruppen_id
-    , bestellgruppen.aktiv as aktiv
-    , bestellgruppen.name as gruppen_name
-    , bestellgruppen.id % 1000 as gruppen_nummer
-    , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_leer_soll_brutto
-    , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_voll_soll_brutto
-    , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) as anzahl_leer
-    FROM bestellgruppen
-    JOIN gesamtbestellungen
-      ON gesamtbestellungen.lieferanten_id = $lieferanten_id
-         $more_on
-    LEFT JOIN gruppenpfand
-      ON gruppenpfand.bestell_id = gesamtbestellungen.id
-         AND gruppenpfand.gruppen_id = bestellgruppen.id
-    GROUP BY $group_by
-    ORDER BY bestellgruppen.aktiv, bestellgruppen.id
-  " );
-}
-
-function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = "pfandverpackungen.id" ) {
-  $more_on = '';
-  if( $bestell_id ) {
-    $more_on = "AND gesamtbestellungen.id = $bestell_id";
-  }
-  return doSql( "
-    SELECT
-      pfandverpackungen.id as verpackung_id
-    , lieferantenpfand.id as zuordnung_id
-    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'lieferanten' ) as pfand_leer_anzahl
-    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_VOLL_ANZAHL, array( 'gesamtbestellungen', 'lieferanten' ) as pfand_voll_anzahl
-    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_LEER_NETTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) as pfand_leer_soll_netto
-    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_LEER_BRUTTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) as pfand_leer_soll_brutto
-    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_VOLL_NETTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) as pfand_voll_soll_netto
-    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_VOLL_BRUTTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) as pfand_voll_soll_brutto
-    FROM pfandverpackungen
-    JOIN gesamtbestellungen
-      ON gesamtbestellungen.lieferanten_id = pfandverpackungen.lieferanten_id
-         $more_on
-    LEFT JOIN lieferantenpfand
-      ON lieferantenpfand.verpackung_id = pfandverpackungen.id
-      AND lieferantenpfand.bestell_id = gesamtbestellungen.id
-    WHERE pfandverpackungen.lieferanten_id=$lieferanten_id
-    GROUP BY $group_by
-    ORDER BY sort_id
-  " );
-}
-
-
 
 /*  select_transaktionen_haben_gruppen:
  *   liefert als skalarer subquery schuld an gruppen aus gruppen_transaktion
@@ -2772,56 +2715,106 @@ function select_transaktionen_soll_lieferanten( $using = array() ) {
 }
 
 function select_waren_soll_gruppen( $using = array() ) {
-  return select_bestellungen_soll_gruppen( OPTION_BRUTTO_SOLL, $using );
+  return select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, $using );
 }
 
 function select_waren_soll_lieferanten( $using = array() ) {
-  return select_bestellungen_soll_lieferanten( OPTION_BRUTTO_SOLL, $using );
+  return select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, $using );
 }
 
 function select_pfand_soll_gruppen( $using = array() ) {
   return " SELECT (
-      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_SOLL_BRUTTO , $using).")
-    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_SOLL_BRUTTO , $using).")
+      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_SOLL_BRUTTO, $using ). ")
+    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_SOLL_BRUTTO, $using ). ")
     ) ";
 }
 
 function select_pfand_soll_lieferanten( $using = array() ) {
   return " SELECT (
-      (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_SOLL_BRUTTO $using). ")
-    + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_SOLL_BRUTTO $using). ")
+      (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_SOLL_BRUTTO, $using ). ")
+    + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_SOLL_BRUTTO, $using ). ")
     ) ";
 }
 
 function select_soll_lieferanten( $using = array() ) {
   return " SELECT (
-      (" .select_waren_soll_lieferanten( $using). ")
-    + (" .select_pfand_soll_lieferanten( $using). ")
+      (" .select_waren_soll_lieferanten( $using ). ")
+    + (" .select_pfand_soll_lieferanten( $using ). ")
     + (" .select_transaktionen_soll_lieferanten( $using ). ")
     ) ";
 }
 
 function select_soll_gruppen( $using = array() ) {
   return " SELECT (
-      (" .select_waren_soll_gruppen( $using). ")
-    + (" .select_pfand_soll_gruppen( $using). ")
-    + (" .select_transaktionen_soll_gruppen($using). ")
+      (" .select_waren_soll_gruppen( $using ). ")
+    + (" .select_pfand_soll_gruppen( $using ). ")
+    + (" .select_transaktionen_soll_gruppen( $using ). ")
   ) ";
 }
 
 
-function select_pfandkontostand_lieferanten( $using = array() ) {
-  return "
-    SELECT ( (" .select_bestellungen_pfand($using). ")
-            - (" .select_transaktionen_pfand($using). ") ) as haben
-  ";
+
+function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0, $group_by = "bestellgruppen.id" ) {
+  $more_on = '';
+  if( $bestell_id ) {
+    $more_on = "AND gesamtbestellungen.id = $bestell_id";
+  }
+  return doSql( "
+    SELECT
+      bestellgruppen.id as gruppen_id
+    , bestellgruppen.aktiv as aktiv
+    , bestellgruppen.name as gruppen_name
+    , bestellgruppen.id % 1000 as gruppen_nummer
+    , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) as pfand_leer_anzahl
+    , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_leer_brutto_soll
+    , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_voll_brutto_soll
+    FROM bestellgruppen
+    JOIN gesamtbestellungen
+      ON gesamtbestellungen.lieferanten_id = $lieferanten_id
+         $more_on
+    LEFT JOIN gruppenpfand
+      ON gruppenpfand.bestell_id = gesamtbestellungen.id
+         AND gruppenpfand.gruppen_id = bestellgruppen.id
+    GROUP BY $group_by
+    ORDER BY bestellgruppen.aktiv, bestellgruppen.id
+  " );
+}
+
+function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'pfandverpackungen.id' ) {
+  $more_on = '';
+  if( $bestell_id ) {
+    $more_on = "AND gesamtbestellungen.id = $bestell_id";
+  }
+  return doSql( "
+    SELECT
+      pfandverpackungen.id as verpackung_id
+    , pfandverpackungen.wert as wert
+    , pfandverpackungen.mwst as mwst
+    , lieferantenpfand.id as zuordnung_id
+    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'lieferanten' ) )." ) ) as pfand_leer_anzahl
+    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_LEER_NETTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) )." ) ) as pfand_leer_netto_soll
+    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_LEER_BRUTTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) )." ) ) as pfand_leer_brutto_soll
+    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_VOLL_ANZAHL, array( 'gesamtbestellungen', 'lieferanten' ) )." ) ) as pfand_voll_anzahl
+    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_VOLL_NETTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) )." ) ) as pfand_voll_netto_soll
+    , sum( (".select_bestellungen_soll_lieferant( OPTION_PFAND_VOLL_BRUTTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) )." ) ) as pfand_voll_brutto_soll
+    FROM pfandverpackungen
+    JOIN gesamtbestellungen
+      ON gesamtbestellungen.lieferanten_id = pfandverpackungen.lieferanten_id
+         $more_on
+    LEFT JOIN lieferantenpfand
+      ON lieferantenpfand.verpackung_id = pfandverpackungen.id
+      AND lieferantenpfand.bestell_id = gesamtbestellungen.id
+    WHERE pfandverpackungen.lieferanten_id=$lieferanten_id
+    GROUP BY $group_by
+    ORDER BY sort_id
+  " );
 }
 
 function sql_verbindlichkeiten_lieferanten() {
   return doSql( "
     SELECT lieferanten.id as lieferanten_id
          , lieferanten.name as name
-         , ( ".select_haben_lieferanten('lieferanten')." ) as soll
+         , ( ".select_soll_lieferanten('lieferanten')." ) as soll
     FROM lieferanten
     HAVING (soll <> 0)
   " );
@@ -2829,71 +2822,95 @@ function sql_verbindlichkeiten_lieferanten() {
 
 function forderungen_gruppen_summe() {
   $row = sql_select_single_row( "
-    SELECT ifnull( sum( table_soll_gruppe.soll_gruppe ), 0.0 ) as soll
+    SELECT ifnull( sum( table_haben.haben ), 0.0 ) as soll
     FROM (
-      SELECT ( -(" .select_kontostand_gruppen('bestellgruppen'). ") ) AS soll_gruppe
+      SELECT ( -(" .select_soll_gruppen('bestellgruppen'). ") ) AS haben
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
-      HAVING (soll_gruppe > 0)
-    ) AS table_soll_gruppe
-  " );
-  return $row['soll'];
-}
-
-function guthaben_gruppen_summe() {
-  $row = sql_select_single_row( "
-    SELECT ifnull( sum( table_haben_gruppe.haben_gruppe ), 0.0 ) as haben
-    FROM (
-      SELECT (" .select_kontostand_gruppen('bestellgruppen'). ") AS haben_gruppe
-      FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
-      HAVING (haben_gruppe > 0)
-    ) AS table_haben_gruppe
+      HAVING ( haben > 0 )
+    ) AS table_haben
   " );
   return $row['haben'];
 }
 
-function sql_bestellungen_soll_gruppe( $gruppen_id ) {
+function verbindlichkeiten_gruppen_summe() {
+  $row = sql_select_single_row( "
+    SELECT ifnull( sum( table_soll.soll ), 0.0 ) as haben
+    FROM (
+      SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
+      FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
+      HAVING ( soll > 0 )
+    ) AS table_soll
+  " );
+  return $row['soll'];
+}
+
+function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
+  $more_where = '';
+  if( $bestell_id ) {
+    need( getState( $bestell_id ) >= STATUS_LIEFERANT );
+    $more_where = "AND ( gesamtbestellungen.id = $bestell_id )";
+  }
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , (" .select_bestellungen_soll_gruppen( OPTION_ENDPREIS_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as soll
-         , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_voll_soll
-         , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_leer_soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_NETTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_netto_soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_brutto_soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_voll_brutto_soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_leer_brutto_soll
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
     INNER JOIN bestellgruppen
       ON bestellgruppen.id = gruppenbestellungen.bestellguppen_id
-    WHERE ( gruppenbestellungen.bestellguppen_id = $gruppen_id )
+    WHERE ( gruppenbestellungen.bestellguppen_id = $gruppen_id ) $more_where
     ORDER BY valuta_kan DESC;
   ";
-  $result = doSql($query, LEVEL_ALL, "Konnte Gesamtpreise nicht aus DB laden..");
-  return $result;
+  return doSql($query, LEVEL_ALL, "sql_bestellungen_soll_gruppe() fehlgeschlagen: ");
 }
 
-function sql_bestellungen_haben_lieferant( $lieferanten_id ) {
+
+function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
+  $where = '';
+  if( $bestell_id ) {
+    need( getState( $bestell_id ) >= STATUS_LIEFERANT );
+    $where = "WHERE gesamtbestellungen.id = $bestell_id";
+  }
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , (" .select_bestellungen_soll_lieferanten( array('lieferanten','gesamtbestellungen') ). ") as soll
-         , (" .select_bestellungen_pfand( array('lieferanten','gesamtbestellungen') ). ") as pfand
+         , (" .select_bestellungen_soll_lieferanten( OPTION_WAREN_NETTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as waren_netto_soll
+         , (" .select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as waren_brutto_soll
+         , (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as pfand_voll_brutto_soll
+         , (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as pfand_leer_brutto_soll
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
+    $where
     HAVING haben <> 0
     ORDER BY valuta_kan DESC;
   ";
-  return doSql( $query, LEVEL_ALL, "Suche nach Lieferantenforderungen fehlgeschlagen: " );
+  return doSql( $query, LEVEL_ALL, "sql_bestellungen_soll_lieferant fehlgeschlagen: " );
+}
+
+function sql_bestellung_soll_lieferant( $bestell_id ) {
+  $result = sql_bestellungen_soll_lieferant( getProduzentBestellID( $bestell_id ), $bestell_id );
+  need( mysql_num_rows( $result ) == 1 );
+  return mysql_fetch_array( $result );
 }
 
 function sql_bestellung_rechnungssumme( $bestell_id ) {
   return sql_select_single_field( "
-    SELECT (" .select_bestellungen_haben_lieferanten( array('gesamtbestellungen') ). ") as summe
+    SELECT (
+          (" .select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, 'gesamtbestellunge' ). ")
+        + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
+        + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
+    ) AS summe
     FROM gesamtbestellungen
     WHERE gesamtbestellungen.id = $bestell_id
   ", 'summe'
@@ -2902,7 +2919,10 @@ function sql_bestellung_rechnungssumme( $bestell_id ) {
 
 function sql_bestellung_pfandsumme( $bestell_id ) {
   return sql_select_single_field( "
-    SELECT (" .select_bestellungen_pfand( array('gesamtbestellungen') ). ") as pfand
+    SELECT (
+      (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, array('gesamtbestellungen') ). ")
+    + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, array('gesamtbestellungen') ). ")
+    ) AS pfand
     FROM gesamtbestellungen
     WHERE gesamtbestellungen.id = $bestell_id
   ", 'pfand'
@@ -2910,23 +2930,23 @@ function sql_bestellung_pfandsumme( $bestell_id ) {
 }
 
 
-function kontostand($gruppen_id){
+function kontostand( $gruppen_id ) {
 	//FIXME: zu langsam auf Gruppenview wenn Dienst5
   $row = sql_select_single_row( "
-    SELECT (".select_kontostand_gruppen('bestellgruppen').") as haben
+    SELECT (".select_soll_gruppen('bestellgruppen').") as soll
     FROM bestellgruppen
     WHERE bestellgruppen.id = $gruppen_id
   " );
-  return $row['haben'];
+  return $row['soll'];
 }
 
-function pfandkontostand($gruppen_id) {
+function pfandkontostand( $gruppen_id ) {
   $row = sql_select_single_row( "
-    SELECT (".select_pfandkontostand_gruppen('bestellgruppen').") as pfand
+    SELECT (".select_pfand_soll_gruppen('bestellgruppen').") as pfand_soll
     FROM bestellgruppen
     WHERE bestellgruppen.id = $gruppen_id
   " );
-  return $row['pfand'];
+  return $row['pfand_soll'];
 }
 
 function sockel_gruppen_summe() {
@@ -2940,20 +2960,20 @@ function sockel_gruppen_summe() {
 
 function lieferantenkontostand( $lieferanten_id ) {
   $row = sql_select_single_row( "
-    SELECT (".select_haben_lieferanten('lieferanten').") as haben
+    SELECT (".select_soll_lieferanten('lieferanten').") as soll
     FROM lieferanten
     WHERE lieferanten.id = $lieferanten_id
   " );
-  return $row['haben'];
+  return $row['soll'];
 }
 
 function lieferantenpfandkontostand( $lieferanten_id ) {
   $row = sql_select_single_row( "
-    SELECT (".select_pfandkontostand_lieferanten('lieferanten').") as pfand
+    SELECT (".select_pfand_soll_lieferanten('lieferanten').") as pfand_soll
     FROM lieferanten
     WHERE lieferanten.id = $lieferanten_id
   " );
-  return $row['pfand'];
+  return $row['pfand_soll'];
 }
 
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
