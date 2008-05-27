@@ -99,7 +99,7 @@ if( $editable ) {
   $kontostand = lieferantenkontostand($lieferanten_id);
   $pfandkontostand = lieferantenpfandkontostand($lieferanten_id);
 
-  $cols = 10;
+  $cols = 9;
   ?>
   <table class="numbers">
     <tr>
@@ -110,20 +110,18 @@ if( $editable ) {
       <th>Pfand</th>
       <th>Pfandsumme</th>
       <th>Waren</th>
-      <th>Summe</th>
-      <th>Transaktionen</th>
+      <th>Buchung</th>
       <th>Kontostand</th>
     </tr>
     <tr class='summe'>
-      <td colspan='<? echo $cols-5; ?>' style='text-align:right;'>Kontostand:</td>
+      <td colspan='5' style='text-align:right;'>Kontostand:</td>
       <td class='number'>
-        <? printf( "(%8.2lf)", $pfandkontostand ); ?>
+        <? printf( "%.2lf", $pfandkontostand ); ?>
       </td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
-      <td>&nbsp;</td>
       <td class='number'>
-        <? printf( "%8.2lf", $kontostand ); ?>
+        <? printf( "%.2lf", $kontostand ); ?>
       </td>
     </tr>
   <?
@@ -157,21 +155,20 @@ if( $editable ) {
             ><? echo $vert_row['name']; ?></a>
         </td>
         <td class='number'>
-          <div style='font-weight:bold;'><? printf("%.2lf", $pfand_soll ); ?></div>
+          <? printf("%.2lf", $pfand_soll ); ?>
         </td>
         <td class='number'>
-          <div style='font-weight:bold;'><? printf("%.2lf", $pfand_summe ); ?></div>
+          <? printf("%.2lf", $pfandsumme ); ?>
         </td>
         <td class='number'>
-          <div style='font-weight:bold;'><? printf("%.2lf", $waren_soll ); ?></div>
+          <? printf("%.2lf", $waren_soll ); ?>
         </td>
-        <td>&mbsp;</td>
         <td class='number'>
           <div style='font-weight:bold;'><? printf("%.2lf", $soll ); ?></div>
-        <td>
+        </td>
         <td class='number'>
-          <div style='font-weight:bold;'><? printf("%.2lf", $summe ); ?></div>
-        <td>
+          <? printf("%.2lf", $summe ); ?>
+        </td>
       </tr>
       <?
       $summe -= $soll;
@@ -221,13 +218,13 @@ if( $editable ) {
           <td>&nbsp;</td>
           <td>&nbsp;</td>
           <td>&nbsp;</td>
-          <td class='mult'>
+          <td class='number'>
             <div style='font-weight:bold;'>
               <? printf("%.2lf" , $konto_row['summe']); ?>
             </div>
           </td>
           <td class='number'>
-            <? printf( "%8.2lf", $summe ); ?>
+            <? printf( "%.2lf", $summe ); ?>
           </td>
         </tr>
       <?
@@ -238,12 +235,15 @@ if( $editable ) {
 
   ?>
     <tr class='summe'>
-      <td colspan='<? echo $cols-5; ?>' style='text-align:right;'>Startsaldo:</td>
+      <td colspan='5' style='text-align:right;'>Startsaldo:</td>
       <td class='number'>
         <div><? printf( "%8.2lf", $pfandsumme ); ?></div>
       </td>
-            <div style='font-size:smaller;'><? printf( "(%8.2lf)", $pfandsumme ); ?></div>
-          </td>
-        </tr>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td class='number'>
+        <div><? printf( "%8.2lf", $summe ); ?></div>
+      </td>
+    </tr>
    </table>
 
