@@ -12,6 +12,8 @@ $bestellung_name = bestellung_name( $bestell_id );
 $lieferant_id = getProduzentBestellID( $bestell_id );
 $lieferant_name = lieferant_name( $lieferant_id );
 
+$bestellung = sql_bestellung( $bestell_id );
+
 need( $state >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
 need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 
@@ -35,10 +37,10 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 //
 /////////////////////////////
 
-// ...
 
-
-
+$warenwert_verteilt_brutto = verteilung_wert_brutto( $bestell_id ); 
+$warenwert_muell_brutto = muell_wert_brutto( $bestell_id ); 
+$warenwert_basar_brutto = basar_wert_brutto( $bestell_id ); 
 
 
 ?>
@@ -48,7 +50,7 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 <?echo self_post(); ?>
   <input type='hidden' name='action' value='abschluss'>
 
-  <table class='numbers'>
+  <table class='liste'>
     <tr>
       <th>Abrechnungsschritt</th>
       <th>Details</th>
@@ -84,7 +86,7 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_netto_soll'] ); ?></b></td>
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ); ?></b></td>
       </td>
-      <td rowspan='2' style='vertical-align:bottom;'>
+      <td rowspan='2' style='vertical-align:middle;'>
         <a href="javascript:neuesfenster('index.php?window=pfandverpackungen&bestell_id=<? echo $bestell_id; ?>','pfandzettel');"
         >zum Pfandzettel...</a>
       </td>
@@ -98,15 +100,41 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ); ?></b></td>
     </tr>
     <tr class='summe'>
-      <td colspan='2'>Summe:</td>
+      <td colspan='2'>Zwischensumme:</td>
       <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll']
                               + $lieferanten_soll['pfand_leer_netto_soll']
                               + $lieferanten_soll['pfand_voll_netto_soll']  ); ?>
       </td>
-      <td class='number'><? printf( "%.2lf", sql_bestellung_rechnungssumme( $bestell_id ) ); ?> </td>
+      <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_brutto_soll']
+                              + $lieferanten_soll['pfand_leer_brutto_soll']
+                              + $lieferanten_soll['pfand_voll_brutto_soll']  ); ?>
+
+      </td>
+      <td colspan='2'>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan='3'>
+        Sonstiges:
+        <br>
+        <input type='text' name='extra_text' size='40' value='<? echo $bestellung['extra_text']; ?>'>
+      </td>
+      <td class='number' style='text-align:right;vertical-align:bottom;'>
+        <input style='text-align:right;' type='text' name='extra_soll' size='10' value='<? printf( "%.2lf", $bestellung['extra_soll'] ); ?>'>
+      </td>
+    </tr>
+    <tr class='summe'>
+      <td colspan='3'>Summe:</td>
+      <td class='number'>
+        <? printf( "%.2lf", sql_bestellung_rechnungssumme( $bestell_id ) ); ?>
+      </td>
       <td>&nbsp;</td>
       <td>
         ok: <input type='checkbox' name='rechnungssumme_ok' value='yes'>
+      </td>
+    </tr>
+    <tr>
+      <td colspan='5'>
+        
       </td>
     </tr>
 
@@ -115,30 +143,13 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 </tr>
     <tr>
       <td>
-        Verteilmengen abgleichen
-      </td>
-      <td>
-        Warenwert Gruppen:
-      </td>
-      <td class='number'>
-      </td>
-      <td class='number'>
-      </td>
-      <td style='vertical-align:bottom;'>
-        <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=<? echo $bestell_id; ?>','verteilliste');"
-        >zur Verteilliste...</a>
-      </td>
-      <td style='vertical-align:bottom;'>
-        ok: <input type='checkbox' name='veteilung_ok' value='yes'>
-      </td>
-    </tr>
-    <tr>
-      <td>
         Basarkäufe eintragen:
       </td>
-      <td colspan='3'>
-        (kommt noch)
+      <td style='text-align:right;'>
+        Reste im Basar:
       </td>
+      <td>&nbsp;</td>
+      <td class='number'><b><? printf( "%.2lf", $warenwert_basar_brutto ); ?></b></td>
       <td style='vertical-align:bottom;'>
         <a href="javascript:neuesfenster('index.php?window=basar','basar');"
         >zum Basar...</a>
@@ -149,13 +160,47 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
     </tr>
     <tr>
       <td rowspan='2'>
+        Verteilmengen abgleichen:
+      </td>
+      <td style='text-align:right;'>
+        Warenwert Gruppen:
+      </td>
+      <td class='number'>&nbsp;</td>
+      <td class='number'><b><? printf( "%.2lf", $warenwert_verteilt_brutto ); ?></b></td>
+      <td rowspan='2' style='vertical-align:middle;'>
+        <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=<? echo $bestell_id; ?>','verteilliste');"
+        >zur Verteilliste...</a>
+      </td>
+      <td rowspan='2' style='vertical-align:bottom;'>
+        ok: <input type='checkbox' name='veteilung_ok' value='yes'>
+      </td>
+    </tr>
+    <tr>
+      <td style='text-align:right;'>
+        auf den Müll gewandert:
+      </td>
+      <td class='number'>&nbsp;</td>
+      <td class='number'><b><? printf( "%.2lf", $warenwert_muell_brutto ); ?></b></td>
+    </tr>
+    <tr class='summe'>
+      <td colspan='3'>Summe:</td>
+      <td class='number'>
+        <? printf( "%.2lf", $warenwert_verteilt_brutto + $warenwert_muell_brutto + $warenwert_basar_brutto ); ?>
+      </td>
+      <td>&nbsp;</td>
+      <td>
+        ok: <input type='checkbox' name='rechnungssumme_ok' value='yes'>
+      </td>
+    </tr>
+    <tr>
+      <td rowspan='2'>
         Pfandabrechnung Bestellgruppen:
         <div class='small'>(nur bei Terra!)</div>
       </td>
       <td style='text-align:right;'>berechnet (Kauf):</td>
       <td>&nbsp;</td>
       <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_voll_brutto_soll'] ); ?></b></td>
-      <td rowspan='2' style='vertical-align:bottom;'>
+      <td rowspan='2' style='vertical-align:middle;'>
         <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=<? echo $bestell_id; ?>','gruppenpfand');"
         >zur Pfandabrechnung...</a>
       </td>

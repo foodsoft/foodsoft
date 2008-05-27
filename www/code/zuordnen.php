@@ -975,8 +975,6 @@ function sql_muell_id(){
   return $muell_id;
 }
 
-
-
 function sql_gruppen_members( $gruppen_id, $member_id = FALSE){ 
   $sql = "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' and gruppen_id = ".mysql_escape_string($gruppen_id);
   if($member_id!==FALSE){
@@ -1559,8 +1557,9 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
   return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 }
 
-function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false ){
+function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 ){
   $basar_id = sql_basar_id();
+  $muell_id = sql_muell_id();
   $state = getState( $bestell_id );
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
@@ -1578,7 +1577,12 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
                                * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
   ";
   $verteilmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0) ), 0.0 )
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
+                                       * IF( gruppenbestellungen.bestellguppen_id=$muell_id, 0, 1) ), 0.0 )
+  ";
+  $muellmenge_expr = "
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
+                                       * IF( gruppenbestellungen.bestellguppen_id=$muell_id, 1 , 0) ), 0.0 )
   ";
 
   // tatsaechlich bestellte oder gelieferte produkte werden vor solchen mit
@@ -1598,15 +1602,23 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
         $firstorder_expr = "liefermenge";
       break;
   }
-  $query = "SELECT *
-    , produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
+  return "SELECT 
+      produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
+    , produkte.id as produkt_id
+    , bestellvorschlaege.liefermenge as liefermenge
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.gebindegroesse as gebindegroesse
+    , produktpreise.preis as preis
+    , produktpreise.pfand as pfand
+    , produktpreise.mwst as mwst
+    , ( produktpreise.preis - produktpreise.pfand ) as bruttopreis
+    , ( produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) as nettopreis
     , $gesamtbestellmenge_expr as gesamtbestellmenge
     , $basarbestellmenge_expr  as basarbestellmenge
     , $toleranzbestellmenge_expr as toleranzbestellmenge
     , $verteilmenge_expr as verteilmenge
+    , $muellmenge_expr as muellmenge
     , IF( $firstorder_expr > 0, 0, 1 ) as menge_ist_null
   FROM bestellvorschlaege
   INNER JOIN produkte
@@ -1629,9 +1641,10 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id=false, $produkt_id=false 
   "
    . ( $gruppen_id ? " HAVING gesamtbestellmenge<>0 or verteilmenge<>0" : "" ) .
   " ORDER BY menge_ist_null, produktgruppen_id, produkte.name ";
+}
 
-  $result = doSql($query, LEVEL_ALL, "Konnte Produktdaten nich aus DB laden..");
-  return $result;
+function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 ) {
+  return doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ) );
 }
 
 function select_liefermenge( $bestell_id, $produkt_id ) {
@@ -1647,27 +1660,32 @@ function sql_liefermenge( $bestell_id, $produkt_id ) {
 }
 
 function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
+  $muell_id = sql_muell_id();
+  $basar_id = sql_basar_id();
   if( $gruppen_id ) {
-    $more_where = 'AND (gruppenbestellung.bestellguppen_id = $gruppen_id )';
+    $more_where = " AND (gruppenbestellungen.bestellguppen_id = $gruppen_id )";
   } else {
-    $more_where = 'AND (gruppenbestellung.bestellguppen_id != $muell_id) AND (gruppenbestellung.bestellguppen_id != $basar_id)';
+    $more_where = " AND (gruppenbestellungen.bestellguppen_id != $muell_id) AND (gruppenbestellungen.bestellguppen_id != $basar_id)";
   }
   $muell_id = sql_muell_id();
   $basar_id = sql_basar_id();
   return "( SELECT IFNULL( sum( bestellzuordnung.menge ), 0.0 ) as verteilmenge
     FROM bestellzuordnung
-    JOIN gruppenbestellung
-      ON gruppenbestellung.gesamtbestellung_id = $bestell_id
-         AND gruppenbestellung.id = bestellzuordnung.gruppenbestellung_id
+    JOIN gruppenbestellungen
+      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
     WHERE ( bestellzuordnung.art = 2 ) AND ( bestellzuordnung.produkt_id = $produkt_id )
+          AND ( gruppenbestellungen.gesamtbestellung_id = $bestell_id )
          $more_where
   ) ";
 }
 
-# function select_basarmenge( $bestell_id, $produkt_id ) {
-#
-#
-# }
+function select_basarmenge( $bestell_id, $produkt_id ) {
+  return "( SELECT ("
+           . select_liefermenge( $bestell_id, $produkt_id ).
+      " - " .select_verteilmenge( $bestell_id, $produkt_id ).
+      " - " .select_verteilmenge( $bestell_id, $produkt_id, sql_muell_id() ).
+    ") AS basarmenge )";
+}
 
 
 function sql_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
@@ -1679,6 +1697,80 @@ function sql_muellmenge( $bestell_id, $produkt_id ) {
 }
 
 
+
+/**
+ *  sql_basar:
+ *  produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
+ */
+function sql_basar( $bestell_id = 0, $order='produktname' ) {
+  switch( $order ) {
+    case 'datum':
+      $order_by = 'lieferung';
+      break;
+    case 'bestellung':
+      $order_by = 'bestellung_name';
+      break;
+    default:
+    case 'produktname':
+      $order_by = 'produkt_name';
+      break;
+  }
+  return doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" );
+}
+
+/**
+ *
+ */
+function select_basar( $bestell_id = 0 ) {
+  $where = '';
+  if( $bestell_id )
+    $where = "WHERE gesamtbestellungen.id = $bestell_id";
+  return "
+    SELECT produkte.name as produkt_name
+         , gesamtbestellungen.name as bestellung_name
+         , gesamtbestellungen.lieferung as lieferung
+         , gesamtbestellungen.id as gesamtbestellung_id
+         , produktpreise.preis as endpreis
+         , produktpreise.preis - produktpreise.pfand as bruttopreis
+         , ( produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) as nettopreis
+         , produktpreise.verteileinheit
+         , bestellvorschlaege.produkt_id
+         , bestellvorschlaege.produktpreise_id
+         , bestellvorschlaege.liefermenge
+         , bestellvorschlaege.bestellmenge
+         , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basar
+    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
+    JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
+    JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
+    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
+    $where
+    HAVING (basar <> 0)
+  " ;
+}
+
+function basar_wert_brutto( $bestell_id = 0 ) {
+  return sql_select_single_field(
+    " SELECT IFNULL(sum( basar.basar * basar.bruttopreis ), 0.0 ) as wert
+      FROM ( " .select_basar( $bestell_id ). " ) as basar "
+  , 'wert'
+  );
+}
+
+function muell_wert_brutto( $bestell_id = 0 ) {
+  return sql_select_single_field(
+    " SELECT IFNULL( sum( bestellprodukte.bruttopreis * bestellprodukte.muellmenge ), 0.0 ) as muell
+      FROM ( " .select_bestellprodukte( $bestell_id ). " ) AS bestellprodukte "
+  , 'muell'
+  );
+}
+
+function verteilung_wert_brutto( $bestell_id = 0 ) {
+  return sql_select_single_field(
+    " SELECT IFNULL( sum( bestellprodukte.bruttopreis * bestellprodukte.verteilmenge ), 0.0 ) as wert
+      FROM ( " .select_bestellprodukte( $bestell_id ). " ) AS bestellprodukte "
+  , 'wert'
+  );
+}
 
 
 /**
@@ -1975,9 +2067,9 @@ function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
 }
 
 function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestell_id){
-  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
-  doSql( "DELETE * FROM bestellzuordnung
-          WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
+  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+  doSql( " DELETE FROM bestellzuordnung
+           WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
   return sql_insert( 'bestellzuordnung', array(
     'produkt_id' => $produkt_id
   , 'menge' => $menge
@@ -1996,68 +2088,6 @@ function sql_basar2group($gruppe, $produkt, $bestell_id, $menge){
 }
 
 
-/**
- *  sql_basar:
- *  produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
- */
-function sql_basar($bestell_id=0,$order='produktname'){
-  $where = ( $bestell_id ? "WHERE gesamtbestellungen.id = $bestell_id" : "" );
-  switch( $order ) {
-    case 'datum':
-      $order_by = 'lieferung';
-      break;
-    case 'bestellung':
-      $order_by = 'bestellung_name';
-      break;
-    default:
-    case 'produktname':
-      $order_by = 'produkt_name';
-      break;
-  }
-  $sql = select_basar() . "$where ORDER BY $order_by";
-  return doSql($sql, LEVEL_ALL, "Konnte Basardaten nicht aus DB laden..");
-}
-
-/**
- *
- */
-function select_basar( $bestell_id ) {
-  $subselect_verteilmenge = "
-    SELECT IFNULL(sum(menge),0.0) as verteilmenge
-    FROM bestellzuordnung
-    JOIN gruppenbestellungen
-      ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-    WHERE (art = 2)
-      AND (produkte.id = bestellzuordnung.produkt_id)
-      AND (gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id)
-  ";
-  return "
-    SELECT produkte.name as produkt_name
-         , gesamtbestellungen.name as bestellung_name
-         , gesamtbestellungen.lieferung as lieferung
-        , produktpreise.preis
-         , produktpreise.verteileinheit
-         , bestellvorschlaege.produkt_id
-         , bestellvorschlaege.gesamtbestellung_id
-         , bestellvorschlaege.produktpreise_id
-         , bestellvorschlaege.liefermenge
-         , bestellvorschlaege.bestellmenge
-         , ( bestellvorschlaege.liefermenge - ( $subselect_verteilmenge ) ) as basar
-    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
-    JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
-    JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
-    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
-    HAVING (basar <> 0)
-  " ;
-}
-
-function basar_wert_summe() {
-  return sql_select_single_field(
-    " SELECT IFNULL(sum( basar.basar * basar.preis ), 0.0 ) as wert
-      FROM ( " .select_basar(). " ) as basar "
-  , 'wert'
-  );
-}
 
 /**
  *  zusaetzlicheBestellung:
@@ -2588,6 +2618,7 @@ define( 'OPTION_PFAND_VOLL_ANZAHL', 6 );
 define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 7 );   /* schuld aus rueckgabe leerer pfandverpackungen */
 define( 'OPTION_PFAND_LEER_NETTO_SOLL', 8 ); 
 define( 'OPTION_PFAND_LEER_ANZAHL', 9 );
+define( 'OPTION_EXTRA_BRUTTO_SOLL', 10 );   /* sonstiges: Rabatte, Versandkosten, ... */
 
 
 /* select_bestellungen_soll_gruppen:
@@ -2754,7 +2785,7 @@ function select_transaktionen_soll_gruppen( $using = array() ) {
  */
 function select_transaktionen_soll_lieferanten( $using = array() ) {
   return "
-    SELECT IFNULL( sum( -summe ), 0.0 )
+    SELECT IFNULL( sum( summe ), 0.0 )
       FROM gruppen_transaktion
      WHERE ( gruppen_transaktion.lieferanten_id > 0 ) " . use_filters( $using, array(
        'lieferanten' => 'gruppen_transaktion.lieferanten_id = lieferanten.id'
@@ -2771,15 +2802,15 @@ function select_waren_soll_lieferanten( $using = array() ) {
 
 function select_pfand_soll_gruppen( $using = array() ) {
   return " SELECT (
-      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_SOLL_BRUTTO, $using ). ")
-    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_SOLL_BRUTTO, $using ). ")
+      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, $using ). ")
+    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, $using ). ")
     ) ";
 }
 
 function select_pfand_soll_lieferanten( $using = array() ) {
   return " SELECT (
-      (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_SOLL_BRUTTO, $using ). ")
-    + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_SOLL_BRUTTO, $using ). ")
+      (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, $using ). ")
+    + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, $using ). ")
     ) ";
 }
 
@@ -2962,6 +2993,7 @@ function sql_bestellung_rechnungssumme( $bestell_id ) {
           (" .select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
         + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
         + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
+        + ( SELECT extra_soll FROM gesamtbestellungen WHERE id = $bestell_id )
     ) AS summe
     FROM gesamtbestellungen
     WHERE gesamtbestellungen.id = $bestell_id
