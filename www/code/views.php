@@ -230,21 +230,6 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 
   ?> <table class='numbers'> <?
 
-  if( $editAmounts ) {
-    ?>
-      <tr>
-        <td colspan='2'> Gruppe: 
-          <select name='gruppe'>
-          <option value='' selected>(Gruppe w&auml;hlen)</option>
-          <? echo optionen_gruppen( false, false, false, false, false, array($muell_id) ); ?>
-          </select>
-        </td>
-        <td colspan='<? echo $cols-2; ?>' style='text-align:right;padding-bottom:1ex;'>
-          Glasr&uuml;ckgabe zu je <? echo $pfand; ?> Euro (Anzahl eintragen):	<input name='menge_glas' type='text' size='3' />
-        </td>
-      </tr>
-    <?
-  }
 
   $legend = array(
     "<th><a href='" . self_url('orderby') . "&orderby=produktname'
@@ -287,7 +272,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      $menge=$basar_row['basar'];
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
      $menge *= $kan_verteilmult;
-     $wert = $basar_row['basar'] * $basar_row['preis'];
+     $wert = $basar_row['basar'] * $basar_row['endpreis'];
      $gesamtwert += $wert;
 
      $row = array( 
@@ -296,7 +281,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
            href=\"javascript:neuesfenster('index.php?window=bestellschein&bestell_id={$basar_row['gesamtbestellung_id']}','bestellschein')\"
              title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>"
      , "<td>{$basar_row['lieferung']}</td>"
-     , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['preis'] ) . "</td>
+     , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['endpreis'] ) . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
      , "<td class='mult'><b>$menge</b></td>
         <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
@@ -341,6 +326,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
     <tr class='summe'>
       <td colspan='8' style='text-align:right'>Summe:</td>
       <td class='number'><? printf( "%8.2lf", $gesamtwert ); ?></td>
+      <td>&nbsp;</td>
     </tr>
   <?
   echo $js;
@@ -348,9 +334,12 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   if( $editAmounts ) {
     ?>
       <tr style='border:none'>
-        <td colspan='<? echo $cols; ?>' style='border:none;padding-top:1ex;'>
-          <input type='submit' value=' Neu laden / Basareintrag &uuml;bertragen '>
-          <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
+        <td colspan='<? echo $cols; ?>' style='border:none;padding-top:1ex;text-align:right;'>
+          <select name='gruppe'>
+            <option value='' selected>(Gruppe w&auml;hlen)</option>
+            <? echo optionen_gruppen( false, false, false, false, false, array($muell_id) ); ?>
+          </select>
+          <input type='submit' value='Zuteilen' style='margin-left:2em;'>
         </td>
       </tr>
       </table>                   
