@@ -1,6 +1,6 @@
 <?PHP
 
- assert($angemeldet) or exit();
+assert($angemeldet) or exit();
  
  //Vergleicht das Datum der beiden mysql-records
  //gibt +1 zur¸ck, wenn Datum in $konto ‰lter ist
@@ -166,12 +166,11 @@ if( $meinkonto ) {
   }
 }
 
-  $kontostand = kontostand($gruppen_id);
-  $pfandkontostand = pfandkontostand($gruppen_id);
+$kontostand = kontostand($gruppen_id);
+$pfandkontostand = pfandkontostand($gruppen_id);
 
-  // aktuelle Gruppendaten laden
-	$result = mysql_query("SELECT * FROM bestellgruppen WHERE id=".mysql_escape_string($gruppen_id)) or error(__LINE__,__FILE__,"Konnte Gruppendaten nicht lesen.",mysql_error());
-	$bestellgruppen_row = mysql_fetch_array($result);
+// aktuelle Gruppendaten laden
+$bestellgruppen_row = sql_gruppendaten( $gruppen_id );
 	
 	// wieviele Kontenbewegungen werden ab wo angezeigt...
 	if (isset($HTTP_GET_VARS['start_pos'])) $start_pos = $HTTP_GET_VARS['start_pos']; else $start_pos = 0;
@@ -180,96 +179,122 @@ if( $meinkonto ) {
 	$size          = 2000;
 	 
 	
-   $cols = 6;
-   ?>
-	 <table class="numbers">
-	    <tr>
-			   <th>Typ</th>
-				 <th>Valuta</th>
-				 <th>Buchung</th>
-				 <th>Informationen</th>
-				 <th colspan='1'><div>Betrag</div><div style='font-size:smaller;'>(Pfand)</div></th>
-				 <th colspan='1'><div>Summe</div><div style='font-size:smaller;'>(Pfand)</div></th>
-			</tr>
-      <tr class='summe'>
-        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Kontostand:</td>
+  $cols = 9;
+  ?>
+  <table class="numbers">
+    <tr>
+      <th>Typ</th>
+      <th>Valuta</th>
+      <th>Buchung</th>
+      <th>Informationen</th>
+      <th>Pfand Kauf</th>
+      <th>Pfand Rueckgabe</th>
+      <th>Pfandsumme</th>
+      <th>Waren</th>
+      <th>Buchung</th>
+      <th>Kontostand</th>
+    </tr>
+    <tr class='summe'>
+      <td colspan='6' style='text-align:right;'>Kontostand:</td>
+      <td class='number'>
+        <? printf( "%8.2lf", $pfandkontostand ); ?>
+      </td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td class='number'>
+        <? printf( "%8.2lf", $kontostand ); ?>
+      </td>
+    </tr>
+  <?
+  $konto_result = sql_get_group_transactions( $gruppen_id, 0 );
+  $num_rows = mysql_num_rows($result);
+
+  $vert_result = sql_bestellungen_soll_gruppe($gruppen_id);
+  $summe = $kontostand;
+  $pfandsumme = $pfandkontostand;
+  $konto_row = mysql_fetch_array($konto_result);
+  $vert_row = mysql_fetch_array($vert_result);
+  while( $vert_row or $konto_row ) {
+    //Mische Eintr‰ge aus Kontobewegungen und Verteilzuordnung zusammen
+    if( compare_date($konto_row, $vert_row)==1 ){
+      //Eintrag in Konto ist ƒlter -> Verteil ausgeben
+      $details_url = "index.php?window=bestellschein"
+      . "&gruppen_id=$gruppen_id"
+      . "&bestell_id={$vert_row['gesamtbestellung_id']}"
+      . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
+                        | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+      $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
+      $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
+      $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
+      $waren_soll = $vert_row['waren_brutto_soll'];
+      $soll = $pfand_soll + $waren_soll;
+      $have_pfand = false;
+      ?>
+      <tr>
+        <td valign='top'><b>Bestellung</b></td>
+        <td><? echo $vert_row['valuta_trad']; ?></td>
+        <td><? echo $vert_row['lieferdatum_trad']; ?></td>
+        <td>Bestellung: <a
+          href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
+          ><? echo $vert_row['name']; ?></a>
+        </td>
         <td class='number'>
-          <div><? printf( "%8.2lf", $kontostand ); ?></div>
-          <div style='font-size:smaller;'>
-            <? printf( "(%8.2lf)", $pfandkontostand ); ?>
-          </div>
+          <?
+            if( abs( $pfand_voll_soll ) > 0.005 ) {
+              printf( "%.2lf", $pfand_voll_soll );
+              $have_pfand = true;
+            }
+          ?>
+        </td>
+        <td class='number'>
+          <?
+            if( abs( $pfand_leer_soll ) > 0.005 ) {
+              printf( "%.2lf", $pfand_leer_soll );
+              $have_pfand = true;
+            }
+          ?>
+        </td>
+        <td class='number'>
+          <?
+            if( $have_pfand )
+              printf( "%.2lf", $pfandsumme );
+          ?>
+        </td>
+        <td class='number'>
+          <? printf( "%.2lf", $waren_soll ); ?>
+        </td>
+        <td class='number'>
+          <div style='font-weight:bold;'><? printf( "%.2lf", $soll ); ?></div>
+        </td>
+        <td class='number'>
+          <? printf( "%.2lf", $summe ); ?>
         </td>
       </tr>
-			<?PHP
-
-			   // $result = mysql_query("SELECT id, type, summe, kontobewegungs_datum, kontoauszugs_nr, kontoauszugs_jahr, notiz, DATE_FORMAT(eingabe_zeit,'%d.%m.%Y  <br> <font size=1>(%T)</font>') as date FROM gruppen_transaktion WHERE gruppen_id=".mysql_escape_string($gruppen_id)." ORDER BY  eingabe_zeit DESC LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
-			   $result = sql_get_group_transactions( $gruppen_id, 0 );
-         $num_rows = mysql_num_rows($result);
-
-         $vert_result = sql_bestellungen_soll_gruppe($gruppen_id);
-         $summe = $kontostand;
-         $pfandsumme = $pfandkontostand;
-				 $konto_row = mysql_fetch_array($result);
-				 $vert_row = mysql_fetch_array($vert_result);
-				 //Gehe zum ersten Eintrag in Bestellzuordnung, der nach dem Eintrag in Konto liegt
-				 //while(compare_date($konto_row, $vert_row)==+1){
-				 	//$vert_row = mysql_fetch_array($vert_result);
-				 //}
-				 while( $vert_row or $konto_row ) {
-				    //Mische Eintr‰ge aus Kontobewegungen und Verteilzuordnung zusammen
-            if( compare_date($konto_row, $vert_row)==1 ){
-				    		//Eintrag in Konto ist ƒlter -> Verteil ausgeben
-              $details_url = "index.php?window=bestellschein"
-              . "&gruppen_id=$gruppen_id"
-              . "&bestell_id={$vert_row['gesamtbestellung_id']}"
-              . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
-                                | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
-              $pfand = -$vert_row['pfand'];
-              ?>
-					      <tr>
-					      <td valign='top'><b>Bestellung</b></td>
-					      <td><? echo $vert_row['valuta_trad']; ?></td>
-					      <td><? echo $vert_row['lieferdatum_trad']; ?></td>
-					      <td>Bestellung: <a
-                  href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
-                  ><? echo $vert_row['name']; ?></a></td>
-					      <td class='number'>
-                  <div style='font-weight:bold'>
-                    <? printf("%.2lf", -$vert_row['soll']); ?>
-                  </div>
-					        <? if( abs($pfand) >= 0.005 )
-                    printf("<div style='font-size:smaller'>(%.2lf)</div>", $pfand);
-                  ?>
-                </td>
-                <td class='number'>
-                  <div><? printf( "%8.2lf", $summe ); ?></div>
-                  <? if( abs($pfand) >= 0.005 )
-                    printf( "<div style='font-size:smaller;'>(%8.2lf)</div>", $pfandsumme ); ?>
-                </td>
-                </tr>
-              <?
-              $summe += $vert_row['soll'];
-              $pfandsumme -= $pfand;
-				 	    $vert_row = mysql_fetch_array($vert_result);
-
-            } else {
-              // eintrag aus gruppen_transaktion anzeigen:
-              //
-              ?> <tr>
-                  <td valign='top' style='font-weight:bold;'>
-              <?
-              if( $konto_row['konterbuchung_id'] >= 0 ) {
-                echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
-              } else {
-                echo "Verrechnung";
-              }
-              ?> </td>
-                 <td><? echo $konto_row['valuta_trad']; ?></td>
-                 <td><div><? echo $konto_row['date']; ?></div>
-                     <div style='font-size:1;'><? echo $konto_row['dienst_name']; ?></div></td>
-                  <td><div><? echo $konto_row['notiz']; ?></div>
-                    <div>
-              <?
+      <?
+      $summe -= $soll;
+      $pfandsumme -= $pfand_soll;
+      $vert_row = mysql_fetch_array($vert_result);
+    } else {
+      ?>
+      <tr>
+        <td valign='top' style='font-weight:bold;'>
+          <?
+          if( $konto_row['konterbuchung_id'] >= 0 ) {
+            echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
+          } else {
+            echo "Verrechnung";
+          }
+          ?>
+        </td>
+        <td><? echo $konto_row['valuta_trad']; ?></td>
+        <td>
+          <? echo $konto_row['date']; ?>
+          <div style='font-size:1;'><? echo $konto_row['dienst_name']; ?></div>
+        </td>
+        <td>
+          <div><? echo $konto_row['notiz']; ?></div>
+          <div>
+            <?
               $k_id = $konto_row['konterbuchung_id'];
               if( $k_id > 0 ) { // bank-transaktion
                 // echo "k_id: $k_id";
@@ -342,38 +367,39 @@ if( $meinkonto ) {
                   ?> <div class='warn'>Keine g√ºltige Transaktion</div> <?
                 }
               }
-              $pfand = $konto_row['pfand'];
               ?>
-                </div>
-                </td>
-                <td class='number'>
-                  <div style='font-weight:bold'>
-                    <? printf("%.2lf",$konto_row['summe']); ?>
-                  </div>
-                  <?  if( abs($pfand) > 0.005 )
-                    printf("<div style='font-size:smaller;'>(%.2lf)</div>", $pfand); ?>
-                </td>
-					      <td class='number'>
-                  <div><? printf( "%.2lf", $summe ); ?></div>
-                  <?  if( abs($pfand) > 0.005 )
-                    printf("<div style='font-size:smaller;'>(%.2lf)</div>", $pfandsumme); ?>
-					      </td>
-                </tr>
-              <?
-              $summe -= $konto_row['summe'];
-              $pfandsumme -= $pfand;
-				 	    $konto_row = mysql_fetch_array($result);
-				 	}
-				 }
-			?>
-      <tr class='summe'>
-        <td colspan='<? echo $cols-1; ?>' style='text-align:right;'>Startsaldo:</td>
+          </div>
+        </td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
         <td class='number'>
-          <div><? printf( "%8.2lf", $summe ); ?></div>
-          <div style='font-size:smaller;'><? printf( "(%8.2lf)", $pfandsumme ); ?></div>
+          <div style='font-weight:bold'><? printf("%.2lf",$konto_row['summe']); ?></div>
+        </td>
+        <td class='number'>
+          <? printf( "%.2lf", $summe ); ?>
         </td>
       </tr>
-	 </table>
+      <?
+      $summe -= $konto_row['summe'];
+      $konto_row = mysql_fetch_array($konto_result);
+    }
+  }
+
+  ?>
+    <tr class='summe'>
+      <td colspan='6' style='text-align:right;'>Startsaldo:</td>
+      <td class='number'>
+        <? printf( "%8.2lf", $pfandsumme ); ?>
+      </td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td class='number'>
+        <? printf( "%8.2lf", $summe ); ?>
+      </td>
+    </tr>
+  </table>
 
 	 <form name="skip" action="showGroupTransaktions.php">
 	    <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">

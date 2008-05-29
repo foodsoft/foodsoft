@@ -125,7 +125,7 @@ function need( $exp, $comment = "Fataler Fehler" ) {
   if( ! $exp ) {
     ?>
       <div class='warn'>
-        <? echo $comment; ?>
+        <? echo "$comment $exp"; ?>
         <a href='<? echo self_url(); ?>'>weiter...</a>
       </div>
     <?
@@ -1338,7 +1338,7 @@ function sql_bestellung( $bestell_id ) {
 }
 
 function getState($bestell_id){
-  return sql_select_single_field( "SELECT status FROM gesamtbestellungen WHERE id=$bestell_id", 'status' );
+  return sql_select_single_field( "SELECT rechnungsstatus FROM gesamtbestellungen WHERE id=$bestell_id", 'rechnungsstatus' );
 }
 
 function bestellung_name($bestell_id){
@@ -1359,7 +1359,7 @@ function changeState($bestell_id, $state){
 
   $bestellung = sql_bestellung( $bestell_id );
 
-  $current = $bestellung['status'];
+  $current = $bestellung['rechnungsstatus'];
   if( $current == $state )
     return true;
 
@@ -1367,7 +1367,7 @@ function changeState($bestell_id, $state){
   nur_fuer_dienst(1,3,4);
 
   $do_verteilmengen_zuweisen = false;
-  $changes = "state = '$state'";
+  $changes = "rechnungsstatus = '$state'";
   switch( "$current,$state" ){
     case STATUS_BESTELLEN . "," . STATUS_LIEFERANT:
       need( $bestellung['bestellende'] < $mysqljetzt , "Fehler: Bestellung läuft noch!" );
@@ -2901,27 +2901,25 @@ function sql_verbindlichkeiten_lieferanten() {
 }
 
 function forderungen_gruppen_summe() {
-  $row = sql_select_single_row( "
-    SELECT ifnull( sum( table_haben.haben ), 0.0 ) as soll
+  return sql_select_single_field( "
+    SELECT ifnull( -sum( table_soll.soll ), 0.0 ) as forderungen
     FROM (
-      SELECT ( -(" .select_soll_gruppen('bestellgruppen'). ") ) AS haben
+      SELECT ( (" .select_soll_gruppen('bestellgruppen'). ") ) AS soll
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
-      HAVING ( haben > 0 )
-    ) AS table_haben
-  " );
-  return $row['haben'];
+      HAVING ( soll < 0 )
+    ) AS table_soll
+  ", 'forderungen' );
 }
 
 function verbindlichkeiten_gruppen_summe() {
-  $row = sql_select_single_row( "
-    SELECT ifnull( sum( table_soll.soll ), 0.0 ) as haben
+  return sql_select_single_field( "
+    SELECT ifnull( sum( table_soll.soll ), 0.0 ) as verbindlichkeiten
     FROM (
       SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
       HAVING ( soll > 0 )
     ) AS table_soll
-  " );
-  return $row['soll'];
+  ", 'verbindlichkeiten' );
 }
 
 function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
@@ -3024,13 +3022,16 @@ function kontostand( $gruppen_id ) {
   return $row['soll'];
 }
 
-function pfandkontostand( $gruppen_id ) {
-  $row = sql_select_single_row( "
-    SELECT (".select_pfand_soll_gruppen('bestellgruppen').") as pfand_soll
+function pfandkontostand( $gruppen_id = 0 ) {
+  $where = '';
+  if( $gruppen_id )
+    $where = "WHERE bestellgruppen.id = $gruppen_id";
+  return sql_select_single_field( "
+    SELECT IFNULL( sum((".select_pfand_soll_gruppen('bestellgruppen').")), 0.0 ) as pfand_soll
     FROM bestellgruppen
-    WHERE bestellgruppen.id = $gruppen_id
-  " );
-  return $row['pfand_soll'];
+    $where
+  ", 'pfand_soll'
+  );
 }
 
 function sockel_gruppen_summe() {
@@ -3051,13 +3052,16 @@ function lieferantenkontostand( $lieferanten_id ) {
   return $row['soll'];
 }
 
-function lieferantenpfandkontostand( $lieferanten_id ) {
-  $row = sql_select_single_row( "
-    SELECT (".select_pfand_soll_lieferanten('lieferanten').") as pfand_soll
+function lieferantenpfandkontostand( $lieferanten_id = 0 ) {
+  $where = '';
+  if( $lieferanten_id )
+    $where = "WHERE lieferanten.id = $lieferanten_id";
+  return sql_select_single_field( "
+    SELECT IFNULL( sum((" .select_pfand_soll_lieferanten('lieferanten')." )), 0.0 ) as pfand_soll
     FROM lieferanten
-    WHERE lieferanten.id = $lieferanten_id
-  " );
-  return $row['pfand_soll'];
+    $where
+  ", 'pfand_soll'
+  );
 }
 
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {

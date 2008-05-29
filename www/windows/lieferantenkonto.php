@@ -214,19 +214,19 @@ if( $editable ) {
             }
             ?>
           </div>
-          </td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td class='number'>
-            <div style='font-weight:bold;'>
-              <? printf("%.2lf" , $konto_row['summe']); ?>
-            </div>
-          </td>
-          <td class='number'>
-            <? printf( "%.2lf", $summe ); ?>
-          </td>
-        </tr>
+        </td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td class='number'>
+          <div style='font-weight:bold;'>
+            <? printf("%.2lf" , $konto_row['summe']); ?>
+          </div>
+        </td>
+        <td class='number'>
+          <? printf( "%.2lf", $summe ); ?>
+        </td>
+      </tr>
       <?
       $summe -= $konto_row['summe'];
       $konto_row = mysql_fetch_array($konto_result);
@@ -237,12 +237,12 @@ if( $editable ) {
     <tr class='summe'>
       <td colspan='5' style='text-align:right;'>Startsaldo:</td>
       <td class='number'>
-        <div><? printf( "%8.2lf", $pfandsumme ); ?></div>
+        <? printf( "%8.2lf", $pfandsumme ); ?>
       </td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td class='number'>
-        <div><? printf( "%8.2lf", $summe ); ?></div>
+        <? printf( "%8.2lf", $summe ); ?>
       </td>
     </tr>
    </table>

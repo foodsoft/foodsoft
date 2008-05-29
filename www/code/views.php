@@ -950,7 +950,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
     ?>
       <tr id='row<?echo $bestell_id; ?>'>
       <td><?echo $row['name']?></td>
-      <td><? echo rechnung_status_string( $row['status'] ); ?></td>
+      <td><? echo rechnung_status_string( $row['rechnungsstatus'] ); ?></td>
       <td><? echo $row['bestellstart']; ?></td>
       <td><? echo $row['bestellende']; ?></td>
       <td><? echo $row['lieferung']; ?></td>
@@ -971,7 +971,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
   -->
     <?
   
-    switch( $row['status'] ) {
+    switch( $row['rechnungsstatus'] ) {
   
       case STATUS_BESTELLEN:
         ?>
@@ -1046,8 +1046,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
               <br><a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a>
             <? } ?>
             <br>
-            <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=$bestell_id','abrechnung');"
-              title='Zur \"Ubersichtsseite Abrechnung...'>&gt; Abrechnung &gt;</a>
+            <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');"
+              title='Zur Uebersichtsseite Abrechnung...'>&gt; Abrechnung &gt;</a>
           </td>
         <?
         break;
