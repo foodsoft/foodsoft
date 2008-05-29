@@ -188,8 +188,8 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
       <th>Buchung</th>
       <th>Informationen</th>
       <th>Pfand Kauf</th>
-      <th>Pfand Rueckgabe</th>
-      <th>Pfandsumme</th>
+      <th style='vertical-align:bottom;'>Rückgabe</th>
+      <th>Pfandkonto</th>
       <th>Waren</th>
       <th>Buchung</th>
       <th>Kontostand</th>

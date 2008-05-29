@@ -2571,7 +2571,7 @@ define( 'PFAND_OPT_ALLE_BESTELLUNGEN', 2 );
 // _ersetzt_ fruehere zuordnungen (nicht additiv!)
 //
 function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll, $anzahl_leer ) {
-  if( $kauf > 0 or $rueckgabe > 0 ) {
+  if( $anzahl_voll > 0 or $anzahl_leer > 0 ) {
     sql_insert( 'lieferantenpfand' , array(
         'verpackung_id' => $verpackung_id
       , 'bestell_id' => $bestell_id
@@ -2875,6 +2875,7 @@ function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0 ) {
     , pfandverpackungen.name as name
     , pfandverpackungen.wert as wert
     , pfandverpackungen.mwst as mwst
+    , pfandverpackungen.sort_id as sort_id
     , lieferantenpfand.id as zuordnung_id
     , sum( (".select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) )." ) ) as pfand_leer_anzahl
     , sum( (".select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_NETTO_SOLL, array( 'gesamtbestellungen', 'pfandverpackungen', 'lieferanten' ) )." ) ) as pfand_leer_netto_soll
@@ -2958,9 +2959,11 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
 
 function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
   $where = '';
+  $having = 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 )';
   if( $bestell_id ) {
     need( getState( $bestell_id ) >= STATUS_LIEFERANT );
     $where = "WHERE gesamtbestellungen.id = $bestell_id";
+    $having = '';
   }
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
@@ -2978,7 +2981,7 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
     $where
-    HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 )
+    $having
     ORDER BY valuta_kan DESC;
   ";
   return doSql( $query, LEVEL_ALL, "sql_bestellungen_soll_lieferant fehlgeschlagen: " );

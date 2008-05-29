@@ -89,8 +89,8 @@ if( $action == 'moveup' ) {
         break;
       // echo "prev: {$prev['id']}/{$prev['sort_id']}, row: {$row['id']}/{$row['sort_id']}<br>";
       $h = $prev['sort_id'];
-      sql_update( 'pfandverpackungen', $prev['id'], array( 'sort_id' => $row['sort_id'] ) );
-      sql_update( 'pfandverpackungen', $row['id'], array( 'sort_id' => $h ) );
+      sql_update( 'pfandverpackungen', $prev['verpackung_id'], array( 'sort_id' => $row['sort_id'] ) );
+      sql_update( 'pfandverpackungen', $row['verpackung_id'], array( 'sort_id' => $h ) );
       // erzwinge neue index-reihenfolge schon beim naechsten SELECT in diesem script:
       doSql( 'FLUSH TABLES' );
       break;
@@ -108,8 +108,8 @@ if( $action == 'movedown' ) {
         break;
       // echo "next: {$next['id']}/{$next['sort_id']}, row: {$row['id']}/{$row['sort_id']}<br>";
       $h = $row['sort_id'];
-      sql_update( 'pfandverpackungen', $row['id'], array( 'sort_id' => $next['sort_id'] ) );
-      sql_update( 'pfandverpackungen', $next['id'], array( 'sort_id' => $h ) );
+      sql_update( 'pfandverpackungen', $row['verpackung_id'], array( 'sort_id' => $next['sort_id'] ) );
+      sql_update( 'pfandverpackungen', $next['verpackung_id'], array( 'sort_id' => $h ) );
       doSql( 'FLUSH TABLES' );
       break;
     }

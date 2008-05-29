@@ -180,8 +180,13 @@
 //         } | $gzip ;
 //       " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
      //
+
+     // FIXME: only for testing:
+     $tables = 'lieferanten pfandverpackungen';
      $command = "
-       $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
+       tar c $foodsoftdir \
+       && echo -n "---- cut me" && echo " here ----" \
+       && $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
      ";
      // echo "command: <pre>$command</pre>";
      header("Content-Type: application/data");
