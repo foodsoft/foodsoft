@@ -1447,6 +1447,7 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $liefera
   return sql_insert( 'gesamtbestellungen', array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
   , 'lieferung' => $lieferung, 'lieferanten_id' => $lieferanten_id
+  , 'rechnungsstatus' => STATUS_BESTELLEN
   ) );
 }
 
@@ -2562,6 +2563,9 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
 //
 ////////////////////////////////////
 
+define( 'PFAND_OPT_GRUPPEN_INAKTIV', 1 );
+define( 'PFAND_OPT_ALLE_BESTELLUNGEN', 2 );
+
 // pfandzuordnung_{lieferant,gruppe}:
 // schreibe _gesamtmenge_ fuer eine (bestellung,verpackung) oder (bestellung,gruppe),
 // _ersetzt_ fruehere zuordnungen (nicht additiv!)
@@ -2832,10 +2836,13 @@ function select_soll_gruppen( $using = array() ) {
 
 
 
-function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'bestellgruppen.id' ) {
-  $more_on = '';
+function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'bestellgruppen.id' ) {
+  $on = '';
+  if( $lieferanten_id ) {
+    $on = " ON gesamtbestellungen.lieferanten_id = $lieferanten_id";
+  }
   if( $bestell_id ) {
-    $more_on = "AND gesamtbestellungen.id = $bestell_id";
+    $on .= " AND gesamtbestellungen.id = $bestell_id";
   }
   return doSql( "
     SELECT
@@ -2848,8 +2855,7 @@ function sql_gruppenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'bestel
     , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_voll_brutto_soll
     FROM bestellgruppen
     JOIN gesamtbestellungen
-      ON gesamtbestellungen.lieferanten_id = $lieferanten_id
-         $more_on
+      $on
     LEFT JOIN gruppenpfand
       ON gruppenpfand.bestell_id = gesamtbestellungen.id
          AND gruppenpfand.gruppen_id = bestellgruppen.id

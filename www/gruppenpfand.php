@@ -3,16 +3,25 @@
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
-need_http_var( 'bestell_id', 'u', true );
+get_http_var( 'bestell_id', 'u', 0, true );
 
-$bestellung_name = bestellung_name( $bestell_id );
-$lieferanten_id = getProduzentBestellID( $bestell_id );
-$lieferant_name = lieferant_name( $lieferanten_id );
+// TODO: aufschluesselung nach lieferanten? (macht im moment keinen sinn, pfand gibt's nur bei terra!)
+//
+// get_http_var( 'lieferanten_id', 'u', 0, true );
 
 get_http_var( 'optionen', 'u', 0, true );
-define( 'OPTION_GRUPPEN_INAKTIV', 1 );
-define( 'OPTION_ALLE_BESTELLUNGEN', 2 );
-if( $optionen & OPTION_ALLE_BESTELLUNGEN ) {
+
+if( $bestell_id ) {
+  $bestellung_name = bestellung_name( $bestell_id );
+  $lieferanten_id = getProduzentBestellID( $bestell_id );
+  $lieferant_name = lieferant_name( $lieferanten_id );
+} else {
+  $optionen |= PFAND_OPT_ALLE_BESTELLUNGEN;
+  $bestellung_name = '';
+  $lieferanten_id = 0;
+}
+
+if( $optionen & PFAND_OPT_ALLE_BESTELLUNGEN ) {
   $bestell_id = 0;
   $editable = false;
 }
@@ -28,32 +37,36 @@ if( $optionen & OPTION_ALLE_BESTELLUNGEN ) {
       <tr>
         <td>
           <input style='margin-left:2em;' type='checkbox'
-            <? if( $optionen & OPTION_GRUPPEN_INAKTIV ) echo " checked"; ?>
+            <? if( $optionen & PFAND_OPT_GRUPPEN_INAKTIV ) echo " checked"; ?>
             onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_GRUPPEN_INAKTIV );
+              echo self_url('optionen'), "&optionen=", ($optionen ^ PFAND_OPT_GRUPPEN_INAKTIV );
             ?>';"
             title='Auch inaktive Gruppen in Pfandübersicht aufnehmen?'
           > auch inaktive Gruppen anzeigen?
         </td>
       </tr>
+      <? if( $bestellung_name ) { ?>
       <tr>
         <td>
           <input style='margin-left:2em;' type='checkbox'
-            <? if( $optionen & OPTION_ALLE_BESTELLUNGEN ) echo " checked"; ?>
+            <? if( $optionen & PFAND_OPT_ALLE_BESTELLUNGEN ) echo " checked"; ?>
             onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ OPTION_ALLE_BESTELLUNGEN );
+              echo self_url('optionen'), "&optionen=", ($optionen ^ PFAND_OPT_ALLE_BESTELLUNGEN );
             ?>';"
             title='Pfandsumme ueber alle Bestellungen bei <? echo $lieferant_name; ?> anzeigen'
           > Summe aller Bestellungen anzeigen?
         </td>
       </tr>
+      <? } ?>
     </table>
   </td>
   <td>
     <? if( $bestell_id ) { ?>
       <h3>Gruppenpfand: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3>
-    <? } else { ?>
+    <? } else if( $lieferanten_id ) { ?>
       <h3>Gruppenpfand: alle Bestellungen bei <? echo "$lieferant_name"; ?></h3>
+    <? } else { ?>
+      <h3>Gruppenpfand: alle Bestellungen </h3>
     <? } ?>
   </td>
 </tr>
@@ -124,7 +137,7 @@ while( $row = mysql_fetch_array( $gruppen ) ) {
     $basar_row = $row;
     continue;
   }
-  if( ! ( $row['aktiv'] or ( $optionen & OPTION_GRUPPEN_INAKTIV ) ) )
+  if( ! ( $row['aktiv'] or ( $optionen & PFAND_OPT_GRUPPEN_INAKTIV ) ) )
     continue;
   ?>
     <tr>

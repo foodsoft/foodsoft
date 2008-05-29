@@ -75,12 +75,12 @@ rubrik( "Bankguthaben" );
     , $konto['saldo']
     );
   }
-  
+
   posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_UNGEBUCHT . "','gruppen');\">Ungebuchte Einzahlungen</a>", $gruppen_einzahlungen_ungebucht );
 
 rubrik( "Umlaufvermögen" );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=basar','basar');\">Warenbestand Basar</a>", basar_wert_summe() );
-  posten( "Bestand Pfandverpackungen", $inventur_pfandwert );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=basar','basar');\">Warenbestand Basar</a>", basar_wert_brutto() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=pfandverpackungen','pfandzettel');\">Bestand Pfandverpackungen</a>", -lieferantenpfandkontostand() );
 
 rubrik( "Forderungen" );
   posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_SCHULDEN . "','gruppen');\">Forderungen an Gruppen</a>", forderungen_gruppen_summe() );
@@ -104,7 +104,8 @@ $seitensumme = 0;
 
 rubrik( "Einlagen der Gruppen" );
   posten( "Sockeleinlagen", sockel_gruppen_summe() );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_GUTHABEN . "','gruppen');\">Kontoguthaben</a>", guthaben_gruppen_summe() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_GUTHABEN . "','gruppen');\">Kontoguthaben</a>", verbindlichkeiten_gruppen_summe() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppenpfand&optionen=" . PFAND_OPT_GRUPPEN_INAKTIV . "','gruppenpfand');\">Pfandverpackungen</a>", -pfandkontostand() );
 
 $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
 rubrik( "Verbindlichkeiten" );
@@ -115,6 +116,7 @@ rubrik( "Verbindlichkeiten" );
     , $vkeit['soll']
     );
   }
+
 
 $passiva = $seitensumme;
 
@@ -143,3 +145,4 @@ printf( "
 echo "</table>";
 
 ?>
+
