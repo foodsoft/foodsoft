@@ -108,7 +108,7 @@ if( $editable ) {
       <th>Buchung</th>
       <th>Informationen</th>
       <th>Pfand</th>
-      <th>Pfandsumme</th>
+      <th>Pfandkonto</th>
       <th>Waren</th>
       <th>Buchung</th>
       <th>Kontostand</th>

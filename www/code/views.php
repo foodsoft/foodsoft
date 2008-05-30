@@ -918,8 +918,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
     <tr>
       <th>Name</th>
       <th>Status</th>
-      <th>Beginn</th>
-      <th>Ende</th>
+      <th>Bestellzeitraum</th>
       <th>Lieferung</th>
         <!-- <th>Ausgang</th>
         <th>Bezahlung</th> -->
@@ -951,8 +950,10 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       <tr id='row<?echo $bestell_id; ?>'>
       <td><?echo $row['name']?></td>
       <td><? echo rechnung_status_string( $row['rechnungsstatus'] ); ?></td>
-      <td><? echo $row['bestellstart']; ?></td>
-      <td><? echo $row['bestellende']; ?></td>
+      <td>
+        <div><? echo $row['bestellstart']; ?></div>
+        <div> - <? echo $row['bestellende']; ?></div>
+      </td>
       <td><? echo $row['lieferung']; ?></td>
       <td><?
         $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
