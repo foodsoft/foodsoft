@@ -110,9 +110,16 @@
    }
 
    if( $action == 'upload' ) {
+     if($_FILES['userfile']['error']!=0){
+
+       echo "<div class='warn'>Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)</div>";
+       //var_dump($_FILES);
+       exit();
+     }
      $tmpfile = $_FILES['userfile']['tmp_name'];
      if(!$tmpfile) {
        echo "<div class='warn'>Keine Datei uebergeben!</div>";
+       //var_dump($_FILES);
        exit();
      }
 //    exitcode 2 ist bei gzip auch erfolgreich!
@@ -171,14 +178,6 @@
           ( \"upload_ursprung\", \"$foodsoftserver\", 1, \"Server auf dem das zuletzt hochgeladene Dump erzeugt wurde\" )
          ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
      ";
-       $command = "
-         {
-           $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 &&
-           echo '
-             $leit_sql
-           ';
-         } | $gzip ;
-       " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
 
 
      // FIXME: only for testing:
@@ -188,6 +187,9 @@
 //       && echo -n "---- cut me" && echo " here ----" \
 //       && $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
 //     ";
+     $command = "
+       $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
+     ";
      // echo "command: <pre>$command</pre>";
      header("Content-Type: application/data");
      header("Content-Disposition: filename=$downloadname");
