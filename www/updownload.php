@@ -171,23 +171,23 @@
           ( \"upload_ursprung\", \"$foodsoftserver\", 1, \"Server auf dem das zuletzt hochgeladene Dump erzeugt wurde\" )
          ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
      ";
-//       $command = "
-//         {
-//           $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 &&
-//           echo '
-//             $leit_sql
-//           ';
-//         } | $gzip ;
-//       " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
-     //
+       $command = "
+         {
+           $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 &&
+           echo '
+             $leit_sql
+           ';
+         } | $gzip ;
+       " . '[ "${PIPESTATUS[*]}" == "0 0" ]';
+
 
      // FIXME: only for testing:
-     $tables = 'lieferanten pfandverpackungen';
-     $command = "
-       tar c $foodsoftdir \
-       && echo -n "---- cut me" && echo " here ----" \
-       && $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
-     ";
+//     $tables = 'lieferanten pfandverpackungen';
+//     $command = "
+//       tar c $foodsoftdir \
+//       && echo -n "---- cut me" && echo " here ----" \
+//       && $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
+//     ";
      // echo "command: <pre>$command</pre>";
      header("Content-Type: application/data");
      header("Content-Disposition: filename=$downloadname");
