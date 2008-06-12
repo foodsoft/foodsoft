@@ -112,12 +112,13 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
     // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
     break;
   case STATUS_VERTEILT:
+  case STATUS_ABGERECHNET:
     if( $gruppen_id ) {
       $editable= FALSE;
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
-      $editable = (!$readonly) && ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV );
+      $editable = (!$readonly) && ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV && ( $state == STATUS_VERTEILT ) );
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
              | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME | PR_ROWS_NICHTGEFUELLT );

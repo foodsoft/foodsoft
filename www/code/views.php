@@ -1623,6 +1623,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   if( $bestell_id ) {
     $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
     $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
+    $rechnungsstatus = getState( $bestell_id );
   }
 
   ?>
@@ -1735,7 +1736,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
           title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>
         <?
       } else {
-        if( $editable ) {
+        if( $editable and ( $rechnungsstatus < STATUS_ABGERECHNET ) ) {
           echo action_button( "setzen"
           , "diesen Preiseintrag für Bestellung $bestellung_name auswählen"
           , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] )
