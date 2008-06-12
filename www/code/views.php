@@ -959,7 +959,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
         if( $abrechnung_dienstkontrollblatt_id ) {
           printf( "<div>%.2lf</div><div style='font-size:smaller;'>%s</div"
-          , $row['rechnungssumme']
+          , sql_bestellung_rechnungssumme( $bestell_id )
           , dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id )
           );
         } else {
