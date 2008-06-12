@@ -1613,6 +1613,8 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
     , produktpreise.preis as preis
     , produktpreise.pfand as pfand
     , produktpreise.mwst as mwst
+    , produkte.artikelnummer as artikelnummer
+    , produktpreise.bestellnummer as bestellnummer
     , ( produktpreise.preis - produktpreise.pfand ) as bruttopreis
     , ( produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) as nettopreis
     , $gesamtbestellmenge_expr as gesamtbestellmenge
@@ -3023,6 +3025,8 @@ function sql_bestellung_pfandsumme( $bestell_id ) {
 
 function kontostand( $gruppen_id ) {
 	//FIXME: zu langsam auf Gruppenview wenn Dienst5
+  if( $gruppen_id == sql_basar_id() )
+    return 100.0;
   $row = sql_select_single_row( "
     SELECT (".select_soll_gruppen('bestellgruppen').") as soll
     FROM bestellgruppen

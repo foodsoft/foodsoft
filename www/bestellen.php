@@ -18,8 +18,8 @@
     $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
     echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
   }
-
   $kontostand = kontostand( $gruppen_id );
+
 
   // Aktuelle Bestellung ermitteln...
   if ( get_http_var('bestellungs_id', 'u') ) {
