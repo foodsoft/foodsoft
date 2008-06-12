@@ -12,6 +12,10 @@ $state = getState( $bestell_id );
 need( $state >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
 need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 
+$bestellung = sql_bestellung( $bestell_id );
+$bestellung_name = $bestellung['name'];
+$lieferant_id = $bestellung['lieferanten_id'];
+$lieferant_name = lieferant_name( $lieferant_id );
 
 /////////////////////////////
 //
@@ -22,29 +26,40 @@ need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
 
+$status = getState( $bestell_id );
+
 if( $action == 'save' ) {
-  get_http_var( 'rechnungsnummer', 'H', '' ) or $rechnungsnummer = '';
-  get_http_var( 'extra_text', 'H', '' ) or $extra_text = '';
-  need_http_var( 'extra_soll', 'f', 0.0 );
-  get_http_var( 'rechnung_abschluss', 'w', '' );
-  sql_update( 'gesamtbestellungen', $bestell_id, array(
-    'rechnungsnummer' => $rechnungsnummer
-  , 'extra_text' => $extra_text
-  , 'extra_soll' => $extra_soll
-  ) );
-  if( $rechnung_abschluss == 'yes' ) {
+  if( $status == STATUS_ABGERECHNET ) {
+    get_http_var( 'rechnung_abschluss', 'w', '' );
+    if( $rechnung_abschluss == 'reopen' ) {
+      changeState( $bestell_id, STATUS_VERTEILT );
+    }
+  } else {
+    get_http_var( 'rechnungsnummer', 'H', '' ) or $rechnungsnummer = '';
+    get_http_var( 'extra_text', 'H', '' ) or $extra_text = '';
+    need_http_var( 'extra_soll', 'f', 0.0 );
     sql_update( 'gesamtbestellungen', $bestell_id, array(
-      'abrechnung_dienstkontrollblatt_id' => $dienstkontrollblatt_id
-    , 'abrechnung_datum' => $mysqlheute
+      'rechnungsnummer' => $rechnungsnummer
+    , 'extra_text' => $extra_text
+    , 'extra_soll' => $extra_soll
     ) );
+    get_http_var( 'rechnung_abschluss', 'w', '' );
+    if( $rechnung_abschluss == 'yes' ) {
+      changeState( $bestell_id, STATUS_ABGERECHNET );
+    }
   }
 }
-
 
 $bestellung = sql_bestellung( $bestell_id );
 $bestellung_name = $bestellung['name'];
 $lieferant_id = $bestellung['lieferanten_id'];
 $lieferant_name = lieferant_name( $lieferant_id );
+$status = getState( $bestell_id );
+$ro_tag = '';
+if( $status >= STATUS_ABGERECHNET ) {
+  $ro_tag = 'readonly';
+}
+
 
 $result = sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" );
 $gruppenpfand = mysql_fetch_array( $result );
@@ -145,7 +160,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
     <div style='text-align:center;'>Lieferant <? echo $lieferant_name; ?>: </div>
     <div style='text-align:left;'>
       Rechnungsnummer des Lieferanten:
-      <input type='text' size='40' name='rechnungsnummer' value='<? echo $bestellung['rechnungsnummer']; ?>'>
+      <input <? echo $ro_tag; ?> type='text' size='40' name='rechnungsnummer' value='<? echo $bestellung['rechnungsnummer']; ?>'>
     </div>
   </th>
 </tr>
@@ -197,10 +212,10 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td colspan='3'>
         Sonstiges:
         <br>
-        <input type='text' name='extra_text' size='40' value='<? echo $bestellung['extra_text']; ?>'>
+        <input <? echo $ro_tag; ?> type='text' name='extra_text' size='40' value='<? echo $bestellung['extra_text']; ?>'>
       </td>
       <td class='number' style='text-align:right;vertical-align:bottom;'>
-        <input style='text-align:right;' type='text' name='extra_soll' size='10' value='<? printf( "%.2lf", $bestellung['extra_soll'] ); ?>'>
+        <input <? echo $ro_tag; ?> style='text-align:right;' type='text' name='extra_soll' size='10' value='<? printf( "%.2lf", $bestellung['extra_soll'] ); ?>'>
       </td>
     </tr>
     <tr class='summe'>
@@ -211,19 +226,20 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td colspan='5'>
-        
-        
-      </td>
-    </tr>
-    <tr style='padding-top:2em;'>
-      <td colspan='5' style='text-align:right;'>
-        <? if( $bestellung['abrechnung_dienstkontrollblatt_id'] ) { ?>
+      <td colspan='5' style='padding-top:1em;text-align:right;'>
+        <? if( $status >= STATUS_ABGERECHNET ) { ?>
           Abrechnung durchgeführt: <? echo dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ); ?>,
           <? echo $bestellung['abrechnung_datum']; ?>
+          <? if( $hat_dienst_IV ) { ?>
+            <span style='padding-left:3em;'>Nochmal öffnen: <input type='checkbox' name='rechnung_abschluss' value='reopen' style='padding-right:4em'>
+            <input type='submit' value='Abschicken'>
+            </span>
+          <? } ?>
         <? } else { ?>
-          Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
-          <input type='submit' value='Speichern'>
+          <? if( $hat_dienst_IV ) { ?>
+            Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
+            <input type='submit' value='Speichern'>
+          <? } ?>
         <? } ?>
       </td>
     </tr>

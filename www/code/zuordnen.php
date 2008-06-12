@@ -1355,7 +1355,7 @@ function getProduzentBestellID($bestell_id){
  *   - ggf. werden Nebenwirkungen, wie verteilmengenZuweisen, ausgeloest
  */
 function changeState($bestell_id, $state){
-  global $mysqljetzt;
+  global $mysqljetzt, $dienstkontrollblatt_id;
 
   $bestellung = sql_bestellung( $bestell_id );
 
@@ -1382,6 +1382,15 @@ function changeState($bestell_id, $state){
       $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
     case STATUS_VERTEILT . "," . STATUS_ABGERECHNET:
+      nur_fuer_dienst(4);
+      need( $dienstkontrollblatt_id > 0, "Kein Dienstkontrollblatt Eintrag" );
+      $changes .= ", abrechnung_dienstkontrollblatt_id = '$dienstkontrollblatt_id'
+                   , abrechnung_datum = '$mysqljetzt' ";
+      break;
+    case STATUS_ABGERECHNET . "," . STATUS_VERTEILT:
+      nur_fuer_dienst(4);
+      need( $dienstkontrollblatt_id > 0, "Kein Dienstkontrollblatt Eintrag" );
+      $changes .= ", abrechnung_dienstkontrollblatt_id = 0 ";
       break;
     case STATUS_ABRECHNET . "," . STATUS_ARCHIVIERT:
       // TODO: tests:
