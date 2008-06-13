@@ -45,6 +45,7 @@ if( $action == 'save' ) {
     ) );
     get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'yes' ) {
+      need( abs( basar_wert_brutto( $bestell_id ) ) < 0.01 , "Abschluss noch nicht möglich: da sind noch Reste im Basar!" );
       changeState( $bestell_id, STATUS_ABGERECHNET );
     }
   }
@@ -76,7 +77,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
 
 
 ?>
-<h2>Abrechung: Bestellung <? echo "$bestellung_name ($lieferant_name)"; ?></h2>
+<h2>Abrechnung: Bestellung <? echo "$bestellung_name ($lieferant_name)"; ?></h2>
 
 <form method='post' action='<? echo self_url(); ?>'>
 <?echo self_post(); ?>
@@ -143,7 +144,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       </td>
       <td style='text-align:right;'>berechnet (Kauf):</td>
       <td>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_voll_brutto_soll'] ); ?></b></td>
+      <td class='number'><b><? printf( "%.2lf", -$gruppenpfand['pfand_voll_brutto_soll'] ); ?></b></td>
       <td rowspan='2' style='vertical-align:middle;'>
         <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=<? echo $bestell_id; ?>','gruppenpfand');"
         >zur Pfandabrechnung...</a>
@@ -152,7 +153,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
     <tr>
       <td style='text-align:right;'>gutgeschrieben (Rückgabe):</td>
       <td>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", $gruppenpfand['pfand_leer_brutto_soll'] ); ?></b></td>
+      <td class='number'><b><? printf( "%.2lf", -$gruppenpfand['pfand_leer_brutto_soll'] ); ?></b></td>
     </tr>
 
 <tr>
@@ -237,7 +238,9 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
           <? } ?>
         <? } else { ?>
           <? if( $hat_dienst_IV ) { ?>
-            Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
+            <? if( abs( $warenwert_basar_brutto ) < 0.05 ) { ?>
+              Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
+            <? } ?>
             <input type='submit' value='Speichern'>
           <? } ?>
         <? } ?>
