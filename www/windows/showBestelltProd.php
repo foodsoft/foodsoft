@@ -25,6 +25,7 @@ $vorschlag = sql_bestellvorschlag_daten($bestell_id,$produkt_id);
 preisdatenSetzen( & $vorschlag );
 
 $basar_id = sql_basar_id();
+$muell_id = sql_muell_id();
 $basar_festmenge = 0;
 $basar_toleranzmenge = 0;
 
@@ -67,11 +68,13 @@ if( $editAmounts ) {
 
 distribution_tabellenkopf( 'Gruppe' );
 
+$muellmenge = 0;
 $verteilt = 0;
 while( $gruppe = mysql_fetch_array($gruppen) ) {
   $gruppen_id = $gruppe['id'];
 
   $bestellungen = sql_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id );
+  echo "$gruppen_id";
 
   switch( $rows = mysql_num_rows($bestellungen) ) {
     case 0:
@@ -89,6 +92,11 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
         $basar_festmenge = $bestellung['gesamtbestellmenge'] - $bestellung['basarbestellmenge'];
         $basar_toleranzmenge = $bestellung['basarbestellmenge'];
         continue 2;  // 'switch' ist in php auch eine Schleife!
+      }
+      if( $gruppen_id == $muell_id ) {
+        // sonderfall: muell
+        $muellmenge = $bestellung['muellmenge'];
+        continue 2;
       }
       $toleranzmenge = $bestellung['toleranzbestellmenge'];
       $festmenge = $bestellung['gesamtbestellmenge'] - $toleranzmenge;
@@ -159,7 +167,20 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
   $verteilt += $menge;
 }
 
-$basar = $vorschlag['liefermenge'] - $verteilt;
+?>
+  <tr class='summe'>
+    <td>Müll:</td>
+    <td> </td>
+    <td> </td>
+    <td class='mult'><? printf( '%d', $muellmenge * $vorschlag['kan_verteilmult'] ); ?></td>
+    <td class='unit'><? echo $vorschlag['kan_verteileinheit']; ?></td>
+    <td class='mult'><? echo $vorschlag['preis_rund']; ?></td>
+    <td class='unit'>/ <? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></td>
+    <td class='number'><? printf( "%.2lf", $vorschlag['preis'] * $muellmenge ); ?></td>
+  <tr>
+<?
+
+$basar = $vorschlag['liefermenge'] - $verteilt - $muellmenge;
 
 ?>
   <tr class='summe'>

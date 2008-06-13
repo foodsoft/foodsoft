@@ -4,7 +4,7 @@
   // (nuetzlich fuers debugging)
   // Timo, 2007
 
-exit(1); // momentan ausser betrieb!
+// exit(1);
 
   require_once('code/config.php');
   require_once('code/err_functions.php');
@@ -161,6 +161,7 @@ exit(1); // momentan ausser betrieb!
           <th colspan='2'>Menge</th>
           <th>Einzelpreis</th>
           <th>Gesamtpreis</th>
+          <th>Gruppenbestellung</th>
         </tr>
     ";
     while( $zuordnung = mysql_fetch_array( $zuordnungen ) ) {
@@ -176,6 +177,7 @@ exit(1); // momentan ausser betrieb!
           <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produkt_id=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"
           >{$zuordnung['preis']}</a></td>
           <td class='number'>" . $zuordnung['preis'] * $zuordnung['menge'] . "</td>
+          <td class='number'>" . $zuordnung['gruppenbestellung_id'] . "</td>
         </tr>
       ";
     }

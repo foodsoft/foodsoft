@@ -1150,7 +1150,20 @@
 					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
                <?php
                  if( ! $readonly ) {
-                   echo "<input type='button' class='bigbutton' value='bestellen' onClick='bestellungAktualisieren();'>";
+                   ?>
+                     <input type='button' class='bigbutton' value='bestellen' onClick='bestellungAktualisieren();'>
+                     <!--
+                     <span style='position:fixed;top:120px;left:20px;padding:1em;z-index:999;' class='alert'>
+                       <div style='margin:1ex;'>
+                       Änderungen sind noch nicht gespeichert!
+                       </div>
+                       <div>
+                       <input type='button' class='bigbutton' value='Speichern' onClick='bestellungAktualisieren();'>
+                       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+                       </div>
+                     </span>
+                     -->
+                   <?
                  }
                ?>
 				       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">

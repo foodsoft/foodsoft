@@ -1651,7 +1651,7 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
   . "
   GROUP BY bestellvorschlaege.produkt_id
   "
-   . ( $gruppen_id ? " HAVING gesamtbestellmenge<>0 or verteilmenge<>0" : "" ) .
+   . ( $gruppen_id ? " HAVING gesamtbestellmenge<>0 OR verteilmenge<>0 OR muellmenge<>0 " : "" ) .
   " ORDER BY menge_ist_null, produktgruppen_id, produkte.name ";
 }
 
