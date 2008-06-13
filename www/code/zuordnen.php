@@ -2746,6 +2746,9 @@ function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
       $expr = "( lieferantenpfand.anzahl_leer )";
       $query = 'pfand';
       break;
+    case OPTION_EXTRA_BRUTTO_SOLL:
+      $query = 'extra';
+      break;
     default:
       error(__LINE__,__FILE__, "select_bestellungen_soll_lieferanten: bitte Funktionsaufruf anpassen!", debug_backtrace());
   }
@@ -2777,6 +2780,14 @@ function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
           'lieferanten' => 'pfandverpackungen.lieferanten_id = lieferanten.id'
         , 'gesamtbestellungen' => 'lieferantenpfand.bestell_id = gesamtbestellungen.id'
         , 'pfandverpackungen' => 'lieferantenpfand.verpackung_id = pfandverpackungen.id'
+        ) );
+    case 'extra':
+      return "
+        SELECT IFNULL( sum( bla.extra_soll ), 0.0 )
+        FROM gesamtbestellungen as bla
+        WHERE 1 " .use_filters( $using, array(
+          'lieferanten' => 'lieferanten.id = bla.lieferanten_id'
+        , 'gesamtbestellungen' => 'bla.id = gesamtbestellungen.id'
         ) );
   }
 }
@@ -2829,11 +2840,16 @@ function select_pfand_soll_lieferanten( $using = array() ) {
     ) ";
 }
 
+function select_extra_soll_lieferanten( $using = array() ) {
+  return select_bestellungen_soll_lieferanten( OPTION_EXTRA_BRUTTO_SOLL, $using );
+}
+
 function select_soll_lieferanten( $using = array() ) {
   return " SELECT (
       (" .select_waren_soll_lieferanten( $using ). ")
     + (" .select_pfand_soll_lieferanten( $using ). ")
     + (" .select_transaktionen_soll_lieferanten( $using ). ")
+    + (" .select_extra_soll_lieferanten( $using ). ")
     ) ";
 }
 
@@ -2988,6 +3004,7 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
          , (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_NETTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as pfand_leer_netto_soll
          , (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as pfand_voll_brutto_soll
          , (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as pfand_leer_brutto_soll
+         , (" .select_bestellungen_soll_lieferanten( OPTION_EXTRA_BRUTTO_SOLL, array('lieferanten','gesamtbestellungen') ). ") as extra_brutto_soll
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
@@ -3011,8 +3028,8 @@ function sql_bestellung_rechnungssumme( $bestell_id ) {
           (" .select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
         + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_VOLL_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
         + (" .select_bestellungen_soll_lieferanten( OPTION_PFAND_LEER_BRUTTO_SOLL, 'gesamtbestellungen' ). ")
-        + ( SELECT extra_soll FROM gesamtbestellungen WHERE id = $bestell_id )
-    ) AS summe
+    )   + extra_soll
+    AS summe
     FROM gesamtbestellungen
     WHERE gesamtbestellungen.id = $bestell_id
   ", 'summe'

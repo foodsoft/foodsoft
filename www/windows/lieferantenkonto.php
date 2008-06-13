@@ -110,6 +110,7 @@ if( $editable ) {
       <th>Pfand</th>
       <th>Pfandkonto</th>
       <th>Waren</th>
+      <th>Sonstiges</th>
       <th>Buchung</th>
       <th>Kontostand</th>
     </tr>
@@ -118,6 +119,7 @@ if( $editable ) {
       <td class='number'>
         <? printf( "%.2lf", $pfandkontostand ); ?>
       </td>
+      <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td class='number'>
@@ -144,7 +146,8 @@ if( $editable ) {
       $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
       $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
       $waren_soll = $vert_row['waren_brutto_soll'];
-      $soll = $pfand_soll + $waren_soll;
+      $extra_soll = $vert_row['extra_brutto_soll'];
+      $soll = $pfand_soll + $waren_soll + $extra_soll;
       ?>
       <tr>
         <td style='vertical-align:top;font-weight:bold;'>Bestellung</td>
@@ -162,6 +165,9 @@ if( $editable ) {
         </td>
         <td class='number'>
           <? printf("%.2lf", $waren_soll ); ?>
+        </td>
+        <td class='number'>
+          <? printf("%.2lf", $extra_soll ); ?>
         </td>
         <td class='number'>
           <div style='font-weight:bold;'><? printf("%.2lf", $soll ); ?></div>
@@ -218,6 +224,7 @@ if( $editable ) {
         <td>&nbsp;</td>
         <td>&nbsp;</td>
         <td>&nbsp;</td>
+        <td>&nbsp;</td>
         <td class='number'>
           <div style='font-weight:bold;'>
             <? printf("%.2lf" , $konto_row['summe']); ?>
@@ -239,6 +246,7 @@ if( $editable ) {
       <td class='number'>
         <? printf( "%8.2lf", $pfandsumme ); ?>
       </td>
+      <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
       <td class='number'>
