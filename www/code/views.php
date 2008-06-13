@@ -931,6 +931,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
 
   while ($row = mysql_fetch_array($result)) {
     $bestell_id = $row['id'];
+    $rechnungsstatus = getState( $bestell_id );
     $detail_url = "javascript:neuesfenster('"
            . "$foodsoftdir/index.php?window=bestellschein"
            . "&bestell_id=$bestell_id"
@@ -957,7 +958,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       <td><? echo $row['lieferung']; ?></td>
       <td><?
         $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
-        if( $abrechnung_dienstkontrollblatt_id ) {
+        if( $rechnungsstatus == STATUS_ABGERECHNET ) {
           printf( "<div>%.2lf</div><div style='font-size:smaller;'>%s</div"
           , sql_bestellung_rechnungssumme( $bestell_id )
           , dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id )
@@ -966,13 +967,9 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           echo "-";
         }
       ?></td>
-  <!--
-      <td><? echo $row['ausgang']; ?></td>
-      <td><? echo $row['bezahlung']; ?></td>
-  -->
     <?
   
-    switch( $row['rechnungsstatus'] ) {
+    switch( $rechnungsstatus ) {
   
       case STATUS_BESTELLEN:
         ?>

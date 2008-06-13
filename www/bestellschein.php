@@ -47,6 +47,7 @@ switch( $action ) {
   case 'insert':
     fail_if_readonly();
     nur_fuer_dienst(1,3,4);
+    need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     need_http_var( 'produkt_id', 'u' );
     need_http_var( 'menge', 'f' );
     if( $bestell_id && ( $menge > 0 ) ) {

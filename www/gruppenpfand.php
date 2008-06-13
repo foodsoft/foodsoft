@@ -15,10 +15,12 @@ if( $bestell_id ) {
   $bestellung_name = bestellung_name( $bestell_id );
   $lieferanten_id = getProduzentBestellID( $bestell_id );
   $lieferant_name = lieferant_name( $lieferanten_id );
+  $editable = ( getState( $bestell_id ) < STATUS_ABGERECHNET );
 } else {
   $optionen |= PFAND_OPT_ALLE_BESTELLUNGEN;
   $bestellung_name = '';
   $lieferanten_id = 0;
+  $editable = false;
 }
 
 if( $optionen & PFAND_OPT_ALLE_BESTELLUNGEN ) {
