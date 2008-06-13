@@ -4,6 +4,8 @@
   // (nuetzlich fuers debugging)
   // Timo, 2007
 
+exit(1); // momentan ausser betrieb!
+
   require_once('code/config.php');
   require_once('code/err_functions.php');
   require_once('code/zuordnen.php');

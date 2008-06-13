@@ -23,11 +23,14 @@ if( $action == 'basarzuteilung' ) {
 
   for( $i = 0; get_http_var( "produkt$i", 'u' ) ; $i++ ) {
     need_http_var( "bestellung$i", 'u' );
+    $id = ${"bestellung$i"};
+    if( getState( $id ) >= STATUS_ABGERECHNET )
+      continue;
     if( get_http_var( "menge$i", "f" ) ) {
 //      if( ${"menge$i"} > 0 ) {
         fail_if_readonly();
         nur_fuer_dienst(4);
-        $pr = sql_bestellvorschlag_daten( ${"bestellung$i"}, ${"produkt$i"} );
+        $pr = sql_bestellvorschlag_daten( $id, ${"produkt$i"} );
         kanonische_einheit( $pr['verteileinheit'], &$kan_verteileinheit, &$kan_verteilmult );
         $gruppen_menge = ${"menge$i"} / $kan_verteilmult;
         sql_basar2group($gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge);

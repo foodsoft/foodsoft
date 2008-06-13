@@ -274,6 +274,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      $menge *= $kan_verteilmult;
      $wert = $basar_row['basar'] * $basar_row['endpreis'];
      $gesamtwert += $wert;
+     $rechnungsstatus = getState( $basar_row['gesamtbestellung_id'] );
 
      $row = array( 
        "<td>{$basar_row['produkt_name']}</td>"
@@ -291,13 +292,14 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
             ></a></td>
          "
      , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
-     , ( $editAmounts ?
+     , ( $editAmounts ? ( $rechnungsstatus < STATUS_ABGERECHNET ?
          "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
           <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
           <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
           <input name='menge$fieldcount' type='text' size='5'></td>
           <td class='unit'>$kan_verteileinheit</td>"
-       : ""
+         : "<td> (Bestellung abgeschlossen) </td>"
+       ) : ""
        )
      );
      $fieldcount++;

@@ -5,6 +5,7 @@
   // debugger fuer tabelle gruppen_transaktion
   //
 
+exit(1); // momentan ausser betrieb!
 error_reporting(E_ALL);
 
 assert($angemeldet) or exit();

@@ -18,7 +18,10 @@
     if( $readonly ) {
       echo " class='ro'";
     }
-    echo "><table width='100%'";
+    ?>
+      >
+      <table width='100%'
+    <?
     if( $readonly ) {
       echo " class='headro'";
     } else {
