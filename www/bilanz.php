@@ -80,7 +80,7 @@ rubrik( "Bankguthaben" );
 
 rubrik( "Umlaufvermögen" );
   posten( "<a href=\"javascript:neuesfenster('index.php?window=basar','basar');\">Warenbestand Basar</a>", basar_wert_brutto() );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=pfandverpackungen','pfandzettel');\">Bestand Pfandverpackungen</a>", -lieferantenpfandkontostand() );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=pfandverpackungen','pfandzettel');\">Bestand Pfandverpackungen</a>", lieferantenpfandkontostand() );
 
 rubrik( "Forderungen" );
   posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_SCHULDEN . "','gruppen');\">Forderungen an Gruppen</a>", forderungen_gruppen_summe() );
