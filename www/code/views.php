@@ -1152,77 +1152,97 @@ function sum_row($sum){
 <?
 }
 function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
-	 ?>
-         <table class="info">
-               <tr>
-                   <th> Bestellung: </th>
-                     <td style="font-size:1.2em;font-weight:bold"><?PHP echo $row['name']; 
-		     if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
-		     	  ?><br> <b>Vorsicht:</b> <a href=index.php?area=dienstplan>Dienstegruppen abwesend?</a> <?
-         }
-         ?>
-
-		     </td>
-                </tr>
-           <tr>
-             <th>Lieferant:</th>
-             <td><? echo lieferant_name( $row['lieferanten_id'] ); ?></td>
-           </tr>
-               <tr>
-                   <th> Bestellbeginn: </th>
-                     <td><?PHP echo $row['bestellstart']; ?></td>
-                </tr>
-               <tr>
-                   <th> Bestellende: </th>
-                     <td><?PHP echo $row['bestellende']; ?></td>
-                </tr>                
-		<?
-    if( $showGroup and $gruppen_id ){
-      $gruppendaten = sql_gruppendaten( $gruppen_id );
-		?>
-		<tr>
-		    <th> Gruppe: </th>
-		  <td>
-                <?PHP
-                  if( $gruppen_id == sql_basar_id() )
-                    echo "<span class='warn'> BASAR </span>";
-                  else
-                    echo "{$gruppendaten['name']} ({$gruppendaten['gruppennummer']})";
-                ?>
-                </td>
-	      </tr>	
-	      <tr>
-	          <th> Kontostand: </th>
-	          <td><?PHP 
-			// überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
-			$kontostand = kontostand($gruppen_id);
-			if ($kontostand < "0") { 
-				echo "<span style=\"color:red; font-weight:bold;\">".sprintf("%.02f",$kontostand)."</span>"; 
-			} else {
-				echo "<span style=\"color:green; font-weight:normal;\">".sprintf("%.02f",$kontostand)."</span>"; 
-			}	
-	      	      ?>
-		 </td>
-	     </tr>	
-
-		<?
-		}
-    if( $id = $row['abrechnung_dienstkontrollblatt_id' ] ) {
-      ?>
-        <tr>
-          <th>Abgeschlossen:</th>
-          <td class='number'>
-            <div><? echo $row['rechnungsnummer']; ?></div>
-            <div><? printf( '%.2lf', $row['rechnungssumme'] ); ?></div>
-            <div class='small'><? echo dienstkontrollblatt_name( $id ); ?></div>
+  $bestell_id = $row['id'];
+  ?>
+    <table class="info">
+      <tr>
+        <th> Bestellung: </th>
+          <td style="font-size:1.2em;font-weight:bold">
+            <?
+              echo $row['name']; 
+              if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
+                ?> <br> <b>Vorsicht:</b> <a href=index.php?area=dienstplan>Dienstegruppen abwesend?</a> <?
+              }
+            ?>
           </td>
         </tr>
+        <tr>
+          <th>Lieferant:</th>
+          <td><? echo lieferant_name( $row['lieferanten_id'] ); ?></td>
+        </tr>
+        <tr>
+          <th> Bestellbeginn: </th>
+          <td><?PHP echo $row['bestellstart']; ?></td>
+        </tr>
+        <tr>
+          <th> Bestellende: </th>
+          <td><?PHP echo $row['bestellende']; ?></td>
+        </tr>
+    <?
+    if( $showGroup and $gruppen_id ){
+      $gruppendaten = sql_gruppendaten( $gruppen_id );
+      ?>
+        <tr>
+          <th> Gruppe: </th>
+          <td>
+            <?PHP
+              if( $gruppen_id == sql_basar_id() )
+                echo "<span class='warn'> BASAR </span>";
+              else
+                echo "{$gruppendaten['name']} ({$gruppendaten['gruppennummer']})";
+            ?>
+          </td>
+        </tr>	
+        <tr>
+          <th> Kontostand: </th>
+          <td>
+            <?
+              // überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
+              $kontostand = kontostand($gruppen_id);
+              if( $kontostand < 0 ) { 
+                echo "<span style=\"color:red; font-weight:bold;\">".sprintf("%.02f",$kontostand)."</span>"; 
+              } else {
+                echo "<span style=\"color:green; font-weight:normal;\">".sprintf("%.02f",$kontostand)."</span>"; 
+              }	
+            ?>
+          </td>
+        </tr>	
       <?
     }
-		?>
-            </table>
-	    <br/>
-	    <?
+    ?>
+      <tr>
+        <th>Status:</th>
+        <td>
+          <?
+            $status = $row['rechnungsstatus'];
+            echo rechnung_status_string( $status );
+            if( $status == STATUS_ABGERECHNET ) {
+              ?>
+                <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');">
+                <div style='padding-top:1ex;padding-left:1ex;'>
+                <table class='inner' width='100%' style='color:#ed0000;'>
+                  <tr>
+                    <td class='small'>Rechnungsnummer:</td>
+                    <td style='text-align:right;' class='small'><? echo $row['rechnungsnummer']; ?></td>
+                  </tr>
+                  <tr>
+                    <td class='small'>Rechnungssumme:</td>
+                    <td style='text-align:right;' class='small'><? printf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ); ?></td>
+                  </tr>
+                  <tr>
+                    <td class='small'>abgerechnet von:</td>
+                    <td style='text-align:right;' class='small'><? echo dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ); ?></td>
+                  </tr>
+                </table>
+                </div>
+                </a>
+              <?
+            }
+          ?>
+        </td>
+      </tr>
+    </table>
+  <?
 }
 
 
