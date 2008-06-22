@@ -227,8 +227,8 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td colspan='5' style='padding-top:1em;text-align:right;'>
-        <? if( $status >= STATUS_ABGERECHNET ) { ?>
+      <? if( $status >= STATUS_ABGERECHNET ) { ?>
+        <td colspan='5' style='padding-top:1em;text-align:right;'>
           Abrechnung durchgeführt: <? echo dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ); ?>,
           <? echo $bestellung['abrechnung_datum']; ?>
           <? if( $hat_dienst_IV ) { ?>
@@ -236,15 +236,23 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
             <input type='submit' value='Abschicken'>
             </span>
           <? } ?>
-        <? } else { ?>
-          <? if( $hat_dienst_IV ) { ?>
-            <? if( abs( $warenwert_basar_brutto ) < 0.05 ) { ?>
-              Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
-            <? } ?>
-            <input type='submit' value='Speichern'>
+        </td>
+      <? } else { ?>
+        <? if( $hat_dienst_IV ) { ?>
+          <? if( abs( $warenwert_basar_brutto ) < 0.05 ) { ?>
+            <td colspan='4' style='padding-top:0.8em;text-align:right;border-right:none;'>
+            Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
+            </td>
+          <? } else { ?>
+            <td colspan='4' style='padding-top:1ex;text-align:left;font-size:smaller;'>
+              Reste im Basar --- bitte vor Abschluss leermachen!
+            </td>
           <? } ?>
+          <td style='padding-top:1em;text-align:right;border-left:none;'>
+            <input type='submit' value='Speichern'>
+          </td>
         <? } ?>
-      </td>
+      <? } ?>
     </tr>
   </table>
 

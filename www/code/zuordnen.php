@@ -95,7 +95,7 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
     $cols .= "$komma $key";
     if( $escape_and_quote )
       $val = "'" . mysql_real_escape_string($val) . "'";
-    $vals .= "$komma '" . mysql_real_escape_string($val) . "'";
+    $vals .= "$komma $val";
     if( is_array( $update_cols ) ) {
       if( isset( $update_cols[$key] ) ) {
         if( $update_cols[$key] ) {
@@ -1286,9 +1286,6 @@ function sql_lieferanten( $id = false ) {
   return doSql( select_lieferanten( $id ) );
 }
 
-/**
- *   Infos zu Lieferant abfragen
- */
 function sql_getLieferant($lieferant_id){
   return sql_select_single_row( select_lieferanten( $id ) );
 }
@@ -1527,7 +1524,7 @@ function sql_bestellpreis($bestell_id, $produkt_id){
 	return $row['preis_id'];
 }
 
-function sql_create_gruppenbestellung($gruppe, $bestell_id){
+function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurueckgeben */  )
@@ -2428,7 +2425,6 @@ function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = 
 
 
 function sql_get_transaction( $id ) {
-  // debug_args( func_get_args(), 'sql_get_transaction' );
   if( $id > 0 ) {
     $sql = "
       SELECT kontoauszug_jahr, kontoauszug_nr
@@ -2463,7 +2459,6 @@ function sql_get_transaction( $id ) {
       WHERE gruppen_transaktion.id = ".(-$id)."
     ";
   }
-  // echo "sql_get_transaction: $sql";
   return sql_select_single_row( $sql );
 }
 
@@ -2492,13 +2487,12 @@ function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = FALSE ) 
       );
     }
   }
-  // echo "sql_bankkonto_saldo: [$where]<br>";
-  $row = sql_select_single_row( "
+  return sql_select_single_field( "
     SELECT IFNULL(sum( betrag ),0.0) as saldo
     FROM bankkonto
     $where
-  " );
-  return $row['saldo'];
+  " , 'saldo'
+  );
 }
 
 function sql_konten() {
@@ -2937,7 +2931,7 @@ function forderungen_gruppen_summe() {
   return sql_select_single_field( "
     SELECT ifnull( -sum( table_soll.soll ), 0.0 ) as forderungen
     FROM (
-      SELECT ( (" .select_soll_gruppen('bestellgruppen'). ") ) AS soll
+      SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
       FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
       HAVING ( soll < 0 )
     ) AS table_soll

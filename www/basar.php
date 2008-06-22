@@ -15,7 +15,7 @@ $editable or $action = '';
 
 if( $action == 'basarzuteilung' ) {
   need_http_var('gruppe','u', false );
-
+  need( $gruppe > 0, "Keine aktive Bestellgruppe ausgewaehlt!" );
   if( $gruppe != sql_muell_id() ) {
     $gruppendaten = sql_gruppendaten( $gruppe );
     need( $gruppendaten['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );

@@ -901,12 +901,23 @@ function preis_selection($produkt_id, $current_preis_id){
  * Ausgabe der Links im Foodsoft-Kopf
  */
 function areas_in_head($area){
-
 ?>
   <li>
   <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
 <?
 }
+
+function bestellschein_url( $bestell_id ) {
+  global $dienst, $login_gruppen_id, $foodsoftdir;
+  return "javascript:neuesfenster('"
+         . "$foodsoftdir/index.php?window=bestellschein"
+         . "&bestell_id=$bestell_id"
+         . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
+         . "','bestellschein');";
+}
+
+
+
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */
@@ -925,7 +936,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         <!-- <th>Ausgang</th>
         <th>Bezahlung</th> -->
       <th> Summe </th>
-      <th> Detailansicht </th>
+      <th> Detailansichten </th>
 <?
   if( $changeState || $editDates )
     echo "<th> Aktionen </th>";
@@ -934,12 +945,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
   while ($row = mysql_fetch_array($result)) {
     $bestell_id = $row['id'];
     $rechnungsstatus = getState( $bestell_id );
-    $detail_url = "javascript:neuesfenster('"
-           . "$foodsoftdir/index.php?window=bestellschein"
-           . "&bestell_id=$bestell_id"
-           . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
-           . "','bestellschein');";
-    $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$bestell_id','bestellfax');";
+    $detail_url = bestellschein_url($bestell_id);
+    // $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$bestell_id','bestellfax');";
     $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestell_id=$bestell_id','Verteil-Liste');";
     $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
     $edit_link = "<a class='png' style='padding:0pt 1ex 0pt 1ex;'
@@ -976,7 +983,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       case STATUS_BESTELLEN:
         ?>
           <td>
-            <a href="<? echo "$detail_url"; ?>">Bestellschein (vorl&auml;ufig)</a>
+            <a href="<? echo $detail_url; ?>">Bestellschein (vorl&auml;ufig)</a>
           </td>
         <?
         if( $editDates )
@@ -1005,7 +1012,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           <td>
             <a href="<? echo "$detail_url"; ?>">Bestellschein</a>
             <? if( $hat_dienst_IV ) { ?>
-              <br><a href="<? echo "$fax_url"; ?>">Bestell-Fax (.pdf)</a>
+              <!-- momentan ausser betrieb! <br><a href="<? echo "$fax_url"; ?>">Bestell-Fax (.pdf)</a> -->
             <? } ?>
           </td>
         <?
@@ -1038,16 +1045,31 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         break;
   
       case STATUS_VERTEILT:
-      case STATUS_ABGERECHNET:
         ?>
           <td>
             <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
             <?  if( $dienst > 0 ) { ?>
               <br><a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a>
             <? } ?>
+          </td>
+        <?
+        if( $dienst == 4 ) {
+           $aktionen .= "<li>
+             <a title='Zur Übersichtsseite Abrechnung'
+                href=\"javascript:neuesfenster('index.php?window=abrechnung&bestell_id=$bestell_id','abrechnung');\"
+                title='Zur Uebersichtsseite Abrechnung'>Abrechnung beginnen...</a>
+             </li>
+           ";
+        }
+        break;
+
+      case STATUS_ABGERECHNET:
+        ?>
+          <td>
+            <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
             <br>
             <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');"
-              title='Zur Uebersichtsseite Abrechnung...'>&gt; Abrechnung &gt;</a>
+              title='Zur Uebersichtsseite Abrechnung...'>Abrechnung Übersicht</a>
           </td>
         <?
         break;
