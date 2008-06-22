@@ -256,6 +256,7 @@
 					 
 				   function changeMenge(produktId, schritt, art) {
 					    geandert = true;
+              document.getElementById('reminder').style.display = 'inline';
 					 
 					    // feste Bestellmengen auslesen
 					    mengeInGeb     = document.getElementById("menge_geb_"+produktId).firstChild.nodeValue;
@@ -1152,17 +1153,27 @@
                  if( ! $readonly ) {
                    ?>
                      <input type='button' class='bigbutton' value='bestellen' onClick='bestellungAktualisieren();'>
-                     <!--
-                     <span style='position:fixed;top:120px;left:20px;padding:1em;z-index:999;' class='alert'>
-                       <div style='margin:1ex;'>
-                       Änderungen sind noch nicht gespeichert!
-                       </div>
-                       <div>
-                       <input type='button' class='bigbutton' value='Speichern' onClick='bestellungAktualisieren();'>
-                       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+                     <span id='reminder' style='display:none;position:fixed;top:20px;left:20px;padding:1ex;z-index:999;' class='alert'>
+                       <div style='margin:0.5ex;'>
+                         <table class='alert'>
+                           <tr>
+                             <td class='alert'>
+                               <img class='button' src='img/close_black_trans.gif'
+                                 onClick='document.getElementById("reminder").style.display = "none";'>
+                             </td>
+                             <td style='text-align:center' class='alert'>
+                               Änderungen sind noch nicht gespeichert!
+                             </td>
+                           </tr>
+                           <tr>
+                             <td colspan='2' style='text-align:center;' class='alert'>
+                               <input type='button' class='bigbutton' value='Speichern' onClick='bestellungAktualisieren();'>
+                               <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+                             </td>
+                           </tr>
+                         </table>
                        </div>
                      </span>
-                     -->
                    <?
                  }
                ?>
