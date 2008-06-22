@@ -32,9 +32,9 @@ function debug_args( $args, $tag = '' ) {
 
 
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
-	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".$sql."</p>";
+	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".htmlspecialchars($sql)."</p>";
 	$result = mysql_query($sql) or
-	error(__LINE__,__FILE__,$error_text."(".$sql.")",mysql_error(), debug_backtrace());
+	error(__LINE__,__FILE__,$error_text."(".htmlspecialchars($sql).")",mysql_error(), debug_backtrace());
 	return $result;
 }
 
@@ -62,28 +62,29 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
-    $escape_and_quote and $val = "'" . mysql_real_escape_string($val) . "'";
+    if( $escape_and_quote )
+      $val = "'" . mysql_real_escape_string($val) . "'";
     $sql .= "$komma $key=$val";
     $komma=',';
   }
   if( is_array( $where ) ) {
     $and = 'WHERE';
     foreach( $where as $field => $val ) {
-      $sql .= " $and ($field='$val') ";
+      if( $escape_and_quote )
+        $val = "'" . mysql_real_escape_string($val) . "'";
+      $sql .= " $and ($field=$val) ";
       $and = 'AND';
     }
   } else {
     $sql .= " WHERE id=$where";
   }
-  // echo "<br>sql_update: $sql<br>";
   if( doSql( $sql, LEVEL_IMPORTANT, "Update von Tabelle $table fehlgeschlagen: " ) )
     return $where;
   else
     return FALSE;
 }
 
-function sql_insert( $table, $values, $update_cols = false ) {
-  // debug_args( func_get_args(), 'sql_insert' );
+function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = true ) {
   $table == 'leitvariable' or $table == 'transactions' or fail_if_readonly();
   $komma='';
   $update_komma='';
@@ -92,19 +93,22 @@ function sql_insert( $table, $values, $update_cols = false ) {
   $update = '';
   foreach( $values as $key => $val ) {
     $cols .= "$komma $key";
+    if( $escape_and_quote )
+      $val = "'" . mysql_real_escape_string($val) . "'";
     $vals .= "$komma '" . mysql_real_escape_string($val) . "'";
-    if( $update_cols or is_array($update_cols) ) {
-      if( is_array( $update_cols ) ) {
-        if( isset( $update_cols[$key] ) ) {
-          $update .= "$update_komma $key='" . mysql_real_escape_string(
-            $update_cols[$key] ? $update_cols[$key] : $val
-          ) . "'";
-          $update_komma=',';
+    if( is_array( $update_cols ) ) {
+      if( isset( $update_cols[$key] ) ) {
+        if( $update_cols[$key] ) {
+          $val = $update_cols[$key];
+          if( $escape_and_quote )
+            $val = "'" . mysql_real_escape_string($val) . "'";
         }
-      } else {
-        $update .= "$update_komma $key='" . mysql_real_escape_string($val) . "'";
+        $update .= "$update_komma $key=$val";
         $update_komma=',';
       }
+    } elseif( $update_cols ) {
+      $update .= "$update_komma $key=$val";
+      $update_komma=',';
     }
     $komma=',';
   }
@@ -112,7 +116,6 @@ function sql_insert( $table, $values, $update_cols = false ) {
   if( $update_cols or is_array( $update_cols ) ) {
     $sql .= " ON DUPLICATE KEY UPDATE $update $update_komma id = LAST_INSERT_ID(id) ";
   }
-  // echo "<br>sql_insert: $sql<br>";
   if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: " ) )
     return mysql_insert_id();
   else
@@ -125,7 +128,7 @@ function need( $exp, $comment = "Fataler Fehler" ) {
   if( ! $exp ) {
     ?>
       <div class='warn'>
-        <? echo "$comment $exp"; ?>
+        <? echo htmlspecialchars( "$comment $exp" ); ?>
         <a href='<? echo self_url(); ?>'>weiter...</a>
       </div>
     <?
@@ -194,11 +197,6 @@ function use_filters( $using, $rules ) {
 }
 
 
-// define('STATUS_BESTELLEN', "bestellen");
-// define('STATUS_LIEFERANT', "beimLieferanten");
-// define('STATUS_VERTEILT', "Verteilt");
-// define('STATUS_ARCHIVIERT', "archiviert");
-
 define('STATUS_BESTELLEN', 10 );
 define('STATUS_LIEFERANT', 20 );
 define('STATUS_VERTEILT', 30 );
@@ -220,12 +218,6 @@ function rechnung_status_string( $state ) {
   }
   return "FEHLER: undefinierter Status: $state";
 }
-
-// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='10' where state='Bestellen'" );
-// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='20' where state='beimLieferanten'" );
-// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='30' where state='Verteilt'" );
-// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='40' where state='Abgerechnet'" );
-// doSql( "UPDATE gesamtbestellungen set rechnungsstatus='50' where state='archiviert'" );
 
 
 ////////////////////////////////////
@@ -938,12 +930,13 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
     $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
   }
   $result = mysql_query( "
-    SELECT *
-     , bestellgruppen.id as gruppen_id
-     , bestellgruppen.name as gruppen_name
-     , dienstkontrollblatt.id as id
-     , dienstkontrollblatt.name as name
-     , dienstkontrollblatt.telefon as telefon
+    SELECT
+      bestellgruppen.id as gruppen_id
+    , bestellgruppen.name as gruppen_name
+    , dienstkontrollblatt.id as id
+    , dienstkontrollblatt.name as name
+    , dienstkontrollblatt.telefon as telefon
+    , dienstkontrollblatt.notiz as notiz
     FROM dienstkontrollblatt
     INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
     $where
@@ -965,13 +958,13 @@ function dienstkontrollblatt_name( $id ) {
 
 function sql_basar_id(){
   global $basar_id;
-  need( $basar_id );
+  need( $basar_id, "Spezielle Basar-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
   return $basar_id;
 }
 
 function sql_muell_id(){
   global $muell_id;
-  need( $muell_id );
+  need( $muell_id, "Spezielle Muell-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
   return $muell_id;
 }
 
@@ -999,7 +992,11 @@ function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dien
 
 function select_bestellgruppen( $filter = '', $more_select = '' ) {
   return "
-    SELECT bestellgruppen.*
+    SELECT
+      bestellgruppen.name as name
+    , bestellgruppen.id as id
+    , bestellgruppen.aktiv as aktiv
+    , bestellgruppen.passwort as passwort
     , ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
@@ -1037,7 +1034,7 @@ function sql_gruppennummer($gruppen_id){
  * sql_beteiligte_gruppen: SELECT
  * - alle an einer gesamtbestellung beteiligten (durch bestellung oder zuordnung!) gruppen,
  * - optional eingeschraenkt auf einen bestimmten artikel dieser bestellung
- *
+ * auch pfandrueckgabe zaehlt als teilnahme an einer bestellung
  */
 function sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id = FALSE ){
   $query = select_bestellgruppen( '', 'gruppenbestellungen.id as gruppenbestellungen_id' )
@@ -1166,11 +1163,14 @@ function check_new_group_nr($newNummer){
  * Argument: personen_id
  */
 function sql_delete_group_member($person_id, $gruppen_id){
-	global $problems, $msg, $sockelbetrag, $muell_id, $mysqlheute;
-  need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
-  need( $muell_id );
-             $sql = "UPDATE gruppenmitglieder set status = 'geloescht', diensteinteilung = 'freigestellt', rotationsplanposition = 0  WHERE id=".mysql_escape_string($person_id);
-   	     doSql($sql, LEVEL_IMPORTANT, "Konnte Person nicht l&ouml;schen");
+	global $problems, $msg, $sockelbetrag, $mysqlheute;
+  need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
+  $muell_id = sql_muell_id();
+  sql_update( 'gruppenmitglieder', $person_id, array(
+    status => 'geloescht'
+  , diensteinteilung => 'freigestellt'
+  , rotationsplanposition => 0
+  ) );
 
           //Den Sockelbetrag ändern
   if( sql_doppelte_transaktion(
@@ -1196,8 +1196,8 @@ function sql_delete_group_member($person_id, $gruppen_id){
  */
 function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDiensteinteilung){
 	global $problems, $msg, $sockelbetrag, $muell_id, $mysqlheute;
-  need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
-  need( $muell_id );
+  need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
+  $muell_id = sql_muell_id();
   sql_insert( 'gruppenmitglieder', array(
     'vorname' => $newVorname
   , 'name' => $newName
@@ -1273,29 +1273,28 @@ define( 'GRUPPEN_OPT_DETAIL', 16 );
 //
 ////////////////////////////////////
 
-function sql_lieferanten( $id = false ) {
+function select_lieferanten( $id = false ) {
   $where = ( $id ? "WHERE id=$id" : "" );
-  return doSql( "
+  return  "
     SELECT *
     , ( SELECT count(*) FROM produkte WHERE produkte.lieferanten_id = lieferanten.id ) as anzahl_produkte
     , ( SELECT count(*) FROM pfandverpackungen WHERE pfandverpackungen.lieferanten_id = lieferanten.id ) as anzahl_pfandverpackungen
-    FROM lieferanten $where"
-    , LEVEL_ALL, "Suche nach Lieferanten fehlgeschlagen: "
-  );
+    FROM lieferanten $where";
+}
+
+function sql_lieferanten( $id = false ) {
+  return doSql( select_lieferanten( $id ) );
 }
 
 /**
  *   Infos zu Lieferant abfragen
  */
 function sql_getLieferant($lieferant_id){
-  $result = sql_lieferanten( $lieferant_id );
-  need( mysql_num_rows( $result ) == 1 );
-  return mysql_fetch_array($result);
+  return sql_select_single_row( select_lieferanten( $id ) );
 }
 
 function lieferant_name($id){
-  $infos = sql_getLieferant($id);
-  return $infos["name"];
+  return sql_select_single_field( select_lieferanten( $id ) , 'name' );
 }
 
 function optionen_lieferanten( $selected = false, $option_0 = false ) {
