@@ -7,20 +7,9 @@ $msg="";
 
 
 get_http_var( 'optionen', 'u', 0, true );
-$show_member_details= $optionen & GRUPPEN_OPT_DETAIL
+$show_member_details= $optionen & GRUPPEN_OPT_DETAIL;
 	
 
-?>
-<form action="input_checkbox.htm">
-          <input type='checkbox'
-            <? if( $optionen & GRUPPEN_OPT_DETAIL ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_DETAIL );
-            ?>';"
-            title='Details f&uuml;r Gruppenmitglieder anzeigen'
-          > Details f&uuml;r Gruppenmitglieder anzeigen
-</form>
-<?
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
 get_http_var('action','w','');
 $readonly and $action = '';
@@ -38,6 +27,17 @@ $readonly and $action = '';
       <table class='menu' style='padding-bottom:2em;'>
       <tr>
         <th>Optionen</th>
+      </tr>
+      <tr>
+        <td>
+          <input type='checkbox'
+            <? if( $optionen & GRUPPEN_OPT_DETAIL ) echo " checked"; ?>
+            onclick="window.location.href='<?
+              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_DETAIL );
+            ?>';"
+            title='Details f&uuml;r Gruppenmitglieder anzeigen'
+          >Details f&uuml;r Gruppenmitglieder anzeigen
+        </td>
       </tr>
       <tr>
         <td>
