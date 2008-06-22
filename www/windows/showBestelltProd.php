@@ -8,9 +8,16 @@ setWikiHelpTopic( "foodsoft:Produktverteilung" );  // TODO: das ganze Skript umb
 need_http_var('bestell_id', 'u', true);
 need_http_var('produkt_id', 'u', true);
 
+$status = getState( $bestell_id );
+
 get_http_var('action','w','');
 
-$editAmounts = ( $hat_dienst_IV and ! $readonly );
+$editAmounts = ( $hat_dienst_IV and ( ! $readonly ) );
+$ro_tag = '';
+if( $status != STATUS_VERTEILT ) {
+  $editAmounts = false;
+  $ro_tag="readonly";
+}
 $editAmounts or $action = '';
 
 // TODO: wird bisher von nirgendwo ausgeloest, wird das gebraucht?
@@ -38,6 +45,16 @@ $gruppen = sql_beteiligte_bestellgruppen($bestell_id, $produkt_id);
       <td><a
          href="javascript:neuesfenster('index.php?window=bestellschein&bestell_id=<? echo $bestell_id; ?>','bestellschein')"
              title='zum Lieferschein...'><? echo $vorschlag['name']; ?></a>
+      </td>
+    </tr>
+    <tr>
+      <th>Status:</th>
+      <td>
+        <?
+          echo rechnung_status_string( $status );
+          if( $status == STATUS_ABGERECHNET )
+            abrechnung_kurzinfo( $bestell_id );
+        ?>
       </td>
     </tr>
     <tr>
@@ -74,7 +91,6 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
   $gruppen_id = $gruppe['id'];
 
   $bestellungen = sql_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id );
-  echo "$gruppen_id";
 
   switch( $rows = mysql_num_rows($bestellungen) ) {
     case 0:
@@ -114,25 +130,6 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
       <td class='unit'>{$vorschlag['kan_verteileinheit']}</td>
   ";
 
-  // zugeteilte mengen ermitteln:
-  // TODO: mit sql_bestellmengen zusammen. Wieso  brauchen wir count?
-  // DONE: sql_bestellprodukte liefert schon alles. count brauchen wir wohl nicht :-)
-  //   $zuteilungen = mysql_query(
-  //     "SELECT sum(menge) as menge, count(*) as anzahl
-  //       FROM bestellzuordnung
-  //       INNER JOIN gruppenbestellungen
-  //                  ON gruppenbestellungen.id=bestellzuordnung.gruppenbestellung_id
-  //       INNER JOIN bestellgruppen
-  //                  ON bestellgruppen.id=gruppenbestellungen.bestellguppen_id
-  //       WHERE     gruppenbestellungen.gesamtbestellung_id='$bestell_id'
-  //             AND gruppenbestellungen.bestellguppen_id='$gruppen_id'
-  //             AND bestellzuordnung.produkt_id='$produkt_id'
-  //             AND art=2
-  //       GROUP BY gruppenbestellungen.gesamtbestellung_id,gruppenbestellungen.bestellguppen_id
-  //     "
-  //   ) or error ( __LINE__, __FILE__,
-  //     "Suche nach Zuteilungen fehlgeschlagen: " . mysql_error() );
-
   if( $editAmounts && ( $action == 'zuteilungen_aendern' ) ) {
     fail_if_readonly();
     if( get_http_var("zuteilung_$gruppen_id",'f') ) {
@@ -146,7 +143,7 @@ while( $gruppe = mysql_fetch_array($gruppen) ) {
   ?> <td class='number' style='padding:1px 1ex 1px 1em;'> <?
   if( $editAmounts ) {
     ?>
-      <input name='zuteilung_<? echo $gruppen_id; ?>' type='text' size='5'
+      <input $ro_tag name='zuteilung_<? echo $gruppen_id; ?>' type='text' size='5'
         style='text-align:right;'
         value='<? echo $menge * $vorschlag['kan_verteilmult']; ?>'
         onfocus="document.getElementById('form_submit').style.display='';"

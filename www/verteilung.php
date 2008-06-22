@@ -9,14 +9,21 @@
 assert( $angemeldet ) or exit();
 need_http_var('bestell_id','u',true);
 
+$status = getState( $bestell_id );
+
+$ro_tag = '';
+if( $status != STATUS_VERTEILT ) {
+  $ro_tag = 'readonly';
+}
+
 if(!nur_fuer_dienst(1,4)){exit();}
 
-	 $basar= sql_basar_id();
+$basar= sql_basar_id();
 
 	//Änderung der Gruppenverteilung wird unten, beim Aufbau der
 	//Tabelle überprüft und eingetragen
 
-  $row_gesamtbestellung = sql_bestellung( $bestell_id );
+$row_gesamtbestellung = sql_bestellung( $bestell_id );
 
 
 setWikiHelpTopic( "foodsoft:verteilung" );
@@ -100,7 +107,7 @@ while  ($produkte_row = mysql_fetch_array($result1)) {
     if( $gruppenID != $basar ) {
       distribution_view( $gruppenID, $festmenge, $toleranz, $verteil,
              $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit'],
-             $produkte_row['preis'],"verteil_".$produkt_id."_".$gruppenID );
+             $produkte_row['preis'], ( $ro_tag ? false : "verteil_".$produkt_id."_".$gruppenID ) );
     }
 
   } //end while gruppen array
@@ -115,17 +122,19 @@ while  ($produkte_row = mysql_fetch_array($result1)) {
 
 } //end while produkte array
 
-?>
+if( ! $ro_tag ) {
+  ?>
   <tr style='border:none'>
     <td colspan='6' style='border:none;'>
       <input type='submit' value=' speichern '>
       <input type='reset' value=' &Auml;nderungen zur&uuml;cknehmen'>
     </td>
   </tr>
+  <?
+}
+
+?>
 </table>
-</form>
-<form action='index.php' method='get'>
-  <input type='submit' value='Zur&uuml;ck '>
 </form>
 
 

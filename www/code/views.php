@@ -1217,31 +1217,37 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
             $status = $row['rechnungsstatus'];
             echo rechnung_status_string( $status );
             if( $status == STATUS_ABGERECHNET ) {
-              ?>
-                <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');">
-                <div style='padding-top:1ex;padding-left:1ex;'>
-                <table class='inner' width='100%' style='color:#ed0000;'>
-                  <tr>
-                    <td class='small'>Rechnungsnummer:</td>
-                    <td style='text-align:right;' class='small'><? echo $row['rechnungsnummer']; ?></td>
-                  </tr>
-                  <tr>
-                    <td class='small'>Rechnungssumme:</td>
-                    <td style='text-align:right;' class='small'><? printf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ); ?></td>
-                  </tr>
-                  <tr>
-                    <td class='small'>abgerechnet von:</td>
-                    <td style='text-align:right;' class='small'><? echo dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ); ?></td>
-                  </tr>
-                </table>
-                </div>
-                </a>
-              <?
+              abrechnung_kurzinfo( $bestell_id );
             }
           ?>
         </td>
       </tr>
     </table>
+  <?
+}
+
+function abrechnung_kurzinfo( $bestell_id ) {
+  $row = sql_bestellung( $bestell_id );
+  need( $row['rechnungsstatus'] == STATUS_ABGERECHNET, "Bestellung nicht abgerechnet" );
+  ?>
+    <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');">
+    <div style='padding-top:1ex;padding-left:1ex;'>
+    <table class='inner' width='100%' style='color:#ed0000;'>
+      <tr>
+        <td class='small'>Rechnungsnummer:</td>
+        <td style='text-align:right;' class='small'><? echo $row['rechnungsnummer']; ?></td>
+      </tr>
+      <tr>
+        <td class='small'>Rechnungssumme:</td>
+        <td style='text-align:right;' class='small'><? printf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ); ?></td>
+      </tr>
+      <tr>
+        <td class='small'>abgerechnet von:</td>
+        <td style='text-align:right;' class='small'><? echo dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ); ?></td>
+      </tr>
+    </table>
+    </div>
+    </a>
   <?
 }
 
