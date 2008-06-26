@@ -15,6 +15,77 @@ $muell_id = sql_muell_id();
 <h2>Verlustaufstellung: Achtung, noch unvollstaendig!</h2>
 
 
+
+<h3>Internes Verrechnungskonto:</h3>
+<table class='numbers'>
+  <tr>
+    <th>Id</th>
+    <th>Art</th>
+    <th>Valuta</th>
+    <th>Notiz</th>
+    <th>Betrag</th>
+    <th>Verlust</th>
+  </tr>
+
+<?
+$result = doSql( "
+  SELECT gruppen_transaktion.*
+  FROM gruppen_transaktion
+  WHERE gruppen_transaktion.gruppen_id = $muell_id
+  ORDER BY type, kontobewegungs_datum
+" );
+
+
+$soll_summe = array();
+$soll_total = 0.0;
+$type = -1;
+
+$row = mysql_fetch_array( $result );
+while( $row ) {
+  $soll = $row['summe'];
+  if( $type != $row['type'] ) {
+    ?>
+      <tr>
+        <th colspan='6' style='padding:1ex;'>
+          <? echo transaktion_typ_string( $row['type'] ); ?>
+        </th>
+      </tr>
+    <?
+  }
+  $type = $row['type'];
+  if( ! isset( $soll_summe[$type] ) )
+    $soll_summe[$type] = 0.0;
+
+  ?>
+    <tr>
+      <td><a href="javascript:window.open('index.php?window=editBuchung&transaktion_id=<? echo $row['id']; ?>','buchung','width=490,height=620,left=200,top=100').focus();"><? echo $row['id']; ?></a></td>
+      <td><? echo transaktion_typ_string( $type ); ?></td>
+      <td><? echo $row['kontobewegungs_datum']; ?></td>
+      <td><? echo $row['notiz']; ?></td>
+      <td class='number'><? printf( "%.2lf", $soll ); ?></td>
+      <td class='number'><? printf( "%.2lf", $soll_total ); ?></td>
+    </tr>
+  <?
+  $soll_summe[$type] += $soll;
+  $soll_total += $soll;
+
+  $row = mysql_fetch_array( $result );
+  if( ! $row or ( $row['type'] != $type ) ) {
+    ?>
+      <tr class='summe'>
+        <td colspan='5'>Zwischensumme <? echo transaktion_typ_string( $type ); ?>:</td>
+        <td class='number'><? printf( "%.2lf", $soll_summe[$type] ); ?></td>
+      </tr>
+    <?
+  }
+}
+?>
+  <tr class='summe'>
+    <td colspan='5'>Summe:</td>
+    <td class='number'><? printf( "%.2lf", $soll_total ); ?></td>
+  </tr>
+</table>
+
 <h3>Differenzen aus Bestellungen:</h3>
 <table class='numbers'>
   <tr>
@@ -42,8 +113,7 @@ while( $row = mysql_fetch_array( $result ) ) {
   $muell_soll = - $row['muell_soll'];
   $extra_soll = $row['extra_soll'];
   $soll = $muell_soll + $extra_soll;
-  continue;
-  
+
   ?>
     <tr>
       <td><a href="<? echo abrechnung_url( $row['id'] ); ?>"><? echo $row['name']; ?></a></td>
@@ -64,55 +134,6 @@ while( $row = mysql_fetch_array( $result ) ) {
     <td>&nbsp;</td>
     <td class='number'><? printf( "%.2lf", $extra_soll_summe ); ?></td>
     <td class='number'><? printf( "%.2lf", $soll_summe ); ?></td>
-  </tr>
-</table>
-
-<h3>Internes Verrechnungskonto:</h3>
-<table class='numbers'>
-  <tr>
-    <th>Id</th>
-    <th>Art</th>
-    <th>Valuta</th>
-    <th>Notiz</th>
-    <th>Betrag</th>
-    <th>Verlust</th>
-  </tr>
-
-<?
-$result = doSql( "
-  SELECT gruppen_transaktion.*
-  FROM gruppen_transaktion
-  WHERE gruppen_transaktion.gruppen_id = $muell_id
-  ORDER BY type, kontobewegungs_datum
-" );
-
-
-$soll_summe = array();
-$soll_total = 0.0;
-
-while( $row = mysql_fetch_array( $result ) ) {
-  $soll = $row['summe'];
-  $type = $row['type'];
-  if( ! isset( $soll_summe[$type] ) )
-    $soll_summe[$type] = 0.0;
-
-  ?>
-    <tr>
-      <td><? echo $row['id']; ?></td>
-      <td><? echo transaktion_typ_string( $type ); ?></td>
-      <td><? echo $row['kontobewegungs_datum']; ?></td>
-      <td><? echo $row['notiz']; ?></td>
-      <td class='number'><? printf( "%.2lf", $soll ); ?></td>
-      <td class='number'><? printf( "%.2lf", $soll_total ); ?></td>
-    </tr>
-  <?
-  $soll_summe[$type] += $soll;
-  $soll_total += $soll;
-}
-?>
-  <tr class='summe'>
-    <td colspan='5'>Summe:</td>
-    <td class='number'><? printf( "%.2lf", $soll_total ); ?></td>
   </tr>
 </table>
 <?

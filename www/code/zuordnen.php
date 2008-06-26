@@ -2612,13 +2612,16 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 //
 ////////////////////////////////////////////
 
-define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );
-define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );
-define( 'TRANSAKTION_TYP_EINAUSZAHLUNG', 2 );
+define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );      // noch nicht zugeordnet
+define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben gruppen _und_ lieferanten
+define( 'TRANSAKTION_TYP_EINAUSZAHLUNG', 2 );    // einzahlungen/auszahungen
 define( 'TRANSAKTION_TYP_SPENDE', 3 );
-define( 'TRANSAKTION_TYP_SONDERAUSGABEN', 4 );
-define( 'TRANSAKTION_TYP_VERLUST', 5 );
-define( 'TRANSAKTION_TYP_SONSTIGES', 6 );
+define( 'TRANSAKTION_TYP_SONDERAUSGABEN', 4 );   // Mitgliedsbeitrag Haus der Natur, Kontofuehrung, ...
+define( 'TRANSAKTION_TYP_VERLUST', 5 );          // Verderb, Fehlmengen, ...
+define( 'TRANSAKTION_TYP_SOCKEL', 6 );
+define( 'TRANSAKTION_TYP_BASAR', 7 );            // alte Basarabrechnungen (kommen nicht mehr vor), Grillabend, ...
+define( 'TRANSAKTION_TYP_STORNO', 98 );          // Buchungen, die sich gegenseitig neutralisieren
+define( 'TRANSAKTION_TYP_SONSTIGES', 99 );
 
 function transaktion_typ_string( $typ ) {
   switch( $typ ) {
@@ -2634,6 +2637,12 @@ function transaktion_typ_string( $typ ) {
       return 'Sonderausgabe';
     case TRANSAKTION_TYP_VERLUST:
       return 'Verlust';
+    case TRANSAKTION_TYP_SOCKEL:
+      return 'Sockeleinlage';
+    case TRANSAKTION_TYP_BASAR:
+      return 'Basar';
+    case TRANSAKTION_TYP_STORNO:
+      return 'Storno';
     case TRANSAKTION_TYP_SONSTIGES:
       return 'Sonstiges';
   }

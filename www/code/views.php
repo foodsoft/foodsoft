@@ -916,6 +916,14 @@ function bestellschein_url( $bestell_id ) {
          . "','bestellschein');";
 }
 
+function abrechnung_url( $bestell_id ) {
+  global $foodsoftdir;
+  return "javascript:neuesfenster('"
+         . "$foodsoftdir/index.php?window=abrechnung"
+         . "&bestell_id=$bestell_id"
+         . "','abrechnung' );";
+}
+
 
 
 /**
