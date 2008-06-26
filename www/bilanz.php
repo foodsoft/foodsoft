@@ -124,7 +124,8 @@ $bilanzverlust = $aktiva - $passiva;
 $passiva += $bilanzverlust;
 
 rubrik( "Bilanzausgleich" );
-  posten( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust", $bilanzverlust );
+  posten( "<a href=\"javascript:neuesfenster('index.php?window=verluste','verluste')\">"
+             . ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) . "</a>", $bilanzverlust );
 
 echo "
       </table>

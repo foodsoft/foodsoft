@@ -1167,7 +1167,7 @@
                            </tr>
                            <tr>
                              <td colspan='2' style='text-align:center;' class='alert'>
-                               <input type='button' class='bigbutton' value='Speichern' onClick='bestellungAktualisieren();'>
+                               <input type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
                                <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
                              </td>
                            </tr>
