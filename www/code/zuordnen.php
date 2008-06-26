@@ -2612,6 +2612,35 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 //
 ////////////////////////////////////////////
 
+define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );
+define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );
+define( 'TRANSAKTION_TYP_EINAUSZAHLUNG', 2 );
+define( 'TRANSAKTION_TYP_SPENDE', 3 );
+define( 'TRANSAKTION_TYP_SONDERAUSGABEN', 4 );
+define( 'TRANSAKTION_TYP_VERLUST', 5 );
+define( 'TRANSAKTION_TYP_SONSTIGES', 6 );
+
+function transaktion_typ_string( $typ ) {
+  switch( $typ ) {
+    case TRANSAKTION_TYP_UNDEFINIERT:
+      return 'undefiniert';
+    case TRANSAKTION_TYP_ANFANGSGUTHABEN:
+      return 'Anfangsguthaben';
+    case TRANSAKTION_TYP_EINAUSZAHLUNG:
+      return 'Ein-/Auszahlung';
+    case TRANSAKTION_TYP_SPENDE:
+      return 'Spende';
+    case TRANSAKTION_TYP_SONDERAUSGABEN:
+      return 'Sonderausgabe';
+    case TRANSAKTION_TYP_VERLUST:
+      return 'Verlust';
+    case TRANSAKTION_TYP_SONSTIGES:
+      return 'Sonstiges';
+  }
+  return "FEHLER: undefinierter Typ: $typ";
+}
+
+
 // optionen fuer kontoabfragen:
 //
 // betraege werden immer als 'soll' der fc, also schuld der fc
