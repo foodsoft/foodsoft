@@ -45,7 +45,7 @@ function show_transaction( $id ) {
         <td><label>Notiz:</label></td><td><? echo $t['kommentar']; ?></td>
       </tr>
       <tr>
-        <td><label>Betrag:</label></td><td><? printf( "%.2lf", $t['haben'] ); ?></td>
+        <td><label>Soll FC:</label></td><td><? printf( "%.2lf", -$t['haben'] ); ?></td>
       </tr>
     <?
   } else {
@@ -81,7 +81,7 @@ function show_transaction( $id ) {
         <td><label>Notiz:</label></td><td><? echo $t['kommentar']; ?></td>
       </tr>
       <tr>
-        <td><label>Betrag:</label></td><td><? printf( "%.2lf", $t['haben'] ); ?></td>
+        <td><label>Soll FC:</label></td><td><? printf( "%.2lf", -$t['haben'] ); ?></td>
       </tr>
     <?
   }
