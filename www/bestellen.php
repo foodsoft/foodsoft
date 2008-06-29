@@ -505,7 +505,7 @@
 					 }
 					 
 					 function bestellungBeenden() {
-					    if (!geandert || confirm('Die Bestellung wurde geändert, aber noch nicht durchgeführt!\n Wirklich beenden OHNE ZU BESTELLEN?')) self.location.href="index.php";
+					    if (!geandert || confirm('Die Bestellung wurde ge&auml;ndert, aber noch nicht durchgef&uuml;hrt!\n Wirklich beenden OHNE ZU BESTELLEN?')) self.location.href="index.php";
 					 }
 					 
 					 function bestellungReload() {
@@ -1178,7 +1178,6 @@
                  }
                ?>
 				       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
-				       
 				   </th>
 				</tr>
 				</table>
@@ -1191,7 +1190,7 @@
 	     <?php
 	     	    select_products_not_in_list($bestell_id);
 	     ?>
-	   <input type="submit" value="Produkt hinzufügen">
+	   <input type="submit" value="Produkt hinzuf&uuml;gen">
    </form>
 <?php } ?>
 
@@ -1202,13 +1201,13 @@
 								
 // 							 if (((double)$gesamt_preis - (double)$HTTP_GET_VARS['gesamt_preis']) >= 0.01) {
 // 							    $bestellungDurchfuehren = false;
-// 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, leider ist die Bestellung dadurch teurer geworden!\\n Bitte die aktualisierte Bestellung nochmal prüfen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
+// 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, leider ist die Bestellung dadurch teurer geworden!\\n Bitte die aktualisierte Bestellung nochmal pr&uuml;fen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
 // 							 } else if (! $bestellungDurchfuehren) {	
-// 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, die aktuelle Bestellung wurde geändert!\\n Bitte die aktualisierte Bestellung nochmal prüfen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
+// 							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Andere Bestellgruppen haben in der Zwischenzeit bestellt, die aktuelle Bestellung wurde ge&auml;ndert!\\n Bitte die aktualisierte Bestellung nochmal pr&uuml;fen und NOCHMAL BESTELLEN!');\n  geandert=true; \n--> \n</script>\n";
 // 						   } else
                if ($kontostand < $max_gesamt_preis) {
 							    $bestellungDurchfuehren = false;
-							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Das Gruppenkonto weist kein ausreichendes Guthaben für diese Bestellung auf. Die Bestellungsdaten werden so NICHT AKTUALISIERT!!\\n Bitte die Bestellung ändern.');\n  geandert=true; \n--> \n</script>\n";
+							    echo "<script type='text/javascript'>\n <!--\n alert('ACHTUNG\\n Das Gruppenkonto weist kein ausreichendes Guthaben f&uuml;r diese Bestellung auf. Die Bestellungsdaten werden so NICHT AKTUALISIERT!!\\n Bitte die Bestellung &auml;ndern.');\n  geandert=true; \n--> \n</script>\n";
 							}
 //               else if (((double)$HTTP_GET_VARS['gesamt_preis'] - (double)$gesamt_preis) >= 0.01) {
 // 							   echo "<script type='text/javascript'>\n <!--\n alert('Andere Bestellgruppen haben in der Zwischenzeit bestellt. Der Preis der Bestellung hat sich verbessert!!\\n Die Bestellung wurde aufgenommen.');\n  geandert=false; \n--> \n</script>\n";
