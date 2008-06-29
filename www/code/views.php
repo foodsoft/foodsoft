@@ -179,8 +179,9 @@ function show_dienst_gruppe($row, $color_use){
      echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
 
 }
+
 /**
- *  Zeigt ein Produkt als Bestellungsübersicht
+ * Ausgabe der Links im Hauptmenue und im Foodsoft-Kopf
  */
 function areas_in_menu($area){
  ?>
@@ -189,6 +190,12 @@ function areas_in_menu($area){
 	<td valign="middle" class="smalfont"><? echo $area['hint']?></td>
     </tr> 		 
   <?
+}
+function areas_in_head($area){
+?>
+  <li>
+  <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
+<?
 }
 
 function rotationsplanView($row){
@@ -216,7 +223,7 @@ function rotationsplanView($row){
 
 
 function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts = false ) {
-  global $self_fields, $gruppe, $pfand, $specialgroups, $muell_id;
+  $muell_id = sql_muell_id();
 
   if( $editAmounts ) {
     ?> <form action='<? echo self_url(); ?>' method='post'>
@@ -229,7 +236,6 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   }
 
   ?> <table class='numbers'> <?
-
 
   $legend = array(
     "<th><a href='" . self_url('orderby') . "&orderby=produktname'
@@ -267,7 +273,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   $js = '';
   $fieldcount=0;
   $gesamtwert = 0;
-  while  ($basar_row = mysql_fetch_array($result)) {
+  while( $basar_row = mysql_fetch_array($result) ) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
      $menge=$basar_row['basar'];
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
@@ -384,7 +390,6 @@ function products_overview(
     $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
     $select_columns = false, $select_nichtgeliefert = false
   ) {
-  global $self_fields;
 
   $result = sql_bestellprodukte($bestell_id,$gruppen_id);
   $state = getState($bestell_id);
@@ -857,55 +862,7 @@ function option_menu_row( $option = false ) {
   }
 }
 
-/**
- * Gibt einen einzelnen Preis mit Pfand und Mehrwertsteuer aus
- * Argument: mysql_fetch_array(sql_produktpreise2())
- */
 
-function preis_view($pr){
-        printf( "%5.2lf", ( $pr['preis'] - $pr['pfand'] ) / ( 1.0 + $pr['mwst'] / 100.0 ) );
-				echo "&nbsp;({$pr['preis']},{$pr['mwst']},{$pr['pfand']})";
-
-}
-
-/**
- * Erzeugt eine Auswahl für alle Preise eines Produktes
- */
-function preis_selection($produkt_id, $current_preis_id){
-	$selectpreis = "preis".$produkt_id;
-
-		?>
-                <select name="<? echo($selectpreis)?>"> 
-	       		<?
-			   $preise=sql_produktpreise2($produkt_id);
-			   while($pr = mysql_fetch_array($preise)){
-				$sel = "";
-			   	if($pr['id']==$current_preis_id ){
-					$sel = " selected=\"selected\"";
-					$preis =$pr['preis'];
-				}
-				echo "<option value='{$pr['id']}' $sel>";
-				preis_view($pr);
-        			echo "</option>\n";
-
-			   }
-	       
-	       		?>
-	   	     </select>
-		     <?
-		     return $preis;
-}
-
-
-/**
- * Ausgabe der Links im Foodsoft-Kopf
- */
-function areas_in_head($area){
-?>
-  <li>
-  <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
-<?
-}
 
 function bestellschein_url( $bestell_id ) {
   global $dienst, $login_gruppen_id, $foodsoftdir;
@@ -924,13 +881,48 @@ function abrechnung_url( $bestell_id ) {
          . "','abrechnung' );";
 }
 
+function verteilung_url( $bestell_id ) {
+  global $foodsoftdir;
+  return "javascript:neuesfenster('"
+         . "$foodsoftdir/index.php?window=verteilung"
+         . "&bestell_id=$bestell_id"
+         . "','verteilliste' );";
+}
 
+function alink( $url, $name = false, $title = false, $img = false ) {
+  if( $title ) {
+    $title = "title='$title'";
+    $alt = "alt='$title'";
+  } else {
+    $title = '';
+    $alt = '';
+  }
+  $l = "<a href=\"$url\" $title";
+  if( $img )
+    $l .= " class='png' style='padding:0pt 1ex 0pt 1ex;'";
+  $l .= ">";
+  if( $img )
+    $l .=  "<img src='$img' border='0' $alt $title />";
+  if( $name )
+    $l .= "$name";
+  $l .= "</a>";
+  return $l;
+}
+
+function link_editBestellung( $bestell_id, $img = 'img/b_edit.png' ) {
+  return alink(
+    "javascript:window.open('index.php?window=editBestellung&bestell_id=$bestell_id','editBestellung','width=460,height=420,left=100,top=100').focus();"
+  , ' Bestellung edieren...'
+  , 'Stammdaten der Bestellung &auml;ndern'
+  , $img
+  );
+}
 
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */
 function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:", $editDates = false, $changeState = false ) {
-  global $self, $self_fields, $foodsoftdir, $dienst, $login_gruppen_id, $hat_dienst_IV, $mysqljetzt;
+  global $self, $foodsoftdir, $dienst, $login_gruppen_id, $hat_dienst_IV, $mysqljetzt;
 
   if( $head )
     echo "<h1 style='margin-bottom:2em;'>$head</h1>";
@@ -941,27 +933,21 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
       <th>Status</th>
       <th>Bestellzeitraum</th>
       <th>Lieferung</th>
-        <!-- <th>Ausgang</th>
-        <th>Bezahlung</th> -->
-      <th> Summe </th>
-      <th> Detailansichten </th>
+      <th>Summe</th>
+      <th>Detailansichten</th>
 <?
   if( $changeState || $editDates )
-    echo "<th> Aktionen </th>";
+    echo "<th>Aktionen</th>";
   echo "</tr>";
 
   while ($row = mysql_fetch_array($result)) {
     $bestell_id = $row['id'];
     $rechnungsstatus = getState( $bestell_id );
-    $detail_url = bestellschein_url($bestell_id);
+    $detail_url = bestellschein_url( $bestell_id );
     // $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$bestell_id','bestellfax');";
-    $verteil_url = "javascript:neuesfenster('$foodsoftdir/index.php?window=verteilung&bestell_id=$bestell_id','Verteil-Liste');";
+    $verteil_url = verteilung_url( $bestell_id );
     $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
-    $edit_link = "<a class='png' style='padding:0pt 1ex 0pt 1ex;'
-      href=\"javascript:window.open('index.php?window=editBestellung&bestell_id=$bestell_id','editBestellung','width=400,height=420,left=100,top=100').focus();\">
-      <img src='img/b_edit.png' border='0' alt='Daten der Bestellung ändern' title='Daten der Bestellung ändern'>
-      edieren...</a>
-    ";
+    $edit_link = link_editBestellung( $bestell_id );
     $aktionen = "";
 
     ?>
