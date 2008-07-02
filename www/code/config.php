@@ -92,6 +92,7 @@
   $database_version or $database_version = 0;
   require_once('code/err_functions.php');
   require_once('code/views.php');
+  require_once('code/inlinks.php');
   require_once('code/zuordnen.php');
   require_once('code/katalogsuche.php');
   update_database($database_version);

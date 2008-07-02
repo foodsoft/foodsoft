@@ -284,19 +284,15 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 
      $row = array( 
        "<td>{$basar_row['produkt_name']}</td>"
-     , "<td><a
-           href=\"javascript:neuesfenster('index.php?window=bestellschein&bestell_id={$basar_row['gesamtbestellung_id']}','bestellschein')\"
-             title='zum Lieferschein...'>{$basar_row['bestellung_name']}</a></td>"
+     , "<td>" . link_bestellschein( $basar_row['gesamtbestellung_id'], $basar_row['bestellung_name'] ) . "</td>"
      , "<td>{$basar_row['lieferung']}</td>"
      , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['endpreis'] ) . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
      , "<td class='mult'><b>$menge</b></td>
         <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
-        <td style='border-left-style:none;'><a 
-            href=\"javascript:neuesfenster('index.php?window=showBestelltProd&bestell_id={$basar_row['gesamtbestellung_id']}&produkt_id={$basar_row['produkt_id']}','produktverteilung');\"
-            ><img src='img/b_browse.png' border='0' title='Details zur Verteilung' alt='Details zur Verteilung'
-            ></a></td>
-         "
+        <td style='border-left-style:none;'>"
+        . link_produktverteilung( $basar_row['gesamtbestellung_id'], $basar_row['produkt_id'], false, 'img/b_browse.png' )
+        . "</td>"
      , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
      , ( $editAmounts ? ( $rechnungsstatus < STATUS_ABGERECHNET ?
          "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
@@ -350,7 +346,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
           <input type='submit' value='Zuteilen' style='margin-left:2em;'>
         </td>
       </tr>
-      </table>                   
+      </table>
       </form>
     <?
   } else {
@@ -864,59 +860,7 @@ function option_menu_row( $option = false ) {
 
 
 
-function bestellschein_url( $bestell_id ) {
-  global $dienst, $login_gruppen_id, $foodsoftdir;
-  return "javascript:neuesfenster('"
-         . "$foodsoftdir/index.php?window=bestellschein"
-         . "&bestell_id=$bestell_id"
-         . "&gruppen_id=" . ( $dienst > 0 ? "0" : "$login_gruppen_id" )
-         . "','bestellschein');";
-}
 
-function abrechnung_url( $bestell_id ) {
-  global $foodsoftdir;
-  return "javascript:neuesfenster('"
-         . "$foodsoftdir/index.php?window=abrechnung"
-         . "&bestell_id=$bestell_id"
-         . "','abrechnung' );";
-}
-
-function verteilung_url( $bestell_id ) {
-  global $foodsoftdir;
-  return "javascript:neuesfenster('"
-         . "$foodsoftdir/index.php?window=verteilung"
-         . "&bestell_id=$bestell_id"
-         . "','verteilliste' );";
-}
-
-function alink( $url, $name = false, $title = false, $img = false ) {
-  if( $title ) {
-    $title = "title='$title'";
-    $alt = "alt='$title'";
-  } else {
-    $title = '';
-    $alt = '';
-  }
-  $l = "<a href=\"$url\" $title";
-  if( $img )
-    $l .= " class='png' style='padding:0pt 1ex 0pt 1ex;'";
-  $l .= ">";
-  if( $img )
-    $l .=  "<img src='$img' border='0' $alt $title />";
-  if( $name )
-    $l .= "$name";
-  $l .= "</a>";
-  return $l;
-}
-
-function link_editBestellung( $bestell_id, $img = 'img/b_edit.png' ) {
-  return alink(
-    "javascript:window.open('index.php?window=editBestellung&bestell_id=$bestell_id','editBestellung','width=460,height=420,left=100,top=100').focus();"
-  , ' Bestellung edieren...'
-  , 'Stammdaten der Bestellung &auml;ndern'
-  , $img
-  );
-}
 
 /**
  * Liste zur Auswahl einer Bestellung via Link
@@ -1047,14 +991,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
             <? } ?>
           </td>
         <?
-        if( $dienst == 4 ) {
-           $aktionen .= "<li>
-             <a title='Zur Übersichtsseite Abrechnung'
-                href=\"javascript:neuesfenster('index.php?window=abrechnung&bestell_id=$bestell_id','abrechnung');\"
-                title='Zur Uebersichtsseite Abrechnung'>Abrechnung beginnen...</a>
-             </li>
-           ";
-        }
+        if( $dienst == 4 )
+           $aktionen .= ( "<li>" . link_abrechnung( $bestell_id, 'Abrechnung beginnen...' ) . "</li>" );
         break;
 
       case STATUS_ABGERECHNET:
@@ -1062,12 +1000,11 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           <td>
             <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
             <br>
-            <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');"
-              title='Zur Uebersichtsseite Abrechnung...'>Abrechnung Übersicht</a>
+            <? echo link_abrechnung( $bestell_id ); ?>
           </td>
         <?
         break;
-  
+
       case STATUS_ARCHIVIERT:
       default:
         ?>
@@ -1087,25 +1024,25 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
 }
 
 function select_products_not_in_list($bestell_id){
-	   echo "Produkt: <select name=\"produkt_id\"> ";
-	 if($bestell_id!=0){
-	   $produkte=getProdukteVonLieferant(getProduzentBestellID($bestell_id), $bestell_id);
-	   while($prod = mysql_fetch_array($produkte)){
-		echo "<option value=\"".$prod['produkt_id']."\">".
-			$prod['name']." (".$prod['verteileinheit'].") "."</option>\n";
-	   }
-	 }
-	 echo "  </select>\n";
-
+  ?> Produkt: <select name='produkt_id'> <?
+  if( $bestell_id ) {
+    $produkte = getProdukteVonLieferant( getProduzentBestellID( $bestell_id ), $bestell_id );
+    while( $prod = mysql_fetch_array( $produkte ) ) {
+      echo "<option value='".$prod['produkt_id']."'>"
+      . $prod['name'] . " (" . $prod['verteileinheit']. ") " ."</option>";
+    }
+  }
+  ?> </select> <?
 }
+
 function distribution_tabellenkopf($name){
   ?>
-            <tr class="legende">
-               <th><?echo $name?></th>
-               <th colspan='2'>bestellt (toleranz)</th>
-               <th colspan='2'>geliefert</th>
-               <th>Gesamtpreis</th>
-            </tr>
+    <tr class="legende">
+       <th><?echo $name?></th>
+       <th colspan='2'>bestellt (toleranz)</th>
+       <th colspan='2'>geliefert</th>
+       <th>Gesamtpreis</th>
+    </tr>
  
   <?
 }
@@ -1137,14 +1074,14 @@ function distribution_view($gruppen_id, $festmenge, $toleranz, $verteilmenge, $v
 }
 
 function sum_row($sum){
-?>
-<tr style='border:none'>
-		 <td colspan='7' style='border:none' align=right><b>Summe:</b></td>
-     <td class='number'><b><?echo
-     sprintf( "%8.2lf", $sum); ?></b></td>
-	      </tr>
-<?
+  ?>
+  <tr style='border:none' class='summe'>
+    <td colspan='7' style='border:none;text-align:right;'>Summe:</td>
+    <td class='number'><? printf( "%8.2lf", $sum); ?></td>
+  </tr>
+  <?
 }
+
 function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
   $bestell_id = $row['id'];
   ?>
@@ -1194,9 +1131,9 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
               // überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
               $kontostand = kontostand($gruppen_id);
               if( $kontostand < 0 ) { 
-                echo "<span style=\"color:red; font-weight:bold;\">".sprintf("%.02f",$kontostand)."</span>"; 
+                ?><span style'color:red;font-weight:bold;'><? printf( "%.2lf", $kontostand ); ?></span><?
               } else {
-                echo "<span style=\"color:green; font-weight:normal;\">".sprintf("%.02f",$kontostand)."</span>"; 
+                ?><span style='color:green;font-weight:normal;'><? printf( "%.2lf", $kontostand ); ?></span><?
               }	
             ?>
           </td>
@@ -1223,31 +1160,28 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 function abrechnung_kurzinfo( $bestell_id ) {
   $row = sql_bestellung( $bestell_id );
   need( $row['rechnungsstatus'] == STATUS_ABGERECHNET, "Bestellung nicht abgerechnet" );
-  ?>
-    <a href="javascript:neuesfenster('index.php?window=abrechnung&bestell_id=<? echo $bestell_id; ?>','abrechnung');">
-    <div style='padding-top:1ex;padding-left:1ex;'>
-    <table class='inner' width='100%' style='color:#ed0000;'>
+  echo link_abrechnung( $bestell_id,
+    "<div style='padding-top:1ex;padding-left:1ex;'>
+     <table class='inner' width='100%' style='color:#ed0000;'>
       <tr>
         <td class='small'>Rechnungsnummer:</td>
-        <td style='text-align:right;' class='small'><? echo $row['rechnungsnummer']; ?></td>
+        <td style='text-align:right;' class='small'>". $row['rechnungsnummer'] ."</td>
       </tr>
       <tr>
         <td class='small'>Rechnungssumme:</td>
-        <td style='text-align:right;' class='small'><? printf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ); ?></td>
+        <td style='text-align:right;' class='small'>". sprintf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ) ."</td>
       </tr>
       <tr>
         <td class='small'>abgerechnet von:</td>
-        <td style='text-align:right;' class='small'><? echo dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ); ?></td>
+        <td style='text-align:right;' class='small'>". dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ) ."</td>
       </tr>
     </table>
-    </div>
-    </a>
-  <?
+    </div>"
+  );
 }
 
-
 function formular_buchung_gruppe_bank(
-  $gruppen_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = '', $notiz = 'Einzahlung'
+  $gruppen_id = 0, $konto_id = 0, $auszug_jahr = '', $auszug_nr = '', $notiz = 'Einzahlung'
 ) {
   ?>
     <form method='post' class='small_form'
@@ -1594,7 +1528,6 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
   }
   ?>
     <div style='display:<? echo $form_display; ?>;' id='anummer_form' class='small_form'>
-      <!-- <form> -->
       <fieldset class='small_form'>
         <legend>
           <?
@@ -1635,7 +1568,6 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
           </tr>
         </table>
       </fieldset>
-      <!-- </form> -->
     </div>
   <?
 }
