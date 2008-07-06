@@ -257,6 +257,8 @@
 				   function changeMenge(produktId, schritt, art) {
 					    geandert = true;
               document.getElementById('reminder').style.display = 'inline';
+              document.getElementById('hinzufuegen').style.display = 'none';
+              document.getElementById('hinzufuegen2').style.display = 'inline';
 					 
 					    // feste Bestellmengen auslesen
 					    mengeInGeb     = document.getElementById("menge_geb_"+produktId).firstChild.nodeValue;
@@ -527,7 +529,29 @@
             sql_insert_bestellvorschlaege( $produkt_id, $bestell_id );
 					}
 					
-		 ?>
+if( ! $readonly ) {
+  ?>
+  <span id='reminder' style='display:none;position:fixed;top:20px;left:20px;padding:1ex;z-index:999;' class='alert'>
+    <div style='margin:0.5ex;'>
+      <table class='alert'>
+        <tr>
+          <td class='alert'>
+            <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("reminder").style.display = "none";'>
+          </td>
+          <td style='text-align:center' class='alert'> Änderungen sind noch nicht gespeichert! </td>
+        </tr>
+        <tr>
+          <td colspan='2' style='text-align:center;' class='alert'>
+            <input type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
+            <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+          </td>
+        </tr>
+      </table>
+    </div>
+  </span>
+  <?
+}
+?>
 	
 								<!-- Bestelltabelle Anfang -->
 								
@@ -546,8 +570,8 @@
 						 <th class="toleranz">Toleranz</th>
 						 <th>Kosten</th>
 					</tr>			
-		
-		<?PHP
+	
+		<?
 		
 
 								
@@ -1148,33 +1172,9 @@
 				</tr>				
 	      <tr>
 				   <th colspan="9">
-					     <!-- <input type="button" class="bigbutton" value="aktualisieren" onClick="bestellungReload();"> -->
-               <?php
+               <?
                  if( ! $readonly ) {
-                   ?>
-                     <input type='button' class='bigbutton' value='bestellen' onClick='bestellungAktualisieren();'>
-                     <span id='reminder' style='display:none;position:fixed;top:20px;left:20px;padding:1ex;z-index:999;' class='alert'>
-                       <div style='margin:0.5ex;'>
-                         <table class='alert'>
-                           <tr>
-                             <td class='alert'>
-                               <img class='button' src='img/close_black_trans.gif'
-                                 onClick='document.getElementById("reminder").style.display = "none";'>
-                             </td>
-                             <td style='text-align:center' class='alert'>
-                               Änderungen sind noch nicht gespeichert!
-                             </td>
-                           </tr>
-                           <tr>
-                             <td colspan='2' style='text-align:center;' class='alert'>
-                               <input type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
-                               <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
-                             </td>
-                           </tr>
-                         </table>
-                       </div>
-                     </span>
-                   <?
+                   ?> <input type='button' class='bigbutton' value='bestellen' onClick='bestellungAktualisieren();'> <?
                  }
                ?>
 				       <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
@@ -1183,16 +1183,20 @@
 				</table>
 		    </form>
  
-<?php if( ! $readonly ) {  ?>
-   <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
-   <form method='post' action='<? echo self_url(); ?>'>
-	 <? echo self_post(); ?>
-	     <?php
-	     	    select_products_not_in_list($bestell_id);
-	     ?>
-	   <input type="submit" value="Produkt hinzuf&uuml;gen">
-   </form>
-<?php } ?>
+<? if( ! $readonly ) { ?>
+  <span id='hinzufuegen'>
+    <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
+    <form method='post' action='<? echo self_url(); ?>'>
+    <? echo self_post(); ?>
+      <? select_products_not_in_list($bestell_id); ?>
+      <input type="submit" value="Produkt hinzuf&uuml;gen">
+    </form>
+  </span>
+  <span id='hinzufuegen2' class='alert' style='display:none;'>
+    <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
+    Vor dem Hinzufügen: Bitte erst Änderungen speichern!
+  </span>
+<? } ?>
 
    <?PHP
 		
