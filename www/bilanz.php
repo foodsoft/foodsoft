@@ -5,24 +5,18 @@
 
 assert( $angemeldet ) or exit();
 
+setWikiHelpTopic( 'foodsoft:Bilanz' );
+
 ?> <h1>Bilanz <!-- - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink> --></h1> <?
 
 // aktiva berechnen:
 //
 
-if( ! isset( $inventur_datum ) )
-  $inventur_datum = "(keine)";
-if( ! isset( $inventur_pfandwert ) )
-  $inventur_pfandwert = 0.0;
-
-
-$row = sql_select_single_row( "
-  SELECT sum( summe ) as summe
-  FROM gruppen_transaktion
-  WHERE (gruppen_id>0) and (konterbuchung_id=0)
-" );
-$gruppen_einzahlungen_ungebucht = $row['summe'];
-
+$gruppen_einzahlungen_ungebucht = sql_select_single_field( "
+    SELECT sum( einzahlungen.summe ) as summe
+    FROM ( ".select_ungebuchte_einzahlungen()." ) as einzahlungen
+  ", 'summe'
+);
 
 $erster_posten = 1;
 function rubrik( $name ) {
