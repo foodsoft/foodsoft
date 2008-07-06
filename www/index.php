@@ -31,19 +31,12 @@
       include( "$window.php" );
     echo "$print_on_exit";
     exit();
-  } else {
+  }
 
+  include ( "head.php" );
+  include('dienst_info.php');
 
-    if($area == 'bestellt_faxansicht'){     // TODO: Aufruf per index.php?download=...
-    	include("bestellt_faxansicht.php");
-  	exit();
-    }
-
-
-    include ( "head.php" );
-    include('dienst_info.php');
-
-    global $login_gruppen_id;
+  global $login_gruppen_id;
 
 	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
 	    if (!isset($area)) {
@@ -86,7 +79,6 @@
 	    }
 				 
 				 
-  }
   
   echo "
     <table width='100%' class='footer'>
