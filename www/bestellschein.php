@@ -154,9 +154,9 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
     }
     // Als nicht geliefert markierte Produkte löschen
     if(get_http_var( 'nichtGeliefert[]','u')){
-    	foreach($nichtGeliefert as $p_id){
-    		nichtGeliefert($bestell_id, $p_id);
-    	}
+      foreach($nichtGeliefert as $p_id){
+        nichtGeliefert($bestell_id, $p_id);
+      }
     }
   }
 
@@ -195,10 +195,6 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
       ) . " </select></td>"
   );
 
-  // $abschluss_option = ""; // ggf. erst als letzte Option ausgeben (s.u.)!
-  $pfand_option = "";
-
-
   products_overview(
     $bestell_id,
     $editable,   // Liefermengen edieren zulassen?
@@ -231,9 +227,5 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
     default:
       break;
   }
-
-  $pfand_option and option_menu_row( $pfand_option );
-  // $abschluss_option and option_menu_row( $abschluss_option );
-
 ?>
 
