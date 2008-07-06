@@ -28,6 +28,19 @@ $muell_id = sql_muell_id();
   </tr>
 
 <?
+
+$result = doSql( "
+  SELECT gruppen_transaktion.type as type
+  FROM gruppen_transaktion
+  GROUP BY type
+" );
+
+$types = array();
+while( $row = mysql_fetch_array( $result ) ) {
+  $types[] = $row['type'];
+}
+
+
 $result = doSql( "
   SELECT gruppen_transaktion.*
   FROM gruppen_transaktion
