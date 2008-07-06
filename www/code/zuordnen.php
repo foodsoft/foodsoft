@@ -937,6 +937,9 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
     , dienstkontrollblatt.name as name
     , dienstkontrollblatt.telefon as telefon
     , dienstkontrollblatt.notiz as notiz
+    , dienstkontrollblatt.zeit as zeit
+    , dienstkontrollblatt.datum as datum
+    , dienstkontrollblatt.dienst as dienst
     FROM dienstkontrollblatt
     INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
     $where
@@ -1175,7 +1178,7 @@ function sql_delete_group_member($person_id, $gruppen_id){
           //Den Sockelbetrag ändern
   if( sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
   , $sockelbetrag
   , $mysqlheute
   , "Korrektur Sockelbetrag für ausgetretenes Mitglied"
@@ -1209,7 +1212,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
 
   //Den Sockelbetrag ändern
   if( sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $muell_id )
+    array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
   , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
   , $sockelbetrag
   , $mysqlheute
@@ -1273,20 +1276,22 @@ define( 'GRUPPEN_OPT_DETAIL', 16 );
 //
 ////////////////////////////////////
 
-function select_lieferanten( $id = false ) {
+function select_lieferanten( $id = false, $orderby = 'name' ) {
   $where = ( $id ? "WHERE id=$id" : "" );
   return  "
     SELECT *
     , ( SELECT count(*) FROM produkte WHERE produkte.lieferanten_id = lieferanten.id ) as anzahl_produkte
     , ( SELECT count(*) FROM pfandverpackungen WHERE pfandverpackungen.lieferanten_id = lieferanten.id ) as anzahl_pfandverpackungen
-    FROM lieferanten $where";
+    FROM lieferanten $where
+    ORDER BY $orderby
+  ";
 }
 
 function sql_lieferanten( $id = false ) {
   return doSql( select_lieferanten( $id ) );
 }
 
-function sql_getLieferant($lieferant_id){
+function sql_getLieferant( $id ) {
   return sql_select_single_row( select_lieferanten( $id ) );
 }
 
@@ -1321,7 +1326,23 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
   return $output;
 }
 
+function references_lieferant( $lieferanten_id ) {
+  return sql_select_single_field(
+    "SELECT count(*) as count FROM gesamtbestellungen WHERE lieferanten_id=$lieferanten_id"
+  , 'count'
+  );
+}
 
+function delete_lieferant( $lieferanten_id ) {
+  $name = lieferant_name( $lieferanten_id );
+  need( references_lieferant == 0, 'Bestellungen vorhanden: Lieferant $name kann nicht gelöpscht werden!' );
+  need( abs( lieferantenkontostand( $lieferanten_id )) < 0.01
+    , 'Lieferantenkonto nicht ausgeglichen: Lieferant $name kann nicht gelöpscht werden!' );
+  doSql(
+    "DELETE FROM lieferanten WHERE id=$lieferanten_id"
+  , LEVEL_IMPORTANT, "Loeschen des Lieferanten fehlgeschlagen"
+  );
+}
 
 ////////////////////////////////////
 //
@@ -3134,15 +3155,19 @@ function lieferantenpfandkontostand( $lieferanten_id = 0 ) {
   );
 }
 
-function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
-  return doSql( "
+function select_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
+  return "
     SELECT *
       , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
       , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS eingabedatum_trad
     FROM gruppen_transaktion
     WHERE (konterbuchung_id = 0)
       and ( gruppen_id " . ( $gruppen_id ? "=$gruppen_id" : ">0" ) . ")
-  " );
+  ";
+}
+
+function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
+  return doSql( select_ungebuchte_einzahlungen( $gruppen_id ) );
 }
 
 /////////////////////////////////////////////
