@@ -3,102 +3,74 @@
 <?PHP
 
 assert( $angemeldet ) or exit();
-$problems = '';
 $editable = ( ! $readonly and ( $dienst == 4 ) );
  
-	 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)
+// ggf. Aktionen durchführen (z.B. Lieferant löschen...)
 get_http_var('action','w','');
+$editable or $action = '';
+
 if( $action == 'delete' ) {
-  fail_if_readonly();
   nur_fuer_dienst(4,5);
   need_http_var('lieferanten_id','u');
-
-  if( abs( lieferantenkontostand( $lieferanten_id )) > 0.005 ) {
-    $problems .= "<div class='warn'>Lieferantenkonto nicht ausgeglichen, loeschen nicht moeglich!</div>";
-  }
-
-  if( ! $problems ) {
-    doSql(
-      "DELETE FROM lieferanten WHERE id=$lieferanten_id"
-    , LEVEL_IMPORTANT, "Loeschen des Lieferanten fehlgeschlagen"
-    );
-  }
+  delete_lieferant( $lieferanten_id );
 }
+$result = sql_lieferanten();
 
-	 
-  ?> <table class='menu' style='margin-bottom:2em;'> <?
+?>
+<table class='menu' style='margin-bottom:2em;'>
+  <? if( $editable ) { ?>
+    <tr>
+      <td><input type='button' value='Neuer Lieferant' class='bigbutton'
+           onClick="<? echo fc_url( 'edit_lieferant' ); ?>">
+         </td>
+      <td valign=middle'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
+    </tr>
+  <? } ?>
+  <tr>
+     <td><input type='button' value='Reload' class='bigbutton' onClick="self.location.href='<? echo self_url(); ?>';"></td>
+     <td valign=middle'>diese Seite aktualisieren...</td>
+  </tr><tr>
+     <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php'"></td>
+     <td valign=middle'>diesen Bereich verlassen...</td>
+  </tr>
+</table>
 
-  if( ! $readonly ) {
-    ?>
-				   <tr>
-		          <td><input type='button' value='Neuen Lieferanten' class='bigbutton' onClick="window.open('index.php?window=editLieferant','lieferant','width=510,height=500,left=200,top=100').focus();"></td>
-				      <td valign=middle'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
-					 </tr>
-    <?
-  }
+<table class='liste'>
+  <tr>
+    <th>Name</th>
+    <th>Telefon</th>
+    <th>Fax</th>
+    <th>Mail</th>
+    <th>Webadresse</th>
+    <th>Kontostand</th>
+    <th>Optionen</th>
+  </tr>
+
+<?
+while ($row = mysql_fetch_array($result)) {
+  $lieferanten_id=$row['id'];
+  $kontostand = lieferantenkontostand( $row['id'] );
   ?>
-     <tr>
-        <td><input type='button' value='Reload' class='bigbutton' onClick="self.location.href='<? echo self_url(); ?>';"></td>
-        <td valign=middle'>diese Seite aktualisieren...</td>
-     </tr><tr>
-        <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php'"></td>
-        <td valign=middle'>diesen Bereich verlassen...</td>
-     </tr>
-  </table>
-  
-  <?
-	$result = mysql_query("SELECT * FROM lieferanten ORDER BY name")
-    or $problems = $problems . "<div class='warn'>Konnte LieferantInnen nich aus DB laden: "
-                  . mysql_error() . '</div>';
-  echo "
-        $problems
-				<table class='liste'>
-	        <tr>
-						 <th>Name</th>
-						 <th>Telefon</th
-						 <th>Fax</th
-						 <th>Mail</th
-						 <th>Webadresse</th
-						 <th>Kontostand</th
-						 <th>Optionen</th
-					</tr>					 
-	";
-	while ($row = mysql_fetch_array($result)) {
-    echo "
-	        <tr>
-						 <td><b>{$row['name']}</b></td>
-						 <td>{$row['telefon']}</td>
-						 <td>{$row['fax']}</td>
-						 <td>{$row['mail']}</td>
-						 <td>
-    ";
-    if( $row['url'] )
-      echo "<a href='{$row['url']}' target='_new'>{$row['url']}</a>";
-    else
-      echo "-";
-    $kontostand = lieferantenkontostand( $row['id'] );
-    ?>
+    <tr>
+      <td><b><? echo $row['name']; ?></b></td>
+      <td><? echo $row['telefon']; ?></td>
+      <td><? echo $row['fax']; ?></td>
+      <td><? echo $row['mail']; ?></td>
+      <td>
+        <?
+        if( $row['url'] )
+          echo "<a href='{$row['url']}' title='zur Webseite des Lieferanten' target='_new'>{$row['url']}</a>";
+        else
+          echo "-";
+        ?>
       </td>
-      <td class='number'>
-      <? printf( "%.2lf", $kontostand ); ?>
-      </td>
+      <td class='number'><? printf( "%.2lf", $kontostand ); ?></td>
       <td style='white-space:nowrap;'>
     <?
-    echo "
-      <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-        href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id={$row['id']}','lieferantenkonto');\">
-       <img src='img/chart.png' border='0' title='Finanzielles' alt='Finanzielles'/></a>
-      <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-        href=\"javascript:neuesfenster('index.php?window=pfandverpackungen&lieferanten_id={$row['id']}','pfandzettel');\">
-       <img src='img/fant.gif' border='0' title='Fantkram' alt='Fantkram'/></a>
-    ";
-    if( ( ! $readonly ) and ( $dienst == 4 or $dienst == 5 ) ) {
-      echo "
-        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-          href=\"javascript:window.open('index.php?window=editLieferant&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-          <img src='img/b_edit.png' border='0' alt='Lieferanten edieren' title='Lieferanten editieren' />
-        </a>
-      ";
+    echo fc_alink( 'lieferantenkonto', array( 'lieferanten_id' => $lieferanten_id ) );
+    echo fc_alink( 'pfandzettel', "lieferanten_id=$lieferanten_id" );
+    if( $editable ) {
+      echo fc_alink( 'edit_lieferant', array( 'lieferanten_id' => $lieferanten_id ) );
       if( abs($kontostand) < 0.005 ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
@@ -107,12 +79,7 @@ if( $action == 'delete' ) {
         ";
       }
     } else {
-      echo "
-        <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-          href=\"javascript:window.open('index.php?window=editLieferant&ro=1&lieferanten_id={$row['id']}','lieferant','width=510,height=500,left=200,top=100').focus()\">
-          <img src='img/birne_rot.png' border='0' alt='Details zum Lieferanten' title='Details zum Lieferanten' />
-        </a>
-      ";
+      echo fc_alink( 'edit_lieferant', array( 'lieferanten_id' => $lieferanten_id, 'ro' => '1', 'img' => 'img/birne_rot.png' ) );
     }
     ?> </td></tr> <?
   }
