@@ -5,7 +5,7 @@
 
 
 // global defaults for windows
-// (these are really constants, but php doesn not support arrays-valued constants)
+// (these are really constants, but php doesn not support array-valued constants)
 //
 $large_window_options = array(
     'dependent' => 'yes'
@@ -31,76 +31,221 @@ $small_window_options = array(
 
 
 // fc_window:
-// define optional and mandatory parameters and default options for sub-windows
+// define optional and mandatory parameters and default options for windows
 //
 function fc_window( $name ) {
-  global $dienst, $login_gruppen_id, $large_window_options, $small_window_options;
+  global $dienst, $login_gruppen_id, $large_window_options, $small_window_options, $self_fields;
   $parameters = array();
   $options = $large_window_options;
   switch( strtolower( $name ) ) {
-    case 'lieferschein':
-    case 'bestellschein':
-      $parameters['bestell_id'] = false;
-      $parameters['gruppen_id'] = ( $dienst > 0 ? "0" : "$login_gruppen_id" );
-      $options = $large_window_options;
-      $window_id = 'bestellschein';
+    //
+    // self: Anzeige im selben Fenster, per self_url():
+    //
+    case 'self':
+      $parameters = $self_fields;
+      $parameters['text'] = 'Reload';
       break;
+    //
+    // Anzeige im Hauptfenster (aus dem Hauptmenue) oder in "grossem" Fenster moeglich:
+    //
+    case 'index':
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'Beenden';
+      $options = $large_window_options;
+      break;
+    case 'meinkonto':
+      $parameters['window'] = 'showGroupTransaktions';
+      $parameters['window_id'] = 'gruppenkonto';
+      $parameters['meinkonto'] = '1';
+      $parameters['text'] = 'mein Konto';
+      $parameters['title'] = 'zur Kontoanzeige der Gruppe';
+      $parameters['img'] = 'img/euro.png';
+      $options = $large_window_options;
+      break;
+    case 'bestellungen_overview':
+      $parameters['window'] = 'bestellschein';
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'alle Bestellungen';
+      $parameters['title'] = 'Tabelle aller Bestellungen';
+      $options = $large_window_options;
+      break;
+    case 'bestellen':
+      $parameters['window'] = 'bestellen';
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'Bestellen';
+      $parameters['title'] = 'zum Bestellformular';
+      $options = $large_window_options;
+      break;
+    case 'bilanz':
+      $parameters['window'] = 'bilanz';
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'Bilanz';
+      $parameters['img'] = 'img/chart.png';
+      $parameters['title'] = 'zur &Uuml;bersicht &uuml;ber die Finanzen der Foodcoop';
+      $options = $large_window_options;
+      break;
+    case 'produkte':
+      $parameters['window'] = 'produkte';
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'Produkte';
+      $parameters['title'] = 'zur Produktdatenbank der Foodsoft';
+      $parameters['optionen'] = NULL;
+      $options = $large_window_options;
+      break;
+    case 'gruppen':
+      $parameters['window'] = 'gruppen';
+      $parameters['window_id'] = 'gruppen';
+      $parameters['optionen'] = NULL;
+      $parameters['text'] = 'Gruppen';
+      $parameters['title'] = 'zur Tabelle der Bestellgruppen';
+      $options = $large_window_options;
+      break;
+    case 'lieferanten':
+      $parameters['window'] = 'lieferanten';
+      $parameters['window_id'] = 'lieferanten';
+      $parameters['text'] = 'Lieferanten';
+      $parameters['title'] = 'zur Tabelle aller Lieferanten';
+      $options = $large_window_options;
+      break;
+    case 'basar':
+      $parameters['window'] = 'basar';
+      $parameters['window_id'] = 'basar';
+      $parameters['bestell_id'] = NULL;
+      $parameters['orderby'] = NULL;
+      $parameters['text'] = "Basar";
+      $parameters['title'] = "zur Basar&uuml;bersicht";
+      $options = $large_window_options;
+      break;
+    case 'dienstkontrollblatt':
+      $parameters['window'] = 'dienstkontrollblatt';
+      $parameters['window_id'] = 'dienstkontrollblatt';
+      $parameters['text'] = 'Dienstkontrollblatt';
+      $parameters['title'] = 'zur Anzeige des Dienstkontrollblatts...';
+      $options = $large_window_options;
+      break;
+    case 'updownload':
+      $parameters['window'] = 'updownload';
+      $parameters['window_id'] = 'updownload';
+      $parameters['text'] = 'Up/Download';
+      $parameters['title'] = 'zum Upload / Download der Datenbank...';
+      $options = $large_window_options;
+      break;
+    case 'dienstplan':
+      $parameters['window'] = 'dienstplan';
+      $parameters['window_id'] = 'dienstplan';
+      $parameters['text'] = 'Dienstplan';
+      $parameters['title'] = 'zum Dienstplan...';
+      $options = $large_window_options;
+      break;
+    //
+    // "grosse" Fenster:
+    //
     case 'abrechnung':
+      $parameters['window'] = 'abrechnung';
+      $parameters['window_id'] = 'abrechnung';
       $parameters['bestell_id'] = false;
       $parameters['text'] = 'Abrechnung';
       $parameters['title'] = '&Uuml;bersichtsseite Abrechnung';
-      $options = $large_window_options;
-      $window_id = 'abrechnung';
+      $options = array_merge( $large_window_options, array( 'width' => 860, 'height' => 720 ) );
       break;
-    case 'verteilliste':
-      $parameters['bestell_id'] = false;
-      $options = $large_window_options;
-      $window_id = 'verteilliste';
-      break;
-    case 'lieferantenkonto':
-      $parameters['lieferanten_id'] = false;
+    case 'bestellschein':
+    case 'lieferschein':
+      $parameters['window'] = 'bestellschein';
+      $parameters['window_id'] = 'bestellschein';
       $parameters['img'] = 'img/b_chart.png';
-      $parameters['title'] = 'Lieferantenkonto';
-      $options = array_merge( $large_window_options, array( 'width' => '640' ) );
-      $window_id = 'kontoblatt';
+      $parameters['bestell_id'] = false;
+      $parameters['gruppen_id'] = NULL;
+      $parameters['spalten'] = NULL;
+      $options = $large_window_options;
       break;
     case 'gruppenkonto':
+      $parameters['window'] = 'showGroupTransaktions';
+      $parameters['window_id'] = 'kontoblatt';
       $parameters['gruppen_id'] = false;
-      $options = array_merge( $large_window_options, array( 'width' => '640' ) );
-      $window_id = 'kontoblatt';
+      $parameters['img'] = 'img/euro.png';
+      $options = array_merge( $large_window_options, array( 'width' => '1000' ) );
+      break;
+    case 'gruppenpfand':
+      $parameters['window'] = 'gruppenpfand';
+      $parameters['window_id'] = 'pfandzettel';
+      $parameters['bestell_id'] = NULL;
+      $parameters['title'] = 'Fantkram';
+      $parameters['img'] = 'img/fant.gif';
+      $options = $large_window_options;
+      break;
+    case 'kontoauszug':
+      $parameters['window'] = 'konto';
+      $parameters['window_id'] = 'kontoauszug';
+      $parameters['konto_id'] = false;
+      $parameters['auszug_nr'] = false;
+      $parameters['auszug_jahr'] = false;
+      $parameters['img'] = 'img/euro.png';
+      $options = $large_window_options;
+      break;
+    case 'lieferantenkonto':
+      $parameters['window'] = 'lieferantenkonto';
+      $parameters['window_id'] = 'kontoblatt';
+      $parameters['img'] = 'img/euro.png';
+      $parameters['text'] = 'Lieferantenkonto';
+      $parameters['title'] = 'zum Lieferantenkonto...';
+      $parameters['lieferanten_id'] = false;
+      $options = array_merge( $large_window_options, array( 'width' => '1000' ) );
       break;
     case 'pfandzettel':
+      $parameters['window'] = 'pfandverpackungen';
+      $parameters['window_id'] = 'pfandzettel';
+      $parameters['title'] = 'Fantkram';
+      $parameters['img'] = 'img/fant.gif';
       $parameters['lieferanten_id'] = false;
       $parameters['bestell_id'] = NULL;
       $options = $large_window_options;
-      $window_id = 'kontoblatt';
       break;
+    case 'produktverteilung':
+      $parameters['window'] = 'showBestelltProd';
+      $parameters['window_id'] = 'produktverteilung';
+      $parameters['bestell_id'] = false;
+      $parameters['produkt_id'] = false;
+      $options = array_merge( $large_window_options, array( 'width' => '600' ) );
+      break;
+    case 'verluste':
+      $parameters['window'] = 'verluste';
+      $parameters['window_id'] = 'verluste';
+      $options = $large_window_options;
+      break;
+    case 'verteilliste':
+      $parameters['window'] = 'verteilung';
+      $parameters['window_id'] = 'verteilliste';
+      $parameters['bestell_id'] = false;
+      $options = $large_window_options;
+      break;
+    //
+    // "kleine" Fenster:
+    //
     case 'edit_bestellung':
+      $parameters['window'] = 'editBestellung';
+      $parameters['window_id'] = 'edit_bestellung';
       $parameters['bestell_id'] = false;
       $options = array_merge( $small_window_options, array( 'width' => '460' ) );
-      $window_id = 'edit_bestellung';
       break;
     case 'edit_lieferant':
+      $parameters['window'] = 'editLieferant';
+      $parameters['window_id'] = 'edit_lieferant';
       $parameters['lieferanten_id'] = NULL;
       $parameters['ro'] = NULL;
       $parameters['title'] = 'zu den Stammdaten des Lieferanten';
       $parameters['img'] = 'img/b_edit.png';
       $options = array_merge( $small_window_options, array( 'width' => '510', 'height' => 500 ) );
-      $window_id = 'edit_lieferant';
-      break;
-    case 'produktverteilung':
-      $parameters['bestell_id'] = false;
-      $parameters['produkt_id'] = false;
-      $options = array_merge( $large_window_options, array( 'width' => '600' ) );
-      $window_id = 'produktverteilung';
       break;
     default:
       error( __LINE__, __FILE__, "undefiniertes Fenster: $name ", debug_backtrace());
   }
-  return array( 'parameters' => $parameters, 'options' => $options, 'window_id' => $window_id );
+  return array( 'parameters' => $parameters, 'options' => $options );
 }
- 
-function p_explode( $s ) {
+
+// parameters_explode:
+// wandelt string "k1=v1,k2=k2,..." nach array( k1 => v1, k2 => v2, ...)
+//
+function parameters_explode( $s ) {
   $r = array();
   $pairs = explode( ',', $s );
   foreach( $pairs as $pair ) {
@@ -110,44 +255,61 @@ function p_explode( $s ) {
   return $r;
 }
 
-function fc_url( $name, $parameters = array(), $options = array() ) {
+function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'javascript:' ) {
   global $foodsoftdir;
 
-  $window = fc_window( $name );
-
   if( is_string( $parameters ) )
-    $parameters = p_explode( $parameters );
+    $parameters = parameters_explode( $parameters );
 
-  if( is_string( $options ) )
-    $options = p_explode( $options );
-  $options = array_merge( $window['options'], $options );
+  $window = fc_window( $name );
+  $window_parameters = $window['parameters'];
 
-  $url = "$foodsoftdir/index.php?window=$name";
-  foreach( $window['parameters'] as $key => $value ) {
+  $url = "$foodsoftdir/index.php";
+  $and = '?';
+  foreach( $window_parameters as $key => $value ) {
+    switch( $key ) {
+      case 'img':
+      case 'text':
+      case 'title':
+        continue 2; //  php counts switch as a loop!
+    }
     if( isset( $parameters[$key] ) )
       $value = $parameters[$key];
     elseif( $value === false )
       error( __LINE__, __FILE__, "parameter $key nicht uebergeben", debug_backtrace());
     if( $value === NULL )
       continue;
-    $url .= "&$key=$value";
+    $url .= "$and$key=$value";
+    $and = '&';
   }
-  $option_string = '';
-  $komma = '';
-  foreach( $options as $key => $value ) {
-    $option_string .= "$komma$key=$value";
-    $komma = ',';
+  $window_id = adefault( $parameters, 'window_id', $window_parameters['window_id'] );
+  switch( $window_id ) {
+    case 'self':
+      return "javascript:self.location.href='$url';";
+    case 'top':
+    case 'main':
+      $window_id = '_top';
+    default:
+      if( is_string( $options ) )
+        $options = parameters_explode( $options );
+      $options = array_merge( $window['options'], $options );
+      $option_string = '';
+      $komma = '';
+      foreach( $options as $key => $value ) {
+        $option_string .= "$komma$key=$value";
+        $komma = ',';
+      }
+      return "{$scheme}window.open('$url','$window_id','$option_string').focus();";
   }
-  return "javascript:window.open('$url','{$window['window_id']}','$option_string').focus();";
 }
 
 function alink( $url, $text = false, $title = false, $img = false ) {
   if( $title ) {
-    $title = "title='$title'";
     $alt = "alt='$title'";
+    $title = "title='$title'";
   } else {
-    $title = '';
     $alt = '';
+    $title = '';
   }
   $l = "<a href=\"$url\" $title";
   if( $img )
@@ -159,68 +321,50 @@ function alink( $url, $text = false, $title = false, $img = false ) {
   return $l;
 }
 
-function fc_alink( $name, $parameters = array(), $options = array() ) {
-  $window = fc_window( $name );
-  if( is_string( $parameters ) )
-    $parameters = p_explode( $parameters );
-  $url = fc_url( $name, $parameters, $options );
-  $parameters = array_merge( $window['parameters'], $parameters );
-  $title = ( isset( $parameters['title'] ) ? $parameters['title'] : '' );
-  $text = ( isset( $parameters['text'] ) ? $parameters['text'] : '' );
-  $img = ( isset( $parameters['img'] ) ? $parameters['img'] : '' );
-  return alink( $url, $text, $title, $img );
+function buttonlink( $url, $text, $title = false ) {
+  if( $title ) {
+    $title = "title='$title'";
+  } else {
+    $title = '';
+  }
+  return "<input type='button' value='$text' class='bigbutton' $title onclick=\"$url\">";
 }
 
 
-// function alink_bestellschein( $parameters, $name = false, $gruppen_id = 0, $img = 'img/b_browse.png' ) {
-//   need( isset( $parameters['bestell_id'] ) );
-//   switch( getState( $parameters['bestell_id'] ) ) {
-//     case STATUS_BESTELLEN:
-//       $title = 'zum vorl&auml;ufigen Bestellschein';
-//       $name or $name = 'Bestellschein';
-//       break;
-//     case STATUS_LIEFERANT:
-//       $title = 'zum Bestellschein';
-//       $name or $name = 'Bestellschein';
-//       break;
-//     default:
-//       $title = 'zum Lieferschein';
-//       $name or $name = 'Lieferschein';
-//       break;
-//   }
-//   return alink( fc_url( 'bestellschein', $parameters ), $name, $title, $img );
-// }
-// 
-// function alink_abrechnung( $parameters ) {
-//   return alink( fc_url( 'abrechnung', $parameters ), $name, "zur &Uuml;bersichtsseite Abrechnung", $img );
-// }
-// 
-// function alink_verteilliste( $parameters, $name = 'Verteilliste', $img = false ) {
-//   return alink( fc_url( 'verteilliste', $parameters ), $name, "zur Verteilliste", $img );
-// }
-// 
-// 
-// function alink_edit_bestellung( $parameters, $name = '', $img = 'img/b_edit.png' ) {
-//   return alink( fc_url( 'edit_bestellung', $parameters), $name, 'Stammdaten der Bestellung edieren', $img );
-// }
-// function alink_edit_lieferant( $parameters = array(), $name = '', $img = 'img/b_edit.png' ) {
-//   return alink( fc_url( 'edit_lieferant', $parameters ), $name, 'Formular Stammdaten des Lieferanten', $img );
-// }
-// 
-// 
-// function alink_produktverteilung( $parameters, $name = 'Produktverteilung', $img = 'img/chart.png' ) {
-//   return alink( fc_url( 'produktverteilung', $parameters ), $name, 'Details zur Verteilung des Produkts', $img );
-// }
-// 
-// function alink_lieferantenkonto( $parameters, $name = 'Lieferantenkonto', $img = 'img/chart.png' ) {
-//   return alink( fc_url( 'lieferantenkonto', $parameters ), $name, 'Kontoübersicht des Lieferanten', $img );
-// }
-// function alink_gruppenkonto( $parameters, $name = 'Gruppenkonto', $img = 'img/chart.png' ) {
-//   return alink( fc_url( 'gruppenkonto', $parameters ), $name, 'Kontoblatt der Gruppe', $img );
-// }
-// 
-// function alink_pfandzettel( $parameters, $name = 'Pfandzettel', $img = 'img/fant.gif' ) {
-//   return alink( fc_url( 'pfandzettel', $parameters ), $name, 'Fantkram', $img );
-// }
+function fc_alink( $name, $parameters = array(), $options = array() ) {
+  $window = fc_window( $name );
+  if( is_string( $parameters ) )
+    $parameters = parameters_explode( $parameters );
+  $url = fc_url( $name, $parameters, $options );
+  $title = adefault( $window['parameters'], 'title', '' );
+  $title = adefault( $parameters, 'title', $title );
+  $text = adefault( $window['parameters'], 'text', '' );
+  $text = adefault( $parameters, 'text', $text );
+  $img = adefault( $window['parameters'], 'img', '' );
+  $img = adefault( $parameters, 'img', $img );
+  return alink( $url, $text, $title, $img );
+}
+
+function fc_button( $name, $parameters = array(), $options = array() ) {
+  $window = fc_window( $name );
+  if( is_string( $parameters ) )
+    $parameters = parameters_explode( $parameters );
+  $url = fc_url( $name, $parameters, $options );
+  $title = adefault( $window['parameters'], 'title', '' );
+  $title = adefault( $parameters, 'title', $title );
+  $text = adefault( $window['parameters'], 'text', '' );
+  $text = adefault( $parameters, 'text', $text );
+  return buttonlink( $url, $text, $title );
+}
+
+function fc_openwindow( $name, $parameters = array(), $options = array() ) {
+  $url = fc_url( $name, $parameters, $options, '' );
+  return "
+    <script type='text/javascript'> 
+      $url
+    </script>
+  ";
+}
 
 ?>
+

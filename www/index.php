@@ -1,100 +1,80 @@
 <?php
-  // Konfigurationsdatei einlesen
-	require_once('code/config.php');
 
-  get_http_var( 'area','w','' );
-  require_once('code/login.php');
-  if( ! $angemeldet ) {
-    echo "<div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html>";
-    exit();
-  }
-	
-	// egal ob get oder post verwendet wird...
-	$HTTP_GET_VARS = array_merge($HTTP_GET_VARS, $HTTP_POST_VARS);
+require_once('code/config.php');
 
-  global $self_fields;
-  $self_fields = array();
+$self_fields = array();
 
-  if( get_http_var( 'download','w' ) ) {  // Datei-Download (.pdf, ...): ohne Kopf
-    $area = $download;
-    $self_fields['download'] = $area;
-    include( "$download.php" );
-    exit();
-  }
-  if( get_http_var( 'window','w' ) ) {    // window: anzeige in Unterfenster (kleiner Kopf)
-    $area = $window;
-    $self_fields['window'] = $area;
-    require_once( 'windows/head.php' );
-    if( is_readable( "windows/$window.php" ) )
-      include( "windows/$window.php" );
-    else
+get_http_var( 'window', 'w', 'menu', true );     // eigentlich: name des skriptes
+get_http_var( 'window_id', 'w', 'main', true );  // ID des browserfensters
+require_once( 'code/login.php' );
+if( ! $angemeldet ) {
+  ?> <div class='warn'>Bitte erst <a href='index.php'>Anmelden...</a></div></body></html> <?
+  exit();
+}
+
+if( get_http_var( 'download','w' ) ) {  // Spezialfall: Datei-Download (.pdf, ...): ohne HTTP-header!
+  $area = $download;
+  $self_fields['download'] = $area;
+  include( "$download.php" );
+  exit();
+}
+
+if( $window_id != 'main' ) {
+  require_once( 'windows/head.php' );
+  if( is_readable( "windows/$window.php" ) )
+    include( "windows/$window.php" );
+  else
+    include( "$window.php" );
+  echo "$print_on_exit";
+  exit();
+}
+
+include('head.php');
+include('dienst_info.php');
+
+global $login_gruppen_id;
+
+switch( $window ) {
+  case "bestellen":
+    if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
+      //darf nur bestellen, wenn Dienste akzeptiert
+      ?> <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> <?
+      include('dienstplan.php');
+    } else {
+      include('bestellen.php');
+    }
+    break;
+  case "lieferschein":
+  case "bestellungen_overview":
+    //Fast gleich
+    include('bestellschein.php');
+    break;
+  case "wiki":
+    reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
+    break;
+  default:
+    if( is_readable( "$window.php" ) ) {
       include( "$window.php" );
-    echo "$print_on_exit";
-    exit();
-  }
-
-  include ( "head.php" );
-  include('dienst_info.php');
-
-  global $login_gruppen_id;
-
-	    // Wenn kein Bereich gewählt wurde, dann Auswahlmenü präsentieren
-	    if (!isset($area)) {
-			   include('menu.php');
-	    } else {
-        $self_fields['area'] = $area;
-		    switch($area){
-		    case "bestellen":
-// 			   if ( !( $dienst == 4 ) 
-//                and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 )
-//          ) {
-// 			   //darf nur bestellen, wenn Dienste akzeptiert
-// 			       echo "<h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2>";
-// 			       include('dienstplan.php');
-// 			   } else {
-			       include('bestellen.php');		
-//			   }
-			    break;
-		    case "lieferschein":
-        case "bestellungen_overview":
-			    //Fast gleich
-			    include('bestellschein.php');
-			    break;
-		    case "wiki":
-          reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
-			    break;
-        case "":
-	        include('menu.php');
-          break;
-		    default:
-			    if(file_exists($area.".php")){
-			        include($area.".php");
-			    } else {
-                              ?>
-				      <div class='warn'>Ung&uuml;ltiger Bereich: <?echo($area)?></div></body></html>
-			      <?
-			        include('menu.php');
-			    }
-		    }
-	    }
-				 
-				 
-  
-  echo "
-    <table width='100%' class='footer'>
-      <tr>
-        <td style='padding-left:1em;text-align:left;'>aktueller Server: <kbd>$foodsoftserver</kbd></td>
-        <td style='padding-right:1em;text-align:right;'>
-        $mysqljetzt
-  ";
-  if( $readonly ) {
-    echo "<span style='font-weight:bold;color:440000;'> --- !!! Datenbank ist schreibgeschuetzt !!!</span>";
-  }
-  echo "
-      </td>
-    </tr>
-    </table>
-    $print_on_exit
-  ";
+    } elseif( is_readable( "windows/$window.php" ) ) {
+      include( "windows/$window.php" );
+    } else {
+      ?> <div class='warn'>Ung&uuml;ltiger Bereich: <? echo($window); ?></div> <?
+      include('menu.php');
+    }
+}
 
 ?>
+
+<table width='100%' class='footer'>
+  <tr>
+    <td style='padding-left:1em;text-align:left;'>aktueller Server: <kbd><? echo $foodsoftserver; ?></kbd></td>
+    <td style='padding-right:1em;text-align:right;'>
+    <? echo $mysqljetzt; ?>
+      <?  if( $readonly ) { ?>
+        <span style='font-weight:bold;color:440000;'> --- !!! Datenbank ist schreibgeschuetzt !!!</span>";
+      <? } ?>
+    </td>
+  </tr>
+</table>
+<? echo $print_on_exit; ?>
+
