@@ -2965,6 +2965,7 @@ function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0 ) {
     FROM pfandverpackungen
     JOIN lieferanten
       ON lieferanten.id = pfandverpackungen.lieferanten_id
+         AND lieferanten.id = $lieferanten_id
     JOIN gesamtbestellungen
       ON gesamtbestellungen.lieferanten_id = pfandverpackungen.lieferanten_id
          $more_on
