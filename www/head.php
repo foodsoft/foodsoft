@@ -1,6 +1,6 @@
 <?php
   global $angemeldet, $login_gruppen_name, $coopie_name, $dienst
-       , $readonly, $kopf_schon_ausgegeben, $print_on_exit, $area, $foodsoftdir;
+       , $readonly, $kopf_schon_ausgegeben, $print_on_exit, $foodsoftdir;
 
   if( ! $kopf_schon_ausgegeben ) {
     echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
@@ -11,8 +11,6 @@
         <link rel='stylesheet' type='text/css' href='$foodsoftdir/css/foodsoft.css'>
         <script type='text/javascript' src='$foodsoftdir/js/foodsoft.js' language='javascript'></script>	 
       </head>
-      <!-- foodsoftpath:$foodsoftpath: -->
-      <!-- foodsoftdir:$foodsoftdir: -->
       <body
     ";
     if( $readonly ) {
@@ -43,7 +41,7 @@
     if( $angemeldet ) {
       if( $dienst > 0 ) {
         // fuer dienste: noch dienstkontrollblatteintrag aktualisieren:
-        echo "<a class='button' href='index.php?area=dienstkontrollblatt&action=abmelden'>Abmelden</a>";
+        echo "<a class='button' href='index.php?window=dienstkontrollblatt&action=abmelden'>Abmelden</a>";
       } else {
         echo "<a class='button' href='index.php?action=logout'>Abmelden</a>";
       }
@@ -61,7 +59,7 @@
       }
      echo "<li>";
 
-     wikiLink( isset($area) ? "foodsoft:$area" : "", "Hilfe-Wiki", true );
+     wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki", true );
 
      echo " </li>
      </ul>

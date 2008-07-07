@@ -74,6 +74,7 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'main';
       $parameters['text'] = 'Bestellen';
       $parameters['title'] = 'zum Bestellformular';
+      $parameters['bestell_id'] = NULL;
       $options = $large_window_options;
       break;
     case 'bilanz':
@@ -121,6 +122,8 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'dienstkontrollblatt';
       $parameters['text'] = 'Dienstkontrollblatt';
       $parameters['title'] = 'zur Anzeige des Dienstkontrollblatts...';
+      $parameters['id_to'] = NULL;
+      $parameters['id_from'] = NULL;
       $options = $large_window_options;
       break;
     case 'updownload':
@@ -165,6 +168,13 @@ function fc_window( $name ) {
       $parameters['img'] = 'img/euro.png';
       $options = array_merge( $large_window_options, array( 'width' => '1000' ) );
       break;
+    case 'gruppenmitglieder':
+      $parameters['window'] = 'gruppen_mitglieder';
+      $parameters['window_id'] = 'gruppenmitglieder';
+      $parameters['gruppen_id'] = false;
+      $parameters['title'] = 'Gruppenmitglieder';
+      $options = array_merge( $large_window_options, array( 'width' => '900' ) );
+      break;
     case 'gruppenpfand':
       $parameters['window'] = 'gruppenpfand';
       $parameters['window_id'] = 'pfandzettel';
@@ -176,9 +186,9 @@ function fc_window( $name ) {
     case 'kontoauszug':
       $parameters['window'] = 'konto';
       $parameters['window_id'] = 'kontoauszug';
-      $parameters['konto_id'] = false;
-      $parameters['auszug_nr'] = false;
-      $parameters['auszug_jahr'] = false;
+      $parameters['konto_id'] = NULL;
+      $parameters['auszug_nr'] = NULL;
+      $parameters['auszug_jahr'] = NULL;
       $parameters['img'] = 'img/euro.png';
       $options = $large_window_options;
       break;
@@ -196,16 +206,28 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'pfandzettel';
       $parameters['title'] = 'Fantkram';
       $parameters['img'] = 'img/fant.gif';
-      $parameters['lieferanten_id'] = false;
+      $parameters['lieferanten_id'] = NULL;
       $parameters['bestell_id'] = NULL;
+      $options = $large_window_options;
+      break;
+    case 'produktpreise':
+    case 'produktdetails':
+      $parameters['window'] = 'terraabgleich';
+      $parameters['window_id'] = 'produktdetails';
+      $parameters['title'] = 'Preise und andere Produktdetails...';
+      $parameters['text'] = ' Produktdetails';
+      $parameters['bestell_id'] = NULL;;
+      $parameters['produkt_id'] = false;
       $options = $large_window_options;
       break;
     case 'produktverteilung':
       $parameters['window'] = 'showBestelltProd';
       $parameters['window_id'] = 'produktverteilung';
+      $parameters['img'] = 'img/b_browse.png';
+      $parameters['title'] = 'Details zur Verteilung des Produkts...';
       $parameters['bestell_id'] = false;
       $parameters['produkt_id'] = false;
-      $options = array_merge( $large_window_options, array( 'width' => '600' ) );
+      $options = array_merge( $large_window_options, array( 'width' => '680', 'height' => '600' ) );
       break;
     case 'verluste':
       $parameters['window'] = 'verluste';
@@ -216,6 +238,8 @@ function fc_window( $name ) {
       $parameters['window'] = 'verteilung';
       $parameters['window_id'] = 'verteilliste';
       $parameters['bestell_id'] = false;
+      $parameters['text'] = 'Verteilliste';
+      $parameters['title'] = 'zur Verteilliste...';
       $options = $large_window_options;
       break;
     //
@@ -262,27 +286,25 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
     $parameters = parameters_explode( $parameters );
 
   $window = fc_window( $name );
-  $window_parameters = $window['parameters'];
+  $parameters = array_merge( $window['parameters'], $parameters );
+  $window_id = $parameters['window_id'];
 
   $url = "$foodsoftdir/index.php";
   $and = '?';
-  foreach( $window_parameters as $key => $value ) {
+  foreach( $parameters as $key => $value ) {
     switch( $key ) {
       case 'img':
       case 'text':
       case 'title':
         continue 2; //  php counts switch as a loop!
     }
-    if( isset( $parameters[$key] ) )
-      $value = $parameters[$key];
-    elseif( $value === false )
-      error( __LINE__, __FILE__, "parameter $key nicht uebergeben", debug_backtrace());
     if( $value === NULL )
       continue;
+    if( $value === false )
+      error( __LINE__, __FILE__, "parameter $key nicht uebergeben", debug_backtrace() );
     $url .= "$and$key=$value";
     $and = '&';
   }
-  $window_id = adefault( $parameters, 'window_id', $window_parameters['window_id'] );
   switch( $window_id ) {
     case 'self':
       return "javascript:self.location.href='$url';";
