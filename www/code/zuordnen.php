@@ -789,52 +789,52 @@ function sql_rotationsplan($dienst){
 function possible_areas(){
   global $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
    $areas = array(
-           array("area" => "index.php?area=meinkonto", 
+           array("area" => "meinkonto", 
 	        "hint"  => "Hier können die einzelnen Gruppen ihre Kontoauszüge einsehen....", 
 		"title" => "Mein Konto"
 	   )
    );
-$areas[] = array("area" => "index.php?area=bestellungen_overview",
+$areas[] = array("area" => "bestellungen_overview",
 	"hint" => "Auflistung aller Bestellungen mit Status und Links",
 	"title" => "Alle Bestellungen");
-$areas[] = array("area" => "index.php?area=bestellen",
+$areas[] = array("area" => "bestellen",
 	"hint" => "Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....",
 	"title" => "Bestellen");
 
-$areas[] = array("area" => "index.php?area=bilanz",
+$areas[] = array("area" => "bilanz",
 	"hint" => "Finanzen der FC: Überblick und Verwaltung",
 	"title" => "Bilanz");
 
 if($hat_dienst_IV){
-	$areas[] = array("area" => "index.php?area=produkte",
+	$areas[] = array("area" => "produkte",
 	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
 } else {
-	$areas[] = array("area" => "index.php?area=produkte",
+	$areas[] = array("area" => "produkte",
 	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produktdatenbank");	 
 }
-	$areas[] = array("area" => "index.php?area=gruppen",
+	$areas[] = array("area" => "gruppen",
 	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
 	"title" => "Gruppen");		
 if($hat_dienst_IV or $hat_dienst_III){
-	$areas[] = array("area" => "index.php?area=basar",
+	$areas[] = array("area" => "basar",
 	"hint" => "Produkte im Basar an Gruppen verteilen",
 	"title" => "Basar");
 }
 if($hat_dienst_IV){
-	$areas[] = array("area" => "index.php?area=lieferanten",
+	$areas[] = array("area" => "lieferanten",
 	"hint" => "Hier kann man die LieferantInnen verwalten...",
 	"title" => "LieferantInnen");
 } 
-	$areas[] = array("area" => "index.php?area=dienstkontrollblatt",
+	$areas[] = array("area" => "dienstkontrollblatt",
 	"hint" => "Hier kann man das Dientkontrollblatt einsehen...",
 	"title" => "Dienstkontrollblatt");		
 if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
-	$areas[] = array("area" => "index.php?area=updownload",
+	$areas[] = array("area" => "updownload",
 	"hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
 	"title" => "Up/Download");
 } 
 
-   $areas[] = array("area" => "index.php?area=dienstplan", 
+   $areas[] = array("area" => "dienstplan", 
 	        "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...", 
 		"title" => "Dienstplan"
 	   );
