@@ -33,11 +33,7 @@ switch( $action ) {
         switch( $change_to ) {
           case STATUS_LIEFERANT:   // bestellschein oder ...
           case STATUS_VERTEILT:    // ... lieferschein anzeigen:
-            echo "
-              <script type='text/javascript'>
-                neuesfenster('index.php?window=bestellschein&bestell_id=$change_id','bestellschein');
-              </script>
-            ";
+            echo fc_openwindow( 'bestellschein', "$bestell_id=$change_id" );
           break;
         }
       }

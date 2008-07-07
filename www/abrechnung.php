@@ -7,6 +7,8 @@ assert( $angemeldet ) or exit();
 $editable = ( $hat_dienst_IV and ! $readonly );
 need_http_var( 'bestell_id', 'u', true );
 
+setWikiHelpTopic( 'foodsoft:Abrechnung' );
+
 $state = getState( $bestell_id );
 
 need( $state >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
@@ -15,7 +17,8 @@ need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 $bestellung = sql_bestellung( $bestell_id );
 $bestellung_name = $bestellung['name'];
 $lieferant_id = $bestellung['lieferanten_id'];
-$lieferant_name = lieferant_name( $lieferant_id );
+$lieferant = sql_getLieferant( $lieferant_id );
+$lieferant_name = $lieferant['name'];
 
 /////////////////////////////
 //
@@ -52,24 +55,19 @@ if( $action == 'save' ) {
 }
 
 $bestellung = sql_bestellung( $bestell_id );
-$bestellung_name = $bestellung['name'];
-$lieferant_id = $bestellung['lieferanten_id'];
-$lieferant_name = lieferant_name( $lieferant_id );
+// $bestellung_name = $bestellung['name'];
+// $lieferant_id = $bestellung['lieferanten_id'];
+// $lieferant_name = lieferant_name( $lieferant_id );
 $status = getState( $bestell_id );
 $ro_tag = '';
 if( $status >= STATUS_ABGERECHNET ) {
   $ro_tag = 'readonly';
 }
 
-
 $result = sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" );
 $gruppenpfand = mysql_fetch_array( $result );
 
-// $result = sql_pfandverpackungen( $lieferant_id, $bestell_id, "lieferantenpfand.bestell_id" );
-// $lieferantenpfand = mysql_fetch_array( $result );
-
 $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
-
 
 $warenwert_verteilt_brutto = verteilung_wert_brutto( $bestell_id ); 
 $warenwert_muell_brutto = muell_wert_brutto( $bestell_id ); 
@@ -104,10 +102,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       </td>
       <td>&nbsp;</td>
       <td class='number'><b><? printf( "%.2lf", $warenwert_basar_brutto ); ?></b></td>
-      <td style='vertical-align:bottom;'>
-        <a href="javascript:neuesfenster('index.php?window=basar','basar');"
-        >zum Basar...</a>
-      </td>
+      <td style='vertical-align:bottom;'><? echo fc_alink( 'basar', "text=zum Basar...,img=" ); ?></td>
     </tr>
     <tr>
       <td rowspan='2'>
@@ -119,9 +114,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td class='number'>&nbsp;</td>
       <td class='number'><b><? printf( "%.2lf", $warenwert_verteilt_brutto ); ?></b></td>
       <td rowspan='2' style='vertical-align:middle;'>
-        <a href="javascript:neuesfenster('index.php?window=verteilung&bestell_id=<? echo $bestell_id; ?>','verteilliste');"
-        >zur Verteilliste...</a>
-      </td>
+        <? echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,img=" ); ?></td>
     </tr>
     <tr>
       <td style='text-align:right;'>
@@ -137,17 +130,14 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       </td>
       <td>&nbsp;</td>
     </tr>
+  <? if( $lieferant['anzahl_pfandverpackungen'] > 0 ) { ?>
     <tr>
-      <td rowspan='2'>
-        Pfandabrechnung Bestellgruppen:
-        <div class='small'>(nur bei Terra!)</div>
-      </td>
+      <td rowspan='2'>Pfandabrechnung Bestellgruppen:</td>
       <td style='text-align:right;'>berechnet (Kauf):</td>
       <td>&nbsp;</td>
       <td class='number'><b><? printf( "%.2lf", -$gruppenpfand['pfand_voll_brutto_soll'] ); ?></b></td>
       <td rowspan='2' style='vertical-align:middle;'>
-        <a href="javascript:neuesfenster('index.php?window=gruppenpfand&bestell_id=<? echo $bestell_id; ?>','gruppenpfand');"
-        >zur Pfandabrechnung...</a>
+        <? echo fc_alink( 'gruppenpfand', "bestell_id=$bestell_id,img=,text=zur Pfandabrechnung..." ); ?>
       </td>
     </tr>
     <tr>
@@ -155,6 +145,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td>&nbsp;</td>
       <td class='number'><b><? printf( "%.2lf", -$gruppenpfand['pfand_leer_brutto_soll'] ); ?></b></td>
     </tr>
+  <? } ?>
 
 <tr>
   <th colspan='6' style='padding-top:2em;'>
@@ -173,10 +164,10 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll'] ); ?></b></td>
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['waren_brutto_soll'] ); ?></b></td>
       <td style='vertical-align:bottom;'>
-        <a href="javascript:neuesfenster('index.php?window=bestellschein&bestell_id=<? echo $bestell_id; ?>','bestellschein');"
-        >zum Lieferschein...</a>
+        <? echo fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=zum Lieferschein..." ); ?>
       </td>
     </tr>
+  <? if( $lieferant['anzahl_pfandverpackungen'] > 0 ) { ?>
     <tr>
       <td rowspan='2'>
         Pfandabrechnung Lieferant:
@@ -187,8 +178,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ); ?></b></td>
       </td>
       <td rowspan='2' style='vertical-align:middle;'>
-        <a href="javascript:neuesfenster('index.php?window=pfandverpackungen&bestell_id=<? echo $bestell_id; ?>','pfandzettel');"
-        >zum Pfandzettel...</a>
+        <? echo fc_alink( 'pfandzettel', "bestell_id=$bestell_id,lieferanten_id=$lieferant_id,img=,text=zum Pfandzettel..." ); ?>
       </td>
     </tr>
     <tr>
@@ -196,6 +186,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_netto_soll'] ); ?></b></td>
       <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ); ?></b></td>
     </tr>
+  <? } ?>
     <tr class='summe'>
       <td colspan='2'>Zwischensumme:</td>
       <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll']

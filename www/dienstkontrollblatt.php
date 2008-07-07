@@ -44,14 +44,16 @@
 
   } else {
 
-    $id_to = 10;
     $result = mysql_query( "SELECT id FROM dienstkontrollblatt ORDER BY id DESC LIMIT 5" );
     $row = mysql_fetch_array( $result );
     if( ! $row )
       error( __LINE__, __FILE__, "konnte dienstkontrollblatt nicht lesen" );
     $id_max = $row['id'];
-    get_http_var('id_to', 'u', $id_max );
-    get_http_var('id_from', 'u', $id_to - 10 );
+    get_http_var( 'id_to', 'u', $id_max, true );
+    $id_from = $id_to - 10;
+    if( $id_from < 1 )
+      $id_from = 1;
+    // get_http_var('id_from', 'u', $id_to - 10, true );
   
     $result = dienstkontrollblatt_select( $id_from, $id_to );
 
@@ -72,41 +74,41 @@
 
     if( $id_from > 1 ) {
       $n = ( $id_from > 10 ) ? $id_from : 10;
-      echo "
+      ?>
         <tr>
           <td colspan='7'>
-          <a class='button' href='index.php?area=dienstkontrollblatt&id_to=$n'> &lt; &lt; &lt;  Bl&auml;ttern &lt; &lt; &lt;  </a>
+            <? echo fc_button( 'self', "id_to=$n,text= &lt; &lt; &lt;  Bl&auml;ttern &lt; &lt; &lt; " ); ?>
           </td>
         </tr>
-      ";
+      <?
     }
     while( $row = mysql_fetch_array( $result ) ) {
-      echo "
+      ?>
         <tr>
           <td>
-            <a title='Zentrieren' style='padding:0pt 1ex 0pt 1ex;' href='index.php?area=dienstkontrollblatt&id_to=" . ($row['id'] + 5) . "'> {$row['id']} </a>
+            <?  echo fc_alink( 'self', array( 'title' => 'Zentrieren', 'id_to' => $row['id'] + 5, 'text' => $row['id'] ) ); ?>
           </td>
-          <td>{$row['datum']}</td>
-          <td>{$row['zeit']}</td>
-          <td>{$row['dienst']}</td>
-          <td>{$row['gruppen_name']}</td>
-          <td>{$row['name']}</td>
-          <td>{$row['telefon']}</td>
-          <td>{$row['notiz']}</td>
+          <td><? echo $row['datum']; ?></td>
+          <td><? echo $row['zeit']; ?></td>
+          <td><? echo $row['dienst']; ?></td>
+          <td><? echo $row['gruppen_name']; ?></td>
+          <td><? echo $row['name']; ?></td>
+          <td><? echo $row['telefon']; ?></td>
+          <td><? echo $row['notiz']; ?></td>
         </tr>
-      ";
+      <?
     }
     if( $id_to < $id_max ) {
       $n = $id_to + 10;
       if( $n > $id_max )
         $n = $id_max;
-      echo "
+      ?>
         <tr>
           <td colspan='7'>
-          <a class='button' href='index.php?area=dienstkontrollblatt&id_to=$n'> &gt; &gt; &gt; Bl&auml;ttern &gt; &gt; &gt; </a>
+            <? echo fc_button( 'self', "id_to=$n,text= &gt; &gt; &gt;  Bl&auml;ttern &gt; &gt; &gt; " ); ?>
           </td>
         </tr>
-      ";
+      <?
     }
     echo "</table>";
   }
