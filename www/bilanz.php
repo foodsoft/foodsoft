@@ -7,10 +7,7 @@ assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( 'foodsoft:Bilanz' );
 
-?> <h1>Bilanz <!-- - <blink>Achtung, in Arbeit: Werte stimmen nicht!</blink> --></h1> <?
-
-// aktiva berechnen:
-//
+?> <h1>Bilanz </h1> <?
 
 $gruppen_einzahlungen_ungebucht = sql_select_single_field( "
     SELECT sum( einzahlungen.summe ) as summe
@@ -21,11 +18,7 @@ $gruppen_einzahlungen_ungebucht = sql_select_single_field( "
 $erster_posten = 1;
 function rubrik( $name ) {
   global $erster_posten;
-  echo "
-    <tr class='rubrik'>
-      <th colspan='2'>$name</th>
-    </tr>
-  ";
+  echo "<tr class='rubrik'><th colspan='2'>$name</th></tr>";
   $erster_posten = 1;
 }
 function posten( $name, $wert ) {
@@ -45,7 +38,7 @@ function posten( $name, $wert ) {
   $seitensumme += $wert;
 }
 
-echo "
+?>
   <table width='100%'>
     <colgroup>
       <col width='*'><col width='*'>
@@ -55,58 +48,57 @@ echo "
       <td>
 
       <table class='inner' width='100%'>
-";
+<?
 
+// aktiva:
+//
 
 $seitensumme = 0;
 
 rubrik( "Bankguthaben" );
   $kontosalden = sql_bankkonto_salden();
   while( $konto = mysql_fetch_array( $kontosalden ) ) {
-    posten( "
-      <a href=\"javascript:neuesfenster('index.php?window=konto&konto_id={$konto['konto_id']}','konto');\"
-      >Konto {$konto['kontoname']}</a>"
+    posten(
+      fc_alink( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'img' => false, 'text' => "Konto {$konto['kontoname']}" ) )
     , $konto['saldo']
     );
   }
 
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_UNGEBUCHT . "','gruppen');\">Ungebuchte Einzahlungen</a>", $gruppen_einzahlungen_ungebucht );
+  posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
 
 rubrik( "Umlaufvermögen" );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=basar','basar');\">Warenbestand Basar</a>", basar_wert_brutto() );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=pfandverpackungen','pfandzettel');\">Bestand Pfandverpackungen</a>", lieferantenpfandkontostand() );
+  posten( fc_alink( 'basar', "img=,text=Warenbestand Basar" ), basar_wert_brutto() );
+  posten( fc_alink( 'pfandzettel', "img=,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
 
 rubrik( "Forderungen" );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_SCHULDEN . "','gruppen');\">Forderungen an Gruppen</a>", forderungen_gruppen_summe() );
+  posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
 
 
 $aktiva = $seitensumme;
 
 
+// passiva:
 //
-// ab hier passiva:
-//
-echo "
+
+?>
     </table>
     </td><td>
 
     <table class='inner' width='100%'>
-";
+<?
 
 $seitensumme = 0;
 
 
 rubrik( "Einlagen der Gruppen" );
   posten( "Sockeleinlagen", sockel_gruppen_summe() );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppen&optionen=" . GRUPPEN_OPT_GUTHABEN . "','gruppen');\">Kontoguthaben</a>", verbindlichkeiten_gruppen_summe() );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=gruppenpfand&optionen=" . PFAND_OPT_GRUPPEN_INAKTIV . "','gruppenpfand');\">Pfandverpackungen</a>", -pfandkontostand() );
+  posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
+  posten( fc_alink( 'gruppenpfand', "img=,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
 
 $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
 rubrik( "Verbindlichkeiten" );
   while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-    posten( "
-      <a href=\"javascript:neuesfenster('index.php?window=lieferantenkonto&lieferanten_id={$vkeit['lieferanten_id']}','lieferantenkonto');\"
-      >{$vkeit['name']}</a>"
+    posten( fc_alink( 'lieferantenkonto', array( 'img' => false, 'lieferanten_id' => $vkeit['lieferanten_id'], 'text' => $vkeit['name'] ) )
     , $vkeit['soll']
     );
   }
@@ -118,26 +110,20 @@ $bilanzverlust = $aktiva - $passiva;
 $passiva += $bilanzverlust;
 
 rubrik( "Bilanzausgleich" );
-  posten( "<a href=\"javascript:neuesfenster('index.php?window=verluste','verluste')\">"
-             . ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) . "</a>", $bilanzverlust );
+  posten( fc_alink( 'verluste', "text=". ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) )
+  , $bilanzverlust
+  );
 
-echo "
+?>
       </table>
       </td>
     </tr>
-";
 
-printf( "
     <tr class='summe'>
-      <td class='number'>%.2lf</td>
-      <td class='number'>%.2lf</td>
+      <td class='number'><? printf( "%.2lf", $aktiva ); ?></td>
+      <td class='number'><? printf( "%.2lf", $passiva ); ?></td>
     </tr>
-  "
-, $aktiva
-, $passiva
-);
 
-echo "</table>";
+</table>
 
-?>
 

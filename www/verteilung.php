@@ -25,7 +25,6 @@ $basar= sql_basar_id();
 
 $row_gesamtbestellung = sql_bestellung( $bestell_id );
 
-
 setWikiHelpTopic( "foodsoft:verteilung" );
 
 ?>
@@ -33,10 +32,8 @@ setWikiHelpTopic( "foodsoft:verteilung" );
 
 <? bestellung_overview($row_gesamtbestellung); ?>
 
-<br>
-<br>
 <form action="<? echo self_url(); ?>" method="post"><? echo self_post(); ?>
-<table style="width: 600px;" class='numbers'>
+<table style="width: 620px;" class='numbers'>
 
 <?
 distribution_tabellenkopf("Gruppe"); 
@@ -46,7 +43,7 @@ $result1 = sql_bestellprodukte($bestell_id);
 while  ($produkte_row = mysql_fetch_array($result1)) {
   // nettopreis, Masseinheiten, ... ausrechnen:
   preisdatenSetzen( $produkte_row );
-  $produkt_id =$produkte_row['produkt_id'];
+  $produkt_id = $produkte_row['produkt_id'];
   // echo "produkt_id: $produkt_id<br>";
 
   // Wenn genügend bestellt wurde, gibt es mindestens einen  Eintrag mit art=2
@@ -65,7 +62,10 @@ while  ($produkte_row = mysql_fetch_array($result1)) {
 
    ?>
      <tr><th colspan='6'>
-       <span style='font-size:1.2em; margin:5px;'> <? echo $produkte_row['produkt_name']; ?> </span>
+       <span style='font-size:1.2em; margin:5px;'>
+         <? echo fc_alink( 'produktpreise', array(
+           'text' => $produkte_row['produkt_name'], 'img' => '', 'produkt_id' => $produkt_id ) ); ?>
+       </span>
        <span style='font-size:0.8em'>
        <? printf( "Preis: %.2lf / %s, Produktgruppe: %s"
          , $produkte_row['preis']

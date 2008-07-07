@@ -20,17 +20,15 @@ $result = sql_lieferanten();
 <table class='menu' style='margin-bottom:2em;'>
   <? if( $editable ) { ?>
     <tr>
-      <td><input type='button' value='Neuer Lieferant' class='bigbutton'
-           onClick="<? echo fc_url( 'edit_lieferant' ); ?>">
-         </td>
-      <td valign=middle'>Einen neuen Lieferanten hinzuf&uuml;gen...</td>
+      <td><? echo fc_button( 'edit_lieferant', "text=Neuer Lieferant" ); ?></td>
+      <td valign=middle'>einen neuen Lieferanten hinzuf&uuml;gen...</td>
     </tr>
   <? } ?>
   <tr>
-     <td><input type='button' value='Reload' class='bigbutton' onClick="self.location.href='<? echo self_url(); ?>';"></td>
-     <td valign=middle'>diese Seite aktualisieren...</td>
+     <td><? echo fc_button( 'self', "text=Aktualisieren" ); ?></td>
+     <td valign=middle'>diese Seite neu laden...</td>
   </tr><tr>
-     <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php'"></td>
+     <td><? echo fc_button( 'index', "text=Beenden" ); ?></td>
      <td valign=middle'>diesen Bereich verlassen...</td>
   </tr>
 </table>
@@ -67,10 +65,10 @@ while ($row = mysql_fetch_array($result)) {
       <td class='number'><? printf( "%.2lf", $kontostand ); ?></td>
       <td style='white-space:nowrap;'>
     <?
-    echo fc_alink( 'lieferantenkonto', array( 'lieferanten_id' => $lieferanten_id ) );
+    echo fc_alink( 'lieferantenkonto', "lieferanten_id=$lieferanten_id,text=" );
     echo fc_alink( 'pfandzettel', "lieferanten_id=$lieferanten_id" );
     if( $editable ) {
-      echo fc_alink( 'edit_lieferant', array( 'lieferanten_id' => $lieferanten_id ) );
+      echo fc_alink( 'edit_lieferant', "lieferanten_id=$lieferanten_id" );
       if( abs($kontostand) < 0.005 ) {
         echo "
           <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
@@ -79,7 +77,7 @@ while ($row = mysql_fetch_array($result)) {
         ";
       }
     } else {
-      echo fc_alink( 'edit_lieferant', array( 'lieferanten_id' => $lieferanten_id, 'ro' => '1', 'img' => 'img/birne_rot.png' ) );
+      echo fc_alink( 'edit_lieferant', "lieferanten_id=$lieferanten_id,ro=1,img=img/birne_rot.png" );
     }
     ?> </td></tr> <?
   }
@@ -87,6 +85,4 @@ while ($row = mysql_fetch_array($result)) {
 ?>
 
 </table>
-</body>
-</html>
 
