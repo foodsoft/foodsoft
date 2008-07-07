@@ -18,7 +18,7 @@
 
    
    <form name="erstellen" action="index.php" method="post">
-	   <input type="hidden" name="area" value="dienstplan">			
+	   <input type="hidden" name="window" value="dienstplan">			
 	   <? 
 	     get_http_var("dienstfrequenz"); //ToDo check for integer
 	     if (!isset($dienstfrequenz)){
@@ -53,7 +53,7 @@
  
 
    <form name="rotationsplan" action="index.php" method="post">
-	   <input type="hidden" name="area" value="dienstplan">			
+	   <input type="hidden" name="window" value="dienstplan">			
 	   <? 
 	     get_http_var("plan_dienst");
 	     if (!isset($plan_dienst)) $plan_dienst = "1/2";
@@ -133,7 +133,7 @@
 		   //Nicht bestätigten Dienst: Confirmation
 		       ?>
                        <form action="index.php">
-		       <input type="hidden" name="area" value="dienstplan">
+		       <input type="hidden" name="window" value="dienstplan">
 		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $command[1]?>">
 		       <input type="hidden" name="confirmed" value="confirmed">
 		       <div class='warn'>
@@ -166,7 +166,7 @@
 			   <div class='warn'>Bitte Ausweichdatum auswählen:</div>
 			   <form name=tauschdatum" action="index.php" method="post">
 		            <input type="hidden" name="aktion" value="abtauschen_<?echo $command[1]?>">
-	                   <input type="hidden" name="area" value="dienstplan">	
+	                   <input type="hidden" name="window" value="dienstplan">	
 			   <select name="abtauschdatum">
 			   <?
 		           while($date = mysql_fetch_array($dates)){
