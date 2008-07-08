@@ -2,7 +2,7 @@
 <?PHP
   error_reporting('E_NONE'); 
 
-  assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=bestellen erfolgen
+  assert( $angemeldet ) or exit();
 	
   setWikiHelpTopic( "foodsoft:bestellen" );
 
@@ -20,14 +20,7 @@
   }
   $kontostand = kontostand( $gruppen_id );
 
-
-  // Aktuelle Bestellung ermitteln...
-  if ( get_http_var('bestellungs_id', 'u') ) {
-    $bestell_id = $bestellungs_id;
-    $self_fields['bestell_id'] = $bestell_id;
-  } else {
-    get_http_var('bestell_id','u',false,true );
-  }
+  get_http_var('bestell_id','u',0,true );
 
   if( $bestell_id ) {
     if( getState( $bestell_id ) != STATUS_BESTELLEN )
@@ -39,7 +32,7 @@
     ?>
       <div class='warn'>
         Zur Zeit laufen leider keine Bestellungen!
-        <a href='index.php'>Zurück...</a>
+        <? echo fc_alink( 'index', "text=Zur&uuml;ck..." ); ?>
       </div>
     <?
     return;
@@ -86,8 +79,9 @@
     if( $row['id'] != $bestell_id ) {
       ?>
         <tr>
-          <td><a class='tabelle' href='<? echo self_url('bestell_id'); ?>&bestell_id=<? echo $row['id']; ?>'
-              ><? echo $row['name']; ?></a></td>
+          <td>
+            <? echo fc_alink( 'self', array( 'bestell_id' => $row['id'], 'text' => $row['name'] ) ); ?>
+          </td>
       <?
     } else {
       ?>
@@ -118,9 +112,6 @@
     return;
 
   $gesamtbestellung = sql_bestellung( $bestell_id );
-  if( $gesamtbestellung['bestellende'] < $mysqljetzt ) {
-
-  }
 
 
   // ab hier: eigentliches bestellformular:
@@ -128,11 +119,6 @@
 
 						$gesamt_preis = 0;
 						$max_gesamt_preis = 0;
-						
-						
-						// Lieferantenname zu den Lieferanten-Nummern auslesen
-						$result = mysql_query("SELECT name,id FROM lieferanten") or error(__LINE__,__FILE__,"Konnte Lieferantennamen nich aus DB laden..",mysql_error());
-						while ($row = mysql_fetch_array($result)) $lieferanten_id2name[$row['id']] = $row['name'];
 						
 						
 						// Produktgruppennamen zu den Produktgruppen-Nummern auslesen
@@ -1051,22 +1037,22 @@ if( ! $readonly ) {
                               title='Preis nicht aktuell: Dienst 4 sollte aktualisieren!'
                             ";
                           }
-                          echo "
-                            ><a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produkt_id={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\">
-                             ".sprintf("%.02f",$preise_row['preis'])."
-                             </a>
-                            </td>
+                          echo ">"
+                             . fc_alink( 'produktpreise', array(
+                                'img' => false, 'text' => sprintf( "%.2lf", $preise_row['preis'] )
+                              , 'produkt_id' => $produkt_row['id'], 'bestell_id' => $bestell_id
+                              ) )
+                          . "</td>
                             <td class='unit'> / {$preise_row['kan_verteilmult']} {$preise_row['kan_verteileinheit']}</td>
-                            <!-- </tr> -->";
+                          ";
                         } else {
                           echo "
                             <td class='warn' colspan='4'
                             title='...kann bedeuten: Artikel nicht (mehr) lieferbar!'
                             >Kein aktueller
-                              <a href=\"javascript:neuesfenster('index.php?window=terraabgleich&produkt_id={$produkt_row['id']}&bestell_id={$row_gesamtbestellung['id']}','produktdetails');\"
-                              >Preiseintrag</a>
-                            </td>
-                          ";
+                            "  . fc_alink( 'produktpreise', array(
+                                  'img' => false, 'text' => 'Preiseintrag' , 'produkt_id' => $produkt_row['id'], 'bestell_id' => $bestell_id ) )
+                            . "</td>";
                         }
 											 
 						?>

@@ -23,8 +23,9 @@
     if( $editable ) {
       ?>
         <tr>
-          <td><input type='button' value='Neues Produkt eintragen' class='bigbutton' onClick="window.open('index.php?window=editProdukt&lieferanten_id=<? echo $lieferanten_id; ?>','editProdukt','width=500,height=500,left=100,top=100').focus()"></td>
-        </tr><!-- momentan ausser Betrieb (Einheiten nicht korrekt implementiert!)
+          <td><? echo fc_button( 'edit_produkt', "lieferanten_id=$lieferanten_id,text=Neues Produkt" ); ?></td>
+        </tr>
+        <!-- momentan ausser Betrieb (Einheiten nicht korrekt implementiert!)
           <tr>
           <td><input type='button' value='Alle Produkte bearbeiten' class='bigbutton' onClick="document.forms['reload_form'].action.value = 'edit_all'; document.forms['reload_form'].submit();"></td>
         </tr>
@@ -33,12 +34,11 @@
     }
     ?>
       <tr>
-        <td><input type='button' value='Seite aktualisieren' class='bigbutton' onClick="document.forms['reload_form'].submit();"></td>
+        <td><? echo fc_button( 'self', "text=Seite aktualisieren" ); ?></td>
       </tr><tr>
-        <td><input type='button' value='Katalogsuche' class='bigbutton'
-          onClick="neuesfenster('index.php?window=artikelsuche','artikelsuche');">
+        <td><? echo fc_button( 'katalog', "text=Katalogsuche" ); ?></td>
       </tr><tr>
-        <td><input type='button' value='Beenden' class='bigbutton' onClick="self.location.href='index.php';"></td>
+        <td><? echo fc_button( 'index' ); ?></td>
       </tr>
       <tr>
         <td>
@@ -234,7 +234,7 @@
           <td valign="top"><b><? echo $produkt['name']; ?></b></td>
           <td valign="top"><? echo $produkt['produktgruppen_name']; ?></td>
       <? if( $produkt['zeitstart'] ) { ?>
-          <td valign="top"><? echo $produkt['notiz']; ?></td>
+          <td style="vertical-align:top;width:25ex;"><? echo $produkt['notiz']; ?></td>
           <td class='number'><?
             printf(
               "%d * (%s %s)"
@@ -253,17 +253,18 @@
         <td colspan='6' style='text-align:center'>(kein aktueller Preiseintrag)</td>
       <? } ?>
           <td valign='top' style='white-space:nowrap;'>
-          <? if( $editable ) { ?>
-            <a class='png' href="javascript:f=window.open('index.php?window=editProdukt&produkt_id=<? echo $id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
-             border='0' alt='Produktdaten ändern' title='Produktdaten ändern'/></a>
-            &nbsp;
-            <a class='png' href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $id; ?>','produktdetails');"><img src='img/b_browse.png'
-             border='0' alt='Details und Preise' title='Details und Preise'></a>
-            <? if( $references == 0 ) { ?>
-              &nbsp; <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0'
-                      alt='Produkt löschen' title='Produkt löschen'/></a>
-            <? } ?>
-          <? } ?>
+          <?
+          if( $editable ) {
+            echo fc_alink( 'edit_produkt', "produkt_id=$id" );
+            echo fc_alink( 'produktpreise', "produkt_id=$id" );
+            if( $references == 0 ) {
+              ?>
+               <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0'
+                       alt='Produkt löschen' title='Produkt löschen'/></a>
+              <?
+            } 
+          }
+          ?>
           </td>
         </tr>
         <tr class='groupofrows_bottom'>
@@ -339,14 +340,4 @@
 
     </form>
  </table>
-
-<?
-// "produktkategorien" im moment unbenutzt:
-//          $kat_result = mysql_query("SELECT produktkategorien.name FROM produktkategorien, kategoriezuordnung WHERE kategoriezuordnung.produkt_id = ".mysql_escape_string($row['id'])." AND kategoriezuordnung.kategorien_id = produktkategorien.id;") or error(__LINE__,__FILE__,"Konnte Kategorien nich aus DB laden..",mysql_error());
-//          $kategorien_str = "";
-//          while ($kat_row = mysql_fetch_array($kat_result)) {
-//            $kategorien_str .= $kat_row['name'];
-//          }
-//          echo $kategorien_str ? $kategorien_str : "-";
-?>
 

@@ -55,20 +55,8 @@ switch( $action ) {
 }
 
 if( ! $bestell_id ) {
-  // auswahl praesentieren, abhaengig von $state oder $area:
-  if( ! get_http_var( 'state', 'w', NULL, true ) ) {
-    switch( $area ) {
-      case 'lieferschein':
-        $state = STATUS_VERTEILT;
-        break;
-      case 'bestellschein':
-        $state = array( STATUS_BESTELLEN, STATUS_LIEFERANT );
-        break;
-      default:
-        $state = FALSE;
-    }
-    $self_fields['state'] = $state;
-  }
+  // auswahl praesentieren, abhaengig von $state oder $window:
+  get_http_var( 'state', 'u', 0, true );
   $result = sql_bestellungen( $state );
   select_bestellung_view($result, 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
   return;

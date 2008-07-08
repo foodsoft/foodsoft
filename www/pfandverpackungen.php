@@ -27,11 +27,17 @@ get_http_var( 'optionen', 'u', 0, true );
 <td>
   <table class='menu'>
     <tr>
-      <td><h4>Optionen</h4></td>
+      <th style='text-align:center;'><h4>Optionen</h4></th>
     </tr>
     <? if( $lieferanten_id) { ?>
       <tr>
-        <td><input type='button' value='Neue Verpackung eintragen' class='bigbutton' onClick="window.open('index.php?window=editVerpackung&lieferanten_id=<? echo $lieferanten_id; ?>','editProdukt','width=500,height=500,left=100,top=100').focus()"></td>
+        <td><? echo fc_button( 'edit_verpackung', "text=Neue Verpackung eintragen,lieferanten_id=$lieferanten_id" ); ?></td>
+      </tr>
+      <tr>
+        <td><? echo fc_button( 'self', "text=Seite aktualisieren" ); ?></td>
+      </tr>
+      <tr>
+        <td><? echo fc_button( 'index', "text=Beenden" ); ?></td>
       </tr>
     <? } ?>
   </table>
@@ -87,12 +93,12 @@ if( $action == 'moveup' ) {
     if( $row['verpackung_id'] == $verpackung_id ) {
       if( ! $prev )
         break;
-      // echo "prev: {$prev['id']}/{$prev['sort_id']}, row: {$row['id']}/{$row['sort_id']}<br>";
+      // echo "prev: {$prev['verpackung_id']}/{$prev['sort_id']}, row: {$row['verpackung_id']}/{$row['sort_id']}<br>";
       $h = $prev['sort_id'];
       sql_update( 'pfandverpackungen', $prev['verpackung_id'], array( 'sort_id' => $row['sort_id'] ) );
       sql_update( 'pfandverpackungen', $row['verpackung_id'], array( 'sort_id' => $h ) );
       // erzwinge neue index-reihenfolge schon beim naechsten SELECT in diesem script:
-      doSql( 'FLUSH TABLES' );
+      // doSql( 'FLUSH TABLES' );
       break;
     }
     $prev = $row;
@@ -142,7 +148,7 @@ if( $bestell_id ) {
 ?>
   <table class='numbers'>
     <tr>
-      <th>Bezeichnung</th>
+      <th>Bezeichnung <? echo $lieferanten_id; ?></th>
       <th>Einzelwert</th>
       <th>MWSt</th>
       <th class='number'>geliefert</th>
@@ -205,15 +211,13 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
         <? printf( "%.2lf" , $row['pfand_voll_brutto_soll'] + $row['pfand_leer_brutto_soll'] ); ?>
       </td>
       <td>
-        <a class='png' href="javascript:f=window.open('index.php?window=editVerpackung&verpackung_id=<? echo $verpackung_id; ?>','editProdukt','width=500,height=450,left=200,top=100');f.focus();"><img src='img/b_edit.png'
-           border='0' alt='Stammdaten ändern' title='Stammdaten ändern'/></a>
-           &nbsp;
-        <? if( $editable ) { ?>
-          <a class='png' href='<? echo self_url() . "&action=moveup&verpackung_id=$verpackung_id"; ?>'>
-            <img style='border:none;' src='img/arrow.up.blue.png' title='Eintrag nach oben schieben'></a>
-          <a class='png' href='<? echo self_url() . "&action=movedown&verpackung_id=$verpackung_id"; ?>'>
-            <img style='border:none;' src='img/arrow.down.blue.png' title='Eintrag nach unten schieben'></a>
-        <? } ?>
+        <?
+          if( $editable ) {
+            echo fc_alink( 'edit_verpackung', "verpackung_id=$verpackung_id" );
+            echo fc_alink( 'self', "action=moveup,verpackung_id=$verpackung_id,text=,img=img/arrow.up.blue.png,title=Eintrag nach oben schieben" );
+            echo fc_alink( 'self', "action=movedown,verpackung_id=$verpackung_id,text=,img=img/arrow.down.blue.png,title=Eintrag nach unten schieben" );
+          }
+        ?>
       </td>
     </tr>
   <?

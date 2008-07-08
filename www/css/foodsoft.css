@@ -225,7 +225,13 @@ table.info td, th {
 	border-top:1px dotted gray;
 }
 	
-a.png { border:none; }
+a {
+  padding:0ex 1ex 0ex 1ex;
+}
+
+.png {
+  border:none;
+}
 
 table.layout, table.layout td, table.inner, table.inner td {
 	border:none;

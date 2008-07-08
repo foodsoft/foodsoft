@@ -237,35 +237,14 @@ if( $action == 'cancel_payment' ) {
     ";
     $mitglieder_summe += $row['mitgliederzahl'];
     if( $row['aktiv'] > 0 ) {
-      echo"
-            <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-              href=\"javascript:neuesfenster('index.php?window=gruppen_mitglieder&gruppen_id=$id','gruppenmitglieder');\">
-             <img src='img/b_browse.png' border='0' title='Personen' alt='Personen'/>
-            </a>
-      ";
+      echo fc_alink( 'gruppenmitglieder', "gruppen_id=$id,title=Personen,img=img/b_browse.png" );
       if( ! $readonly ) {
         if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
-          echo "
-            <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-              href=\"javascript:neuesfenster('index.php?window=showGroupTransaktions&gruppen_id={$row['id']}','kontoblatt');\">
-             <img src='img/chart.png' border='0' title='Kontotransaktionen' alt='Kontotransaktionen'/>
-            </a>
-          ";
+          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,img=img/euro.png" );
         } elseif( $login_gruppen_id == $id ) {
-          ?>
-            <a class='png' style='padding:0pt 1ex 0pt 1ex;'  href='index.php?area=meinkonto'>
-             <img src='img/chart.png' border='0' title='Mein Konto' alt='Mein Konto'/>
-            </a>
-          <?
+          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,img=img/euro.png,meinkonto=1" );
         }
         if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
-          ?>
-       <!-- nicht mehr da, da Formular veraltet ToDo: Gruppennamen hier editierbar machen
-            <a class='png' style='padding:0pt 1ex 0pt 1ex;'
-            href="javascript:window.open('index.php?window=editGroup&gruppen_id=<?// echo $row['id']; ?>','insertGroup','width=390,height=420,left=200,top=100').focus();">
-            <img src='img/b_edit.png' border='0' alt='Gruppendaten ändern' title='Gruppendaten ändern'/></a>
-        -->
-          <?
           if( mysql_num_rows($offene_einzahlungen) > 0 ) {
             ?>
               <table>

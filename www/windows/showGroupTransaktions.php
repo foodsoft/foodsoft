@@ -355,13 +355,9 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
                     );
                   }
                 } else if ( $k_lieferanten_id > 0 ) {
-                    ?> 
-                      Überweisung an Lieferant
-                      <a href="javascript:neuesfenster(
-                          'index.php?window=lieferantenkonto&lieferanten_id=<? echo $k_lieferanten_id; ?>'
-                        , 'lieferantenkonto')"
-                      ><? echo lieferant_name( $k_lieferanten_id ); ?></a>
-                    <?
+                  ?> Überweisung an Lieferant <?
+                  echo fc_alink( 'lieferantenkonto', array(
+                    'img' => false, 'lieferanten_id' => $k_lieferanten_id, 'text' => lieferant_name( $k_lieferanten_id ) ) );
                 } else {
                   ?> <div class='warn'>Keine gültige Transaktion</div> <?
                 }

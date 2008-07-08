@@ -1,7 +1,7 @@
 <?php
 
    assert( $angemeldet ) or exit();
-   nur_fuer_dienst(1,3,4);
+   // nur_fuer_dienst(1,3,4);
 
    $path = array_merge(
      split( ':', getenv("PATH") )
@@ -39,9 +39,9 @@
    // echo "<pre>mysql: $mysql</pre>";
    // echo "<pre>gzip: $gzip</pre>";
 
-   // echo "<div class='warn'>Upload/Download zur Zeit ausser Betrieb!</div>";
-   // exit();
-   
+   echo "<div class='warn'>Das Hochladen im Keller funktioniert zur Zeit leider nicht (wir arbeiten dran...): bitte druckt Euch die Verteillisten aus!</div>";
+   exit();
+
    if( ! $mysqldump ) {
      echo "<div class='warn'>FEHLER: Programm mysqldump nicht gefunden!</div>";
      exit();

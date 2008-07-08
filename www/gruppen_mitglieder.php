@@ -4,9 +4,7 @@
 assert( $angemeldet ) or exit();
 // $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
-need_http_var('gruppen_id','u');
-          //set variables for submit-button
-          $self_fields['gruppen_id'] = $gruppen_id;
+need_http_var('gruppen_id','u', 1);
 
           //predefine all edit modes as false
 	  $edit_names = FALSE;
