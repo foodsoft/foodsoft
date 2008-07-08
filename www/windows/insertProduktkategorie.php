@@ -1,4 +1,6 @@
 <?PHP
+  exit();  // wird zur Zeit nicht benutzt und nicht gepflegt!
+  
   assert( $angemeldet ) or exit();
 	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 	 

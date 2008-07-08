@@ -18,24 +18,14 @@
 			
 			// Wenn keine Fehler, dann einfügen...
 			if ($errStr == "") {
-			
-			   mysql_query("INSERT INTO produktgruppen (name) VALUES ('".mysql_escape_string($newName)."');") or error(__LINE__,__FILE__,"Konnte neues Produktgruppe nicht einfügen.",mysql_error());
-					
+         sql_insert( 'produktgruppen', array( 'name' => $newName ) );
 				 $onload_str = "opener.focus();  if (opener.document.forms['reload_form'].action) opener.document.forms['reload_form'].action.value='reload'; opener.document.forms['reload_form'].submit(); window.close();";
 			}
 	 };
 	 
 ?>
 
-<html>
-<head>
-   <title>neues Produktgruppe einfügen</title>
-   <link rel="stylesheet" type="text/css" media="screen" href="../css/foodsoft.css" />
-</head>
-<body onload="<?PHP echo $onload_str; ?>">
-   
-
-<h3>neue Produktgruppe einfügen</h3>
+<h3>neue Produktgruppe einf&uuml;gen</h3>
 	 <form action="<? echo self_url(); ?>" method='post'>
 		<table class="menu" style="width:240px;">
 		   <tr>
@@ -43,7 +33,7 @@
 					<td><input type="input" size="20" name="newProdukt_name"></td>
 			 </tr>
 			 <tr>
-			    <td colspan="2" align="center"><input type="submit" value="Einfügen"><input type="button" value="Abbrechen" onClick="opener.focus(); window.close();"></td>
+			    <td colspan="2" align="center"><input type="submit" value="Einf&uuml;gen"><input type="button" value="Abbrechen" onClick="if(opener) opener.focus(); window.close();"></td>
 			 </tr>
 		</table>
 	 </form>

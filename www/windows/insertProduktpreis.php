@@ -1,4 +1,5 @@
 <?PHP
+  exit();  // wird zur Zeit nicht benutzt und nicht gepflegt!
   assert( $angemeldet ) or exit();
   nur_fuer_dienst_IV();
   get_http_var('produkt_id','u');

@@ -1,5 +1,7 @@
 <?PHP
    
+  exit(); // skript wird im Moment nicht benutzt und nicht gepflegt!
+   
   assert( $angemeldet ) or exit();
   need( isset( $sockelbetrag ) );  // sollte in leitvariablen definiert sein!
    
