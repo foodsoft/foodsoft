@@ -8,6 +8,7 @@ setWikiHelpTopic( 'foodsoft:buchung_edieren' );
 nur_fuer_dienst_IV();
   // fail_if_readonly();
 $editable = ( $dienst == 4 and ! $readonly );
+$ro_tag = ( $editable ? '' : 'readonly' );
 
 $msg = '';
 $problems = '';

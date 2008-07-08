@@ -1,6 +1,6 @@
 <?PHP
+  exit();  // skript wird im Moment nicht benutzt und nicht gepflegt!
 //   error_reporting(E_ALL);
-	 // Verbindung zur Datenbank herstellen
   assert( $angemeldet ) or exit();
   need_http_var('lieferanten_id','u');
   nur_fuer_dienst_IV();
