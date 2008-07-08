@@ -1434,7 +1434,7 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
     $where .= " $add_and (NOW() BETWEEN bestellstart AND bestellende)";
     $add_and = 'AND';
   }
-  if($state!==FALSE){
+  if( $state ) {
     $add_or = '';
     $where .= " $add_and ( ";
     if(!is_array($state)){
@@ -4270,8 +4270,9 @@ function wikiLink( $topic, $text, $head = false ) {
   global $foodsoftdir;
   echo "
     <a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) . "
-    title='zur Wiki-Seite $topic'
-    href=\"javascript:neuesfenster('$foodsoftdir/../wiki/doku.php?id=$topic','wiki');\">$text</a>
+      title='zur Wiki-Seite $topic'
+      href=\"javascript:neuesfenster('$foodsoftdir/../wiki/doku.php?id=$topic','wiki');\"
+    >$text</a>
   ";
 }
 

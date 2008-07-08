@@ -184,18 +184,19 @@ function show_dienst_gruppe($row, $color_use){
  * Ausgabe der Links im Hauptmenue und im Foodsoft-Kopf
  */
 function areas_in_menu($area){
- ?>
-   <tr>
-       <td><input type="button" value="<? echo $area['title']?>" class="bigbutton" onClick="self.location.href='<? echo $area['area']?>'"></td>
-	<td valign="middle" class="smalfont"><? echo $area['hint']?></td>
-    </tr> 		 
-  <?
+  ?> <tr> <td> <?
+    echo fc_button( $area['area'], array(
+       'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] 
+     ) );
+  ?> </td><td><? echo $area['hint']; ?></td></tr><?
 }
+
 function areas_in_head($area){
-?>
-  <li>
-  <a href="<? echo $area['area']?>" class="first" title="<? echo $area['hint']?>"><? echo $area['title']?></a> </li>
-<?
+  ?> <li> <?
+  echo fc_alink( $area['area'], array(
+    'window_id' => 'main', 'img' => '', 'text' => $area['title'], 'title' => $area['hint'] 
+  ) );
+  ?> </li> <?
 }
 
 function rotationsplanView($row){
@@ -238,12 +239,9 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   ?> <table class='numbers'> <?
 
   $legend = array(
-    "<th><a href='" . self_url('orderby') . "&orderby=produktname'
-      title='Sortieren nach Produkten'>Produkt</a></th>"
-  , "<th><a href='" . self_url('orderby') . "&orderby=bestellung'
-      title='Sortieren nach Bestellung'>Bestellung</a></th>"
-  , "<th><a href='" . self_url('orderby') . "&orderby=datum'
-      title='Sortieren nach Lieferdatum'>Lieferdatum</a></th>"
+    "<th>" . fc_alink( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
+  , "<th>" . fc_alink( 'self', "orderby=bestellung,text=Bestellung,title=Sortieren nach Bestellung" ) ."</th>"
+  , "<th>" . fc_alink( 'self', "orderby=datum,text=Lieferdatum,title=Sortieren nach Lieferdatum" ) ."</th>"
   , "<th colspan='2'>Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
   , "<th title='Wert incl. MWSt. und Pfand'>Wert</th>"
@@ -284,15 +282,18 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 
      $row = array( 
        "<td>{$basar_row['produkt_name']}</td>"
-     , "<td>" . link_bestellschein( $basar_row['gesamtbestellung_id'], $basar_row['bestellung_name'] ) . "</td>"
+     , "<td>" . fc_alink( 'bestellschein', array(
+          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'img' => false
+        ) ) . "</td>"
      , "<td>{$basar_row['lieferung']}</td>"
      , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['endpreis'] ) . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
      , "<td class='mult'><b>$menge</b></td>
         <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
         <td style='border-left-style:none;'>"
-        . link_produktverteilung( $basar_row['gesamtbestellung_id'], $basar_row['produkt_id'], false, 'img/b_browse.png' )
-        . "</td>"
+        . fc_alink( 'produktverteilung', array(
+           'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
+        ) ) . "</td>"
      , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
      , ( $editAmounts ? ( $rechnungsstatus < STATUS_ABGERECHNET ?
          "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
@@ -662,14 +663,7 @@ function products_overview(
     if( $spalten & PR_COL_LPREIS ) {
       echo "<td class='mult'>";
       if($editPrice){
-        echo "<a
-          href=\"javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=$produkt_id&bestell_id=$bestell_id','produktdetails');\"
-          onclick=\"
-            document.getElementById('row$produkt_id').className='modified';
-            document.getElementById('row_total').className='modified';\"
-            title='Preis oder Produktdaten &auml;ndern'
-          >" . sprintf( "%8.2lf", $nettolieferpreis ) . "</a>
-        ";
+        echo fc_alink( 'produktdetails', "img=,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) );
       } else {
         printf( "%8.2lf", $nettolieferpreis );
       }
@@ -749,14 +743,9 @@ function products_overview(
 
       }
       if( ! $gruppen_id ) {
-        echo "
-          <td style='border-left-style:none;'><a class='png' style='padding:0pt 1pt 0pt 1pt;'
-            href=\"javascript:neuesfenster('index.php?window=showBestelltProd&bestell_id=$bestell_id&produkt_id=$produkt_id','produktverteilung')\"
-            title='Details zur Verteilung'
-            ><img src='img/b_browse.png' style='border-style:none;padding:1px 0.5ex 1px 0.5ex;'
-               title='Details zur Verteilung' alt='Details zur Verteilung'
-            ></a></td>
-        ";
+        ?> <td style='border-left-style:none;'> <?
+        echo fc_alink( 'produktverteilung', "bestell_id=$bestell_id,produkt_id=$produkt_id" );
+        ?> </td> <?
       }
     }
     if( $spalten & PR_COL_LIEFERGEBINDE ) {
@@ -887,11 +876,9 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
   while ($row = mysql_fetch_array($result)) {
     $bestell_id = $row['id'];
     $rechnungsstatus = getState( $bestell_id );
-    $detail_url = bestellschein_url( $bestell_id );
-    // $fax_url = "javascript:neuesfenster('$foodsoftdir/index.php?download=bestellt_faxansicht&bestell_id=$bestell_id','bestellfax');";
-    $verteil_url = verteilung_url( $bestell_id );
+    // $fax_url = ?
     $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
-    $edit_link = link_editBestellung( $bestell_id );
+    $edit_link = fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" );
     $aktionen = "";
 
     ?>
@@ -919,11 +906,9 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
     switch( $rechnungsstatus ) {
   
       case STATUS_BESTELLEN:
-        ?>
-          <td>
-            <a href="<? echo $detail_url; ?>">Bestellschein (vorl&auml;ufig)</a>
-          </td>
-        <?
+        ?> <td> <?
+          echo  fc_alink( 'bestellschein', "bestell_id=$bestell_id,img=,text=Bestellschein (vorl&auml;ufig)" );
+        ?> </td> <?
         if( $editDates )
           $aktionen .= "<li>$edit_link</li>";
         if( $changeState ) {
@@ -946,14 +931,12 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         break;
   
       case STATUS_LIEFERANT:
-        ?>
-          <td>
-            <a href="<? echo "$detail_url"; ?>">Bestellschein</a>
-            <? if( $hat_dienst_IV ) { ?>
-              <!-- momentan ausser betrieb! <br><a href="<? echo "$fax_url"; ?>">Bestell-Fax (.pdf)</a> -->
-            <? } ?>
-          </td>
-        <?
+        ?> <td> <?
+          echo  fc_alink( 'bestellschein', "bestell_id=$bestell_id,img=,text=Bestellschein" );
+          // if( $hat_dienst_IV ) {
+          //    fax-download: im Moment ausser Betrieb!
+          // }
+        ?> </td> <?
         if( $editDates )
           $aktionen .= "<li>$edit_link</li>";
         if( $changeState ) {
@@ -981,35 +964,34 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           }
         }
         break;
-  
+
       case STATUS_VERTEILT:
-        ?>
-          <td>
-            <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
-            <?  if( $dienst > 0 ) { ?>
-              <br><a href="<? echo "$verteil_url"; ?>">Verteil-Liste</a>
-            <? } ?>
-          </td>
-        <?
+        ?> <td> <?
+          echo  fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=Lieferschein" );
+          if( $dienst > 0 ) {
+           ?> <br> <?
+            echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,img=" );
+          }
+        ?> </td> <?
         if( $dienst == 4 )
-           $aktionen .= ( "<li>" . link_abrechnung( $bestell_id, 'Abrechnung beginnen...' ) . "</li>" );
+           $aktionen .= ( "<li>" . fc_alink( 'abrechnung', "bestell_id=$bestell_id,text=Abrechnung beginnen..." ) . "</li>" );
         break;
 
       case STATUS_ABGERECHNET:
-        ?>
-          <td>
-            <a href="<? echo "$detail_url"; ?>">Lieferschein</a>
-            <br>
-            <? echo link_abrechnung( $bestell_id ); ?>
-          </td>
-        <?
+        ?> <td> <?
+          echo  fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=Lieferschein" );
+          ?> <br> <?
+          echo  fc_alink( 'abrechnung', "bestell_id=$bestell_id,img=" );
+          if( $dienst > 0 ) {
+           ?> <br> <?
+            echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,img=" );
+          }
+        ?> </td> <?
         break;
 
       case STATUS_ARCHIVIERT:
       default:
-        ?>
-          <td>(keine Details verf&uuml;gbar)</td>
-        <?
+        ?> <td>(keine Details verf&uuml;gbar)</td> <?
         break;
     }
     if( $changeState || $editDates ) {
@@ -1092,7 +1074,8 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
             <?
               echo $row['name']; 
               if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
-                ?> <br> <b>Vorsicht:</b> <a href=index.php?area=dienstplan>Dienstegruppen abwesend?</a> <?
+                ?> <br> <b>Vorsicht:</b> <?
+                echo fc_alink( 'dienstplan', 'text=Dienstegruppen abwesend?' );
               }
             ?>
           </td>
@@ -1143,15 +1126,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
     ?>
       <tr>
         <th>Status:</th>
-        <td>
-          <?
-            $status = $row['rechnungsstatus'];
-            echo rechnung_status_string( $status );
-            if( $status == STATUS_ABGERECHNET ) {
-              abrechnung_kurzinfo( $bestell_id );
-            }
-          ?>
-        </td>
+        <td> <?  abrechnung_kurzinfo( $bestell_id ); ?> </td>
       </tr>
     </table>
   <?
@@ -1159,9 +1134,14 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
 
 function abrechnung_kurzinfo( $bestell_id ) {
   $row = sql_bestellung( $bestell_id );
-  need( $row['rechnungsstatus'] == STATUS_ABGERECHNET, "Bestellung nicht abgerechnet" );
-  echo link_abrechnung( $bestell_id,
-    "<div style='padding-top:1ex;padding-left:1ex;'>
+  $status = $row['rechnungsstatus'];
+  if( $status < STATUS_VERTEILT ) {
+    echo rechnung_status_string( $status );
+    return;
+  }
+  if( $status == STATUS_ABGERECHNET ) {
+    $text = "abgerechnet
+     <div style='padding-top:1ex;padding-left:1ex;'>
      <table class='inner' width='100%' style='color:#ed0000;'>
       <tr>
         <td class='small'>Rechnungsnummer:</td>
@@ -1176,8 +1156,11 @@ function abrechnung_kurzinfo( $bestell_id ) {
         <td style='text-align:right;' class='small'>". dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ) ."</td>
       </tr>
     </table>
-    </div>"
-  );
+    </div>";
+  } else {
+    $text = rechnung_status_string( $status );
+  }
+  echo fc_alink( 'abrechnung', array( 'bestell_id' => $bestell_id, 'img' => false , 'text' => $text ) );
 }
 
 function formular_buchung_gruppe_bank(
@@ -1746,14 +1729,14 @@ function auswahl_lieferant( $selected = 0 ) {
     } else {
       echo "<tr>";
     }
-    echo "
-      <td><a class='tabelle'
-             href='" . self_url('lieferanten_id') . "&lieferanten_id={$row['id']}'>{$row['name']}</a>
+    ?> <td> <?
+      echo fc_alink( 'self', array( 'lieferanten_id' => $row['id'], 'text' => $row['name'] ) );
+    ?>
       </td>
-      <td>{$row['anzahl_produkte']}</td>
-      <td>{$row['anzahl_pfandverpackungen']}</td>
+      <td><? echo $row['anzahl_produkte']; ?></td>
+      <td><? echo $row['anzahl_pfandverpackungen']; ?></td>
       </tr>
-    ";
+    <?
   }
   ?> </table> <?
 }
