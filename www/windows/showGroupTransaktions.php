@@ -19,7 +19,7 @@ assert($angemeldet) or exit();
   return 0;
  }
 
-$meinkonto = ( $area == 'meinkonto' );
+get_http_var( 'meinkonto', 'u', 0 );
 $muell_id = sql_muell_id();
 
 if( $meinkonto ) {
@@ -35,6 +35,7 @@ if( $meinkonto ) {
     <span class='button'
       onclick="document.getElementById('transaction_form').style.display='block';
                document.getElementById('transaction_button').style.display='none';"
+      title="Hier kÃ¶nnt Ihr eintragen, dass Ihr Geld Ã¼berwiesen habt, und dann gleich damit bestellen!"
       >Ãœberweisung eintragen...</span>
     </div>
 
@@ -218,11 +219,12 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
     //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
     if( compare_date($konto_row, $vert_row)==1 ){
       //Eintrag in Konto ist Älter -> Verteil ausgeben
-      $details_url = "index.php?window=bestellschein"
-      . "&gruppen_id=$gruppen_id"
-      . "&bestell_id={$vert_row['gesamtbestellung_id']}"
-      . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS
-                        | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+      $details_link = fc_alink( 'lieferschein', array(
+        'img' => false, 'text' => $vert_row['name'], 'title' => 'zum Lieferschein...'
+      , 'bestell_id' => $vert_row['gesamtbestellung_id']
+      , 'gruppen_id' => $gruppen_id
+      , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME )
+      ) );
       $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
       $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
       $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
@@ -234,10 +236,7 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
         <td valign='top'><b>Bestellung</b></td>
         <td><? echo $vert_row['valuta_trad']; ?></td>
         <td><? echo $vert_row['lieferdatum_trad']; ?></td>
-        <td>Bestellung: <a
-          href="javascript:neuesfenster('<? echo $details_url; ?>','bestellschein');"
-          ><? echo $vert_row['name']; ?></a>
-        </td>
+        <td>Bestellung: <? echo $details_link; ?></td>
         <td class='number'>
           <?
             if( abs( $pfand_voll_soll ) > 0.005 ) {
@@ -303,11 +302,11 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
                 $konto_id = $bank_row['konto_id'];
                 $auszug_nr = $bank_row['kontoauszug_nr'];
                 $auszug_jahr = $bank_row['kontoauszug_jahr'];
-                echo "<a href=\"javascript:neuesfenster(
-                      'index.php?window=konto&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
-                      ,'konto'
-                    );\">$auszug_jahr / $auszug_nr ({$bank_row['kontoname']})</a>
-                  ";
+                echo fc_alink( 'kontoauszug', array(
+                  'img' => false, 'text' => "$auszug_jahr / $auszug_nr ({$bank_row['kontoname']})"
+                , 'title' => 'zum Kontoauszug...'
+                , 'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr
+                ) );
               } else if( $k_id == 0 ) { // bank-transaktion, noch unvollstaendig!
                 if( $meinkonto ) {
                   ?> <div class='alert'>noch nich verbucht</div> <?

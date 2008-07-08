@@ -138,8 +138,7 @@ if( $editable ) {
   while( $konto_row or $vert_row ) {
     if( compare_date($konto_row, $vert_row) == 1 ) {
       //Eintrag in Konto ist Älter -> Verteil ausgeben
-      $details_url = "index.php?window=abrechnung"
-          . "&bestell_id={$vert_row['gesamtbestellung_id']}";
+      $bestell_id = $vert_row['gesamtbestellung_id'];
 //              . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS
 //                                | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
       $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
@@ -153,9 +152,11 @@ if( $editable ) {
         <td style='vertical-align:top;font-weight:bold;'>Bestellung</td>
         <td><? echo $vert_row['valuta_trad']; ?></td>
         <td><? echo $vert_row['lieferdatum_trad']; ?></td>
-        <td>Bestellung: <a
-            href="javascript:neuesfenster('<? echo $details_url; ?>','abrechnung');"
-            ><? echo $vert_row['name']; ?></a>
+        <td>Bestellung:
+          <? echo fc_alink( 'lieferschein', array(
+             'img' => false, 'bestell_id' => $bestell_id, 'text' => $vert_row['name']
+             , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME )
+          ) ); ?>
         </td>
         <td class='number'>
           <? printf("%.2lf", $pfand_soll ); ?>
@@ -195,7 +196,11 @@ if( $editable ) {
         <td><? echo $konto_row['valuta_trad']; ?></td>
         <td><? echo $konto_row['date']; ?></td>
         <td>
-          <div><? echo $konto_row['notiz']; ?></div>
+          <div>
+            <? echo fc_alink( 'edit_buchung', array(
+              'img' => false, 'transaktion_id' => $konto_row['id'], 'text' => $konto_row['notiz'] ) );
+            ?>
+          </div>
           <div>
             <?
             $k_id = $konto_row['konterbuchung_id'];
@@ -204,19 +209,14 @@ if( $editable ) {
               $konto_id = $k_row['konto_id'];
               $auszug_nr = $k_row['kontoauszug_nr'];
               $auszug_jahr = $k_row['kontoauszug_jahr'];
-              echo "Auszug: <a href=\"javascript:neuesfenster(
-                 'index.php?window=konto&konto_id=$konto_id&auszug_jahr=$auszug_jahr&auszug_nr=$auszug_nr'
-                ,'konto'
-                );\">$auszug_jahr / $auszug_nr ({$k_row['kontoname']})</a>
-              ";
+              echo "Auszug: " . fc_alink( 'kontoauszug', array(
+                'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr
+              , 'img' => false, 'text' => "$auszug_jahr / $auszug_nr ({$k_row['kontoname']})" ) );
             } else {  // zahlung durch gruppe
               $gruppen_id = $k_row['gruppen_id'];
               $gruppen_name = sql_gruppenname($gruppen_id);
-              echo "Zahlung durch Gruppe: <a href=\"javascript:neuesfenster(
-              'index.php?window=showGroupTransaktions&gruppen_id=$gruppen_id'
-              , 'kontoblatt'
-              );\">$gruppen_name</a>
-              ";
+              echo "Zahlung durch Gruppe: " . fc_alink( 'gruppenkonto', array(
+                'img' => false, 'gruppen_id' => $gruppen_id, 'text' => $gruppen_name ) );
             }
             ?>
           </div>

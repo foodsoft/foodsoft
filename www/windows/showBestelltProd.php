@@ -20,11 +20,6 @@ if( $status != STATUS_VERTEILT ) {
 }
 $editAmounts or $action = '';
 
-// TODO: wird bisher von nirgendwo ausgeloest, wird das gebraucht?
-// if( $action == 'zuteilung_loeschen' ) {
-//   need_http_var( 'zuteilung_id' );
-//   sql_delete_bestellzuordnung($zuteilungs_id);
-// }
 
 // daten zum bestellvorschlag ermitteln:
 //
@@ -42,26 +37,22 @@ $gruppen = sql_beteiligte_bestellgruppen($bestell_id, $produkt_id);
   <table class='liste' style='margin-bottom:2em;'>
     <tr>
       <th>Bestellung:</th>
-      <td><a
-         href="javascript:neuesfenster('index.php?window=bestellschein&bestell_id=<? echo $bestell_id; ?>','bestellschein')"
-             title='zum Lieferschein...'><? echo $vorschlag['name']; ?></a>
-      </td>
-    </tr>
-    <tr>
-      <th>Status:</th>
       <td>
-        <?
-          echo rechnung_status_string( $status );
-          if( $status == STATUS_ABGERECHNET )
-            abrechnung_kurzinfo( $bestell_id );
-        ?>
+        <? echo fc_alink( 'lieferschein', array(
+          'img' => false, 'bestell_id' => $bestell_id, 'title' => 'zum Lieferschein...', 'text' => $vorschlag['name'] ) ); ?>
       </td>
     </tr>
     <tr>
       <th>Produkt:</th>
       <td>
-        <a href="javascript:neuesfenster('index.php?window=terraabgleich&produkt_id=<? echo $produkt_id; ?>','produktdetails');"
-          title='zu den Produktdetails...' ><? echo $vorschlag['produkt_name']; ?></a>
+        <? echo fc_alink( 'produktdetails', array(
+          'img' => false, 'produkt_id' => $produkt_id, 'title' => 'zum den Produktdetails...', 'text' => $vorschlag['produkt_name'] ) ); ?>
+      </td>
+    </tr>
+    <tr>
+      <th>Status:</th>
+      <td>
+        <? abrechnung_kurzinfo( $bestell_id ); ?>
       </td>
     </tr>
   </table>
@@ -81,9 +72,14 @@ if( $editAmounts ) {
       <td class='unit'>/ <? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></td>
       <td class='number'><? printf( "%.2lf", $vorschlag['preis'] * $vorschlag['liefermenge'] ); ?></td>
     </tr>
+    <tr class="legende">
+       <th>Gruppe</th>
+       <th colspan='2'>bestellt (toleranz)</th>
+       <th colspan='2'>geliefert</th>
+       <th colspan='2'>Einzelpreis</th>
+       <th>Gesamtpreis</th>
+    </tr>
 <?
-
-distribution_tabellenkopf( 'Gruppe' );
 
 $muellmenge = 0;
 $verteilt = 0;
@@ -181,8 +177,7 @@ $basar = $vorschlag['liefermenge'] - $verteilt - $muellmenge;
 
 ?>
   <tr class='summe'>
-    <td><a href="javascript:neuesfenster('index.php?window=basar','basar');"
-      title='Basar anzeigen...'>Basar:</a></td>
+    <td><? echo fc_alink( 'basar', 'text=Basar:,title=Basar anzeigen...' ); ?></td>
     <td class='mult'><? printf( '%d', $basar_festmenge * $vorschlag['kan_verteilmult'] ); ?>
        (<? printf( '%d', $basar_toleranzmenge * $vorschlag['kan_verteilmult'] ); ?>)</td>
     <td class='unit'><? echo $vorschlag['kan_verteileinheit'] ?></td>
