@@ -23,16 +23,16 @@ function rubrik( $name ) {
 }
 function posten( $name, $wert ) {
   global $erster_posten, $seitensumme;
-  $wert += 0.00499;
-  $class = ( $wert < 0 ? 'rednumber' : 'number' );
+  $rounded = sprintf( "%.2lf", $wert );
+  $class = ( $rounded < 0 ? 'rednumber' : 'number' );
   printf( "
     <tr class='%s'>
       <td>%s:</td>
-      <td class='$class'>%.2lf</td>
+      <td class='$class'>%s</td>
     </tr>
     "
   , $erster_posten ? 'ersterposten' : 'posten'
-  , $name, $wert
+  , $name, $rounded
   );
   $erster_posten = 0;
   $seitensumme += $wert;
