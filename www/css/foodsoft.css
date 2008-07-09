@@ -381,6 +381,10 @@ th.alert, td.alert, div.alert, span.alert {
   padding-bottom:2px;
 }
 
+table.alert, table.alert td {
+  border:none;
+}
+
 th.ok, td.ok, div.ok, span.ok {
   background-color:#ccffcc;
   color:#000000;

@@ -225,7 +225,7 @@ function fc_window( $name ) {
       $parameters['img'] = 'img/b_browse.png';
       $parameters['title'] = 'Details zur Verteilung des Produkts...';
       $options = array_merge(
-        $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '680', 'menubar' => 'no','height' => '640' ) );
+        $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '840', 'menubar' => 'no','height' => '640' ) );
       break;
     case 'verluste':
       $parameters['window'] = 'verluste';
@@ -239,7 +239,7 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'verteilliste';
       $parameters['text'] = 'Verteilliste';
       $parameters['title'] = 'zur Verteilliste...';
-      $options = array_merge( $large_window_options, array( 'width' => '900' ) );
+      $options = array_merge( $large_window_options, array( 'width' => '840' ) );
       break;
     //
     // "kleine" Fenster:

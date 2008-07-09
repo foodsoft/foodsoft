@@ -49,7 +49,7 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   ?> <tr> <td colspan='6'>&nbsp;</td></tr> <?
 }
 
-if( ! $ro_tag ) {
+if( 0 ) {
   ?>
   <tr style='border:none'>
     <td colspan='6' style='border:none;'>
@@ -63,7 +63,8 @@ if( ! $ro_tag ) {
 ?> </table> <?
 
 if( ! $ro_tag ) {
-  ?> <form action="<? echo self_url(); ?>" method="post"><?
+  floating_submission_button( 'reminder' );
+  ?> </form> <?
   echo self_post();
 }
 

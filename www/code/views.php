@@ -60,6 +60,29 @@ function time_selector($stunde_feld, $stunde, $minute_feld, $minute){
     number_selector($minute_feld,0, 59, $minute,"%02d");
 }
 
+function floating_submission_button( $id ) {
+  ?>
+  <span id='<? echo $id; ?>' style='display:none;position:fixed;top:20px;left:20px;padding:1ex;z-index:999;' class='alert'>
+    <div style='margin:0.5ex;'>
+      <table class='alert'>
+        <tr>
+          <td class='alert'>
+            <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("<? echo $id; ?>").style.display = "none";'>
+          </td>
+          <td style='text-align:center' class='alert'> &Auml;nderungen sind noch nicht gespeichert! </td>
+        </tr>
+        <tr>
+          <td colspan='2' style='text-align:center;' class='alert'>
+            <input type='submit' class='bigbutton' value='Speichern'>
+            <input type='reset' class="bigbutton" value='Zur&uuml;cksetzen'
+              onClick='document.getElementById("<? echo $id; ?>").style.display = "none";'>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </span>
+  <?
+}
 
 /**
  *  Zeigt einen Dienst und die möglichen Aktionen
@@ -1019,7 +1042,7 @@ function select_products_not_in_list($bestell_id){
 
 function distribution_tabellenkopf() {
   ?>
-    <table class='numbers' width='700'>
+    <table class='numbers' width='800'>
     <tr class="legende">
        <th>Gruppe</th>
        <th colspan='2'>bestellt (toleranz)</th>
@@ -1072,7 +1095,11 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
                 $liefermenge = $liefermenge_form;
               }
             }
-            printf( "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'>", $liefermenge );
+            printf(
+              "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'
+               onchange=\"document.getElementById('reminder').style.display = 'inline';\">"
+            , $liefermenge
+            );
           } else {
             printf( "%d", $liefermenge );
           }
@@ -1124,7 +1151,11 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
           $verteilmenge = $menge_form;
         }
       }
-      printf( "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'>", $verteilmenge );
+      printf(
+        "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'
+         onchange=\"document.getElementById('reminder').style.display = 'inline';\">"
+      , $verteilmenge
+      );
     } else {
       printf( "%d", $verteilmenge );
     }
@@ -1150,7 +1181,11 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
               $muellmenge = $menge_form;
             }
           }
-          printf( "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'>", $muellmenge );
+          printf(
+            "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'
+             onchange=\"document.getElementById('reminder').style.display = 'inline';\">"
+          , $muellmenge
+          );
         } else {
           printf( "%d", $muellmenge );
         }
