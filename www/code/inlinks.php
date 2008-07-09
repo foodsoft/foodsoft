@@ -220,8 +220,8 @@ function fc_window( $name ) {
       $options = $large_window_options;
       break;
     case 'produktverteilung':
-      $parameters['window'] = 'showBestelltProd';
-      $parameters['window_id'] = 'produktverteilung';
+      $parameters['window'] = 'verteilung';
+      $parameters['window_id'] = 'verteilliste';
       $parameters['img'] = 'img/b_browse.png';
       $parameters['title'] = 'Details zur Verteilung des Produkts...';
       $options = array_merge(

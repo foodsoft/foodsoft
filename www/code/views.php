@@ -341,13 +341,13 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
       <tr style='border:none'>
         <td colspan='<? echo $cols; ?>' style='border:none;padding-top:1ex;text-align:right;'>
           <select name='gruppe'>
-            <option value='' selected>(Gruppe w&auml;hlen)</option>
             <? echo optionen_gruppen( false, false, false, false, false, array($muell_id) ); ?>
           </select>
           <input type='submit' value='Zuteilen' style='margin-left:2em;'>
         </td>
       </tr>
       </table>
+      <? echo "<input type='hidden' name='fieldcount' value='$fieldcount'>"; ?>
       </form>
     <?
   } else {
@@ -1017,43 +1017,161 @@ function select_products_not_in_list($bestell_id){
   ?> </select> <?
 }
 
-function distribution_tabellenkopf($name){
+function distribution_tabellenkopf() {
   ?>
+    <table class='numbers' width='700'>
     <tr class="legende">
-       <th><?echo $name?></th>
+       <th>Gruppe</th>
        <th colspan='2'>bestellt (toleranz)</th>
        <th colspan='2'>geliefert</th>
        <th>Gesamtpreis</th>
     </tr>
- 
   <?
 }
-function distribution_view($gruppen_id, $festmenge, $toleranz, $verteilmenge, $verteilmult, $verteileinheit, $preis
-  , $inputbox_name = false, $summenzeile = false ){
-  $gruppe = sql_gruppendaten( $gruppen_id );
-  if( $summenzeile )
-    echo "<tr class='summe'>";
-  else
-    echo "<tr>";
-  echo "
-      <td>{$gruppe['gruppennummer']} {$gruppe['name']}</td>
-      <td class='mult'><b>" . $festmenge * $verteilmult . " </b> (" . $toleranz * $verteilmult . ")</td>
-      <td class='unit'>$verteileinheit</td>
-      <td class='mult'>
-  ";
-  if($inputbox_name===false){
-      echo $verteilmenge * $verteilmult;
-  }else{
-      echo "<input name='$inputbox_name' type='text' size='5' style='text-align:right;'
-            value='" . $verteilmenge * $verteilmult . "' />";
-  }
-  echo "
-      </td>
-      <td class='unit'>$verteileinheit</td> 
-      <td class='number'>" . sprintf( "%8.2lf", $verteilmenge * $preis ) . " </td>
-    </tr>
-  ";
+
+function distribution_produktdaten( $bestell_id, $produkt_id ) {
+  $produkt = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
+  ?>
+  <tr><th colspan='6'>
+    <div style='font-size:1.2em; margin:5px;'>
+       <? echo fc_alink( 'produktpreise', array(
+         'text' => $produkt['produkt_name'], 'img' => '', 'produkt_id' => $produkt_id ) ); ?>
+    </div>
+     <div style='font-size:0.8em'>
+       <? printf( "Preis: %.2lf / %s, Produktgruppe: %s"
+         , $produkt['preis']
+         , $produkt['verteileinheit']
+         , $produkt['produktgruppen_name']
+         );
+       ?>
+    </div>
+  </th></tr>
+  <?
 }
+
+function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
+  $vorschlag = sql_bestellvorschlag_daten($bestell_id,$produkt_id);
+  preisdatenSetzen( & $vorschlag );
+  $verteilmult = $vorschlag['kan_verteilmult'];
+  $verteileinheit = $vorschlag['kan_verteileinheit'];
+  $preis = $vorschlag['preis'];
+
+  ?>
+    <tr class='summe'>
+      <th colspan='3' style='text-align:left;'>Liefermenge:</th>
+      <th class='mult'>
+        <?
+          $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
+          if( $editable ) {
+            $feldname = "liefermenge_{$bestell_id}_{$produkt_id}";
+            global $$feldname;
+            if( get_http_var( $feldname, 'f' ) ) {
+              $liefermenge_form = $$feldname;
+              if( $liefermenge != $liefermenge_form ) {
+                changeLiefermengen_sql( $liefermenge_form / $verteilmult, $produkt_id, $bestell_id );
+                $liefermenge = $liefermenge_form;
+              }
+            }
+            printf( "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'>", $liefermenge );
+          } else {
+            printf( "%d", $liefermenge );
+          }
+        ?>
+      </th>
+      <th class='unit'>
+        <? echo $verteileinheit; ?>
+      </th>
+      <th class='number'><? printf( "%.2lf", $preis * $liefermenge / $verteilmult ); ?></td>
+    </tr>
+  <?
+
+  $basar_id = sql_basar_id();
+  $muell_id = sql_muell_id();
+  $basar_festmenge = 0;
+  $basar_toleranzmenge = 0;
+  $muellmenge = 0;
+
+  $gruppen = sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id );
+  while( $gruppe = mysql_fetch_array( $gruppen ) ) {
+    $gruppen_id = $gruppe['id'];
+    $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ) );
+    $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
+    $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
+    $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+    switch( $gruppen_id ) {
+      case $muell_id:
+        $muellmenge = $mengen['muellmenge'] * $verteilmult;
+        continue 2;
+      case $basar_id;
+        $basar_toleranzmenge = $toleranzmenge;
+        $basar_festmenge = $festmenge;
+        continue 2;
+    }
+    ?>
+      <tr>
+        <td><? echo "{$gruppe['gruppennummer']} {$gruppe['name']}"; ?></td>
+        <td class='mult'><? printf( "%d (%d)", $festmenge, $toleranzmenge ); ?></td>
+        <td class='unit'><? echo $verteileinheit ?></td>
+        <td class='mult'>
+    <?
+    if( $editable ) {
+      $feldname = "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}";
+      global $$feldname;
+      if( get_http_var( $feldname, 'f' ) ) {
+        $menge_form = $$feldname;
+        if( $verteilmenge != $menge_form ) {
+          changeVerteilmengen_sql( $menge_form / $verteilmult, $gruppen_id, $produkt_id, $bestell_id );
+          $verteilmenge = $menge_form;
+        }
+      }
+      printf( "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'>", $verteilmenge );
+    } else {
+      printf( "%d", $verteilmenge );
+    }
+    ?>
+      </td>
+      <td class='unit'><? echo $verteileinheit ?></td>
+      <td class='number'><? printf( "%.2lf", $preis * $verteilmenge / $verteilmult ); ?></td>
+      </tr>
+    <?
+  }
+  ?>
+    <tr class='summe'>
+      <td colspan='3'>M&uuml;ll:</td>
+      <td class='mult'>
+      <?
+        if( $editable ) {
+          $feldname = "menge_{$bestell_id}_{$produkt_id}_{$muell_id}";
+          global $$feldname;
+          if( get_http_var( $feldname, 'f' ) ) {
+            $menge_form = $$feldname;
+            if( $muellmenge != $menge_form ) {
+              changeVerteilmengen_sql( $menge_form / $verteilmult, $muell_id, $produkt_id, $bestell_id );
+              $muellmenge = $menge_form;
+            }
+          }
+          printf( "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'>", $muellmenge );
+        } else {
+          printf( "%d", $muellmenge );
+        }
+      ?>
+      </td>
+      <td class='unit'><? echo $verteileinheit ?></td>
+      <td class='number'><? printf( "%.2lf", $preis * $muellmenge / $verteilmult ); ?></td>
+    </tr>
+    <tr class='summe'>
+      <td colspan='1'>Basar:</td>
+      <td class='mult'>
+        <? printf( "%d (%d)", $basar_festmenge, $basar_toleranzmenge ); ?>
+      </td>
+      <td class='unit'><? echo $verteileinheit ?></td>
+      <td class='mult'><? echo $basarmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult; ?></td>
+      <td class='unit'><? echo $verteileinheit ?></td>
+      <td class='number'><? printf( "%.2lf", $preis * $basarmenge / $verteilmult ); ?></td>
+    </tr>
+  <?
+}
+
 
 function sum_row($sum){
   ?>
@@ -1072,7 +1190,10 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
         <th> Bestellung: </th>
           <td style="font-size:1.2em;font-weight:bold">
             <?
-              echo $row['name']; 
+              echo fc_alink( 'lieferschein', array(
+                'img' => false, 'text' => $row['name'], 'bestell_id' => $row['id']
+                , 'title' => 'zum Bestellschein/Lieferschein...'
+              ) );
               if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
                 ?> <br> <b>Vorsicht:</b> <?
                 echo fc_alink( 'dienstplan', 'text=Dienstegruppen abwesend?' );
@@ -1553,20 +1674,6 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
       </fieldset>
     </div>
   <?
-}
-
-function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) {
-  $s = "<div class='<? echo $class; ?>' style='white-space:nowrap;padding:0.1ex 1ex 0.1ex 1ex;'>
-      <form style='margin:0ex;padding:0ex;' method='post' action='" . self_url() . "'>" . self_post();
-  foreach( $fields as $name => $value )
-     $s .= "<input type='hidden' name='$name' value='$value'>";
-  $s .= "<input style='padding:0ex;margin:0ex;' type='submit' name='submit' value='$label'";
-  if( $mod_id )
-    $s .= " onclick=\"document.getElementById('$mod_id').className='modified';\"";
-  if( $title )
-    $s .= " title='$title'";
-  $s  .= "></form></div>";
-  return $s;
 }
 
 // preishistorie_view:

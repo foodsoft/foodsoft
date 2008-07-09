@@ -1526,6 +1526,7 @@ function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
       SELECT *
                , produktpreise.id as preis_id
                , produkte.name as produkt_name
+               , produktgruppen.name as produktgruppen_name
                , gesamtbestellungen.name as name
       FROM gesamtbestellungen
       INNER JOIN bestellvorschlaege
@@ -1534,6 +1535,8 @@ function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
               ON produkte.id=bestellvorschlaege.produkt_id
       INNER JOIN produktpreise
               ON produktpreise.id=bestellvorschlaege.produktpreise_id
+      INNER JOIN produktgruppen
+              ON produktgruppen.id=produkte.produktgruppen_id
       WHERE     gesamtbestellungen.id='$bestell_id'
             AND bestellvorschlaege.produkt_id='$produkt_id'
   " );
