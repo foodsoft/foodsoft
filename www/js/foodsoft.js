@@ -3,13 +3,6 @@
 // copyright Fc Schinke09 2006 
 
 
-function deleteLieferant(lieferantID) {
-  if (confirm('Soll der Lieferant wirklich GELÖSCHT werden?')) { 
-    document.forms['reload_form'].action.value="delete";
-    document.forms['reload_form'].lieferanten_id.value=lieferantID;
-    document.forms['reload_form'].submit();
- }
-}
 function deleteProdukt(produktID)
 {
     if (confirm('Soll das Produkt wirklich GELÖSCHT werden?')) { 

@@ -70,11 +70,11 @@ while ($row = mysql_fetch_array($result)) {
     if( $editable ) {
       echo fc_alink( 'edit_lieferant', "lieferanten_id=$lieferanten_id" );
       if( abs($kontostand) < 0.005 ) {
-        echo "
-          <a class='png' style='padding:0pt 1ex 0pt 1ex;' href=\"javascript:deleteLieferant({$row['id']});\">
-            <img src='img/b_drop.png' border='0' alt='Lieferanten l&ouml;schen' title='Lieferanten l&ouml;schen' />
-          </a>
-        ";
+        echo fc_action( array(
+          'img' => 'img/b_drop.png', 'title' => 'Lieferanten l&ouml;schen'
+        , 'confirm' => 'Soll der Lieferant wirklich GEL&Ouml;SCHT werden?'
+        , 'action' => 'delete', 'lieferanten_id' => $lieferanten_id
+        ) );
       }
     } else {
       echo fc_alink( 'edit_lieferant', "lieferanten_id=$lieferanten_id,ro=1,img=img/birne_rot.png" );

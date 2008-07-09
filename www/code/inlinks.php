@@ -387,6 +387,20 @@ function buttonlink( $url, $text, $title = '' ) {
   return "<input type='button' value='$text' class='bigbutton' $title onclick=\"$url\">";
 }
 
+function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) {
+  $s = "<div class='<? echo $class; ?>' style='white-space:nowrap;padding:0.1ex 1ex 0.1ex 1ex;'>
+      <form style='margin:0ex;padding:0ex;' method='post' action='" . self_url() . "'>" . self_post();
+  foreach( $fields as $name => $value )
+     $s .= "<input type='hidden' name='$name' value='$value'>";
+  $s .= "<input style='padding:0ex;margin:0ex;' type='submit' name='submit' value='$label'";
+  if( $mod_id )
+    $s .= " onclick=\"document.getElementById('$mod_id').className='modified';\"";
+  if( $title )
+    $s .= " title='$title'";
+  $s  .= "></form></div>";
+  return $s;
+}
+
 
 function fc_alink( $name, $parameters = array(), $options = array() ) {
   $window = fc_window( $name );
@@ -412,6 +426,50 @@ function fc_button( $name, $parameters = array(), $options = array() ) {
   $text = adefault( $window['parameters'], 'text', '' );
   $text = adefault( $parameters, 'text', $text );
   return buttonlink( $url, $text, $title );
+}
+
+$action_form_id = 0;
+function fc_action( $parameters = array() ) {
+  global $action_form_id;
+  $action_form_id++;
+  $class = '';
+  $title = '';
+  $text = '';
+  $img = '';
+  $confirm = '';
+  $l = "<form style='display:inline;' method='post' id='action_form_$action_form_id' action='" .self_url(). "'>" . self_post();
+  foreach( $parameters as $name => $value ) {
+    switch( $name ) {
+      case 'title':
+      case 'text':
+      case 'img':
+      case 'class':
+      case 'confirm':
+        $$name = $value;
+        continue 2;
+      default:
+        $l .= "<input type='hidden' name='$name' value='$value'>";
+    }
+  }
+  $alt = '';
+  if( $title ) {
+    $alt = "alt='$title'";
+    $title = "title='$title'";
+  }
+  $l .= "<a class='$class' href='#' $title onclick=\"";
+  if( $confirm ) {
+    $l .= "if( confirm( '$confirm' ) ) ";
+  }
+  $l .= "document.forms['action_form_$action_form_id'].submit();\" ";
+  $l .= '>';
+  if( $img ) {
+    $l .= "<img src='$img' class='png' $alt $title />";
+    $img = ' ';
+  }
+  if( $text )
+    $l .= "$img$text";
+  $l .= "</a></form>";
+  return $l;
 }
 
 function fc_openwindow( $name, $parameters = array(), $options = array() ) {
