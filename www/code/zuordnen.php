@@ -1335,7 +1335,7 @@ function references_lieferant( $lieferanten_id ) {
 
 function delete_lieferant( $lieferanten_id ) {
   $name = lieferant_name( $lieferanten_id );
-  need( references_lieferant == 0, 'Bestellungen vorhanden: Lieferant $name kann nicht gelöpscht werden!' );
+  need( references_lieferant( $lieferanten_id ) == 0, 'Bestellungen vorhanden: Lieferant $name kann nicht gelöpscht werden!' );
   need( abs( lieferantenkontostand( $lieferanten_id )) < 0.01
     , 'Lieferantenkonto nicht ausgeglichen: Lieferant $name kann nicht gelöpscht werden!' );
   doSql(
@@ -1522,8 +1522,9 @@ function sql_insert_bestellvorschlaege(
 }
 
 function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
-	  $query=
-    " SELECT * , produktpreise.id as preis_id
+  return sql_select_single_row( "
+      SELECT *
+               , produktpreise.id as preis_id
                , produkte.name as produkt_name
                , gesamtbestellungen.name as name
       FROM gesamtbestellungen
@@ -1535,9 +1536,7 @@ function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
               ON produktpreise.id=bestellvorschlaege.produktpreise_id
       WHERE     gesamtbestellungen.id='$bestell_id'
             AND bestellvorschlaege.produkt_id='$produkt_id'
-	    ";
-    $result= doSql($query, LEVEL_ALL, "Suche in gesamtbestellungen,bestellvorschlaege fehlgeschlagen");
-    return mysql_fetch_array($result)  ;
+  " );
 }
 
 function sql_bestellpreis($bestell_id, $produkt_id){
@@ -1560,8 +1559,8 @@ function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
 //
 ////////////////////////////////////
 
-
 function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
+  $basar_id = sql_basar_id();
 	$query = "
     SELECT  *, bestellzuordnung.id as bestellzuordnung_id
     FROM gruppenbestellungen
@@ -1579,7 +1578,7 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
   if($sortByDate){
     $query = $query." ORDER BY bestellzuordnung.zeitpunkt;";
   }else{
-    $query = $query." ORDER BY gruppenbestellung_id, art;";
+    $query = $query." ORDER BY IF(bestellguppen_id=$basar_id,1,0), gruppenbestellung_id, art;";
   }
   return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 }
@@ -2146,10 +2145,8 @@ function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
 ////////////////////////////////////
 
 
-/**
- * transaktionsart: 0 : normal
- *                  1 : pfand
- */
+// TODO: transaktionsart: zur Klassifikation der Gruppe-13-Transaktionen benutzen!
+//
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
   $notiz ="",
