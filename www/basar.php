@@ -14,6 +14,7 @@ get_http_var( 'action','w','' );
 $editable or $action = '';
 
 if( $action == 'basarzuteilung' ) {
+  need_http_var('fieldcount','u' );
   need_http_var('gruppe','u', false );
   need( $gruppe > 0, "Keine aktive Bestellgruppe ausgewaehlt!" );
   if( $gruppe != sql_muell_id() ) {
@@ -21,32 +22,33 @@ if( $action == 'basarzuteilung' ) {
     need( $gruppendaten['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );
   }
 
-  for( $i = 0; get_http_var( "produkt$i", 'u' ) ; $i++ ) {
+  for( $i = 0; $i < $fieldcount; $i++ ) {
+    if( ! get_http_var( "produkt$i", 'u' ) )
+      continue;
     need_http_var( "bestellung$i", 'u' );
     $id = ${"bestellung$i"};
     if( getState( $id ) >= STATUS_ABGERECHNET )
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
-//      if( ${"menge$i"} > 0 ) {
         fail_if_readonly();
         nur_fuer_dienst(4);
         $pr = sql_bestellvorschlag_daten( $id, ${"produkt$i"} );
         kanonische_einheit( $pr['verteileinheit'], &$kan_verteileinheit, &$kan_verteilmult );
         $gruppen_menge = ${"menge$i"} / $kan_verteilmult;
+        echo "  ($gruppen_menge)";
         sql_basar2group($gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge);
-//      }
     }
   }
 }
 
-if( $action == 'schwund' ) {
-  need_http_var( 'produkt_id', 'u' );
-  need_http_var( 'bestellung', 'u' );
-  need_http_var( 'menge', 'f' );
-  need( $muell_id );
-  // echo "Schwundbuchung: $produkt_id, $bestellung, $menge<br>";
-  sql_basar2group( $muell_id, $produkt_id, $bestellung, $menge );
-}
+// if( $action == 'schwund' ) {
+//   need_http_var( 'produkt_id', 'u' );
+//   need_http_var( 'bestellung', 'u' );
+//   need_http_var( 'menge', 'f' );
+//   need( $muell_id );
+//   // echo "Schwundbuchung: $produkt_id, $bestellung, $menge<br>";
+//   sql_basar2group( $muell_id, $produkt_id, $bestellung, $menge );
+// }
 
 
 
@@ -55,7 +57,4 @@ if( $action == 'schwund' ) {
 basar_overview( $bestell_id, $orderby, $editable );
 
 ?>
-   <form action='index.php' method='post'>
-     <input type='submit' value='Zur&uuml;ck '>
-   </form>
 

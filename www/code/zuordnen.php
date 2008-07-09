@@ -1561,6 +1561,7 @@ function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
 
 function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
   $basar_id = sql_basar_id();
+  $muell_id = sql_muell_id();
 	$query = "
     SELECT  *, bestellzuordnung.id as bestellzuordnung_id
     FROM gruppenbestellungen
@@ -1578,7 +1579,7 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
   if($sortByDate){
     $query = $query." ORDER BY bestellzuordnung.zeitpunkt;";
   }else{
-    $query = $query." ORDER BY IF(bestellguppen_id=$basar_id,1,0), gruppenbestellung_id, art;";
+    $query = $query." ORDER BY IF(bestellguppen_id in ($basar_id,$muell_id),1,0), gruppenbestellung_id, art;";
   }
   return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 }
@@ -1718,6 +1719,10 @@ function select_basarmenge( $bestell_id, $produkt_id ) {
 
 function sql_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
   return sql_select_single_field( "SELECT ".select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id )." AS verteilmenge", 'verteilmenge' );
+}
+
+function sql_basarmenge( $bestell_id, $produkt_id ) {
+  return sql_select_single_field( "SELECT ".select_basarmenge( $bestell_id, $produkt_id )." AS basarmenge", 'basarmenge' );
 }
 
 function sql_muellmenge( $bestell_id, $produkt_id ) {
