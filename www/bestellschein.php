@@ -13,21 +13,15 @@ error_reporting(E_ALL);
 
 assert( $angemeldet ) or exit();
 
-if( get_http_var( 'bestellungs_id', 'u' ) ) {
-  $bestell_id = $bestellungs_id;
-  $self_fields['bestell_id'] = $bestell_id;
-} else {
-  get_http_var( 'bestell_id', 'u', 0, true );
-}
+get_http_var( 'bestell_id', 'u', 0, true );
 
 get_http_var( 'action', 'w', '' );
+$readonly and $action = '';
 switch( $action ) {
   case 'changeState':
-    fail_if_readonly();
     nur_fuer_dienst(1,3,4);
     need_http_var( 'change_id', 'u' );
     need_http_var( 'change_to', 'w' );
-    echo "<!-- going to call changeState: $change_id, $change_to -->";
     if( changeState( $change_id, $change_to ) ) {
       if( ! $bestell_id ) {  // falls nicht bereits in detailanzeige:
         switch( $change_to ) {
@@ -41,7 +35,6 @@ switch( $action ) {
     break;
 
   case 'insert':
-    fail_if_readonly();
     nur_fuer_dienst(1,3,4);
     need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     need_http_var( 'produkt_id', 'u' );
@@ -134,12 +127,11 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
           changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
         }
       }
-
     }
     // Als nicht geliefert markierte Produkte löschen
-    if(get_http_var( 'nichtGeliefert[]','u')){
-      foreach($nichtGeliefert as $p_id){
-        nichtGeliefert($bestell_id, $p_id);
+    if( get_http_var( 'nichtGeliefert[]','u') ) {
+      foreach( $nichtGeliefert as $p_id ) {
+        nichtGeliefert( $bestell_id, $p_id );
       }
     }
   }
@@ -147,15 +139,12 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
   //infos zur gesamtbestellung auslesen 
   $bestellung = sql_bestellung($bestell_id);
 
-	echo "<h1>$title</h1>";
+  ?><h1><? echo $title; ?></h1>
 
-  ?>
     <table width='100%' class='layout'>
       <tr>
         <td style='text-align:left;padding-bottom:1em;'>
-         <?
-         bestellung_overview($bestellung,$gruppen_id,$gruppen_id);
-         ?>
+         <?  bestellung_overview($bestellung,$gruppen_id,$gruppen_id); ?>
         </td>
         <td style='text-align:right;padding-bottom:1em;' id='option_menu'>
         </td>

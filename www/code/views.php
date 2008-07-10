@@ -292,7 +292,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   $last_key = '';
   $row_index=0;
   $js = '';
-  $fieldcount=0;
+  $fieldcount = 0;
   $gesamtwert = 0;
   while( $basar_row = mysql_fetch_array($result) ) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
@@ -370,7 +370,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
         </td>
       </tr>
       </table>
-      <? echo "<input type='hidden' name='fieldcount' value='$fieldcount'>"; ?>
+      <input type='hidden' name='fieldcount' value='<? echo $fieldcount; ?>'>
       </form>
     <?
   } else {
@@ -738,6 +738,7 @@ function products_overview(
           printf( "
             <input name='liefermenge$produkt_id' style='text-align:right;' type='text' size='6' value='%.3lf'
               onchange=\"
+                document.getElementById('reminder').style.display='inline';
                 document.getElementById('row$produkt_id').className='modified';
                 document.getElementById('row_total').className='modified';\"
               title='tats&auml;chliche Liefermenge eingeben'
@@ -755,11 +756,11 @@ function products_overview(
         if( $editAmounts ) {
 	  //Checkbox für fehlende Lieferung. Löscht auch gleich 
 		//die Einträge in der Verteiltabelle
-        echo "
-              <td style='border-left-style:none;border-right-style:none;'>
-		<input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='$produkt_id'>
-	      </td>
-        ";
+          ?> <td style='border-left-style:none;border-right-style:none;'>
+                <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
+                  onchange="document.getElementById('reminder').style.display='inline';">
+             </td>
+          <?
 	} else {
 		echo " <td></td>";
 	}
@@ -794,19 +795,10 @@ function products_overview(
 
   eval( $summenzeile );
 
+  ?> </table> <?
   if($editAmounts){
-    ?>
-        <tr style='border:none'>
-          <td colspan='<? echo $cols ?>'>
-            <input type='submit' value='Speichern'>
-            <input type='reset' value='Änderungen zurücknehmen'>
-          </td>
-        </tr>
-      </table>
-      </form>
-    <?
-  } else {
-    ?> </table> <?
+    floating_submission_button( 'reminder' );
+    ?> </form> <?
   };
 
   if( $haben_nichtgeliefert && $select_nichtgeliefert ) {

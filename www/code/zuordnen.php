@@ -2102,6 +2102,24 @@ function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
   );
 }
 
+function nichtGeliefert( $bestell_id, $produkt_id ) {
+  doSql( "UPDATE bestellzuordnung
+    INNER JOIN gruppenbestellungen
+       ON gruppenbestellung_id = gruppenbestellungen.id
+    SET menge =0
+    WHERE art=2
+      AND produkt_id = $produkt_id
+      AND gesamtbestellung_id = $bestell_id
+  ", LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern..."
+  );
+  doSql( "UPDATE bestellvorschlaege
+    SET liefermenge = 0
+    WHERE produkt_id = $produkt_id
+      AND gesamtbestellung_id = $bestell_id
+  ", LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB ändern..."
+  );
+}
+
 function changeVerteilmengen_sql($menge, $gruppen_id, $produkt_id, $bestell_id){
   $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
   doSql( " DELETE FROM bestellzuordnung
@@ -3428,9 +3446,6 @@ $masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
-/**
- *
- */
 function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
   global $masseinheiten;
   $kan_einheit = NULL;
@@ -4498,19 +4513,6 @@ function move_html( $id, $into_id ) {
 // /**
 //  *
 //  */
-// function nichtGeliefert($bestell_id, $produkt_id){
-//     $sql = "UPDATE bestellzuordnung INNER JOIN gruppenbestellungen 
-// 	    ON gruppenbestellung_id = gruppenbestellungen.id 
-// 	    SET menge =0 
-// 	    WHERE art=2 
-// 	    AND produkt_id = ".$produkt_id." 
-// 	    AND gesamtbestellung_id = ".$bestell_id.";";
-//     doSql($sql, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern...");
-//     $sql = "UPDATE bestellvorschlaege
-//     	    SET liefermenge = 0 
-// 	    WHERE produkt_id = ".$produkt_id."
-// 	    AND gesamtbestellung_id = ".$bestell_id;
-//     doSql($sql, LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB ändern...");
 // }
 // /**
 //  *
