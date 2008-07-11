@@ -14,16 +14,9 @@ $show_member_details= $optionen & GRUPPEN_OPT_DETAIL;
 get_http_var('action','w','');
 $readonly and $action = '';
 
-  ?>
-    <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='gruppen_id' value=''>
-      <input type='hidden' name='transaction_id' value=''>
-      <input type='hidden' name='action' value=''>
-    </form>
-    <div style='padding-bottom:2em;'>
-
-    <? if( $dienst == 4 or $dienst == 5 ) { ?>
+?> <div style='padding-bottom:2em;'> <?
+  if( $dienst == 4 or $dienst == 5 ) {
+    ?>
       <table class='menu' style='padding-bottom:2em;'>
       <tr>
         <th>Optionen</th>
@@ -166,7 +159,7 @@ if( $action == 'cancel_payment' ) {
   // echo "id: $gruppen_id, trans: $transaction_id <br>";
   $trans = sql_get_transaction( -$transaction_id );
   if( $trans['gruppen_id'] != $login_gruppen_id )
-    nur_guer_dienst(4,5);
+    nur_fuer_dienst(4,5);
   doSql( "DELETE FROM gruppen_transaktion WHERE id=$transaction_id" );
 }
 
@@ -256,12 +249,10 @@ if( $action == 'cancel_payment' ) {
                   <td><? echo $trans['eingabedatum_trad']; ?></td>
                   <td><? printf( "%.2lf", $trans['summe'] ); ?></td>
                   <td>
-                  <a class='png' href="javascript:
-                    document.forms['reload_form'].action.value='cancel_payment';
-                    document.forms['reload_form'].gruppen_id.value='<? echo $id; ?>';
-                    document.forms['reload_form'].transaction_id.value='<? echo $trans['id']; ?>';
-                    document.forms['reload_form'].submit();">
-                    <img src='img/b_drop.png' border='0' alt='Löschen?' title='Löschen?'/></a>
+                    <? echo fc_action( array( 'action' => 'cancel_payment', 'transaction_id' => $trans['id']
+                       , 'img' => 'img/b_drop.png', 'title' => 'L&ouml;schen?'
+                       ) );
+                    ?>
                   </td>
                 </tr>
               <? } ?>
@@ -277,13 +268,10 @@ if( $action == 'cancel_payment' ) {
             && ( $row['mitgliederzahl'] == 0 )
             && ( ! in_array( $id, $specialgroups ) )
         ) {
-          ?>
-            <a class='png' href="javascript:if(confirm('Soll die Gruppe wirklich GELÖSCHT werden?')){
-              document.forms['reload_form'].action.value='delete';
-              document.forms['reload_form'].gruppen_id.value='<? echo $row['id']; ?>';
-              document.forms['reload_form'].submit();}">
-            <img src='img/b_drop.png' border='0' alt='Gruppe löschen' title='Gruppe löschen'/></a>
-          <?
+          echo fc_action( array( 'action' => 'delete', 'gruppen_id' => $row['id']
+          , 'img' => 'img/b_drop.png', 'title' => 'Gruppe l&ouml;schen?'
+          , 'confirm' => 'Soll die Gruppe wirklich GEL&Ouml;SCHT werden?'
+          ) );
         }
       }
     } else {
