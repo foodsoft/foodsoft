@@ -3,14 +3,6 @@
 // copyright Fc Schinke09 2006 
 
 
-function deleteProdukt(produktID)
-{
-    if (confirm('Soll das Produkt wirklich GELÖSCHT werden?')) { 
-      document.forms['reload_form'].action.value="delete";
-      document.forms['reload_form'].produkt_id.value=produktID;
-      document.forms['reload_form'].submit();
-   }
-}	
 function deleteProduktpreis(id)
 {
    document.forms['reload_form'].action.value="delete_price";

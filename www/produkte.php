@@ -107,45 +107,45 @@
   get_http_var('action','w','');
 
   $edit_all = false;
-  if( $action == "edit_all" and $editable ) { 
-    $edit_all = true;
-  }
+  //   if( $action == "edit_all" and $editable ) { 
+  //     $edit_all = true;
+  //   }
 
   if( $action == 'delete' and $editable ) {
     need_http_var('produkt_id','u');
     sql_delete_produkt( $produkt_id );
   }
 
-  if( ($action == "change_all") and $editable ) {
-    get_http_vars( 'prodIds[]', 'u', array() );
-    foreach( $prodIds as $pid ) {
-      need_http_var( "name_$pid", 'H' );
-      need_http_var( "prodgroup_$pid", 'u' );
-      need_http_var( "einheit_$pid", 'H' );
-      need_http_var( "notiz_$pid", 'H' );
-      need_http_var( "preis_$pid", 'f' );
-      need_http_var( "bestellnummer_$pid", 'H' );
-      need_http_var( "gebindegroesse_$pid", 'H' );
-      sql_update_produkt( $pid, ${"name_$pid"}, ${"prodgroup_$pid"}, ${"einheit_$pid"}, ${"notiz_$pid"} );
-
-      $preis = ${"preis_$pid"};
-
-      //aber erst wird gepr¸ft, ob es aktuelle preise f¸r das produkt gibt
-      $preis_row = sql_aktueller_produktpreis( $pid, false );
-      if( $preis_row ) {
-        if( $preis_row['preis'] == $preis
-            and $preis_row['bestellnummer'] == ${"bestellnummer_$pid"}
-            and $preis_row['gebindegroesse'] == ${"gebindegroesse_$pid"}
-            and $preis_row['einheit'] == ${"einheit_$pid"}
-          ) {
-          continue;  // keine aenderungen noetig
-        }
-      }
-      sql_insert_produktpreis( $pid,
-        $preis, $mysqljetzt, "NULL", ${"bestellnummer_$pid"}, ${"gebindegroesse_$pid"}
-      );
-    }
-  }
+  //   if( ($action == "change_all") and $editable ) {
+  //     get_http_vars( 'prodIds[]', 'u', array() );
+  //     foreach( $prodIds as $pid ) {
+  //       need_http_var( "name_$pid", 'H' );
+  //       need_http_var( "prodgroup_$pid", 'u' );
+  //       need_http_var( "einheit_$pid", 'H' );
+  //       need_http_var( "notiz_$pid", 'H' );
+  //       need_http_var( "preis_$pid", 'f' );
+  //       need_http_var( "bestellnummer_$pid", 'H' );
+  //       need_http_var( "gebindegroesse_$pid", 'H' );
+  //       sql_update_produkt( $pid, ${"name_$pid"}, ${"prodgroup_$pid"}, ${"einheit_$pid"}, ${"notiz_$pid"} );
+  // 
+  //       $preis = ${"preis_$pid"};
+  // 
+  //       //aber erst wird gepr¸ft, ob es aktuelle preise f¸r das produkt gibt
+  //       $preis_row = sql_aktueller_produktpreis( $pid, false );
+  //       if( $preis_row ) {
+  //         if( $preis_row['preis'] == $preis
+  //             and $preis_row['bestellnummer'] == ${"bestellnummer_$pid"}
+  //             and $preis_row['gebindegroesse'] == ${"gebindegroesse_$pid"}
+  //             and $preis_row['einheit'] == ${"einheit_$pid"}
+  //           ) {
+  //           continue;  // keine aenderungen noetig
+  //         }
+  //       }
+  //       sql_insert_produktpreis( $pid,
+  //         $preis, $mysqljetzt, "NULL", ${"bestellnummer_$pid"}, ${"gebindegroesse_$pid"}
+  //       );
+  //     }
+  //   }
 
 
   /////////////////////////////
@@ -157,15 +157,6 @@
   $lieferant_name = lieferant_name($lieferanten_id);
   $produkte = sql_produkte_von_lieferant_ids($lieferanten_id);
 
-  ?>
-    <!-- Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu kˆnnen -->
-    <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='action' value='nop'>
-      <input type='hidden' name='produkt_id' value='0'>
-    </form>
-  <?
-
   if ($edit_all) {
     ?>
       <form action="<? echo self_url(); ?>" name="editAllForm" method="POST">
@@ -174,7 +165,7 @@
     <?
   } else {
     ?>
-      <form action="index.php?window=insertBestellung" method="post" target="insertBestellung" name="newBestellungForm">
+      <form action="<? echo fc_url( 'insert_bestellung', '', '', 'form:' ); ?>" method="post"  name="newBestellungForm">
       <input type="hidden" name="lieferanten_id" value="<? echo $lieferanten_id; ?>">
     <?
   }
@@ -258,10 +249,9 @@
             echo fc_alink( 'edit_produkt', "produkt_id=$id" );
             echo fc_alink( 'produktpreise', "produkt_id=$id" );
             if( $references == 0 ) {
-              ?>
-               <a class='png' href="javascript:deleteProdukt(<? echo $id; ?>);"><img src='img/b_drop.png' border='0'
-                       alt='Produkt l√∂schen' title='Produkt l√∂schen'/></a>
-              <?
+              echo fc_action( array( 'action' => 'delete', 'img' => 'img/b_drop.png', 'produkt_id' => $id
+              , 'confirm' => 'Soll das Produkt wirklich GEL&Ouml;SCHT werden?'
+              ) );
             } 
           }
           ?>
@@ -329,9 +319,8 @@
     } else {
       ?>
         <th colspan="10">
-          <input type="button" value="neue Bestellung" onClick="window.open('','insertBestellung','width=400,height=450,left=200,top=100').focus() ; document.forms['newBestellungForm'].submit();">
-          &nbsp;| <a href="javascript:checkAll('newBestellungForm','',true)" class="tabelle">alle Produkte ausw√§hlen</a>
-          &nbsp;| <a href="#" class="tabelle">nach oben</a>
+          <? echo fc_button( 'insert_bestellung', 'text=Neue Bestellung,form=newBestellungForm' ); ?>
+          <input type='button' class='bigbutton' onclick="javascript:checkAll('newBestellungForm','',true)" value='alle Produkte ausw√§hlen' />
       <?
     }
     ?> </th> </tr> <?

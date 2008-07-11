@@ -314,6 +314,8 @@ function parameters_explode( $s ) {
   $pairs = explode( ',', $s );
   foreach( $pairs as $pair ) {
     $v = explode( '=', $pair );
+    if( $v[0] == '' )
+      continue;
     $r[$v[0]] = $v[1];
   }
   return $r;
@@ -329,6 +331,7 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
   $parameters = array_merge( $window['parameters'], $parameters );
   $window_id = $parameters['window_id'];
 
+  $form = '';
   $url = "$foodsoftdir/index.php";
   $and = '?';
   foreach( $parameters as $key => $value ) {
@@ -337,6 +340,9 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
       case 'text':
       case 'title':
         continue 2; //  php counts switch as a loop!
+      case 'form':
+        $form = $value;
+        continue 2;
     }
     if( $value === NULL )
       continue;
@@ -344,6 +350,13 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
       error( __LINE__, __FILE__, "parameter $key nicht uebergeben", debug_backtrace() );
     $url .= "$and$key=$value";
     $and = '&';
+  }
+  if( $scheme == 'form:' ) {
+    // this is the action of a <form>: 
+    // - the submit-button must set the target window,
+    // - here we just set the plain url (another reload via javascript would spoil the POSTED parameters!)
+    //
+    return $url;
   }
   switch( $window_id ) {
     case 'self':
@@ -361,7 +374,17 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
         $option_string .= "$komma$key=$value";
         $komma = ',';
       }
-      return "{$scheme}window.open('$url','$window_id','$option_string').focus();";
+      if( $form )
+        return "
+          javascript:window.open('','$window_id','$option_string').focus();
+           // if( ! document.forms['$form'].target )
+           //   document.forms['$form'].createAttribute('target');
+          document.forms['$form'].target = '$window_id';
+          document.forms['$form'].submit();
+        ";
+      else
+        return "{$scheme}window.open('$url','$window_id','$option_string').focus();";
+      return $url;
   }
 }
 
@@ -430,6 +453,9 @@ function fc_button( $name, $parameters = array(), $options = array() ) {
 
 $action_form_id = 0;
 function fc_action( $parameters = array() ) {
+  global $print_on_exit;
+  if( is_string( $parameters ) )
+    $parameters = parameters_explode( $parameters );
   global $action_form_id;
   $action_form_id++;
   $class = '';
@@ -437,7 +463,7 @@ function fc_action( $parameters = array() ) {
   $text = '';
   $img = '';
   $confirm = '';
-  $l = "<form style='display:inline;' method='post' id='action_form_$action_form_id' action='" .self_url(). "'>" . self_post();
+  $form = "<form style='display:inline;' method='post' id='action_form_$action_form_id' action='" .self_url(). "'>" . self_post();
   foreach( $parameters as $name => $value ) {
     switch( $name ) {
       case 'title':
@@ -448,15 +474,17 @@ function fc_action( $parameters = array() ) {
         $$name = $value;
         continue 2;
       default:
-        $l .= "<input type='hidden' name='$name' value='$value'>";
+        $form .= "<input type='hidden' name='$name' value='$value'>";
     }
   }
+  $form .= "</form";
+  $print_on_exit = "$form $print_on_exit";
   $alt = '';
   if( $title ) {
     $alt = "alt='$title'";
     $title = "title='$title'";
   }
-  $l .= "<a class='$class' href='#' $title onclick=\"";
+  $l = "<a class='$class' href='#' $title onclick=\"";
   if( $confirm ) {
     $l .= "if( confirm( '$confirm' ) ) ";
   }
@@ -468,7 +496,7 @@ function fc_action( $parameters = array() ) {
   }
   if( $text )
     $l .= "$img$text";
-  $l .= "</a></form>";
+  $l .= "</a>";
   return $l;
 }
 
