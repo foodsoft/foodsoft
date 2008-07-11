@@ -56,6 +56,12 @@ if( $editable and ( ! $produkt_id ) ) { ?>
   <form class='small_form' action='index.php?window=terrakatalog_upload' method='post' enctype='multipart/form-data'>
     <fieldset class='small_form'>
       <legend> Kataloge </legend>
+      <table>
+        <tr>
+          <th> Katalog </th>
+          <th> Typ </th>
+          <th> Aktionen </th>
+        </tr>
       <?
         $kataloge = doSql( "
           SELECT katalogdatum, katalogtyp
@@ -64,14 +70,7 @@ if( $editable and ( ! $produkt_id ) ) { ?>
           GROUP BY katalogdatum, katalogtyp
           ORDER BY katalogtyp, katalogdatum
         " );
-      ?>
-      <table>
-        <tr>
-          <th> Katalog </th>
-          <th> Typ </th>
-          <th> Aktionen </th>
-        </tr>
-        <? while( $row = mysql_fetch_array( $kataloge ) ) { ?>
+        while( $row = mysql_fetch_array( $kataloge ) ) { ?>
           <tr>
             <td>
               <? echo $row['katalogdatum']; ?>
@@ -80,16 +79,16 @@ if( $editable and ( ! $produkt_id ) ) { ?>
               <? echo $row['katalogtyp']; ?>
             </td>
             <td>
-              <a class='png' href='<? echo self_url();
-                ?>&action=delete&katalogdatum=<? echo $row['katalogdatum'];
-                ?>&katalogtyp=<?echo $row['katalogtyp']; ?>'><img
-                src='img/b_drop.png' alt='Katalog löschen' title='Katalog löschen'/>
-              </a>
+              <? echo fc_action( array(
+                'img' => 'img/b_drop.png', 'title' => 'Katalog l&ouml;schen'
+              , 'action' => 'delete', 'confirm' => 'Soll der Katalog wirklich GEL&Ouml;SCHT werden?'
+              , 'katalogdatum' => $row['katalogdatum'], 'katalogtyp' => $row['katalogtyp']
+              ) ); ?>
             </td>
           </tr>
         <? } ?>
       </table>
-      
+
       <h3> Neuen Katalog einlesen: </h3>
       <table>
         <tr>
@@ -175,10 +174,10 @@ if( $filter != '' ) {
     limit $limit
   " );
 
-  if ( $produkt_id > 0 ) {
+  if( $produkt_id ) {
     ?>
       <b>Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b>
-      <form action='index.php?window=terraabgleich&produkt_id=<? echo $produkt_id; ?>' method='post'>
+      <form action='<? echo fc_url( 'produktpreise', "produkt_id=$produkt_id" ); ?>' method='post'>
       <input type='hidden' name='action' value='artikelnummer_setzen'>
     <?
   }
@@ -200,7 +199,11 @@ if( $filter != '' ) {
       <th>Katalog</th>
     </tr>
 
-    <? while( $row = mysql_fetch_array( $result ) ) { ?>
+    <? while( $row = mysql_fetch_array( $result ) ) {
+      $netto = $row['preis'];
+      $mwst = $row['mwst'];
+      $brutto = $netto * (1 + $mwst / 100.0 );
+      ?>
       <tr>
         <td class='mult'>
           <? if ( $produkt_id > 0 ) { ?>
@@ -209,11 +212,6 @@ if( $filter != '' ) {
             <? echo $row['artikelnummer']; ?>
           <? } ?>
         </td>
-        <?
-          $netto = $row['preis'];
-          $mwst = $row['mwst'];
-          $brutto = $netto * (1 + $mwst / 100.0 );
-        ?>
         <td class='number'><? echo $row['bestellnummer']; ?></td>
         <td><? echo $row['name']; ?></td>
         <td class='mult'><? echo $row['gebinde']; ?></td>
@@ -228,13 +226,11 @@ if( $filter != '' ) {
     <? } ?>
 
   </table>
-
   <?
-  if( $produkt_id > 0 ) {
+  if( $produkt_id )
     echo "</form>";
-  }
-
 }
 ?>
 
 </fieldset>
+

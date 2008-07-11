@@ -20,7 +20,6 @@ $lieferant_id = $bestellung['lieferanten_id'];
 $lieferant = sql_getLieferant( $lieferant_id );
 $lieferant_name = $lieferant['name'];
 
-/////////////////////////////
 //
 // aktionen verarbeiten:
 //
@@ -55,9 +54,6 @@ if( $action == 'save' ) {
 }
 
 $bestellung = sql_bestellung( $bestell_id );
-// $bestellung_name = $bestellung['name'];
-// $lieferant_id = $bestellung['lieferanten_id'];
-// $lieferant_name = lieferant_name( $lieferant_id );
 $status = getState( $bestell_id );
 $ro_tag = '';
 if( $status >= STATUS_ABGERECHNET ) {
@@ -248,6 +244,4 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
   </table>
 
 </form>
-
-
 
