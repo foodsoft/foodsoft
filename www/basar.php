@@ -3,8 +3,6 @@
 
 assert( $angemeldet ) or exit();  // aufruf nur per index.php?window=basar...
 
-// self-variable:
-//
 get_http_var( 'orderby', 'w' , 'artikelname', true );
 get_http_var( 'bestell_id', 'u' , 0, true );
 
@@ -33,10 +31,9 @@ if( $action == 'basarzuteilung' ) {
         fail_if_readonly();
         nur_fuer_dienst(4);
         $pr = sql_bestellvorschlag_daten( $id, ${"produkt$i"} );
-        kanonische_einheit( $pr['verteileinheit'], &$kan_verteileinheit, &$kan_verteilmult );
-        $gruppen_menge = ${"menge$i"} / $kan_verteilmult;
-        echo "  ($gruppen_menge)";
-        sql_basar2group($gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge);
+        preisdatenSetzen( & $pr );
+        $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
+        sql_basar2group( $gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
     }
   }
 }
