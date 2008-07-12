@@ -71,7 +71,7 @@ while( $row ) {
 
   ?>
     <tr>
-      <td><a href="javascript:window.open('index.php?window=editBuchung&transaktion_id=<? echo $row['id']; ?>','buchung','width=490,height=620,left=200,top=100').focus();"><? echo $row['id']; ?></a></td>
+      <td><? echo fc_alink( 'edit_buchung', "transaktion_id={$row['id']},img=,text={$row['id']}" ); ?></td>
       <td><? echo transaktion_typ_string( $type ); ?></td>
       <td><? echo $row['kontobewegungs_datum']; ?></td>
       <td><? echo $row['notiz']; ?></td>
