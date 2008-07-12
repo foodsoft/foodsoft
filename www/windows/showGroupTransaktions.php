@@ -19,7 +19,7 @@ assert($angemeldet) or exit();
   return 0;
  }
 
-get_http_var( 'meinkonto', 'u', 0 );
+get_http_var( 'meinkonto', 'u', 0, true );
 $muell_id = sql_muell_id();
 
 if( $meinkonto ) {
