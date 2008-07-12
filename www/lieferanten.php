@@ -69,7 +69,7 @@ while ($row = mysql_fetch_array($result)) {
     echo fc_alink( 'pfandzettel', "lieferanten_id=$lieferanten_id" );
     if( $editable ) {
       echo fc_alink( 'edit_lieferant', "lieferanten_id=$lieferanten_id" );
-      if( abs($kontostand) < 0.005 ) {
+      if( ( references_lieferant($lieferanten_id) == 0 ) and ( abs($kontostand) < 0.005 ) ) {
         echo fc_action( array(
           'img' => 'img/b_drop.png', 'title' => 'Lieferanten l&ouml;schen'
         , 'confirm' => 'Soll der Lieferant wirklich GEL&Ouml;SCHT werden?'

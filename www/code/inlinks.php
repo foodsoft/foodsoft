@@ -263,7 +263,7 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'edit_lieferant';
       $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
       $parameters['img'] = 'img/b_edit.png';
-      $options = array_merge( $small_window_options, array( 'width' => '640', 'height' => 500 ) );
+      $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
     case 'edit_produkt':
       $parameters['window'] = 'editProdukt';
