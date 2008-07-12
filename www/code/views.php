@@ -109,8 +109,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
                 <?    show_dienst_gruppe($row, $color_not_accepted); ?>
                 Dieser Dienst ist euch zugeteilt</b> <br>
 	       <?if($show_buttons){?>
-	       <form action="index.php">
-	       <input type="hidden" name="area" value=<?echo $area?>>
+	       <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
 	       <input type="hidden" name="aktion" value="akzeptieren_<?echo $row["ID"]?>">
 	       <input type="submit" value="akzeptieren">  
 	       </form>
@@ -135,7 +135,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 
 		       ?>
 	               <?if($show_buttons){?>
-		       <form action="index.php">
+  	       <form action="<? echo self_url(); ?>" method='post'>
+  	       <? echo self_post(); ?>
 		       <input type="hidden" name="area" value=<?echo $area?>>
 		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
 		       <input  type="submit" value="übernehmen">  
@@ -152,7 +153,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	    ?>
 	       <font color=<?echo $color_not_accepted?>>Offener Dienst </font>
 	       <?if($show_buttons){?>
-	       <form action="index.php">
+	       <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
 	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
 	       <input  type="submit" value="übernehmen">  
@@ -174,7 +176,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        	    if($gruppe == $row["gruppen_id"]){
 	    ?>
 	       <?if($show_buttons){?>
-	       <form action="index.php" >
+	       <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
 	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="wirdoffen_<?echo $row["ID"]?>">
 	       <input type="submit" value="kann doch nicht">  
@@ -185,7 +188,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 
 	       ?>
 	       <?if($show_buttons){?>
-	       <form action="index.php">
+	       <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
 	       <input type="hidden" name="area" value=<?echo $area?>>
 	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
 	       <input  type="submit" value="übernehmen">  
@@ -1113,10 +1117,16 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $gruppen = sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id );
   while( $gruppe = mysql_fetch_array( $gruppen ) ) {
     $gruppen_id = $gruppe['id'];
-    $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ) );
-    $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
-    $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
-    $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+    $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ), true );
+    if( $mengen ) {
+      $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
+      $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
+      $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+    } else {
+      $toleranzmenge = 0;
+      $festmenge = 0;
+      $verteilmenge = 0;
+    }
     switch( $gruppen_id ) {
       case $muell_id:
         $muellmenge = $mengen['muellmenge'] * $verteilmult;
