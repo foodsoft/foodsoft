@@ -1170,9 +1170,9 @@ function sql_delete_group_member($person_id, $gruppen_id){
   need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
   $muell_id = sql_muell_id();
   sql_update( 'gruppenmitglieder', $person_id, array(
-    status => 'geloescht'
-  , diensteinteilung => 'freigestellt'
-  , rotationsplanposition => 0
+    'status' => 'geloescht'
+  , 'diensteinteilung' => 'freigestellt'
+  , 'rotationsplanposition' => 0
   ) );
 
           //Den Sockelbetrag ändern
