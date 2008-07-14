@@ -116,8 +116,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	       </form>
 	       <?}?>
 	       <?if($show_buttons){?>
-	       <form action="index.php" >
-	       <input type="hidden" name="area" value=<?echo $area?>>
+	       <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
 	       <input type="hidden" name="aktion" value="abtauschen_<?echo $row["ID"]?>">
 	       <input type="submit" value="geht nicht">  
 	       </form>
