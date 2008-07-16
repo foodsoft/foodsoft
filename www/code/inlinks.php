@@ -7,6 +7,9 @@
 // global defaults for windows
 // (these are really constants, but php doesn not support array-valued constants)
 //
+// this file may be include from inside a function (from doku-wiki!), so we need `global':
+//
+global $large_window_options, $small_window_options;
 $large_window_options = array(
     'dependent' => 'yes'
   , 'toolbar' => 'yes'
@@ -37,6 +40,7 @@ function fc_window( $name ) {
   global $dienst, $login_gruppen_id, $large_window_options, $small_window_options, $self_fields;
   $parameters = array();
   $options = $large_window_options;
+  // echo "fc_window: $name<br>";
   switch( strtolower( $name ) ) {
     //
     // self: Anzeige im selben Fenster, per self_url():

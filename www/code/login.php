@@ -7,7 +7,7 @@
 //  - andernfalls: prueft, ob benutzer schon angemeldet (per cookie)
 //  - falls auch nicht: anmeldeformular ausgeben
 //  - per "action=logout" wird ein logout (loeschen des cookie) erzwungen
-//  - falls $from_dokuwiki==true wird index.php?area=wiki aufgerufen
+//  - falls $from_dokuwiki==true wird index.php?window=wiki aufgerufen
 //
 // bei erfolgreicher anmeldung werden gesetzt:
 //  - $angemeldet == TRUE
@@ -214,7 +214,7 @@
 
   get_http_var( 'area', 'w', '' );
   if( isset( $from_dokuwiki ) && $from_dokuwiki or ( $area == 'wiki' ) ) {
-    $form_action="$foodsoftdir/index.php?area=wiki";
+    $form_action="$foodsoftdir/index.php?window=wiki";
   } else {
     $form_action="$foodsoftdir/index.php";
   }

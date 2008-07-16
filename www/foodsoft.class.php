@@ -45,8 +45,6 @@ class auth_foodsoft extends auth_basic {
         $foodsoftpath = FOODSOFT_PATH;
         $from_dokuwiki = true;
         require_once( FOODSOFT_PATH . '/code/config.php' );
-        require_once( FOODSOFT_PATH . '/code/zuordnen.php' );
-        require_once( FOODSOFT_PATH . '/code/views.php' );
         require_once( FOODSOFT_PATH . '/code/login.php' );
         chdir( $dir );
         $_REQUEST['do'] = 'show';
