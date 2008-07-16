@@ -10,7 +10,7 @@ setWikiHelpTopic( 'foodsoft:Bilanz' );
 ?> <h1>Bilanz </h1> <?
 
 $gruppen_einzahlungen_ungebucht = sql_select_single_field( "
-    SELECT sum( einzahlungen.summe ) as summe
+    SELECT IFNULL( sum( einzahlungen.summe ), 0.0 ) as summe
     FROM ( ".select_ungebuchte_einzahlungen()." ) as einzahlungen
   ", 'summe'
 );
