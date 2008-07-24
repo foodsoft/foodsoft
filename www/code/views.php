@@ -432,7 +432,7 @@ function products_overview(
     'header' => "B-Nr.", 'title' => "Bestellnummer", 'cols' => 1
   );
   $col[PR_COL_LPREIS] = array(
-    'header' => "L-Preis", 'title' => "Nettopreis (ohne MWSt und Pfand) beim Lieferanten", 'cols' => 2
+    'header' => "L-Preis", 'title' => "Nettopreis (ohne MWSt, ohne Pfand) beim Lieferanten", 'cols' => 2
   );
   $col[PR_COL_MWST] = array(
     'header' => "MWSt", 'title' => "Mehrwertsteuersatz in Prozent", 'cols' => 1
@@ -1656,7 +1656,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
     if( $default_on ) {
       $form_display = ''; $button_display = 'none';
     } else {
-      $form_display = 'none'; $button_display = '';
+      $form_display = 'none'; $button_display = 'inline';
     }
     ?>
       <span class='button' id='anummer_button' style='display:<? echo $button_display; ?>;'

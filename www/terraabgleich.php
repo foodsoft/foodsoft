@@ -289,7 +289,7 @@ if( $neednewprice ) {
           onclick='preiseintrag_on();' >Neuer Preiseintrag...</span>
       </div>
     </div>
-    <div style='display:none;padding:none;' id='preiseintrag_form' class='small_form'>
+    <div style='display:none;padding:0ex;' id='preiseintrag_form' class='small_form'>
       <form name='Preisform' method='post' action='<? echo self_url(); ?>'>
       <? echo self_post(); ?>
       <fieldset>
