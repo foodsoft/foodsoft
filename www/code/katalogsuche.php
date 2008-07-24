@@ -54,7 +54,7 @@ function katalogabgleich(
   $katalog_bestellnummer = $katalogeintrag["bestellnummer"];
   $katalog_name = $katalogeintrag["name"];
   $katalog_einheit = $katalogeintrag["liefereinheit"];
-  $katalog_gebindegroesse = $katalogeintrag["gebinde"];
+  $katalog_gebindegroesse = str_replace( ',', '.' , $katalogeintrag["gebinde"] );
   $katalog_herkunft =  $katalogeintrag["herkunft"];
   $katalog_verband = $katalogeintrag["verband"];
   $katalog_netto = $katalogeintrag["preis"];
