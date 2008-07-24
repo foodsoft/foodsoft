@@ -21,9 +21,9 @@
       <table width='100%'
     <?
     if( $readonly ) {
-      echo " class='headro'";
+      echo " class='headro'>";
     } else {
-      echo " class='head'";
+      echo " class='head'>";
     }
     echo "
       <tr>

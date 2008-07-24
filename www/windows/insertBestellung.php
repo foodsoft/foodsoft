@@ -126,7 +126,7 @@
               <?
             } else {
               ?>
-                <input value='OK' type='button' onClick='if(opener) opener.focus();window.close();'>
+                <input value='OK' type='button' onClick='if(opener) opener.focus(); window.close();'>
               <?
             }
           ?>
