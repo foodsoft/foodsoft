@@ -94,6 +94,7 @@ function fc_window( $name ) {
       $parameters['window'] = 'produkte';
       $parameters['window_id'] = 'main';
       $parameters['text'] = 'Produkte';
+      $parameters['img'] = 'img/b_browse.png';
       $parameters['title'] = 'zur Produktdatenbank der Foodsoft...';
       $options = $large_window_options;
       break;
@@ -101,6 +102,7 @@ function fc_window( $name ) {
       $parameters['window'] = 'gruppen';
       $parameters['window_id'] = 'gruppen';
       $parameters['text'] = 'Gruppen';
+      $parameters['img'] = 'img/b_browse.png';
       $parameters['title'] = 'zur Liste der Bestellgruppen...';
       $options = $large_window_options;
       break;
@@ -108,6 +110,7 @@ function fc_window( $name ) {
       $parameters['window'] = 'lieferanten';
       $parameters['window_id'] = 'lieferanten';
       $parameters['text'] = 'Lieferanten';
+      $parameters['img'] = 'img/b_browse.png';
       $parameters['title'] = 'zur Liste aller Lieferanten...';
       $options = $large_window_options;
       break;
@@ -167,6 +170,7 @@ function fc_window( $name ) {
       $parameters['window'] = 'gruppen_mitglieder';
       $parameters['window_id'] = 'gruppenmitglieder';
       $parameters['title'] = 'zur Liste der Gruppenmitglieder...';
+      $parameters['img'] = 'img/b_browse.png';
       $options = array_merge( $large_window_options, array( 'width' => '900' ) );
       break;
     case 'gruppenpfand':
@@ -224,12 +228,16 @@ function fc_window( $name ) {
       $options = $large_window_options;
       break;
     case 'produktverteilung':
-      $parameters['window'] = 'verteilung';
-      $parameters['window_id'] = 'verteilliste';
-      $parameters['img'] = 'img/b_browse.png';
-      $parameters['title'] = 'Details zur Verteilung des Produkts...';
-      $options = array_merge(
-        $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '840', 'menubar' => 'no','height' => '640' ) );
+      if( $dienst > 0 ) {
+        $parameters['window'] = 'verteilung';
+        $parameters['window_id'] = 'verteilliste';
+        $parameters['img'] = 'img/b_browse.png';
+        $parameters['title'] = 'Details zur Verteilung des Produkts...';
+        $options = array_merge(
+          $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '840', 'menubar' => 'no','height' => '640' ) );
+      } else {
+        $parameters = NULL;
+      }
       break;
     case 'verluste':
       $parameters['window'] = 'verluste';
@@ -239,11 +247,15 @@ function fc_window( $name ) {
       $options = $large_window_options;
       break;
     case 'verteilliste':
-      $parameters['window'] = 'verteilung';
-      $parameters['window_id'] = 'verteilliste';
-      $parameters['text'] = 'Verteilliste';
-      $parameters['title'] = 'zur Verteilliste...';
-      $options = array_merge( $large_window_options, array( 'width' => '840' ) );
+      if( $dienst > 0 ) {
+        $parameters['window'] = 'verteilung';
+        $parameters['window_id'] = 'verteilliste';
+        $parameters['text'] = 'Verteilliste';
+        $parameters['title'] = 'zur Verteilliste...';
+        $options = array_merge( $large_window_options, array( 'width' => '840' ) );
+      } else {
+        $parameters = NULL;
+      }
       break;
     //
     // "kleine" Fenster:
@@ -252,13 +264,13 @@ function fc_window( $name ) {
       $parameters['window'] = 'editBestellung';
       $parameters['window_id'] = 'edit_bestellung';
       $parameters['title'] = 'zu den Stammdaten der Bestellung...';
-      $parameters['img'] = 'img/b_edit.png';
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
       $options = array_merge( $small_window_options, array( 'width' => '460' ) );
       break;
     case 'edit_buchung':
       $parameters['window'] = 'editBuchung';
       $parameters['window_id'] = 'edit_buchung';
-      $parameters['img'] = 'img/b_edit.png';
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
       $options = array_merge( $small_window_options, array( 'width' => '600', 'height' => '600' ) );
       break;
     // case 'edit_group':  //  im moment nicht benutzt
@@ -266,21 +278,21 @@ function fc_window( $name ) {
       $parameters['window'] = 'editLieferant';
       $parameters['window_id'] = 'edit_lieferant';
       $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
-      $parameters['img'] = 'img/b_edit.png';
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
     case 'edit_produkt':
       $parameters['window'] = 'editProdukt';
       $parameters['window_id'] = 'edit_produkt';
       $parameters['title'] = 'zu den Stammdaten des Produkts...';
-      $parameters['img'] = 'img/b_edit.png';
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
       $options = array_merge( $small_window_options, array( 'width' => '550', 'height' => 380 ) );
       break;
     case 'edit_verpackung':
       $parameters['window'] = 'editVerpackung';
       $parameters['window_id'] = 'edit_verpackung';
       $parameters['title'] = 'zu den Stammdaten der Pfandverpackung...';
-      $parameters['img'] = 'img/b_edit.png';
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
       $options = array_merge( $small_window_options, array( 'width' => '500' ) );
       break;
     // case 'editProduktpreis': // nicht benutzt
@@ -307,7 +319,10 @@ function fc_window( $name ) {
     default:
       error( __LINE__, __FILE__, "undefiniertes Fenster: $name ", debug_backtrace());
   }
-  return array( 'parameters' => $parameters, 'options' => $options );
+  if( $parameters )
+    return array( 'parameters' => $parameters, 'options' => $options );
+  else
+    return NULL;
 }
 
 // parameters_explode:
@@ -332,6 +347,8 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
     $parameters = parameters_explode( $parameters );
 
   $window = fc_window( $name );
+  if( $window == NULL )
+    return '';
   $parameters = array_merge( $window['parameters'], $parameters );
   $window_id = $parameters['window_id'];
 
@@ -428,9 +445,10 @@ function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) 
   return $s;
 }
 
-
 function fc_alink( $name, $parameters = array(), $options = array() ) {
   $window = fc_window( $name );
+  if( ! $window )
+    return '';
   if( is_string( $parameters ) )
     $parameters = parameters_explode( $parameters );
   $url = fc_url( $name, $parameters, $options );
@@ -445,6 +463,8 @@ function fc_alink( $name, $parameters = array(), $options = array() ) {
 
 function fc_button( $name, $parameters = array(), $options = array() ) {
   $window = fc_window( $name );
+  if( ! $window )
+    return '';
   if( is_string( $parameters ) )
     $parameters = parameters_explode( $parameters );
   $url = fc_url( $name, $parameters, $options );
@@ -506,8 +526,10 @@ function fc_action( $parameters = array() ) {
 
 function fc_openwindow( $name, $parameters = array(), $options = array() ) {
   $url = fc_url( $name, $parameters, $options, '' );
+  if( ! $url )
+    return '';
   return "
-    <script type='text/javascript'> 
+    <script type='text/javascript'>
       $url
     </script>
   ";
