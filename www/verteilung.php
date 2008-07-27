@@ -17,7 +17,7 @@ if( $status != STATUS_VERTEILT ) {
   $ro_tag = 'readonly';
 }
 
-nur_fuer_dienst(1,3,4);
+nur_fuer_dienst(1,3,4,5);
 
 setWikiHelpTopic( "foodsoft:verteilung" );
 

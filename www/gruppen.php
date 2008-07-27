@@ -230,12 +230,12 @@ if( $action == 'cancel_payment' ) {
     ";
     $mitglieder_summe += $row['mitgliederzahl'];
     if( $row['aktiv'] > 0 ) {
-      echo fc_alink( 'gruppenmitglieder', "gruppen_id=$id,title=Personen,img=img/b_browse.png" );
+      echo fc_alink( 'gruppenmitglieder', "gruppen_id=$id,title=Personen" );
       if( ! $readonly ) {
         if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
-          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,img=img/euro.png" );
+          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt" );
         } elseif( $login_gruppen_id == $id ) {
-          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,img=img/euro.png,meinkonto=1" );
+          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,meinkonto=1" );
         }
         if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
           if( mysql_num_rows($offene_einzahlungen) > 0 ) {
