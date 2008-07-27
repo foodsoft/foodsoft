@@ -19,7 +19,7 @@
 			// Wenn keine Fehler, dann einfügen...
 			if ($errStr == "") {
          sql_insert( 'produktgruppen', array( 'name' => $newName ) );
-				 $onload_str = "opener.focus();  if (opener.document.forms['reload_form'].action) opener.document.forms['reload_form'].action.value='reload'; opener.document.forms['reload_form'].submit(); window.close();";
+				 $onload_str = "opener.focus();  if (opener.document.forms['reload_form'].action) opener.document.forms['reload_form'].action.value='reload'; opener.document.forms['reload_form'].submit(); closeCurrentWindow();";
 			}
 	 };
 	 
@@ -33,7 +33,7 @@
 					<td><input type="input" size="20" name="newProdukt_name"></td>
 			 </tr>
 			 <tr>
-			    <td colspan="2" align="center"><input type="submit" value="Einf&uuml;gen"><input type="button" value="Abbrechen" onClick="if(opener) opener.focus(); window.close();"></td>
+			    <td colspan="2" align="center"><input type="submit" value="Einf&uuml;gen"><input type="button" value="Abbrechen" onClick="if(opener) opener.focus(); closeCurrentWindow();"></td>
 			 </tr>
 		</table>
 	 </form>

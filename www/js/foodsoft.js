@@ -74,8 +74,8 @@ function select_auszug(self) {
 }
 
 function closeCurrentWindow() {
-  // this function is a workaround for the " 'window.close()' is not a function" -bug
-  // (occurring in some uses of onClick='window.close();'):
+  // this function is a workaround for the spurious " 'window.close()' is not a function" -bug
+  // (occurring in some uses of onClick='window.close();'; strangely, the following works:):
   window.close();
 }
 

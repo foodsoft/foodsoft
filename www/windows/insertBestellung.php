@@ -122,11 +122,11 @@
             if( ! $done ) {
               ?>
                 <input type='submit' value='Einf&uuml;gen'>
-                <input type='button' value='Abbrechen' onclick='if(opener) opener.focus(); window.close();'>
+                <input type='button' value='Abbrechen' onclick='if(opener) opener.focus(); closeCurrentWindow();'>
               <?
             } else {
               ?>
-                <input value='OK' type='button' onClick='if(opener) opener.focus(); window.close();'>
+                <input value='OK' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
               <?
             }
           ?>
