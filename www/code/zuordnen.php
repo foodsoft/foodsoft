@@ -1562,10 +1562,8 @@ function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
 //
 ////////////////////////////////////
 
-function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$sortByDate=true){
-  $basar_id = sql_basar_id();
-  $muell_id = sql_muell_id();
-	$query = "
+function sql_bestellmengen( $bestell_id, $produkt_id, $art = -1, $orderby = 'bestellzuordnung.zeitpunkt' ) {
+  $query = "
     SELECT  *, bestellzuordnung.id as bestellzuordnung_id
     FROM gruppenbestellungen
     INNER JOIN bestellzuordnung
@@ -1573,16 +1571,13 @@ function sql_bestellmengen($bestell_id, $produkt_id, $art, $gruppen_id=false,$so
     WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id 
       AND bestellzuordnung.produkt_id = $produkt_id
   ";
-  if($gruppen_id!==false){
-    $query = $query." AND gruppenbestellungen.bestellguppen_id = $gruppen_id";
+  if( $art >= 0 ){
+    $query = $query." AND bestellzuordnung.art=$art";
+  } else {
+    $query = $query." AND bestellzuordnung.art < 2";
   }
-  if($art!==false){
-    $query = $query." AND bestellzuordnung.art=".$art;
-  }
-  if($sortByDate){
-    $query = $query." ORDER BY bestellzuordnung.zeitpunkt;";
-  }else{
-    $query = $query." ORDER BY IF(bestellguppen_id in ($basar_id,$muell_id),1,0), gruppenbestellung_id, art;";
+  if( $orderby ) {
+    $query = $query." ORDER BY $orderby ";
   }
   return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 }
@@ -1632,7 +1627,7 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
         $firstorder_expr = "liefermenge";
       break;
   }
-  return "SELECT 
+  return "SELECT
       produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
     , produkte.id as produkt_id
     , bestellvorschlaege.liefermenge as liefermenge
@@ -1655,7 +1650,7 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
   FROM bestellvorschlaege
   INNER JOIN produkte
     ON (produkte.id=bestellvorschlaege.produkt_id)
-  INNER JOIN produktpreise 
+  INNER JOIN produktpreise
     ON (produktpreise.id=bestellvorschlaege.produktpreise_id)
   INNER JOIN produktgruppen
     ON (produktgruppen.id=produkte.produktgruppen_id)
@@ -1678,6 +1673,44 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
 function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 ) {
   return doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ) );
 }
+
+
+function zuteilungen_berechnen( $bestell_id, $produkt_id ) {
+  $basar_id = sql_basar_id();
+  $muell_id = sql_muell_id();
+
+  $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, 0, $produkt_id ) );
+  $gebindegroesse = $mengen['gebindegroesse'];
+  $toleranzbestellmenge = $mengen['toleranzbestellmenge'];
+  $basarbestellmenge = $mengen['basarbestellmenge'];
+  $gesamtbestellmenge = $mengen['gesamtbestellmenge'];
+  $festbestellmenge = $gesamtbestellmenge - $toleranzbestellmenge - $basarbestellmenge;
+
+  $gebinde = int( $mengen['festbestellmenge'] / $gebindegroesse );
+  if( $gebinde * $gebindegroesse < $festbestellmenge )
+    if( ($gebinde+1) * $gebindegroesse <= $toleranzbestellmenge )
+      ++$gebinde;
+  $bestellmenge = $gebinde * $gebindegroesse;
+
+  $bestellmengen = sql_bestellmengen( $bestell_id, $produkt_id, /* order by */ " art, bestellzuordnung.zeitpunkt" );
+  $zuteilungen = array();
+  while( ( $bestellmenge > 0 ) and ( $row = mysql_fetch_array( $bestellmengen ) ) ) {
+    $menge = $row['menge'];
+    $gruppe = $row['bestellguppen_id'];
+    if( $menge > $bestellmenge )
+      $menge = $bestellmenge;
+    if( isset( $zuteilungen[$gruppe] ) )
+      $zuteilungen[$gruppe] += $menge;
+    else
+      $zuteilungen[$gruppe] = $menge;
+    $bestellmenge -= $menge;
+  }
+  return $zuteilungen;
+}
+
+
+
+
 
 function select_liefermenge( $bestell_id, $produkt_id ) {
   return "( SELECT bestellvorschlaege.liefermenge
@@ -2966,7 +2999,7 @@ function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'be
   " );
 }
 
-function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0 ) {
+function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'pfandverpackungen.id' ) {
   $more_on = '';
   if( $bestell_id ) {
     $more_on = "AND gesamtbestellungen.id = $bestell_id";
@@ -2995,7 +3028,7 @@ function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0 ) {
     LEFT JOIN lieferantenpfand
       ON lieferantenpfand.verpackung_id = pfandverpackungen.id
       AND lieferantenpfand.bestell_id = gesamtbestellungen.id
-    GROUP BY pfandverpackungen.id
+    GROUP BY $group_by
     ORDER BY sort_id
   " );
 }
@@ -3193,6 +3226,50 @@ function select_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
   return doSql( select_ungebuchte_einzahlungen( $gruppen_id ) );
 }
+
+
+//
+// verluste und spenden
+//
+
+function select_verluste( $type ) {
+  $muell_id = sql_muell_id();
+  return "
+    SELECT id, summe, kontobewegungs_datum, notiz, konterbuchung_id
+    FROM gruppen_transaktion
+    WHERE gruppen_transaktion.gruppen_id = $muell_id AND type = $type
+    ORDER BY type, kontobewegungs_datum
+  ";
+}
+
+function sql_verluste( $type ) {
+  return doSql( select_verluste( $type ) );
+}
+
+function sql_verluste_summe( $type ) {
+  return sql_select_single_field( "
+    RETURN sum( summe ) as soll
+    FROM ( " .select_verluste( $type ). " ) as verluste
+  ", 'soll'
+  );
+}
+
+function sql_spenden( $orderby = 'valuta' ) {
+  return doSql( "
+    SELECT spenden.id as id
+         , spenden.summe as haben
+         , spenden.kontobewegungs_datum as valuta
+         , spenden.notiz as notiz
+         , bestellgruppen.name as name
+    FROM ( " .select_verluste( TRANSAKTION_TYP_SPENDE ). " ) as spenden
+    JOIN gruppen_transaktion
+      ON  gruppen_transaktion.id = -spenden.konterbuchung_id
+    JOIN bestellgruppen
+      ON bestellgruppen.id = gruppen_transaktion.gruppen_id
+    ORDER BY $orderby
+  " );
+}
+
 
 /////////////////////////////////////////////
 //
@@ -3442,7 +3519,7 @@ function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestel
 }
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -4499,21 +4576,6 @@ function move_html( $id, $into_id ) {
 // }
 //
 //
-// function sql_verteilmengen($bestell_id, $produkt_id, $gruppen_id){
-// 	$result = sql_bestellmengen($bestell_id, $produkt_id,2, $gruppen_id);
-// 	if(mysql_num_rows($result)==0) $return = 0;
-// 	else if(mysql_num_rows($result)>1) 
-// 		error(__LINE__,__FILE__,"Nicht genau ein Eintrag (".mysql_num_rows($result).") für Verteilmenge: bestell_id = $bestell_id, produkt_id = $produkt_id, gruppen_id = $gruppen_id" );
-// 	else{
-// 		$row = mysql_fetch_array($result);
-// 		$return = $row['menge'];
-// 	}
-// 	return $return;
-// }
-// /**
-//  *
-//  */
-// }
 // /**
 //  *
 //  */

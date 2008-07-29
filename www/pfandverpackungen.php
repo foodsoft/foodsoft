@@ -164,8 +164,10 @@ if( $bestell_id ) {
     </tr>
 <?
 
+$summe_voll_anzahl = 0;
 $summe_voll_netto = 0;
 $summe_voll_brutto = 0;
+$summe_leer_anzahl = 0;
 $summe_leer_netto = 0;
 $summe_leer_brutto = 0;
 while( $row = mysql_fetch_array( $verpackungen ) ) {
@@ -177,7 +179,8 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       <td class='number'><? printf( "%.2lf", $row['mwst'] ); ?></td>
       <td class='mult'>
         <? if( $editable and $bestell_id ) { ?>
-          <input type=text' size='6' name='anzahl_voll<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['pfand_voll_anzahl'] ); ?>'>
+          <input style='text-align:right;' type=text' size='3' name='anzahl_voll<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['pfand_voll_anzahl'] ); ?>'
+               onchange="document.getElementById('reminder').style.display = 'inline';">
         <? } else { ?>
           <? echo $row['pfand_voll_anzahl']; ?>
         <? } ?>
@@ -190,7 +193,8 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       </td>
       <td class='number'>
         <? if( $editable and $bestell_id ) { ?>
-          <input type=text' size='6' name='anzahl_leer<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['pfand_leer_anzahl'] ); ?>'>
+          <input style='text-align:right;' type=text' size='3' name='anzahl_leer<? echo $verpackung_id; ?>' value='<? printf( "%d", $row['pfand_leer_anzahl'] ); ?>'
+               onchange="document.getElementById('reminder').style.display = 'inline';">
         <? } else { ?>
           <? echo $row['pfand_leer_anzahl']; ?>
         <? } ?>
@@ -221,29 +225,59 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
       </td>
     </tr>
   <?
+  $summe_voll_anzahl += $row['pfand_voll_anzahl'];
   $summe_voll_netto += $row['pfand_voll_netto_soll'];
   $summe_voll_brutto += $row['pfand_voll_brutto_soll'];
+  $summe_leer_anzahl += $row['pfand_leer_anzahl'];
   $summe_leer_netto += $row['pfand_leer_netto_soll'];
   $summe_leer_brutto += $row['pfand_leer_brutto_soll'];
+}
+if( $bestell_id ) {
+  $verpackungen = sql_lieferantenpfand( $lieferanten_id, $bestell_id, 'mwst' );
+  while( $row = mysql_fetch_array( $verpackungen ) ) {
+    ?>
+      <tr class='summe'>
+        <td colspan='2'>Zwischensumme:</td>
+        <td class='number'><? echo $row['mwst']; ?></td>
+        <td class='number'><? printf( "%u", $row['pfand_voll_anzahl'] ); ?></td>
+        <td class='number'><? printf( "%.2lf", $row['pfand_voll_netto_soll'] ); ?></td>
+        <td class='number'><? printf( "%.2lf", $row['pfand_voll_brutto_soll'] ); ?></td>
+        <td class='number'><? printf( "%u", $row['pfand_leer_anzahl'] ); ?></td>
+        <td class='number'><? printf( "%.2lf", $row['pfand_leer_netto_soll'] ); ?></td>
+        <td class='number'><? printf( "%.2lf", $row['pfand_leer_brutto_soll'] ); ?></td>
+        <td class='number'><? printf( "%u", $row['pfand_voll_anzahl'] - $row['pfand_leer_anzahl'] ); ?></td>
+        <td class='number'><? printf( "%.2lf", $row['pfand_voll_netto_soll'] + $row['pfand_leer_netto_soll'] ); ?></td>
+        <td class='number'><? printf( "%.2lf", $row['pfand_voll_brutto_soll'] + $row['pfand_leer_brutto_soll'] ); ?></td>
+        <td>&nbsp;</td>
+      </tr>
+    <?
+  }
 }
 
 ?>
   <tr class='summe'>
-    <td colspan='4'>Summe:</td>
+    <td colspan='3'>Summe:</td>
+    <td class='number'>
+      <? printf( "%u", $summe_voll_anzahl ); ?>
+    </td>
     <td class='number'>
       <? printf( "%.2lf", $summe_voll_netto ); ?>
     </td>
     <td class='number'>
       <? printf( "%.2lf", $summe_voll_brutto ); ?>
     </td>
-    <td>&nbsp;</td>
+    <td class='number'>
+      <? printf( "%u", $summe_leer_anzahl ); ?>
+    </td>
     <td class='number'>
       <? printf( "%.2lf", $summe_leer_netto ); ?>
     </td>
     <td class='number'>
       <? printf( "%.2lf", $summe_leer_brutto ); ?>
     </td>
-    <td>&nbsp;</td>
+    <td class='number'>
+      <? printf( "%u", $summe_voll_anzahl - $summe_leer_anzahl ); ?>
+    </td>
     <td class='number'>
       <? printf( "%.2lf", $summe_voll_netto + $summe_leer_netto ); ?>
     </td>
@@ -254,18 +288,12 @@ while( $row = mysql_fetch_array( $verpackungen ) ) {
   </tr>
 <?
 
+?> </table> <?
+
 if( $bestell_id ) {
-  ?>
-    <tr>
-      <td colspan='6'>
-        <input type='submit' class='button' value='Speichern'>
-      </td>
-    </tr>
-  </table>
-  </form>
-  <?
-} else {
-  ?> </table> <?
+  floating_submission_button( 'reminder' );
+  ?> </form> <?
 }
+
 
 
