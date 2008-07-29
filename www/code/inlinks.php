@@ -37,7 +37,7 @@ $small_window_options = array(
 // define optional and mandatory parameters and default options for windows
 //
 function fc_window( $name ) {
-  global $dienst, $login_gruppen_id, $large_window_options, $small_window_options, $self_fields;
+  global $readonly, $dienst, $login_gruppen_id, $large_window_options, $small_window_options, $self_fields;
   $parameters = array();
   $options = $large_window_options;
   // echo "fc_window: $name<br>";
@@ -171,7 +171,7 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'gruppenmitglieder';
       $parameters['title'] = 'zur Liste der Gruppenmitglieder...';
       $parameters['img'] = 'img/b_browse.png';
-      $options = array_merge( $large_window_options, array( 'width' => '900' ) );
+      $options = array_merge( $large_window_options, array( 'width' => '800', 'height' => '600' ) );
       break;
     case 'gruppenpfand':
       $parameters['window'] = 'gruppenpfand';
@@ -244,7 +244,8 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'verluste';
       $parameters['text'] = 'Verlustaufstellung';
       $parameters['title'] = 'zur &Uuml;bersicht &uuml;ber die Verluste der Foodcoop...';
-      $options = $large_window_options;
+        $options = array_merge(
+          $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '800', 'menubar' => 'no','height' => '1000' ) );
       break;
     case 'verteilliste':
       if( $dienst > 0 ) {
@@ -353,7 +354,8 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
   $window_id = $parameters['window_id'];
 
   $form = '';
-  $url = "$foodsoftdir/index.php";
+  $anchor = '';
+  $query = '';
   $and = '?';
   foreach( $parameters as $key => $value ) {
     switch( $key ) {
@@ -361,6 +363,9 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
       case 'text':
       case 'title':
         continue 2; //  php counts switch as a loop!
+      case 'anchor':
+        $anchor = "#$value";
+        continue 2;
       case 'form':
         $form = $value;
         continue 2;
@@ -369,9 +374,10 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
       continue;
     if( $value === false )
       error( __LINE__, __FILE__, "parameter $key nicht uebergeben", debug_backtrace() );
-    $url .= "$and$key=$value";
+    $query .= "$and$key=$value";
     $and = '&';
   }
+  $url = "$foodsoftdir/index.php" . $query . $anchor;
   if( $scheme == 'form:' ) {
     // this is the action of a <form>: 
     // - the submit-button must set the target window,
