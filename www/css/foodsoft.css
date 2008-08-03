@@ -365,15 +365,16 @@ padding: 2px 2px 2px 5px;
 	 line-height: 1.3em;
 }
 
-th.warn, td.warn, div.warn, span.warn {
-  background-color:#ffaaaa;
+.warn .warn th, .warn td, .warn div, .warn span {
+  background-color:#f0a0a0;
   color:#000000;
   font-weight:bold;
   padding-top:2px;
   padding-bottom:2px;
 }
 
-th.alert, td.alert, div.alert, span.alert {
+
+.alert, .alert th, .alert td, .alert div, .alert span {
   background-color:#ffffa0;
   color:#000000;
   font-weight:bold;

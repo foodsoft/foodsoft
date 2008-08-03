@@ -119,7 +119,7 @@
 <script type="text/javascript">
   var anzahl_produkte = <? echo $anzahl_produkte; ?>;
   var kontostand = <? printf( "%.2lf", $kontostand ); ?>;
-  var gesamtkosten = 0.00;
+  var gesamtpreis = 0.00;
   var gebindegroesse     = new Array();
   var preis              = new Array();
   var kosten             = new Array();
@@ -140,12 +140,12 @@
     toleranz[produkt] = _toleranz;
     toleranz_andere[produkt] = _toleranz_andere;
     kosten[produkt] = _preis * ( _fest + _toleranz );
-    gesamtkosten += kosten[produkt];
+    gesamtpreis += kosten[produkt];
   }
 
   function zuteilung_berechnen( produkt ) {
     var festmenge, toleranzmenge, gebinde, bestellmenge, restmenge, zuteilung_fest;
-    var menge, quote, zuteilung_toleranz, kosten_neu;
+    var menge, quote, zuteilung_toleranz, kosten_neu, reminder, konto_rest, kontostand_neu;
 
     // bestellmenge berechnen: wieviel kann insgesamt bestellt werden:
     //
@@ -238,14 +238,26 @@
     document.getElementById('toleranz_'+produkt).value = toleranz[produkt];
 
     // kosten und neuen kontostand berechnen und anzeigen:
-    kosten_neu = preis * ( fest[produkt] + toleranz[produkt] );
-    gesamtkosten += ( kosten_neu - kosten[produkt] );
+    kosten_neu = preis[produkt] * ( fest[produkt] + toleranz[produkt] );
+    gesamtpreis += ( kosten_neu - kosten[produkt] );
     kosten[produkt] = kosten_neu;
-    document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu;
-    document.getElementById('gesamtkosten').firstChild.nodeValue = gesamtkosten;
-    document.getElementById('konto_rest').firstChild.nodeValue = kontostand - gesamtkosten;
+    // alert( 'preis: ' + preis[produkt] + ' gesamtpreis ' + gesamtpreis + ' kosten: ' + kosten[produkt] + ' kosten_neu: ' + kosten_neu );
+    document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
+    document.getElementById('gesamtpreis1').firstChild.nodeValue = gesamtpreis.toFixed(2);
+    document.getElementById('gesamtpreis2').firstChild.nodeValue = gesamtpreis.toFixed(2);
+    kontostand_neu = ( kontostand - gesamtpreis ).toFixed(2);
+    konto_rest = document.getElementById('konto_rest');
+    konto_rest.firstChild.nodeValue = kontostand_neu;
 
-    document.getElementById('reminder').style.display = 'inline';
+    reminder = document.getElementById('reminder');
+    reminder.style.display = 'inline';
+
+    if( gesamtpreis > kontostand ) {
+      konto_rest.style.color = '#c00000';
+    } else {
+      konto_rest.style.color = '#000000';
+    }
+
     return true;
   }
 
@@ -279,29 +291,32 @@
 
 if( ! $readonly ) {
   ?>
-  <div style='position:fixed;top:20px;left:20px;padding:0ex;z-index:999;' class='alert'>
-    <div style='margin:0pt;display:none;padding:1ex;' id='reminder'>
-      <table class='alert'>
-        <tr>
-          <td class='alert'>
-            <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("reminder").style.display = "none";'>
-          </td>
-          <td style='text-align:center' class='alert'> Änderungen sind noch nicht gespeichert! </td>
-        </tr>
-        <tr>
-          <td colspan='2' style='text-align:center;' class='alert'>
-            <input type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
-            <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
-          </td>
-        </tr>
-        <tr>
-          <td>Gesamtpreis:</td><td class='number' id='gesamtkosten'>-</td>
-        </tr>
-        <tr>
-          <td>noch verf&uuml;gbar:</td><td class='number' id='konto_rest'><? printf( '%.2lf', $kontostand ); ?></td>
-        </tr>
-      </table>
-    </div>
+  <div style='position:fixed;top:20px;left:20px;padding:2ex;z-index:999;display:none;' id='reminder' class='alert'>
+    <table class='inner'>
+      <tr>
+        <td>
+          <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("reminder").style.display = "none";'>
+        </td>
+        <td style='text-align:center;' colspan='2'>Änderungen sind noch nicht gespeichert!</td>
+      </tr>
+      <tr>
+        <td class='alert' style='padding-left:1em;' colspan='2'>Gesamtpreis:</td>
+        <td class='alert' id='gesamtpreis1' style='text-align:right;padding-right:1em;'>-</td>
+      </tr>
+      <tr>
+        <td class='alert' style='padding-left:1em;' colspan='2'>noch verf&uuml;gbar:</td>
+        <td class='alert' id='konto_rest' style='text-align:right;padding-right:1em;'><? printf( '%.2lf', $kontostand ); ?></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style='text-align:center;'>
+          <input type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
+        </td>
+        <td style='text-align:center;'>
+          <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+        </td>
+      </tr>
+    </table>
   </div>
   <?
 }
@@ -317,7 +332,7 @@ if( ! $readonly ) {
         <th>Produktgruppe</th>
         <th colspan='2'>Gebindegroesse</th>
         <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
-        <th colspan='2' title='voraussichtliche Bestellmenge aller Gruppen'>Gesamtbestellmenge</th>
+        <th colspan='2' title='voraussichtliche Bestellmenge aller Gruppen'>Bestellmenge</th>
         <th>Menge fest</th>
         <th>Toleranz</th>
         <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
@@ -375,8 +390,8 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
       <td class='unit'><? printf( "%s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
       <td class='mult'><? printf( "%.2lf", $preis ); ?></td>
       <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-      <td class='mult' id='bm_<? echo $n; ?>'><? printf( "%u", $zuteilungen['bestellmenge'] ); ?></td>
-      <td class='unit'><? printf( "%s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
+      <td class='mult' id='bm_<? echo $n; ?>' style='width:4em;'><? printf( "%u", $zuteilungen['bestellmenge'] ); ?></td>
+      <td class='unit'> * <? printf( "%s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
       <td class='number'>
         <div class='oneline'>
           <span style='color:#00e000;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
@@ -425,7 +440,7 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
 ?>
   <tr class='summe'>
     <td colspan='10'>Gesamtpreis:</td>
-    <td class='number' id='summe'><? printf( "%.2lf", $gesamtpreis ); ?></td>
+    <td class='number' id='gesamtpreis2'><? printf( "%.2lf", $gesamtpreis ); ?></td>
   </tr>
   </table>
   </form>
