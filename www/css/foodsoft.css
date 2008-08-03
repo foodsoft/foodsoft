@@ -565,6 +565,18 @@ div.kommentar {
   font-size:11pt;
 }
 
+div.oneline {
+  padding:0pt;
+  margin:0pt;
+  white-space:nowrap;
+}
+div.oneline_small {
+  padding:0pt;
+  margin:0pt;
+  white-space:nowrap;
+  font-size:smaller;
+}
+
 div#Zusatz {
 font-size: 0.9em;
 float: right; width: 30em;
