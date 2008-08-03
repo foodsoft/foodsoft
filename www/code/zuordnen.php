@@ -1725,7 +1725,7 @@ function zuteilungen_berechnen( $bestell_id, $produkt_id ) {
       $toleranzzuteilungen[$gruppe] = $menge;
     $restmenge -= $menge;
   }
-  return array( 'bestellmenge' => $bestellmenge, 'festzuteilungen' => $festzuteilungen, 'toleranzzuteilungen' => $toleranzzuteilungen );
+  return array( 'bestellmenge' => $bestellmenge, 'gebinde' => $gebinde, 'festzuteilungen' => $festzuteilungen, 'toleranzzuteilungen' => $toleranzzuteilungen );
 }
 
 

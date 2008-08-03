@@ -11,7 +11,7 @@
     // $status[] = STATUS_LIEFERANT;
     $useDate = FALSE;
     $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
-    $kontostand = 100.0;
+    $kontostand = 20.0;
     echo "<h1>Bestellen f&uuml;r den Basar</h1>";
   } else {
     // Neu: alle duerfen weiter bestellen, solange STATUS_BESTELLEN besteht:
@@ -231,7 +231,7 @@
       document.getElementById('tg_'+produkt).firstChild.nodeValue = toleranz[produkt] + toleranz_andere[produkt];
     }
 
-    document.getElementById('bm_'+produkt).firstChild.nodeValue = bestellmenge;
+    document.getElementById('gv_'+produkt).firstChild.nodeValue = gebinde;
 
     // formularfelder aktualisieren:
     document.getElementById('fest_'+produkt).value = fest[produkt];
@@ -254,8 +254,14 @@
 
     if( gesamtpreis > kontostand ) {
       konto_rest.style.color = '#c00000';
+      document.getElementById('submit').style.color = '#c00000';
+      document.getElementById('submit').style.fontWeight = 'bold';
+      document.getElementById('submit').value = 'Konto überzogen';
     } else {
       konto_rest.style.color = '#000000';
+      document.getElementById('submit').style.color = '#000000;'
+      document.getElementById('submit').style.fontWeight = 'normal';
+      document.getElementById('submit').value = 'Speichern';
     }
 
     return true;
@@ -300,6 +306,9 @@ if( ! $readonly ) {
         <td style='text-align:center;' colspan='2'>Änderungen sind noch nicht gespeichert!</td>
       </tr>
       <tr>
+        <td style='padding:0.5ex;' colspan='3'></td>
+      </tr>
+      <tr>
         <td class='alert' style='padding-left:1em;' colspan='2'>Gesamtpreis:</td>
         <td class='alert' id='gesamtpreis1' style='text-align:right;padding-right:1em;'>-</td>
       </tr>
@@ -308,9 +317,12 @@ if( ! $readonly ) {
         <td class='alert' id='konto_rest' style='text-align:right;padding-right:1em;'><? printf( '%.2lf', $kontostand ); ?></td>
       </tr>
       <tr>
+        <td style='padding:0.5ex;' colspan='3'></td>
+      </tr>
+      <tr>
         <td></td>
         <td style='text-align:center;'>
-          <input type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
+          <input id='submit' type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
         </td>
         <td style='text-align:center;'>
           <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
@@ -330,9 +342,8 @@ if( ! $readonly ) {
       <tr>
         <th>Bezeichnung</th>
         <th>Produktgruppe</th>
-        <th colspan='2'>Gebindegroesse</th>
+        <th colspan='4'>Gebinde</th>
         <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
-        <th colspan='2' title='voraussichtliche Bestellmenge aller Gruppen'>Bestellmenge</th>
         <th>Menge fest</th>
         <th>Toleranz</th>
         <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
@@ -386,17 +397,17 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
     <tr>
       <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
       <td><? echo $produkt['produktgruppen_name']; ?></td>
-      <td class='mult'><? printf( "%s *", $gebindegroesse ); ?></td>
-      <td class='unit'><? printf( "%s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
+      <td class='mult' style='font-weight:bold;width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?></td>
+      <td style='width:1ex;border-right:none;border-left:none;'>*</td>
+      <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
+      <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
       <td class='mult'><? printf( "%.2lf", $preis ); ?></td>
       <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-      <td class='mult' id='bm_<? echo $n; ?>' style='width:4em;'><? printf( "%u", $zuteilungen['bestellmenge'] ); ?></td>
-      <td class='unit'> * <? printf( "%s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
       <td class='number'>
         <div class='oneline'>
-          <span style='color:#00e000;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
+          <span style='color:#00e000;font-weight:bold;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
           +
-          <span style='color:#e80000;' id='fr_<? echo $n; ?>'><? echo $festmenge - $zuteilung_fest; ?></span>
+          <span style='color:#e80000;font-weight:bold;' id='fr_<? echo $n; ?>'><? echo $festmenge - $zuteilung_fest; ?></span>
           /
           <span style='color:#000000;' id='fg_<? echo $n; ?>'><? echo $festmenge_gesamt; ?></span>
         </div>
@@ -410,11 +421,11 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
       <td class='number'>
         <? if( $gebindegroesse > 1 ) { ?>
           <div class='oneline'>
-            <span style='color:#00e000;' id='tz_<? echo $n; ?>'><? echo $zuteilung_toleranz; ?></span>
+            <span style='color:#00e000;font-weight:bold;' id='tz_<? echo $n; ?>'><? echo $zuteilung_toleranz; ?></span>
             +
-            <span style='color:#e80000;' id='tr_<? echo $n; ?>'><? echo $toleranzmenge - $zuteilung_toleranz; ?></span>
+            <span style='color:#e80000;font-weight:bold;width:2ex;' id='tr_<? echo $n; ?>'><? echo $toleranzmenge - $zuteilung_toleranz; ?></span>
             /
-            <span style='color:#000000;' id='tg_<? echo $n; ?>'><? echo $toleranzmenge_gesamt; ?></span>
+            <span style='color:#000000;width:4ex;' id='tg_<? echo $n; ?>'><? echo $toleranzmenge_gesamt; ?></span>
           </div>
           <? if( ! $readonly ) { ?>
             <div class='oneline'>
