@@ -415,7 +415,7 @@ function products_overview(
     $select_columns = false, $select_nichtgeliefert = false
   ) {
 
-  $result = sql_bestellprodukte($bestell_id,$gruppen_id);
+  $result = sql_bestellprodukte( $bestell_id, $gruppen_id, 0 );
   $state = getState($bestell_id);
 
   $warnung_vorlaeufig = "";

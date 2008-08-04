@@ -11,7 +11,7 @@
     // $status[] = STATUS_LIEFERANT;
     $useDate = FALSE;
     $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
-    $kontostand = 20.0;
+    $kontostand = 100.0;
     echo "<h1>Bestellen f&uuml;r den Basar</h1>";
   } else {
     // Neu: alle duerfen weiter bestellen, solange STATUS_BESTELLEN besteht:
@@ -97,23 +97,43 @@
   if( ! $bestell_id )
     return;
 
+// ab hier: eigentliches bestellformular:
 
-  // ab hier: eigentliches bestellformular:
 
-  get_http_var( 'action', 'w', '' );
+get_http_var( 'action', 'w', '' );
 
-  switch( $action ) {
-    case 'produkt_hinzufuegen':
-      need_http_var( 'produkt_id', 'U' );
-      sql_insert_bestellvorschlaege( $produkt_id, $bestell_id );
-      break;
-  }
+switch( $action ) {
+  case 'produkt_hinzufuegen':
+    need_http_var( 'produkt_id', 'U' );
+    sql_insert_bestellvorschlaege( $produkt_id, $bestell_id );
+    break;
+  case 'bestellen':
+    $produkte = sql_bestellprodukte( $bestell_id, 0, 0 );
+    $gesamtpreis = 0;
+    $bestellungen = array();
+    while( $produkt = mysql_fetch_array( $produkte ) ) {
+      $n = $produkt['produkt_id'];
+      get_http_var( "fest_$n", 'u', 0 );
+      $fest = ${"fest_$n"};
+      get_http_var( "toleranz_$n", 'u', 0 );
+      $toleranz = ${"toleranz_$n"};
+      $bestellungen[$n] = array( 'fest' => $fest, 'toleranz' => $toleranz );
+      $gesamtpreis += $produkt['preis'] * ( $fest + $toleranz );
+    }
+    need( $gesamtpreis <= $kontostand, "Konto &uuml;berzogen!" );
+    foreach( $bestellungen as $produkt_id => $m ) {
+      change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'] );
+    }
+}
 
-  $gesamt_preis = 0;
-  $max_gesamt_preis = 0;
 
-  $produkte = sql_bestellprodukte( $bestell_id );
-  $anzahl_produkte = mysql_num_rows( $produkte );
+$produkte = sql_bestellprodukte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
+// ^ brauchen wir gleich im java-script!
+$anzahl_produkte = mysql_num_rows( $produkte );
+// echo "<br>anzahl_produkte: $anzahl_produkte";
+$gesamtpreis = 0.0;
+
+// echo "[".date('H') . ':' . date('i') . ':' . date('s') ."]";
 
 ?>
 <script type="text/javascript">
@@ -144,7 +164,7 @@
   }
 
   function zuteilung_berechnen( produkt ) {
-    var festmenge, toleranzmenge, gebinde, bestellmenge, restmenge, zuteilung_fest;
+    var festmenge, toleranzmenge, gebinde, bestellmenge, restmenge, zuteilung_fest, t_min;
     var menge, quote, zuteilung_toleranz, kosten_neu, reminder, konto_rest, kontostand_neu;
 
     // bestellmenge berechnen: wieviel kann insgesamt bestellt werden:
@@ -170,23 +190,18 @@
       // falls festmenge hoeher oder gleichgeblieben:
       // gruppe kriegt mindestens das, was schon vorher zugeteilt worden waere:
       //
-      menge = zuteilung_fest_alt[produkt];
-      if( menge > restmenge )
-        menge = restmenge;
-      zuteilung_fest += menge; restmenge -= menge;
+      menge = Math.min( zuteilung_fest_alt[produkt], restmenge );
+      zuteilung_fest += menge;
+      restmenge -= menge;
 
       // ...dann werden, soweit moeglich, die anderen festbestellungen erfuellt:
       //
-      menge = fest_andere[produkt];
-      if( menge > restmenge )
-        menge = restmenge;
+      menge = Math.min( fest_andere[produkt], restmenge );
       restmenge -= menge;
 
       // ...dann wird die zuteilung der gruppe, soweit moeglich, aufgestockt:
       //
-      menge = fest[produkt] - zuteilung_fest;
-      if( menge > restmenge )
-        menge = restmenge;
+      menge = Math.min( fest[produkt] - zuteilung_fest, restmenge );
       zuteilung_fest += menge; restmenge -= menge;
 
     } else {
@@ -194,16 +209,12 @@
       // festmenge wurde reduziert:
       // erstmal werden die anderen gruppen beruecksichtigt...
       //
-      menge = zuteilung_fest_andere[produkt];
-      if( menge > restmenge )
-        menge = restmenge;
+      menge = Math.min( fest_andere[produkt], restmenge );
       restmenge -= menge;
 
       // ...und erst dann die gruppe, die reduziert hat:
       //
-      menge = fest[produkt];
-      if( menge > restmenge )
-        menge = restmenge;
+      menge = Math.min( fest[produkt], restmenge );
       zuteilung_fest += menge; restmenge -= menge;
 
     }
@@ -212,9 +223,7 @@
     //
     if( restmenge > 0 ) {
       quote = restmenge / ( toleranz_andere[produkt] + toleranz[produkt] );
-      menge = Math.ceil( toleranz[produkt] * quote );
-      if( menge > restmenge )
-        menge = restmenge;
+      menge = Math.min( Math.ceil( toleranz[produkt] * quote ), restmenge );
       zuteilung_toleranz = menge;
     } else {
       zuteilung_toleranz = 0;
@@ -252,6 +261,9 @@
     reminder = document.getElementById('reminder');
     reminder.style.display = 'inline';
 
+    document.getElementById('hinzufuegen').style.display = 'none';
+    document.getElementById('hinzufuegen2').style.display = 'inline';
+
     if( gesamtpreis > kontostand ) {
       konto_rest.style.color = '#c00000';
       document.getElementById('submit').style.color = '#c00000';
@@ -271,9 +283,26 @@
     fest[produkt]++;
     zuteilung_berechnen( produkt );
   }
+  function fest_plusplus( produkt ) {
+    var gebinde;
+    gebinde = Math.floor( fest[produkt] / gebindegroesse[produkt] );
+    fest[produkt] = (gebinde+1) * gebindegroesse[produkt];
+    zuteilung_berechnen( produkt );
+  }
   function fest_minus( produkt ) {
     if( fest[produkt] > 0 ) {
       fest[produkt]--;
+      zuteilung_berechnen( produkt );
+    }
+  }
+  function fest_minusminus( produkt ) {
+    var gebinde;
+    gebinde = Math.ceil( fest[produkt] / gebindegroesse[produkt] ) - 1;
+    if( gebinde > 0 ) {
+      fest[produkt] = gebinde * gebindegroesse[produkt];
+      zuteilung_berechnen( produkt );
+    } else {
+      fest[produkt] = 0;
       zuteilung_berechnen( produkt );
     }
   }
@@ -287,6 +316,22 @@
     if( toleranz[produkt] > 0 ) {
       toleranz[produkt]--;
       zuteilung_berechnen( produkt );
+    }
+  }
+  function toleranz_auffuellen( produkt ) {
+    gebinde = Math.floor( fest[produkt] / gebindegroesse[produkt] );
+    if( fest[produkt] - gebinde * gebindegroesse[produkt] > 0 ) {
+      toleranz[produkt] = (gebinde+1) * gebindegroesse[produkt] - fest[produkt];
+    } else {
+      toleranz[produkt] = 0;
+    }
+    zuteilung_berechnen( produkt );
+  }
+  function bestellung_submit( produkt ) {
+    if( gesamtpreis > kontostand ) {
+      alert( 'Kontostand nicht ausreichend!' );
+    } else {
+      document.forms['bestellform'].submit();
     }
   }
 -->
@@ -322,7 +367,7 @@ if( ! $readonly ) {
       <tr>
         <td></td>
         <td style='text-align:center;'>
-          <input id='submit' type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellungAktualisieren();'>
+          <input id='submit' type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellung_submit();'>
         </td>
         <td style='text-align:center;'>
           <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
@@ -335,13 +380,13 @@ if( ! $readonly ) {
 ?>
 
 
-<form name="bestellForm" action="<? echo self_url(); ?>" method="post">
+<form name="bestellform" action="<? echo self_url(); ?>" method="post">
   <? echo self_post(); ?>
     <input type="hidden" name="action" value='bestellen'>
     <table class='numbers' width='100%' style="margin:40px 0 0 0;">
       <tr>
-        <th>Bezeichnung</th>
         <th>Produktgruppe</th>
+        <th>Bezeichnung</th>
         <th colspan='4'>Gebinde</th>
         <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
         <th>Menge fest</th>
@@ -350,25 +395,19 @@ if( ! $readonly ) {
       </tr>
 <?
 
-$produkte = sql_bestellprodukte( $bestell_id );
-
-$gesamtpreis = 0.0;
-$n = 0;
+$produktgruppe_alt = '';
+$rowspan = 1;
+$pg_id = 0;
 while( $produkt = mysql_fetch_array( $produkte ) ) {
-  ++$n;
   preisdatenSetzen( $produkt );
   $produkt_id = $produkt['produkt_id'];
-  // echo "$bestell_id, $gruppen_id, $produkt_id<br>";
-  $bestellmengen_gruppe = sql_select_single_row(
-    select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id )
-  , array( 'toleranzbestellmenge' => 0, 'basarbestellmenge' => 0, 'gesamtbestellmenge' => 0 )
-  );
+  $n = $produkt_id;
 
   $gebindegroesse = $produkt['gebindegroesse'];
   $preis = $produkt['preis'];
 
-  $toleranzmenge = $bestellmengen_gruppe['toleranzbestellmenge'] + $bestellmengen_gruppe['basarbestellmenge'];
-  $festmenge = $bestellmengen_gruppe['gesamtbestellmenge'] - $toleranzmenge;
+  $festmenge = gruppengesamtmenge( $bestell_id, $produkt_id, $gruppen_id, 0 );
+  $toleranzmenge = gruppengesamtmenge( $bestell_id, $produkt_id, $gruppen_id, 1 );
 
   $toleranzmenge_gesamt = $produkt['toleranzbestellmenge'] + $produkt['basarbestellmenge'];
   $toleranzmenge_andere = $toleranzmenge_gesamt - $toleranzmenge;
@@ -376,7 +415,7 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   $festmenge_gesamt = $produkt['gesamtbestellmenge'] - $toleranzmenge_gesamt;
   $festmenge_andere = $festmenge_gesamt - $festmenge;
 
-  $zuteilungen = zuteilungen_berechnen( $bestell_id, $produkt_id );
+  $zuteilungen = zuteilungen_berechnen( $produkt );
   $zuteilung_fest = adefault( $zuteilungen['festzuteilungen'], $gruppen_id, 0 );
   $zuteilung_toleranz = adefault( $zuteilungen['toleranzzuteilungen'], $gruppen_id, 0 );
 
@@ -393,17 +432,37 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   , $festmenge_andere, $toleranzmenge_andere
   , $zuteilung_fest, $zuteilung_toleranz
   );
+  ?> <tr> <?
+  $produktgruppe = $produkt['produktgruppen_name'];
+  if( $produktgruppe != $produktgruppe_alt ) {
+    if( $pg_id ) {
+      ?>
+        <script type='text/javascript'>
+          document.getElementById('pg_<? echo $pg_id; ?>').rowSpan = <? echo $rowspan; ?>;
+        </script>
+      <?
+    }
+    ++$pg_id;
+    ?>
+      <td id='pg_<? echo $pg_id; ?>' rowspan='1'>
+        <? echo $produktgruppe; ?>
+      </td>
+    <?
+    $rowspan = 1;
+    $produktgruppe_alt = $produktgruppe;
+  } else {
+    ++$rowspan;
+  }
+
   ?>
-    <tr>
       <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
-      <td><? echo $produkt['produktgruppen_name']; ?></td>
       <td class='mult' style='font-weight:bold;width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?></td>
       <td style='width:1ex;border-right:none;border-left:none;'>*</td>
       <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
       <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
       <td class='mult'><? printf( "%.2lf", $preis ); ?></td>
       <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-      <td class='number'>
+      <td style='text-align:center;'>
         <div class='oneline'>
           <span style='color:#00e000;font-weight:bold;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
           +
@@ -413,12 +472,19 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
         </div>
         <? if( ! $readonly ) { ?>
           <div class='oneline'>
+          <? if( $gebindegroesse > 1 ) { ?>
+            <input type='button' value='<<' onclick='fest_minusminus(<? echo $n; ?>);' >
+          <? } ?>
             <input type='button' value='<' onclick='fest_minus(<? echo $n; ?>);' >
+            <span style='width:4em;'>&nbsp;</span>
             <input type='button' value='>' onclick='fest_plus(<? echo $n; ?>);' >
+          <? if( $gebindegroesse > 1 ) { ?>
+            <input type='button' value='>>' onclick='fest_plusplus(<? echo $n; ?>);' >
+          <? } ?>
           </div>
         <? } ?>
       </td>
-      <td class='number'>
+      <td style='text-align:center;'>
         <? if( $gebindegroesse > 1 ) { ?>
           <div class='oneline'>
             <span style='color:#00e000;font-weight:bold;' id='tz_<? echo $n; ?>'><? echo $zuteilung_toleranz; ?></span>
@@ -430,6 +496,9 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
           <? if( ! $readonly ) { ?>
             <div class='oneline'>
             <input type='button' value='<' onclick='toleranz_minus(<? echo $n; ?>);' >
+            <span style='width:2em;'>&nbsp;</span>
+            <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' >
+            <span style='width:2em;'>&nbsp;</span>
             <input type='button' value='>' onclick='toleranz_plus(<? echo $n; ?>);' >
             </div>
           <? } ?>
@@ -447,6 +516,13 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
     </tr>
   <?
 }
+if( $rowspan > 1 ) {
+  ?>
+    <script type='text/javascript'>
+      document.getElementById('pg_<? echo $pg_id; ?>').rowSpan = <? echo $rowspan; ?>;
+    </script>
+  <?
+}
 
 ?>
   <tr class='summe'>
@@ -455,5 +531,20 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   </tr>
   </table>
   </form>
-<?
+
+<? if( ! $readonly ) { ?>
+  <span id='hinzufuegen'>
+    <h3> Zus&auml;tzliches Produkt in Bestellvorlage aufnehmen </h3>
+    <form method='post' action='<? echo self_url(); ?>'>
+    <input type='hidden' name='action' value='produkt_hinzufuegen'>
+    <? echo self_post(); ?>
+      <? select_products_not_in_list($bestell_id); ?>
+      <input type="submit" value="Produkt hinzuf&uuml;gen">
+    </form>
+  </span>
+  <span id='hinzufuegen2' class='alert' style='display:none;'>
+    <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
+    Vor dem Hinzufügen: Bitte erst Änderungen speichern!
+  </span>
+<? } ?>
 
