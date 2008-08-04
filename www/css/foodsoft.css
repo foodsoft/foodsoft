@@ -490,7 +490,7 @@ table#preisform label {
 }
 
 label {
-  padding-right:1em;
+  margin-right:1em;
 }
 
 tr.modified td, tr.modified th, .modified {
@@ -527,11 +527,15 @@ p.li {
   padding:1ex;
   margin:1ex;
 }
-.small_form td, .small_form table {
+table.small_form tr td, .small_form table {
   background-color:#ffffd0;
   border-style:none;
   padding:0.5ex;
   text-align:left;
+}
+
+table.small_form tr td label a {
+  padding:0pt;
 }
 
 fieldset.big_form {

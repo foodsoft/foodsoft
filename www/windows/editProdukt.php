@@ -80,7 +80,7 @@
       <fieldset style='width:400px;' class='small_form'>
       <legend><? echo ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ); ?></legend>
       <? echo $msg . $problems; ?>
-			  <table>
+			  <table class='small_form'>
           <tr>
            <td><label>Lieferant:</label></td>
            <td><? echo $lieferant_name; ?></td>
@@ -114,8 +114,6 @@
 						 <input <? echo $ro_tag; ?> name="notiz" type='text' size='40' value='<? echo $notiz; ?>'>
 					</td>
 			 </tr>	 
-     </table>
-     <table width='100%'>
        <tr>
 			   <td style='text-align:left;white-space:nowrap;'>
            <? if( ! $ro ) { ?>

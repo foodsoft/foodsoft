@@ -287,7 +287,7 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'edit_produkt';
       $parameters['title'] = 'zu den Stammdaten des Produkts...';
       $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
-      $options = array_merge( $small_window_options, array( 'width' => '550', 'height' => 380 ) );
+      $options = array_merge( $small_window_options, array( 'width' => '560', 'height' => 380 ) );
       break;
     case 'edit_verpackung':
       $parameters['window'] = 'editVerpackung';
@@ -421,7 +421,7 @@ function alink( $url, $text = '', $title = '', $img = false ) {
     $alt = "alt='$title'";
     $title = "title='$title'";
   }
-  $l = "<a style='padding:0pt;' href=\"$url\" $title>";
+  $l = "<a href=\"$url\" $title>";
   if( $img ) {
     $l .= "<img src='$img' class='png' $alt $title />";
     $img = ' ';
