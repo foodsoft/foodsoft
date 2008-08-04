@@ -1588,11 +1588,26 @@ function sql_bestellmengen( $bestell_id, $produkt_id, $art = -1, $orderby = 'bes
   return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
 }
 
-function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 ){
+function gruppengesamtmenge( $bestell_id, $produkt_id, $gruppen_id, $art ) {
+  return sql_select_single_field( "
+    SELECT IFNULL( SUM( menge ), 0 ) as summe
+    FROM gruppenbestellungen
+    INNER JOIN bestellzuordnung
+       ON ( bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
+    WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id 
+      AND bestellzuordnung.produkt_id = $produkt_id
+      AND gruppenbestellungen.bestellguppen_id = $gruppen_id
+      AND bestellzuordnung.art = $art
+  ", 'summe'
+  );
+}
+
+function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
   $state = getState( $bestell_id );
 
+  // echo "select_bestellprodukte: $gruppen_id, $produkt_id, $empty <br>";
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) ), 0.0 )
@@ -1616,6 +1631,9 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
                                        * IF( gruppenbestellungen.bestellguppen_id=$muell_id, 1 , 0) ), 0.0 )
   ";
 
+  if( $orderby == '' )
+    $orderby = "menge_ist_null, produktgruppen_id, produkte.name";
+
   // tatsaechlich bestellte oder gelieferte produkte werden vor solchen mit
   // menge 0 angezeigt; dafuer einen sortierbaren ausdruck definieren:
   switch($state) {
@@ -1633,11 +1651,15 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
         $firstorder_expr = "liefermenge";
       break;
   }
+
+  // echo "<br>select_bestellprodukte: $having</br>";
   return "SELECT
-      produkte.name as produkt_name, produktgruppen.name as produktgruppen_name
+      produkte.name as produkt_name
+    , produktgruppen.name as produktgruppen_name
     , produkte.id as produkt_id
     , produkte.notiz as notiz
     , bestellvorschlaege.liefermenge as liefermenge
+    , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.gebindegroesse as gebindegroesse
@@ -1661,9 +1683,9 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
     ON (produktpreise.id=bestellvorschlaege.produktpreise_id)
   INNER JOIN produktgruppen
     ON (produktgruppen.id=produkte.produktgruppen_id)
-  INNER JOIN gruppenbestellungen
+  LEFT JOIN gruppenbestellungen
     ON (gruppenbestellungen.gesamtbestellung_id=$bestell_id)
-  INNER JOIN bestellzuordnung
+  LEFT JOIN bestellzuordnung
     ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
         AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
   WHERE bestellvorschlaege.gesamtbestellung_id=$bestell_id
@@ -1672,18 +1694,20 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 )
    . ( $produkt_id ? " and produkte.id=$produkt_id " : "" )
   . "
   GROUP BY bestellvorschlaege.produkt_id
-  "
-   . ( $gruppen_id ? " HAVING gesamtbestellmenge<>0 OR verteilmenge<>0 OR muellmenge<>0 " : "" ) .
-  " ORDER BY menge_ist_null, produktgruppen_id, produkte.name ";
+  ORDER BY $orderby ";
 }
 
-function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0 ) {
-  return doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ) );
+function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
+  return doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id, $orderby ) );
 }
 
-
-function zuteilungen_berechnen( $bestell_id, $produkt_id ) {
-  $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, 0, $produkt_id ) );
+// zuteilungen_berechnen():
+// wo benoetigt, ist sql_bestellprodukte() schon aufgerufen; zwecks effizienz uebergeben wir der funktion
+// eine Ergebniszeile, um den komplexen query in sql_bestellprodukte() nicht wiederholen zu muessen:
+//
+function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) {
+  $produkt_id = $mengen['produkt_id'];
+  $bestell_id = $mengen['gesamtbestellung_id'];
   $gebindegroesse = $mengen['gebindegroesse'];
   $toleranzbestellmenge = $mengen['toleranzbestellmenge'] + $mengen['basarbestellmenge'];
   $gesamtbestellmenge = $mengen['gesamtbestellmenge'];
@@ -1695,22 +1719,57 @@ function zuteilungen_berechnen( $bestell_id, $produkt_id ) {
       ++$gebinde;
   $bestellmenge = $gebinde * $gebindegroesse;
 
+  if( $bestellmenge < 1 )
+    return array( 'bestellmenge' => 0, 'gebinde' => 0, 'festzuteilungen' => array(), 'toleranzzuteilungen' => array() );
+
   $restmenge = $bestellmenge;
 
+  // erste zuteilungsrunde: festbestellungen in bestellreihenfolge erfuellen, dabei berechnete
+  // negativ-toleranz abziehen:
+  //
   $festbestellungen = sql_bestellmengen( $bestell_id, $produkt_id, 0 );
   $festzuteilungen = array();
+  $offen = array();
   while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $festbestellungen ) ) ) {
-    $menge = $row['menge'];
     $gruppe = $row['bestellguppen_id'];
+    $menge = $row['menge'];
+    if( isset( $offen[$gruppe] ) ) {
+      $offen[$gruppe] += $menge;
+    } else {
+      $offen[$gruppe] = $menge;
+      $festzuteilungen[$gruppe] = 0;
+    }
+
+    // negativ-toleranz ausrechnen und zurueckbehalten (maximal ein halbes gebinde):
+    //
+    $t_min = floor( ( $menge - $gebindegroesse / 2 ) / 2 );
+    if( $t_min < 0 )
+      $t_min = 0;
+    if( $t_min > $gebindegroesse / 2 )
+      $t_min = floor( $gebindegroesse / 2 );
+    $menge -= $tmin;
+
     if( $menge > $restmenge )
       $menge = $restmenge;
-    if( isset( $festzuteilungen[$gruppe] ) )
-      $festzuteilungen[$gruppe] += $menge;
-    else
-      $festzuteilungen[$gruppe] = $menge;
+
+    $festzuteilungen[$gruppe] += $menge;
     $restmenge -= $menge;
+    $offen[$gruppe] -= $menge;
   }
 
+  // zweite zuteilungsrunde: ebenfalls in bestellreihenfolge noch offene festbestellungen erfuellen:
+  //
+  mysql_data_seek( $festbestellungen, 0 );
+  while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $festbestellungen ) ) ) {
+    $gruppe = $row['bestellguppen_id'];
+    $menge = min( $row[$gruppe], $offen[$gruppe], $restmenge );
+    $festzuteilungen[$gruppe] += $menge;
+    $restmenge -= $menge;
+    $offen[$gruppe] -= $menge;
+  }
+
+  // dritte zuteilungsrunde: mit positiv-toleranzen auffuellen:
+  //
   $toleranzbestellungen = sql_bestellmengen( $bestell_id, $produkt_id, 1, '-menge' );
   $toleranzzuteilungen = array();
   $quote = ( 1.0 * $restmenge ) / $toleranzbestellmenge;
@@ -1924,217 +1983,41 @@ function writeLiefermenge_sql($bestell_id){
 /**
  *
  */
-function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $produkt_id){
-	if($gruppenMengeInGebinde > 0){
-		$query = "INSERT INTO  bestellzuordnung (menge, produkt_id, gruppenbestellung_id, art) 
-			  VALUES (".$gruppenMengeInGebinde.
-			 ", ".$produkt_id.
-			 ", ".$gruppenbestellung_id.", 2);";
-                doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB schreiben...");
-	}
-}
-
-/**
- *
- */
 function verteilmengenZuweisen($bestell_id){
-  // nichts tun, wenn keine Bestellung ausgewählt
-  need($bestell_id);
+  $basar_id = sql_basar_id();
 
-  if(getState($bestell_id)!=STATUS_LIEFERANT) return;
+  need( getState($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
-  //row_gesamtbestellung einlesen aus Datenbank
-  //benötigt für Bestellstart und Ende
-  $sql_best = sql_bestellungen(FALSE, FALSE, $bestell_id);
-  $row_gesamtbestellung = mysql_fetch_array($sql_best);
-
-  $gruppen = sql_beteiligte_bestellgruppen($bestell_id);
-  while ($gruppe_row = mysql_fetch_array($gruppen)){
-     //Diese loops sind noch nicht sauber verschachtelt.
-     //Eigentlich könnte man sich die Gruppenmengen in Array merken
-     //und damit weiterrechnen. Dazu sind aber im Moment zuviele
-     //Variablen da, die ich nicht verstehe.
-     $gruppen_id = $gruppe_row['id'];
-     $gruppenbestellung_id = $gruppe_row['gruppenbestellungen_id'];
-     //echo "Bearbeite Gruppe (".$gruppen_id.") ".$gruppe_row['name'];
-     // Produkte auslesen & Tabelle erstellen...
-     $result = sql_bestellprodukte($bestell_id);
-				    
-
-	$produkt_counter = 0;
-	$bestellungDurchfuehren = true;   
-			 
-	while ($produkt_row = mysql_fetch_array($result)) {
-
-	   unset($gebindegroessen);
-	   unset($gebindepreis);
-			 
-	    // Gebindegroessen und Preise des Produktes auslesen...
-	    $preise = sql_produktpreise($produkt_row['produkt_id'],$bestell_id,
-	    				$row_gesamtbestellung['bestellstart'],
-	    				$row_gesamtbestellung['bestellende']);
-	    $i = 0;
-	    while ($row = mysql_fetch_array($preise)) {
-		   $gebindegroessen[$i]=$row['gebindegroesse'];
-	 	   $gebindepreis[$i]=$row['preis'];
-	 	   $i++;
-
-	    }			 
-
-	    if($i == 0) error(__FILE__,__LINE__,"Kein Preis für Produkt ".$produkt_row['produkt_name']." (".$produkt_row['produkt_id'].") gefunden! Überprüfe gültigkeit");
-
-	    // Bestellmengenzähler setzen
-	    $gesamtBestellmengeFest[$produkt_row['produkt_id']] = 0;
-   	    $gesamtBestellmengeToleranz[$produkt_row['produkt_id']] = 0;
-	    $gruppenBestellmengeFest[$produkt_row['produkt_id']] = 0;
-	    $gruppenBestellmengeToleranz[$produkt_row['produkt_id']] = 0;
-	    $gruppenBestellmengeFestInBerstellung[$produkt_row['produkt_id']] = 0;
-	    $gruppenBestellmengeToleranzInBerstellung[$produkt_row['produkt_id']] = 0;
-	    unset($gruppenBestellintervallUntereGrenze);
-	    unset($gruppenBestellintervallObereGrenze);
-	    unset($bestellintervallId);
-					
-					
-	    // Hier werden die aktuellen festen Bestellmengen ausgelesen...
-	    $bestellmengen = sql_bestellmengen($bestell_id, $produkt_row['produkt_id'],0);
-	    $intervallgrenzen_counter = 0;								
-	    while ($einzelbestellung_row = mysql_fetch_array($bestellmengen)) {
-		if ($einzelbestellung_row['bestellguppen_id'] == $gruppen_id) {
-		    //$gruppenbestellung_id = $einzelbestellung_row['gruppenbest_id'];
-		    $ug = $gruppenBestellintervallUntereGrenze[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $gesamtBestellmengeFest[$produkt_row['produkt_id']] + 1;
-		    $og = $gruppenBestellintervallObereGrenze[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $gesamtBestellmengeFest[$produkt_row['produkt_id']] + $einzelbestellung_row['menge'];
-		    $bestellintervallId[$produkt_row['produkt_id']][$intervallgrenzen_counter] = $einzelbestellung_row['bestellzuordnung_id'];
-								
-		    $intervallgrenzen_counter++;
-		    $gruppenBestellmengeFest[$produkt_row['produkt_id']] += $einzelbestellung_row['menge'];
-		}
-		$gesamtBestellmengeFest[$produkt_row['produkt_id']] += $einzelbestellung_row['menge'];
-	   }
-					
-	   $gesamteBestellmengeAnfang = $gesamtBestellmengeFest[$produkt_row['produkt_id']];
-
-	   unset($toleranzenNachGruppen);
-	   // Hier werden die aktuellen toleranz Bestellmengen ausgelesen...
-	   $bestellmengen = sql_bestellmengen($bestell_id, $produkt_row['produkt_id'],1);
-	   $toleranzBestellungId = -1;
-	   while ($einzelbestellung_row = mysql_fetch_array($bestellmengen)) {						
-	 	if ($einzelbestellung_row['bestellguppen_id'] == $gruppen_id) {
-		    $gruppenBestellmengeToleranz[$produkt_row['produkt_id']] += $einzelbestellung_row['menge'];
-		    $toleranzBestellungId =  $einzelbestellung_row['bestellzuordnung_id'];
-		}
-		$gesamtBestellmengeToleranz[$produkt_row['produkt_id']] += $einzelbestellung_row['menge'];
-						 
-		// für jede Gruppe getrennt die Toleranzmengen ablegen
-	 	$bestellgruppen_id = $einzelbestellung_row['bestellguppen_id'];
-		if (!isset($toleranzenNachGruppen[$bestellgruppen_id])) $toleranzenNachGruppen[$bestellgruppen_id] = 0;
-		$toleranzenNachGruppen[$bestellgruppen_id] += $einzelbestellung_row['menge'];
-						 
-	  }
-					
-	  if (isset($toleranzenNachGruppen)) ksort($toleranzenNachGruppen);
-					
-	  // jetzt die Gebindeaufteilung berechnen
-	  unset($gruppenMengeInGebinde);
-	  unset($festeGebindeaufteilung);
-				
-	  $rest_menge = $gesamtBestellmengeFest[$produkt_row['produkt_id']]; 
-	  $gesamtMengeBestellt = 0;
-	  $gruppeGesamtMengeInGebinden = 0;
- 	  for ($i=0; $i < count($gebindegroessen); $i++) {
-	      $festeGebindeaufteilung[$i] = floor($rest_menge / $gebindegroessen[$i]);
-	      $rest_menge = $rest_menge % $gebindegroessen[$i];
-					 
-	      // berechne: wieviel  hat die aktuelle Gruppe in diesem Gebinde
-	      $gebindeAnfang = $gesamtMengeBestellt + 1;
-	      $gesamtMengeBestellt += $festeGebindeaufteilung[$i] * $gebindegroessen[$i];
-					 
-	      $gruppenMengeInGebinde[$i] = 0;
-					 
-	      if ($festeGebindeaufteilung[$i] > 0 && isset($gruppenBestellintervallUntereGrenze[$produkt_row['produkt_id']])) {
-		   for ($j=0; $j < count($gruppenBestellintervallUntereGrenze[$produkt_row['produkt_id']]); $j++) {
-			$ug = $gruppenBestellintervallUntereGrenze[$produkt_row['produkt_id']][$j];
-			$og = $gruppenBestellintervallObereGrenze[$produkt_row['produkt_id']][$j];
-			$gebindeEnde = $gesamtMengeBestellt;
-
-			if ($ug >= $gebindeAnfang && $ug <= $gebindeEnde) {  // untere Grenze des Bestellintervalls im aktuellen Gebinde...
-			     if ($og >= $gebindeAnfang && $og <= $gebindeEnde)   { // und die obere Grenze auch dann...
-				$gruppenMengeInGebinde[$i] += 1 + $og - $ug;
-			     } else {   // und die obere Grenze nicht, dann ...
-				$gruppenMengeInGebinde[$i] += 1 + $gebindeEnde - $ug;    // alles bis zum Intervallende
-			     }
-			} else if ($og >= $gebindeAnfang && $og <= $gebindeEnde) {  // die obere Grenze des Bestellintervalls im aktuellen Gebinde, und die untere nicht, dann...
-				$gruppenMengeInGebinde[$i] += 1 + $og - $gebindeAnfang;    // alles ab Intervallanfang bis obere Grenze
-			} else if ($ug < $gebindeAnfang && $og > $gebindeEnde) { //die untere Grenze des Bestellintervalls unterhalb und die obere oberhalb des aktuellen Gebindes, dann..
-			 	$gruppenMengeInGebinde[$i] += 1 + $gebindeEnde - $gebindeAnfang;    // das gesamte Gebinde
-			}
-		   }
-	      }
-	      $gruppeGesamtMengeInGebinden += $gruppenMengeInGebinde[$i];
-	  }
-				
-	  // versuche offenes Gebinde mit Toleranzmengen zu füllen							
-	  $gruppenToleranzInGebinde     = 0;
-	  $toleranzGebNr = -1;
-		
-	  if ($rest_menge != 0) {
-		$fuellmenge = $gebindegroessen[count($gebindegroessen)-1] - $rest_menge;
-		if (isset($toleranzenNachGruppen) && $fuellmenge <= $gesamtBestellmengeToleranz[$produkt_row['produkt_id']]) {
-			//echo "<p>toleranzenNachGruppen: ".$toleranzenNachGruppen."</p>";
-			//echo "<p>isset(toleranzenNachGruppen): ";
-			//if(isset($toleranzenNachGruppen)) echo "true";
-			//else echo "false";
-			//echo "</p>";
-			reset($toleranzenNachGruppen);
-			do {
-			    while (!(list($key, $value) = each($toleranzenNachGruppen))) reset($toleranzenNachGruppen);   // neue Wete auslesen und ggf. wieder am Anfang des Arrays starten
-
-			    if ($value > 0) { 
-				$toleranzenNachGruppen[$key] --;
-				$fuellmenge--;
-				if ($key == $gruppen_id) $gruppenToleranzInGebinde++;
-			    }
-										
-										
-			} while($fuellmenge > 0);
-								 
-			// das "toleranzgefüllte" Gebinde anzeigen
-			$toleranzGebNr = count($festeGebindeaufteilung)-1;
-								 
-			$festeGebindeaufteilung[count($festeGebindeaufteilung)-1]++;
-			$gruppenMengeInGebinde[$toleranzGebNr] += $gruppenBestellmengeFest[$produkt_row['produkt_id']]  - $gruppeGesamtMengeInGebinden;
-			$gruppenMengeInGebinde[$toleranzGebNr] += $gruppenToleranzInGebinde;
-			$gruppeGesamtMengeInGebinden = $gruppenBestellmengeFest[$produkt_row['produkt_id']];
-			$toleranzFuellung = count($gebindegroessen) -1;
-								 
-			// Gebindeaufteillung an Toleranzfüllung anpassen...
-			$anzInAktGeb = $festeGebindeaufteilung[$toleranzGebNr] * $gebindegroessen[$toleranzGebNr];											 
-
-			for ($i = count($gebindegroessen)-2; $i >= 0 ; $i--)
-			if (($anzInAktGeb % $gebindegroessen[$i]) == 0) {
-			   	$gruppenMengeInGebinde[$i] += $gruppenMengeInGebinde[$toleranzGebNr];
-				$gruppenMengeInGebinde[$toleranzGebNr] = 0;
-				$festeGebindeaufteilung[$i] += floor($anzInAktGeb / $gebindegroessen[$i]);
-				$festeGebindeaufteilung[$toleranzGebNr] = 0;
-				$toleranzGebNr = $i;
-				$anzInAktGeb = $festeGebindeaufteilung[$toleranzGebNr] * $gebindegroessen[$toleranzGebNr];
-			}
-								 
-		}
-	  }
-
-	$gruppenToleranzNichtInGebinde = $gruppenBestellmengeToleranz[$produkt_row['produkt_id']] - $gruppenToleranzInGebinde;
-	$gruppeGesamtMengeNichtInGebinden = $gruppenBestellmengeFest[$produkt_row['produkt_id']]  - $gruppeGesamtMengeInGebinden;
-	$dr_bestellen = $gruppeGesamtMengeInGebinden +$gruppenToleranzInGebinde;
-	
-	//Hier können Verteilmengen geschrieben werden
-	writeVerteilmengen_sql($dr_bestellen, $gruppenbestellung_id, $produkt_row['produkt_id']);
-     }
+  $produkte = sql_bestellprodukte( $bestell_id );
+  while( $produkt = mysql_fetch_row( $produkte ) ) {
+    $zuteilungen = zuteilungen_berechnen( $produkt );
+    sql_update( 'gesamtbestellungen', $bestell_id, array(
+      'bestellmenge' => $zuteilungen['bestellmenge']
+    , 'liefermenge' => $zuteilungen['bestellmenge']
+    ) );
+    $festzuteilungen = $zuteilungen['festzuteilungen'];
+    $toleranzzuteilungen = $zuteilungen['toleranzzuteilungen'];
+    foreach( $festzuteilungen as $gruppen_id => $menge ) {
+      if( $gruppen_id == $basar_id )
+        continue;
+      if( isset( $toleranzzuteilungen[$gruppen_id] ) ) {
+        $menge += $toleranzzuteilungen[$gruppen_id];
+        unset( $toleranzzuteilungen[$gruppen_id] );
+      }
+      $gruppenbestellung_id = sql_create_gruppenbestellung( $bestell_id, $gruppen_id );
+      sql_insert( 'bestellzuordnung', array(
+        'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
+      , 'art' => 2, 'menge' => $menge
+      ) );
+    }
+    foreach( $toleranzzuteilungen as $gruppen_id => $menge ) {
+      $gruppenbestellung_id = sql_create_gruppenbestellung( $bestell_id, $gruppen_id );
+      sql_insert( 'bestellzuordnung', array(
+        'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
+      , 'art' => 2, 'menge' => $menge
+      ) );
+    }
   }
-  	writeLiefermenge_sql($bestell_id);
-	if(!verteilmengenLoeschen($bestell_id, TRUE))
-		error(__LINE__,__FILE__,"Konnte basareinträge  nicht löschen..","")	;
-	
-	// changeState($bestell_id, STATUS_LIEFERANT);
 }
 
 function changeLieferpreis_sql($preis_id, $produkt_id, $bestell_id){
@@ -2175,7 +2058,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   if( $festmenge >= 0 ) {
     $festmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS festmenge FROM bestellzuordnung
-       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $groppenbestellung_id AND art=0"
+       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id AND art=0"
     , 'festmenge'
     );
     if( $festmenge > $festmenge_alt ) {
@@ -2201,7 +2084,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   if( $toleranzmenge >= 0 ) {
     $toleranzmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS toleranzmenge FROM bestellzuordnung
-       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $groppenbestellung_id AND art=1"
+       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id AND art=1"
     , 'toleranzmenge'
     );
     if( $toleranzmenge_alt != $toleranzmenge ) {
@@ -4690,6 +4573,15 @@ function move_html( $id, $into_id ) {
 //         'bestellgruppen' => 'bestellgruppen.id = gruppen_transaktion.gruppen_id'
 //       , 'lieferanten' => 'lieferanten.id = gruppen_transaktion.lieferanten_id'
 //   ) );
+// }
+// function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $produkt_id){
+// 	if($gruppenMengeInGebinde > 0){
+// 		$query = "INSERT INTO  bestellzuordnung (menge, produkt_id, gruppenbestellung_id, art) 
+// 			  VALUES (".$gruppenMengeInGebinde.
+// 			 ", ".$produkt_id.
+// 			 ", ".$gruppenbestellung_id.", 2);";
+//                 doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB schreiben...");
+// 	}
 // }
 
 
