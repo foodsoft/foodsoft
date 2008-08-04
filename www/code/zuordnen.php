@@ -1989,12 +1989,16 @@ function verteilmengenZuweisen($bestell_id){
   need( getState($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
   $produkte = sql_bestellprodukte( $bestell_id );
-  while( $produkt = mysql_fetch_row( $produkte ) ) {
+  while( $produkt = mysql_fetch_array( $produkte ) ) {
+    $produkt_id = $produkt['produkt_id'];
+    echo "<pre>".var_export( $produkt ) ."</pre>";
+    need(0);
     $zuteilungen = zuteilungen_berechnen( $produkt );
-    sql_update( 'gesamtbestellungen', $bestell_id, array(
+    sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id ), array(
       'bestellmenge' => $zuteilungen['bestellmenge']
     , 'liefermenge' => $zuteilungen['bestellmenge']
     ) );
+    need( 0 );
     $festzuteilungen = $zuteilungen['festzuteilungen'];
     $toleranzzuteilungen = $zuteilungen['toleranzzuteilungen'];
     foreach( $festzuteilungen as $gruppen_id => $menge ) {
@@ -3618,6 +3622,14 @@ function sql_produktgruppen(){
     return $result;
 	
 }
+
+function references_produktgruppe( $produktgruppen_id ) {
+  return sql_select_single_field(
+    "SELECT count(*) as count FROM produkte WHERE produktgruppen_id = $produktgruppen_id"
+  , 'count'
+  );
+}
+
 
 function optionen_produktgruppen( $selected = 0 ) {
   $produktgruppen = sql_produktgruppen();

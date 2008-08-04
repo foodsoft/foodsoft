@@ -101,9 +101,7 @@
 					</td>
 			   </tr>	 
 		     <tr>
-			    <td><label>Produktgruppe
-            <? echo fc_alink( 'insert_produktgruppe', 'text=neu' ); ?>
-          </label></td>
+			    <td><label><? echo fc_alink( 'produktgruppen', 'text=Produktgruppe:' ); ?></label></td>
 					<td>
 						<select <? echo $ro_tag; ?> name="produktgruppen_id">
             <? echo optionen_produktgruppen( isset( $produktgruppen_id ) ? $produktgruppen_id : 0 ); ?>

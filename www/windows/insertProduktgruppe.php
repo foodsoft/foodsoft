@@ -1,53 +1,60 @@
 <?PHP
   assert( $angemeldet ) or exit();
-	 
-   fail_if_readonly();
-   nur_fuer_dienst_IV();
-	 
-	 $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
-	
-   // ggf. die neues produkt hinzufügen
-	 if (isset($HTTP_GET_VARS['newProdukt_name'])) {
-	 
-	    $newName        	                            = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newProdukt_name']));
-			
-			
-			$errStr = "";
-			if ($newName == "") $errStr = "Das neue Produktgruppe muß einen Name haben!<br>";
 
-			
-			// Wenn keine Fehler, dann einfügen...
-			if ($errStr == "") {
-         sql_insert( 'produktgruppen', array( 'name' => $newName ) );
-				 $onload_str = "opener.focus();  if (opener.document.forms['reload_form'].action) opener.document.forms['reload_form'].action.value='reload'; opener.document.forms['reload_form'].submit(); closeCurrentWindow();";
-			}
-	 };
-	 
+  $editable = ( ! $readonly and ( $dienst == 4 ) );
+
+  get_http_var( 'action', 'w', '' );
+  $editable or $action = '';
+  switch( $action ) {
+    case 'insert':
+      need_http_var( 'neue_produktgruppe', 'H' );
+      sql_insert( 'produktgruppen', array( 'name' => $neue_produktgruppe ) );
+      break;
+    case 'delete':
+      need_http_var(' produktgruppen_id', 'u' );
+      doSql( 'DELETE * FROM produktgruppen WHERE id=$produktgruppen_id' );
+      break;
+  }
+
+$produktgruppen = sql_produktgruppen();
+
 ?>
 
-<h3>neue Produktgruppe einf&uuml;gen</h3>
-	 <form action="<? echo self_url(); ?>" method='post'>
-		<table class="menu" style="width:240px;">
-		   <tr>
-			    <td><b>Name</b></td>
-					<td><input type="input" size="20" name="newProdukt_name"></td>
-			 </tr>
-			 <tr>
-			    <td colspan="2" align="center"><input type="submit" value="Einf&uuml;gen"><input type="button" value="Abbrechen" onClick="if(opener) opener.focus(); closeCurrentWindow();"></td>
-			 </tr>
-		</table>
-	 </form>
-	 <h4>existierende Produktgruppen</h4>
-	 <ol style="list-style-type:decimal">
-		<?PHP	 //andere produktgruppen auslesen...
-		$sql = "SELECT name FROM produktgruppen";
-		$res = mysql_query($sql);
-		while ($row = mysql_fetch_array($res)) 
-			{ 
-				echo "<li>".$row['name']."</li>";
-				} //end while
-		?>
-	 </ol>
-	 	
-</body>
-</html>
+<fieldset class='small_form'>
+<legend>Produktgruppen</legend>
+
+<table class='list'>
+  <tr>
+    <th>Produktgruppen</th>
+    <th>Aktionen</th>
+  </tr>
+
+<? while( $row = mysql_fetch_array( $produktgruppen ) ) { ?>
+  <tr>
+    <td><? echo $row['name']; ?></td>
+    <td><? if( references_produktgruppe( $row['id'] ) == 0 )
+              echo fc_action( array( 'action' => 'delete', 'produktgruppen_id' => $row['id'], 'img' => 'img/b_drop.png', 'text' => ''
+                                     , 'title' => 'Produktgruppe l&ouml;schen?' ) ); ?></td>
+  </tr>
+<? } ?>
+
+</table>
+
+<h4>Neue Produktgruppe:</h4>
+
+<form action="<? echo self_url(); ?>" method='post'>
+  <? echo self_post(); ?>
+  <input type='hidden' name='action' value='insert'>
+  <table class="menu">
+    <tr>
+      <td><label>Name:</label></td>
+      <td><input type="text" size="20" name="neue_produktgruppe"></td>
+    </tr>
+    <tr>
+      <td colspan='2' style='text-align:right;'><input type="submit" value="Einf&uuml;gen"></td>
+    </tr>
+  </table>
+</form>
+
+</fieldset>
+
