@@ -1747,7 +1747,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
       $t_min = 0;
     if( $t_min > $gebindegroesse / 2 )
       $t_min = floor( $gebindegroesse / 2 );
-    $menge -= $tmin;
+    $menge -= $t_min;
 
     if( $menge > $restmenge )
       $menge = $restmenge;
@@ -1762,7 +1762,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
   mysql_data_seek( $festbestellungen, 0 );
   while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $festbestellungen ) ) ) {
     $gruppe = $row['bestellguppen_id'];
-    $menge = min( $row[$gruppe], $offen[$gruppe], $restmenge );
+    $menge = min( $row['menge'], $offen[$gruppe], $restmenge );
     $festzuteilungen[$gruppe] += $menge;
     $restmenge -= $menge;
     $offen[$gruppe] -= $menge;
@@ -1770,20 +1770,27 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
 
   // dritte zuteilungsrunde: mit positiv-toleranzen auffuellen:
   //
-  $toleranzbestellungen = sql_bestellmengen( $bestell_id, $produkt_id, 1, '-menge' );
   $toleranzzuteilungen = array();
-  $quote = ( 1.0 * $restmenge ) / $toleranzbestellmenge;
-  need( $quote <= 1 );
-  while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $toleranzbestellungen ) ) ) {
-    $menge = (int) ceil( $quote * $row['menge'] );
-    if( $menge > $restmenge )
-      $menge = $restmenge;
-    if( isset( $toleranzzuteilungen[$gruppe] ) ) // sollte nicht sein: nur _eine_ toleranzbestellung je gruppe!
-      $toleranzzuteilungen[$gruppe] += $menge;
-    else
-      $toleranzzuteilungen[$gruppe] = $menge;
-    $restmenge -= $menge;
+  if( $toleranzbestellmenge > 0 ) {
+    $toleranzbestellungen = sql_bestellmengen( $bestell_id, $produkt_id, 1, '-menge' );
+    $quote = ( 1.0 * $restmenge ) / $toleranzbestellmenge;
+    need( $quote <= 1 );
+    while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $toleranzbestellungen ) ) ) {
+      $menge = (int) ceil( $quote * $row['menge'] );
+      if( $menge > $restmenge )
+        $menge = $restmenge;
+      if( isset( $toleranzzuteilungen[$gruppe] ) ) // sollte nicht sein: nur _eine_ toleranzbestellung je gruppe!
+        $toleranzzuteilungen[$gruppe] += $menge;
+      else
+        $toleranzzuteilungen[$gruppe] = $menge;
+      $restmenge -= $menge;
+    }
   }
+
+  // jetzt sollte nix mehr da sein:  :-)
+  //
+  need( $restmenge == 0, "Fehler beim Verteilen: Rest: $restmenge Rest bei Produkt {$mengen['produkt_name']}" );
+
   return array( 'bestellmenge' => $bestellmenge, 'gebinde' => $gebinde, 'festzuteilungen' => $festzuteilungen, 'toleranzzuteilungen' => $toleranzzuteilungen );
 }
 
@@ -1991,14 +1998,15 @@ function verteilmengenZuweisen($bestell_id){
   $produkte = sql_bestellprodukte( $bestell_id );
   while( $produkt = mysql_fetch_array( $produkte ) ) {
     $produkt_id = $produkt['produkt_id'];
-    echo "<pre>".var_export( $produkt ) ."</pre>";
-    need(0);
+    // echo "<pre>".var_export( $produkt ) ."</pre>";
     $zuteilungen = zuteilungen_berechnen( $produkt );
     sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id ), array(
       'bestellmenge' => $zuteilungen['bestellmenge']
     , 'liefermenge' => $zuteilungen['bestellmenge']
     ) );
-    need( 0 );
+    // echo "<pre>". $produkt['produkt_name'] . "</pre>";
+    // echo "<pre>". var_export( $zuteilungen ). "</pre>";
+    // need(0);
     $festzuteilungen = $zuteilungen['festzuteilungen'];
     $toleranzzuteilungen = $zuteilungen['toleranzzuteilungen'];
     foreach( $festzuteilungen as $gruppen_id => $menge ) {
@@ -2008,14 +2016,15 @@ function verteilmengenZuweisen($bestell_id){
         $menge += $toleranzzuteilungen[$gruppen_id];
         unset( $toleranzzuteilungen[$gruppen_id] );
       }
-      $gruppenbestellung_id = sql_create_gruppenbestellung( $bestell_id, $gruppen_id );
+      $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
       , 'art' => 2, 'menge' => $menge
       ) );
     }
+    // need( is_array( $toleranzzuteilungen ), "<pre>".var_export( $toleranzzuteilungen )."</pre>" );
     foreach( $toleranzzuteilungen as $gruppen_id => $menge ) {
-      $gruppenbestellung_id = sql_create_gruppenbestellung( $bestell_id, $gruppen_id );
+      $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
       , 'art' => 2, 'menge' => $menge
