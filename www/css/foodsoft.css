@@ -479,10 +479,18 @@ table.numbers td.unit, table.numbers th.unit {
   margin-left:0pt;
   padding-left:0pt;
 }
+table.list td {
+  padding: 0.4ex 1em 0.2ex 1em;
+  border:solid 1pt black;
+}
 
 table#preisform label {
   padding-left:2em;
   padding-right:1ex;
+}
+
+label {
+  padding-right:1em;
 }
 
 tr.modified td, tr.modified th, .modified {

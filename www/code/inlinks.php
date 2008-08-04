@@ -303,11 +303,11 @@ function fc_window( $name ) {
       $parameters['title'] = 'neue Bestellvorlage anlegen...';
       $options = array_merge( $small_window_options, array( 'width' => '460' ) );
       break;
-    case 'insert_produktgruppe':
+    case 'produktgruppen':
       $parameters['window'] = 'insertProduktgruppe';
-      $parameters['window_id'] = 'insert_produktgruppe';
-      $parameters['title'] = 'neue Produktgruppe anlegen...';
-      $options = array_merge( $small_window_options, array( 'width' => '460' ) );
+      $parameters['window_id'] = 'produktgruppen';
+      $parameters['title'] = 'Produktgruppen verwalten...';
+      $options = array_merge( $small_window_options, array( 'width' => '420', 'height' => 600, 'scrollbars' => 'yes' ) );
       break;
     case 'insert_produktkategorie':
       $parameters['window'] = 'insertProduktkategorie';
@@ -421,7 +421,7 @@ function alink( $url, $text = '', $title = '', $img = false ) {
     $alt = "alt='$title'";
     $title = "title='$title'";
   }
-  $l = "<a href=\"$url\" $title>";
+  $l = "<a style='padding:0pt;' href=\"$url\" $title>";
   if( $img ) {
     $l .= "<img src='$img' class='png' $alt $title />";
     $img = ' ';
