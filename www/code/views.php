@@ -992,6 +992,8 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
             echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,img=" );
           }
         ?> </td> <?
+        if( $editDates )
+          $aktionen .= "<li>$edit_link</li>";
         if( $dienst == 4 )
            $aktionen .= ( "<li>" . fc_alink( 'abrechnung', "bestell_id=$bestell_id,text=Abrechnung beginnen..." ) . "</li>" );
         break;
@@ -1220,6 +1222,7 @@ function sum_row($sum){
 }
 
 function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
+  global $hat_dienst_IV;
   $bestell_id = $row['id'];
   ?>
     <table class="info">
@@ -1231,6 +1234,9 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
                 'img' => false, 'text' => $row['name'], 'bestell_id' => $row['id']
                 , 'title' => 'zum Bestellschein/Lieferschein...'
               ) );
+              if( $hat_dienst_IV and getState( $bestell_id ) < STATUS_ABGERECHNET ) {
+                echo fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" );
+              }
               if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
                 ?> <br> <b>Vorsicht:</b> <?
                 echo fc_alink( 'dienstplan', 'text=Dienstegruppen abwesend?' );
@@ -1243,12 +1249,12 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
           <td><? echo lieferant_name( $row['lieferanten_id'] ); ?></td>
         </tr>
         <tr>
-          <th> Bestellbeginn: </th>
-          <td><?PHP echo $row['bestellstart']; ?></td>
+          <th> Bestellzeitraum: </th>
+          <td><?PHP echo $row['bestellstart'] .' - '. $row['bestellende']; ?></td>
         </tr>
         <tr>
-          <th> Bestellende: </th>
-          <td><?PHP echo $row['bestellende']; ?></td>
+          <th> Lieferung: </th>
+          <td><?PHP echo $row['lieferung']; ?></td>
         </tr>
     <?
     if( $showGroup and $gruppen_id ){
@@ -1284,7 +1290,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
     ?>
       <tr>
         <th>Status:</th>
-        <td> <?  abrechnung_kurzinfo( $bestell_id ); ?> </td>
+        <td> <? abrechnung_kurzinfo( $bestell_id ); ?> </td>
       </tr>
     </table>
   <?
