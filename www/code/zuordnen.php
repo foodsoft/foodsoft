@@ -1527,6 +1527,21 @@ function sql_insert_bestellvorschlaege(
   return doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen.");
 }
 
+function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
+  need( getState( $bestell_id ) == STATUS_BESTELLEN );
+  doSql( "
+    DELETE bestellzuordnung.*
+    FROM bestellzuordnung
+    INNER JOIN gruppenbestellungen
+      ON gruppenbestellungen.id = gruppenbestellung_id
+    WHERE produkt_id = $produkt_id AND gesamtbestellung_id = $bestell_id
+  " );
+  doSql( "
+    DELETE FROM bestellvorschlaege
+    WHERE produkt_id = $produkt_id AND gesamtbestellung_id = $bestell_id
+  " );
+}
+
 function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
   return sql_select_single_row( "
       SELECT *
@@ -1664,6 +1679,7 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, 
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.gebindegroesse as gebindegroesse
     , produktpreise.preis as preis
+    , produktpreise.id as preis_id
     , produktpreise.pfand as pfand
     , produktpreise.mwst as mwst
     , produkte.artikelnummer as artikelnummer

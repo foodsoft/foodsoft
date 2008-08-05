@@ -124,6 +124,10 @@ switch( $action ) {
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'] );
     }
+  case 'delete':
+    need_http_var( 'produkt_id', 'U' );
+    sql_delete_bestellvorschlag( $produkt_id, $bestell_id );
+    break;
 }
 
 
@@ -392,6 +396,9 @@ if( ! $readonly ) {
         <th>Menge fest</th>
         <th>Toleranz</th>
         <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
+        <? if( $dienst == 4 ) { ?>
+          <th>Aktionen</th>
+        <? } ?>
       </tr>
 <?
 
@@ -455,13 +462,26 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   }
 
   ?>
+      <input type='hidden' name='fest_<? echo $n; ?>' id='fest_<? echo $n; ?>' value='<? echo $festmenge; ?>'>
+      <input type='hidden' name='toleranz_<? echo $n; ?>'  id='toleranz_<? echo $n; ?>' value='<? echo $toleranzmenge; ?>'>
       <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
       <td class='mult' style='font-weight:bold;width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?></td>
       <td style='width:1ex;border-right:none;border-left:none;'>*</td>
       <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
       <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-      <td class='mult'><? printf( "%.2lf", $preis ); ?></td>
+      <td class='mult'
+        <?
+          if( $dienst == 4 ) {
+            $aktueller_preis_id = sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] );
+            if( $aktueller_preis_id != $produkt['preis_id'] )
+              echo " class='alert' title='Preis nicht aktuell!'";
+          }
+          $s = sprintf( "%.2lf", $preis );
+          echo '>' . fc_alink( 'produktpreise', "produkt_id=$n,bestell_id=$bestell_id,img=,text=$s" );
+        ?>
+      </td>
       <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
+      </td>
       <td style='text-align:center;'>
         <div class='oneline'>
           <span style='color:#00e000;font-weight:bold;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
@@ -510,9 +530,16 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
       </td>
       <td class='number' id='k_<? echo $n; ?>'>
         <? printf( "%.2lf", $kosten ); ?>
-        <input type='hidden' name='fest_<? echo $n; ?>' id='fest_<? echo $n; ?>' value='<? echo $festmenge; ?>'>
-        <input type='hidden' name='toleranz_<? echo $n; ?>'  id='toleranz_<? echo $n; ?>' value='<? echo $toleranzmenge; ?>'>
       </td>
+        <? if( $dienst == 4 ) { ?>
+          <td>
+            <?
+              echo fc_alink( 'edit_produkt', "produkt_id=$produkt_id" );
+              echo fc_action( array( 'action' => 'delete', 'produkt_id' => $produkt_id, 'img' => 'img/b_drop.png', 'text' => ''
+                                     , 'title' => 'Bestellvorschlag löschen', 'confirm' => 'Bestellvorschlag wirklich löschen?' ) );
+            ?>
+          </td>
+        <? } ?>
     </tr>
   <?
 }
@@ -528,6 +555,9 @@ if( $rowspan > 1 ) {
   <tr class='summe'>
     <td colspan='10'>Gesamtpreis:</td>
     <td class='number' id='gesamtpreis2'><? printf( "%.2lf", $gesamtpreis ); ?></td>
+    <? if( $dienst == 4 ) { ?>
+      <td></td>
+    <? } ?>
   </tr>
   </table>
   </form>
