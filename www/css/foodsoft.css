@@ -316,12 +316,21 @@ table.numbers tr.groupofrows_bottom td {
 }
 
 
-.bigbutton		{
+.bigbutton, .bigbutton_warn {
 	width:200px;
 	height:30px;
 	font-size:12px;
-	}
-.bigbutton:hover 	{font-weight:bold;}
+}
+
+.bigbutton:hover {
+  font-weight:bold;
+}
+
+.bigbutton_warn {
+  background-color:#ffa0a0;
+  font-weight:bold;
+}
+
 
 
 	
@@ -479,7 +488,7 @@ table.numbers td.unit, table.numbers th.unit {
   margin-left:0pt;
   padding-left:0pt;
 }
-table.list td {
+table.list tr td, table.list tr th, .small_form table.list tr td, .small_form table.list tr th {
   padding: 0.4ex 1em 0.2ex 1em;
   border:solid 1pt black;
 }
@@ -527,14 +536,17 @@ p.li {
   padding:1ex;
   margin:1ex;
 }
-table.small_form tr td, .small_form table {
+table.small_form tr td, .small_form table, .small_form table tr td {
   background-color:#ffffd0;
   border-style:none;
   padding:0.5ex;
   text-align:left;
 }
+.small_form table tr th {
+  background-color:#e0e0a0;
+}
 
-table.small_form tr td label a {
+.small_form table tr td label a {
   padding:0pt;
 }
 

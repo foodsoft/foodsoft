@@ -99,6 +99,7 @@
 
 // ab hier: eigentliches bestellformular:
 
+$lieferanten_id = getProduzentBestellID( $bestell_id );
 
 get_http_var( 'action', 'w', '' );
 
@@ -124,6 +125,7 @@ switch( $action ) {
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'] );
     }
+    break;
   case 'delete':
     need_http_var( 'produkt_id', 'U' );
     sql_delete_bestellvorschlag( $produkt_id, $bestell_id );
@@ -170,6 +172,7 @@ $gesamtpreis = 0.0;
   function zuteilung_berechnen( produkt ) {
     var festmenge, toleranzmenge, gebinde, bestellmenge, restmenge, zuteilung_fest, t_min;
     var menge, quote, zuteilung_toleranz, kosten_neu, reminder, konto_rest, kontostand_neu;
+    var id;
 
     // bestellmenge berechnen: wieviel kann insgesamt bestellt werden:
     //
@@ -265,19 +268,25 @@ $gesamtpreis = 0.0;
     reminder = document.getElementById('reminder');
     reminder.style.display = 'inline';
 
-    document.getElementById('hinzufuegen').style.display = 'none';
-    document.getElementById('hinzufuegen2').style.display = 'inline';
+    id = document.getElementById('hinzufuegen');
+    while( id.firstChild ) {
+      id.removeChild( id.firstChild );
+    }
+    id.appendChild( document.createTextNode( 'Vor dem Hinzufügen: bitte erst Änderungen speichern!' ) );
+    id.style.backgroundColor = '#ffffa0';
 
     if( gesamtpreis > kontostand ) {
       konto_rest.style.color = '#c00000';
-      document.getElementById('submit').style.color = '#c00000';
-      document.getElementById('submit').style.fontWeight = 'bold';
+      // document.getElementById('submit').style.color = '#c00000';
+      // document.getElementById('submit').style.fontWeight = 'bold';
+      document.getElementById('submit').className = 'bigbutton_warn';
       document.getElementById('submit').value = 'Konto überzogen';
     } else {
       konto_rest.style.color = '#000000';
       document.getElementById('submit').style.color = '#000000;'
-      document.getElementById('submit').style.fontWeight = 'normal';
-      document.getElementById('submit').value = 'Speichern';
+      // document.getElementById('submit').style.fontWeight = 'normal';
+      document.getElementById('submit').className = 'bigbutton';
+      document.getElementById('submit').value = 'Bestellung Speichern';
     }
 
     return true;
@@ -374,7 +383,7 @@ if( ! $readonly ) {
           <input id='submit' type='button' class='bigbutton' value='Bestellung speichern' onClick='bestellung_submit();'>
         </td>
         <td style='text-align:center;'>
-          <input type="button" class="bigbutton" value="Abbrechen" onClick="bestellungBeenden();">
+          <? echo fc_button( 'self', 'text=Abbrechen' ); ?>
         </td>
       </tr>
     </table>
@@ -469,15 +478,19 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
       <td style='width:1ex;border-right:none;border-left:none;'>*</td>
       <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
       <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-      <td class='mult'
         <?
+          $class = 'mult';
           if( $dienst == 4 ) {
             $aktueller_preis_id = sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] );
             if( $aktueller_preis_id != $produkt['preis_id'] )
-              echo " class='alert' title='Preis nicht aktuell!'";
+              echo "<td class='mult_outdated' title='Preis nicht aktuell!'>";
+            else
+              echo "<td class='mult'>";
+          } else {
+            echo "<td class='mult'>";
           }
           $s = sprintf( "%.2lf", $preis );
-          echo '>' . fc_alink( 'produktpreise', "produkt_id=$n,bestell_id=$bestell_id,img=,text=$s" );
+          echo fc_alink( 'produktpreise', "produkt_id=$n,bestell_id=$bestell_id,img=,text=$s" );
         ?>
       </td>
       <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
@@ -563,18 +576,27 @@ if( $rowspan > 1 ) {
   </form>
 
 <? if( ! $readonly ) { ?>
-  <span id='hinzufuegen'>
-    <h3> Zus&auml;tzliches Produkt in Bestellvorlage aufnehmen </h3>
+  <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
+  <div id='hinzufuegen' style='height:3em;vertical-align:middle;'>
     <form method='post' action='<? echo self_url(); ?>'>
     <input type='hidden' name='action' value='produkt_hinzufuegen'>
     <? echo self_post(); ?>
       <? select_products_not_in_list($bestell_id); ?>
       <input type="submit" value="Produkt hinzuf&uuml;gen">
     </form>
-  </span>
-  <span id='hinzufuegen2' class='alert' style='display:none;'>
-    <h3> Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen </h3>
-    Vor dem Hinzufügen: Bitte erst Änderungen speichern!
-  </span>
+  </div>
+  <?
+    $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );
+    if( $anzahl_eintraege > 0 ) {
+      ?>
+        <div class='kommentar'>
+          Ist Dein gewünschter Artikel nicht in der Auswahlliste? 
+          Im <? echo fc_alink( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,img=" ); ?>
+          findest Du <? echo $anzahl_eintraege; ?> Artikel; bitte wende Dich an die Leute vom Dienst 4, wenn
+          Du einen davon in die Bestellvorlaege aufnehmen lassen möchtest!
+        </div>
+      <?
+    }
+  ?>
 <? } ?>
 
