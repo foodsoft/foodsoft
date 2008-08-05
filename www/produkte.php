@@ -36,7 +36,7 @@
       <tr>
         <td><? echo fc_button( 'self', "text=Seite aktualisieren" ); ?></td>
       </tr><tr>
-        <td><? echo fc_button( 'katalog', "text=Katalogsuche" ); ?></td>
+        <td><? echo fc_button( 'katalog', "text=Katalogsuche,lieferanten_id=$lieferanten_id" ); ?></td>
       </tr><tr>
         <td><? echo fc_button( 'index' ); ?></td>
       </tr>

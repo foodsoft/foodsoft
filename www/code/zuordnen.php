@@ -3885,7 +3885,16 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
   return $result;
 }
 
+////////////////////////////////////
+//
+// Lieferantenkatalog
+//
+////////////////////////////////////
 
+
+function sql_anzahl_katalogeintraege( $lieferanten_id ) {
+  return sql_select_single_field( "SELECT count(*) as anzahl FROM lieferantenkatalog WHERE lieferanten_id = $lieferanten_id", 'anzahl' );
+}
 
 
 ////////////////////////////////////

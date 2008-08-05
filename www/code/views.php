@@ -1657,6 +1657,7 @@ function mod_onclick( $id ) {
 function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on = false, $mod_id = false ) {
   $produkt = sql_produkt_details( $produkt_id );
   $anummer = $produkt['artikelnummer'];
+  $lieferanten_id = $produkt['lieferanten_id'];
   $can_toggle or $default_on = true;
   if( $can_toggle ) {
     if( $default_on ) {
@@ -1706,7 +1707,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
               ...oder: Katalogsuche nach:
             </td>
             <td>
-              <form action='index.php?window=artikelsuche' method='post'>
+              <form action='index.php?window=artikelsuche&lieferanten_id=<? echo $lieferanten_id; ?>' method='post'>
                 <input name='name' value='<? echo $produkt['name']; ?>' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
                   <? echo mod_onclick( $mod_id ); ?> >
                 <input type='hidden' name='produkt_id' value='<? echo $produkt_id; ?>'>

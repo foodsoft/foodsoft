@@ -8,10 +8,10 @@
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 
-setWindowSubtitle( "Artikelsuche im Terra-Katalog" );
+setWindowSubtitle( "Artikelsuche im Lieferanten-Katalog" );
 setWikiHelpTopic( "foodsoft:katalogsuche" );
 
-$lieferanten_id = sql_select_single_field( "SELECT id FROM lieferanten WHERE name='Terra'", 'id' );
+need_http_var( 'lieferanten_id', 'U', true );
 
 $filter = '';
 
@@ -42,6 +42,13 @@ if( $produkt_id ) {
   $produktname = $produkt['name'];
 }
 
+?>
+
+<h1>Lieferantenkatalog - bisher nur fuer Terra! </h1>
+
+<h3>Lieferant: <? echo lieferant_name( $lieferanten_id ); ?> --- Katalogeintraege: <? echo sql_anzahl_katalogeintraege( $lieferanten_id ); ?></h3>
+
+<?
 
 get_http_var('action','w','');
 $editable or $action = '';
