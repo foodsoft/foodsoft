@@ -27,7 +27,7 @@ switch( $action ) {
         switch( $change_to ) {
           case STATUS_LIEFERANT:   // bestellschein oder ...
           case STATUS_VERTEILT:    // ... lieferschein anzeigen:
-            echo fc_openwindow( 'bestellschein', "$bestell_id=$change_id" );
+            echo fc_openwindow( 'bestellschein', "bestell_id=$change_id" );
           break;
         }
       }
@@ -115,7 +115,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 //  FIXME in obiges switch-statement integrieren
   //
   if( $editable and $state == STATUS_VERTEILT ) {
-    $produkte = sql_bestellprodukte($bestell_id, 0, 0, 'keep' );
+    $produkte = sql_bestellprodukte($bestell_id, 0, 0 );
     while  ($produkte_row = mysql_fetch_array($produkte)) {
       $produkt_id =$produkte_row['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
