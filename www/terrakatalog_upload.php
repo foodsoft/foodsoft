@@ -26,22 +26,31 @@ need_http_var( 'terrakw', 'w' );
       if( preg_match( '&^Art.Nr. *@@Bestell-Nr.@@Milch *@@@@@@Inhalt *@Einh. *@Land *@@IK *@Verband *@@ *Netto-Preis *@@/Einh. *@empf. VK@@MwSt. % *@@EAN-Code *@@@&' , $line ) ) {
         $tag = "Fr";
         $splitat = '@+';
-        // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@@[\d\s]+@/';
       }
+      // Art.Nr.@Bestell-Nr.@Milch@Inhalt@Einh.@Land@IK@Verband@Netto-Preis @/Einh.@empf. VK@MwSt. %@EAN-Code@
+      if( preg_match( '&^Art.Nr. *@+Bestell-Nr. *@+Milch *@+Inhalt *@Einh. *@+Land *@+IK *@+Verband *@+ *Netto-Preis *@+/Einh. *@empf. VK@+MwSt. % *@+EAN-Code *@+&' , $line ) ) {
+        $tag = "Fr";
+        $splitat = '@+';
+        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
+        $pattern = '/^[\d\s]+@+[\d\s]+@/';
+      }
+
       if( preg_match( '&^Art.Nr.@Bestell-Nr.@ZITRUS-FRÜCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
         $tag='OG';
         $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
+
       if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
         $tag='drog';
         $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
+
       if( preg_match( '&^Preisliste\s+Trockensortiment&', $line ) ) {
         // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Liefera@Land@IK@Netto-Preis@@@MwSt.%@EAN- Code@
         $tag = 'Tr';
