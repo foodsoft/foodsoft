@@ -1,103 +1,104 @@
 <?PHP
-  error_reporting('E_NONE'); 
+error_reporting('E_NONE'); 
 
-  assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=bestellen erfolgen
-	
-  setWikiHelpTopic( "foodsoft:bestellen" );
+assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=bestellen erfolgen
 
-  // $HTTP_GET_VARS = array_merge( $HTTP_GET_VARS, $HTTP_POST_VARS );
-  if( $hat_dienst_IV ) {
-    // auch dienst_IV bestellt nur im STATUS_BESTELLEN (kann man ja zuruecksetzen!):
-    // $status[] = STATUS_LIEFERANT;
-    $useDate = FALSE;
-    $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
-    $kontostand = 100.0;
-    echo "<h1>Bestellen f&uuml;r den Basar</h1>";
-  } else {
-    // Neu: alle duerfen weiter bestellen, solange STATUS_BESTELLEN besteht:
-    $useDate = FALSE;
-    $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
-    $kontostand = kontostand( $gruppen_id );
-    echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
-  }
+setWikiHelpTopic( "foodsoft:bestellen" );
 
-  get_http_var('bestell_id','u',false,true );
-  if( $bestell_id ) {
-    if( getState( $bestell_id ) != STATUS_BESTELLEN )
-      $bestell_id = NULL;
-  }
+if( $hat_dienst_IV ) {
+  // auch dienst_IV bestellt nur im STATUS_BESTELLEN (kann man ja zuruecksetzen!):
+  // $status[] = STATUS_LIEFERANT;
+  $useDate = FALSE;
+  $gruppen_id = sql_basar_id();                 // dienst IV bestellt fuer basar...
+  $kontostand = 100.0;
+  echo "<h1>Bestellen f&uuml;r den Basar</h1>";
+} else {
+  // Neu: alle duerfen weiter bestellen, solange STATUS_BESTELLEN besteht:
+  $useDate = FALSE;
+  $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
+  $kontostand = kontostand( $gruppen_id );
+  echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
+}
 
-  $laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN, $useDate );
-  if (mysql_num_rows($laufende_bestellungen) < 1) {
-    ?>
-      <div class='warn'>
-        Zur Zeit laufen leider keine Bestellungen!
-        <a href='index.php'>Zurück...</a>
-      </div>
-    <?
-    return;
-  }
+get_http_var('bestell_id','u',false,true );
+if( $bestell_id ) {
+  if( getState( $bestell_id ) != STATUS_BESTELLEN )
+    $bestell_id = NULL;
+}
 
-  // tabelle fuer infos und auswahl bestellungen:
-  //
-  ?> <table width='100%' class='layout'><tr> <?
-
-  if( $bestell_id ) {
-    $gesamtbestellung = sql_bestellung( $bestell_id );
-    ?> <td style='text-align:left;padding-bottom:1em;'> <?
-    bestellung_overview( $gesamtbestellung, TRUE, $gruppen_id );
-    ?> </td> <?
-  }
-
+$laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN, $useDate );
+if (mysql_num_rows($laufende_bestellungen) < 1) {
   ?>
-    <td style='text-align:left;padding:1ex 1em 2em 3em;'>
-    <h4> Zur Zeit laufende Bestellungen: </h4>
-    <table style="width:600px;" class="liste">
-      <tr>
-        <th>Name</th>
-        <th>Lieferant</th>
-        <th>Beginn</th>
-        <th>Ende</th>
-        <th>Produkte</th>
-      </tr>
+    <div class='warn'>
+      Zur Zeit laufen leider keine Bestellungen!
+      <a href='index.php'>Zurück...</a>
+    </div>
   <?
-  while( $row = mysql_fetch_array($laufende_bestellungen) ) {
-    $id = $row['id'];
-    //jetzt die anzahl der produkte bestimmen ...
-    $num = sql_select_single_field(
-      "SELECT COUNT(*) as num FROM bestellvorschlaege WHERE gesamtbestellung_id=$id", 'num'
-    );
-    if( $id != $bestell_id ) {
-      ?>
-        <tr>
-          <td><? echo fc_alink( 'bestellen', array( 'bestell_id' => $id, 'text' => $row['name'] ) ); ?></td>
-      <?
-    } else {
-      ?>
-        <tr class='active'>
-          <td style='font-weight:bold;'><? echo $row['name']; ?></td>
-      <?
-    }
-    ?>
-      <td><? echo lieferant_name($row['lieferanten_id']); ?></td>
-      <td><? echo $row['bestellstart']; ?></td>
-      <td <? if( $row['bestellende'] < $mysqljetzt ) echo "style='font-weight:bold;'"; ?>
-         ><? echo $row['bestellende']; ?></td>
-      <td><? echo $num; ?></td>
-      </tr>
-    <?
-  }
-  ?>
-        </table>
-      </td>
+  return;
+}
+
+// tabelle fuer infos und auswahl bestellungen:
+//
+?> <table width='100%' class='layout'><tr> <?
+
+if( $bestell_id ) {
+  $gesamtbestellung = sql_bestellung( $bestell_id );
+  ?> <td style='text-align:left;padding-bottom:1em;'> <?
+  bestellung_overview( $gesamtbestellung, TRUE, $gruppen_id );
+  ?> </td> <?
+}
+
+?>
+  <td style='text-align:left;padding:1ex 1em 2em 3em;'>
+  <h4> Zur Zeit laufende Bestellungen: </h4>
+  <table style="width:600px;" class="liste">
+    <tr>
+      <th>Name</th>
+      <th>Lieferant</th>
+      <th>Beginn</th>
+      <th>Ende</th>
+      <th>Produkte</th>
     </tr>
-    </table>
+<?
+while( $row = mysql_fetch_array($laufende_bestellungen) ) {
+  $id = $row['id'];
+  //jetzt die anzahl der produkte bestimmen ...
+  $num = sql_select_single_field(
+    "SELECT COUNT(*) as num FROM bestellvorschlaege WHERE gesamtbestellung_id=$id", 'num'
+  );
+  if( $id != $bestell_id ) {
+    ?>
+      <tr>
+        <td><? echo fc_alink( 'bestellen', array( 'bestell_id' => $id, 'text' => $row['name'] ) ); ?></td>
+    <?
+  } else {
+    ?>
+      <tr class='active'>
+        <td style='font-weight:bold;'><? echo $row['name']; ?></td>
+    <?
+  }
+  ?>
+    <td><? echo lieferant_name($row['lieferanten_id']); ?></td>
+    <td><? echo $row['bestellstart']; ?></td>
+    <td <? if( $row['bestellende'] < $mysqljetzt ) echo "style='font-weight:bold;'"; ?>
+       ><? echo $row['bestellende']; ?></td>
+    <td><? echo $num; ?></td>
+    </tr>
   <?
+}
+?>
+      </table>
+    </td>
+  </tr>
+  </table>
+<?
 
-  if( ! $bestell_id )
-    return;
+if( ! $bestell_id )
+  return;
 
+///////////////////////////////////////////
 // ab hier: eigentliches bestellformular:
+//
 
 $lieferanten_id = getProduzentBestellID( $bestell_id );
 
@@ -136,10 +137,7 @@ switch( $action ) {
 $produkte = sql_bestellprodukte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
 // ^ brauchen wir gleich im java-script!
 $anzahl_produkte = mysql_num_rows( $produkte );
-// echo "<br>anzahl_produkte: $anzahl_produkte";
 $gesamtpreis = 0.0;
-
-// echo "[".date('H') . ':' . date('i') . ':' . date('s') ."]";
 
 ?>
 <script type="text/javascript">
@@ -250,6 +248,7 @@ $gesamtpreis = 0.0;
     document.getElementById('gv_'+produkt).firstChild.nodeValue = gebinde;
 
     // formularfelder aktualisieren:
+    //
     document.getElementById('fest_'+produkt).value = fest[produkt];
     document.getElementById('toleranz_'+produkt).value = toleranz[produkt];
 
@@ -257,7 +256,6 @@ $gesamtpreis = 0.0;
     kosten_neu = preis[produkt] * ( fest[produkt] + toleranz[produkt] );
     gesamtpreis += ( kosten_neu - kosten[produkt] );
     kosten[produkt] = kosten_neu;
-    // alert( 'preis: ' + preis[produkt] + ' gesamtpreis ' + gesamtpreis + ' kosten: ' + kosten[produkt] + ' kosten_neu: ' + kosten_neu );
     document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
     document.getElementById('gesamtpreis1').firstChild.nodeValue = gesamtpreis.toFixed(2);
     document.getElementById('gesamtpreis2').firstChild.nodeValue = gesamtpreis.toFixed(2);
@@ -277,14 +275,11 @@ $gesamtpreis = 0.0;
 
     if( gesamtpreis > kontostand ) {
       konto_rest.style.color = '#c00000';
-      // document.getElementById('submit').style.color = '#c00000';
-      // document.getElementById('submit').style.fontWeight = 'bold';
       document.getElementById('submit').className = 'bigbutton_warn';
       document.getElementById('submit').value = 'Konto überzogen';
     } else {
       konto_rest.style.color = '#000000';
       document.getElementById('submit').style.color = '#000000;'
-      // document.getElementById('submit').style.fontWeight = 'normal';
       document.getElementById('submit').className = 'bigbutton';
       document.getElementById('submit').value = 'Bestellung Speichern';
     }
@@ -349,11 +344,9 @@ $gesamtpreis = 0.0;
   }
 </script>
 
-
-<?
-
-if( ! $readonly ) {
-  ?>
+// submit/reset knoepfe (werden nach der ersten aenderung oben links eingeblendet):
+//
+<? if( ! $readonly ) { ?>
   <div style='position:fixed;top:20px;left:20px;padding:2ex;z-index:999;display:none;' id='reminder' class='alert'>
     <table class='inner'>
       <tr>
@@ -383,9 +376,7 @@ if( ! $readonly ) {
       </tr>
     </table>
   </div>
-  <?
-}
-?>
+<? } ?>
 
 <form name="bestellform" action="<? echo self_url(); ?>" method="post">
   <? echo self_post(); ?>
@@ -522,23 +513,21 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
           </div>
         <? } ?>
       <? } else { ?>
-        <div class='oneline' style='text-align:center;'>
-        -
-        </div>
+        <div class='oneline' style='text-align:center;'> - </div>
       <? } ?>
     </td>
     <td class='number' id='k_<? echo $n; ?>'>
       <? printf( "%.2lf", $kosten ); ?>
     </td>
-      <? if( $dienst == 4 ) { ?>
-        <td>
-          <?
-            echo fc_alink( 'edit_produkt', "produkt_id=$produkt_id" );
-            echo fc_action( array( 'action' => 'delete', 'produkt_id' => $produkt_id, 'img' => 'img/b_drop.png', 'text' => ''
-                                   , 'title' => 'Bestellvorschlag löschen', 'confirm' => 'Bestellvorschlag wirklich löschen?' ) );
-          ?>
-        </td>
-      <? } ?>
+    <? if( $dienst == 4 ) { ?>
+      <td>
+        <?
+          echo fc_alink( 'edit_produkt', "produkt_id=$produkt_id" );
+          echo fc_action( array( 'action' => 'delete', 'produkt_id' => $produkt_id, 'img' => 'img/b_drop.png', 'text' => ''
+                                 , 'title' => 'Bestellvorschlag löschen', 'confirm' => 'Bestellvorschlag wirklich löschen?' ) );
+        ?>
+      </td>
+    <? } ?>
   </tr>
   <?
 }
