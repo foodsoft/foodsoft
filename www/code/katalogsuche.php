@@ -53,13 +53,33 @@ function katalogabgleich(
   $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
   $katalog_bestellnummer = $katalogeintrag["bestellnummer"];
   $katalog_name = $katalogeintrag["name"];
-  $katalog_einheit = $katalogeintrag["liefereinheit"];
+  $katalog_einheit = str_replace( ',', '.' , $katalogeintrag["liefereinheit"] );
   $katalog_gebindegroesse = str_replace( ',', '.' , $katalogeintrag["gebinde"] );
   $katalog_herkunft =  $katalogeintrag["herkunft"];
   $katalog_verband = $katalogeintrag["verband"];
   $katalog_netto = $katalogeintrag["preis"];
   $katalog_mwst = $katalogeintrag["mwst"];
+
+  // das format der terra-kataloge ist zuweilen inkonsistent:
+  // die (selten vorkommenden) zahlenfaktoren in der katalog-liefereinheit sind 
+  //  - relevant fuer gebindegroessen / liefereinheiten, aber
+  //  - muessen auf 1 gesetzt werden bei preisberechnung
+  // (scheint jedenfalls empirisch so zu sein, etwa bei Roggen "2.5 KG", wo das gebinde 2 * 2.5 kg gross,
+  /// der preis aber trotzdem pro "1 KG" angegeben ist)
+  //
+  $katalog_preiseinheit = preg_replace( '/^[\d.]+\s*/', '', $katalog_einheit );
+
+  kanonische_einheit( $katalog_einheit, &$kan_katalogeinheit, &$kan_katalogmult );
+  kanonische_einheit( $katalog_preiseinheit, &$kan_katalogpreiseinheit, &$kan_katalogpreismult );
+
+  if( $kan_katalogmult != $kan_katalogpreismult ) {
+    // hier tritt dieser fall ein: wir rechnen einfach den katalogpreis auf die packungseinheit um
+    // (also bei roggen wie oben auf den preis pro "2.5 kg"-beutel, statt pro "1 kg"):
+    $katalog_netto *= ( ( 1.0 * $kan_katalogmult ) / $kan_katalogpreismult );
+  }
+
   $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
+
   if( $detail ) {
     ?>
       <fieldset class='big_form'>
@@ -95,7 +115,6 @@ function katalogabgleich(
     <?
   }
 
-  kanonische_einheit( $katalog_einheit, &$kan_katalogeinheit, &$kan_katalogmult );
 
   ////////////////////////////////
   // aktuellsten preiseintrag mit Katalogeintrag vergleichen,
