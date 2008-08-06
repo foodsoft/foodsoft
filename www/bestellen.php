@@ -347,7 +347,6 @@ $gesamtpreis = 0.0;
       document.forms['bestellform'].submit();
     }
   }
--->
 </script>
 
 
@@ -363,9 +362,7 @@ if( ! $readonly ) {
         </td>
         <td style='text-align:center;' colspan='2'>Änderungen sind noch nicht gespeichert!</td>
       </tr>
-      <tr>
-        <td style='padding:0.5ex;' colspan='3'></td>
-      </tr>
+      <tr><td style='padding:0.5ex;' colspan='3'></td></tr>
       <tr>
         <td class='alert' style='padding-left:1em;' colspan='2'>Gesamtpreis:</td>
         <td class='alert' id='gesamtpreis1' style='text-align:right;padding-right:1em;'>-</td>
@@ -374,9 +371,7 @@ if( ! $readonly ) {
         <td class='alert' style='padding-left:1em;' colspan='2'>noch verf&uuml;gbar:</td>
         <td class='alert' id='konto_rest' style='text-align:right;padding-right:1em;'><? printf( '%.2lf', $kontostand ); ?></td>
       </tr>
-      <tr>
-        <td style='padding:0.5ex;' colspan='3'></td>
-      </tr>
+      <tr><td style='padding:0.5ex;' colspan='3'></td></tr>
       <tr>
         <td></td>
         <td style='text-align:center;'>
@@ -392,28 +387,28 @@ if( ! $readonly ) {
 }
 ?>
 
-
 <form name="bestellform" action="<? echo self_url(); ?>" method="post">
   <? echo self_post(); ?>
-    <input type="hidden" name="action" value='bestellen'>
-    <table class='numbers' width='100%' style="margin:40px 0 0 0;">
-      <tr>
-        <th>Produktgruppe</th>
-        <th>Bezeichnung</th>
-        <th colspan='4'>Gebinde</th>
-        <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
-        <th>Menge fest</th>
-        <th>Toleranz</th>
-        <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
-        <? if( $dienst == 4 ) { ?>
-          <th>Aktionen</th>
-        <? } ?>
-      </tr>
+  <input type="hidden" name="action" value='bestellen'>
+  <table class='numbers' width='100%' style="margin:40px 0 0 0;">
+    <tr>
+      <th>Produktgruppe</th>
+      <th>Bezeichnung</th>
+      <th colspan='4'>Gebinde</th>
+      <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
+      <th>Menge fest</th>
+      <th>Toleranz</th>
+      <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
+      <? if( $dienst == 4 ) { ?>
+        <th>Aktionen</th>
+      <? } ?>
+    </tr>
 <?
 
 $produktgruppe_alt = '';
 $rowspan = 1;
 $pg_id = 0;
+$js = '';
 while( $produkt = mysql_fetch_array( $produkte ) ) {
   preisdatenSetzen( $produkt );
   $produkt_id = $produkt['produkt_id'];
@@ -438,11 +433,7 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   $kosten = $preis * ( $festmenge + $toleranzmenge );
   $gesamtpreis += $kosten;
 
-  printf( "
-    <script type='text/javascript'>
-      init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u );
-    </script>
-  "
+  $js .= sprintf( "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u );\n"
   , $n, $gebindegroesse , $preis
   , $festmenge, $toleranzmenge
   , $festmenge_andere, $toleranzmenge_andere
@@ -451,13 +442,8 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   ?> <tr> <?
   $produktgruppe = $produkt['produktgruppen_name'];
   if( $produktgruppe != $produktgruppe_alt ) {
-    if( $pg_id ) {
-      ?>
-        <script type='text/javascript'>
-          document.getElementById('pg_<? echo $pg_id; ?>').rowSpan = <? echo $rowspan; ?>;
-        </script>
-      <?
-    }
+    if( $pg_id )
+      $js .= sprintf( "document.getElementById('pg_%u').rowSpan = %u;\n", $pg_id, $rowspan );
     ++$pg_id;
     ?>
       <td id='pg_<? echo $pg_id; ?>' rowspan='1'>
@@ -471,95 +457,98 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   }
 
   ?>
-      <input type='hidden' name='fest_<? echo $n; ?>' id='fest_<? echo $n; ?>' value='<? echo $festmenge; ?>'>
-      <input type='hidden' name='toleranz_<? echo $n; ?>'  id='toleranz_<? echo $n; ?>' value='<? echo $toleranzmenge; ?>'>
-      <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
-      <td class='mult' style='font-weight:bold;width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?></td>
-      <td style='width:1ex;border-right:none;border-left:none;'>*</td>
-      <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
-      <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-        <?
-          $class = 'mult';
-          if( $dienst == 4 ) {
-            $aktueller_preis_id = sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] );
-            if( $aktueller_preis_id != $produkt['preis_id'] )
-              echo "<td class='mult_outdated' title='Preis nicht aktuell!'>";
-            else
-              echo "<td class='mult'>";
-          } else {
+    <input type='hidden' name='fest_<? echo $n; ?>' id='fest_<? echo $n; ?>' value='<? echo $festmenge; ?>'>
+    <input type='hidden' name='toleranz_<? echo $n; ?>'  id='toleranz_<? echo $n; ?>' value='<? echo $toleranzmenge; ?>'>
+    <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
+    <td class='mult' style='font-weight:bold;width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?></td>
+    <td style='width:1ex;border-right:none;border-left:none;'>*</td>
+    <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
+    <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
+      <?
+        $class = 'mult';
+        if( $dienst == 4 ) {
+          $aktueller_preis_id = sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] );
+          if( $aktueller_preis_id != $produkt['preis_id'] )
+            echo "<td class='mult_outdated' title='Preis nicht aktuell!'>";
+          else
             echo "<td class='mult'>";
-          }
-          $s = sprintf( "%.2lf", $preis );
-          echo fc_alink( 'produktpreise', "produkt_id=$n,bestell_id=$bestell_id,img=,text=$s" );
-        ?>
-      </td>
-      <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
-      </td>
-      <td style='text-align:center;'>
+        } else {
+          echo "<td class='mult'>";
+        }
+        $s = sprintf( "%.2lf", $preis );
+        echo fc_alink( 'produktpreise', "produkt_id=$n,bestell_id=$bestell_id,img=,text=$s" );
+      ?>
+    </td>
+    <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
+    </td>
+    <td style='text-align:center;'>
+      <div class='oneline'>
+        <span style='color:#00e000;font-weight:bold;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
+        +
+        <span style='color:#e80000;font-weight:bold;' id='fr_<? echo $n; ?>'><? echo $festmenge - $zuteilung_fest; ?></span>
+        /
+        <span style='color:#000000;' id='fg_<? echo $n; ?>'><? echo $festmenge_gesamt; ?></span>
+      </div>
+      <? if( ! $readonly ) { ?>
         <div class='oneline'>
-          <span style='color:#00e000;font-weight:bold;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
+        <? if( $gebindegroesse > 1 ) { ?>
+          <input type='button' value='<<' onclick='fest_minusminus(<? echo $n; ?>);' >
+        <? } ?>
+          <input type='button' value='<' onclick='fest_minus(<? echo $n; ?>);' >
+          <span style='width:4em;'>&nbsp;</span>
+          <input type='button' value='>' onclick='fest_plus(<? echo $n; ?>);' >
+        <? if( $gebindegroesse > 1 ) { ?>
+          <input type='button' value='>>' onclick='fest_plusplus(<? echo $n; ?>);' >
+        <? } ?>
+        </div>
+      <? } ?>
+    </td>
+    <td style='text-align:center;'>
+      <? if( $gebindegroesse > 1 ) { ?>
+        <div class='oneline'>
+          <span style='color:#00e000;font-weight:bold;' id='tz_<? echo $n; ?>'><? echo $zuteilung_toleranz; ?></span>
           +
-          <span style='color:#e80000;font-weight:bold;' id='fr_<? echo $n; ?>'><? echo $festmenge - $zuteilung_fest; ?></span>
+          <span style='color:#e80000;font-weight:bold;width:2ex;' id='tr_<? echo $n; ?>'><? echo $toleranzmenge - $zuteilung_toleranz; ?></span>
           /
-          <span style='color:#000000;' id='fg_<? echo $n; ?>'><? echo $festmenge_gesamt; ?></span>
+          <span style='color:#000000;width:4ex;' id='tg_<? echo $n; ?>'><? echo $toleranzmenge_gesamt; ?></span>
         </div>
         <? if( ! $readonly ) { ?>
           <div class='oneline'>
-          <? if( $gebindegroesse > 1 ) { ?>
-            <input type='button' value='<<' onclick='fest_minusminus(<? echo $n; ?>);' >
-          <? } ?>
-            <input type='button' value='<' onclick='fest_minus(<? echo $n; ?>);' >
-            <span style='width:4em;'>&nbsp;</span>
-            <input type='button' value='>' onclick='fest_plus(<? echo $n; ?>);' >
-          <? if( $gebindegroesse > 1 ) { ?>
-            <input type='button' value='>>' onclick='fest_plusplus(<? echo $n; ?>);' >
-          <? } ?>
+          <input type='button' value='<' onclick='toleranz_minus(<? echo $n; ?>);' >
+          <span style='width:2em;'>&nbsp;</span>
+          <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
+          <span style='width:2em;'>&nbsp;</span>
+          <input type='button' value='>' onclick='toleranz_plus(<? echo $n; ?>);' >
           </div>
         <? } ?>
-      </td>
-      <td style='text-align:center;'>
-        <? if( $gebindegroesse > 1 ) { ?>
-          <div class='oneline'>
-            <span style='color:#00e000;font-weight:bold;' id='tz_<? echo $n; ?>'><? echo $zuteilung_toleranz; ?></span>
-            +
-            <span style='color:#e80000;font-weight:bold;width:2ex;' id='tr_<? echo $n; ?>'><? echo $toleranzmenge - $zuteilung_toleranz; ?></span>
-            /
-            <span style='color:#000000;width:4ex;' id='tg_<? echo $n; ?>'><? echo $toleranzmenge_gesamt; ?></span>
-          </div>
-          <? if( ! $readonly ) { ?>
-            <div class='oneline'>
-            <input type='button' value='<' onclick='toleranz_minus(<? echo $n; ?>);' >
-            <span style='width:2em;'>&nbsp;</span>
-            <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' >
-            <span style='width:2em;'>&nbsp;</span>
-            <input type='button' value='>' onclick='toleranz_plus(<? echo $n; ?>);' >
-            </div>
-          <? } ?>
-        <? } else { ?>
-          <div class='oneline' style='text-align:center;'>
-          -
-          </div>
-        <? } ?>
-      </td>
-      <td class='number' id='k_<? echo $n; ?>'>
-        <? printf( "%.2lf", $kosten ); ?>
-      </td>
-        <? if( $dienst == 4 ) { ?>
-          <td>
-            <?
-              echo fc_alink( 'edit_produkt', "produkt_id=$produkt_id" );
-              echo fc_action( array( 'action' => 'delete', 'produkt_id' => $produkt_id, 'img' => 'img/b_drop.png', 'text' => ''
-                                     , 'title' => 'Bestellvorschlag löschen', 'confirm' => 'Bestellvorschlag wirklich löschen?' ) );
-            ?>
-          </td>
-        <? } ?>
-    </tr>
+      <? } else { ?>
+        <div class='oneline' style='text-align:center;'>
+        -
+        </div>
+      <? } ?>
+    </td>
+    <td class='number' id='k_<? echo $n; ?>'>
+      <? printf( "%.2lf", $kosten ); ?>
+    </td>
+      <? if( $dienst == 4 ) { ?>
+        <td>
+          <?
+            echo fc_alink( 'edit_produkt', "produkt_id=$produkt_id" );
+            echo fc_action( array( 'action' => 'delete', 'produkt_id' => $produkt_id, 'img' => 'img/b_drop.png', 'text' => ''
+                                   , 'title' => 'Bestellvorschlag löschen', 'confirm' => 'Bestellvorschlag wirklich löschen?' ) );
+          ?>
+        </td>
+      <? } ?>
+  </tr>
   <?
 }
-if( $rowspan > 1 ) {
+if( $rowspan > 1 )
+  $js .= sprintf( "document.getElementById('pg_%u').rowSpan = %u;\n", $pg_id, $rowspan );
+
+if( $js ) {
   ?>
     <script type='text/javascript'>
-      document.getElementById('pg_<? echo $pg_id; ?>').rowSpan = <? echo $rowspan; ?>;
+      <? echo $js; ?>
     </script>
   <?
 }
