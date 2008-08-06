@@ -245,7 +245,17 @@ $gesamtpreis = 0.0;
       document.getElementById('tg_'+produkt).firstChild.nodeValue = toleranz[produkt] + toleranz_andere[produkt];
     }
 
-    document.getElementById('gv_'+produkt).firstChild.nodeValue = gebinde;
+    if( gebinde > 0 ) {
+      document.getElementById('gv_'+produkt).firstChild.nodeValue = gebinde;
+      document.getElementById('gv_'+produkt).className = 'mult_highlight';
+    } else {
+      document.getElementById('gv_'+produkt).firstChild.nodeValue = '0';
+      if( festmenge + toleranzmenge > 0 ) {
+        document.getElementById('gv_'+produkt).className = 'mult_crit';
+      } else {
+        document.getElementById('gv_'+produkt).className = 'mult';
+      }
+    }
 
     // formularfelder aktualisieren:
     //
@@ -256,7 +266,23 @@ $gesamtpreis = 0.0;
     kosten_neu = preis[produkt] * ( fest[produkt] + toleranz[produkt] );
     gesamtpreis += ( kosten_neu - kosten[produkt] );
     kosten[produkt] = kosten_neu;
-    document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
+    if( ( fest[produkt] + toleranz[produkt] ) > 0 ) {
+      document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
+      document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
+      if( gebinde > 0 ) {
+        document.getElementById('k_'+produkt).className = 'mult_highlight';
+        document.getElementById('m_'+produkt).className = 'mult_highlight';
+      } else {
+        document.getElementById('k_'+produkt).className = 'mult_crit';
+        document.getElementById('m_'+produkt).className = 'mult_crit';
+      }
+    } else {
+      document.getElementById('k_'+produkt).firstChild.nodeValue = '0.00'
+      document.getElementById('k_'+produkt).className = 'mult';
+      document.getElementById('m_'+produkt).firstChild.nodeValue = '0';
+      document.getElementById('m_'+produkt).className = 'mult';
+    }
+
     document.getElementById('gesamtpreis1').firstChild.nodeValue = gesamtpreis.toFixed(2);
     document.getElementById('gesamtpreis2').firstChild.nodeValue = gesamtpreis.toFixed(2);
     kontostand_neu = ( kontostand - gesamtpreis ).toFixed(2);
@@ -344,8 +370,6 @@ $gesamtpreis = 0.0;
   }
 </script>
 
-// submit/reset knoepfe (werden nach der ersten aenderung oben links eingeblendet):
-//
 <? if( ! $readonly ) { ?>
   <div style='position:fixed;top:20px;left:20px;padding:2ex;z-index:999;display:none;' id='reminder' class='alert'>
     <table class='inner'>
@@ -387,7 +411,8 @@ $gesamtpreis = 0.0;
       <th>Bezeichnung</th>
       <th colspan='4'>Gebinde</th>
       <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
-      <th>Menge fest</th>
+      <th colspan='2'>Menge</th>
+      <th>fest</th>
       <th>Toleranz</th>
       <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
       <? if( $dienst == 4 ) { ?>
@@ -451,7 +476,18 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
     <input type='hidden' name='fest_<? echo $n; ?>' id='fest_<? echo $n; ?>' value='<? echo $festmenge; ?>'>
     <input type='hidden' name='toleranz_<? echo $n; ?>'  id='toleranz_<? echo $n; ?>' value='<? echo $toleranzmenge; ?>'>
     <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
-    <td class='mult' style='font-weight:bold;width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?></td>
+    <td
+      <? if( $zuteilungen[gebinde] > 0 ) { ?>
+        class='mult_highlight'
+      <? } else { ?>
+        <? if( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) { ?>
+         class='mult_crit'
+        <? } else { ?>
+         class='mult'
+        <? } ?>
+      <? } ?>
+         style='width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?>
+    </td>
     <td style='width:1ex;border-right:none;border-left:none;'>*</td>
     <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
     <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
@@ -471,7 +507,19 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
       ?>
     </td>
     <td class='unit'><? printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
+    <td
+      <? if( $festmenge + $toleranzmenge > 0 ) { ?>
+        <? if( $zuteilungen[gebinde] > 0 ) { ?>
+          class='mult_highlight' 
+        <? } else { ?>
+          class='mult_crit'
+        <? } ?>
+      <? } else { ?>
+          class='mult'
+      <? } ?>
+          id='m_<? echo $n; ?>'><? printf( "%u", $festmenge + $toleranzmenge ); ?>
     </td>
+    <td class='unit'><? printf( "* %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
     <td style='text-align:center;'>
       <div class='oneline'>
         <span style='color:#00e000;font-weight:bold;' id='fz_<? echo $n; ?>'><? echo $zuteilung_fest; ?></span>
@@ -516,8 +564,17 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
         <div class='oneline' style='text-align:center;'> - </div>
       <? } ?>
     </td>
-    <td class='number' id='k_<? echo $n; ?>'>
-      <? printf( "%.2lf", $kosten ); ?>
+    <td
+      <? if( $festmenge + $toleranzmenge > 0 ) { ?>
+        <? if( $zuteilungen[gebinde] > 0 ) { ?>
+          class='mult_highlight'
+        <? } else { ?>
+          class='mult_crit'
+        <? } ?>
+      <? } else { ?>
+          class='mult'
+      <? } ?>
+          id='k_<? echo $n; ?>'><? printf( "%.2lf", $kosten ); ?>
     </td>
     <? if( $dienst == 4 ) { ?>
       <td>
@@ -544,7 +601,7 @@ if( $js ) {
 
 ?>
   <tr class='summe'>
-    <td colspan='10'>Gesamtpreis:</td>
+    <td colspan='12'>Gesamtpreis:</td>
     <td class='number' id='gesamtpreis2'><? printf( "%.2lf", $gesamtpreis ); ?></td>
     <? if( $dienst == 4 ) { ?>
       <td></td>

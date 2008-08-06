@@ -481,6 +481,25 @@ table.numbers td.mult_outdated {
   padding-right:1ex;
   background-color:#ffffaa;
 }
+td.mult_highlight {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:1ex;
+  font-weight:bold;
+  background-color:#d0ffc0;
+}
+td.mult_crit {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:1ex;
+  font-weight:bold;
+  background-color:#fff0c0;
+}
+
 table.numbers td.unit, table.numbers th.unit {
   white-space:nowrap;
   text-align:left;
