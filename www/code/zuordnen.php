@@ -1792,6 +1792,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
     $quote = ( 1.0 * $restmenge ) / $toleranzbestellmenge;
     need( $quote <= 1 );
     while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $toleranzbestellungen ) ) ) {
+      $gruppe = $row['bestellguppen_id'];
       $menge = (int) ceil( $quote * $row['menge'] );
       if( $menge > $restmenge )
         $menge = $restmenge;

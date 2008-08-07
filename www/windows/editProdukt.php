@@ -68,6 +68,15 @@
           $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
         }
       }
+      ?>
+        <script type='text/javascript'>
+          if( window.opener ) {
+            if( opener.name == 'produktdetails' ) {
+              opener.document.forms['update_form'].submit();
+            }
+          }
+        </script>
+      <?
     }
   }
 

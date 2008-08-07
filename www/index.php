@@ -25,6 +25,11 @@ if( $window_id != 'main' ) {
     include( "windows/$window.php" );
   else
     include( "$window.php" );
+  ?>
+    <form name='update_form' method='post' action='<? echo self_url(); ?>'>
+    <? echo self_post(); ?>
+    </form>
+  <?
   echo "$print_on_exit";
   exit();
 }
@@ -76,5 +81,8 @@ switch( $window ) {
     </td>
   </tr>
 </table>
+<form name='update_form' method='post' action='<? echo self_url(); ?>'>
+  <? echo self_post(); ?>
+</form>
 <? echo $print_on_exit; ?>
 

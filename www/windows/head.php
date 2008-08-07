@@ -61,7 +61,7 @@
       </td></tr>
       </table></div><div class='payload$ro'>
     ";
-    $print_on_exit='</div></body></html>';
+    $print_on_exit = "</div></body></html>";
     $kopf_schon_ausgegeben = true;
   }
 ?>

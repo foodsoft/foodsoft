@@ -70,8 +70,7 @@
     } else {
       echo " class='payload'>";
     }
-    $print_on_exit='</div></body></html>';
-
+    $print_on_exit = "</div></body></html>";
     $kopf_schon_ausgegeben = true;
   }
 ?>
