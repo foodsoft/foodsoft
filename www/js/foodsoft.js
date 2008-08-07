@@ -79,3 +79,19 @@ function closeCurrentWindow() {
   window.close();
 }
 
+// submit_form: erlaubt POST an script in anderem fenster:
+//  - $form ist name eines <form> im aktuellen skript, action="neues skript"
+//  - $window ist ein fenstename
+//  - $button_id ist eine optionale POST variable, um den gedrueckten submit-knopf zu identifizieren
+function submit_form( form, window_id, optionen, button_id ) {
+  window.open( '', window_id, optionen ).focus();
+  document.forms[form].target = window_id;
+  if( button_id != '' )
+    if( document.forms[form].button_id )
+      document.forms[form].button_id.value = button_id;
+  if( document.forms[form] )
+    document.forms[form].submit();
+  else
+    alert( 'no such form: ' + form + ' button_id: ' + button_id );
+}
+

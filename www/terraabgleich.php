@@ -49,7 +49,10 @@ if( $action == 'zeitende_setzen' ) {
   sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "$zeitende" ), false );
 }
 if( $action == 'artikelnummer_setzen' ) {
-  need_http_var( 'anummer', 'H' );
+  if( get_http_var( 'button_id', 'H' ) )  // aufruf aus katalogsuche per click auf A-nummer
+    $anummer = $button_id;
+  else
+    need_http_var( 'anummer', 'H' );
   sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
 }
 if( $action == 'neuer_preiseintrag' ) {

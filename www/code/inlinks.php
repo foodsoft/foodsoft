@@ -341,6 +341,10 @@ function parameters_explode( $s ) {
   return $r;
 }
 
+// fc_url
+// um variable per POST zu uebergeben:
+//  - im formular scheme 'form:' uebergeben (erzeugt kein javascript), und attribut name='bla' setzen
+//  - per fc_button einen submit-knpof erzeugen, dabei form=bla als parameter uebergeben
 function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'javascript:' ) {
   global $foodsoftdir;
 
@@ -356,15 +360,20 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
   $form = '';
   $anchor = '';
   $query = '';
+  $button_id = '';
   $and = '?';
   foreach( $parameters as $key => $value ) {
     switch( $key ) {
       case 'img':
       case 'text':
       case 'title':
+      case 'class':
         continue 2; //  php counts switch as a loop!
       case 'anchor':
         $anchor = "#$value";
+        continue 2;
+      case 'button_id':
+        $button_id = $value;
         continue 2;
       case 'form':
         $form = $value;
@@ -381,7 +390,7 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
   if( $scheme == 'form:' ) {
     // this is the action of a <form>: 
     // - the submit-button must set the target window,
-    // - here we just set the plain url (another reload via javascript would spoil the POSTED parameters!)
+    // - here we just set the plain url (another reload via javascript would spoil the POSTed parameters!)
     //
     return $url;
   }
@@ -402,15 +411,9 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
         $komma = ',';
       }
       if( $form )
-        return "
-          javascript:window.open('','$window_id','$option_string').focus();
-           // if( ! document.forms['$form'].target )
-           //   document.forms['$form'].createAttribute('target');
-          document.forms['$form'].target = '$window_id';
-          document.forms['$form'].submit();
-        ";
+        return "javascript:submit_form( '$form', '$window_id', '$option_string', '$button_id' );";
       else
-        return "{$scheme}window.open('$url','$window_id','$option_string').focus();";
+        return "{$scheme}window.open( '$url', '$window_id', '$option_string' ).focus();";
       return $url;
   }
 }
@@ -431,10 +434,10 @@ function alink( $url, $text = '', $title = '', $img = false ) {
   return $l . '</a>';
 }
 
-function buttonlink( $url, $text, $title = '' ) {
+function buttonlink( $url, $text, $title = '', $class = 'bigbutton' ) {
   if( $title )
     $title = "title='$title'";
-  return "<input type='button' value='$text' class='bigbutton' $title onclick=\"$url\">";
+  return "<input type='button' value='$text' class='$class' $title onclick=\"$url\">";
 }
 
 function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) {
@@ -442,7 +445,7 @@ function action_button( $label, $title, $fields, $mod_id = false, $class = '' ) 
       <form style='margin:0ex;padding:0ex;' method='post' action='" . self_url() . "'>" . self_post();
   foreach( $fields as $name => $value )
      $s .= "<input type='hidden' name='$name' value='$value'>";
-  $s .= "<input style='padding:0ex;margin:0ex;' type='submit' name='submit' value='$label'";
+  $s .= "<input style='padding:0ex;margin:0ex;' type='submit' name='submission_button' value='$label'";
   if( $mod_id )
     $s .= " onclick=\"document.getElementById('$mod_id').className='modified';\"";
   if( $title )
@@ -478,7 +481,9 @@ function fc_button( $name, $parameters = array(), $options = array() ) {
   $title = adefault( $parameters, 'title', $title );
   $text = adefault( $window['parameters'], 'text', '' );
   $text = adefault( $parameters, 'text', $text );
-  return buttonlink( $url, $text, $title );
+  $class = adefault( $window['parameters'], 'class', 'bigbutton' );
+  $class = adefault( $parameters, 'class', $class );
+  return buttonlink( $url, $text, $title, $class );
 }
 
 $action_form_id = 0;

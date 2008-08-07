@@ -184,8 +184,9 @@ if( $filter != '' ) {
   if( $produkt_id ) {
     ?>
       <b>Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b>
-      <form action="<? echo fc_url( 'produktpreise', "produkt_id=$produkt_id" ); ?>" method='post'>
+      <form name='anummer_setzen' action="<? echo fc_url( 'produktpreise', "produkt_id=$produkt_id", '', 'form:' ); ?>" method='post'>
       <input type='hidden' name='action' value='artikelnummer_setzen'>
+      <input type='hidden' name='button_id' value=''>
     <?
   }
 
@@ -213,11 +214,14 @@ if( $filter != '' ) {
       ?>
       <tr>
         <td class='mult'>
-          <? if ( $produkt_id > 0 ) { ?>
-            <input type='submit' name='anummer' value='<? echo $row['artikelnummer']; ?>'>
-          <? } else { ?>
-            <? echo $row['artikelnummer']; ?>
-          <? } ?>
+          <?
+            $anummer = $row['artikelnummer'];
+            if ( $produkt_id > 0 ) {
+              echo fc_button( 'produktdetails', "text=$anummer,class=submit,form=anummer_setzen,button_id=$anummer" );
+            } else {
+              echo $anummer;
+            }
+          ?>
         </td>
         <td class='number'><? echo $row['bestellnummer']; ?></td>
         <td><? echo $row['name']; ?></td>
