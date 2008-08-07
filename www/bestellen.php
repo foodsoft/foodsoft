@@ -409,11 +409,11 @@ $gesamtpreis = 0.0;
     <tr>
       <th>Produktgruppe</th>
       <th>Bezeichnung</th>
-      <th colspan='4'>Gebinde</th>
-      <th colspan='2' title='Einzelpreis (mit Pfand und MWSt')>Preis</th>
-      <th colspan='2'>Menge</th>
-      <th>fest</th>
-      <th>Toleranz</th>
+      <th colspan='4' title='Anzahl voller Gebinde und Gebindegröße'>Gebinde</th>
+      <th colspan='2' title='Einzelpreis (mit Pfand und MWSt)'>Preis</th>
+      <th colspan='2' title='von Eurer Gruppe maximal bestellte Menge'>Menge</th>
+      <th title='Fest-Bestellmenge: wieviel Ihr wirklich haben wollt'>fest</th>
+      <th title='Toleranz-Menge: wieviel Ihr auch mehr nehmen würdet'>Toleranz</th>
       <th title='voraussichtliche Kosten (mit Pfand und MWSt)'>Kosten</th>
       <? if( $dienst == 4 ) { ?>
         <th>Aktionen</th>
