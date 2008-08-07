@@ -1661,7 +1661,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
   $can_toggle or $default_on = true;
   if( $can_toggle ) {
     if( $default_on ) {
-      $form_display = ''; $button_display = 'none';
+      $form_display = 'inline'; $button_display = 'none';
     } else {
       $form_display = 'none'; $button_display = 'inline';
     }
@@ -1672,7 +1672,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
       >Artikelnummer (<? echo $anummer; ?>) &auml;ndern...</span>
     <?
   } else {
-    $form_display = '';
+    $form_display = 'inline';
   }
   ?>
     <div style='display:<? echo $form_display; ?>;' id='anummer_form' class='small_form'>
@@ -1707,10 +1707,10 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
               ...oder: Katalogsuche nach:
             </td>
             <td>
-              <form action='index.php?window=artikelsuche&lieferanten_id=<? echo $lieferanten_id; ?>' method='post'>
-                <input name='name' value='<? echo $produkt['name']; ?>' size='40'>&nbsp;<input type='submit' name='submit' value='Los!'
-                  <? echo mod_onclick( $mod_id ); ?> >
+              <form name='artikelsuche' action="<? echo fc_url( 'artikelsuche', "lieferanten_id=$lieferanten_id", '', 'form:' ); ?>" method='post'>
                 <input type='hidden' name='produkt_id' value='<? echo $produkt_id; ?>'>
+                <input name='name' value='<? echo $produkt['name']; ?>' size='40'>&nbsp;
+                <? echo fc_button( 'artikelsuche', 'text=Los!,form=artikelsuche,class=submit' ); ?>
               </form>
             </td>
           </tr>
