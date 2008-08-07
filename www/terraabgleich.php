@@ -151,7 +151,21 @@ $produkt_name = $produkt['name'];
       <th title='Endpreis je V-Einheit'>V-Preis</th>
     </tr>
     <tr>
-     <td><? echo $produkt['name']; ?></td>
+      <td><table class='inner' width='100%'>
+         <tr>
+           <td>
+             <div class='oneline'><? printf( "%s", $produkt['name'] ); ?></div>
+           </td>
+           <td rowspan='2' style='width:5em;text-align:center;'>
+             <? echo fc_alink( 'edit_produkt', "produkt_id=$produkt_id" ); ?>
+           </td>
+         </tr>
+         <tr>
+           <td>
+             <div class='oneline_small'><? printf( "%s", $produkt['notiz'] ); ?></div>
+           </td>
+         </tr>
+      </table></td>
 <?
 
 if( $prgueltig ) {
