@@ -68,15 +68,13 @@
           $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
         }
       }
-      ?>
-        <script type='text/javascript'>
-          if( window.opener ) {
-            if( opener.name == 'produktdetails' ) {
-              opener.document.forms['update_form'].submit();
-            }
-          }
-        </script>
-      <?
+      //      // update_form ist erst am ende des skripts verfuegbar!
+      //      $print_on_exit = "
+      //        <script type='text/javascript'>
+      //          document.forms['update_form'].message.value = 'hello, world';
+      //          notify_up();
+      //        </script>
+      //      " . $print_on_exit;
     }
   }
 
