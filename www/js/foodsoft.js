@@ -84,7 +84,7 @@ function closeCurrentWindow() {
 //  - $window ist ein fenstename
 //  - $button_id ist eine optionale POST variable, um den gedrueckten submit-knopf zu identifizieren
 function submit_form( form, window_id, optionen, button_id ) {
-  window.open( '', window_id, optionen ).focus();
+  window.open( '', window_id, optionen, focus ).focus();
   document.forms[form].target = window_id;
   if( button_id != '' )
     if( document.forms[form].button_id )
@@ -94,4 +94,46 @@ function submit_form( form, window_id, optionen, button_id ) {
   else
     alert( 'no such form: ' + form + ' button_id: ' + button_id );
 }
+
+// experimenteller code - funktioniert noch nicht richtig...
+// 
+// var child_windows = new Array();
+// var child_counter = 0;
+// 
+// function window_open( url, name, options, focus ) {
+//   var w, i;
+//   w = window.open( url, name, options );
+//   if( focus )
+//     w.focus();
+//   for( i = 0; i < child_counter; i++ ) {
+//     if( child_windows[i].name == name )
+//       return w;
+//   }
+//   child_windows[ child_counter++ ] = w;
+//   return w;
+// }
+//   
+// 
+// function notify_down() {
+//   var m;
+//   m = document.forms['update_form'].message.value;
+//   for( i = 0; i < child_counter; i++ ) {
+//     child_windows[i].document.forms['update_form'].message.value = m;
+//     if( confirm( 'down to: ' + i + ' ' + child_windows[i].name ) )
+//       child_windows[i].notify_down();
+//   }
+// }
+// 
+// function notify_up() {
+//   var m;
+//   m = document.forms['update_form'].message.value;
+//   if( opener && ( opener != window ) && opener.document.forms ) {
+//     opener.document.forms['update_form'].message.value = m;
+//     if( confirm( 'weitermachen: ' + opener.name ) )
+//       opener.notify_up();
+//   } else {
+//     alert( 'top reached: passing message down...' );
+//     notify_down();
+//   }
+// }
 
