@@ -84,7 +84,7 @@ function closeCurrentWindow() {
 //  - $window ist ein fenstename
 //  - $button_id ist eine optionale POST variable, um den gedrueckten submit-knopf zu identifizieren
 function submit_form( form, window_id, optionen, button_id ) {
-  window.open( '', window_id, optionen, focus ).focus();
+  window.open( '', window_id, optionen ).focus();
   document.forms[form].target = window_id;
   if( button_id != '' )
     if( document.forms[form].button_id )
