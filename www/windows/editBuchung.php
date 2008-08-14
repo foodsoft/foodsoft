@@ -12,6 +12,16 @@ $editable = ( $dienst == 4 and ! $readonly );
 $msg = '';
 $problems = '';
 
+$muell_id = sql_muell_id();
+
+$selectable_types = array(
+  TRANSAKTION_TYP_ANFANGSGUTHABEN
+, TRANSAKTION_TYP_SPENDE
+, TRANSAKTION_TYP_SONDERAUSGABEN
+, TRANSAKTION_TYP_VERLUST
+, TRANSAKTION_TYP_SONSTIGES
+);
+
 if( get_http_var( 'transaktion_id', 'u', NULL, true ) )
   $buchung_id = -$transaktion_id;
 else
@@ -29,35 +39,81 @@ get_http_var( 'action', 'w', '' );
 $editable or $action = '';
 switch( $action ) {
   case 'update':
-    need_http_var( 'soll', 'f' );
+    need_http_var( 'id_1', 'd' ); need( $id_1 == $buchung_id );
+    need_http_var( 'id_2', 'd' ); need( $id_2 == $k_id );
+    $b1 = sql_get_transaction( $id_1 );
+    $b2 = sql_get_transaction( $id_2 );
+    need_http_var( 'haben', 'f' );
     need_http_var( 'notiz', 'H' );
-    need_http_var( 'day', 'U' );
-    need_http_var( 'month', 'U' );
-    need_http_var( 'year', 'U' );
-    if( $buchung_id > 0 ) {
+    need_http_var( 'vday', 'U' );
+    need_http_var( 'vmonth', 'U' );
+    need_http_var( 'vyear', 'U' );
+    $mod_1 = array();
+    $mod_2 = array();
+    if( $id_1 > 0 ) {
       need_http_var( "auszug_jahr_1", 'U' );
       need_http_var( "auszug_nr_1", 'U' );
+      $mod_1['kommentar'] = $notiz;
+      $mod_1['valuta'] = "$vyear-$vmonth-$vday";
+      $mod_1['kontoauszug_jahr'] = $auszug_jahr_1;
+      $mod_1['kontoauszug_nr'] = $auszug_nr_1;
+      $mod_1['betrag'] = $haben;
     } else {
-      need_http_var( 'typ_1', 'u' );
+      $mod_1['notiz'] = $notiz;
+      $mod_1['kontobewegungs_datum'] = "$vyear-$vmonth-$vday";
+      $mod_1['summe'] = -$haben;
+      if( $b1['gruppen_id'] == $muell_id ) {
+        if( in_array( $b1['transaktionstyp'], $selectable_types ) or ( $b1['transaktionstyp'] == TRANSAKTION_TYP_UNDEFINIERT ) ) {
+          need_http_var( 'typ_1', 'U' );
+          need( in_array( $typ_1, $selectable_types ) );
+          $mod_1['type'] = $typ_1;
+        }
+      }
     }
-    if( $k_id > 0 ) {
+    if( $id_2 > 0 ) {
       need_http_var( "auszug_jahr_2", 'U' );
       need_http_var( "auszug_nr_2", 'U' );
+      $mod_2['kommentar'] = $notiz;
+      $mod_2['valuta'] = "$vyear-$vmonth-$vday";
+      $mod_2['kontoauszug_jahr'] = $auszug_jahr_2;
+      $mod_2['kontoauszug_nr'] = $auszug_nr_2;
+      $mod_2['betrag'] = -$haben;
     } else {
-      need_http_var( 'typ_2', 'u' );
+      $mod_2['notiz'] = $notiz;
+      $mod_2['kontobewegungs_datum'] = "$vyear-$vmonth-$vday";
+      $mod_2['summe'] = $haben;
+      if( $b2['gruppen_id'] == $muell_id ) {
+        if( in_array( $b2['transaktionstyp'], $selectable_types ) or ( $b2['transaktionstyp'] == TRANSAKTION_TYP_UNDEFINIERT ) ) {
+          need_http_var( 'typ_2', 'U' );
+          need( in_array( $typ_2, $selectable_types ) );
+          $mod_2['type'] = $typ_2;
+        }
+      }
     }
-
+    if( $id_1 > 0 ) {
+      sql_update( 'bankkonto', $id_1, $mod_1 );
+    } else {
+      sql_update( 'gruppen_transaktion', -$id_1, $mod_1 );
+    }
+    if( $id_2 > 0 ) {
+      sql_update( 'bankkonto', $id_2, $mod_2 );
+    } else {
+      sql_update( 'gruppen_transaktion', -$id_2, $mod_2 );
+    }
     break;
 }
 
 
 
-function show_transaction( $id, $show_common ) {
-  global $editable;
+function show_transaction( $id, $tag ) {
+  global $editable, $selectable_types, $muell_id;
+
   $t = sql_get_transaction( $id );
   $v = preg_split( '/[- ]/',$t['valuta'] );
 
-  if( $show_common ) {
+  echo "<input type='hidden' name='id_$tag' value='$id'>";
+
+  if( $tag == 1 ) {
     ?>
       <tr>
         <td><label>Buchung:</label></td><td><kbd><? echo $t['buchungsdatum']; ?></kbd></td>
@@ -66,7 +122,7 @@ function show_transaction( $id, $show_common ) {
         <td><label>Valuta:</label></td>
         <td>
           <? if( $editable ) { ?>
-            <? date_selector( 'day', $v[2], 'month', $v[1], 'year', $v[0] ); ?>
+            <? date_selector( 'vday', $v[2], 'vmonth', $v[1], 'vyear', $v[0] ); ?>
           <? } else { ?>
             <kbd><? echo $t['valuta']; ?></kbd>
           <? } ?>
@@ -88,7 +144,7 @@ function show_transaction( $id, $show_common ) {
   if( $id > 0 ) {
     ?>
       <tr class='newfield'>
-        <th colspan='2'>Bank-Transaktion (<? echo $id; ?>)</th>
+        <th colspan='2'>Bank-Transaktion <span class='small'><? echo $id; ?></span></th>
       </tr>
       <tr>
         <td><label>Konto:</label></td><td><? echo $t['kontoname']; ?></td>
@@ -97,21 +153,11 @@ function show_transaction( $id, $show_common ) {
         <td><label>Auszug:</label></td>
         <td class='number'>
         <? if( $editable )  { ?>
-          <input name='auszug_jahr_<? echo $id; ?>' type='text' size='4' value='<? echo $t['kontoauszug_jahr']; ?>'>
+          <input name='auszug_jahr_<? echo $tag; ?>' type='text' size='4' value='<? echo $t['kontoauszug_jahr']; ?>'>
             /
-          <input name='auszug_nr_<? echo $id; ?>' type='text' size='2' value='<? echo $t['kontoauszug_nr']; ?>'>
+          <input name='auszug_nr_<? echo $tag; ?>' type='text' size='2' value='<? echo $t['kontoauszug_nr']; ?>'>
         <? } else { ?>
           <kbd><? echo "{$t['kontoauszug_nr']} / {$t['kontoauszug_jahr']}"; ?></kbd>
-        <? } ?>
-        </td>
-      </tr>
-      <tr class='lastline'>
-        <td><label>Soll FC:</label></td>
-        <td class='number'>
-          <? if( $editable and $show_common ) { ?>
-            <input name='soll' type='text' size='6' value='<? printf( "%.2lf", -$t['haben'] ); ?>'>
-        <? } else { ?>
-          <kbd><? printf( "%.2lf", -$t['haben'] ); ?></kbd>
         <? } ?>
         </td>
       </tr>
@@ -123,13 +169,13 @@ function show_transaction( $id, $show_common ) {
     if( $lieferanten_id > 0 ) {
       ?>
         <tr class='newfield'>
-          <th colspan='2'>Lieferanten-Transaktion (<? echo $id; ?>)</th>
+          <th colspan='2'>Lieferanten-Transaktion <span class='small'><? echo $id; ?></span></th>
         </tr>
         <tr>
           <td><label>Lieferant:</label></td><td><kbd><? printf( "%s", lieferant_name( $lieferanten_id ) ); ?></kbd></td>
         </tr>
       <?
-    } else if( $gruppen_id == sql_muell_id() ) {
+    } else if( $gruppen_id == $muell_id ) {
       ?>
         <tr class='newfield'>
           <th colspan='2'>Interne Verrechnung (<? echo $id; ?>)</th>
@@ -141,11 +187,10 @@ function show_transaction( $id, $show_common ) {
               $typ = $t['transaktionstyp'];
               $options = '';
               $selected = false;
-              foreach( array( TRANSAKTION_TYP_ANFANGSGUTHABEN, TRANSAKTION_TYP_SPENDE, TRANSAKTION_TYP_SONDERAUSGABEN, TRANSAKTION_TYP_VERLUST
-                              , TRANSAKTION_TYP_SONSTIGES ) as $tt ) {
+              foreach( $selectable_types as $tt ) {
                 $options .= "<option value='".$tt."'";
                 if( $tt == $typ ) {
-                  echo " selected";
+                  $options .= " selected";
                   $selected = true;
                 }
                 $options .= ">" . transaktion_typ_string($tt) . "</option>";
@@ -154,7 +199,7 @@ function show_transaction( $id, $show_common ) {
                 $options = "<option value=''>(bitte Typ wählen)</option>$options";
               }
               if( $selected or ( $typ == TRANSAKTION_TYP_UNDEFINIERT ) ) {
-                ?> <select name='typ'> <?
+                ?> <select name='typ_<? echo $tag; ?>'> <?
                 echo $options
                 ?> </select> <?
               } else {
@@ -174,12 +219,19 @@ function show_transaction( $id, $show_common ) {
         </tr>
       <?
     }
-    ?>
-      <tr class='lastline'>
-        <td><label>Soll FC:</label></td><td><kbd><? printf( " %.2lf", -$t['haben'] ); ?></kbd></td>
-      </tr>
-    <?
   }
+  ?>
+    <tr class='lastline'>
+      <td><label>Haben FC:</label></td>
+      <td class='number'>
+        <? if( $editable and ( $tag == 1 ) ) { ?>
+          <input name='haben' type='text' size='6' value='<? printf( "%.2lf", $t['haben'] ); ?>'>
+      <? } else { ?>
+        <kbd><? printf( "%.2lf", $t['haben'] ); ?></kbd>
+      <? } ?>
+      </td>
+    </tr>
+  <?
 }
 
 
@@ -191,9 +243,9 @@ function show_transaction( $id, $show_common ) {
     <legend>Buchung:</legend>
     <? echo $msg; echo $problems; ?>
     <table style="width:350px;" class='form'>
-      <? show_transaction( $buchung_id, true ); ?>
+      <? show_transaction( $buchung_id, 1 ); ?>
       <tr><td colspan='2'></td></tr>
-      <? show_transaction( $k_id, false ); ?>
+      <? show_transaction( $k_id, 2 ); ?>
       <tr class='newfield'>
         <td colspan='2' class='text-align:right;'>
           <input type='submit' value='&Auml;ndern'>

@@ -20,12 +20,13 @@ $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
  $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
 function debug_args( $args, $tag = '' ) {
-  echo "<br>";
+  echo "<br><pre>";
   $i = 1;
-  foreach( $args as $a ) {
-    echo "$tag: $i:";
-    print_r( $a );
-    echo "<br>";
+  foreach( $args as $k => $a ) {
+    echo "$tag: $i: $k => ";
+    var_export( $a );
+    echo '';
+    echo "</pre>";
     $i++;
   }
 }
@@ -2501,6 +2502,7 @@ function sql_get_transaction( $id ) {
            , bankkonto.kontoauszug_nr
            , (-summe) as haben
            , gruppen_transaktion.notiz as kommentar
+           , gruppen_transaktion.type as transaktionstyp
            , gruppen_transaktion.kontobewegungs_datum as valuta
            , gruppen_transaktion.eingabe_zeit as buchungsdatum
            , gruppen_transaktion.konterbuchung_id as konterbuchung_id
@@ -3930,6 +3932,12 @@ function checkvalue( $val, $typ){
         $val = preg_replace( '/[^\d].*$/', '', $val );
 	      $pattern = '/^\d+$/';
 	      break;
+	    case 'd':
+	      $val = trim($val);
+        // eventuellen nachkommateil abschneiden:
+        $val = preg_replace( '/[.].*$/', '', $val );
+	      $pattern = '/^-{0,1}\d+$/';
+	      break;
 	    case 'f':
 	      $val = str_replace( ',', '.' , trim($val) );
 	      $pattern = '/^[-\d.]+$/';
@@ -3957,6 +3965,7 @@ function checkvalue( $val, $typ){
 // get_http_var:
 // - name: wenn name auf [] endet, wird ein array erwartet (aus <input name='bla[]'>)
 // - typ: definierte $typ argumente:
+//   d : ganze Zahl
 //   u (default wenn name auf _id endet): nicht-negative ganze Zahl
 //   U positive ganze Zahl (also echt groesser als NULL)
 //   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
