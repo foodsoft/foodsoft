@@ -71,7 +71,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
 
 
 ?>
-<h2>Abrechnung: Bestellung <? echo "$bestellung_name ($lieferant_name)"; ?></h2>
+<h2>Abrechnung: Bestellung <? echo "$bestellung_name ($lieferant_name) ". fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" ); ?></h2>
 
 <form method='post' action='<? echo self_url(); ?>'>
 <?echo self_post(); ?>

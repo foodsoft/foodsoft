@@ -388,12 +388,7 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       <? printf( "%.2lf", $row['betrag'] ); ?>
     </td>
     <td style='vertical-align:bottom;'>
-      <?
-        if( ! $editable )
-          echo fc_alink( 'edit_buchung', "buchung_id={$row['id']}" );
-        else
-          echo fc_alink( 'edit_buchung', "buchung_id={$row['id']},img=img/birne_rot.png,title=Details..." );
-      ?>
+      <?  echo fc_alink( 'edit_buchung', "buchung_id={$row['id']}" ); ?>
     </tr>
   <?
 }
