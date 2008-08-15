@@ -5,12 +5,14 @@
   setWindowSubtitle( 'Bestellvorlage edieren' );
   setWikiHelpTopic( 'foodsoft:bestellvorlage_edieren' );
 
-  nur_fuer_dienst_IV();
-  fail_if_readonly();
-
   $msg = '';
+  $problems = '';
 
   need_http_var( 'bestell_id','u', true );
+  get_http_var( 'ro', 'u', 0, true );
+
+  $editable = ( ( $dienst == 4 ) and ( ! $readonly ) and ( ! $ro ) and ( getState( $bestell_id ) < STATUS_ABGERECHNET ) );
+  $ro_tag = ( $editable ? '' : 'readonly' );
 
   $bestellung = sql_bestellung( $bestell_id );
   $startzeit = $bestellung['bestellstart'];
@@ -20,6 +22,7 @@
   $status = $bestellung['state'];
 
   get_http_var('action','w','');
+  $editable or $action = '';
 
   if( $action == 'update' ) {
     need_http_var("startzeit_tag",'u');
@@ -59,33 +62,62 @@
   <? echo self_post(); ?>
   <input type='hidden' name='action' value='update'>
   <fieldset style='width:360px;' class='small_form'>
-    <legend>Bestellvorlage edieren</legend>
+    <legend>Bestellvorlage <? echo ( $editable ? 'edieren' : '(abgeschlossen)' ); ?></legend>
     <? echo $msg; echo $problems; ?>
-    <table style="width:350px;">
+    <table style="width:420px;">
+      <tr>
+        <td><label>Lieferant:</label></td>
+        <td>
+          <kbd><? echo lieferant_name( $bestellung['lieferanten_id'] ); ?></kbd>
+        </td>
+      </tr>
       <tr>
         <td><label>Name:</label></td>
-        <td><input type="text" name="bestellname" size="35" value="<? echo "$bestellname"; ?>"></td>
+        <td>
+          <? if( $editable ) { ?>
+            <input type="text" name="bestellname" size="35" value="<? echo "$bestellname"; ?>">
+          <? } else { ?>
+            <kbd><? echo $bestellname; ?></kbd>
+          <? } ?>
+        </td>
       </tr>
       <tr>
         <td valign="top"><label>Startzeit:</label></td>
         <td>
-          <?date_time_selector($startzeit,"startzeit");?>
+          <? if( $editable ) { ?>
+            <?date_time_selector($startzeit,"startzeit");?>
+          <? } else { ?>
+            <kbd><? echo $startzeit; ?></kbd>
+          <? } ?>
         </td>
       </tr>
       <tr>
         <td valign="top"><label>Ende:</label></td>
         <td>
-          <?date_time_selector($endzeit,"endzeit");?>
+          <? if( $editable ) { ?>
+            <?date_time_selector($endzeit,"endzeit");?>
+          <? } else { ?>
+            <kbd><? echo $endzeit; ?></kbd>
+          <? } ?>
         </td>
       </tr>
       <tr>
         <td valign="top"><label>Lieferung:</label></td>
         <td>
-          <?date_time_selector($lieferung,"lieferung",false);?>
+          <? if( $editable ) { ?>
+            <?date_time_selector($lieferung,"lieferung",false);?>
+          <? } else { ?>
+            <kbd><? echo $lieferung; ?></kbd>
+          <? } ?>
         </td>
       </tr>
       <tr>
-        <td colspan='2' align='center'><input type='submit' value='&Auml;ndern'></td>
+        <td colspan='2' style='text-align:right;'>
+          <? if( $editable ) { ?>
+            <input type='submit' value='&Auml;ndern'>
+          <? } ?>
+          <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
+        </td>
       </tr>
     </table>
   </fieldset>
