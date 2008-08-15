@@ -266,7 +266,7 @@ function fc_window( $name ) {
       $parameters['window_id'] = 'edit_bestellung';
       $parameters['title'] = 'zu den Stammdaten der Bestellung...';
       $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
-      $options = array_merge( $small_window_options, array( 'width' => '460' ) );
+      $options = array_merge( $small_window_options, array( 'width' => '480' ) );
       break;
     case 'edit_buchung':
       $parameters['window'] = 'editBuchung';
@@ -394,12 +394,13 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
     //
     return $url;
   }
+  $js_window_name = $window_id;
   switch( $window_id ) {
     case 'self':
       return "javascript:self.location.href='$url';";
     case 'top':
     case 'main':
-      $window_id = '_top';
+      $js_window_name = '_top';
     default:
       if( is_string( $options ) )
         $options = parameters_explode( $options );
@@ -410,10 +411,16 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
         $option_string .= "$komma$key=$value";
         $komma = ',';
       }
-      if( $form )
-        return "javascript:submit_form( '$form', '$window_id', '$option_string', '$button_id' );";
-      else
-        return "{$scheme}window.open( '$url', '$window_id', '$option_string' ).focus();";
+      if( $form ) {
+        return "javascript:submit_form( '$form', '$js_window_name', '$option_string', '$button_id' );";
+      } else {
+        // echo "[$window_id,${GLOBALS['window_id']}]<br>";
+        if( $window_id == $GLOBALS['window_id'] ) {
+          return $url;
+        } else {
+          return "{$scheme}window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+        }
+      }
       return $url;
   }
 }
