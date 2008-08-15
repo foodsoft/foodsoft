@@ -9,7 +9,6 @@
   $onload_str = "";       // befehlsstring der beim laden ausgeführt wird...
 
   ( $dienst == 4 ) or $ro = 1;
-  nur_fuer_dienst_IV();
 
   $msg = "";
   $problems = "";
@@ -34,8 +33,9 @@
   $lieferant_name = lieferant_name( $lieferanten_id );
 
   $action = '';
-  if( ! $ro )
-    get_http_var( 'action', 'w', '' );
+  get_http_var( 'action', 'w', '' );
+  if( $ro )
+    $action = '';
 
   if( $action == 'save' ) {
     $values = array(
