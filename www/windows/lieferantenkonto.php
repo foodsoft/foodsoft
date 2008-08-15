@@ -187,9 +187,10 @@ if( $editable ) {
         <td valign='top' style='font-weight:bold;'>
           <?
           if( $konto_row['konterbuchung_id'] >= 0 ) {
-            echo 'Zahlung';
+            $text = 'Zahlung';
           } else {
-            echo 'Verrechnung';
+            $text = 'Verrechnung';
+            echo fc_alink( 'edit_buchung', "transaktion_id={$konto_row['id']},text=$text,img=" );
           }
           ?>
         </td>

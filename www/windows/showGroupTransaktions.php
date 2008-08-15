@@ -274,14 +274,20 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
       $pfandsumme -= $pfand_soll;
       $vert_row = mysql_fetch_array($vert_result);
     } else {
+      $k_id = $konto_row['konterbuchung_id'];
       ?>
       <tr>
         <td valign='top' style='font-weight:bold;'>
           <?
           if( $konto_row['konterbuchung_id'] >= 0 ) {
-            echo $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung';
+            $text = ( $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung' );
           } else {
-            echo "Verrechnung";
+            $text = 'Verrechnung';
+          }
+          if( $k_id ) {
+            echo fc_alink( 'edit_buchung', "transaktion_id={$konto_row['id']},text=$text,img=" );
+          } else {
+            echo $text;
           }
           ?>
         </td>
@@ -292,7 +298,7 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
         </td>
         <td>
           <div><? echo $konto_row['notiz']; ?></div>
-          <div>
+          <div class='oneline'>
             <?
               $k_id = $konto_row['konterbuchung_id'];
               if( $k_id > 0 ) { // bank-transaktion
