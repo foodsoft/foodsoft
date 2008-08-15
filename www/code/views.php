@@ -689,11 +689,11 @@ function products_overview(
     }
     if( $spalten & PR_COL_LPREIS ) {
       echo "<td class='mult'>";
-      if($editPrice){
+      // if($editPrice){
         echo fc_alink( 'produktdetails', "img=,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) );
-      } else {
-        printf( "%8.2lf", $nettolieferpreis );
-      }
+      // } else {
+      //  printf( "%8.2lf", $nettolieferpreis );
+      // }
       echo "</td><td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>";
     }
     if( $spalten & PR_COL_MWST ) {
@@ -1222,7 +1222,7 @@ function sum_row($sum){
 }
 
 function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
-  global $hat_dienst_IV;
+  global $hat_dienst_IV, $window_id;
   $bestell_id = $row['id'];
   ?>
     <table class="info">
@@ -1246,7 +1246,10 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
         </tr>
         <tr>
           <th>Lieferant:</th>
-          <td><? echo lieferant_name( $row['lieferanten_id'] ); ?></td>
+          <td><?
+            echo fc_alink( 'edit_lieferant', array( 'text' => lieferant_name( $row['lieferanten_id'] )
+                                                     , 'img' => '' , 'lieferanten_id' => $row['lieferanten_id'] ) );
+          ?></td>
         </tr>
         <tr>
           <th> Bestellzeitraum: </th>
@@ -1287,13 +1290,15 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
         </tr>	
       <?
     }
-    ?>
-      <tr>
-        <th>Status:</th>
-        <td> <? abrechnung_kurzinfo( $bestell_id ); ?> </td>
-      </tr>
-    </table>
-  <?
+    if( $window_id != 'abrechnung' ) {
+      ?>
+        <tr>
+          <th>Status:</th>
+          <td> <? abrechnung_kurzinfo( $bestell_id ); ?> </td>
+        </tr>
+      <?
+    }
+  ?> </table> <?
 }
 
 function abrechnung_kurzinfo( $bestell_id ) {
