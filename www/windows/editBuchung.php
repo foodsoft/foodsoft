@@ -178,7 +178,7 @@ function show_transaction( $id, $tag ) {
     } else if( $gruppen_id == $muell_id ) {
       ?>
         <tr class='newfield'>
-          <th colspan='2'>Interne Verrechnung (<? echo $id; ?>)</th>
+          <th colspan='2'>Interne Verrechnung <span class='small'><? echo $id; ?></span></th>
         </tr>
         <tr>
           <td><label>Typ:</label></td>
@@ -212,7 +212,7 @@ function show_transaction( $id, $tag ) {
     } else {
       ?>
         <tr class='newfield'>
-          <th colspan='2'>Gruppen-Transaktion (<? echo $id; ?>)</th>
+          <th colspan='2'>Gruppen-Transaktion <span class='small'><? echo $id; ?></span></th>
         </tr>
         <tr>
           <td><label>Gruppe:</label></td><td><kbd><? printf( "%s (%s)", sql_gruppenname( $gruppen_id ), $gruppen_id ); ?></kbd></td>
