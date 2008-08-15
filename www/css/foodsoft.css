@@ -261,11 +261,6 @@ table input {
 	font-size:11pt;
 }
 
-/* für den hover effekt */
-table.liste tr:hover, table.numbers tr:hover {
-	background-color: #efefef;
-}
-	
 a.tabelle {
 	color:#ED0606;
 }
@@ -303,6 +298,9 @@ tr.posten td.number, tr.ersterposten td.number {
 tr.posten td.rednumber, tr.ersterposten td.rednumber, td.rednumber {
   color:#ff0000;
   font-weight:bold;
+}
+td.number input {
+  text-align:right;
 }
 
 tr.groupofrows_top td {
@@ -511,6 +509,10 @@ table.list tr td, table.list tr th, .small_form table.list tr td, .small_form ta
   padding: 0.4ex 1em 0.2ex 1em;
   border:solid 1pt black;
 }
+table.form tr td {
+  border-style:none;
+  text-align:left;
+}
 
 table#preisform label {
   padding-left:2em;
@@ -562,7 +564,7 @@ table.small_form tr td, .small_form table, .small_form table tr td {
   text-align:left;
 }
 .small_form table tr th {
-  background-color:#e0e0a0;
+  background-color:#e0e0f0;
 }
 
 .small_form table tr td label a {
@@ -592,8 +594,15 @@ fieldset legend {
   border-color:#000000;
 }
 
-.newfield {
-  padding-top:1em;
+tr.newfield td, td.newfield {
+  padding-top:1ex;
+}
+tr.newfield th, tr.newfield {
+  margin-top:3em;
+}
+
+tr.lastline td, table.form tr.lastline td {
+  padding-bottom:1em;
 }
 
 input.checkbox {
