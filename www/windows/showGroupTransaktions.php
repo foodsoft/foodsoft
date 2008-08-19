@@ -1,6 +1,7 @@
 <?PHP
 
 assert($angemeldet) or exit();
+$editable = ! $readonly;
  
  //Vergleicht das Datum der beiden mysql-records
  //gibt +1 zurück, wenn Datum in $konto älter ist
@@ -31,7 +32,7 @@ if( $meinkonto ) {
 
   if( ! $readonly ) {
     ?>
-    <div id='transaction_button' style='padding-bottom:1em;'>
+    <div id='transaction_button' style='padding:1em;'>
     <span class='button'
       onclick="document.getElementById('transaction_form').style.display='block';
                document.getElementById('transaction_button').style.display='none';"
@@ -42,6 +43,7 @@ if( $meinkonto ) {
     <div id='transaction_form' style='display:none;padding-bottom:1em;'>
       <form method='post' class='small_form' action='<? echo self_url(); ?>'>
       <? echo self_post(); ?>
+      <input type='hidden' name='action' value='einzahlung'>
       <fieldset>
       <legend>
         <img src='img/close_black_trans.gif' class='button'
@@ -54,10 +56,75 @@ if( $meinkonto ) {
       </fieldset>
       </form>
     </div>
+
+    <span class='alert'>
+    <div id='spende_button' style='padding:1em;'>
+    <span class='button'
+      onclick="document.getElementById('spende_form').style.display='block';
+               document.getElementById('spende_button').style.display='none';"
+      title="Hier kÃ¶nnt Ihr freiwillige Spenden zum Abbau der Schulden der Foodcoop eintragen"
+      >Spende an die Foodcoop...</span>
+    </div>
+
+    <div id='spende_form' style='display:none;padding-bottom:1em;'>
+      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+        <? echo self_post(); ?>
+        <input type='hidden' name='action' value='spende'>
+        <fieldset>
+          <legend>
+            <img src='img/close_black_trans.gif' class='button'
+             onclick="document.getElementById('spende_button').style.display='block';
+                      document.getElementById('spende_form').style.display='none';">
+            Spende an die Foodcoop
+          </legend>
+          <table>
+            <tr>
+              <td><label>Unsere Gruppe</label></td>
+              <td>
+               <kbd><? echo sql_gruppenname( $gruppen_id ); ?></kbd>
+                  <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
+              </td>
+            </tr>
+            <tr>
+              <td>spendet der Foodcoop</td>
+              <td class='number'><input type="text" name="betrag" value="" size='6'> <kbd>Euro!</kbd></td>
+            </tr>
+            <tr>
+              <td>Anmerkungen:</td>
+              <td><input type="text" size="60" name="notiz" value='Spende zum Schuldenabbau'>
+                &nbsp;
+                <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+              </td>
+            </tr>
+          </table>
+        </fieldset>
+      </form>
+    </div>
+
+    </span>
+
     <?
 
-    if( get_http_var( 'amount', 'f' ) ) {
-      sql_gruppen_transaktion( 0, $login_gruppen_id, $amount, "Einzahlung" );
+    get_http_var( 'action', 'w', '' );
+    $editable or $action = '';
+    switch( $action ) {
+      case 'einzahlung':
+        need_http_var( 'amount', 'f' );
+        sql_gruppen_transaktion( 0, $login_gruppen_id, $amount, "Einzahlung" );
+        break;
+      case 'spende':
+        need_http_var( 'betrag', 'f' );
+        need_http_var( 'gruppen_id', 'U' );
+        get_http_var( 'notiz', 'H', 'Spende' );
+        need( $gruppen_id == $login_gruppen_id );
+        sql_doppelte_transaktion(
+          array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SPENDE )
+        , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id, 'transaktionsart' => TRANSAKTION_TYP_SPENDE )
+        , $betrag
+        , $mysqlheute
+        , $notiz
+        );
+        break;
     }
   }
 
