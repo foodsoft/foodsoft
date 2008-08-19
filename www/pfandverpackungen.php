@@ -237,8 +237,7 @@ if( $bestell_id ) {
   while( $row = mysql_fetch_array( $verpackungen ) ) {
     ?>
       <tr class='summe'>
-        <td colspan='2'>Zwischensumme:</td>
-        <td class='number'><? echo $row['mwst']; ?></td>
+        <td colspan='3'>Teilsumme <? echo $row['mwst']; ?>%:</td>
         <td class='number'><? printf( "%u", $row['pfand_voll_anzahl'] ); ?></td>
         <td class='number'><? printf( "%.2lf", $row['pfand_voll_netto_soll'] ); ?></td>
         <td class='number'><? printf( "%.2lf", $row['pfand_voll_brutto_soll'] ); ?></td>
