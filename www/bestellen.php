@@ -126,6 +126,11 @@ switch( $action ) {
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'] );
     }
+    echo "
+      <script type='text/javascript'>
+        alert( 'Bestellung wurde eingetragen!' );
+      </script>
+    ";
     break;
   case 'delete':
     need_http_var( 'produkt_id', 'U' );
