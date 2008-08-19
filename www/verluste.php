@@ -5,44 +5,28 @@
 
 assert( $angemeldet ) or exit();
 $editable = ( $hat_dienst_IV and ! $readonly );
-get_http_var( 'optionen', 'u', 0, true );
+// get_http_var( 'optionen', 'u', 0, true );
+
+get_http_var( 'detail', 'w', 0, true );
 
 $muell_id = sql_muell_id();
 
 
-
-$verluste_summe = 0.0;
-
-$option_flag = 1;
-
-
-?>
-<h1>Verlustaufstellung: Achtung, noch unvollstaendig!</h1>
-
-<h2>Differenzen aus Bestellungen:</h2>
-  <table width='98%' class='numbers'>
-    <tr>
-      <th>Bestellung</th>
-      <th>Schwund/Müll</th>
-      <th colspan='2'>Sonstiges</th>
-      <th>Verlust</th>
-    </tr>
-    <tr>
-      <td colspan='5' style='text-align:left;'>
-  <?
-  if( $optionen & $option_flag ) {
-    echo fc_alink( 'self', array( 'img' => 'img/close_black_trans.gif', 'text' => ''
-                                , 'optionen' => $optionen ^ $option_flag ) );
-    ?> Details: <?
-  } else {
-    echo fc_alink( 'self', array( 'img' => 'img/open_black_trans.gif', 'text' => 'Details...'
-                                           , 'optionen' => $optionen ^ $option_flag ) );
+function verlust_bestellungen( $detail = false ) {
+  global $muell_id;
+  if( $detail ) {
+    ?>
+      <h2>Differenzen aus Bestellungen:</h2>
+        <table width='98%' class='numbers'>
+          <tr>
+            <th>Bestellung</th>
+            <th>Schwund/Müll</th>
+            <th colspan='2'>Sonstiges</th>
+            <th>Haben FC</th>
+          </tr>
+    <?
   }
-  ?>
-      </td>
-    </tr>
-  <?
-  
+
   $result = doSql( "
     SELECT gesamtbestellungen.*
     , (" .select_bestellungen_soll_gruppen( OPTION_ENDPREIS_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ). ") as muell_soll
@@ -51,17 +35,17 @@ $option_flag = 1;
     HAVING ( extra_soll <> 0 ) OR ( muell_soll <> 0)
     ORDER BY gesamtbestellungen.lieferung
   " );
-  
+
   $muell_soll_summe = 0;
   $extra_soll_summe = 0;
   $soll_summe = 0;
-  
+
   while( $row = mysql_fetch_array( $result ) ) {
-    $muell_soll = - $row['muell_soll'];
+    $muell_soll = - $row['muell_soll'];  // soll _aus_sicht_von_gruppe_13_! (also der FC-Gemeinschaft!)
     $extra_soll = $row['extra_soll'];
     $soll = $muell_soll + $extra_soll;
-  
-    if( $optionen & $option_flag ) {
+
+    if( $detail ) {
       ?>
         <tr>
           <td><? echo fc_alink( 'abrechnung', array( 'bestell_id' => $row['id'], 'text' => $row['name'] ) ); ?></td>
@@ -76,88 +60,326 @@ $option_flag = 1;
     $extra_soll_summe += $extra_soll;
     $soll_summe += $soll;
   }
-  $verluste_summe += $soll_summe;
-  ?>
-    <tr class='summe'>
-      <td>Summe:</td>
-      <td class='number'><? printf( "%.2lf", $muell_soll_summe ); ?></td>
-      <td>&nbsp;</td>
-      <td class='number'><? printf( "%.2lf", $extra_soll_summe ); ?></td>
-      <td class='number'><? printf( "%.2lf", $soll_summe ); ?></td>
-    </tr>
-  </table>
-  <?
-  $option_flag <<= 1;
+  if( $detail ) {
+    ?>
+      <tr class='summe'>
+        <td>Summe:</td>
+        <td class='number'><? printf( "%.2lf", - $muell_soll_summe ); ?></td>
+        <td>&nbsp;</td>
+        <td class='number'><? printf( "%.2lf", - $extra_soll_summe ); ?></td>
+        <td class='number'><? printf( "%.2lf", - $soll_summe ); ?></td>
+      </tr>
+    </table>
+    <?
+  }
+
+  return $soll_summe;
+}
 
 
-function verlust_transaktionen( $typ, $title ) {
+function verlust_transaktionen( $typ, $detail = false ) {
   global $option_flag, $optionen, $verluste_summe;
-  echo "<a name='label$option_flag'></a>$title";
+  if( $detail ) {
+    ?>
+      <h4><? echo transaktion_typ_string( $typ ); ?></h4>
+      <table width='98%' class='numbers'>
+        <tr>
+          <th>Id</th>
+          <th>Valuta</th>
+          <th>Notiz</th>
+          <th>Haben FC</th>
+        </tr>
+        <tr>
+          <td colspan='4' style='text-align:left;'>
+    <?
+  }
 
   $result = sql_verluste( $typ );
-  ?>
-  <table width='98%' class='numbers'>
-    <tr>
-      <th>Id</th>
-      <th>Valuta</th>
-      <th>Notiz</th>
-      <th>Betrag</th>
-    </tr>
-    <tr>
-      <td colspan='4' style='text-align:left;'>
-  <?
-  if( $optionen & $option_flag ) {
-    echo fc_alink( 'self', array( 'img' => 'img/close_black_trans.gif', 'text' => ''
-                                , 'anchor' => "label$option_flag"
-                                , 'optionen' => $optionen ^ $option_flag ) );
-    ?> Details: <?
-  } else {
-    echo fc_alink( 'self', array( 'img' => 'img/open_black_trans.gif', 'text' => 'Details...'
-                                , 'anchor' => "label$option_flag"
-                                , 'optionen' => $optionen ^ $option_flag ) );
-  }
-  ?>
-      </td>
-    </tr>
-  <?
-
   $soll_summe = 0.0;
-
   while( $row = mysql_fetch_array( $result ) ) {
-    $soll = $row['soll'];
-    if( $optionen & $option_flag ) {
+    $soll = - $row['soll'];  // $soll aus sicht von gruppe 13
+    if( $detail ) {
       ?>
         <tr>
           <td><? echo fc_alink( 'edit_buchung', "transaktion_id={$row['id']},img=,text={$row['id']}" ); ?></td>
           <td><? echo $row['valuta']; ?></td>
           <td><? echo $row['notiz']; ?></td>
-          <td class='number'><? printf( "%.2lf", -$soll ); ?></td>
+          <td class='number'><? printf( "%.2lf", - $soll ); ?></td>
         </tr>
       <?
     }
     $soll_summe += $soll;
   }
-  ?>
-    <tr class='summe'>
-      <td colspan='3' style='text-align:right;'>Summe:</td>
-      <td class='number'><? printf( "%.2lf", $soll_summe ); ?></td>
-    </tr>
-  </table>
-  <?
-  $verluste_summe += $soll_summe;
-  $option_flag <<= 1;
+  if( $detail ) {
+    ?>
+      <tr class='summe'>
+        <td colspan='3' style='text-align:right;'>Summe:</td>
+        <td class='number'><? printf( "%.2lf", - $soll_summe ); ?></td>
+      </tr>
+    </table>
+    <?
+  }
+  return $soll_summe;
 }
 
+get_http_var( 'action', 'w', '' );
+$editable or $action = '';
+switch( $action ) {
+  case 'umbuchung_verlust':
+    need_http_var( 'von_typ', 'U' );
+    need_http_var( 'nach_typ', 'U' );
+    need_http_var( 'betrag', 'f' );
+    need_http_var( 'day', 'u' );
+    need_http_var( 'month', 'u' );
+    need_http_var( 'year', 'u' );
+    need_http_var( 'notiz', 'H' );
+    need( in_array( $von_typ, array( TRANSAKTION_TYP_SPENDE, TRANSAKTION_TYP_UMLAGE ) ) );
+    need( in_array( $nach_typ, array( TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
+                                    , TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
+                                    , TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE ) ) );
+    switch( $von_typ ) {
+      case TRANSAKTION_TYP_SPENDE:
+        $von_typ = TRANSAKTION_TYP_UMBUCHUNG_SPENDE;
+        break;
+      case TRANSAKTION_TYP_UMLAGE:
+        $von_typ = TRANSAKTION_TYP_UMBUCHUNG_UMLAGE;
+    }
+    if( ! $notiz ) {
+      ?> <div class='warn'>Bitte Notiz eingeben!</div> <?
+      $problems = true;
+    }
+    if( ! $problems ) {
+      sql_doppelte_transaktion(
+        array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $nach_typ )
+      , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $von_typ )
+      , $betrag
+      , "$year-$month-$day"
+      , "$notiz"
+      );
+    }
+    break;
+}
 
-verlust_transaktionen( TRANSAKTION_TYP_SONDERAUSGABEN, "<h2 style='margin-top:2em;'>Sonderausgaben</h2>" );
+if( $detail ) {
+  if( $detail == 'bestellungen' ) {
+    verlust_bestellungen( true );
+  } else if ( $detail == 'undefiniert' ) {
+    verlust_transaktionen( TRANSAKTION_TYP_UNDEFINIERT, true );
+  } else {
+    verlust_transaktionen( $detail, true );
+  }
+  return;
+}
+
+$verluste_summe = 0.0;
+$ausgleich_summe = 0.0;
+
+?>
+<h1>Verlustaufstellung --- &Uuml;bersicht</h1>
+
+<div id='transactions_button' style='padding-bottom:1em;'>
+  <span class='button'
+    onclick="document.getElementById('transactions_form').style.display='block';
+             document.getElementById('transactions_button').style.display='none';"
+    >Transaktionen...
+  </span>
+</div>
+
+<div id='transactions_form' style='padding-bottom:1em;display:none;margin-bottom:2em;'>
+  <fieldset class='small_form'>
+    <legend>
+      <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+      onclick="document.getElementById('transactions_button').style.display='block';
+               document.getElementById('transactions_form').style.display='none';">
+      Umbuchung Verlust
+    </legend>
+  
+    <? formular_umbuchung_verlust(); ?>
+  
+  </fieldset>
+</div>
 
 
-?> <h2 style='margin-top:2em;'>Altlasten:</h2> <?
+<table class='numbers'>
+  <tr>
+    <th>Typ</th>
+    <th>Haben FC</th>
+    <th>Ausgleichsbuchungen</th>
+    <th>Summe</th>
+  </tr>
+<?
+
+$soll = verlust_transaktionen( TRANSAKTION_TYP_ANFANGSGUTHABEN );
+$verluste_summe += $soll;
+
+$ausgleich = verlust_transaktionen( TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN );
+$ausgleich_summe += $ausgleich;
+
+?>
+  <tr>
+    <td>Altlasten (Anfangsguthaben):</td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_ANFANGSGUTHABEN, 'img' => '' , 'text' => sprintf( "%.2lf", -$soll ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN, 'img' => '' , 'text' => sprintf( "%.2lf", -$ausgleich ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", - $soll - $ausgleich ); ?>
+    </td>
+  </tr>
+<?
 
 
-verlust_transaktionen( TRANSAKTION_TYP_UNDEFINIERT, '<h4>Nicht klassifiziert</h4>' );
-verlust_transaktionen( TRANSAKTION_TYP_ANFANGSGUTHABEN, '<h4>Anfangsguthaben</h4>' );
-verlust_transaktionen( TRANSAKTION_TYP_BASAR, '<h4>Basar</h4>' );
-verlust_transaktionen( TRANSAKTION_TYP_VERLUST, '<h4>Schwund/M&uuml;ll</h4>' );
-verlust_transaktionen( TRANSAKTION_TYP_SONSTIGES, '<h4>Sonstiges</h4>' );
+$soll = verlust_bestellungen( false );
+$verluste_summe += $soll;
+
+$ausgleich = verlust_transaktionen( TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE );
+$ausgleich_summe += $ausgleich;
+
+?>
+  <tr>
+    <td>Verluste aus Bestellungen:</td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => 'bestellungen', 'img' => '' , 'text' => sprintf( "%.2lf", -$soll ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE, 'img' => '' , 'text' => sprintf( "%.2lf", -$ausgleich ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", - $soll - $ausgleich ); ?>
+    </td>
+  </tr>
+<?
+
+
+$soll = verlust_transaktionen( TRANSAKTION_TYP_SONDERAUSGABEN );
+$verluste_summe += $soll;
+
+$ausgleich = verlust_transaktionen( TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN );
+$ausgleich_summe += $ausgleich;
+
+?>
+  <tr>
+    <td>Sonderausgaben:</td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SONDERAUSGABEN, 'img' => '' , 'text' => sprintf( "%.2lf", -$soll ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN, 'img' => '' , 'text' => sprintf( "%.2lf", -$ausgleich ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", - $soll - $ausgleich ); ?>
+    </td>
+  </tr>
+<?
+
+$soll = verlust_transaktionen( TRANSAKTION_TYP_SPENDE );
+$verluste_summe += $soll;
+
+$ausgleich = verlust_transaktionen( TRANSAKTION_TYP_UMBUCHUNG_SPENDE );
+$ausgleich_summe += $ausgleich;
+
+?>
+  <tr>
+    <th colspan='4' style='text-align:left;padding-top:1em;'>
+      Einnahmen:
+    </th>
+  </tr>
+  <tr>
+    <td>Spenden:</td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SPENDE, 'img' => '' , 'text' => sprintf( "%.2lf", -$soll ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_UMBUCHUNG_SPENDE, 'img' => '' , 'text' => sprintf( "%.2lf", -$ausgleich ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", - $soll - $ausgleich ); ?>
+    </td>
+  </tr>
+<?
+
+$soll = verlust_transaktionen( TRANSAKTION_TYP_UMLAGE );
+$verluste_summe += $soll;
+
+$ausgleich = verlust_transaktionen( TRANSAKTION_TYP_UMBUCHUNG_UMLAGE );
+$ausgleich_summe += $ausgleich;
+
+?>
+  <tr>
+    <td>Umlagen:</td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_UMLAGE, 'img' => '' , 'text' => sprintf( "%.2lf", -$soll ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_UMBUCHUNG_UMLAGE, 'img' => '' , 'text' => sprintf( "%.2lf", -$ausgleich ) ) ); ?>
+    </td>
+    <td class='number'>
+      <? printf( "%.2lf", - $soll - $ausgleich ); ?>
+    </td>
+  </tr>
+<?
+
+
+
+$soll = verlust_transaktionen( TRANSAKTION_TYP_UNDEFINIERT );
+$verluste_summe += $soll;
+
+?>
+  <tr>
+    <th colspan='4' style='text-align:left;padding-top:1em;'>
+      Sonstiges:
+    </th>
+  </tr>
+  <tr>
+    <td>nicht klassifiziert:</td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array( 'detail' => 'undefiniert', 'img' => '' , 'text' => sprintf( "%.2lf", -$soll ) ) ); ?>
+    </td>
+    <td class='number'>
+      &nbsp;
+    </td>
+    <td class='number'>
+      &nbsp;
+    </td>
+  </tr>
+<?
+
+
+?>
+  <tr class='summe'>
+    <td>Summe:</td>
+    <td class='number'><? printf( "%.2lf", - $verluste_summe ); ?></td>
+    <td class='number'><? printf( "%.2lf", - $ausgleich_summe ); ?></td>
+    <td class='number'><? printf( "%.2lf", - $ausgleich_summe - $verluste_summe ); ?></td>
+  </tr>
+
+
+  <tr>
+    <th colspan='4' style='text-align:left;padding-top:2em;'>
+      Weitere "Muell"-Buchungen (keine Verluste):
+    </th>
+  </tr>
+  <tr>
+    <td colspan='3' style='text-align:left;'>
+      Stornos (sollten zusammen Betrag 0 ergeben):
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array(
+        'detail' => TRANSAKTION_TYP_STORNO, 'img' => ''
+        , 'text' => sprintf( "%.2lf", -verlust_transaktionen( TRANSAKTION_TYP_STORNO ) ) ) ); ?>
+    </td>
+  </tr>
+  <tr>
+    <td colspan='3' style='text-align:left;'>
+      "geparkte" Sockeleinlagen:
+    </td>
+    <td class='number'>
+      <? echo fc_alink( 'verlust_details', array(
+        'detail' => TRANSAKTION_TYP_SOCKEL, 'img' => ''
+        , 'text' => sprintf( "%.2lf", -verlust_transaktionen( TRANSAKTION_TYP_SOCKEL ) ) ) ); ?>
+    </td>
+  </tr>
+</table>
 
