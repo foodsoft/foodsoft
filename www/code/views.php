@@ -1354,7 +1354,7 @@ function formular_buchung_gruppe_bank(
                 <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
               </kbd>
             <? } else { ?>
-              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id, false, false, sql_muell_id() ); ?></select>
+              <select name='gruppen_id'><? echo optionen_gruppen(); ?></select>
             <? } ?>
             </td>
           </tr>
@@ -1384,10 +1384,10 @@ function formular_buchung_gruppe_bank(
             <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
           </tr>
           <tr>
-            <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Betrag:</label></td>
+            <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Haben Konto:</label></td>
             <td>
-              <input type="text" name="betrag" value=""
-              title='von der Gruppe eingezahlt: postiv / an die Gruppe ausgezahlt: negativ'>
+              <input type="text" name="betrag" size='6' value="" title='positiv: Einzahlung / negativ: Auszahlung!'>
+              <kbd>EUR</kbd>
             </td>
           </tr>
           <tr>
@@ -1410,8 +1410,8 @@ function formular_buchung_lieferant_bank(
 , $notiz = 'Abbuchung Lieferant'
 ) {
   ?>
-    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
+    <form method='post' class='small_form' action='<? echo self_url('lieferanten_id'); ?>'>
+      <? echo self_post('lieferanten_id'); ?>
       <input type='hidden' name='action' value='zahlung_lieferant'>
       <fieldset>
         <legend>
@@ -1457,9 +1457,11 @@ function formular_buchung_lieferant_bank(
             <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
           </tr>
           <tr>
-            <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Betrag:</label></td>
+            <td><label title='positiv: Einzahlung / negativ: Auszahlung!'>Haben Konto:</label></td>
             <td>
-              <input type="text" name="betrag" value="">
+              <input type="text" name="betrag" value="" size='6'
+                   title='positiv: Einzahlung / negativ: Auszahlung!'>
+              <kbd>EUR</kbd>
             </td>
           </tr>
           <tr>
@@ -1497,7 +1499,7 @@ function formular_buchung_gruppe_lieferant(
                 <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
               </kbd>
             <? } else { ?>
-              <select name='gruppen_id'><? echo optionen_gruppen( false, false, $gruppen_id, false, false, sql_muell_id() ); ?></select>
+              <select name='gruppen_id'><? echo optionen_gruppen(); ?></select>
             <? } ?>
             </td>
           </tr>
@@ -1519,9 +1521,11 @@ function formular_buchung_gruppe_lieferant(
             <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
           </tr>
           <tr>
-            <td><label>Betrag:</label></td>
+            <td><label title='positiv: Zahlung an / negativ: Zahlung von Lieferant'>Haben Lieferant:</label></td>
             <td>
-              <input type="text" name="betrag" value="">
+              <input type="text" name="betrag" value="" size='6'
+                title='positiv: Zahlung an Lieferant/ negativ: Zahlung von Lieferant'>
+              <kbd>EUR</kbd>
             </td>
           </tr>
           <tr>
@@ -1560,7 +1564,7 @@ function formular_buchung_gruppe_gruppe(
               </kbd>
             <? } else { ?>
               <select name='gruppen_id'><?
-                echo optionen_gruppen( false, false, $gruppen_id, false, false, sql_muell_id() );
+                echo optionen_gruppen();
               ?></select>
             <? } ?>
             </td>
@@ -1568,7 +1572,7 @@ function formular_buchung_gruppe_gruppe(
           <tr>
             <td><label>an Gruppe:</label></td>
             <td><select name='nach_gruppen_id'><?
-              echo optionen_gruppen( false, false, $nach_gruppen_id, false, false, sql_muell_id() );
+              echo optionen_gruppen( false, false, $nach_gruppen_id );
             ?></select></td>
           </tr>
           <tr>
@@ -1578,7 +1582,8 @@ function formular_buchung_gruppe_gruppe(
           <tr>
             <td><label>Betrag:</label></td>
             <td>
-              <input type="text" name="betrag" value="">
+              <input type="text" name="betrag" value="" size='6'>
+              <kbd>EUR</kbd>
             </td>
           </tr>
           <tr>
@@ -1637,7 +1642,8 @@ function formular_buchung_bank_bank(
           <tr>
             <td><label>Betrag:</label></td>
             <td>
-              <input type="text" name="betrag" value="">
+              <input type="text" name="betrag" value="" size='6'>
+              <kbd>EUR</kbd>
             </td>
           </tr>
           <tr>
@@ -1654,6 +1660,174 @@ function formular_buchung_bank_bank(
   return true;
 }
 
+function formular_buchung_bank_sonderausgabe(
+  $konto_id, $auszug_jahr, $auszug_nr, $notiz = ''
+) {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+      <? echo self_post(); ?>
+      <input type='hidden' name='action' value='ueberweisung_sonderausgabe'>
+      <fieldset>
+        <legend>
+          &Uuml;berweisung Sonderausgabe
+        </legend>
+        <table>
+          <tr>
+            <td><label>von Konto:</label></td>
+            <td>
+              <kbd>
+                <? echo sql_kontoname( $konto_id ); ?>
+                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
+              </kbd>
+              &nbsp; Auszug:
+              <kbd>
+                <? echo "$auszug_jahr / $auszug_nr"; ?>
+                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
+                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
+              </kbd>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label title='positiv: Gewinn der FC / negativ: Verlust der FC'>Haben FC:</label></td>
+            <td>
+              <input type="text" name="betrag" value="" size='6'
+                title='positiv: Gewinn der FC / negativ: Verlust der FC'>
+              <kbd>EUR</kbd>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
+function formular_buchung_gruppe_sonderausgabe( $gruppen_id = 0, $notiz = '' ) {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url('gruppen_id'); ?>'>
+      <? echo self_post('gruppen_id'); ?>
+      <input type='hidden' name='action' value='sonderausgabe_gruppe'>
+      <fieldset>
+        <legend>
+          Sonderausgabe durch eine Gruppe
+        </legend>
+        <table>
+          <tr>
+            <td><label>von Gruppe:</label></td>
+            <td>
+            <? if ( $gruppen_id ) { ?>
+              <kbd>
+                <? echo sql_gruppenname( $gruppen_id ); ?>
+                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
+              </kbd>
+            <? } else { ?>
+              <select name='gruppen_id'><?
+                echo optionen_gruppen();
+              ?></select>
+            <? } ?>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label title='positiv: Gewinn der FC / negativ: Verlust der FC'>Betrag:</label></td>
+            <td>
+              <input type="text" name="betrag" value="" size='6'
+                title='positiv: Gewinn der FC / negativ: Verlust der FC'>
+              <kbd>EUR</kbd>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </form>
+  <?
+  return true;
+}
+
+function formular_umbuchung_verlust( $typ = 0 ) {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+      <? echo self_post(); ?>
+      <input type='hidden' name='action' value='umbuchung_verlust'>
+      <input type='hidden' name='typ' value='<? echo $typ; ?>'>
+        <table>
+          <tr>
+            <td><label>von:</label></td>
+            <td>
+              <?  if( $typ ) { ?>
+                <? need( in_array( $typ, array( TRANSAKTION_TYP_SPENDE, TRANSAKTION_TYP_UMLAGE ) ) ); ?>
+                <kbd><? echo transaktion_typ_string( $typ ); ?></kbd>
+                <input type='hidden' name='von_typ' value='<? echo $typ; ?>'>
+              <? } else { ?>
+                <select name='von_typ'>
+                  <option value=''>(bitte Typ w&auml;hlen)</option>
+                  <?
+                    foreach( array( TRANSAKTION_TYP_SPENDE , TRANSAKTION_TYP_UMLAGE ) as $t ) {
+                      ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
+                    }
+                  ?>
+                </select>
+              <?  } ?>
+            </td>
+          </tr>
+          <tr>
+            <td><label>nach:</label></td>
+            <td>
+              <select name='nach_typ'>
+                <option value=''>(bitte Ziel w&auml;hlen)</option>
+                <?
+                  foreach( array( TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
+                                , TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
+                                , TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE ) as $t ) {
+                    ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
+                  }
+                ?>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td><label>Betrag:</label></td>
+            <td>
+              <input type="text" size='6' name="betrag" value="" size='6'>
+              <kbd>EUR</kbd>
+            </td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz" value=''>
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+        </table>
+    </form>
+  <?
+  return true;
+}
 
 function mod_onclick( $id ) {
   return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';

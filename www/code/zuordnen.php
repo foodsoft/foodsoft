@@ -2287,11 +2287,12 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
 
 
 /*
- * buchung_gruppe_bank: wertet formular zu einhabe eine einzahlung einer
+ * buchung_gruppe_bank: wertet formular zu eingabe eine einzahlung einer
  * gruppe auf ein bankkonto aus.
  */
 function buchung_gruppe_bank() {
   global $betrag, $gruppen_id, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
+  global $specialgroups;
   $problems = false;
   // echo "buchung_gruppe_bank: 1";
   $betrag or need_http_var( 'betrag', 'f' );
@@ -2322,11 +2323,77 @@ function buchung_gruppe_bank() {
     ?> <div class='warn'>Bitte Gruppe wählen!</div> <?
     $problems = true;
   }
+  need( ! in_array( $gruppen_id, $specialgroups ) );
+  need( sql_gruppenname( $gruppen_id ) );
 
   if( ! $problems ) {
     sql_doppelte_transaktion(
       array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , $betrag
+    , "$year-$month-$day"
+    , "$notiz"
+    );
+  }
+}
+
+function buchung_bank_sonderausgabe() {
+  global $betrag, $notiz, $day, $month, $year, $auszug_jahr, $auszug_nr, $konto_id;
+  $problems = false;
+  // echo "buchung_sonderausgabe: 1";
+  $betrag or need_http_var( 'betrag', 'f' );
+  $notiz or need_http_var( 'notiz', 'H' );
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  $konto_id or need_http_var( 'konto_id', 'u' );
+  $auszug_jahr or need_http_var( 'auszug_jahr', 'u' );
+  $auszug_nr or need_http_var( 'auszug_nr', 'u' );
+  if( ! $notiz ) {
+    ?> <div class='warn'>Bitte Notiz eingeben!</div> <?
+    $problems = true;
+  }
+  if( ! $konto_id ) {
+    ?> <div class='warn'>Bitte Konto wählen!</div> <?
+    $problems = true;
+  }
+
+  if( ! $problems ) {
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+    , array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , $betrag
+    , "$year-$month-$day"
+    , "$notiz"
+    );
+  }
+}
+
+function buchung_gruppe_sonderausgabe() {
+  global $betrag, $notiz, $day, $month, $year, $gruppen_id, $specialgroups;
+  $problems = false;
+  // echo "buchung_sonderausgabe: 1";
+  $betrag or need_http_var( 'betrag', 'f' );
+  $notiz or need_http_var( 'notiz', 'H' );
+  $day or need_http_var( 'day', 'u' );
+  $month or need_http_var( 'month', 'u' );
+  $year or need_http_var( 'year', 'u' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'U' );
+  if( ! $notiz ) {
+    ?> <div class='warn'>Bitte Notiz eingeben!</div> <?
+    $problems = true;
+  }
+  if( ! $gruppen_id ) {
+    ?> <div class='warn'>Bitte Gruppe wählen!</div> <?
+    $problems = true;
+  }
+  need( ! in_array( $gruppen_id, $specialgroups ) );
+  need( sql_gruppenname( $gruppen_id ) );
+
+  if( ! $problems ) {
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+    , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
     , $betrag
     , "$year-$month-$day"
     , "$notiz"
@@ -2480,7 +2547,6 @@ function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = 
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
 }
 
-
 function sql_get_transaction( $id ) {
   if( $id > 0 ) {
     $sql = "
@@ -2492,8 +2558,10 @@ function sql_get_transaction( $id ) {
            , bankkonto.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
            , bankkonten.id as konto_id
+           , dienstkontrollblatt.name as dienst_name
       FROM bankkonto
       JOIN bankkonten ON bankkonten.id = bankkonto.konto_id
+      LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = bankkonto.dienstkontrollblatt_id
       WHERE bankkonto.id = $id
     ";
   } else {
@@ -2509,11 +2577,13 @@ function sql_get_transaction( $id ) {
            , bankkonten.name as kontoname
            , gruppen_transaktion.gruppen_id as gruppen_id
            , gruppen_transaktion.lieferanten_id as lieferanten_id
+           , dienstkontrollblatt.name as dienst_name
       FROM gruppen_transaktion
       LEFT JOIN bankkonto
              ON bankkonto.id = gruppen_transaktion.konterbuchung_id
       LEFT JOIN bankkonten
              ON bankkonten.id = bankkonto.konto_id
+      LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = gruppen_transaktion.dienstkontrollblatt_id
       WHERE gruppen_transaktion.id = ".(-$id)."
     ";
   }
@@ -2672,33 +2742,42 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 
 define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );      // noch nicht zugeordnet
 define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben gruppen _und_ lieferanten
-define( 'TRANSAKTION_TYP_EINAUSZAHLUNG', 2 );    // einzahlungen/auszahungen
-define( 'TRANSAKTION_TYP_SPENDE', 3 );
+define( 'TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN', 2 ); // Ausgleich/Umlage Differenz Anfangsguthaben
+define( 'TRANSAKTION_TYP_SPENDE', 3 );           // freiwillige Spende
 define( 'TRANSAKTION_TYP_SONDERAUSGABEN', 4 );   // Mitgliedsbeitrag Haus der Natur, Kontofuehrung, ...
-define( 'TRANSAKTION_TYP_VERLUST', 5 );          // Verderb, Fehlmengen, ...
-define( 'TRANSAKTION_TYP_SOCKEL', 6 );
-define( 'TRANSAKTION_TYP_BASAR', 7 );            // alte Basarabrechnungen (kommen nicht mehr vor), Grillabend, ...
+define( 'TRANSAKTION_TYP_UMLAGE', 5 );           // Verlustumlage auf alle Mitglieder
+define( 'TRANSAKTION_TYP_SOCKEL', 6 );           // geparkte Sockelbetraege
+define( 'TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE', 7 ); // Umlage Bestellverluste (auch: ein paar ganz alte Basarabrechnungen)
+define( 'TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN', 8 ); // Umlage Sonderausgaben
+define( 'TRANSAKTION_TYP_UMBUCHUNG_SPENDE', 9 );   // umbuchung von spenden nach TRANSAKTION_TYP_AUSGLEICH_*
+define( 'TRANSAKTION_TYP_UMBUCHUNG_UMLAGE', 10 );  // umbuchung von umlagen nach TRANSAKTION_TYP_AUSGLEICH_*
 define( 'TRANSAKTION_TYP_STORNO', 98 );          // Buchungen, die sich gegenseitig neutralisieren
-define( 'TRANSAKTION_TYP_SONSTIGES', 99 );
+// define( 'TRANSAKTION_TYP_SONSTIGES', 99 ); // nicht benutzt
 
 function transaktion_typ_string( $typ ) {
   switch( $typ ) {
     case TRANSAKTION_TYP_UNDEFINIERT:
-      return 'undefiniert';
+      return 'unklassifiziert';
     case TRANSAKTION_TYP_ANFANGSGUTHABEN:
       return 'Anfangsguthaben';
-    case TRANSAKTION_TYP_EINAUSZAHLUNG:
-      return 'Ein-/Auszahlung';
     case TRANSAKTION_TYP_SPENDE:
       return 'Spende';
+    case TRANSAKTION_TYP_UMBUCHUNG_SPENDE:
+      return 'Umbuchung von Spenden';
     case TRANSAKTION_TYP_SONDERAUSGABEN:
       return 'Sonderausgabe';
-    case TRANSAKTION_TYP_VERLUST:
-      return 'Verlust';
+    case TRANSAKTION_TYP_UMLAGE:
+      return 'Verlustumlage auf Mitglieder';
+    case TRANSAKTION_TYP_UMBUCHUNG_UMLAGE:
+      return 'Umbuchung von Umlagen';
     case TRANSAKTION_TYP_SOCKEL:
       return 'Sockeleinlage';
-    case TRANSAKTION_TYP_BASAR:
-      return 'Basar';
+    case TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE:
+      return 'Ausgleich für Bestellverluste';
+    case TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN:
+      return 'Ausgleich für Sonderausgaben';
+    case TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN:
+      return 'Ausgleich für Differenz Anfangsguthaben';
     case TRANSAKTION_TYP_STORNO:
       return 'Storno';
     case TRANSAKTION_TYP_SONSTIGES:
@@ -3213,8 +3292,21 @@ function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
 // verluste und spenden
 //
 
-function select_verluste( $type ) {
+function select_verluste( $type, $not = false ) {
   $muell_id = sql_muell_id();
+  if( is_array( $type ) ) {
+    $filter = ' type in (';
+    $komma = '';
+    foreach( $type as $v ) {
+      $filter .= "$komma $v";
+      $komma = ',';
+    }
+    $filter .= " )";
+  } else {
+    $filter = " type = $type ";
+  }
+  if( $not )
+    $filter = " not ( $filter ) ";
   return "
     SELECT id
          , summe as soll
@@ -3222,7 +3314,7 @@ function select_verluste( $type ) {
          , notiz
          , konterbuchung_id
     FROM gruppen_transaktion
-    WHERE gruppen_transaktion.gruppen_id = $muell_id AND type = $type
+    WHERE gruppen_transaktion.gruppen_id = $muell_id AND $filter
     ORDER BY type, kontobewegungs_datum
   ";
 }
