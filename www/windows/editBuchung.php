@@ -5,8 +5,8 @@ assert( $angemeldet ) or exit();
 setWindowSubtitle( 'Buchung edieren' );
 setWikiHelpTopic( 'foodsoft:buchung_edieren' );
 
-nur_fuer_dienst_IV();
-  // fail_if_readonly();
+// nur_fuer_dienst_IV();
+// fail_if_readonly();
 $editable = ( $dienst == 4 and ! $readonly );
 
 $msg = '';
@@ -18,8 +18,11 @@ $selectable_types = array(
   TRANSAKTION_TYP_ANFANGSGUTHABEN
 , TRANSAKTION_TYP_SPENDE
 , TRANSAKTION_TYP_SONDERAUSGABEN
-, TRANSAKTION_TYP_VERLUST
-, TRANSAKTION_TYP_SONSTIGES
+/// , TRANSAKTION_TYP_VERLUST
+, TRANSAKTION_TYP_UMLAGE
+, TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
+, TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
+, TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE
 );
 
 if( get_http_var( 'transaktion_id', 'u', NULL, true ) )
@@ -29,11 +32,24 @@ else
 
 $buchung = sql_get_transaction( $buchung_id ); 
 $k_id = $buchung['konterbuchung_id'];
-if( ( $k_id > 0 ) and ( $buchung_id < 0 ) ) {
-  $h = $buchung_id;
-  $buchung_id = $k_id;
-  $k_id = $h;
+
+// waehle eine (hoffentlich) leicht verstaendliche / kanonische reihenfolge der beiden Buchungen:
+//
+if( $buchung_id < 0 ) {
+  if( $k_id > 0 ) { //  wenn eine bank-transaktion dabei: diese zuerst anzeigen!
+    $h = $buchung_id;
+    $buchung_id = $k_id;
+    $k_id = $h;
+  } else {  // beides sind gruppen-transaktionen
+    // geparkte sockel-einlage moeglichst als zweites anzeigen:
+    if( ( $buchung['gruppen_id'] == $muell_id ) and ( $buchung['transaktionstyp'] == TRANSAKTION_TYP_SOCKEL ) ) {
+      $h = $buchung_id;
+      $buchung_id = $k_id;
+      $k_id = $h;
+    }
+  }
 }
+$self_fields['buchung_id'] = $buchung_id;   // moeglicherweise getauscht
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
@@ -41,15 +57,20 @@ switch( $action ) {
   case 'update':
     need_http_var( 'id_1', 'd' ); need( $id_1 == $buchung_id );
     need_http_var( 'id_2', 'd' ); need( $id_2 == $k_id );
+    need( $dienstkontrollblatt_id );
     $b1 = sql_get_transaction( $id_1 );
     $b2 = sql_get_transaction( $id_2 );
-    need_http_var( 'haben', 'f' );
+    if( get_http_var( 'haben', 'f' ) ) {
+      $soll = - $haben;
+    } else {
+      need_http_var( 'soll', 'f' );
+    }
     need_http_var( 'notiz', 'H' );
     need_http_var( 'vday', 'U' );
     need_http_var( 'vmonth', 'U' );
     need_http_var( 'vyear', 'U' );
-    $mod_1 = array();
-    $mod_2 = array();
+    $mod_1 = array( 'dienstkontrollblatt_id' => $dienstkontrollblatt_id );
+    $mod_2 = array( 'dienstkontrollblatt_id' => $dienstkontrollblatt_id );
     if( $id_1 > 0 ) {
       need_http_var( "auszug_jahr_1", 'U' );
       need_http_var( "auszug_nr_1", 'U' );
@@ -57,11 +78,11 @@ switch( $action ) {
       $mod_1['valuta'] = "$vyear-$vmonth-$vday";
       $mod_1['kontoauszug_jahr'] = $auszug_jahr_1;
       $mod_1['kontoauszug_nr'] = $auszug_nr_1;
-      $mod_1['betrag'] = $haben;
+      $mod_1['betrag'] = - $soll;
     } else {
       $mod_1['notiz'] = $notiz;
       $mod_1['kontobewegungs_datum'] = "$vyear-$vmonth-$vday";
-      $mod_1['summe'] = -$haben;
+      $mod_1['summe'] = $soll;
       if( $b1['gruppen_id'] == $muell_id ) {
         if( in_array( $b1['transaktionstyp'], $selectable_types ) or ( $b1['transaktionstyp'] == TRANSAKTION_TYP_UNDEFINIERT ) ) {
           need_http_var( 'typ_1', 'U' );
@@ -77,11 +98,11 @@ switch( $action ) {
       $mod_2['valuta'] = "$vyear-$vmonth-$vday";
       $mod_2['kontoauszug_jahr'] = $auszug_jahr_2;
       $mod_2['kontoauszug_nr'] = $auszug_nr_2;
-      $mod_2['betrag'] = -$haben;
+      $mod_2['betrag'] = $soll;
     } else {
       $mod_2['notiz'] = $notiz;
       $mod_2['kontobewegungs_datum'] = "$vyear-$vmonth-$vday";
-      $mod_2['summe'] = $haben;
+      $mod_2['summe'] = - $soll;
       if( $b2['gruppen_id'] == $muell_id ) {
         if( in_array( $b2['transaktionstyp'], $selectable_types ) or ( $b2['transaktionstyp'] == TRANSAKTION_TYP_UNDEFINIERT ) ) {
           need_http_var( 'typ_2', 'U' );
@@ -111,12 +132,19 @@ function show_transaction( $id, $tag ) {
   $t = sql_get_transaction( $id );
   $v = preg_split( '/[- ]/',$t['valuta'] );
 
+  $haben = $t['haben'];
+  $soll = -$haben;
+
   echo "<input type='hidden' name='id_$tag' value='$id'>";
 
   if( $tag == 1 ) {
     ?>
       <tr>
-        <td><label>Buchung:</label></td><td><kbd><? echo $t['buchungsdatum']; ?></kbd></td>
+        <td><label>Buchung:</label></td>
+        <td>
+          <div><kbd><? echo $t['buchungsdatum']; ?></kbd></div>
+          <div class='small'><? echo $t['dienst_name']; ?></div>
+        </td>
       </tr>
       <tr>
         <td><label>Valuta:</label></td>
@@ -161,6 +189,16 @@ function show_transaction( $id, $tag ) {
         <? } ?>
         </td>
       </tr>
+      <tr class='lastline'>
+        <td class='oneline'><label title='Haben FC: positiv, falls zu unseren Gunsten (wie auf Kontoauszug der Bank)'>Haben FC:</label></td>
+        <td class='number'>
+          <? if( $editable and ( $tag == 1 ) ) { ?>
+            <input name='haben' type='text' size='6' value='<? printf( "%.2lf", $haben ); ?>'>
+        <? } else { ?>
+          <kbd><? printf( "%.2lf", $t['haben'] ); ?></kbd>
+        <? } ?>
+        </td>
+      </tr>
     <?
   } else {
     $id = -$id;
@@ -174,6 +212,27 @@ function show_transaction( $id, $tag ) {
         <tr>
           <td><label>Lieferant:</label></td><td><kbd><? printf( "%s", lieferant_name( $lieferanten_id ) ); ?></kbd></td>
         </tr>
+        <tr class='lastline'>
+          <? if( $haben > 0 ) { ?>
+            <td class='oneline'><label title='Haben FC: positiv, falls wir unsere Schulden beim Lieferanten verringern'>Haben FC:</label></td>
+            <td class='number'>
+              <? if( $editable and ( $tag == 1 ) ) { ?>
+                <input name='haben' type='text' size='6' value='<? printf( "%.2lf", $haben ); ?>'>
+            <? } else { ?>
+              <kbd><? printf( "%.2lf", $haben ); ?></kbd>
+            <? } ?>
+            </td>
+          <? } else { ?>
+            <td class='oneline'><label title='Soll FC: positiv, falls wir unsere Schulden beim Lieferanten vergroessern'>Soll FC:</label></td>
+            <td class='number'>
+              <? if( $editable and ( $tag == 1 ) ) { ?>
+                <input name='soll' type='text' size='6' value='<? printf( "%.2lf", $soll ); ?>'>
+            <? } else { ?>
+              <kbd><? printf( "%.2lf", $soll ); ?></kbd>
+            <? } ?>
+            </td>
+          <? } ?>
+        </tr>
       <?
     } else if( $gruppen_id == $muell_id ) {
       ?>
@@ -185,28 +244,53 @@ function show_transaction( $id, $tag ) {
           <td>
             <?
               $typ = $t['transaktionstyp'];
-              $options = '';
-              $selected = false;
-              foreach( $selectable_types as $tt ) {
-                $options .= "<option value='".$tt."'";
-                if( $tt == $typ ) {
-                  $options .= " selected";
-                  $selected = true;
+              if( $editable )  {
+                $options = '';
+                $selected = false;
+                foreach( $selectable_types as $tt ) {
+                  $options .= "<option value='".$tt."'";
+                  if( $tt == $typ ) {
+                    $options .= " selected";
+                    $selected = true;
+                  }
+                  $options .= ">" . transaktion_typ_string($tt) . "</option>";
                 }
-                $options .= ">" . transaktion_typ_string($tt) . "</option>";
-              }
-              if( ! $selected ) {
-                $options = "<option value=''>(bitte Typ wählen)</option>$options";
-              }
-              if( $selected or ( $typ == TRANSAKTION_TYP_UNDEFINIERT ) ) {
-                ?> <select name='typ_<? echo $tag; ?>'> <?
-                echo $options
-                ?> </select> <?
+                if( ! $selected ) {
+                  $options = "<option value=''>(bitte Typ wählen)</option>$options";
+                }
+                if( $selected or ( $typ == TRANSAKTION_TYP_UNDEFINIERT ) ) {
+                  ?> <select name='typ_<? echo $tag; ?>'> <?
+                  echo $options
+                  ?> </select> <?
+                } else {
+                  echo "<kbd>" .transaktion_typ_string($typ)."</kbd>";
+                }
               } else {
-                echo "<kbd>" .transaktion_typ_string($typ)."</kbd>";
+                echo "<kbd>" . transaktion_typ_string( $typ ) . "</kbd>";
               }
             ?>
           </td>
+        </tr>
+        <tr class='lastline'>
+          <? if( $haben > 0 ) { ?>
+            <td class='oneline'><label title='Soll FC: positiv, falls wir Verlust gemacht haben'>Soll FC:</label></td>
+            <td class='number'>
+              <? if( $editable and ( $tag == 1 ) ) { ?>
+                <input name='haben' type='text' size='6' value='<? printf( "%.2lf", $haben ); ?>'>
+            <? } else { ?>
+              <kbd><? printf( "%.2lf", $haben ); ?></kbd>
+            <? } ?>
+            </td>
+          <? } else { ?>
+            <td class='oneline'><label title='Haben FC: positiv, falls wir Gewinn gemacht haben'>Haben FC:</label></td>
+            <td class='number'>
+              <? if( $editable and ( $tag == 1 ) ) { ?>
+                <input name='soll' type='text' size='6' value='<? printf( "%.2lf", $soll ); ?>'>
+            <? } else { ?>
+              <kbd><? printf( "%.2lf", $soll ); ?></kbd>
+            <? } ?>
+            </td>
+          <? } ?>
         </tr>
       <?
     } else {
@@ -217,21 +301,19 @@ function show_transaction( $id, $tag ) {
         <tr>
           <td><label>Gruppe:</label></td><td><kbd><? printf( "%s (%s)", sql_gruppenname( $gruppen_id ), $gruppen_id ); ?></kbd></td>
         </tr>
+        <tr class='lastline'>
+          <td class='oneline'><label title='Haben Gruppe: positiv, wenn die Gruppe jetzt mehr Geld auf dem Gruppenkonto hat'>Haben Gruppe:</label></td>
+          <td class='number'>
+            <? if( $editable and ( $tag == 1 ) ) { ?>
+              <input name='soll' type='text' size='6' value='<? printf( "%.2lf", -$t['haben'] ); ?>'>
+          <? } else { ?>
+            <kbd><? printf( "%.2lf", -$t['haben'] ); ?></kbd>
+          <? } ?>
+          </td>
+        </tr>
       <?
     }
   }
-  ?>
-    <tr class='lastline'>
-      <td><label>Haben FC:</label></td>
-      <td class='number'>
-        <? if( $editable and ( $tag == 1 ) ) { ?>
-          <input name='haben' type='text' size='6' value='<? printf( "%.2lf", $t['haben'] ); ?>'>
-      <? } else { ?>
-        <kbd><? printf( "%.2lf", $t['haben'] ); ?></kbd>
-      <? } ?>
-      </td>
-    </tr>
-  <?
 }
 
 
@@ -247,8 +329,11 @@ function show_transaction( $id, $tag ) {
       <tr><td colspan='2'></td></tr>
       <? show_transaction( $k_id, 2 ); ?>
       <tr class='newfield'>
-        <td colspan='2' class='text-align:right;'>
-          <input type='submit' value='&Auml;ndern'>
+        <td colspan='2' style='text-align:right;'>
+          <? if( $editable ) { ?>
+            <input type='submit' value='&Auml;ndern'>
+          <? } ?>
+          <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
         </td>
       </tr>
       <tr>
