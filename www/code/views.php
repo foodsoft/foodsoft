@@ -1834,6 +1834,39 @@ function formular_umbuchung_verlust( $typ = 0 ) {
   return true;
 }
 
+function formular_gruppen_umlage() {
+  ?>
+    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
+      <? echo self_post(); ?>
+      <input type='hidden' name='action' value='umlage'>
+        <table>
+          <tr>
+            <td colspan='2'>
+              Von <span style='font-weight:bold;font-style:italic'>allen aktiven Bestellgruppen</span> eine Umlage
+            </td>
+          </tr>
+          <tr>
+            <td class='oneline'>in Höhe von</td>
+            <td><input type="text" size='6' name="betrag" value="" size='6'>
+              EUR je Gruppenmitglied erheben
+            </td>
+          </tr>
+          <tr>
+            <td><label>Valuta:</label></td>
+            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
+          </tr>
+          <tr>
+            <td>Notiz:</td>
+            <td><input type="text" size="60" name="notiz" value=''>
+              &nbsp;
+              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
+            </td>
+          </tr>
+        </table>
+    </form>
+  <?
+  return true;
+}
 
 function mod_onclick( $id ) {
   return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
