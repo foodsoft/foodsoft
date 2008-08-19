@@ -96,6 +96,9 @@ if( $meinkonto ) {
         need_http_var( 'day', 'u' );
         sql_finish_transaction( $trans_nr, $konto_id, $auszug_nr, $auszug_jahr, "$year-$month-$day", 'gebuchte Einzahlung' );
         break;
+      case 'sonderausgabe_gruppe':
+        buchung_gruppe_sonderausgabe();
+        break;
       case 'zahlung_gruppe':
         buchung_gruppe_bank();
         break;
@@ -125,29 +128,43 @@ if( $meinkonto ) {
         </legend>
     
         Art der Transaktion:
-        <span style='padding-left:1em;' title='Einzahlung auf oder Auszahlung von Bankkonto der Foodcoop'>
+        <ul style='list-style:none;'>
+        <li style='padding-left:1em;' title='Einzahlung auf oder Auszahlung von Bankkonto der Foodcoop'>
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('einzahlung_form').style.display='block';
                    document.getElementById('gruppegruppe_form').style.display='none';
+                   document.getElementById('gruppesonderausgabe_form').style.display='none';
                    document.getElementById('gruppelieferant_form').style.display='none';"
         ><b>Einzahlung</b>
-        </span>
+        </li>
   
-        <span style='padding-left:1em;' title='überweisung auf ein anderes Gruppenkonto'>
+        <li style='padding-left:1em;' title='überweisung auf ein anderes Gruppenkonto'>
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('einzahlung_form').style.display='none';
                    document.getElementById('gruppegruppe_form').style.display='block';
+                   document.getElementById('gruppesonderausgabe_form').style.display='none';
                    document.getElementById('gruppelieferant_form').style.display='none';"
         ><b>Transfer an andere Gruppe</b>
-        </span>
-  
-        <span style='padding-left:1em;' title='überweisung von Gruppe an Lieferant'>
+        </li>
+
+        <li style='padding-left:1em;' title='überweisung von Gruppe an Lieferant'>
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('einzahlung_form').style.display='none';
                    document.getElementById('gruppegruppe_form').style.display='none';
+                   document.getElementById('gruppesonderausgabe_form').style.display='none';
                    document.getElementById('gruppelieferant_form').style.display='block';"
         ><b>Überweisung von Gruppe an Lieferant</b>
-        </span>
+        </li>
+  
+        <li style='padding-left:1em;' title='Sonderausgabe durch Gruppe (z.B. Geschenkkauf)'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('einzahlung_form').style.display='none';
+                   document.getElementById('gruppegruppe_form').style.display='none';
+                   document.getElementById('gruppesonderausgabe_form').style.display='block';
+                   document.getElementById('gruppelieferant_form').style.display='none';"
+        ><b>Sonderausgabe durch Gruppe</b>
+        </li>
+        </ul>
   
         <div id='einzahlung_form' style='display:none;'>
           <? formular_buchung_gruppe_bank( $gruppen_id ); ?>
@@ -159,6 +176,10 @@ if( $meinkonto ) {
   
         <div id='gruppelieferant_form' style='display:none;'>
           <? formular_buchung_gruppe_lieferant( $gruppen_id, 0 ); ?>
+        </div>
+  
+        <div id='gruppesonderausgabe_form' style='display:none;'>
+          <? formular_buchung_gruppe_sonderausgabe( $gruppen_id ); ?>
         </div>
   
       </fieldset>
@@ -343,15 +364,9 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
                 $k_lieferanten_id = $k_row['lieferanten_id'];
                 if( $k_gruppen_id > 0 ) {
                   if( $k_gruppen_id == $muell_id ) {
-                    if( $meinkonto ) {
-                      ?> Verrechnung mit FC-Verrechnungskonto (Gruppe <? echo $muell_id; ?>) <?
-                    } else {
-                      ?>
-                        Verrechnung mit
-                        <a href='<? echo self_url('gruppen_id')."&gruppen_id=$muell_id"; ?>'
-                        >FC-Konto FC-Verrechnungskonto (Gruppe <? echo $muell_id; ?>) </a>
-                      <?
-                    }
+                    $typ = $k_row['transaktionstyp'];
+                    echo fc_alink( 'verlust_details', array( 'detail' => $typ, 'img' => ''
+                                    , 'text' => transaktion_typ_string( $typ ) ) );
                   } else {
                     printf( "Überweisung %s %sGruppe %s%s</td>"
                     , ( $konto_row['summe'] > 0 ? 'von' : 'an' )

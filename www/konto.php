@@ -244,6 +244,9 @@ switch( $action ) { // aktionen, die einen auszug brauchen
   case 'ueberweisung_konto_konto':
     buchung_bank_bank();
     break;
+  case 'ueberweisung_sonderausgabe':
+    buchung_bank_sonderausgabe();
+    break;
   case 'confirm_payment':
     need_http_var( 'transaction_id', 'u' );
     need_http_var( 'year', 'u' );
@@ -277,7 +280,8 @@ switch( $action ) { // aktionen, die einen auszug brauchen
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('gruppe_form').style.display='block';
                    document.getElementById('lieferant_form').style.display='none';
-                   document.getElementById('konto_form').style.display='none';"
+                   document.getElementById('konto_form').style.display='none';
+                   document.getElementById('sonderausgabe_form').style.display='none';"
         ><b>Einzahlung / Auszahlung Gruppe</b>
       </li>
 
@@ -285,7 +289,8 @@ switch( $action ) { // aktionen, die einen auszug brauchen
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('gruppe_form').style.display='none';
                    document.getElementById('lieferant_form').style.display='block';
-                   document.getElementById('konto_form').style.display='none';"
+                   document.getElementById('konto_form').style.display='none';
+                   document.getElementById('sonderausgabe_form').style.display='none';"
         ><b>Überweisung / Lastschrift Lieferant</b>
       </li>
 
@@ -293,8 +298,18 @@ switch( $action ) { // aktionen, die einen auszug brauchen
         <input type='radio' name='transaktionsart'
           onclick="document.getElementById('gruppe_form').style.display='none';
                    document.getElementById('lieferant_form').style.display='none';
-                   document.getElementById('konto_form').style.display='block';"
+                   document.getElementById('konto_form').style.display='block';
+                   document.getElementById('sonderausgabe_form').style.display='none';"
         ><b>Überweisung auf ein anderes Konto der FC</b>
+      </li>
+
+      <li title='&Uuml;berweisung/Abbuchung Sonderausgabe: Kontogeb&uuml;hren, Mitgliedsbeitrag, ...'>
+        <input type='radio' name='transaktionsart'
+          onclick="document.getElementById('gruppe_form').style.display='none';
+                   document.getElementById('lieferant_form').style.display='none';
+                   document.getElementById('konto_form').style.display='none';
+                   document.getElementById('sonderausgabe_form').style.display='block';"
+        ><b>Überweisung/Abbuchung Sonderausgabe</b>
       </li>
 
     </ul>
@@ -309,6 +324,10 @@ switch( $action ) { // aktionen, die einen auszug brauchen
 
     <div id='konto_form' style='display:none;'>
       <? formular_buchung_bank_bank( $konto_id, $auszug_jahr, $auszug_nr ); ?>
+    </div>
+
+    <div id='sonderausgabe_form' style='display:none;'>
+      <? formular_buchung_bank_sonderausgabe( $konto_id, $auszug_jahr, $auszug_nr ); ?>
     </div>
 
   </fieldset>
@@ -367,10 +386,16 @@ while( $row = mysql_fetch_array( $auszug ) ) {
       $gruppen_id = $konterbuchung['gruppen_id'];
       $lieferanten_id=$konterbuchung['lieferanten_id'];
       if( $gruppen_id ) {
-        $gruppen_name = sql_gruppenname( $gruppen_id );
-        ?> <div>Überweisung Gruppe <?
-        echo fc_alink( 'gruppenkonto', array( 'gruppen_id' => $gruppen_id , 'img' => false, 'text' => $gruppen_name ) );
-        ?> </div> <?
+        if( $gruppen_id == sql_muell_id() ) {
+         $typ = $konterbuchung['transaktionstyp'];
+          echo "<div>" . fc_alink( 'verlust_details', array(
+            'detail' => $typ, 'img' => '', 'text' => transaktion_typ_string( $typ ) ) ) . "</div>";
+        } else {
+          $gruppen_name = sql_gruppenname( $gruppen_id );
+          ?> <div>Überweisung Gruppe <?
+          echo fc_alink( 'gruppenkonto', array( 'gruppen_id' => $gruppen_id , 'img' => false, 'text' => $gruppen_name ) );
+          ?> </div> <?
+        }
       } else if ( $lieferanten_id ) {
         $lieferanten_name = lieferant_name( $lieferanten_id );
         ?> <div>Überweisung/Lastschrift Lieferant <?
