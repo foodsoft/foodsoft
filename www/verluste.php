@@ -146,17 +146,27 @@ switch( $action ) {
     }
     if( ! $notiz ) {
       ?> <div class='warn'>Bitte Notiz eingeben!</div> <?
-      $problems = true;
+      break;
     }
-    if( ! $problems ) {
-      sql_doppelte_transaktion(
-        array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $nach_typ )
-      , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $von_typ )
-      , $betrag
-      , "$year-$month-$day"
-      , "$notiz"
-      );
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $nach_typ )
+    , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $von_typ )
+    , $betrag
+    , "$year-$month-$day"
+    , "$notiz"
+    );
+    break;
+  case 'umlage':
+    need_http_var( 'betrag', 'f' );
+    need_http_var( 'day', 'u' );
+    need_http_var( 'month', 'u' );
+    need_http_var( 'year', 'u' );
+    need_http_var( 'notiz', 'H' );
+    if( ! $notiz ) {
+      ?> <div class='warn'>Bitte Notiz eingeben!</div> <?
+      break;
     }
+    sql_gruppen_umlage( $betrag, "$year-$month-$day", $notiz );
     break;
 }
 
@@ -177,27 +187,56 @@ $ausgleich_summe = 0.0;
 ?>
 <h1>Verlustaufstellung --- &Uuml;bersicht</h1>
 
+<? if( $editable ) { ?>
+
 <div id='transactions_button' style='padding-bottom:1em;'>
   <span class='button'
-    onclick="document.getElementById('transactions_form').style.display='block';
+    onclick="document.getElementById('transactions_menu').style.display='block';
              document.getElementById('transactions_button').style.display='none';"
     >Transaktionen...
   </span>
 </div>
 
-<div id='transactions_form' style='padding-bottom:1em;display:none;margin-bottom:2em;'>
-  <fieldset class='small_form'>
-    <legend>
-      <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-      onclick="document.getElementById('transactions_button').style.display='block';
-               document.getElementById('transactions_form').style.display='none';">
-      Umbuchung Verlust
-    </legend>
-  
-    <? formular_umbuchung_verlust(); ?>
-  
-  </fieldset>
-</div>
+<fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
+  <legend>
+    <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
+    onclick="document.getElementById('transactions_button').style.display='block';
+             document.getElementById('transactions_menu').style.display='none';">
+    Transaktionen
+  </legend>
+
+  Art der Transaktion:
+  <ul style='list-style:none;'>
+    <li style='padding-left:1em;' title='Umbuchung von Spenden oder Umlagen zur Schuldentilgung'>
+      <input type='radio' name='transaktionsart'
+        onclick="document.getElementById('umbuchung_form').style.display='block';
+                 document.getElementById('umlage_form').style.display='none';"
+      ><b>Umbuchung Verlustausgleich</b>
+    </li>
+    <li style='padding-left:1em;' title='Umlage von allen(!) aktiven Gruppenmitgliedern erheben'>
+      <input type='radio' name='transaktionsart'
+        onclick="document.getElementById('umbuchung_form').style.display='none';
+                 document.getElementById('umlage_form').style.display='block';"
+      ><b>Umlage erheben</b>
+    </li>
+  </ul>
+
+  <div id='umbuchung_form' style='padding-bottom:1em;display:none;margin-bottom:2em;'>
+    <fieldset class='small_form'>
+      <legend>Umbuchung Verlustausgleich </legend>
+      <? formular_umbuchung_verlust(); ?>
+    </fieldset>
+  </div>
+
+  <div id='umlage_form' style='padding-bottom:1em;display:none;margin-bottom:2em;'>
+    <fieldset class='small_form'>
+      <legend>Verlustumlage auf Gruppenmitglieder</legend>
+      <? formular_gruppen_umlage(); ?>
+    </fieldset>
+  </div>
+</fieldset>
+
+<? } ?>
 
 
 <table class='numbers'>
@@ -205,7 +244,7 @@ $ausgleich_summe = 0.0;
     <th>Typ</th>
     <th>Haben FC</th>
     <th>Ausgleichsbuchungen</th>
-    <th>Summe</th>
+    <th>Stand</th>
   </tr>
 <?
 
