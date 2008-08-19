@@ -9,6 +9,8 @@ setWikiHelpTopic( 'foodsoft:Bilanz' );
 
 ?> <h1>Bilanz </h1> <?
 
+// echo "[0:" . date('His') . "]<br>";
+
 $gruppen_einzahlungen_ungebucht = sql_select_single_field( "
     SELECT IFNULL( sum( einzahlungen.summe ), 0.0 ) as summe
     FROM ( ".select_ungebuchte_einzahlungen()." ) as einzahlungen
@@ -91,7 +93,7 @@ $seitensumme = 0;
 
 
 rubrik( "Einlagen der Gruppen" );
-  posten( "Sockeleinlagen", sockel_gruppen_summe() );
+  posten( fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'img' => '' ) ), sockel_gruppen_summe() );
   posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
   posten( fc_alink( 'gruppenpfand', "img=,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
 
