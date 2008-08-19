@@ -2209,6 +2209,21 @@ function sql_gruppen_transaktion(
   ) );
 }
 
+function sql_gruppen_umlage( $betrag, $valuta, $notiz ) {
+  $gruppen = sql_aktive_bestellgruppen();
+  while( $gruppe = mysql_fetch_array( $gruppen ) ) {
+    if( $gruppe['mitgliederzahl'] > 0 ) {
+      sql_doppelte_transaktion(
+        array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
+      , array( 'konto_id' => -1, 'gruppen_id' => $gruppe['id'], 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
+      , $betrag * $gruppe['mitgliederzahl']
+      , $valuta
+      , "$notiz"
+      );
+    }
+  }
+}
+
 function sql_bank_transaktion(
   $konto_id, $auszug_jahr, $auszug_nr
 , $haben, $valuta
@@ -2248,13 +2263,24 @@ function sql_link_transaction( $soll_id, $haben_id ) {
 /*
  * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
  */
-function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz ) {
-  global $dienstkontrollblatt_id;
+function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spende = false ) {
+  global $dienstkontrollblatt_id, $login_gruppen_id;
 
-  nur_fuer_dienst(4,5);
-  need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
+  if( $spende ) {
+    need( $betrag > 0, "Bitte nur positive Spenden!" );
+    $soll['konto_id'] = -1;
+    $soll['gruppen_id'] = sql_muell_id();
+    $soll['transaktionsart'] = TRANSAKTION_TYP_SPENDE;
+    $haben['konto_id'] = -1;
+    $haben['transaktionsart'] = TRANSAKTION_TYP_SPENDE;
+    need( $haben['gruppen_id'] == $login_gruppen_id );
+  } else {
+    nur_fuer_dienst(4,5);
+    need( $dienstkontrollblatt_id, 'Kein Dienstkontrollblatt Eintrag!' );
+  }
   need( $notiz, 'Bitte Notiz angeben!' );
   need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
+
 
   if( $soll['konto_id'] == -1 ) {
     $soll_id = -1 * sql_gruppen_transaktion(

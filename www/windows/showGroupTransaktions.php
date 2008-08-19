@@ -114,6 +114,8 @@ if( $meinkonto ) {
         break;
       case 'spende':
         need_http_var( 'betrag', 'f' );
+        if( $betrag <= 0 )
+          break;
         need_http_var( 'gruppen_id', 'U' );
         get_http_var( 'notiz', 'H', 'Spende' );
         need( $gruppen_id == $login_gruppen_id );
@@ -123,7 +125,13 @@ if( $meinkonto ) {
         , $betrag
         , $mysqlheute
         , $notiz
+        , true
         );
+        echo "
+          <script type='text/javascript'>
+            alert( 'Spende ist eingegangen, vielen Dank!' );
+          </script>
+        ";
         break;
     }
   }
