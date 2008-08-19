@@ -247,6 +247,14 @@ function fc_window( $name ) {
         $options = array_merge(
           $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '800', 'menubar' => 'no','height' => '1000' ) );
       break;
+    case 'verlust_details':
+      $parameters['window'] = 'verluste';
+      $parameters['window_id'] = 'verlust_details';
+      $parameters['text'] = 'Details...';
+      $parameters['title'] = 'Zur Liste aller Einzelposten...';
+      $options = array_merge(
+        $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '800', 'menubar' => 'no','height' => '1000' ) );
+      break;
     case 'verteilliste':
       if( $dienst > 0 ) {
         $parameters['window'] = 'verteilung';
@@ -265,13 +273,13 @@ function fc_window( $name ) {
       $parameters['window'] = 'editBestellung';
       $parameters['window_id'] = 'edit_bestellung';
       $parameters['title'] = 'zu den Stammdaten der Bestellung...';
-      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_rot.png' );
       $options = array_merge( $small_window_options, array( 'width' => '480' ) );
       break;
     case 'edit_buchung':
       $parameters['window'] = 'editBuchung';
       $parameters['window_id'] = 'edit_buchung';
-      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_rot.png' );
       $options = array_merge( $small_window_options, array( 'width' => '600', 'height' => '600' ) );
       break;
     // case 'edit_group':  //  im moment nicht benutzt
@@ -279,21 +287,21 @@ function fc_window( $name ) {
       $parameters['window'] = 'editLieferant';
       $parameters['window_id'] = 'edit_lieferant';
       $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
-      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_rot.png' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
     case 'edit_produkt':
       $parameters['window'] = 'editProdukt';
       $parameters['window_id'] = 'edit_produkt';
       $parameters['title'] = 'zu den Stammdaten des Produkts...';
-      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_rot.png' );
       $options = array_merge( $small_window_options, array( 'width' => '560', 'height' => 380 ) );
       break;
     case 'edit_verpackung':
       $parameters['window'] = 'editVerpackung';
       $parameters['window_id'] = 'edit_verpackung';
       $parameters['title'] = 'zu den Stammdaten der Pfandverpackung...';
-      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_row.png' );
+      $parameters['img'] = ( ( $dienst == 4 and ! $readonly ) ? 'img/b_edit.png' : 'img/birne_rot.png' );
       $options = array_merge( $small_window_options, array( 'width' => '500' ) );
       break;
     // case 'editProduktpreis': // nicht benutzt
