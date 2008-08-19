@@ -118,7 +118,7 @@
 						<td><input <? echo $ro_tag; ?> type='text' size='50' value="<? echo $url; ?>" name='url'></td>
 				 </tr>			 
 				 <tr>
-				    <td colspan='2' align='center'>
+				    <td colspan='1' style='text-align:right;'>
             <?  if( ! $ro ) { ?>
               <input type='submit' value='<? echo ( $lieferanten_id ? 'Ändern' : 'Einfügen'); ?>'>
               &nbsp;
@@ -126,7 +126,14 @@
             <?  if( $ro or $done ) { ?>
               <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
             <? } ?>
-            </td>
+           </td>
+           <td style='text-align:right;'>
+           <?
+             if( $lieferanten_id > 0 ) {
+               echo fc_alink( 'lieferantenkonto', "lieferanten_id=$lieferanten_id,text=Lieferantenkonto..." );
+              }
+           ?>
+           </td>
 				 </tr>
 			</table>
     </fieldset>

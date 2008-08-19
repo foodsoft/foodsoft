@@ -313,7 +313,12 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
           'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'img' => false
         ) ) . "</td>"
      , "<td>{$basar_row['lieferung']}</td>"
-     , "<td class='mult'>" . sprintf( "%8.2lf", $basar_row['endpreis'] ) . "</td>
+     , "<td class='mult'>"
+         . fc_alink( 'produktdetails', array(
+             'img' => '', 'produkt_id' => $basar_row['produkt_id']
+           , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] )
+           ) )
+         . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
      , "<td class='mult'><b>$menge</b></td>
         <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
@@ -1828,6 +1833,7 @@ function formular_umbuchung_verlust( $typ = 0 ) {
   <?
   return true;
 }
+
 
 function mod_onclick( $id ) {
   return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
