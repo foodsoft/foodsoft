@@ -48,6 +48,7 @@ function fc_window( $name ) {
     case 'self':
       $parameters = $self_fields;
       $parameters['text'] = 'Neu Laden';
+      $parameters['window_id'] = $GLOBALS['window_id'];
       break;
     //
     // Anzeige im Hauptfenster (aus dem Hauptmenue) oder in "grossem" Fenster moeglich:
@@ -353,7 +354,10 @@ function parameters_explode( $s ) {
 // um variable per POST zu uebergeben:
 //  - im formular scheme 'form:' uebergeben (erzeugt kein javascript), und attribut name='bla' setzen
 //  - per fc_button einen submit-knpof erzeugen, dabei form=bla als parameter uebergeben
-function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'javascript:' ) {
+//
+// - $context: one of 'href', 'submit', 'action', or 'handler' (e.g. for onclick, ...)
+//
+function fc_url( $name, $parameters = array(), $options = array(), $context = 'href' ) {
   global $foodsoftdir;
 
   if( is_string( $parameters ) )
@@ -385,6 +389,7 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
         continue 2;
       case 'form':
         $form = $value;
+        $context= 'submit';
         continue 2;
     }
     if( $value === NULL )
@@ -395,17 +400,11 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
     $and = '&';
   }
   $url = "$foodsoftdir/index.php" . $query . $anchor;
-  if( $scheme == 'form:' ) {
-    // this is the action of a <form>: 
-    // - the submit-button must set the target window,
-    // - here we just set the plain url (another reload via javascript would spoil the POSTed parameters!)
-    //
-    return $url;
-  }
   $js_window_name = $window_id;
   switch( $window_id ) {
     case 'self':
-      return "javascript:self.location.href='$url';";
+      need( 0, " window_id == 'self' encountered " );
+      break;
     case 'top':
     case 'main':
       $js_window_name = '_top';
@@ -419,17 +418,26 @@ function fc_url( $name, $parameters = array(), $options = array(), $scheme = 'ja
         $option_string .= "$komma$key=$value";
         $komma = ',';
       }
-      if( $form ) {
-        return "javascript:submit_form( '$form', '$js_window_name', '$option_string', '$button_id' );";
-      } else {
-        // echo "[$window_id,${GLOBALS['window_id']}]<br>";
-        if( $window_id == $GLOBALS['window_id'] ) {
+      switch( $context ) {
+        case 'submit':
+          return "javascript:submit_form( '$form', '$js_window_name', '$option_string', '$button_id' );";
+        case 'action':
           return $url;
-        } else {
-          return "{$scheme}window.open( '$url', '$js_window_name', '$option_string' ).focus();";
-        }
+        case 'handler':
+          if( $window_id == $GLOBALS['window_id'] ) {
+            return "self.location.href='$url';";
+          } else {
+            return "window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+          }
+        case 'href':
+          if( $window_id == $GLOBALS['window_id'] ) {
+            return $url;
+          } else {
+            return "javascript:window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+          }
+        default:
+          need( 0, "undefinierter context: $context" );
       }
-      return $url;
   }
 }
 
@@ -475,7 +483,7 @@ function fc_alink( $name, $parameters = array(), $options = array() ) {
     return '';
   if( is_string( $parameters ) )
     $parameters = parameters_explode( $parameters );
-  $url = fc_url( $name, $parameters, $options );
+  $url = fc_url( $name, $parameters, $options, 'href' );
   $title = adefault( $window['parameters'], 'title', '' );
   $title = adefault( $parameters, 'title', $title );
   $text = adefault( $window['parameters'], 'text', '' );
@@ -491,7 +499,7 @@ function fc_button( $name, $parameters = array(), $options = array() ) {
     return '';
   if( is_string( $parameters ) )
     $parameters = parameters_explode( $parameters );
-  $url = fc_url( $name, $parameters, $options );
+  $url = fc_url( $name, $parameters, $options, 'handler' );
   $title = adefault( $window['parameters'], 'title', '' );
   $title = adefault( $parameters, 'title', $title );
   $text = adefault( $window['parameters'], 'text', '' );
@@ -551,7 +559,7 @@ function fc_action( $parameters = array() ) {
 }
 
 function fc_openwindow( $name, $parameters = array(), $options = array() ) {
-  $url = fc_url( $name, $parameters, $options, '' );
+  $url = fc_url( $name, $parameters, $options, 'handler' );
   if( ! $url )
     return '';
   return "

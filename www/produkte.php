@@ -165,7 +165,7 @@
     <?
   } else {
     ?>
-      <form action="<? echo fc_url( 'insert_bestellung', '', '', 'form:' ); ?>" method="post"  name="newBestellungForm">
+      <form action="<? echo fc_url( 'insert_bestellung', '', '', 'action' ); ?>" method="post"  name="newBestellungForm">
       <input type="hidden" name="lieferanten_id" value="<? echo $lieferanten_id; ?>">
     <?
   }

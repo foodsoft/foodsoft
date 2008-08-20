@@ -184,7 +184,7 @@ if( $filter != '' ) {
   if( $produkt_id ) {
     ?>
       <b>Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</b>
-      <form name='anummer_setzen' action="<? echo fc_url( 'produktpreise', "produkt_id=$produkt_id", '', 'form:' ); ?>" method='post'>
+      <form name='anummer_setzen' action="<? echo fc_url( 'produktpreise', "produkt_id=$produkt_id", '', 'action' ); ?>" method='post'>
       <input type='hidden' name='action' value='artikelnummer_setzen'>
       <input type='hidden' name='button_id' value=''>
     <?
