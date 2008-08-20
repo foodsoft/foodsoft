@@ -373,7 +373,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
       <tr style='border:none'>
         <td colspan='<? echo $cols; ?>' style='border:none;padding-top:1ex;text-align:right;'>
           <select name='gruppe'>
-            <? echo optionen_gruppen( false, false, false, false, false, array($muell_id) ); ?>
+            <? echo optionen_gruppen( false, false, false, false, false, array($muell_id => 'Müll' ) ); ?>
           </select>
           <input type='submit' value='Zuteilen' style='margin-left:2em;'>
         </td>
@@ -419,6 +419,8 @@ function products_overview(
     $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
     $select_columns = false, $select_nichtgeliefert = false
   ) {
+  $basar_id = sql_basar_id();
+  $muell_id = sql_muell_id();
 
   $result = sql_bestellprodukte( $bestell_id, $gruppen_id, 0 );
   $state = getState($bestell_id);
@@ -656,7 +658,11 @@ function products_overview(
       case STATUS_LIEFERANT:  // verteilmengen sollten jetzt zugewiesen sein:
       default:  // rien ne va plus...
         if( $gruppen_id ) {
-          $liefermenge = $produkte_row['verteilmenge'];
+          if( $gruppen_id == $muell_id ) {
+            $liefermenge = $produkte_row['muellmenge'];
+          } else {
+            $liefermenge = $produkte_row['verteilmenge'];
+          }
         } else {
           $liefermenge = $produkte_row['liefermenge'];
         }
@@ -717,7 +723,7 @@ function products_overview(
         '<td class="mult">%1$.0lf / %2$.0lf' . ( $gruppen_id ? '' : ' / %3$.0lf' ) . '</td>
          <td class="unit">%4$s</td>'
       , $festbestellmenge * $kan_verteilmult
-      , $toleranzbestellmenge * $kan_verteilmult
+      , ( ( $gruppen_id == $basar_id ) ? $basarbestellmenge : $toleranzbestellmenge ) * $kan_verteilmult
       , $basarbestellmenge * $kan_verteilmult
       , $produkte_row['kan_verteileinheit']
       );
@@ -872,9 +878,6 @@ function option_menu_row( $option = false ) {
 }
 
 
-
-
-
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */
@@ -938,17 +941,15 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
         if( $changeState ) {
           if( $dienst == 4 )  {
             if ( $row['bestellende'] < $mysqljetzt ) {
-              $aktionen .= "<li>$self_form
-                <input type='hidden' name='action' value='changeState'>
-                <input type='hidden' name='change_id' value='$bestell_id'>
-                <input type='hidden' name='change_to' value='".STATUS_LIEFERANT."'>
-                <input type='submit' class='button' name='submit'
-                  title='Jetzt Bestellschein für Lieferanten fertigmachen?'
-                  value='> Bestellschein fertigmachen >'>
-                </form></li>
-              ";
+              $aktionen .= ( "<li>" . fc_action( array( 'action' => 'changeState', 'class' => 'action'
+                             , 'change_id' => $bestell_id, 'change_to' => STATUS_LIEFERANT
+                             , 'title' => 'Jetzt Bestellschein für Lieferanten fertigmachen?'
+                             , 'text' => '>>> Bestellschein fertigmachen >>>' ) ) . "</li>" );
             } else {
               $aktionen .= "<li style='font-weight:bold;'>Bestellung läuft noch!</li>";
+            }
+            if( references_gesamtbestellung( $bestell_id ) == 0 ) {
+              $aktionen .= ( "<li>" . fc_action( "action=delete,title=Bestellung löschen,delete_id=$bestell_id,img=img/b_drop.png" ) . "</li>" );
             }
           }
         }
@@ -965,26 +966,16 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
           $aktionen .= "<li>$edit_link</li>";
         if( $changeState ) {
           if( $hat_dienst_IV ) {
-            $aktionen .= "<li>$self_form
-              <input type='hidden' name='action' value='changeState'>
-              <input type='hidden' name='change_id' value='$bestell_id'>
-              <input type='hidden' name='change_to' value='".STATUS_BESTELLEN."'>
-              <input type='submit' class='button' name='submit'
-                title='Bestellung nochmal zum Bestellen freigeben?'
-                value='< Nachbestellen lassen <'>
-              </form></li>
-            ";
+            $aktionen .= ( "<li>" . fc_action( array( 'action' => 'changeState', 'class' => 'action'
+                   , 'change_id' => $bestell_id, 'change_to' => STATUS_BESTELLEN
+                   , 'title' => 'Bestellung nochmal zum Bestellen freigeben?'
+                   , 'text' => '<<< Nachbestellen lassen <<<' ) ) . "</li>" );
           }
           if( $dienst > 0 ) {
-            $aktionen .= "<li>$self_form
-              <input type='hidden' name='action' value='changeState'>
-              <input type='hidden' name='change_id' value='$bestell_id'>
-              <input type='hidden' name='change_to' value='".STATUS_VERTEILT."'>
-              <input type='submit' class='button' name='submit'
-                title='Bestellung wurde geliefert, Lieferschein abgleichen?'
-                value='> Lieferschein erstellen >'>
-              </form></li>
-            ";
+            $aktionen .= ( "<li>" . fc_action( array( 'action' => 'changeState', 'class' => 'action'
+                  , 'change_id' => $bestell_id, 'change_to' => STATUS_VERTEILT
+                  , 'title' => 'Bestellung wurde geliefert, Lieferschein abgleichen?'
+                  , 'text' => '>>> Lieferschein erstellen >>>' ) ) . "</li>" );
           }
         }
         break;
@@ -1785,7 +1776,7 @@ function formular_umbuchung_verlust( $typ = 0 ) {
                 <input type='hidden' name='von_typ' value='<? echo $typ; ?>'>
               <? } else { ?>
                 <select name='von_typ'>
-                  <option value=''>(bitte Typ w&auml;hlen)</option>
+                  <option value=''>(bitte Quelle w&auml;hlen)</option>
                   <?
                     foreach( array( TRANSAKTION_TYP_SPENDE , TRANSAKTION_TYP_UMLAGE ) as $t ) {
                       ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
@@ -1925,7 +1916,7 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
               ...oder: Katalogsuche nach:
             </td>
             <td>
-              <form name='artikelsuche' action="<? echo fc_url( 'artikelsuche', "lieferanten_id=$lieferanten_id", '', 'form:' ); ?>" method='post'>
+              <form name='artikelsuche' action="<? echo fc_url( 'artikelsuche', "lieferanten_id=$lieferanten_id", '', 'action' ); ?>" method='post'>
                 <input type='hidden' name='produkt_id' value='<? echo $produkt_id; ?>'>
                 <input name='name' value='<? echo $produkt['name']; ?>' size='40'>&nbsp;
                 <? echo fc_button( 'artikelsuche', 'text=Los!,form=artikelsuche,class=submit' ); ?>
