@@ -1092,14 +1092,14 @@ function optionen_gruppen(
     }
     $output = $output . ">$option_0</option>";
   }
-  foreach( $additionalgroups as $id ) {
+  foreach( $additionalgroups as $id => $name ) {
     $output = "$output
       <option value='$id'";
         if( $selected == $id ) {
           $output = $output . " selected";
           $selected = -1;
         }
-        $output = $output . ">" . sql_gruppenname( $id ) . "</option>";
+        $output = $output . ">" . ( $name ? $name : sql_gruppenname( $id ) ) . "</option>";
   }
   while($gruppe = mysql_fetch_array($gruppen)){
     $id = $gruppe['id'];
@@ -1564,6 +1564,15 @@ function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
   " );
 }
 
+function references_gesamtbestellung( $bestell_id ) {
+  return sql_select_single_field( " SELECT (
+     ( SELECT count(*) FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id )
+   + ( SELECT count(*) FROM gruppenbestellungen WHERE gesamtbestellung_id = $bestell_id ) 
+  ) as count
+  " , 'count'
+  );
+}
+
 function sql_bestellpreis($bestell_id, $produkt_id){
 	$row = sql_bestellvorschlag_daten($bestell_id, $produkt_id);
 	return $row['preis_id'];
@@ -1662,7 +1671,7 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, 
       break;
     default:
       if( $gruppen_id )
-        $firstorder_expr = $verteilmenge_expr;
+        $firstorder_expr = " ( $verteilmenge_expr + $muellmenge_expr ) ";
       else
         $firstorder_expr = "liefermenge";
       break;
@@ -3808,12 +3817,12 @@ function getProdukt($produkt_id){
 }
 
 function references_produkt( $produkt_id ) {
-  $row = sql_select_single_row( " SELECT (
+  return sql_select_single_field( " SELECT (
      ( SELECT count(*) FROM bestellvorschlaege WHERE produkt_id=$produkt_id )
    + ( SELECT count(*) FROM bestellzuordnung WHERE produkt_id=$produkt_id )
   ) as count
-  " );
-  return $row['count'];
+  ", 'count'
+  );
 }
 
 function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
