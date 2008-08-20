@@ -42,6 +42,16 @@ switch( $action ) {
     if( $bestell_id && ( $menge > 0 ) ) {
       zusaetzlicheBestellung( $produkt_id, $bestell_id, $menge );
     }
+    break;
+
+  case 'delete':
+    nur_fuer_dienst(4);
+    need_http_var( 'delete_id', 'U' );
+    need( references_gesamtbestellung( $bestell_id ) == 0 );
+    doSql( "DELETE FROM gesamtbestellungen WHERE id = $delete_id " );
+    unset( $bestell_id );
+    unset( $self_fields['bestell_id'] );
+    break;
 
   default:
     break;
@@ -164,7 +174,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
        , $gruppen_id
        , "Alle (Gesamtbestellung)"
       , ( $hat_dienst_IV ? false : $login_gruppen_id )
-      , $specialgroups
+      , array( sql_basar_id() => 'Basar', sql_muell_id() => 'Müll' )
       ) . " </select></td>"
   );
 
