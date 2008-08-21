@@ -22,7 +22,7 @@ function verlust_bestellungen( $detail = false ) {
             <th>Bestellung</th>
             <th>Schwund/Müll</th>
             <th colspan='2'>Sonstiges</th>
-            <th>Haben FC</th>
+            <th class='oneline'>Haben FC</th>
           </tr>
     <?
   }
@@ -44,15 +44,18 @@ function verlust_bestellungen( $detail = false ) {
     $muell_soll = - $row['muell_soll'];  // soll _aus_sicht_von_gruppe_13_! (also der FC-Gemeinschaft!)
     $extra_soll = $row['extra_soll'];
     $soll = $muell_soll + $extra_soll;
+    $bestell_id = $row['id'];
 
     if( $detail ) {
       ?>
         <tr>
-          <td><? echo fc_alink( 'abrechnung', array( 'bestell_id' => $row['id'], 'text' => $row['name'] ) ); ?></td>
-          <td class='number'><? printf( "%.2lf", $muell_soll ); ?></td>
+          <td><? echo fc_alink( 'abrechnung', array( 'bestell_id' => $bestell_id, 'text' => $row['name'] ) ); ?></td>
+          <td class='number'><?
+            echo fc_alink( 'lieferschein', "img=,bestell_id=$bestell_id,gruppen_id=$muell_id,text=". sprintf( "%.2lf", - $muell_soll ) );
+          ?></td>
           <td><? echo $row['extra_text']; ?></td>
-          <td class='number'><? printf( "%.2lf", $extra_soll ); ?></td>
-          <td class='number'><? printf( "%.2lf", $soll ); ?></td>
+          <td class='number'><? printf( "%.2lf", - $extra_soll ); ?></td>
+          <td class='number'><? printf( "%.2lf", - $soll ); ?></td>
         </tr>
       <?
     }
@@ -87,7 +90,7 @@ function verlust_transaktionen( $typ, $detail = false ) {
           <th>Id</th>
           <th>Valuta</th>
           <th>Notiz</th>
-          <th>Haben FC</th>
+          <th class='oneline'>Haben FC</th>
         </tr>
         <tr>
           <td colspan='4' style='text-align:left;'>
@@ -242,7 +245,7 @@ $ausgleich_summe = 0.0;
 <table class='numbers'>
   <tr>
     <th>Typ</th>
-    <th>Haben FC</th>
+    <th class='oneline'>Haben FC</th>
     <th>Ausgleichsbuchungen</th>
     <th>Stand</th>
   </tr>

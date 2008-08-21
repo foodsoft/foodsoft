@@ -618,7 +618,7 @@ div.kommentar {
   font-size:11pt;
 }
 
-div.oneline {
+div.oneline, td.oneline, th.oneline {
   padding:0pt;
   margin:0pt;
   white-space:nowrap;
