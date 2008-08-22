@@ -91,8 +91,9 @@ need_http_var( 'terrakw', 'w' );
       $i++;
     }
     // drop trailing garbage in $netto:
-    $netto = sprintf( "%.2lf", $netto );
-    $mwst = sprintf( "%.2lf", $mwst );
+    $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', $netto ) );
+    $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.', $mwst ) );
+    $pfand = sprintf( "%.2lf", preg_replace( '/,/', '.', $pfand ) );
     $name = mysql_real_escape_string( $name );
 
     // drop spurious whitespace from numbers:
@@ -100,8 +101,10 @@ need_http_var( 'terrakw', 'w' );
     $bnummer = preg_replace( '/\s/', '', $bnummer );
 
     if( $vpe ) {
-      $gebinde = sprintf( "%.2lf", $vpe );
-      $einheit =  preg_replace( '/^[[:digit:]]* ([[:alpha:]]*)$/', '${1}', $vpe );
+      $gebinde = sprintf( "%.2lf", preg_replace( '/,/', '.', $vpe ) );
+      $einheit =  preg_replace( '/^[[:digit:].]* ([[:alpha:]]*)$/', '${1}', $vpe );
+    } else {
+      $gebinde = sprintf( "%.2lf", preg_replace( '/,/', '.', $gebinde ) );
     }
 
     if( $netto < 0.01 or $mwst < 0.01 ) {
@@ -109,6 +112,7 @@ need_http_var( 'terrakw', 'w' );
       continue;
     }
 
+    echo "<div class='ok'>line: $line</div>";
     echo "<div class='ok'>parsed: $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto</div>";
     doSql( "
       INSERT INTO lieferantenkatalog (
