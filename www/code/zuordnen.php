@@ -1993,26 +1993,6 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 	return true;
 }
 
-/**
- *  setzt bestellmenge und liefermenge in bestellvorschlaegen aus zuteilungen in bestellzuordnung
- */
-function writeLiefermenge_sql($bestell_id){
-	$query = "SELECT produkt_id, sum(menge) as s FROM gruppenbestellungen  
-		  INNER JOIN bestellzuordnung ON
-		  	(gruppenbestellungen.id = gruppenbestellung_id)
-		  WHERE art = 2 
-		  AND gesamtbestellung_id = ".$bestell_id." 
-		  GROUP BY produkt_id";
-        $result = doSql($query, LEVEL_ALL, "Konnte bestellte Mengen nicht aus DB laden..");
-  	while ($produkt_row = mysql_fetch_array($result)){
-		$sql2 = "UPDATE bestellvorschlaege SET bestellmenge = "
-		        .$produkt_row['s'].", liefermenge = ".
-		        $produkt_row['s']." WHERE gesamtbestellung_id = ".
-			$bestell_id." AND produkt_id = ".$produkt_row['produkt_id'];
-                doSql($sql2, LEVEL_IMPORTANT, "Konnte Liefermengen nicht in DB schreiben...");
-	}
-
-}
 
 /**
  *
@@ -2025,15 +2005,11 @@ function verteilmengenZuweisen($bestell_id){
   $produkte = sql_bestellprodukte( $bestell_id );
   while( $produkt = mysql_fetch_array( $produkte ) ) {
     $produkt_id = $produkt['produkt_id'];
-    // echo "<pre>".var_export( $produkt ) ."</pre>";
     $zuteilungen = zuteilungen_berechnen( $produkt );
     sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id ), array(
       'bestellmenge' => $zuteilungen['bestellmenge']
     , 'liefermenge' => $zuteilungen['bestellmenge']
     ) );
-    // echo "<pre>". $produkt['produkt_name'] . "</pre>";
-    // echo "<pre>". var_export( $zuteilungen ). "</pre>";
-    // need(0);
     $festzuteilungen = $zuteilungen['festzuteilungen'];
     $toleranzzuteilungen = $zuteilungen['toleranzzuteilungen'];
     foreach( $festzuteilungen as $gruppen_id => $menge ) {
@@ -2049,8 +2025,9 @@ function verteilmengenZuweisen($bestell_id){
       , 'art' => 2, 'menge' => $menge
       ) );
     }
-    // need( is_array( $toleranzzuteilungen ), "<pre>".var_export( $toleranzzuteilungen )."</pre>" );
     foreach( $toleranzzuteilungen as $gruppen_id => $menge ) {
+      if( $gruppen_id == $basar_id )
+        continue;
       $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
@@ -2058,13 +2035,6 @@ function verteilmengenZuweisen($bestell_id){
       ) );
     }
   }
-}
-
-function changeLieferpreis_sql($preis_id, $produkt_id, $bestell_id){
-  return sql_update( 'bestellvorschlaege'
-  , array( 'produkt_id' => $produkt_id, 'gesamtbestellung_id' => $bestell_id )
-  , array( 'produktpreise_id' => $preis_id )
-  );
 }
 
 function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
