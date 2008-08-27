@@ -314,6 +314,12 @@ $ausgleich_summe += $ausgleich;
       <? printf( "%.2lf", - $soll - $ausgleich ); ?>
     </td>
   </tr>
+  <tr class='summe'>
+    <td>Zwischensumme:</td>
+    <td class='number'><? printf( "%.2lf", - $verluste_summe ); ?></td>
+    <td class='number'><? printf( "%.2lf", - $ausgleich_summe ); ?></td>
+    <td class='number'><? printf( "%.2lf", - $ausgleich_summe - $verluste_summe ); ?></td>
+  </tr>
 <?
 
 $soll = verlust_transaktionen( TRANSAKTION_TYP_SPENDE );
