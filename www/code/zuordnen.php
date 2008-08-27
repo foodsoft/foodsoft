@@ -4453,7 +4453,39 @@ CREATE TABLE `bankkonten` (
 			WHERE name = 'database_version' ;
     ";
 		doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
-	       
+	
+  case 7:
+		doSql( " ALTER TABLE gesamtbestellungen ADD rechnungsstatus smallint(6) NOT NULL "
+    , LEVEL_IMPORTANT, "Konnte Tabelle gesamtbestellungen nicht aktualisieren"
+    );
+		doSql( " ALTER TABLE bestellzuordnung ADD KEY `nochnindex` (`produkt_id`,`gruppenbestellung_id`) "
+    , LEVEL_IMPORTANT, "Konnte Tabelle bestellzuordnung nicht aktualisieren"
+    );
+    doSql( " UPDATE gesamtbestellungen
+      SET rechnungsstatus=10
+      WHERE state='besttellen' "
+    , LEVEL_IMPORTANT, "Konnte Tabelle gesamtbestellungen nicht aktualisieren"
+    );
+    doSql( " UPDATE gesamtbestellungen
+      SET rechnungsstatus=20
+      WHERE state='beimLieferanten' "
+    , LEVEL_IMPORTANT, "Konnte Tabelle gesamtbestellungen nicht aktualisieren"
+    );
+    doSql( " UPDATE gesamtbestellungen
+      SET rechnungsstatus=30
+      WHERE state='Verteilt' "
+    , LEVEL_IMPORTANT, "Konnte Tabelle gesamtbestellungen nicht aktualisieren"
+    );
+    doSql( " UPDATE gesamtbestellungen
+      SET rechnungsstatus=40
+      WHERE state='archiviert' "
+    , LEVEL_IMPORTANT, "Konnte Tabelle gesamtbestellungen nicht aktualisieren"
+    );
+		$sql="UPDATE leitvariable
+			set value =  8
+			WHERE name = 'database_version' ";
+		doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
+
 /*
 	case n:
 		$sql = "
