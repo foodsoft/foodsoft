@@ -1,11 +1,14 @@
 -- phpMyAdmin SQL Dump
--- version 2.9.2
+-- version 2.10.1
 -- http://www.phpmyadmin.net
 -- 
--- Host: localhost
--- Generation Time: Sep 26, 2007 at 01:53 PM
--- Server version: 4.1.11
--- PHP Version: 5.1.4-Debian-0.1~sarge1
+-- Host: 127.0.0.1
+-- Generation Time: Aug 27, 2008 at 01:00 PM
+-- Server version: 5.0.45
+-- PHP Version: 5.2.2
+
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+
 -- 
 -- Database: `nahrungskette`
 -- 
@@ -13,20 +16,41 @@
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `Dienste`
+-- Table structure for table `bankkonten`
 -- 
 
-DROP TABLE IF EXISTS `Dienste`;
-CREATE TABLE `Dienste` (
-  `ID` int(11) NOT NULL auto_increment,
-  `GruppenID` int(11) NOT NULL default '0',
-  `Dienst` enum('1/2','3','4','5','freigestellt') NOT NULL default '1/2',
-  `Lieferdatum` date NOT NULL default '0000-00-00',
-  `Status` enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen') NOT NULL default 'Vorgeschlagen',
-  `Bemerkung` text,
-  PRIMARY KEY  (`ID`),
-  KEY `GruppenID` (`GruppenID`,`Dienst`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Enthält Dienste für jedes einzelne Lieferdatum';
+CREATE TABLE `bankkonten` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` text NOT NULL,
+  `kontonr` text NOT NULL,
+  `blz` text NOT NULL,
+  `url` text NOT NULL COMMENT 'Link zum online-Banking',
+  `kommentar` text NOT NULL,
+  `letzter_auszug_jahr` smallint(6) NOT NULL default '0',
+  `letzter_auszug_nr` smallint(6) NOT NULL default '0',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `bankkonto`
+-- 
+
+CREATE TABLE `bankkonto` (
+  `id` int(11) NOT NULL auto_increment,
+  `valuta` date NOT NULL default '0000-00-00',
+  `kontoauszug_jahr` smallint(6) NOT NULL default '0',
+  `kontoauszug_nr` smallint(6) NOT NULL default '0',
+  `buchungsdatum` date NOT NULL default '0000-00-00',
+  `dienstkontrollblatt_id` int(11) NOT NULL default '0',
+  `betrag` decimal(10,2) NOT NULL default '0.00',
+  `kommentar` text NOT NULL,
+  `konto_id` smallint(6) NOT NULL default '0',
+  `konterbuchung_id` int(11) NOT NULL default '0' COMMENT '>0:bank <0: gruppe',
+  PRIMARY KEY  (`id`),
+  KEY `secondary` (`konto_id`,`kontoauszug_jahr`,`kontoauszug_nr`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Bankkontotransaktionen';
 
 -- --------------------------------------------------------
 
@@ -34,20 +58,12 @@ CREATE TABLE `Dienste` (
 -- Table structure for table `bestellgruppen`
 -- 
 
-DROP TABLE IF EXISTS `bestellgruppen`;
 CREATE TABLE `bestellgruppen` (
   `id` int(11) NOT NULL default '0',
   `name` text NOT NULL,
-  `ansprechpartner` text NOT NULL,
-  `telefon` text NOT NULL,
-  `email` text NOT NULL,
-  `mitgliederzahl` smallint(4) NOT NULL,
   `passwort` text NOT NULL,
   `aktiv` tinyint(1) NOT NULL default '0',
-  `diensteinteilung` enum('1/2','3','4','5','freigestellt') NOT NULL default 'freigestellt',
-  `rotationsplanposition` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`id`),
-  KEY `rotationsplanposition` (`rotationsplanposition`)
+  PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -56,7 +72,6 @@ CREATE TABLE `bestellgruppen` (
 -- Table structure for table `bestellvorschlaege`
 -- 
 
-DROP TABLE IF EXISTS `bestellvorschlaege`;
 CREATE TABLE `bestellvorschlaege` (
   `produkt_id` int(11) NOT NULL default '0',
   `gesamtbestellung_id` int(11) NOT NULL default '0',
@@ -72,7 +87,6 @@ CREATE TABLE `bestellvorschlaege` (
 -- Table structure for table `bestellzuordnung`
 -- 
 
-DROP TABLE IF EXISTS `bestellzuordnung`;
 CREATE TABLE `bestellzuordnung` (
   `id` int(11) NOT NULL auto_increment,
   `produkt_id` int(11) NOT NULL default '0',
@@ -81,9 +95,26 @@ CREATE TABLE `bestellzuordnung` (
   `art` tinyint(1) NOT NULL default '0',
   `zeitpunkt` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`),
-  KEY `secondary` (`art`,`produkt_id`,`gruppenbestellung_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8
-  COMMENT='art = toleranz / fest / zugeteilt';
+  KEY `secondary` (`art`,`produkt_id`,`gruppenbestellung_id`),
+  KEY `nochnindex` (`produkt_id`,`gruppenbestellung_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='art = toleranz / fest / zugeteilt';
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `Dienste`
+-- 
+
+CREATE TABLE `Dienste` (
+  `ID` int(11) NOT NULL auto_increment,
+  `Dienst` enum('1/2','3','4','5','freigestellt') NOT NULL default '1/2',
+  `Lieferdatum` date NOT NULL default '0000-00-00',
+  `Status` enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen') NOT NULL default 'Vorgeschlagen',
+  `Bemerkung` text,
+  `gruppenmitglieder_id` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`ID`),
+  KEY `GruppenID` (`Dienst`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='EnthÃƒÂ¤lt Dienste fÃƒÂ¼r jedes einzelne Lieferdatum';
 
 -- --------------------------------------------------------
 
@@ -91,10 +122,9 @@ CREATE TABLE `bestellzuordnung` (
 -- Table structure for table `dienstkontrollblatt`
 -- 
 
-DROP TABLE IF EXISTS `dienstkontrollblatt`;
 CREATE TABLE `dienstkontrollblatt` (
   `id` int(11) NOT NULL auto_increment,
-  `gruppen_id` int(11) NOT NULL,
+  `gruppen_id` int(11) NOT NULL default '0',
   `dienst` tinyint(1) NOT NULL default '0',
   `datum` date NOT NULL default '0000-00-00',
   `zeit` time NOT NULL default '00:00:00',
@@ -103,21 +133,14 @@ CREATE TABLE `dienstkontrollblatt` (
   `notiz` text NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `secondary` (`dienst`,`gruppen_id`,`datum`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
-
--- 
--- Table structure for table `dienstquiz`
--- 
-
-DROP TABLE IF EXISTS `dienstquiz`;
 
 -- 
 -- Table structure for table `gesamtbestellungen`
 -- 
 
-DROP TABLE IF EXISTS `gesamtbestellungen`;
 CREATE TABLE `gesamtbestellungen` (
   `id` int(11) NOT NULL auto_increment,
   `name` text NOT NULL,
@@ -127,33 +150,17 @@ CREATE TABLE `gesamtbestellungen` (
   `lieferung` date default NULL,
   `bezahlung` datetime default NULL,
   `state` enum('bestellen','beimLieferanten','Verteilt','archiviert') NOT NULL default 'bestellen',
-  `rechnungssumme` decimal(10,2) NOT NULL default '0.00',
-  `abrechnung_dienstkontrollblatt_id` int(11) NOT NULL default 0,
+  `rechnungssumme` decimal(10,2) NOT NULL default '0.00' COMMENT 'wahre Rechnungssumme (kann wegen Pfand von berechneter abweichen!)',
+  `abrechnung_dienstkontrollblatt_id` int(11) NOT NULL default '0',
+  `rechnungsnummer` text NOT NULL COMMENT 'Rechnungsnummer des Lieferanten',
+  `lieferanten_id` int(11) NOT NULL,
+  `rechnungsstatus` smallint(6) NOT NULL,
+  `extra_soll` decimal(10,2) NOT NULL,
+  `extra_text` text NOT NULL,
+  `abrechnung_datum` date NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `state` (`state`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='ausgang = Zeitpunkt der\nBestellung beim Lieferanten';
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `gruppen_transaktion`
--- 
-
-DROP TABLE IF EXISTS `gruppen_transaktion`;
-CREATE TABLE `gruppen_transaktion` (
-  `id` int(11) NOT NULL auto_increment,
-  `dienstkontrollblatt_id` int(11) NOT NULL default '0',
-  `type` tinyint(1) NOT NULL default '0',
-  `gruppen_id` int(11) NOT NULL default '0',
-  `lieferanten_id` int(11) NOT NULL default '0',
-  `eingabe_zeit` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
-  `summe` decimal(10,2) NOT NULL default '0.00',
-  `notiz` text NOT NULL,
-  `kontobewegungs_datum` date NOT NULL default '0000-00-00',
-  `konterbuchung_id` INT NOT NULL default '0',
-  PRIMARY KEY  (`id`),
-  KEY `secondary` (`gruppen_id`,`kontobewegungs_datum`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='ausgang = Zeitpunkt der\nBestellung beim Lieferanten';
 
 -- --------------------------------------------------------
 
@@ -161,14 +168,70 @@ CREATE TABLE `gruppen_transaktion` (
 -- Table structure for table `gruppenbestellungen`
 -- 
 
-DROP TABLE IF EXISTS `gruppenbestellungen`;
 CREATE TABLE `gruppenbestellungen` (
   `id` int(11) NOT NULL auto_increment,
   `bestellguppen_id` int(11) NOT NULL default '0',
   `gesamtbestellung_id` int(11) NOT NULL default '0',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `secondary` (`gesamtbestellung_id`,`bestellguppen_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `gruppenmitglieder`
+-- 
+
+CREATE TABLE `gruppenmitglieder` (
+  `id` int(11) NOT NULL auto_increment,
+  `gruppen_id` int(11) NOT NULL,
+  `name` text NOT NULL,
+  `vorname` text NOT NULL,
+  `telefon` text NOT NULL,
+  `email` text NOT NULL,
+  `diensteinteilung` enum('1/2','3','4','5','freigestellt') NOT NULL default 'freigestellt',
+  `rotationsplanposition` int(11) NOT NULL,
+  `status` enum('aktiv','geloescht') NOT NULL default 'aktiv',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Mitglieder einer Foodcoopgruppe';
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `gruppenpfand`
+-- 
+
+CREATE TABLE `gruppenpfand` (
+  `id` int(11) NOT NULL auto_increment,
+  `bestell_id` int(11) NOT NULL,
+  `gruppen_id` int(11) NOT NULL,
+  `pfand_wert` decimal(6,2) NOT NULL,
+  `anzahl_leer` int(11) NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `secondary` (`bestell_id`,`gruppen_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `gruppen_transaktion`
+-- 
+
+CREATE TABLE `gruppen_transaktion` (
+  `id` int(11) NOT NULL auto_increment,
+  `dienstkontrollblatt_id` int(11) NOT NULL default '0',
+  `type` tinyint(1) NOT NULL default '0',
+  `gruppen_id` int(11) NOT NULL default '0',
+  `eingabe_zeit` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  `summe` decimal(10,2) NOT NULL default '0.00',
+  `notiz` text NOT NULL,
+  `kontobewegungs_datum` date NOT NULL default '0000-00-00',
+  `konterbuchung_id` int(11) NOT NULL default '0' COMMENT '>0:bank <0: gruppe',
+  `lieferanten_id` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`id`),
+  KEY `secondary` (`gruppen_id`,`kontobewegungs_datum`),
+  KEY `tertiary` (`lieferanten_id`,`kontobewegungs_datum`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -176,7 +239,6 @@ CREATE TABLE `gruppenbestellungen` (
 -- Table structure for table `kategoriezuordnung`
 -- 
 
-DROP TABLE IF EXISTS `kategoriezuordnung`;
 CREATE TABLE `kategoriezuordnung` (
   `produkt_id` int(11) NOT NULL default '0',
   `kategorien_id` int(11) NOT NULL default '0'
@@ -188,7 +250,6 @@ CREATE TABLE `kategoriezuordnung` (
 -- Table structure for table `leitvariable`
 -- 
 
-DROP TABLE IF EXISTS `leitvariable`;
 CREATE TABLE `leitvariable` (
   `name` varchar(20) NOT NULL default '',
   `value` text NOT NULL,
@@ -203,7 +264,6 @@ CREATE TABLE `leitvariable` (
 -- Table structure for table `lieferanten`
 -- 
 
-DROP TABLE IF EXISTS `lieferanten`;
 CREATE TABLE `lieferanten` (
   `id` int(11) NOT NULL auto_increment,
   `name` text NOT NULL,
@@ -218,109 +278,13 @@ CREATE TABLE `lieferanten` (
   `kundennummer` text NOT NULL,
   `sonstiges` text NOT NULL,
   PRIMARY KEY  (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
 -- 
--- Table structure for table `produkte`
+-- Table structure for table `lieferantenkatalog`
 -- 
-
-DROP TABLE IF EXISTS `produkte`;
-CREATE TABLE `produkte` (
-  `id` int(11) NOT NULL auto_increment,
-  `artikelnummer` int(11) NOT NULL default '0',
-  `name` text NOT NULL,
-  `lieferanten_id` int(11) NOT NULL default '0',
-  `produktgruppen_id` int(11) NOT NULL default '0',
-  `einheit` text NOT NULL,
-  `notiz` text NOT NULL,
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `produktgruppen`
--- 
-
-DROP TABLE IF EXISTS `produktgruppen`;
-CREATE TABLE `produktgruppen` (
-  `id` int(11) NOT NULL auto_increment,
-  `name` text NOT NULL,
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `produktkategorien`
--- 
-
-DROP TABLE IF EXISTS `produktkategorien`;
-CREATE TABLE `produktkategorien` (
-  `id` int(11) NOT NULL auto_increment,
-  `name` text NOT NULL,
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
--- 
--- Table structure for table `produktpreise`
--- 
-
---
--- preis braucht 4 nachkommestellen, um netto * (1.07) (MWSt) exakt darzustellen!
---
-DROP TABLE IF EXISTS `produktpreise`;
-CREATE TABLE `produktpreise` (
-  `id` int(11) NOT NULL auto_increment,
-  `produkt_id` int(11) NOT NULL default '0',
-  `preis` decimal(10,4) NOT NULL default '0',
-  `zeitstart` datetime NOT NULL default '0000-00-00 00:00:00',
-  `zeitende` datetime default NULL,
-  `bestellnummer` text NOT NULL,
-  `liefereinheit` text NOT NULL,
-  `gebindegroesse` int(11) NOT NULL default '0',
-  `pfand` decimal(6,2) NOT NULL default '0.00',
-  `mwst` decimal(4,2) NOT NULL default '0.00',
-  `verteileinheit` text NOT NULL,
-  PRIMARY KEY  (`id`),
-  KEY `secondary` (`produkt_id`,`zeitende`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='bestellnummer =\nlieferantenbestellnummer sagt zottel!';
-
-
-CREATE TABLE `bankkonto` (
- `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
- `kontoauszug_jahr` SMALLINT NOT NULL, 
- `kontoauszug_nr` SMALLINT NOT NULL, 
- `eingabedatum` DATE NOT NULL, 
- `lieferanten_id` INT NOT NULL,
- `dienstkontrollblatt_id` INT NOT NULL,
- `betrag` DECIMAL(10,2) NOT NULL,
- `konto_id` smallint(4) NOT NULL,
- `kommentar` TEXT NOT NULL,
- `konterbuchung_id` INT NOT NULL,
-  PRIMARY KEY  (`id`),
-  KEY `secondary` ( `konto_id`, `kontoauszug_jahr`,`kontoauszug_nr`)
- )
- ENGINE = myisam DEFAULT CHARACTER SET utf8 COMMENT = 'Bankkontotransaktionen';
-
-CREATE TABLE `bankkonten` (
-`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-`name` TEXT NOT NULL ,
-`kontonr` TEXT NOT NULL ,
-`blz` TEXT NOT NULL,
-`letzter_auszug_jahr` SMALLINT NOT NULL default 0,
-`letzter_auszug_nr` SMALLINT NOT NULL default 0
-) ENGINE = MYISAM ;
-
-CREATE TABLE `transactions` (
-`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-`used` tinyint(1) NOT NULL default '0'
-) ENGINE = MYISAM ;
-
 
 CREATE TABLE `lieferantenkatalog` (
   `id` int(11) NOT NULL auto_increment,
@@ -336,10 +300,32 @@ CREATE TABLE `lieferantenkatalog` (
   `herkunft` text NOT NULL,
   `preis` decimal(8,2) NOT NULL,
   `katalogdatum` text NOT NULL,
+  `katalogtyp` text NOT NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `secondary` (`lieferanten_id`,`artikelnummer`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=235 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `lieferantenpfand`
+-- 
+
+CREATE TABLE `lieferantenpfand` (
+  `id` int(11) NOT NULL auto_increment,
+  `verpackung_id` int(11) NOT NULL,
+  `bestell_id` int(11) NOT NULL,
+  `anzahl_voll` int(11) NOT NULL default '0',
+  `anzahl_leer` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `secondary` (`bestell_id`,`verpackung_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `pfandverpackungen`
+-- 
 
 CREATE TABLE `pfandverpackungen` (
   `id` int(11) NOT NULL auto_increment,
@@ -347,17 +333,82 @@ CREATE TABLE `pfandverpackungen` (
   `name` text NOT NULL,
   `wert` decimal(8,2) NOT NULL,
   `mwst` decimal(6,2) NOT NULL,
-  PRIMARY KEY  (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
-
-CREATE TABLE `pfandzuordnung` (
-  `id` int(11) NOT NULL auto_increment,
-  `verpackung_id` int(11) NOT NULL,
-  `bestell_id` int(11) NOT NULL,
-  `anzahl_kauf` int(11) NOT NULL default '0',
-  `anzahl_rueckgabe` int(11) NOT NULL default '0',
+  `sort_id` int(11) NOT NULL COMMENT 'um Sortierung synchron mit den Papierzetteln zu halten',
   PRIMARY KEY  (`id`),
-  UNIQUE KEY `secondary` (`bestell_id`,`verpackung_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=9 ;
+  KEY `sort_id` (`sort_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
 
+-- 
+-- Table structure for table `produkte`
+-- 
+
+CREATE TABLE `produkte` (
+  `id` int(11) NOT NULL auto_increment,
+  `artikelnummer` int(11) NOT NULL default '0',
+  `name` text NOT NULL,
+  `lieferanten_id` int(11) NOT NULL default '0',
+  `produktgruppen_id` int(11) NOT NULL default '0',
+  `einheit` text NOT NULL,
+  `notiz` text NOT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `produktgruppen`
+-- 
+
+CREATE TABLE `produktgruppen` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` text NOT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `produktkategorien`
+-- 
+
+CREATE TABLE `produktkategorien` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` text NOT NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `produktpreise`
+-- 
+
+CREATE TABLE `produktpreise` (
+  `id` int(11) NOT NULL auto_increment,
+  `produkt_id` int(11) NOT NULL default '0',
+  `preis` decimal(10,4) NOT NULL default '0.0000',
+  `zeitstart` datetime NOT NULL default '0000-00-00 00:00:00',
+  `zeitende` datetime default NULL,
+  `bestellnummer` text NOT NULL,
+  `liefereinheit` text NOT NULL,
+  `gebindegroesse` int(11) NOT NULL default '0',
+  `pfand` decimal(6,2) NOT NULL default '0.00',
+  `mwst` decimal(4,2) NOT NULL default '0.00',
+  `verteileinheit` text NOT NULL,
+  PRIMARY KEY  (`id`),
+  KEY `secondary` (`produkt_id`,`zeitende`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='bestellnummer =\nlieferantenbestellnummer sagt zottel!';
+
+-- --------------------------------------------------------
+
+-- 
+-- Table structure for table `transactions`
+-- 
+
+CREATE TABLE `transactions` (
+  `id` int(11) NOT NULL auto_increment,
+  `used` tinyint(1) NOT NULL default '0',
+  PRIMARY KEY  (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
