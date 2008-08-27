@@ -47,6 +47,7 @@ function fc_window( $name ) {
     //
     case 'self':
       $parameters = $self_fields;
+      unset( $parameters['postform_id'] );
       $parameters['text'] = 'Neu Laden';
       $parameters['window_id'] = $GLOBALS['window_id'];
       break;
