@@ -4,7 +4,7 @@
   // (nuetzlich fuers debugging)
   // Timo, 2007
 
-// exit(1);
+exit(1); // nur bei Bedarf aktivieren!
 
   require_once('code/config.php');
   require_once('code/err_functions.php');
