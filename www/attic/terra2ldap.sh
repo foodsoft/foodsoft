@@ -75,7 +75,7 @@ echo "upload: $1 $2"
     printf "\n#<br>\n"
   done \
   | iconv -t utf-8 -f iso-8859-1 | tee /tmp/ldif \
-  | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w leckerpotsdam -c -H ldap://fcnahrungskette.qipc.org 2>&1
+  | ldapmodify -x -D cn=superfoodi,ou=fcnahrungskette,o=uni-potsdam,c=de -w PASSWORD -c -H ldap://fcnahrungskette.qipc.org 2>&1
 
   echo "<br>done."
 } 2>&1

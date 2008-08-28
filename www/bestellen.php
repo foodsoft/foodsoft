@@ -19,6 +19,7 @@ if( $hat_dienst_IV ) {
   $kontostand = kontostand( $gruppen_id );
   echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
 }
+$self_fields['besteller_id'] = $gruppen_id;
 
 get_http_var('bestell_id','u',false,true );
 if( $bestell_id ) {
