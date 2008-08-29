@@ -26,7 +26,9 @@ while( $row = mysql_fetch_array( $result ) ) {
   $tables[] = $row[0];
 }
 
-echo '$tables = array(
+echo '<?
+
+$tables = array(
 ';
 
 $tkomma = ' ';
@@ -75,6 +77,8 @@ foreach( $tables as $table ) {
   echo "  )\n";
 }
 
-echo ");";
+echo ");\n";
+
+echo '?' . '>';
 
 ?>
