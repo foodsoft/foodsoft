@@ -95,13 +95,14 @@ if( ! $db_selected ) {
 // database connection established; we can now save settings, fix tables, etc....
 //
 
+$sql = array();
+
 function add_table( $want_table ) {
-  global $tables;
-  echo "<pre> add_table: $want_table\n";
-  $s = "CREATE TABLE $want_table ( \n";
+  global $tables, $sql;
+  $s = "CREATE TABLE `$want_table` ( \n";
   $komma = ' ';
   foreach( $tables[$want_table]['cols'] as $col => $props ) {
-    $s .= "$komma $col {$props['type']} ";
+    $s .= "$komma `$col` {$props['type']} ";
     if( $props['null'] == 'NO' ) {
       $s .= 'NOT NULL ';
     } else {
@@ -113,17 +114,71 @@ function add_table( $want_table ) {
     $s .= $props['extra'] . "\n";
     $komma = ',';
   }
-  $s .= ') ENGINE=MyISAM  DEFAULT CHARSET=utf8';
-  echo $s;
-  echo "</pre>";
+  foreach( $tables[$want_table]['indices'] as $want_index => $props ) {
+    if( $want_index == 'PRIMARY' ) {
+      $s .= ", PRIMARY KEY ( {$props['collist']} ) ";
+    } else {
+      $s .= ', ';
+      if( $props['unique'] ) {
+        $s .= "UNIQUE ";
+      }
+      $s .= "KEY `$want_index` ( {$props['collist']} );";
+    }
+  }
+  $s .= ') ENGINE=MyISAM  DEFAULT CHARSET=utf8;';
+  $sql[] = $s;
 }
 
-function add_col( $want_table, $want_col ) {
-  echo "add_col: $want_table, $want_col";
+function add_col( $want_table, $want_col, $op = 'ADD' ) {
+  global $tables, $sql;
+  $col = $tables[$want_table]['cols'][$want_col];
+  $type = $col['type'];
+  $null = ( $col['null'] == 'NO' ? 'NOT NULL' : 'NULL' );
+  $default = ( $col['default'] !== '' ? "default " . $col['default'] : '' );
+  $extra = $col['extra'];
+  $s = " ALTER TABLE $want_table $op COLUMN `$want_col` $type $null $default $extra;";
+  $sql[] = $s;
 }
+
 function add_index( $want_table, $want_index ) {
-  echo "add_index: $want_table, $want_index";
+  global $tables, $sql;
+  $index = $tables[$want_table]['indices'][$want_index];
+  $s = " ALTER TABLE $want_table ADD ";
+  if( $want_index == 'PRIMARY' ) {
+    $s .= "PRIMARY KEY ( {$index['collist']} )";
+  } else {
+    if( $index['unique'] ) {
+      $s .= "UNIQUE ";
+    }
+    $s .= "KEY `$want_index` ( {$index['collist']} );";
+  }
+  $sql[] = $s;
 }
+
+function delete_table( $table ) {
+  global $sql;
+  $sql[] = "DROP TABLE $table; ";
+}
+
+function delete_col( $table, $col ) {
+  global $sql;
+  $sql[] = "ALTER TABLE $table DROP $col;";
+}
+function delete_index( $table, $index ) {
+  global $sql;
+  $sql[] = "ALTER TABLE $table DROP INDEX $index;";
+}
+
+function fix_col( $table, $col ) {
+  add_col( $table, $col, 'MODIFY' );
+}
+function fix_index( $table, $index ) {
+  delete_index( $table, $index );
+  add_index( $table, $index );
+}
+
+
+
 
 if( $HTTP_POST_VARS['action'] == 'setup' ) {
   foreach( $HTTP_POST_VARS as $name => $value ) {
@@ -171,6 +226,38 @@ if( $HTTP_POST_VARS['action'] == 'setup' ) {
             
           
     
+if( count( $sql ) > 0 ) {
+  ?>
+    <table>
+      <tr>
+        <th>SQL instruction</th>
+        <th>Result</th>
+      </tr>
+  <?
+  foreach( $sql as $s ) {
+    ?>
+      <tr>
+        <td><pre> <? echo "$s\n"; ?></pre></td>
+    <?
+    $result = mysql_query( $s );
+    if( $result ) {
+      ?>
+        <td class='ok'>OK</td>
+        </tr>
+      <?
+    } else {
+      ?>
+        <td class='warn'>
+          failed:
+          <? echo mysql_error(); ?>
+        </td>
+        </tr>
+      <?
+      break;
+    }
+  }
+  ?> </table> <?
+}
 
 
 
@@ -220,6 +307,7 @@ foreach( $tables as $table => $want ) {
         </td>
       </tr>
     <?
+    $id++;
     continue;
   }
   echo $thead;
@@ -362,7 +450,7 @@ foreach( $tables as $table => $want ) {
                 <td class='alert' style='text-align:right;'>
                   fix index?  <input type='checkbox' name='fix_index_<? echo $id; ?>'>
                 <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-                <input type='hidden' name='index_<? echo $id; ?>' value='<? echo $field; ?>'>
+                <input type='hidden' name='index_<? echo $id; ?>' value='<? echo $iname; ?>'>
                 </td>
               </tr>
             <?

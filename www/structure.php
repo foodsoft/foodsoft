@@ -1,3 +1,4 @@
+<?
 $tables = array(
   'Dienste' => array(
     'cols' => array(
@@ -43,7 +44,7 @@ $tables = array(
       , 'GruppenID' => array( 'unique' => 0, 'collist' => 'Dienst' )
     )
   )
-, 'bankkonten' => array(
+, 'die_konten' => array(
     'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
@@ -888,7 +889,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' )
+      , 'blubb' => array( 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' )
     )
   )
 , 'pfandverpackungen' => array(
@@ -917,7 +918,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'mwst' => array(
+    , 'ust' => array(
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
       , 'default' => ''
@@ -932,7 +933,6 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'sort_id' => array( 'unique' => 0, 'collist' => 'sort_id' )
     )
   )
 , 'produkte' => array(
@@ -1019,7 +1019,7 @@ $tables = array(
       )
     )
     , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id, bla' )
     )
   )
 , 'produktpreise' => array(
@@ -1055,7 +1055,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'bestellnummer' => array(
-        'type' =>  "text"
+        'type' =>  "varchar(20)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
@@ -1093,7 +1093,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'produkt_id, zeitende' )
+      , 'secondary' => array( 'unique' => 1, 'collist' => 'produkt_id, zeitende' )
     )
   )
 , 'transactions' => array(
@@ -1116,3 +1116,4 @@ $tables = array(
     )
   )
 );
+?>
