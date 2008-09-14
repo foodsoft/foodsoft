@@ -11,6 +11,8 @@ $editable = ( ! $readonly and ( $dienst == 4 ) );
 get_http_var( 'action','w','' );
 $editable or $action = '';
 
+$muell_id = sql_muell_id();
+
 if( $action == 'basarzuteilung' ) {
   need_http_var('fieldcount','u' );
   need_http_var('gruppe','u', false );
@@ -33,19 +35,11 @@ if( $action == 'basarzuteilung' ) {
         $pr = sql_bestellvorschlag_daten( $id, ${"produkt$i"} );
         preisdatenSetzen( & $pr );
         $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
-        sql_basar2group( $gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
+        if( $gruppen_menge > 0 or ( $gruppe == $muell_id ) )
+          sql_basar2group( $gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
     }
   }
 }
-
-// if( $action == 'schwund' ) {
-//   need_http_var( 'produkt_id', 'u' );
-//   need_http_var( 'bestellung', 'u' );
-//   need_http_var( 'menge', 'f' );
-//   need( $muell_id );
-//   // echo "Schwundbuchung: $produkt_id, $bestellung, $menge<br>";
-//   sql_basar2group( $muell_id, $produkt_id, $bestellung, $menge );
-// }
 
 
 
