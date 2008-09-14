@@ -1,4 +1,5 @@
 <?
+
 $tables = array(
   'Dienste' => array(
     'cols' => array(
@@ -44,7 +45,7 @@ $tables = array(
       , 'GruppenID' => array( 'unique' => 0, 'collist' => 'Dienst' )
     )
   )
-, 'die_konten' => array(
+, 'bankkonten' => array(
     'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
@@ -185,6 +186,12 @@ $tables = array(
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
+      , 'extra' => ''
+      )
+   , 'salt' => array(
+        'type' =>  "char(8)"
+      , 'null' => 'NO'
+      , 'default' => '35464'
       , 'extra' => ''
       )
     , 'aktiv' => array(
@@ -889,7 +896,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'blubb' => array( 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' )
+      , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' )
     )
   )
 , 'pfandverpackungen' => array(
@@ -918,7 +925,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'ust' => array(
+    , 'mwst' => array(
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
       , 'default' => ''
@@ -933,6 +940,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'sort_id' => array( 'unique' => 0, 'collist' => 'sort_id' )
     )
   )
 , 'produkte' => array(
@@ -1019,7 +1027,7 @@ $tables = array(
       )
     )
     , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id, bla' )
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     )
   )
 , 'produktpreise' => array(
@@ -1093,7 +1101,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'produkt_id, zeitende' )
+      , 'secondary' => array( 'unique' => 0, 'collist' => 'produkt_id, zeitende' )
     )
   )
 , 'transactions' => array(
@@ -1105,6 +1113,36 @@ $tables = array(
       , 'extra' => 'auto_increment'
       )
     , 'used' => array(
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    , 'cookie' => array(
+        'type' =>  "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'itan' => array(
+        'type' =>  "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'issued' => array(
+        'type' =>  "timestamp"
+      , 'null' => 'NO'
+      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'extra' => ''
+      )
+    , 'login_gruppen_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    , 'dienst' => array(
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
