@@ -51,11 +51,7 @@ if (!($db = mysql_connect($db_server,$db_user,$db_pwd)) || !@MYSQL_SELECT_DB($db
   if( ! isset( $foodsoftdir ) ) {
     $foodsoftdir = ereg_replace( '/[^/]+$', '', $_SERVER['SCRIPT_NAME'] );
     //
-    // ausnahme: einige in ../windows/ wurden direkt aufgerufen, aber das
-    // sollte jetzt nicht mehr vorkommen:
-    /// $foodsoftdir = ereg_replace( '/windows$', '', $foodsoftdir );
-    //
-    // (noch'ne ausnahme: aufruf aus dem wiki heraus...)
+    // ausnahme: aufruf aus dem wiki heraus:
     //
     $foodsoftdir = ereg_replace( '/wiki$', '/foodsoft', $foodsoftdir );
   }

@@ -66,7 +66,7 @@ if( $action == 'delete_price' ) {
 if( $bestell_id ) {
   if( $action == 'preiseintrag_waehlen' ) {
     need_http_var( 'preis_id','u' );
-    need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Ünderung nicht möglich: Bestellung ist bereits abgerechnet!" );
+    need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     doSql ( "UPDATE bestellvorschlaege
        SET produktpreise_id='$preis_id'
        WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produkt_id'
