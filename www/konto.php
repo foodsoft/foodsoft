@@ -80,7 +80,7 @@ if( ! $konto_id )
 // auszug auswaehlen:
 //
 
-get_http_var( 'auszug', '/\d+-\d+/', 0 );
+get_http_var( 'auszug', '/^\d+-\d+$/', 0 );
 if( $auszug ) {
   list( $auszug_jahr, $auszug_nr ) = explode( '-', $auszug );
   $self_fields['auszug_jahr'] = $auszug_jahr;
