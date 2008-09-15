@@ -8,38 +8,40 @@
 
   if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
 
+    $row = false;
     if( $dienst > 0 and $dienstkontrollblatt_id > 0 ) {
       $result = dienstkontrollblatt_select( $dienstkontrollblatt_id );
       $row = mysql_fetch_array( $result );
-  
-      echo "
-        <form class='small_form' action='index.php?action=logout' method='post'>
+    }
+    if( $row ) {
+      ?>
+        <form class='small_form' action='index.php?login=logout' method='post'>
+          <? echo self_post(); ?>
           <fieldset>
             <legend>
               Abmeldung im Dienstkontrollblatt
             </legend>
             <div class='newfield'>
               <label>Dein Name:</label>
-              <input type='text' size='20' name='coopie_name' value='{$row['name']}'></input>
+              <input type='text' size='20' name='coopie_name' value='<? echo $row['name']; ?>'></input>
               <label style='padding-left:4em;'>Telefon:</label>
-              <input type='text' size='20' name='telefon' value='{$row['telefon']}'></input>
+              <input type='text' size='20' name='telefon' value='<? echo $row['telefon']; ?>'></input>
             </div>
             <div class='newfield'>
               <label>Notiz fuers Dienstkontrollblatt (zum Beispiel: wo die Ordner liegen...):</label>
               <br>
-              <textarea cols='80' rows='4' name='notiz'>{$row['notiz']}</textarea>
+              <textarea cols='80' rows='4' name='notiz'><? echo $row['notiz']; ?></textarea>
             </div>
             <div class='newfield'>
               <input type='submit' name='submit' value='Abmelden...'></input>
             </div>
           </fieldset>
         </form>
-      ";
+      <?
     } else {
-
       // kein eintrag zum aktualisieren, also gleich ausloggen:
       //
-      reload_immediately( 'index.php?action=logout' );
+      reload_immediately( 'index.php?login=logout' );
     }
 
   } else {
