@@ -21,8 +21,8 @@ $bnummer and $filter .= " AND bestellnummer='$bnummer'";
 get_http_var( 'anummer', 'w', '' ) or $anummer = '';
 $anummer and $filter .= " AND artikelnummer='$anummer'";
 
-get_http_var( 'name', 'M', '' ) or $name = '';
-$name and $filter .= " AND name like '%$name%'";
+get_http_var( 'name', 'H', '' ) or $name = '';
+$name and $filter .= " AND name like '%'".mysql_real_escape_string($name)."%'";
 
 get_http_var( 'minpreis', 'f', 0 ) or $minpreis = 0;
 ( $minpreis > 0 ) and $filter .= " AND preis >= $minpreis";
