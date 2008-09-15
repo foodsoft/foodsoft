@@ -652,6 +652,15 @@ foreach( $tables as $table => $want ) {
 if( ! $problems ) {
 
 $leitvariable = array(
+  'fc_name' => array(
+    'meaning' => 'Name der Foodcoop'
+  , 'default' => 'Nahrungskette'
+  )
+, 'motd' => array(
+    'meaning' => 'message of the day: wird auf der Startseite angezeigt'
+  , 'default' => 'Willkommen bei der Nahrungskette!'
+  )
+,
   'readonly' => array(
     'meaning' => 'Datenbank schreibgeschuetzt setzen (sehr eingeschränkte bestimmte sind dennoch moeglich)'
   , 'default' => '0'
@@ -664,6 +673,14 @@ $leitvariable = array(
     'meaning' => 'Sockeleinlage pro Gruppenmitglied'
   , 'default' => '6.00'
   )
+, 'basar_id' => array(
+    'meaning' => 'Nummer der speziellen Müll-Gruppe (traditionell: 13)'
+  , 'default' => '13'
+  )
+, 'basar_id' => array(
+    'meaning' => 'Nummer der speziellen Basar-Gruppe (traditionell: 99)'
+  , 'default' => '99'
+  )
 );
 
   ?>
@@ -675,41 +692,67 @@ $leitvariable = array(
       <th>Wert</th>
     </tr>
   <?
-  foreach( $leitvariable as $var => $props ) {
+  $result = mysql_query( "SELECT * FROM leitvariable" );
+
+  $header_written = false;
+  while( $row = mysql_fetch_array( $result ) ) {
+    $name = $row['name'];
+    if( ! isset( $leitvariable[$name] ) )
+      continue;
+    $props = $leitvariable[$name];
+    if( ! $header_written ) {
+      ?><th colspan='3'>Variable in der Datenbank:</th><?
+      $header_written = true;
+    }
+    ?>
+      <tr>
+        <th><? echo $name; ?></th>
+        <td><? echo $props['meaning']; ?></td>
+        <td><input type='text' name='leitvariable_<?echo $name; ?> size='20' value='<? echo $row['value']; ?>'></td>
+      </tr>
+    <?
+    $leitvariable[$name] = false;
+  }
+
+  $header_written = false;
+  foreach( $leitvariable as $name => $props ) {
+    if( ! $props )
+      continue;    // schon oben ausgegeben
+    if( ! $header_written ) {
+      ?><th colspan='3' class='alert'>Variable NOCH NICHT in der Datenbank:
+          <div class='small'>(werden beim Abspeichern neu eingetragen)</div>
+        </th><?
+      $header_written = true;
+    }
     ?>
       <tr>
         <th><? echo $var; ?></th>
         <td><? echo $props['meaning']; ?></td>
-        <td>
-    <?
-      $result = mysql_query( "SELECT * FROM leitvariable WHERE name='$var'" );
-      $row = mysql_fetch_array( $result );
-      if( $row ) {
-        $value = $row['value'];
-      } else{
-        $value = $props['default'];
-        ?>
-          <div class='alert'>Noch nicht in der Datenbank gespeichert!</div>
-        <?
-      }
-    ?>
-        <input type='text' size='20' value='<? echo $value; ?>'></td>
+        <td><input type='text' name='leitvariable_<?echo $name; ?> size='20' value='<? echo $props['default']; ?>'></td>
       </tr>
     <?
   }
+
   $result = mysql_query( "SELECT * FROM leitvariable" );
+  $header_written = false;
   while( $row = mysql_fetch_array( $result ) ) {
     if( isset( $leitvariable[$row['name']] ) )
       continue;
+    if( ! $header_written ) {
+      ?><th colspan='3' class='alert'>unerwartete Variable in der Datenbank:
+          <div class='small'>(sollte gelöscht werden, um Nebeneffekte zu vermeiden)</div>
+        </th><?
+      $header_written = true;
+    }
     ?>
       <tr>
-        <th><? echo $var; ?></th>
-        <td class='alert'>keine aktuell benutzte Konfigurationsvariable - löschen?</td>
-        <td><input type='text' size='20' value='<? echo $value; ?>'></td>
+        <th><? echo $row['name']; ?></th>
+        <td class='alert'>undefinierte Variable - löschen?
+        </td>
+        <td><? echo $row['value']; ?></td>
       </tr>
     <?
   }
-  
 
 
   ?> </table> <?
@@ -718,7 +761,7 @@ $leitvariable = array(
 ?>
 
 <div style='text-align:left;padding:1em 1em 2em 1em;'>
-  <input type='submit' style='padding:1ex;' value='Submit'>
+  <input type='submit' style='padding:1ex;' value='Speichern / Ausführen' title='Abspeichern und/oder &Auml;nderungen vornehmen'>
 </div>
 
 </form>
