@@ -65,7 +65,7 @@ function sql_select_single_field( $sql, $field, $allownull = false ) {
 }
 
 function sql_update( $table, $where, $values, $escape_and_quote = true ) {
-  $table == 'leitvariable' or $table == 'transactions' or fail_if_readonly();
+  $table == 'leitvariable' or $table == 'transactions' or $table == 'log' or fail_if_readonly();
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
@@ -92,7 +92,7 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
 }
 
 function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = true ) {
-  $table == 'leitvariable' or $table == 'transactions' or fail_if_readonly();
+  $table == 'leitvariable' or $table == 'transactions' or $table == 'log' or fail_if_readonly();
   $komma='';
   $update_komma='';
   $cols = '';
@@ -127,6 +127,11 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
     return mysql_insert_id();
   else
     return FALSE;
+}
+
+function logger( $notiz ) {
+  global $session_id;
+  return sql_insert( 'logbook', array( 'notiz' => $notiz, 'session_id' => $session_id ) );
 }
 
 
@@ -208,6 +213,7 @@ define('STATUS_BESTELLEN', 10 );
 define('STATUS_LIEFERANT', 20 );
 define('STATUS_VERTEILT', 30 );
 define('STATUS_ABGERECHNET', 40 );
+define('STATUS_ABGESCHLOSSEN', 45 );
 define('STATUS_ARCHIVIERT', 50 );
 
 function rechnung_status_string( $state ) {
@@ -220,6 +226,8 @@ function rechnung_status_string( $state ) {
       return 'geliefert und verteilt';
     case STATUS_ABGERECHNET:
       return 'abgerechnet';
+    case STATUS_ABGESCHLOSSEN:
+      return 'abgeschlossen';
     case STATUS_ARCHIVIERT:
       return 'archiviert';
   }
@@ -855,26 +863,43 @@ if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 //
 //////////////////////////////
 
+$urandom_handle = false;
+function random_hex_string( $bytes ) {
+  global $urandom_handle;
+  if( ! $urandom_handle )
+    need( $urandom_handle = fopen( '/dev/urandom', 'r' ), 'konnte /dev/urandom nicht oeffnen' );
+  $s = '';
+  while( $bytes > 0 ) {
+    $c = fgetc( $urandom_handle );
+    need( $c !== false, 'Lesefehler von /dev/urandom' );
+    $s .= sprintf( '%02x', ord($c) );
+    $bytes--;
+  }
+  return $s;
+}
+
 function check_password( $gruppen_id, $gruppen_pwd ) {
-  global $crypt_salt, $specialgroups;
+  global $specialgroups;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     if( in_array( $gruppen_id, $specialgroups ) )
       return false;
     $row = sql_gruppendaten( $gruppen_id );
     if( ! $row['aktiv'] )
       return false;
-    if( $row['passwort'] == crypt($gruppen_pwd,$crypt_salt) )
+    if( $row['passwort'] == crypt($gruppen_pwd,$row['salt']) )
       return $row;
   }
   return false;
 }
 
 function set_password( $gruppen_id, $gruppen_pwd ) {
-  global $crypt_salt, $login_gruppen_id;
+  global $login_gruppen_id;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
+    $salt = random_hex_string( 4 );
     return sql_update( 'bestellgruppen', $gruppen_id, array(
-      'passwort' => crypt( $gruppen_pwd, $crypt_salt )
+      'salt' => $salt
+    , 'passwort' => crypt( $gruppen_pwd, $salt )  // TODO: this is not yet very good...
     ) );
   }
 }
@@ -1007,6 +1032,7 @@ function select_bestellgruppen( $filter = '', $more_select = '' ) {
     , bestellgruppen.id as id
     , bestellgruppen.aktiv as aktiv
     , bestellgruppen.passwort as passwort
+    , bestellgruppen.salt as salt
     , ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
@@ -1249,7 +1275,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
  */
 
 function sql_insert_group($newNumber, $newName, $pwd){
-	global $problems, $msg, $crypt_salt;
+	global $problems, $msg;
 
 	  $new_id = check_new_group_nr($newNumber) ;
 
@@ -1259,11 +1285,13 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
 	    if( ! $problems ) {
-		  return sql_insert( 'bestellgruppen', array(
+        $salt = crypto_random();
+        return sql_insert( 'bestellgruppen', array(
           'id' => $new_id
         , 'aktiv' => 1
         , 'name' => $newName
-        , 'passwort' => crypt( $pwd, $crypt_salt )
+        , 'salt' => $salt
+        , 'passwort' => crypt( $pwd, $salt )
         ) );
 	   } else {
 		   return FALSE;
@@ -1490,7 +1518,7 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $liefera
 
 function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
   nur_fuer_dienst_IV();
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
   ) );
@@ -1508,7 +1536,7 @@ function sql_insert_bestellvorschlaege(
   global $hat_dienst_IV;
 
   fail_if_readonly();
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
 
   // finde NOW() aktuellen preis:
   if( ! $preis_id )
@@ -1586,6 +1614,7 @@ function sql_bestellpreis($bestell_id, $produkt_id){
 
 function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
   need( gruppe_ist_aktiv( $gruppe ) or ($gruppe == sql_muell_id()), "sql_create_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
+  need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurueckgeben */  )
@@ -2046,7 +2075,7 @@ function verteilmengenZuweisen($bestell_id){
 
 function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
   nur_fuer_dienst(1,3,4);
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'bestellvorschlaege'
   , array( 'produkt_id' => $produkt_id, 'gesamtbestellung_id' => $bestell_id )
   , array( 'liefermenge' => $menge )
@@ -2054,7 +2083,7 @@ function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
 }
 
 function nichtGeliefert( $bestell_id, $produkt_id ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   doSql( "UPDATE bestellzuordnung
     INNER JOIN gruppenbestellungen
        ON gruppenbestellung_id = gruppenbestellungen.id
@@ -2124,7 +2153,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
 
 function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id ) {
   $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   doSql( " DELETE FROM bestellzuordnung
            WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
   return sql_insert( 'bestellzuordnung', array(
@@ -2136,6 +2165,7 @@ function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id 
 }
 
 function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
+  need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
   $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
      VALUES ('$produkt','$gruppenbestellung_id','$menge', 2)
@@ -2153,7 +2183,7 @@ function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
  *    - liefermenge wird noch _nicht_ gesetzt
  */
 function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
    sql_insert_bestellvorschlaege( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
    $gruppenbestellung_id = sql_create_gruppenbestellung( sql_basar_id(), $bestell_id );
    return sql_insert( 'bestellzuordnung', array(
@@ -2720,7 +2750,7 @@ define( 'PFAND_OPT_ALLE_BESTELLUNGEN', 2 );
 // _ersetzt_ fruehere zuordnungen (nicht additiv!)
 //
 function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll, $anzahl_leer ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   if( $anzahl_voll > 0 or $anzahl_leer > 0 ) {
     sql_insert( 'lieferantenpfand' , array(
         'verpackung_id' => $verpackung_id
@@ -2736,7 +2766,7 @@ function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll
 }
 
 function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   if( $anzahl_leer > 0 ) {
     // pfandrueckgabe ist jetzt an eine gesamtbestellung gebunden, und wir brauchen eine gruppenbestellung:
     sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
@@ -4017,17 +4047,89 @@ function sql_anzahl_katalogeintraege( $lieferanten_id ) {
 //
 ////////////////////////////////////
 
+// variablen die in URL (method='GET' oder in href-url) auftreten duerfen,
+// mit typen:
+//
+$foodsoft_get_vars = array(
+  'action' => 'w'
+, 'aktion' => 'w'
+, 'area' => 'w'
+, 'auszug' => '/\d+-\d+/'
+, 'auszug_jahr' => 'u'
+, 'auszug_nr' => 'u'
+, 'auszus_jahr' => 'u'
+, 'bestell_id' => 'u'
+, 'buchung_id' => 'u'
+, 'confirmed' => 'w'
+, 'dienst_rueckbestatigen' => 'w'
+, 'download' => 'w'
+, 'gruppen_id' => 'u'
+, 'id' => 'u'
+, 'id_to' => 'u'
+, 'login' => 'w'
+, 'katalogdatum' => 'w'
+, 'katalogtyp' => 'w'
+, 'konto_id' => 'u'
+, 'lieferanten_id' => 'u'
+, 'meinkonto' => 'u'
+, 'optionen' => 'u'
+, 'orderby' => 'w'
+, 'postform_id' => 'u'
+, 'prev_id' => 'u'
+, 'produkt_id' => 'u'
+, 'ro' => 'u'
+, 'spalten' => 'u'
+, 'state' => 'u'
+, 'transaktion_id' => 'u'
+, 'verpackung_id' => 'u'
+, 'window' => 'w'
+, 'window_id' => 'w'
+);
+
+$http_input_sanitized = false;
+function sanitize_http_input() {
+  global $HTTP_GET_VARS, $HTTP_POST_VARS
+       , $foodsoft_get_vars, $http_input_sanitized, $session_id;
+
+  // echo "sanitize_input_called: ". var_export(debug_backtrace());
+  foreach( $HTTP_GET_VARS as $key => $val ) {
+    need( isset( $foodsoft_get_vars[$key] ), 'unerwartete Variable $key in URL uebergeben' );
+    need( checkvalue( $val, $foodsoft_get_vars[$key] ), 'unerwarteter Wert fuer Variable $key in URL' );
+  }
+  if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+    need( isset( $HTTP_POST_VARS['postform_id'] ), 'fehlerhaftes Formular uebergeben' );
+    sscanf( $HTTP_POST_VARS['postform_id'], "%u_%s", &$t_id, &$itan );
+    need( $t_id, 'fehlerhaftes Formular uebergeben' );
+    $row = sql_select_single_row( "SELECT * FROM transactions WHERE id=$t_id", true );
+    need( $row, 'fehlerhaftes Formular uebergeben' );
+    if( $row['used'] ) {
+      // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
+      $HTTP_POST_VARS = array();
+      echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
+    } else {
+      need( $row['itan'] == $itan, 'ungueltige iTAN uebergeben' );
+      // echo "session_id: $session_id, from db: {$row['session_id']} <br>";
+      need( $row['session_id'] == $session_id, 'ungueltige session_id' );
+      // id ist noch unverbraucht: jetzt entwerten:
+      sql_update( 'transactions', $t_id, array( 'used' => 1 ) );
+    }
+  } else {
+    $HTTP_POST_VARS = array();
+  }
+  $http_input_sanitized = true;
+}
+
+
 function checkvalue( $val, $typ){
 	  $pattern = '';
 	  switch( substr( $typ, 0, 1 ) ) {
 	    case 'H':
-        // FIXME: 'H' zum default machen?
         if( get_magic_quotes_gpc() )
           $val = stripslashes( $val );
 	      $val = htmlspecialchars( $val );
 	      break;
 	    case 'M':
-	      $val = mysql_real_escape_string( $val );
+	      need( 0, 'interner Fehler in checkvalue: typ M nicht mehr verwenden!' );
 	      break;
       case 'R':
         break;
@@ -4070,7 +4172,6 @@ function checkvalue( $val, $typ){
 	    }
 	  }
       return $val;
-
 }
 
 // get_http_var:
@@ -4079,13 +4180,14 @@ function checkvalue( $val, $typ){
 //   d : ganze Zahl
 //   u (default wenn name auf _id endet): nicht-negative ganze Zahl
 //   U positive ganze Zahl (also echt groesser als NULL)
-//   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
 //   H : wendet htmlspecialchars an (erlaubt sichere und korrekte ausgabe in HTML)
 //   R : raw: keine Einschraenkung, keine Umwandlung
-//   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _
 //   /.../: regex pattern. Wert wird ausserdem ge-trim()-t
+// deprecated (obwohl vor langem mal default...) sind:
+//   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
+//   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
 // - default:
 //   - wenn array erwartet wird, kann der default ein array sein.
 //   - wird kein array erwartet, aber default is ein array, so wird $default[$name] versucht
@@ -4093,34 +4195,13 @@ function checkvalue( $val, $typ){
 // per POST uebergebene variable werden nur beruecksichtigt, wenn zugleich eine
 // unverbrauchte transaktionsnummer 'postform_id' uebergeben wird (als Sicherung
 // gegen mehrfache Absendung desselben Formulars per "Reload" Knopfs des Browsers)
-/**
- *
- */
-function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = false ) {
+//
+function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
   global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
-  global $postform_id;
+  global $postform_id, $http_input_sanitized;
 
-  if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
-    if( ! isset( $postform_id ) ) {
-      if( isset( $HTTP_POST_VARS['postform_id'] ) ) {
-        $postform_id = $HTTP_POST_VARS['postform_id'];
-        $used = sql_select_single_field( "SELECT used FROM transactions WHERE id=$postform_id", 'used', true );
-        if( $used ) {
-          // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
-          $HTTP_POST_VARS = array();
-          echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
-        } else {
-          // id ist noch unverbraucht: jetzt entwerten:
-          sql_update( 'transactions', $postform_id, array( 'used' => 1 ) );
-          // echo "<div class='ok'>postform_id entwertet: $postform_id</div>";
-        }
-      } else {
-        // TODO: warnung ausgeben: formular hatte keine Transaktionsnummer!
-      }
-    }
-  } else {
-    $HTTP_POST_VARS = array();
-  }
+  if( ! $http_input_sanitized )
+    sanitize_http_input();
 
   if( substr( $name, -2 ) == '[]' ) {
     $want_array = true;
@@ -4160,13 +4241,13 @@ function get_http_var( $name, $typ = 'A', $default = NULL, $is_self_field = fals
       return FALSE;
     }
   }
-	  if( $typ == 'A' ) {
-	    if( substr( $name, -3 ) == '_id' ) {
-	      $typ = 'u';
-	    } else {
-	      $typ = 'M';
-	    }
-	  }
+  if( $typ == 'A' ) {
+    if( substr( $name, -3 ) == '_id' ) {
+      $typ = 'u';
+    } else {
+      $typ = 'H';
+    }
+  }
 
   if(is_array($arry)){
     if( ! $want_array ) {
@@ -4569,20 +4650,30 @@ function self_url( $exclude = array() ) {
   return $output;
 }
 
+function set_itan() {
+  global $self_fields, $session_id;
+  $itan = random_hex_string(5);
+  $id = sql_insert( 'transactions' , array(
+    'used' => 0
+  , 'session_id' => $session_id
+  , 'itan' => $itan
+  ) );
+  $self_fields['postform_id'] = $id.'_'.$itan;
+}
+
 // self_post:
 // liefert 'hidden' input elemente, zum neuladen derselben seite per post, zu allen
 // variablen in global $self_fields, mit ausnahme der variablen in $exclude:
 //
-// in jedem Formular wird automatisch eine Transaktionsnummer postform_id eingefuegt.
-// 
+// in jedem Formular wird automatisch eine eindeutige TAN, postform_id, einfgefuegt
+//
 function self_post( $exclude = array() ) {
   global $self_fields, $new_post_id;
 
   // bei bedarf neue nummer ziehen, aber nur einmal pro script:
   //
-  if( ! isset( $self_fields['postform_id'] ) ) {
-    $self_fields['postform_id'] = sql_insert( 'transactions', array( 'used' => 0 ) );
-  }
+  if( ! isset( $self_fields['postform_id'] ) )
+    set_itan();
 
   $output = '';
   if( ! $exclude ) {
