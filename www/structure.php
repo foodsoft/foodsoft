@@ -1118,22 +1118,35 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
-    , 'cookie' => array(
-        'type' =>  "varchar(10)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
     , 'itan' => array(
         'type' =>  "varchar(10)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'issued' => array(
-        'type' =>  "timestamp"
+    , 'session_id' => array(
+        'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+    )
+  )
+, 'sessions' => array(
+    'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'cookie' => array(
+        'type' =>  "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
       , 'extra' => ''
       )
     , 'login_gruppen_id' => array(
@@ -1148,10 +1161,48 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
+    , 'dienstkontrollblatt_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+    )
+  )
+, 'logbook' => array(
+    'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'session_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'time_stamp' => array(
+        'type' =>  "timestamp"
+      , 'null' => 'NO'
+      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'extra' => ''
+      )
+    , 'notiz' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     )
   )
 );
+
 ?>
