@@ -68,13 +68,6 @@
           $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
         }
       }
-      //      // update_form ist erst am ende des skripts verfuegbar!
-      //      $print_on_exit = "
-      //        <script type='text/javascript'>
-      //          document.forms['update_form'].message.value = 'hello, world';
-      //          notify_up();
-      //        </script>
-      //      " . $print_on_exit;
     }
   }
 
