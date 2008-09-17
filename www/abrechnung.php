@@ -9,10 +9,10 @@ need_http_var( 'bestell_id', 'u', true );
 
 setWikiHelpTopic( 'foodsoft:Abrechnung' );
 
-$state = getState( $bestell_id );
+$status = getState( $bestell_id );
 
-need( $state >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
-need( $state < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
+need( $status >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
+need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 
 $bestellung = sql_bestellung( $bestell_id );
 $bestellung_name = $bestellung['name'];
@@ -27,8 +27,6 @@ $lieferant_name = $lieferant['name'];
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
-
-$status = getState( $bestell_id );
 
 if( $action == 'save' ) {
   if( $status == STATUS_ABGERECHNET ) {
@@ -56,7 +54,7 @@ if( $action == 'save' ) {
 $bestellung = sql_bestellung( $bestell_id );
 $status = getState( $bestell_id );
 $ro_tag = '';
-if( $status >= STATUS_ABGERECHNET ) {
+if( ! $editable or ( $status >= STATUS_ABGERECHNET ) ) {
   $ro_tag = 'readonly';
 }
 
@@ -192,7 +190,6 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
       <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_brutto_soll']
                               + $lieferanten_soll['pfand_leer_brutto_soll']
                               + $lieferanten_soll['pfand_voll_brutto_soll']  ); ?>
-
       </td>
       <td colspan='2'>&nbsp;</td>
     </tr>
