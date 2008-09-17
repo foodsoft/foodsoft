@@ -1,17 +1,14 @@
-<?php
+<?
+// dump.php --- dump database structure
+//
+// This script must _not_ be accessible over the net during normal
+// operation - it is for developers only, to dump the database
+// structure in easily PHP-readable format.
+//
 
 header("Content-Type: text/plain");
 
-// <!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
-// <html>
-// <head>
-//   <title>Foodsoft - Setup Tool</title>
-//   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-//   <link rel='stylesheet' type='text/css' href='css/foodsoft.css'>
-// </head>
-// <body>
-// <pre>
-
+exit(1);  // keep disabled when not needed
 
 require_once('code/config.php');
 
