@@ -135,32 +135,6 @@ function logger( $notiz ) {
 }
 
 
-function need( $exp, $comment = "Fataler Fehler" ) {
-  global $print_on_exit;
-  if( ! $exp ) {
-    ?>
-      <div class='warn'>
-        <? echo htmlspecialchars( "$comment $exp" ); ?>
-        <a href='<? echo self_url(); ?>'>weiter...</a>
-      </div>
-    <?
-    echo "$print_on_exit";
-    exit();
-  }
-  return true;
-}
-
-
-function fail_if_readonly() {
-  global $readonly, $print_on_exit;
-  if( $readonly ) {
-    echo "
-      <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div>
-      $print_on_exit
-    ";
-    exit();
-  }
-}
 
 function adefault( $array, $index, $default ) {
   if( isset( $array[$index] ) )
