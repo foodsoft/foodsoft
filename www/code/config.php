@@ -17,6 +17,9 @@ $db_pwd    =  getenv( 'mysql_db_password' ); // password to authenticate with
 // $db_user   = "INSERT_NAME_OF_DATABASE_USER";
 // $db_pwd    = "INSERT_PASSWORD"; 
 
+$allow_setup_from = '141.89.116.*'; // allow to run setup.php from these IPs
+// $allow_setup_from = false;       // uncomment this after installation!
+
 // ... that's it! (all further configuration will be stored in the database)
 
 ?>
