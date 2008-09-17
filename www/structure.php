@@ -673,12 +673,6 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'local' => array(
-        'type' =>  "tinyint(1)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
     , 'comment' => array(
         'type' =>  "text"
       , 'null' => 'NO'
