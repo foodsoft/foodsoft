@@ -19,98 +19,72 @@
 //  - $coopie_name
 //  - $dienstkontrollblatt_id
 
-// Bei aufruf aus dem wiki sind wir in einer function, wir brauchen daher 
-// die global-deklarationen:
-//
-  global $angemeldet,
-         $login_gruppen_id,
-         $login_gruppen_name,
-         $dienst,
-         $coopie_name,
-         $dienstkontrollblatt_id,
-         $foodsoftpath,
-         $foodsoftdir,
-         $action,
-         $session_id,
-         $motd;
+function init_login() {
+  global $angemeldet, $session_id, $login_gruppen_id, $login_gruppen_name
+       , $dienst, $dienstkontrollblatt_id, $coopie_name;
+  $angemeldet=FALSE;
+  $session_id = 0;
+  $login_gruppen_id = FALSE;
+  $login_gruppen_name = FALSE;
+  $dienst = 0;
+  $dienstkontrollblatt_id = FALSE;
+  $coopie_name= FALSE;
+  set_privileges();
+}
 
-  function init_login() {
-    global $angemeldet, $login_gruppen_id, $login_gruppen_name
-         , $session_id, $dienst, $dienstkontrollblatt_id;
-    // echo "init_login called";
-    $angemeldet=FALSE;
-    $login_gruppen_id = FALSE;
-    $login_gruppen_name = FALSE;
-    $dienst = 0;
-    $dienstkontrollblatt_id = FALSE;
-    $coopie_name= FALSE;
-    $session_id = 0;
-    set_privileges();
-  }
-  function logout() {
-    init_login();
-    unset( $_COOKIE['foodsoftkeks'] );
-    setcookie( 'foodsoftkeks', '0', 0, '/' );
-  }
-
+function logout() {
   init_login();
-  $problems = '';
+  unset( $_COOKIE['foodsoftkeks'] );
+  setcookie( 'foodsoftkeks', '0', 0, '/' );
+}
 
-  $telefon ='';
-  $name ='';
-  $notiz ='';
+init_login();
+$problems = '';
 
-  // pruefen, ob schon eingeloggt:
-  //
-  if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
+$telefon ='';
+$name ='';
+$notiz ='';
 
-    sscanf( $_COOKIE['foodsoftkeks'], "%u_%s", &$session_id, &$cookie );
-
-    $row = sql_select_single_row( "SELECT * FROM sessions WHERE id=$session_id", true );
-    if( ! $row ) {
-      $problems .= "<div class='warn'>nicht angemeldet</div>";
-    } elseif( $cookie != $row['cookie'] ) {
-      $problems .= "<div class='warn'>Fehler im Keks: nicht angemeldet</div>";
+// pruefen, ob schon eingeloggt:
+//
+if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
+  sscanf( $_COOKIE['foodsoftkeks'], "%u_%s", &$session_id, &$cookie );
+  $row = sql_select_single_row( "SELECT * FROM sessions WHERE id=$session_id", true );
+  if( ! $row ) {
+    $problems .= "<div class='warn'>nicht angemeldet</div>";
+  } elseif( $cookie != $row['cookie'] ) {
+    $problems .= "<div class='warn'>Fehler im Keks: nicht angemeldet</div>";
+  } else {
+    // anmeldung ist gueltig:
+    $login_gruppen_id = $row['login_gruppen_id'];
+    $dienst = $row['dienst'];
+    $dienstkontrollblatt_id = $row['dienstkontrollblatt_id'];
+    $login_gruppen_name = sql_gruppenname( $login_gruppen_id );
+  }
+  if( ! in_array( $dienst, array( 0, 3, 4, 5 ) ) )
+    $problems = $problems .  "<div class='warn'>interner fehler: ungueltiger dienst</div>";
+  if( $dienst > 0 ) {
+    if( $dienstkontrollblatt_id > 0 ) {
+      $result = dienstkontrollblatt_select( $dienstkontrollblatt_id );
+      $row = mysql_fetch_array($result)
+        or $problems = $problems .  "<div class='warn'>Dienstkontrollblatt-Eintrag nicht gefunden</div>";
+      $coopie_name = $row['name'];
     } else {
-      // anmeldung ist gueltig:
-      $login_gruppen_id = $row['login_gruppen_id'];
-      $dienst = $row['dienst'];
-      $dienstkontrollblatt_id = $row['dienstkontrollblatt_id'];
-      $login_gruppen_name = sql_gruppenname( $login_gruppen_id );
-    }
-    switch( $dienst ) {
-      case 0:
-      case 1:
-      case 3:
-      case 4:
-      case 5:
-        break;
-      default:
-        $problems = $problems .  "<div class='warn'>interner fehler: ungueltiger dienst</div>";
-    }
-    if( $dienst > 0 ) {
-      if( $dienstkontrollblatt_id > 0 ) {
-        $result = dienstkontrollblatt_select( $dienstkontrollblatt_id );
-        $row = mysql_fetch_array($result)
-          or $problems = $problems .  "<div class='warn'>Dienstkontrollblatt-Eintrag nicht gefunden</div>";
-        $coopie_name = $row['name'];
-      } else {
-        $problems = $problems .  "<div class='warn'>interner fehler: ungueltige dienstkontrollblatt_id</div>";
-      }
-    }
-
-    if( ! $problems ) {  // login ok, weitermachen...
-      $angemeldet = TRUE;
-      set_privileges();
-    } else {  // irgendwas war falsch... zurueck auf los:
-      logout();
+      $problems = $problems .  "<div class='warn'>interner fehler: ungueltige dienstkontrollblatt_id</div>";
     }
   }
+  if( ! $problems ) {  // login ok, weitermachen...
+    $angemeldet = TRUE;
+    set_privileges();
+  } else {  // irgendwas war falsch... zurueck auf los:
+    logout();
+  }
+}
 
-  // pruefen, ob neue login daten uebergeben werden:
-  //
-  get_http_var( 'login', 'w', '' );
-  switch( $login ) {
+// pruefen, ob neue login daten uebergeben werden:
+//
+get_http_var( 'login', 'w', '' );
+switch( $login ) {
   case 'login': 
     get_http_var( 'login_gruppen_id', 'u' )
       or $problems = $problems . "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
@@ -119,15 +93,8 @@
     get_http_var( 'dienst', 'u' )
       or $problems = $problems . "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
 
-    switch( $dienst ) {
-      case 0:
-      case 1:
-      case 3:
-      case 4:
-      case 5:
-        break;
-      default:
-        $problems = $problems . "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
+    if( ! in_array( $dienst, array( 0, 3, 4, 5 ) ) ) {
+      $problems = $problems . "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
     }
 
     if( $dienst != 0 ) {
@@ -184,34 +151,31 @@
     logout();
     $problems .= "<div class='ok'>Abgemeldet!</div>";
     break;
-  }
-
-  if( $angemeldet )
-    return;
-
-  // ab hier: benutzer ist nicht eingeloggt; wir setzen alles zurueck und zeigen das anmeldeformular:
-
-  logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
-  // setWikiHelpTopic( ':' );
-  require_once("head.php");
-  setWikiHelpTopic( ':' );
-
-  if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
-    $form_action="$foodsoftdir/index.php?window=wiki";
-  } else {
-    $form_action="$foodsoftdir/index.php";
-  }
-
-if( isset( $motd ) ) {
-  ?> <div class='kommentar'> echo $motd </div> <?
 }
+
+if( $angemeldet )
+  return;
+
+// ab hier: benutzer ist nicht eingeloggt; wir setzen alles zurueck und zeigen das anmeldeformular:
+
+logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
+require_once("head.php");
+setWikiHelpTopic( ':' );
+
+if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
+  $form_action="$foodsoftdir/index.php?window=wiki";
+} else {
+  $form_action="$foodsoftdir/index.php";
+}
+
+?> <div class='kommentar'> echo $motd </div> <?
 
 ?>
 <form action='<? echo $form_action; ?>' method='post' class='small_form'>
   <? echo self_post(); ?>
   <input type='hidden' name='login' value='login'>
-    <fieldset class='small_form' style='padding:2em;'>
-      <legend>Anmelden</legend>
+  <fieldset class='small_form' style='padding:2em;'>
+    <legend>Anmelden</legend>
     <? if( "$problems" ) echo "$problems"; ?>
     <div class='kommentar' style='padding:1em;'>
       Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:
@@ -267,104 +231,102 @@ if( isset( $motd ) ) {
            Funktionen der Foodsoft nutzen; ausserdem wirst Du 
            automatisch ins Dienstkontrollblatt eingetragen:
       </div>
-         <fieldset class='small_form'>
-           <legend>
-             Dienstkontrollblatt
-           </legend>
-           <div class='newfield'>
+        <fieldset class='small_form'>
+          <legend>Dienstkontrollblatt</legend>
+          <div class='newfield'>
              <label>Dein Name:</label>
              <input type='text' size='20' name='coopie_name' value='<? echo $coopie_name; ?>'>
              <label style='padding-left:4em;'>Telefon:</label>
              <input type='text' size='20' name='telefon' value='<? $telefon; ?>'>
-           </div>
-           <div class='newfield'>
+          </div>
+          <div class='newfield'>
              <label>Notiz fuers Dienstkontrollblatt:</label>
              <br>
              <textarea cols='80' rows='3' name='notiz'><? echo $notiz; ?></textarea>
-           </div>
-         </fieldset>
-       </div>
-       <div class='newfield'>
-         <input type='submit' name='submit' value='OK'>
-       </div>
-     </fieldset>
-   </form>
-   <script type='text/javascript'>
-     function dienstform_on() {
-       document.getElementById('dienstform').style.display = 'block';
-     }
-     function dienstform_off() {
-       document.getElementById('dienstform').style.display = 'none';
-     }
-   </script>
+          </div>
+        </fieldset>
+    </div>
+    <div class='newfield'>
+      <input type='submit' name='submit' value='OK'>
+    </div>
+  </fieldset>
+</form>
+<script type='text/javascript'>
+   function dienstform_on() {
+     document.getElementById('dienstform').style.display = 'block';
+   }
+   function dienstform_off() {
+     document.getElementById('dienstform').style.display = 'none';
+   }
+</script>
 <?
 
-  function set_privileges() {
-    global $dienst, $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
-    $hat_dienst_I = FALSE;
-    $hat_dienst_III = FALSE;
-    $hat_dienst_IV = FALSE;
-    $hat_dienst_V = FALSE;
-    switch( $dienst ) {
-      case 1:
-        $hat_dienst_I = TRUE;
-        break;
-      case 3:
-        $hat_dienst_III = TRUE;
-        break;
-      case 4:
-        $hat_dienst_IV = TRUE;
-        break;
-      case 5:
-        $hat_dienst_V = TRUE;
-        break;
-      default:
-        break;
-    }
+function set_privileges() {
+  global $dienst, $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
+  $hat_dienst_I = FALSE;
+  $hat_dienst_III = FALSE;
+  $hat_dienst_IV = FALSE;
+  $hat_dienst_V = FALSE;
+  switch( $dienst ) {
+    case 1:
+      $hat_dienst_I = TRUE;
+      break;
+    case 3:
+      $hat_dienst_III = TRUE;
+      break;
+    case 4:
+      $hat_dienst_IV = TRUE;
+      break;
+    case 5:
+      $hat_dienst_V = TRUE;
+      break;
+    default:
+      break;
   }
-  function nur_fuer_dienst() {
-    global $dienst, $foodsoftpath, $print_on_exit;
-    global $dienst, $foodsoftpath;
-    for( $i = 0; $i < func_num_args(); $i++ ) {
-      if( $dienst == func_get_arg($i) )
-        return TRUE;
-    }
-    require_once( $foodsoftpath."/head.php" );
-    echo "<div class='warn'>Keine Berechtigung</div> $print_on_exit";
+}
+function nur_fuer_dienst() {
+  global $dienst, $foodsoftpath, $print_on_exit;
+  global $dienst, $foodsoftpath;
+  for( $i = 0; $i < func_num_args(); $i++ ) {
+    if( $dienst == func_get_arg($i) )
+      return TRUE;
+  }
+  require_once( $foodsoftpath."/head.php" );
+  echo "<div class='warn'>Keine Berechtigung</div> $print_on_exit";
+  exit();
+}
+function nur_fuer_dienst_I() {
+  global $hat_dienst_I, $foodsoftpath;
+  if( ! $hat_dienst_I ) {
+    require_once( "$foodsoftpath/head.php" );
+    echo "<div class='warn'>Nur fuer Dienst I</div> $print_on_exit";
     exit();
   }
-  function nur_fuer_dienst_I() {
-    global $hat_dienst_I, $foodsoftpath;
-    if( ! $hat_dienst_I ) {
-      require_once( "$foodsoftpath/head.php" );
-      echo "<div class='warn'>Nur fuer Dienst I</div> $print_on_exit";
-      exit();
-    }
+}
+function nur_fuer_dienst_III() {
+  global $hat_dienst_III, $foodsoftpath;
+  if( ! $hat_dienst_III ) {
+    require_once( "$foodsoftpath/head.php" );
+    echo "<div class='warn'>Nur fuer Dienst II</div> $print_on_exit";
+    exit();
   }
-  function nur_fuer_dienst_III() {
-    global $hat_dienst_III, $foodsoftpath;
-    if( ! $hat_dienst_III ) {
-      require_once( "$foodsoftpath/head.php" );
-      echo "<div class='warn'>Nur fuer Dienst II</div> $print_on_exit";
-      exit();
-    }
+}
+function nur_fuer_dienst_IV() {
+  global $hat_dienst_IV, $foodsoftpath;
+  if( ! $hat_dienst_IV ) {
+    require_once( "$foodsoftpath/head.php" );
+    echo "<div class='warn'>Nur fuer Dienst IV</div> $print_on_exit";
+    exit();
   }
-  function nur_fuer_dienst_IV() {
-    global $hat_dienst_IV, $foodsoftpath;
-    if( ! $hat_dienst_IV ) {
-      require_once( "$foodsoftpath/head.php" );
-      echo "<div class='warn'>Nur fuer Dienst IV</div> $print_on_exit";
-      exit();
-    }
+}
+function nur_fuer_dienst_V() {
+  global $hat_dienst_V, $foodsoftpath;
+  if( ! $hat_dienst_V ) {
+    require_once( "$foodsoftpath/head.php" );
+    echo "<div class='warn'>Nur fuer Dienst V</div> $print_on_exit";
+    exit();
   }
-  function nur_fuer_dienst_V() {
-    global $hat_dienst_V, $foodsoftpath;
-    if( ! $hat_dienst_V ) {
-      require_once( "$foodsoftpath/head.php" );
-      echo "<div class='warn'>Nur fuer Dienst V</div> $print_on_exit";
-      exit();
-    }
-  }
+}
 
 echo $print_on_exit;
 
