@@ -19,7 +19,6 @@ if( $hat_dienst_IV ) {
   $kontostand = kontostand( $gruppen_id );
   echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
 }
-$self_fields['besteller_id'] = $gruppen_id;
 
 get_http_var('bestell_id','u',false,true );
 if( $bestell_id ) {
@@ -52,7 +51,7 @@ if( $bestell_id ) {
 ?>
   <td style='text-align:left;padding:1ex 1em 2em 3em;'>
   <h4> Zur Zeit laufende Bestellungen: </h4>
-  <table style="width:600px;" class="liste">
+  <table style="width:600px;" class="list">
     <tr>
       <th>Name</th>
       <th>Lieferant</th>
@@ -411,7 +410,7 @@ $gesamtpreis = 0.0;
 <form name="bestellform" action="<? echo self_url(); ?>" method="post">
   <? echo self_post(); ?>
   <input type="hidden" name="action" value='bestellen'>
-  <table class='numbers' width='100%' style="margin:40px 0 0 0;">
+  <table class='list' width='100%' style="margin:40px 0 0 0;">
     <tr>
       <th>Produktgruppe</th>
       <th>Bezeichnung</th>
@@ -494,8 +493,8 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
       <? } ?>
          style='width:2ex;border-right:none;' id='gv_<? echo $n; ?>'><? printf( "%s", $zuteilungen[gebinde] ); ?>
     </td>
-    <td style='width:1ex;border-right:none;border-left:none;'>*</td>
-    <td class='mult' style='border-left:none;width:6ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
+    <td style='width:1ex;border-right:none;border-left:none;padding-left:0pt;padding-right:0pt;'>*</td>
+    <td class='mult' style='border-left:none;width:5ex;'><? printf( "(%s *", $gebindegroesse ); ?></td>
     <td class='unit'><? printf( "%s %s)", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ); ?></td>
       <?
         $class = 'mult';

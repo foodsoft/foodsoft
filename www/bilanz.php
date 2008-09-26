@@ -43,7 +43,7 @@ function posten( $name, $wert ) {
     <colgroup>
       <col width='*'><col width='*'>
     </colgroup>
-    <tr><th> Aktiva </th><th> Passiva </th></tr>
+    <tr><th style='padding:4px;'> Aktiva </th><th style='padding:4px;'> Passiva </th></tr>
     <tr>
       <td>
 

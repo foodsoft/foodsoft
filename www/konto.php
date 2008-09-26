@@ -36,7 +36,7 @@ get_http_var( 'konto_id', 'u', $konto_id, true );
 ?>
   <h4>Konten der Foodcoop:</h4>
   <div style='padding-bottom:2em;'>
-  <table style='padding-bottom:2em;' class='liste'>
+  <table style='padding-bottom:2em;' class='list'>
     <tr>
       <th>Name</th>
       <th>BLZ</th>
@@ -339,7 +339,7 @@ $saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
 
 ?>
 
-<table class='liste'>
+<table class='list'>
   <tr class='legende'>
     <th>Posten</th>
     <th>Valuta</th>

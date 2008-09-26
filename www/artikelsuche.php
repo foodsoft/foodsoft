@@ -192,7 +192,7 @@ if( $filter != '' ) {
 
   ?>
   <h3> <? echo mysql_num_rows($result); ?> Treffer (Limit: <? echo $limit; ?>)</h3>
-  <table class='numbers'>
+  <table class='list'>
     <tr>
       <th>A-Nr.</th>
       <th>B-Nr.</th>
