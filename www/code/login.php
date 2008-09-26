@@ -168,9 +168,8 @@ if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
   $form_action="$foodsoftdir/index.php";
 }
 
-?> <div class='kommentar'> echo $motd </div> <?
-
 ?>
+<div class='kommentar'><? echo $motd; ?></div>
 <form action='<? echo $form_action; ?>' method='post' class='small_form'>
   <? echo self_post(); ?>
   <input type='hidden' name='login' value='login'>
