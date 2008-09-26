@@ -18,11 +18,9 @@ if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
 $img = "$foodsoftdir/img/close_black_trans.gif";
 
 if( $readonly ) {
-  $bodyclass='ro';
   $headclass='headro';
   $payloadclass='payloadro';
 } else {
-  $bodyclass='';
   $headclass='head';
   $payloadclass='payload';
 }
@@ -34,11 +32,11 @@ if( $readonly ) {
   <link rel='stylesheet' type='text/css' href='<? echo $foodsoftdir; ?>/css/foodsoft.css'>
   <script type='text/javascript' src='<? echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
 </head>
-<body class='<? echo $bodyclass; ?>'>
-  <div style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;' class='<? echo $headclass; ?>'>
+<body>
+  <div id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;' class='<? echo $headclass; ?>'>
     <table width='100%' class='<? echo $headclass; ?>'>
       <tr>
-        <td style='padding-right:0.5ex;' class='<? echo $headclass; ?>'>
+        <td style='padding-right:0.5ex;'>
           <img src='<? echo $img; ?>' class='button' alt='Schlie&szlig;en' title='Schlie&szlig;en'
            width='15' onClick='if(opener) opener.focus(); window.close();'></img>
         </td>
@@ -48,7 +46,7 @@ if( $readonly ) {
         </td>
       </tr>
       <tr>
-        <td>&nbsp;</td>
+        <td></td>
         <td style='font-size:11pt;'>
           <?
             if( $angemeldet ) {
@@ -66,7 +64,7 @@ if( $readonly ) {
       </tr>
     </table>
   </div>
-  <div class='<? echo $payloadclass; ?>'>
+  <div id='payload' class='<? echo $payloadclass; ?>'>
 <?
 $print_on_exit = "</div></body></html>";
 $kopf_schon_ausgegeben = true;
