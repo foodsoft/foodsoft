@@ -215,7 +215,7 @@ function areas_in_menu($area){
     echo fc_button( $area['area'], array(
        'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] 
      ) );
-  ?> </td><td><? echo $area['hint']; ?></td></tr><?
+  ?> </td><td class='small' style='vertical-align:middle;'><? echo $area['hint']; ?></td></tr><?
 }
 
 function areas_in_head($area){
@@ -263,7 +263,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
     $cols=9;
   }
 
-  ?> <table class='numbers'> <?
+  ?> <table class='list'> <?
 
   $legend = array(
     "<th>" . fc_alink( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
@@ -551,7 +551,7 @@ function products_overview(
   if( $editAmounts ) {
     echo "<form action='" . self_url() . "' method='post'>" . self_post();
   }
-  ?> <table class='numbers' width='100%'><tr class='legende'> <?
+  ?> <table class='list' width='100%'><tr class='legende'> <?
 
   $cols = 0;
   $cols_vor_summe = 0;
@@ -847,7 +847,7 @@ function option_menu_row( $option = false ) {
   global $option_menu_counter, $print_on_exit;
   if( ! $option_menu_counter ) {
     // menu erstmal erzeugen (so dass wir einfuegen koennen):
-    echo "<table class='info' id='option_menu_table'></table>";
+    echo "<table class='list' id='option_menu_table'></table>";
     $option_menu_counter = 0;
     // positionieren erst ganz am schluss (wenn parent sicher vorhanden ist):
     $print_on_exit = $print_on_exit
@@ -887,7 +887,7 @@ function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:"
   if( $head )
     echo "<h1 style='margin-bottom:2em;'>$head</h1>";
 ?>
-  <table style="width:100%" class="liste">
+  <table style="width:100%" class="list">
     <tr>
       <th>Name</th>
       <th>Status</th>
@@ -1036,7 +1036,7 @@ function select_products_not_in_list($bestell_id){
 
 function distribution_tabellenkopf() {
   ?>
-    <table class='numbers' width='800'>
+    <table class='list' width='800'>
     <tr class="legende">
        <th>Gruppe</th>
        <th colspan='2'>bestellt (toleranz)</th>
@@ -1221,7 +1221,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
   global $hat_dienst_IV, $window_id;
   $bestell_id = $row['id'];
   ?>
-    <table class="info">
+    <table class="list">
       <tr>
         <th> Bestellung: </th>
           <td style="font-size:1.2em;font-weight:bold">
@@ -1973,7 +1973,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   ?>
     </legend>
     <div id='preishistorie'>
-      <table width='100%' class='numbers'>
+      <table width='100%' class='list'>
         <tr>
           <th title='Interne eindeutige ID-Nummer des Preiseintrags'>id</th>
           <th title='Bestellnummer'>B-Nr</th>
@@ -2075,7 +2075,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
 
 function auswahl_lieferant( $selected = 0 ) {
   ?>
-  <table style="width:600px;" class="liste">
+  <table style="width:600px;" class="list">
     <tr>
       <th>Lieferanten</th>
       <th>Produkte</th>
@@ -2108,7 +2108,7 @@ function auswahl_lieferant( $selected = 0 ) {
  */
 function dienst_selector($pre_select, $id=""){
 	echo"
-              <select name='newDienst[$id]'>
+              <select name='dienst_$id'>
 	";
 	    
 	  //var_dump($_SESSION['DIENSTEINTEILUNG']);
@@ -2125,11 +2125,13 @@ function dienst_selector($pre_select, $id=""){
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)
  */
-function membertable_view($rows, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
+function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
 ?>
   <form method='post' class='big_form' action='<? echo self_url(); ?>'>
-   
-    <table class='liste'>
+  <? echo self_post(); ?>
+  <input type='hidden' name='action' value='edit'>
+
+    <table class='list'>
   <?if($head){?>
       <tr>
          <th>Vorname</th>
@@ -2139,70 +2141,44 @@ function membertable_view($rows, $editable=FALSE, $super_edit=FALSE, $head=TRUE)
          <th>Diensteinteilung</th>
 <?
 	if($super_edit){
-		echo"
-         <th>Optionen</th> ";
+		echo"<th>Optionen</th> ";
 	}
     }
-?>
-      </tr>
-<?     
+?> </tr> <?     
+  $rows = sql_gruppen_members( $gruppen_id );
   while ($row = mysql_fetch_array($rows)) {
-   if($editable){
-	echo"
-      <tr>
-	 <td><input type='input' size='12' name='nVorname[{$row['id']}]' value='{$row['vorname']}'></td>
-	 <td><input type='input' size='12' name='nName[{$row['id']}]' value='{$row['name']}'></td>
-	 <td><input type='input' size='12' name='nEmail[{$row['id']}]' value='{$row['email']}'></td>
-	 <td><input type='input' size='12' name='nTelefon[{$row['id']}]' value='{$row['telefon']}'></td>
-	";
-   }else {
-	echo"
-      <tr>
-        <td>{$row['vorname']}</td>
-        <td>{$row['name']}</td>
-        <td>{$row['email']}</td>
-        <td>{$row['telefon']}</td>
-	";
-   }
-   if($super_edit){
-	echo"
-	   <td>
-	";
-	    
-	dienst_selector($row['diensteinteilung'], $row['id']);
-	echo"
-	   </td>
-	   <td>
-             <a class='png' href=\"javascript:if(confirm('Soll die Person wirklich GELÖSCHT werden?')){
-            document.forms['reload_form'].action.value='delete';
-            document.forms['reload_form'].person_id.value='{$row['id']}';
-            document.forms['reload_form'].submit();}\">
-          <img src='img/b_drop.png' border='0' alt='Person löschen' title='Person löschen'/></a>
-
-	   </td>
-	";
-
-   }else{
-	echo"
-        <td>{$row['diensteinteilung']}</td>
-	";
-   }
-	echo"
-      <tr/>
-	";
+    ?> <tr> <?
+    if($editable){
+      $id = $row['id'];
+      ?>
+         <td><input type='input' size='12' name='vorname_<? echo $id; ?>' value='<? echo $row['vorname']; ?>'></td>
+         <td><input type='input' size='12' name='name_<? echo $id; ?>' value='<? echo $row['name']; ?>'></td>
+         <td><input type='input' size='12' name='email_<? echo $id; ?>' value='<? $row['email']; ?>'></td>
+         <td><input type='input' size='12' name='telefon_<? echo $id; ?>' value='<? $row['telefon']; ?>'></td>
+     <?
+    } else {
+      ?>
+         <td><? echo $row['vorname']; ?></td>
+         <td><? echo $row['name']; ?></td>
+         <td><? echo $row['email']; ?></td>
+         <td><? $row['telefon']; ?></td>
+      <?
+    }
+    if($super_edit){
+      ?> <td> <?
+      dienst_selector($row['diensteinteilung'], $id );
+      ?> </td> <td> <?
+      echo fc_action( array( 'action' => 'delete', 'person_id' => $id, 'img' => 'img/b_drop.png'
+                           , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' ) );
+      ?> </td> <?
+    }else{
+      echo"<td>{$row['diensteinteilung']}</td> ";
+    }
+    ?> </tr> <?
   }
-?>
-          
-      </tr>
-    </table>
-<? if($super_edit or $editable)
-   {
-?>
-     
-      <input type="submit" value="Speichern"/>
-<?
-   }
-?>
-   </form>
-<?
+  ?> </table> <?
+  if($super_edit or $editable) {
+    ?> <input type="submit" value="Speichern"/> <?
+  }
+  ?> </form> <?
 }
