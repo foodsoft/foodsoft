@@ -76,6 +76,10 @@ $specialgroups[] = $muell_id;
 global $self_fields;
 $self_fields = array();
 
+// Benutzerdaten:
+global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $coopie_name, $dienstkontrollblatt_id, $session_id;
+$angemeldet = false;
+
 require_once('code/views.php');
 require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
