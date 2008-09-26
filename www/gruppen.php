@@ -175,7 +175,7 @@ if( $action == 'cancel_payment' ) {
  
     <br><br>
 
-    <table class='liste'>
+    <table class='list'>
       <tr>
          <th>Nr</th>
          <th>Gruppenname</th>
@@ -284,7 +284,7 @@ if( $action == 'cancel_payment' ) {
 	<tr>
           <td/>
           <td colspan="4">
-	<?  membertable_view(sql_gruppen_members($id), FALSE,FALSE, FALSE); ?>
+	<? membertable_view( $id, FALSE,FALSE, FALSE); ?>
          <td/>
 <?
     }

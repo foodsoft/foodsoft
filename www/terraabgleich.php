@@ -138,7 +138,7 @@ $produkt_name = $produkt['name'];
 ?>
   <fieldset class='big_form'>
   <legend>Foodsoft-Datenbank:</legend>
-  <table width='100%' class='numbers'>
+  <table width='100%' class='list'>
     <tr>
       <th>Name</th>
       <th>B-Nr.</th>

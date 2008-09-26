@@ -61,7 +61,7 @@
 
     ?>
       <h1>Dienstkontrollblatt</h1>
-      <table class='liste'>
+      <table class='list'>
         <tr>
           <th> Nr. </th>
           <th> Datum </th>

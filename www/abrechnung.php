@@ -75,7 +75,7 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
 <?echo self_post(); ?>
   <input type='hidden' name='action' value='save'>
 
-  <table class='numbers'>
+  <table class='list'>
     <tr>
       <th>Abrechnungsschritt</th>
       <th>Details</th>
