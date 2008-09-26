@@ -815,7 +815,7 @@ if($hat_dienst_IV){
 	"title" => "LieferantInnen");
 } 
 	$areas[] = array("area" => "dienstkontrollblatt",
-	"hint" => "Hier kann man das Dientkontrollblatt einsehen...",
+	"hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
 	"title" => "Dienstkontrollblatt");		
 if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
 	$areas[] = array("area" => "updownload",
@@ -4035,6 +4035,7 @@ $foodsoft_get_vars = array(
 , 'bestell_id' => 'u'
 , 'buchung_id' => 'u'
 , 'confirmed' => 'w'
+, 'detail' => 'w'
 , 'dienst_rueckbestatigen' => 'w'
 , 'download' => 'w'
 , 'gruppen_id' => 'u'
@@ -4067,8 +4068,8 @@ function sanitize_http_input() {
 
   // echo "sanitize_input_called: ". var_export(debug_backtrace());
   foreach( $HTTP_GET_VARS as $key => $val ) {
-    need( isset( $foodsoft_get_vars[$key] ), 'unerwartete Variable $key in URL uebergeben' );
-    need( checkvalue( $val, $foodsoft_get_vars[$key] ), 'unerwarteter Wert fuer Variable $key in URL' );
+    need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
+    need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert fuer Variable $key in URL" );
   }
   if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     need( isset( $HTTP_POST_VARS['postform_id'] ), 'fehlerhaftes Formular uebergeben' );
@@ -4145,7 +4146,7 @@ function checkvalue( $val, $typ){
 	      return FALSE;
 	    }
 	  }
-      return $val;
+  return $val;
 }
 
 // get_http_var:
