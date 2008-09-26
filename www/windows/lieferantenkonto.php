@@ -101,7 +101,7 @@ if( $editable ) {
 
   $cols = 9;
   ?>
-  <table class="numbers">
+  <table class="list">
     <tr>
       <th>Typ</th>
       <th>Valuta</th>

@@ -278,7 +278,7 @@ $bestellgruppen_row = sql_gruppendaten( $gruppen_id );
 	
   $cols = 9;
   ?>
-  <table class="numbers">
+  <table class="list">
     <tr>
       <th>Typ</th>
       <th>Valuta</th>

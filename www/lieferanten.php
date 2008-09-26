@@ -33,7 +33,7 @@ $result = sql_lieferanten();
   </tr>
 </table>
 
-<table class='liste'>
+<table class='list'>
   <tr>
     <th>Name</th>
     <th>Telefon</th>

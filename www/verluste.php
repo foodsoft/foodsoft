@@ -17,7 +17,7 @@ function verlust_bestellungen( $detail = false ) {
   if( $detail ) {
     ?>
       <h2>Differenzen aus Bestellungen:</h2>
-        <table width='98%' class='numbers'>
+        <table width='98%' class='list'>
           <tr>
             <th>Bestellung</th>
             <th>Schwund/Müll</th>
@@ -85,7 +85,7 @@ function verlust_transaktionen( $typ, $detail = false ) {
   if( $detail ) {
     ?>
       <h4><? echo transaktion_typ_string( $typ ); ?></h4>
-      <table width='98%' class='numbers'>
+      <table width='98%' class='list'>
         <tr>
           <th>Id</th>
           <th>Valuta</th>
@@ -242,7 +242,7 @@ $ausgleich_summe = 0.0;
 <? } ?>
 
 
-<table class='numbers'>
+<table class='list'>
   <tr>
     <th>Typ</th>
     <th class='oneline'>Haben FC</th>

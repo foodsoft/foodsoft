@@ -68,7 +68,7 @@
 
   ?>
     <td style='text-align:left;padding:1ex 1em 2em 3em;'>
-    <table style="width:600px;" class="liste">
+    <table style="width:600px;" class="list">
       <tr>
         <th>Lieferanten</th>
         <th>Produkte</th>
@@ -172,7 +172,7 @@
 
   if (!$edit_all) {   // f¸r die normalansicht
     ?>
-      <table class='numbers'>
+      <table class='list'>
         <tr>
           <th colspan="10"><h3>Produkt√ºbersicht von
               <?php
@@ -194,7 +194,7 @@
     <?
   } else {  //f¸r die alle ¸berarbeiten ansicht
     ?>
-      <table class='numbers'>
+      <table class='list'>
         <tr>
           <th colspan="7"><h3>Produkt√ºbersicht von <?php echo $lieferant_name?></h3></th>
         </tr><tr>

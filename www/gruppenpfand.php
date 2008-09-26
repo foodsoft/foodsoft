@@ -113,7 +113,7 @@ if( $bestell_id ) {
 }
 
 ?>
-<table class='numbers'>
+<table class='list'>
   <tr>
     <th>Gruppe</th>
     <th>Nr (Id)</th>

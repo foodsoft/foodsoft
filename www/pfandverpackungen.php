@@ -146,7 +146,7 @@ if( $bestell_id ) {
 }
 
 ?>
-  <table class='numbers'>
+  <table class='list'>
     <tr>
       <th>Bezeichnung <? echo $lieferanten_id; ?></th>
       <th>Einzelwert</th>
