@@ -816,7 +816,7 @@ if( count( $changes ) > 0 ) {
   foreach( $changes as $s ) {
     ?>
       <tr>
-        <td><pre> <? echo "$s\n"; ?></pre></td>
+        <td><pre> <? echo htmlspecialchars("$s\n"); ?></pre></td>
     <?
     $result = false;
     $result = mysql_query( $s );
