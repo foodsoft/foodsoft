@@ -20,12 +20,12 @@
    <form name="erstellen" action="<? echo self_url(); ?>" method="post">
 	   <? 
 	     echo self_post();
-	     get_http_var("dienstfrequenz"); //ToDo check for integer
+	     get_http_var("dienstfrequenz",'u'); //ToDo check for integer
 	     if (!isset($dienstfrequenz)){
 	     	$dienstfrequenz = "7";
 	     } else {
-	          get_http_var("startdatum"); //ToDo check for date
-	          get_http_var("enddatum"); //ToDo check for date
+	          get_http_var("startdatum", '/^[0-9 -]+$/' ); //ToDo check for date
+	          get_http_var("enddatum", '/^[0-9 -]+$/' ); //ToDo check for date
 		  fail_if_readonly();
 	          create_dienste($startdatum,$enddatum,$dienstfrequenz);
 		  ?>echo <p><b> Dienste erstellt </b></p><?
@@ -105,7 +105,7 @@
    <!-- Zeige bisherige Dienste-->
 
    
-     <table><tr>
+     <table class='list'><tr>
       <th> Datum </th>
       <th> Dienst 1/2 </th>
       <th> Dienst 3 </th>
