@@ -847,7 +847,7 @@ function option_menu_row( $option = false ) {
   global $option_menu_counter, $print_on_exit;
   if( ! $option_menu_counter ) {
     // menu erstmal erzeugen (so dass wir einfuegen koennen):
-    echo "<table class='list' id='option_menu_table'></table>";
+    echo "<table class='menu' id='option_menu_table'></table>";
     $option_menu_counter = 0;
     // positionieren erst ganz am schluss (wenn parent sicher vorhanden ist):
     $print_on_exit = $print_on_exit
