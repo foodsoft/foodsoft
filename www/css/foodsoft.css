@@ -1,129 +1,155 @@
-/* -- Allgemeines -- */
+/*
+ *
+ *   general defaults:
+ *
+*/
 
 body {
+  color:#000000;
   background:#ffffff;
-  color:#000000;
-  margin:0pt;
-  padding:0pt; 
-  /* min-width: 763px;  <-- kann der exploder nicht! */
+  padding:0ex;
+  margin:0ex;
   font-size:11pt;
-  font-family: verdana, arial, sans-serif;
+  font-family:verdana,arial,sans-serif;
 }
-
-div.payload, div.payloadro {
-  padding:1ex;
-  margin:1ex;
-  color:#000000;
-  padding:0pt;
-  /* min-width: 763px;  <-- kann der exploder nicht! */
-  font-size:11pt;
-  font-family: verdana, arial, sans-serif;
+img {
+  border-style:none;
 }
 
 .small {
   font-size:smaller;
 }
 
-div.payload, table.footer td {
-  background:#ffffff;
+div#payload {
+  padding:1ex;
 }
-body.ro, div.payloadro, body.ro table.footer td {
+
+div#payload.payloadro {
   /* bei "readonly" Hintergrundfarbe aendern */
   background:#ffeedd;
 }
 
-
-a {
-  color:#ED0606;
+a, a:visited {
+  color:#e01010;
   text-decoration: none;
-}
-a:visited {
-  color:#ED0606;
 }
 a:hover {
   text-decoration: underline;
 } 
 
- 
+h1, h2, h3, h4 {
+  color:#000000;
+  margin: 0pt 0pt 1em 0pt;
+}
+
 h1 {
- color:#ED0606;
- /* font-size: 2em; <-- macht keinen sinn: em ist _relativ_ zum fontsize! */
  font-size:16pt;
- line-height: 0.8em;
  padding: 5px;
- margin: 0 0 1em 0;
- /* border-bottom: 1px dotted #ED0606; */
+}
+h2 {
+ font-size:14pt;
+ padding: 3px;
+}
+h3 {
+ font-size:12pt;
+ padding: 2px;
+}
+h4 {
+ font-size:11pt;
+ padding: 1px;
 }
 
-input:hover, textarea:hover, select:hover {
-	background-color:#f5f5f5;
-}
-input:focus {
-	background-color:#f5f5f5;
+input:hover, input:focus, textarea:hover, select:hover {
+  background-color:#f5f5f5;
 }
 
-/* - Logo bzw. Kopf - */
+kbd {
+  font-family:arial,sans-serif;
+  font-weight:bold;
+  color:#000000;
+}
 
-table.head, table.head td, table.headro, table.headro td, div.head {
-  border:none;
+table, table tr td, table tr th {
+  border-style:none;
+  margin:0pt;
+  border-spacing:0px;
+  border-width:0pt;
+  border-collapse:collapse;
+  empty-cells:show;
+  text-align:left;
+  vertical-align:top;
+  font-size:11pt;
+}
+td {
+  color:#000000;
+  background-color:#ffffff;
+}
+th {
+  font-weight:bold;
+  background-color:#DDDDDD;
+}
+
+table.debug tr th, table.debug tr td {
+  border:1px dotted black;
+}
+
+
+/*
+ *
+ * page header
+ *
+*/
+
+div#header, div#header table, div#header table tr td {
   color:#ffffff;
   font-weight: bold;
   font-size: 12pt;
   padding:0pt;
   margin:0pt;
 }
-table.head, table.head td, div.head {
-  background:#ed0606;
+div#header.head, div#header.head table, div#header.head table tr td {
+  background-color:#e01010;
 }
-table.headro, table.headro td, div.headro {
+div#header.headro, div#header.headro table, div#header.headro table tr td {
   background:url(readonly.gif);
   background-repeat:repeat;
 }
 
-td.logo {
-  text-align:left;
-  vertical-align:top;
-}
 span.logo, span.logoinvers, a.logo, a.logo:visited, a.logo:link {
  height:56px;
  line-height:54px;
- overflow:hidden; 
  letter-spacing:-1px;
  font-size:24pt;
  margin:0pt;
  padding:0pt;
  text-decoration: none;
 }
-span.logo, a.logo, a.logo:visited, a.logo:link {
-  color: white; 
-  background:#ed0606;
+span.logo, span.logo a {
+  color:#ffffff;
+  background-color:#e01010;
 }
-a.logo:hover {
+span.logoinvers, span.logoinvers a {
+  color:#e01010;
+  background-color:#ffffff;
+}
+span.logo a:hover {
   text-decoration:underline;
 }
-span.logoinvers {
-  background:white;
-  color:#ed0606;
-}
-
 
 /* das menu mit hover funktion  */
 
-
-ul#menu {
-  margin: 0px;
-  list-style: none;
-  background:#ed0606;
-  padding: 5px 5px; /* Je kleiner das Fenster desto kleiner soll auch der Abstand des Menüs rechts und links sein. */
-  text-align:right;
+div#header ul#menu {
+  background:#e01010;
+  display:inline;
+  margin:0pt;
+  padding:2px 5px 0px 5px; /* Je kleiner das Fenster desto kleiner soll auch der Abstand des Menüs rechts und links sein. */
   line-height:3ex;  /* etwas zeilenabstand erzwingen */
 }
 
 ul#menu li {
-  color: white;
+  color:white;
   font-size:11pt;
   display:inline; /* Damit die Menüpunkte nebeneinander und nicht untereinander erscheinen. */
-  /* position: relative; */
   list-style-type: none; /* Die Bullets vor den Menüpunkten schalten wir ab. */
   border-left: 1px dotted white;
   font-weight: bold;
@@ -132,122 +158,121 @@ ul#menu li {
   padding:0pt;
 }
 
-
 ul#menu li a {
-  padding: 2px 10px 2px 10px;
-	color: white;
-	text-decoration: none;
+  padding: 2px 10px 0px 10px;
+  color: white;
+  text-decoration: none;
 }
 ul#menu li a:hover {
   background: white;
-  color: #ED0606;
+  color: #e01010;
+}
+ul#menu li a.wikilink {
+  margin-left:2em;
+}
+
+
+/*
+ *
+ *   payload bay: table styles
+ *
+ *
+*/
+
+
+/*
+ * table.list: standardtabelle fuer bestellscheine, kontoanzeigen, ...
+*/
+
+table.list tr td, table.list tr th {
+  padding: 0.4ex 1ex 0.4ex 1ex;
+  border:dotted 1pt #404040;
+}
+table.list tr th {
+  text-align:center;
 }
 
 /*
-ul#menu li:hover {
-  background: white;
-  color: #ED0606;
-}
+ *
+ * zellen mit zahlen: rechtsbuendig, nicht umbrechen:
+ *
 */
 
-/* haben wir irgendwo verschachtelte menues???
-#menu li:hover ul { display: block; }
-#menu li ul {
-  border-width: 0.25em;
-  margin: 0;
-  display: none;
-  position: absolute;
-  top: 1.2em;
-  right: 0px;
-  border-top: solid #ED0606 ;
-  background:#ED0606;
-  }
-
-#menu li ul li {
-  border-bottom: 1px dotted white;
-  border-left: none;
-  display: block;
-  text-align: right;
-  padding: 0px 10px 0px 15px;
+td.number, th.number {
+  white-space:nowrap;
+  text-align:right;
 }
 
-#menu li ul li a {
-  display: block;
-  width: 10em;
-  font-size:0.6em;
-  width: 12em;
-  text-decoration: none;
-  padding: 0.5em 0 0.5em 0;
+td.mult, th.mult, table.list td.mult, table.list th.mult {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:0.8ex;
 }
-#menu li ul li:hover a, #menu li:hover a.first {
-  color: #ED0606;
-}
-*/
-
-
-#content {
- 	border-top: none;
- 	padding: 20px 0px 0px 0px;
+td.unit, th.unit, table.list td.unit, table.list th.unit {
+  white-space:nowrap;
+  text-align:left;
+  border-left-style:none;
+  margin-left:0pt;
+  padding-left:0pt;
 }
 
-/* für die menüs */
-table.menu td {
-	font-size:11pt;
-	border:none;
+
+/* fuer farbige zellen im bestellformular: */
+
+td.mult_outdated, table.list td.mult_outdated {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:0.8ex;
+  background-color:#ffffaa;
+}
+td.mult_highlight, table.list td.mult_highlight {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:0.8ex;
+  font-weight:bold;
+  background-color:#d0ffc0;
+}
+td.mult_crit, table.list td.mult_crit {
+  white-space:nowrap;
+  text-align:right;
+  border-right-style:none;
+  margin-right:0pt;
+  padding-right:0.8ex;
+  font-weight:bold;
+  background-color:#fff0c0;
 }
 
-/* für die tabellen */
-table {
-	font-size:11pt;
-	border-collapse:collapse;
-	border:1px dotted gray;
-	text-align:left;
-	background-color: white;
-}
-th, td {
-	border:1px dotted gray;	
-	padding:4px;
-  vertical-align:top;
-}
-th {
-	font-weight:bold;
-	background-color:#DDDDDD;
+td.wide, th.wide {
+  padding-left:1em;
+  padding-right:1em;
 }
 
-table.debug tr th, table.debug tr td {
-  border:1px dotted black;
+.oneline {
+  white-space:nowrap;
+}
+.oneline_small {
+  white-space:nowrap;
+  font-size:smaller;
 }
 
-table.info {
-	border-collapse:collapse;
-}
-table.info td, th {
-	border-top:1px dotted gray;
-}
-	
-a {
-  padding:0ex 1ex 0ex 1ex;
+/* fuer auswahllisten (grosse knoepfe) */
+
+table.menu, table.menu tr th, table.menu tr td {
+  border:1px dotted gray;
 }
 
-.png {
-  border:none;
-}
 
-table.layout, table.layout td, table.inner, table.inner td {
-	border:none;
-}
-table.inner td {
-	padding:1px;
-  padding-left:0.5ex;
-  padding-right:0.5ex;
-}
-th.menge, th.toleranz {
-	width: 70px;
-}
-th.gebinde {
-	width: 170px;
-}
+/* kleine untertabellen und listen in tabellenzellen: */
 
+table.inner tr td {
+  padding:1px 0.5ex 1px 0.5ex;
+}
 ul.inner {
   padding:0pt 0pt 0pt 1.5em;
   margin:0pt;
@@ -257,41 +282,37 @@ ul.inner li {
   margin: 0.5ex 0ex 0.5ex 0ex;
 }
 
-table input {
-	font-size:11pt;
-}
 
-a.tabelle {
-	color:#ED0606;
-}
+/* tabellenzeilen und -spalten mit sonderbedeutung */
 
-tr.legende {
-	font-size: 11pt;
+tr.legende td {
 	color: gray;
 }
-tr.legende td { border: none}
 
-tr.summe {
+tr.summe td, table.list tr.summe td {
   font-weight:bold;
+  border-top:2px solid #666666;
+  border-bottom:2px solid #666666;
 }
-tr.summe td {
-  font-weight:bold;
-  border-top:2px solid black;
-  border-bottom:2px solid black;
-}
-tr.rubrik th {
+
+/* formatierung der bilanzaufstellung */
+
+table.inner tr.rubrik th {
   background-color:#eeeeee;
   border-top:1px solid black;
-  padding:1ex 0ex 1ex 0ex;
+  padding:0.8ex 0ex 0.8ex 0ex;
+  border:1px dotted #888888;
+  margin:6px;
 }
-tr.posten td {
+table.inner tr.posten td {
   padding:0ex 0em 1em 0em;
   text-align:right;
 }
-tr.ersterposten td {
+table.inner tr.ersterposten td {
   padding:1em 0em 1em 0em;
   text-align:right;
 }
+
 tr.posten td.number, tr.ersterposten td.number {
   font-weight:bold;
 }
@@ -303,279 +324,62 @@ td.number input {
   text-align:right;
 }
 
-tr.groupofrows_top td {
+/* groupofrows: fuer eine, und optional eine folgezeile */
+
+table.list tr.groupofrows_top td {
   border-bottom-style:none;
 }
-table.numbers tr.groupofrows_bottom td {
+table.list tr.groupofrows_middle td {
+  border-style:none;
+}
+table.list tr.groupofrows_bottom td {
   padding:0pt;
   margin:0pt;
   height:0pt;
   border-top-style:none;
 }
 
-
-.bigbutton, .bigbutton_warn {
-	width:200px;
-	height:30px;
-	font-size:12px;
-}
-
-.bigbutton:hover {
-  font-weight:bold;
-}
-
-.bigbutton_warn {
-  background-color:#ffa0a0;
-  font-weight:bold;
-}
-
-
-
-	
-/* test für die notizanzeige in bestellen.php */
-
-#notiz a {
-/* display: block; */	
-text-decoration:none;
-font-weight:bold;
-width:5px;
-color: gray;
-border:none;
-}
-
-#notiz a .showcase {
-display: none;
-}
-
-#notiz a:hover .showcase {
-position: relative;
-top: 0px;
-left: 20px;
-display: block;
-font: normal 0.9em sans-serif;
-font-style:italic;
-background: #efefef;
-border: 1px dotted gray;
-color:#000000;
-padding: 2px 2px 2px 5px;
-}
-
-/* für die "tip" elemente */
-#tip {
-	width: 250px;
-	background-color:#efefef;
-	border: 1px dotted gray;
-	color: #000;
-	padding: 6px;
-	font: normal 0.9em sans-serif;
-	font-style:italic;
-	 line-height: 1.3em;
-}
-
-.warn, .warn th, .warn td, .warn div, .warn span {
-  background-color:#f0a0a0;
-  color:#000000;
-  font-weight:bold;
-  padding-top:2px;
-  padding-bottom:2px;
-}
-
-
-.alert, .alert th, .alert td, .alert div, .alert span, td.alert {
-  background-color:#ffffa0;
-  color:#000000;
-  font-weight:bold;
-  padding-top:2px;
-  padding-bottom:2px;
-}
-
-table.alert, table.alert td {
-  border:none;
-}
-
-th.ok, td.ok, div.ok, span.ok {
-  background-color:#ccffcc;
-  color:#000000;
-}
-
-a.button, span.button {
-  text-decoration:none;
-  color:#000000;
-  background-color:#f0f0ff;
-  padding:0.1ex 1em 0.1ex 1em;
-  margin-left:1em;
-  margin-right:1em;
-  border-style:solid;
-  border-width:1pt;
-  border-color:#000000;
-  font-weight:bold;
-  font-size:11pt;
-  white-space:nowrap;
-}
-a.button:hover, span.button:hover {
-  font-weight:bold;
-  text-decoration:underline;
-  background-color:#ffffd0;
-}
-span.radiooption {
-  padding-right:1em;
-}
-
-a.blocklink {
-  font-size:12pt;
-  text-decoration:none;
-  color:#000080;
-  padding:2px;
-  display:block;
-  border-style:solid;
-  border-width:1pt;
-  border-color:#000000;
-  color:#000000;
-  background-color:#f0f0ff;
-  text-decoration:none;
-}
-a.blocklink:hover {
-  background-color:#ffffd0;
-}
-img {
-  border:none;
-}
-img.button {
-  background-color:#f0f0ff;
-}
-img.button:hover {
-  background-color:#ffffd0;
-}  
-td.outer, th.outer {
-  border-style:solid;
-  border-color:#000000;
-  border-width:1px;
-}
-
-table.numbers td, table.numbers th {
-  padding:0.5ex;
-}
-table.numbers th {
-  text-align:center;
-}
-
-td.number, th.number, table.numbers th.number {
-  white-space:nowrap;
-  text-align:right;
-}
-
-table.numbers td.mult, table.numbers th.mult {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:1ex;
-}
-table.numbers td.mult_outdated {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:1ex;
-  background-color:#ffffaa;
-}
-td.mult_highlight {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:1ex;
-  font-weight:bold;
-  background-color:#d0ffc0;
-}
-td.mult_crit {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:1ex;
-  font-weight:bold;
-  background-color:#fff0c0;
-}
-
-table.numbers td.unit, table.numbers th.unit {
-  white-space:nowrap;
-  text-align:left;
-  border-left:none;
-  margin-left:0pt;
-  padding-left:0pt;
-}
-table.list tr td, table.list tr th, .small_form table.list tr td, .small_form table.list tr th {
-  padding: 0.4ex 1em 0.2ex 1em;
-  border:solid 1pt black;
-}
-table.form tr td {
-  border-style:none;
-  text-align:left;
-}
-
-table#preisform label {
-  padding-left:2em;
-  padding-right:1ex;
-}
-
-label {
-  margin-right:1em;
-}
-
 tr.modified td, tr.modified th, .modified {
   background-image:url(modified.gif);
   background-repeat:repeat;
 }
-tr.active td {
+table.list tr.active td {
   background-color:#ccffcc;
 }
 
-div.untertabelle {
-  font-size:12pt;
-  font-weight:bold;
-  padding:1em 1ex 1ex 1ex;
-}
 
-kbd {
-  font-family:arial,sans-serif;
-  font-weight:bold;
-  color:#000000;
-}
-
-p.li {
-  padding:0em 1em 0em 2em;
-  margin:0em;
-}
+/*
+ *
+ *  formulare, formulare...
+ *
+*/
 
 .small_form fieldset, fieldset.small_form {
   background-color:#ffffd0;
   margin:1ex;
   border-style:solid;
-  border-color:#000000;
+  border-color:#404040;
   border-width:1px;
   padding:1ex;
   margin:1ex;
 }
-table.small_form tr td, .small_form table, .small_form table tr td {
+.small_form table, .small_form table tr td {
   background-color:#ffffd0;
-  border-style:none;
   padding:0.5ex;
-  text-align:left;
 }
 .small_form table tr th {
   background-color:#e0e0f0;
+  padding:0.5ex;
 }
-
 .small_form table tr td label a {
   padding:0pt;
 }
 
-fieldset.big_form {
+.big_form fieldset, fieldset.big_form {
   background-color:#ffffff;
   margin:1ex;
   border-style:solid;
-  border-color:#000000;
+  border-color:#404040;
   border-width:1px;
   padding:1ex;
   margin:1em 1ex 1em 1ex;
@@ -591,22 +395,22 @@ fieldset legend {
   padding-right:2ex;
   border-style:solid;
   border-width:1px;
-  border-color:#000000;
+  border-color:#202020;
 }
 
-tr.newfield td, td.newfield {
+tr.newfield td, div.newfield {
   padding-top:1ex;
 }
-tr.newfield th, tr.newfield {
+tr.newfield th {
   margin-top:3em;
 }
 
-tr.lastline td, table.form tr.lastline td {
+tr.lastline td {
   padding-bottom:1em;
 }
 
-input.checkbox {
-  margin-left:2em;
+label {
+  margin-right:1em;
 }
 
 div.kommentar {
@@ -618,43 +422,80 @@ div.kommentar {
   font-size:11pt;
 }
 
-div.oneline, td.oneline, th.oneline {
-  padding:0pt;
-  margin:0pt;
-  white-space:nowrap;
+
+/*  warnings, alerts and oks */
+
+.warn, .warn th, .warn td, .warn div, .warn span {
+  background-color:#f0a0a0;
+  color:#000000;
+  font-weight:bold;
 }
-div.oneline_small {
-  padding:0pt;
-  margin:0pt;
-  white-space:nowrap;
-  font-size:smaller;
+.alert, .alert th, .alert td, .alert div, .alert span  {
+  background-color:#ffffa0;
+  color:#000000;
+  font-weight:bold;
+}
+.ok, .ok th, .ok td, .ok div, .ok span {
+  background-color:#ccffcc;
+  color:#000000;
+}
+div.alert, span.alert, div.warn, span.warn, div.ok, span.ok {
+  padding-top:2px;
+  padding-bottom:2px;
 }
 
-div#Zusatz {
-font-size: 0.9em;
-float: right; width: 30em;
-margin-left:  1em; 
-padding: 1em;
-border-style:solid;
-border-color:#FF0000;
-background-color: #eee;
+
+/*
+ *
+ *  bedienelemente: knoepfe und links
+ *
+ */
+
+.bigbutton, .bigbutton_warn {
+  min-width:200px;
+  min-height:30px;
+  font-size:11pt;
+  text-align:center;
+  vertical-align:middle;
+  margin:4px 1em 4px 1em;
 }
-table.footer {
-  margin-top:2em;
-  padding:2em 1em 1ex 1em;
-  border-style:solid none none none;
+.bigbutton:hover {
+  font-weight:bold;
+}
+.bigbutton_warn {
+  background-color:#ffa0a0;
+  font-weight:bold;
+}
+
+
+a.button, span.button {
+  text-decoration:none;
+  color:#000000;
+  background-color:#d0e0f0;
+  padding:0.3ex 1ex 0.3ex 1ex;
+  margin:0pt 1em 0pt 1em;
+  border-style:solid;
   border-width:1px;
-  border-color:#000000;
+  border-color:#666666;
+  font-weight:bold;
+  font-size:11pt;
+  white-space:nowrap;
 }
-table.footer tr, table.footer td {
-  border-style:none;
+a.button:hover, span.button:hover {
+  text-decoration:underline;
+  background-color:#ffffd0;
+}
+img.button {
+  background-color:#f0f0ff;
+}
+img.button:hover {
+  background-color:#ffffd0;
 }
 
 a.wikilink, ul#menu li a.wikilink {
   padding:2px 1ex 2px 2em;
-  font-size:11pt;
   background-color:white;
-  color:#ed0606;
+  color:#e01010;
   background-image:url(../img/gluehbirne_15x16.png);
   background-repeat:no-repeat;
   background-position:5px;
@@ -664,9 +505,17 @@ a.wikilink:hover, ul#menu li a.wikilink:hover {
   background-image:url(../img/birne_rot.png);
   text-decoration:underline;
 }
-ul#menu li a.wikilink {
+
+
+span.radiooption {
+  padding-right:1em;
+}
+
+input.checkbox {
   margin-left:2em;
 }
+
+/* simulierte radioknoepfe (auswahl preiseintrag!) */
 
 .buttonup {
   color:#000000;
@@ -698,7 +547,45 @@ ul#menu li a.wikilink {
 .buttondown:hover {
   background-color:#ccffcc;
 }
-  
+
+
+
+
+
+div.untertabelle {
+  font-size:11pt;
+  font-weight:bold;
+  padding:1em 1ex 1ex 1ex;
+}
+
+
+p.li {
+  padding:0em 1em 0em 2em;
+  margin:0em;
+}
+
+
+div#Zusatz {
+font-size: 0.9em;
+float: right; width: 30em;
+margin-left:  1em; 
+padding: 1em;
+border-style:solid;
+border-color:#FF0000;
+background-color: #eee;
+}
+table.footer {
+  margin-top:2em;
+  padding:2em 1em 1ex 1em;
+  border-style:solid none none none;
+  border-width:1px;
+  border-color:#000000;
+}
+table.footer tr, table.footer td {
+  border-style:none;
+}
+
+
 #option_menu {
   padding-top:1ex;
   padding-bottom:1em;
