@@ -89,34 +89,15 @@ $readonly and $action = '';
   <?
 
   if( $hat_dienst_V and ! $readonly ) {
-    ?>
-    <div id='transaction_button' style='padding-bottom:1em;'>
-    <span class='button'
-      onclick="document.getElementById('transaction_form').style.display='block';
-               document.getElementById('transaction_button').style.display='none';"
-      >Neue Gruppe...</span>
-    </div>
-
-    <div id='transaction_form' style='display:none;'>
-      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
+    echo switchable_form( "Neue Gruppe anlegen", "newgroup", false, "
       <input type='hidden' name='action' value='insert'>
-      <fieldset class='small_form'>
-      <legend>
-        <img src='img/close_black_trans.gif' class='button'
-        onclick="document.getElementById('transaction_form').style.display='none';
-                 document.getElementById('transaction_button').style.display='block';">
-	Neue Gruppe
-      </legend>
-      Nr: <input type="text" size="4" name="newNumber" />
-      Name: <input type="text" size="12" name="newName" />
-      <input type="submit" value="Anlegen" />
-      </fieldset>
-      </form>
-    </div>
+      <table>
+        <tr><td>Nr:</td><td><input type='text' size='4' name='newNumber' /></td></tr>
+        <tr><td>Name:</td><td><input type='text' size='12' name='newName' /></td></tr>
+        <tr><td></td><td style='text-align:right;'><input type='submit' value='Anlegen' /></td></tr>
+      </table>
+    " );
 
-    <?
-	
     if( $action == 'delete' ) {
       nur_fuer_dienst(5);
       need_http_var('gruppen_id','u');
