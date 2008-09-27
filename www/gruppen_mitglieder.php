@@ -1,4 +1,3 @@
-
 <?PHP
   
 assert( $angemeldet ) or exit();
@@ -7,165 +6,100 @@ assert( $angemeldet ) or exit();
 need_http_var('gruppen_id','u', 1);
 
           //predefine all edit modes as false
-	  $edit_names = FALSE;
-	  $edit_dienst_einteilung=FALSE;
+$edit_names = FALSE;
+$edit_dienst_einteilung=FALSE;
+$edit_pwd = FALSE;
+if( ( $login_gruppen_id == $gruppen_id ) and ! $readonly ) {
+  $edit_names = TRUE;
+  $edit_pwd = TRUE;
+}
+if( $hat_dienst_V and ! $readonly ) {
+  $edit_names = TRUE;
+  $edit_dienst_einteilung=TRUE;
+  $edit_pwd = TRUE;
+}
 
+?> <h1>Gruppenmitglieder f&uuml;r Gruppe <? echo sql_gruppenname($gruppen_id)." (".sql_gruppennummer($gruppen_id).")"; ?></h1><?
 
-echo "<h1>Gruppenmitglieder f&uuml;r Gruppe $gruppen_id </h1> ";
+$pwmsg = '';
+
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
-
-global $login_gruppen_id ;
-
-//FIXME: remove trim when http_get_var correctly returns integer
-if( trim($login_gruppen_id) == $gruppen_id and ! $readonly){
-	  $edit_names = TRUE;
+get_http_var('action','w','');
+switch( $action ) {
+  case 'new_pwd':
+    need( $edit_pwd, "keine Berechtigung zur Passwortaenderung!" );
+    need_http_var('newPass', 'R');
+    need_http_var('newPass2', 'R');
+    if($newPass!=$newPass2){
+      $pwmsg =  "<div class='warn' style='padding:1em;'>Eingaben nicht identisch! (Gruppenpasswort wurde nicht geändert)</div>";
+    } else if( strlen( $newPass ) < 4 ) {
+      $pwmsg =  "<div class='warn' style='padding:1em;'>Passwort zu kurz! (Gruppenpasswort wurde nicht geändert)</div>";
+    } else {
+      set_password( $gruppen_id, $newPass );
+      $pwmsg =  "<div class='ok' style='padding:1em;'>Das Gruppenpasswort wurde neu gesetzt</div>";
+    }
+    break;
+  case 'edit':
+    need( $edit_names, "keine Berechtigung!" );
+    $rows = sql_gruppen_members( $gruppen_id );
+    while( $row = mysql_fetch_array($rows) ) {
+      $id = $row['id'];
+      get_http_var( "vorname_$id", 'H', $row['vorname'] );
+      get_http_var( "name_$id", 'H', $row['name'] );
+      get_http_var( "email_$id", 'H', $row['email'] );
+      get_http_var( "telefon_$id", 'H', $row['telefon'] );
+      if( $edit_dienst_einteilung ) {
+        get_http_var( "dienst_$id", 'H', $row['diensteinteilung'] );
+      } else {
+        ${"dienst_$id"} = $row['diensteinteilung'];
+      }
+      sql_update_gruppen_member( $id, ${"name_$id"}, ${"vorname_$id"}, ${"email_$id"}, ${"telefon_$id"}, ${"dienst_$id"} );
+    }
+    break;
+  case 'delete':
+    fail_if_readonly();
+    nur_fuer_dienst(5);
+    need_http_var('person_id','u');
+    sql_delete_group_member($person_id, $gruppen_id);
+    break;
+  case 'add':
+    fail_if_readonly();
+    nur_fuer_dienst(5);
+    need_http_var('newVorname', 'H');
+    need_http_var('newName', 'H');
+    need_http_var('newMail', 'H');
+    need_http_var('newTelefon', 'H');
+    need_http_var('newDienst', 'H');
+    sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst[0]);
+    break;
 }
-  if( $hat_dienst_V and ! $readonly ) {
-	  $edit_names = TRUE;
-	  $edit_dienst_einteilung=TRUE;
-  }
 
 
-if(get_http_var('action','w')){
-	if( $action == 'delete' ) {
-	     fail_if_readonly();
-	     nur_fuer_dienst(5);
-	     need_http_var('person_id','u');
-	     sql_delete_group_member($person_id, $gruppen_id);
-
-	}
-	if ($action == "new_pwd") {
-		 need_http_var('newPass', 'w');
-		 need_http_var('newPass2', 'w');
-		 if($newPass==$newPass2){
-		 //$pwd = strval(rand(1000,9999));
-                     set_password( $gruppen_id, $newPass );
-		     $pwmsg =  "<div class='ok' style='padding:1em;'>Das neu angelegte Gruppenpasswort wurde gesetzt </div>";
-		 } else {
-		     $pwmsg =  "<div class='warn' style='padding:1em;'>Eingaben nicht identisch, Gruppenpasswort wurde nicht gändert </div>";
-
-		 }
-	}
-}
-
-// Änderungen von Gruppenmitgliedern speichern
-
-	get_http_var("nVorname[]", 'H');
-	get_http_var("nEmail[]", 'H');
-	get_http_var("nTelefon[]", 'H');
-	get_http_var("newDienst[]", 'H');
-	if(get_http_var("nName[]", 'H')){
-	
-	   foreach($nName as $change_id => $name){
-		fail_if_readonly();
-		if($edit_names!= TRUE){
-		    echo " <div class='warn'>Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!</div> ";
-		} else {
-
-		    $record = sql_gruppen_members($gruppen_id, $change_id);
-		    if($record['name']!= $nName[$change_id] or
-		       $record['vorname']!= $nVorname[$change_id] or
-		       $record['email']!= $nEmail[$change_id] or
-		       $record['telefon']!= $nTelefon[$change_id] or
-	               $record['diensteinteilung']!=$newDienst[$change_id]){
-			       //nur dienst 5 darf diensteinteilung ändern
-			       if($edit_dienst_einteilung==TRUE){
-				       sql_update_gruppen_member($change_id, $nName[$change_id] , $nVorname[$change_id] , $nEmail[$change_id] , $nTelefon[$change_id], $newDienst[$change_id]);
-			       } else {
-				       sql_update_gruppen_member($change_id, $nName[$change_id] , $nVorname[$change_id] , $nEmail[$change_id] , $nTelefon[$change_id], $record['diensteinteilung']);
-			       }
-		    }
-		    
-
-
-
-		}
-
-   	   }
-	}
-
-  // Hier eine reload-Form die dazu dient, dieses Fenster von einem anderen aus reloaden zu können
-  ?>
-    <form action='<? echo self_url(); ?>' name='reload_form' method='post'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='person_id' value=''>
-      <input type='hidden' name='action' value=''>
-    </form>
-  <?
-  if( $edit_dienst_einteilung ) {
-    ?>
-    <div id='transaction_button' style='padding-bottom:1em;'>
-    <span class='button'
-      onclick="document.getElementById('transaction_form').style.display='block';
-               document.getElementById('transaction_button').style.display='none';"
-      >Neue Gruppenmitglieder...</span>
-    </div>
-
-    <div id='transaction_form' style='display:none;padding-bottom:1em;'>
-      <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
-      <fieldset>
-      <legend>
-        <img src='img/close_black_trans.gif' class='button'
-        onclick="document.getElementById('transaction_button').style.display='block';
-                 document.getElementById('transaction_form').style.display='none';">
-	Neue Gruppenmitglieder
-      </legend>
-      <?
-	  // Schade, geht nicht, da "supplied argument is not a valid MySQL result resource in"
-	  //$new_mem=array('id'=>"", 'vorname'=>"", 'name'=>"", 'email'=>"", 'telefon'=>"", 'diensteinteilung'=>"");
-	  //membertable_view($new_mem, true, true);
-      ?>
-      Vorname: <input type="text" size="12" name="newVorname"/>
-      Name: <input type="text" size="12" name="newName"/>
-      Mail: <input type="text" size="12" name="newMail"/>
-      Telefon: <input type="text" size="12" name="newTelefon"/>
-      Diensteinteilung: <?dienst_selector(""); ?>
-      <input type="submit" value="Anlegen"/>
-      </fieldset>
-      </form>
-    </div>
-    <?
-
-	  //Einfügen des neuen Datensatzes
-	  if(get_http_var('newVorname', 'H')){
-		  get_http_var('newName', 'H');
-		  get_http_var('newMail', 'H');
-		  get_http_var('newTelefon', 'H');
-		  get_http_var('newDienst[]', 'H');
-		  sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst[0]);
-	  }
-  }
-  if( $edit_names ) {
-    ?>
-      <form action='<? echo self_url(); ?>' name='optionen' class='small_form' method='post'>
-      <? echo self_post(); ?>
-			 <input type='hidden' name='action' value=''>
-       <fieldset style='width:350px;' class='small_form'>
-	  	   <legend>Passwort</legend>
-         <? if(isset($pwmsg)) echo $pwmsg; ?>
-         <table style='width:350px;' class='menu'>
-			     <tr>
-		 <td><input type='password' size='24' name='newPass'></td>
-		 <td><input type='password' size='24' name='newPass2'></td>
-				<td>
-                 <input type='button' value='Passwort &auml;ndern'
-                onClick="document.forms['optionen'].action.value='new_pwd';
-                document.forms['optionen'].submit();">
-              </td>
-			     </tr>
-	        </table>
-       </fieldset>
-      </form>
-    <?
-  }
-
-
-  ?>
+if( $hat_dienst_V and ! $readonly ) {
+  echo switchable_form( 'newmember', "Neues Gruppenmitglied eintragen", false, "
+    <input type='hidden' name='action' value='add'>
+    <table>
+      <tr><td>Vorname:</td><td><input type='text' size='12' name='newVorname'/></td></tr>
+      <tr><td>Name:</td><td> <input type='text' size='12' name='newName'/></td></tr>
+      <tr><td>Mail:</td><td> <input type='text' size='12' name='newMail'/></td></tr>
+      <tr><td>Telefon:</td><td> <input type='text' size='12' name='newTelefon'/></td></tr>
+      <tr><td>Diensteinteilung:</td><td>'.dienst_selector('').'</td></tr>
+      <tr><td></td><td style='text-align:right'><input type='submit' value='Anlegen'/></td></tr>
     </table>
+  " );
+}
 
-    <br><br>
+if( $edit_pwd ) {
+  echo switchable_form( 'password', 'Passwort aendern', $pwmsg, "
+    <input type='hidden' name='action' value='new_pwd'>
+    $pwmsg
+    <table class='menu'>
+      <tr> <td>Passwort:</td><td><input type='password' size='24' name='newPass'></td></tr>
+      <tr> <td>nochmal das Passwort:</td><td><input type='password' size='24' name='newPass2'></td></tr>
+      <tr><td></td><td style='text-align:right;'><input type='submit' value='Passwort &auml;ndern'></td></tr>
+    </table>
+  " );
+}
 
-	<?  membertable_view(sql_gruppen_members($gruppen_id), $edit_names , $edit_dienst_einteilung); ?>
-
+membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
 
