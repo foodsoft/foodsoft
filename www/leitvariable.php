@@ -14,7 +14,7 @@ $leitvariable = array(
   , 'local' => false
   , 'comment' => 'Hier kann beliebiger text, einschliessliche einfacher HTML-Formatierung, eingegeben werden'
   , 'runtime_editable' => 1
-  , 'cols' => '40', 'rows' => 5
+  , 'cols' => '60', 'rows' => 5
   )
 , 'readonly' => array(
     'meaning' => 'Datenbank schreibgeschuetzt setzen (einige sehr eingeschränkte Schreibzugriffe sind dennoch moeglich)'
@@ -68,4 +68,3 @@ $leitvariable = array(
   )
 );
 ?>
-
