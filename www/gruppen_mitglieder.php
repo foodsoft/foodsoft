@@ -69,8 +69,8 @@ switch( $action ) {
     need_http_var('newName', 'H');
     need_http_var('newMail', 'H');
     need_http_var('newTelefon', 'H');
-    need_http_var('newDienst', 'H');
-    sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDienst[0]);
+    need_http_var('dienst_', 'H');
+    sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $dienst_ );
     break;
 }
 
@@ -83,7 +83,7 @@ if( $hat_dienst_V and ! $readonly ) {
       <tr><td>Name:</td><td> <input type='text' size='12' name='newName'/></td></tr>
       <tr><td>Mail:</td><td> <input type='text' size='12' name='newMail'/></td></tr>
       <tr><td>Telefon:</td><td> <input type='text' size='12' name='newTelefon'/></td></tr>
-      <tr><td>Diensteinteilung:</td><td>'.dienst_selector('').'</td></tr>
+      <tr><td>Diensteinteilung:</td><td>".dienst_selector('')."</td></tr>
       <tr><td></td><td style='text-align:right'><input type='submit' value='Anlegen'/></td></tr>
     </table>
   " );

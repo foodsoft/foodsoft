@@ -2178,17 +2178,17 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
     if($editable){
       $id = $row['id'];
       ?>
-         <td><input type='input' size='12' name='vorname_<? echo $id; ?>' value='<? echo $row['vorname']; ?>'></td>
-         <td><input type='input' size='12' name='name_<? echo $id; ?>' value='<? echo $row['name']; ?>'></td>
-         <td><input type='input' size='12' name='email_<? echo $id; ?>' value='<? $row['email']; ?>'></td>
-         <td><input type='input' size='12' name='telefon_<? echo $id; ?>' value='<? $row['telefon']; ?>'></td>
+         <td><input type='input' size='16' name='vorname_<? echo $id; ?>' value='<? echo $row['vorname']; ?>'></td>
+         <td><input type='input' size='16' name='name_<? echo $id; ?>' value='<? echo $row['name']; ?>'></td>
+         <td><input type='input' size='16' name='email_<? echo $id; ?>' value='<? echo $row['email']; ?>'></td>
+         <td><input type='input' size='12' name='telefon_<? echo $id; ?>' value='<? echo $row['telefon']; ?>'></td>
       <?
     } else {
       ?>
          <td><? echo $row['vorname']; ?></td>
          <td><? echo $row['name']; ?></td>
          <td><? echo $row['email']; ?></td>
-         <td><? $row['telefon']; ?></td>
+         <td><? echo $row['telefon']; ?></td>
       <?
     }
     if($super_edit){
