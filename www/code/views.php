@@ -2101,25 +2101,52 @@ function auswahl_lieferant( $selected = 0 ) {
   ?> </table> <?
 }
 
+function switchable_form( $tag, $legend, $initially_on, $formfields ) {
+  if( $initially_on ) {
+    $buttondisplay = 'none';
+    $formdisplay = 'block';
+  } else {
+    $buttondisplay = 'block';
+    $formdisplay = 'none';
+  }
+  return "
+    <div id='{$tag}_button' style='padding-bottom:1em;display:$buttondisplay;'>
+      <span class='button'
+        onclick=\"document.getElementById('{$tag}_form').style.display='block';
+                 document.getElementById('{$tag}_button').style.display='none';\"
+        >$legend...</span>
+    </div>
+
+    <div id='{$tag}_form' style='display:$formdisplay;padding-bottom:1em;'>
+      <form method='post' class='small_form' action='".self_url()."'>".self_post()."
+        <fieldset>
+          <legend>
+            <img src='img/close_black_trans.gif' class='button'
+            onclick=\"document.getElementById('{$tag}_button').style.display='block';
+                     document.getElementById('{$tag}_form').style.display='none';\">
+            $legend
+          </legend>
+          $formfields
+        </fieldset>
+      </form>
+    </div>
+  ";
+}
 
 /**
  * Produziert ein neues select-Feld mit den möglichen
  * Diensten.
  */
 function dienst_selector($pre_select, $id=""){
-	echo"
-              <select name='dienst_$id'>
-	";
+  $s = "<select name='dienst_$id'>";
 	    
 	  //var_dump($_SESSION['DIENSTEINTEILUNG']);
 	  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) { 
 	       if ($i == $pre_select) $select_str="selected";
      	       else $select_str = ""; 
-	       echo "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
-	echo"
-               </select>
-	";
-
+	       $s .= "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
+  $s .= "</select>";
+  return $s;
 }
 /**
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
@@ -2132,19 +2159,19 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
   <input type='hidden' name='action' value='edit'>
 
     <table class='list'>
-  <?if($head){?>
+<?
+  if($head){
+    ?>
       <tr>
          <th>Vorname</th>
          <th>Name</th>
          <th>Mail</th>
          <th>Telefon</th>
          <th>Diensteinteilung</th>
-<?
-	if($super_edit){
-		echo"<th>Optionen</th> ";
-	}
-    }
-?> </tr> <?     
+         <? if($super_edit){ ?> <th>Optionen</th> <? } ?>
+      </tr>
+    <?
+  }
   $rows = sql_gruppen_members( $gruppen_id );
   while ($row = mysql_fetch_array($rows)) {
     ?> <tr> <?
@@ -2155,7 +2182,7 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
          <td><input type='input' size='12' name='name_<? echo $id; ?>' value='<? echo $row['name']; ?>'></td>
          <td><input type='input' size='12' name='email_<? echo $id; ?>' value='<? $row['email']; ?>'></td>
          <td><input type='input' size='12' name='telefon_<? echo $id; ?>' value='<? $row['telefon']; ?>'></td>
-     <?
+      <?
     } else {
       ?>
          <td><? echo $row['vorname']; ?></td>
@@ -2166,8 +2193,8 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
     }
     if($super_edit){
       ?> <td> <?
-      dienst_selector($row['diensteinteilung'], $id );
-      ?> </td> <td> <?
+      echo dienst_selector($row['diensteinteilung'], $id );
+      ?> </td><td> <?
       echo fc_action( array( 'action' => 'delete', 'person_id' => $id, 'img' => 'img/b_drop.png'
                            , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' ) );
       ?> </td> <?
