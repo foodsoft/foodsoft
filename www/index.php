@@ -72,12 +72,6 @@ switch( $window_id ) {
       include( "windows/$window.php" );
     else
       include( "$window.php" );
-    ?>
-      <form name='update_form' method='post' action='<? echo self_url(); ?>'>
-        <? echo self_post(); ?>
-        <input type='hidden' name='message' value=''>
-      </form>
-    <?
     break;
 }
 
