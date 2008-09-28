@@ -1,0 +1,86 @@
+
+Installation der Foodosoft:
+===========================
+
+(a) Ihr braucht einen Webserver.
+    Das kann natuerlich auch ein virtueller Server sein (der einer unter vielen
+    auf demselben physikalischen Server sein kann).
+    Die Datei
+      apache.sample.conf
+    enthaelt eine (etwas paranoide) Beispielkonfiguration eines solchen
+    virtuellen Servers fuer den Apache Webserver.
+    Mit einer simpleren default-Konfiguration sollte es notfalls auch klappen;
+    php muss der Server natuerlich unterstuetzen
+
+(b) Unterhalb der /DocumentRoot des Servers koennt Ihr nebeneinander die
+    Foodsoft, und optional das DokuWiki, unterbringen, und zwar in
+    Unterverzeichnissen /foodsoft und /wiki:
+      /DocumentRoot/foodsoft
+      /DocumentRoot/wiki
+    Praktisch kann auch noch ein phpMyAdmin sein, sofern nicht schon
+    woanders installiert:
+      /DocumentRoot/phpmyadmin
+    Fuer den Webserver muessen die Dateien lesbar und die Verzeichnisse
+    "ausfuehrbar" (bedeutet: "betretbar") sein, sollten aber fuer den Server
+    nicht schreibbar sein (sollten daher dem Server auch nicht gehoeren).
+
+(c) Ihr braucht eine MySQL Datenbank; genauer:
+    - die Serveradresse (meist 127.0.0.1, wenn Apache und MySQL auf demselben
+      Rechner laufen) des MySQL-Servers,
+    - den Datenbanknamen,
+    - einen Usernamen, der vollen Zugriff auf die Datenbank haben muss (Lesen,
+      Schreiben, und Anlegen und Veraendern von Tabellen),
+    - das Passwort dieses Users
+    Diese Daten werden am besten in der Webserverkonfiguration untergebracht
+    (siehe apache.sample.conf), alternativ koennt Ihr sie in der Datei
+      code/config.php
+    eintragen.
+
+(d) Zum Test und zur weiteren Konfiguration koennt ihr das Skript setup.php
+    benutzen.
+    Da dieses Skript nur zur Installation und zur Konfiguration benoetigt
+    wird und nicht allgemein zugaenglich sein sollte, muesst ihr in
+      code/config.php
+    die IP Adresse eintragen, von der die weitere Konfiguration erfolgen
+    soll (diese Adresse solltet Ihr spaeter wieder loeschen).
+    Dann in einem Browser die Adresse
+      http://euer.server.name/foodsoft/setup.php
+    aufrufen.
+
+(e) setup.php 
+    - testet die Verbindung zur Datenbank und
+    - schlaegt die Korrekturen vor, um die noetigen Tabellen in der
+      Datenbank anzulegen.
+
+(f) Wenn das alles geklappt hat, wird eine Tabelle mit Konfigurationsvariablen
+    gezeigt, die ihr auf die passenden Werte setzen solltet; die Konfiguration
+    wird dann in der Datenbank in der Tabelle `leitvariablen' abgelegt.
+
+(e) Sobald die Sache laeuft, solltet ihr nicht vergessen, setup.php wieder zu
+    sperren: dazu in code/config.php
+      $allow_setup_from = false
+    eintragen.
+
+
+Weitere FoodCoops installieren
+==============================
+
+Wenn ihr die Foodsoft fuer mehr als eine FoodCoop auf demselben Server betreiben
+wollt:
+
+- Die erste installiert Ihr wie oben beschrieben; die Datenbankkonfiguration 
+  schreibt ihr in die apache-Konfigurationdatei (siehe apache.sample.conf).
+  Wir nehmen mal an, dass das schon geklappt hat.
+
+- Fuer jede weitere braucht ihr dann nur
+  - eine eigene unabhaengige Datenbank (also ein eigener Datenbankname, falls auch
+    auf demselben Server)
+  - einen Eintrag fuer einen weiteren virtuellen Server in der Apache-Konfiguration;
+    dieser unterscheidet sich von den vorhandenen nur
+      - einen anderen Servernamen (logisch), und
+      - durch die neuen Datenbankdetails
+    Die DocumentRoot aller virtuellen FoodCoops koennen gleich sein, die php-Skripte
+    selber braucht ihr also nicht zu kopieren.
+  - Zur Einrichtung der Datenbanktabellen und zum Setzen der Konfigurationsvariablen
+    muesst Ihr fuer jede weitere FoodCoop das setup.php nochmal ausfuehren.
+
