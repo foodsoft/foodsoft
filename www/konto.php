@@ -16,14 +16,10 @@ setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
 //
 $konten = sql_konten();
 if( mysql_num_rows($konten) < 1 ) {
-  ?>
-    <div class='warn'>
-      Keine Konten definiert!
-      <? echo fc_alink( 'index', 'text=zur&uuml;ck...' ); ?>
-    </div>
-  <?
+  echo div_msg( 'warn', "Keine Konten definiert!", 'index' );
   return;
 }
+
 if( mysql_num_rows($konten) == 1 ) {
   $row = mysql_fetch_array($konten);
   $konto_id = $row['id'];
@@ -133,38 +129,21 @@ if( ! $selected ) {
 }
 echo $options;
 ?> </select>
- </td><td>
-
-  <div id='neuer_auszug_button' style='padding-bottom:1em;'>
-    <span class='button'
-      onclick="document.getElementById('neuer_auszug_menu').style.display='block';
-               document.getElementById('neuer_auszug_button').style.display='none';"
-    >Neuen Auszug anlegen...</span>
-  </div>
-
-  <div id='neuer_auszug_menu' style='display:none;margin-bottom:2em;white-space:nowrap;'>
-    <form method='post' action='<? echo self_url( array('auszug_jahr','auszug_nr') ); ?>'>
-      <? echo self_post( array('auszug_jahr','auszug_nr') ); ?>
-      <!-- <fieldset class='small_form'>
-      <legend> -->
-        <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-        onclick="document.getElementById('neuer_auszug_button').style.display='block';
-                 document.getElementById('neuer_auszug_menu').style.display='none';">
-        Neuen Auszug anlegen:
-      <!-- </legend> -->
-      <label>Jahr:</label>
-      <input id='input_auszug_jahr' type='text' size='4' name='auszug_jahr' value='<? echo date('Y'); ?>'>
-      /
-      <label>Nr:</label>
-      <input id='input_auszug_nr' type='text' size='2' name='auszug_nr' value=''>
-      &nbsp;
-      <input type='submit' value='OK'>
-    </form>
-  </div>
-
   </td>
-
-  <? if( $editable and mysql_num_rows( $ungebuchte_einzahlungen ) > 0 ) { ?>
+  <td>
+  <?
+  switchable_form( 'neuer_auszug', 'Neuen Auszug anlegen', false, "
+    <input type='hidden' name='action' value='neuer_auszug'>
+    <div style='white-space:nowrap;'>
+      <label>Jahr:</label>
+      <input id='input_auszug_jahr' type='text' size='4' name='neuer_auszug_jahr' value='<? echo date('Y'); ?>'>
+              / <label>Nr:</label> <input id='input_auszug_nr' type='text' size='2' name='neuer_auszug_nr' value=''>
+      &nbsp; <input type='submit' value='OK'>
+    </div>
+  " );
+  ?> </td> <?
+  if( $editable and mysql_num_rows( $ungebuchte_einzahlungen ) > 0 ) {
+    ?>
     <td>
       <table>
         <tr>
@@ -197,14 +176,12 @@ echo $options;
                 </form>
                 <hr>
               <? } ?>
-              <? if( $editable ) { ?>
-                <form method='post' action='<? echo self_url(); ?>'>
-                  <input type='hidden' name='transaction_id' value='<? echo $trans['id']; ?>'>
-                  <input type='hidden' name='action' value='cancel_payment'>
-                  <input type='submit' class='button' name='Löschen' value='Löschen'
-                   title='diese ungebuchte Gutschrift stornieren'>
-                </form>
-              <? } ?>
+              <?
+                if( $editable ) {
+                  echo action_button( 'L&ouml;schen', 'diese ungebuchte Gutschrift stornieren', array(
+                    'action' => 'cancel_payment', 'transaction_id' => $trans['id']  ) );
+                }
+              ?>
             </td>
           </tr>
         <? } ?>
@@ -226,6 +203,12 @@ switch( $action ) { // aktionen die keinen auszug brauchen
     reload_immediately( self_url() );
     break;
     need_http_var( 'transaction_id', 'u' );
+  case 'neuer_auszug':
+    need_http_var( 'neuer_auszug_nr', 'u' );
+    need_http_var( 'neuer_auszug_jahr', 'u' );
+    $auszug_nr = $neuer_auszug_nr;
+    $auszug_jahr = $neuer_auszug_jahr;
+    break;
 }
 
 if( ! $auszug_jahr or ! $auszug_nr )
