@@ -56,7 +56,11 @@ Installation der Foodosoft:
     gezeigt, die ihr auf die passenden Werte setzen solltet; die Konfiguration
     wird dann in der Datenbank in der Tabelle `leitvariablen' abgelegt.
 
-(e) Sobald die Sache laeuft, solltet ihr nicht vergessen, setup.php wieder zu
+(g) Dann koennt ihr mit setup.php erste Gruppen anlegen: spezielle Gruppen fuer
+    "Basar" und "Muell", und eine erste regulaere Gruppe: diese dient zum ersten
+    Anmelden bei der Foodsoft, um dann weitere Gruppen eintragen zu koennen.
+
+(h) Sobald die Sache laeuft, solltet ihr nicht vergessen, setup.php wieder zu
     sperren: dazu in code/config.php
       $allow_setup_from = false
     eintragen.

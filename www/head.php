@@ -16,7 +16,7 @@ if( $readonly ) {
 ?><!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
 <html>
 <head>
-  <title>FC Potsdam  - Foodsoft</title>
+  <title>FC <? echo $foodcoop_name; ?>  - Foodsoft</title>
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
   <link rel='stylesheet' type='text/css' href='<? echo $foodsoftdir; ?>/css/foodsoft.css'>
   <script type='text/javascript' src='<? echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
@@ -25,7 +25,7 @@ if( $readonly ) {
 <div id='header' class='<? echo $headclass; ?>' style='padding:0pt;margin:0pt;'>
 <table width='100%'>
   <tr>
-    <td><a class='logo' href='index.php'><span class='logoinvers'>FC</span><span class='logo'>Nahrungskette... Foodsoft</span></a></td>
+    <td><a class='logo' href='index.php'><span class='logoinvers'>FC</span><span class='logo'><? echo $foodcoop_name; ?>... Foodsoft</span></a></td>
     <td style='padding-top:1em;'>
       <?
         if( $angemeldet ) {

@@ -43,6 +43,15 @@ $changes = array();
 $js = '';
 $problems = false;
 
+function escape_val( $val ) {
+  switch( $val ) {
+    case 'CURRENT_TIMESTAMP';
+      return $val;
+    default:
+      return "'$val'";
+  }
+}
+
 function check_1() {
   //
   // (1) check server runtime environment:
@@ -267,7 +276,7 @@ function check_4() {
         $s .= 'NULL ';
       }
       if( isset( $props['default'] ) && ( $props['default'] !== '' ) ) {
-        $s .= "default {$props['default']} ";
+        $s .= 'default ' . escape_val( $props['default'] ) .' ';
       }
       if( isset( $props['extra'] ) ) {
         $s .= $props['extra'];
@@ -283,7 +292,7 @@ function check_4() {
         if( $props['unique'] ) {
           $s .= "UNIQUE ";
         }
-        $s .= "KEY `$want_index` ( {$props['collist']} );";
+        $s .= "KEY `$want_index` ( {$props['collist']} ) ";
       }
     }
     $s .= ') ENGINE=MyISAM  DEFAULT CHARSET=utf8;';
@@ -295,7 +304,7 @@ function check_4() {
     $col = $tables[$want_table]['cols'][$want_col];
     $type = $col['type'];
     $null = ( $col['null'] == 'NO' ? 'NOT NULL' : 'NULL' );
-    $default = ( ( isset( $col['default'] ) && ( $col['default'] !== '' ) ) ? "default " . $col['default'] : '' );
+    $default = ( ( isset( $col['default'] ) && ( $col['default'] !== '' ) ) ? "default " . escape_val( $col['default'] ) : '' );
     $extra = ( isset( $col['extra'] ) ? $col['extra'] : '' );
     $s = " ALTER TABLE $want_table $op COLUMN `$want_col` $type $null $default $extra;";
     $changes[] = $s;
@@ -762,12 +771,154 @@ function check_5() {
   return $problems;
 }
 
+function check_6() {
+  global $changes;
+  $problems = false;
+
+  $result = mysql_query( "SELECT * FROM leitvariable WHERE name = 'muell_id'; " );
+  $row = mysql_fetch_array( $result );
+  if( $row ) {
+    $muell_id = $row['value'];
+  } else {
+    $muell_id = false;
+  }
+  $result = mysql_query( "SELECT * FROM leitvariable WHERE name = 'basar_id'; " );
+  $row = mysql_fetch_array( $result );
+  if( $row ) {
+    $basar_id = $row['value'];
+  } else {
+    $basar_id = false;
+  }
+
+  if( isset( $HTTP_POST_VARS['add_group_muell'] ) ) {
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+                  VALUES ( $muell_id, 'internes Verrechnungskonto', 0, '*' )";
+  }
+  if( isset( $HTTP_POST_VARS['add_group_basar'] ) ) {
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+                  VALUES ( $basar_id, 'Basargruppe', 0, '*' )";
+  }
+  if( isset( $HTTP_POST_VARS['add_group_regular'] ) ) {
+    $id = $HTTP_POST_VARS['group_id'];
+    $name = $HTTP_POST_VARS['group_name'];
+    $password = $HTTP_POST_VARS['group_password'];
+    // $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+    //              VALUES ( {$basar_id, 'Basargruppe', 0, '*' )";
+  }
+
+  ?>
+    <table>
+      <tr>
+        <th>Gruppe</th>
+        <th>Status</th>
+        <th>Aktion</th>
+      </tr>
+      <tr>
+        <td>'M&uuml;ll'-Gruppe (Nr. <? echo $muell_id; ?>)</td>
+  <?
+
+  $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$muell_id; " );
+  $row = mysql_fetch_array( $result );
+  if( $row ) {
+    ?>
+      <td class='ok'>eingetragen</td>
+      <td>&nbsp;</td>
+    <?
+  } else {
+    $problems = true;
+    ?>
+      <td class='warn'>nicht vorhanden</td>
+      <td class='alert'>
+        eintragen? <input type='checkbox' name='add_group_muell' value='add_group_muell'>
+      </td>
+    <?
+  }
+  ?>
+      </tr>
+      <tr>
+        <td>'Basar'-Gruppe (Nr. <? echo $basar_id; ?>)</td>
+  <?
+
+  $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$basar_id; " );
+  $row = mysql_fetch_array( $result );
+  if( $row ) {
+    ?>
+      <td class='ok'>eingetragen</td>
+      <td>&nbsp;</td>
+    <?
+  } else {
+    $problems = true;
+    ?>
+      <td class='warn'>nicht vorhanden</td>
+      <td class='alert'>
+        eintragen? <input type='checkbox' name='add_group_basar' value='add_group_muell'>
+      </td>
+    <?
+  }
+  ?>
+      </tr>
+      <tr>
+        <td>Sonstige Gruppen</td>
+  <?
+  $result = mysql_query( "SELECT * FROM bestellgruppen " );
+  $num = mysql_num_rows( $result ) - 2;
+  if( $num > 0 ) {
+    ?>
+      <td class='ok'><? echo $num; ?> Gruppen eingetragen</td>
+      <td>&nbsp;<td>
+    <?
+  } else {
+    $problems = true;
+    ?>
+      <td class='warn'>keine Gruppen vorhanden
+        <div class='small'>
+          Um dich in die Foodsoft einloggen zu k&ouml;nnen, sollte hier mindestens eine erste Gruppe
+          eingetragen werden!
+        </div>
+      </td>
+      <td>&nbsp;<td>
+      </tr>
+    <?
+  }
+  ?>
+  </table>
+  <div style='padding:1em;'>
+  <h4> Gruppe eintragen </h4>
+  Hier kannst Du eine erste Gruppe eintragen, oder Gruppendaten &uuml;berschreiben:
+  <ul>
+    <li>
+      Diese Funktion dient normalerweise nur zum Eintrag einer ersten Gruppe, als die
+      du dich dann in die Foodsoft einloggen kannst - weitere Gruppen sind dann dort
+      viel komfortabler anzulegen
+    </li>
+    <li>
+      WARNUNG: schon vorhandene Daten einer Gruppe werden hier einfach kommentarlos &uuml;berschrieben
+    </li>
+    <li>
+      Du kannst hier also im Notfall auch ein Gruppenpasswort neu setzen
+    </li>
+  </ul>
+  ID: <input type='text' size='4' value='1' name='group_id'>
+  &nbsp;
+  Name: <input type='text' size='20' value='Die Pioniere' name='group_name'>
+  &nbsp;
+  Passwort: <input type='text' size='20' value='' name='group_password'>
+  &nbsp;
+  eintragen? <input type='checkbox' name='add_group_regular' value='add_group_regular'>
+  </div>
+
+  <?
+  return $problems;
+}
+
+
 $checks = array(
   'check_1' => 'HTTP Server / Laufzeitumgebung'
 , 'check_2' => 'Installierte Dateien und Verzeichnisse / Zugriffsrechte'
 , 'check_3' => 'Verbindung zum MySQL Server'
 , 'check_4' => 'Datenbankstruktur'
 , 'check_5' => 'Konfigurationsvariable'
+, 'check_6' => 'Gruppenverwaltung'
 );
 
 foreach( $checks as $f => $title ) {
