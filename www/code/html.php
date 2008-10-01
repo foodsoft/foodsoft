@@ -22,8 +22,12 @@ function close_tag( $tag ) {
   }
 }
 
-function open_div( $class = '', $attr = '' ) {
+function open_div( $class = '', $attr = '', $payload = '' ) {
   open_tag( 'div', $class, $attr );
+  if( $payload ) {
+    echo $payload;
+    close_div();
+  }
 }
 
 function close_div() {

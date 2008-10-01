@@ -168,88 +168,74 @@ if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
   $form_action="$foodsoftdir/index.php";
 }
 
-?>
-<div class='kommentar'><? echo $motd; ?></div>
-<form action='<? echo $form_action; ?>' method='post' class='small_form'>
-  <? echo self_post(); ?>
-  <input type='hidden' name='login' value='login'>
-  <fieldset class='small_form' style='padding:2em;'>
-    <legend>Anmelden</legend>
-    <? if( "$problems" ) echo "$problems"; ?>
-    <div class='kommentar' style='padding:1em;'>
-      Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:
-    </div>
-    <div class='newfield'>
+open_div( 'kommentar', '', $motd );
+open_form( 'small_form', '', $form_action );
+  echo self_post();
+  ?> <input type='hidden' name='login' value='login'> <?
+  open_fieldset( 'small_form', "style='padding:2em;'", 'Anmelden' );
+    if( "$problems" )
+      echo "$problems";
+    open_div( 'kommentar', "style='padding:1em;'", 'Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:' );
+    open_div( 'newfield', '', "
       <label>Gruppe:</label>
       <select size='1' name='login_gruppen_id'>
-        <? echo optionen_gruppen(); ?>
+        ". optionen_gruppen() ."
       </select>
       <label style='padding-left:4em;'>Passwort:</label>
         <input type='password' size='8' name='passwort' value=''>
-    </div>
-    <div class='newfield'>
-      <label>Ich mache gerade...</label>
-    </div>
-    <table>
-      <tr>
-        <td>
-          <input class='checkbox' type='radio' name='dienst' value='0'
-            onclick='dienstform_off();'
-            <? if (!$dienst) echo ' checked'; ?> >
-          <label>keinen Dienst</label>
-        </td>
-        <td>
-          <input class='checkbox' type='radio' name='dienst' value='1'
-            onclick='dienstform_on();'
-            <? if ($dienst==1) echo ' checked'; ?> >
-          <label title='Verteiler'>Dienst I/II</label>
-        </td>
-        <td>
-          <input class='checkbox' type='radio' name='dienst' value='3'
-            onclick='dienstform_on();'
-            <? if ($dienst==3) echo ' checked'; ?> >
-          <label title='Kellerdienst'>Dienst III</label>
-        </td>
-        <td>
-          <input class='checkbox' type='radio' name='dienst' value='4'
-            onclick='dienstform_on();'
-            <? if ($dienst==4) echo ' checked'; ?> >
-          <label title='Abrechnung'>Dienst IV</label>
-        </td>
-        <td>
-          <input class='checkbox' type='radio' name='dienst' value='5'
-            onclick='dienstform_on();'
-            <? if ($dienst==5) echo ' checked'; ?> >
-          <label title='Mitgliederverwaltung'>Dienst V</label>
-        </td>
-      </tr>
-    </table>
-    <div id='dienstform' style='display:<? echo $dienst ? 'block' : 'none';  ?>;'>
-      <div class='kommentar'>
-           Wenn Du Dich fuer einen Dienst anmeldest, kannst Du zusaetzliche
-           Funktionen der Foodsoft nutzen; ausserdem wirst Du 
-           automatisch ins Dienstkontrollblatt eingetragen:
-      </div>
-        <fieldset class='small_form'>
-          <legend>Dienstkontrollblatt</legend>
-          <div class='newfield'>
-             <label>Dein Name:</label>
+    " );
+    open_div( 'newfield', '', 'Ich mache gerade...' );
+    open_table();
+        open_td();
+          ?> <input class='checkbox' type='radio' name='dienst' value='0'
+              onclick='dienstform_off();'
+              <? if (!$dienst) echo ' checked'; ?> >
+              <label>keinen Dienst</label> <?
+        open_td();
+          ?> <input class='checkbox' type='radio' name='dienst' value='1'
+              onclick='dienstform_on();'
+              <? if ($dienst==1) echo ' checked'; ?> >
+              <label title='Verteiler'>Dienst I/II</label> <?
+        open_td();
+          ?> <input class='checkbox' type='radio' name='dienst' value='3'
+               onclick='dienstform_on();'
+               <? if ($dienst==3) echo ' checked'; ?> >
+               <label title='Kellerdienst'>Dienst III</label> <?
+        open_td();
+          ?> <input class='checkbox' type='radio' name='dienst' value='4'
+              onclick='dienstform_on();'
+              <? if ($dienst==4) echo ' checked'; ?> >
+              <label title='Abrechnung'>Dienst IV</label> <?
+        open_td();
+          ?> <input class='checkbox' type='radio' name='dienst' value='5'
+              onclick='dienstform_on();'
+              <? if ($dienst==5) echo ' checked'; ?> >
+              <label title='Mitgliederverwaltung'>Dienst V</label> <?
+    close_table();
+    open_div( '', "id='dienstform' style='display:" . ( $dienst ? 'block' : 'none' ) .";'" );
+      open_div( 'kommentar', '', "
+        Wenn Du Dich fuer einen Dienst anmeldest, kannst Du zusaetzliche
+        Funktionen der Foodsoft nutzen; ausserdem wirst Du 
+        automatisch ins Dienstkontrollblatt eingetragen:
+      " );
+      open_fieldset( 'small_form', '', 'Dienstkontrollblatt</legend>' );
+        open_div( 'newfield' );
+          ?> <label>Dein Name:</label>
              <input type='text' size='20' name='coopie_name' value='<? echo $coopie_name; ?>'>
              <label style='padding-left:4em;'>Telefon:</label>
-             <input type='text' size='20' name='telefon' value='<? $telefon; ?>'>
-          </div>
-          <div class='newfield'>
-             <label>Notiz fuers Dienstkontrollblatt:</label>
+             <input type='text' size='20' name='telefon' value='<? $telefon; ?>'> <?
+        close_div();
+        open_div( 'newfield' );
+          ?> <label>Notiz fuers Dienstkontrollblatt:</label>
              <br>
-             <textarea cols='80' rows='3' name='notiz'><? echo $notiz; ?></textarea>
-          </div>
-        </fieldset>
-    </div>
-    <div class='newfield'>
-      <input type='submit' name='submit' value='OK'>
-    </div>
-  </fieldset>
-</form>
+             <textarea cols='80' rows='3' name='notiz'><? echo $notiz; ?></textarea> <?
+        close_div();
+      close_fieldset();
+    close_div();
+    open_div( 'newfield', '', "<input type='submit' name='submit' value='OK'>" );
+  close_fieldset();
+close_form();
+?>
 <script type='text/javascript'>
    function dienstform_on() {
      document.getElementById('dienstform').style.display = 'block';

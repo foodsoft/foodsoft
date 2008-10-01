@@ -42,7 +42,7 @@ switch( $window_id ) {
           include( "windows/$window.php" );
         } else {
           div_msg( 'warn', "Ung&uuml;ltiger Bereich: $window" );
-          include('menu.php');
+          include('windows/menu.php');
         }
     }
     open_table( 'footer', "width='100%'" );
@@ -65,7 +65,7 @@ switch( $window_id ) {
     break;
 }
 
-open_form( 'update_form' );
+open_form( '', "name='update_form'" );
   echo "<input type='hidden' name='message' value=''>";
 close_form();
 
