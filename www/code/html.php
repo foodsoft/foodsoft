@@ -83,7 +83,7 @@ function close_tr() {
   }
 }
 
-function open_td( $class= '', $attr = '', $tag = 'td' ) {
+function open_tdh( $tag, $class= '', $attr = '', $payload = '' ) {
   global $open_tags;
   $n = count( $open_tags );
   switch( $open_tags[$n] ) {
@@ -100,10 +100,17 @@ function open_td( $class= '', $attr = '', $tag = 'td' ) {
     default:
       error( 'unexpected open_td' );
   }
+  if( $payload ) {
+    echo $payload;
+    close_td();
+  }
 }
 
-function open_th( $class= '', $attr = '' ) {
-  open_td( $class, $attr, 'th' );
+function open_td( $class= '', $attr = '', $payload = '' ) {
+  open_tdh( 'td', $class, $attr, $payload );
+}
+function open_th( $class= '', $attr = '', $payload = '' ) {
+  open_tdh( 'th', $class, $attr, $payload );
 }
 
 function close_td() {
@@ -123,14 +130,16 @@ function close_th() {
   close_td();
 }
 
-function open_form( $name, $class = '', $action = '' ) {
+function open_form( $name = '', $class = '', $action = '' ) {
   if( ! $action ) {
     $action = self_url();
     $hidden = self_post();
   } else {
     $hidden = '';
   }
-  open_tag( 'form', $class, "name='$name' method='post' action='$action'" );
+  if( $name )
+    $name = "name='$name'";
+  open_tag( 'form', $class, "$name method='post' action='$action'" );
   echo $hidden;
 }
 
