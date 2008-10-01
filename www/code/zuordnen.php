@@ -4268,12 +4268,8 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
  *
  */
 function reload_immediately( $url ) {
-  global $print_on_exit;
-  echo "
-    <form action='$url' name='reload_now_form' method='post'></form>
-    <script type='text/javascript'>document.forms['reload_now_form'].submit();</script>
-    $print_on_exit;
-  ";
+  open_form( 'reload_now_form', '', $url );
+  echo "\n <script type='text/javascript'>document.forms['reload_now_form'].submit();</script>\n";
   exit();
 }
 /**

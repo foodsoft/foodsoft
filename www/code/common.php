@@ -16,9 +16,10 @@ if( 0 or $allow_setup ) { // TODO: warnen, wenn setup.php zugreifbar ist?
   exit(1);
 }
 
-global $print_on_exit;
-$print_on_exit = '';
+// lese low-level Funktionen, die keine Datenbankverbindung benoetigen:
+//
 require_once('code/err_functions.php');
+require_once('code/html.php');
 
 // schinke-server fuer (Terra-)kataloge    *** EXPERIMENTELL ***
 // (bisher nicht sinnvoll, da keine bestellnummern geliefert werden!)
@@ -81,7 +82,6 @@ global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $coopie_nam
 $angemeldet = false;
 
 require_once('code/views.php');
-require_once('code/html.php');
 require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
 require_once('code/katalogsuche.php');

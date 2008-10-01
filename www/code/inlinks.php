@@ -537,7 +537,7 @@ function fc_action( $parameters = array() ) {
     }
   }
   $form .= "</form";
-  $print_on_exit = "$form $print_on_exit";
+  $print_on_exit[] = $form;
   $alt = '';
   if( $title ) {
     $alt = "alt='$title'";

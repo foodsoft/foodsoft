@@ -850,17 +850,16 @@ function option_menu_row( $option = false ) {
     echo "<table class='menu' id='option_menu_table'></table>";
     $option_menu_counter = 0;
     // positionieren erst ganz am schluss (wenn parent sicher vorhanden ist):
-    $print_on_exit = $print_on_exit
-    . "
+    $print_on_exit[] = "
       <script type='text/javascript'>
-      var option_menu_parent, option_menu_table;
-      option_menu_table = document.getElementById('option_menu_table');
-      if( option_menu_table ) {
-        option_menu_parent = document.getElementById('option_menu');
-        if( option_menu_parent ) {
-          option_menu_parent.appendChild(option_menu_table);
+        var option_menu_parent, option_menu_table;
+        option_menu_table = document.getElementById('option_menu_table');
+        if( option_menu_table ) {
+          option_menu_parent = document.getElementById('option_menu');
+          if( option_menu_parent ) {
+            option_menu_parent.appendChild(option_menu_table);
+          }
         }
-      }
       </script>
     ";
   }
