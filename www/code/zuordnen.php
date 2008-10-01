@@ -4268,7 +4268,7 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
  *
  */
 function reload_immediately( $url ) {
-  open_form( 'reload_now_form', '', $url );
+  open_form( '', "name='reload_now_form'", $url );
   echo "\n <script type='text/javascript'>document.forms['reload_now_form'].submit();</script>\n";
   exit();
 }
@@ -4661,8 +4661,7 @@ function self_post( $exclude = array() ) {
   return $output;
 }
 
-function optionen( $fieldname, $values ) {
-  global $$fieldname;
+function optionen( $values, $selected ) {
   $output = '';
   foreach( $values as $v ) {
     if( is_array( $v ) ) {
@@ -4675,7 +4674,7 @@ function optionen( $fieldname, $values ) {
       $title = '';
     }
     $output = $output . "<option value='$value'";
-    if( $value == $$fieldname )
+    if( $value == $selected )
       $output = $output . " selected";
     if( $title )
       $output = $output . " title='$title'";

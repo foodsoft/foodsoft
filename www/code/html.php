@@ -130,21 +130,29 @@ function close_th() {
   close_td();
 }
 
-function open_form( $name = '', $class = '', $action = '' ) {
+function open_form( $class = '', $attr = '', $action = '' ) {
   if( ! $action ) {
     $action = self_url();
     $hidden = self_post();
   } else {
     $hidden = '';
   }
-  if( $name )
-    $name = "name='$name'";
-  open_tag( 'form', $class, "$name method='post' action='$action'" );
+  open_tag( 'form', $class, "method='post' action='$action' $attr" );
   echo $hidden;
 }
 
 function close_form() {
   close_tag( 'form' );
+}
+
+function open_fieldset( $class = '', $attr = '', $legend = '' ) {
+  open_tag( 'fieldset', $class, $attr );
+  if( $legend )
+    echo "<legend>$legend</legend>";
+}
+
+function close_fieldset() {
+  close_tag( 'fieldset' );
 }
 
 function close_all_tags() {
