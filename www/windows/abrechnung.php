@@ -68,177 +68,153 @@ $warenwert_muell_brutto = muell_wert_brutto( $bestell_id );
 $warenwert_basar_brutto = basar_wert_brutto( $bestell_id ); 
 
 
+?><h2>Abrechnung: Bestellung <?
+  echo "$bestellung_name ($lieferant_name) ". fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" );
+?></h2><?
+
+open_form();
+  ?><input type='hidden' name='action' value='save'><?
+
+  open_table( 'list' );
+      open_th( '', '', 'Abrechnungsschritt' );
+      open_th( '', '', 'Details' );
+      open_th( '', '', 'Netto' );
+      open_th( '', '', 'Brutto' );
+      open_th( '', '', 'Aktionen' );
+
+    //
+    // gruppennteil:
+    //
+    open_tr();
+      open_th( '', "colspan='5' style='padding-top:2em;'", 'Bestellgruppen:' );
+
+    open_tr();
+      open_td( '', '', 'Basarkäufe eintragen:' );
+      open_td( '', '', 'Reste im Basar:' );
+      open_td();
+      open_td( 'boldnumber', sprintf( "%.2lf", $warenwert_basar_brutto ) );
+      open_td( '', "style='vertical-align:bottom;'", fc_alink( 'basar', "text=zum Basar...,img=" ) );
+    open_tr();
+      open_td( '', "rowspan='2'", "Verteilmengen abgleichen:" );
+      open_td( 'right', '', 'Warenwert Gruppen:' );
+      open_td();
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $warenwert_verteilt_brutto ) );
+      open_td( '', " rowspan='2' style='vertical-align:middle;'",
+               fc_alink( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,img=" ) );
+    open_tr();
+      open_td( 'right', '', 'auf den Müll gewandert:' );
+      open_td();
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $warenwert_muell_brutto ) );
+
+    open_tr( 'summe' );
+      open_td( '', "colspan='3'", 'Summe' );
+      open_td( 'number', '', sprintf( "%.2lf", $warenwert_verteilt_brutto + $warenwert_muell_brutto + $warenwert_basar_brutto ) );
+      open_td();
+
+if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
+    open_tr();
+      open_td( '', "rowspan='2'", 'Pfandabrechnung Bestellgruppen:' );
+      open_td( 'right', '', 'berechnet (Kauf):' );
+      open_td();
+      open_td( 'boldnumber', '', sprintf( "%.2lf", -$gruppenpfand['pfand_voll_brutto_soll'] ) );
+      open_td( '', "rowspan='2' style='vertical-align:middle;'",
+               fc_alink( 'gruppenpfand', "bestell_id=$bestell_id,img=,text=zur Pfandabrechnung..." ) );
+    open_tr();
+      open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
+      open_td();
+      open_td( 'boldnumber', '', sprintf( "%.2lf", -$gruppenpfand['pfand_leer_brutto_soll'] ) );
+}
+
+    //
+    // lieferantenteil:
+    //
+    open_tr();
+      open_th( '', "colspan='5' style='padding-top:2em;'" );
+        echo "Lieferant: $lieferant_name";
+        ?> <div> Rechnungsnummer des Lieferanten: <?
+           if( $readonly ) { 
+             echo $bestellung['rechnungsnummer'];
+           } else {
+             ?> <input type='text' size='40' name='rechnungsnummer' value='<? echo $bestellung['rechnungsnummer']; ?>'> <?
+           }
+        ?> </div> <?
+
+    open_tr();
+      open_td( '', '', 'Liefermengen und -preise abgleichen:' );
+      open_td( 'right', '', 'Warenwert:' );
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['waren_netto_soll'] ) );
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['waren_brutto_soll'] ) );
+      open_td( '', "style='vertical-align:bottom;'",
+                fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=zum Lieferschein..." ) );
+
+if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
+    open_tr();
+      open_td( '', "rowspan='2'", "Pfandabrechnung Lieferant: <div class='small'>(falls zutreffend, etwa bei Terra!)</div>" );
+      open_td( 'right', '', 'berechnet (Kauf):' );
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_voll_netto_soll'] ) );
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ) );
+      open_td( '', "rowspan='2' style='vertical-align:middle;'",
+               fc_alink( 'pfandzettel', "bestell_id=$bestell_id,lieferanten_id=$lieferant_id,img=,text=zum Pfandzettel..." ) );
+
+    open_tr();
+      open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_leer_netto_soll'] ) );
+      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ) );
+}
+    open_tr( 'summe' );
+      open_td( '', "colspan='2'", 'Zwischensumme:' );
+      open_td( 'number', '', sprintf( "%.2lf", $lieferanten_soll['waren_netto_soll']
+                                             + $lieferanten_soll['pfand_leer_netto_soll']
+                                             + $lieferanten_soll['pfand_voll_netto_soll'] ) );
+      open_td( 'number', '', sprintf( "%.2lf", $lieferanten_soll['waren_brutto_soll']
+                                             + $lieferanten_soll['pfand_leer_brutto_soll']
+                                             + $lieferanten_soll['pfand_voll_brutto_soll'] ) );
+      open_td( '', "colspan='2'" );
+
+    open_tr();
+      open_td( '', "colspan='3'" );
+        ?> Sonstiges: <br><?
+        if( $readonly ) {
+          echo $bestellung['extra_text'];
+        } else {
+          ?> <input type='text' name='extra_text' size='40' value='<? echo $bestellung['extra_text']; ?>'> <?
+        }
+      open_td( 'number', "style='text-align:right;vertical-align:bottom;'" );
+        if( $readonly ) {
+          printf( "%.2lf", $bestellung['extra_soll'] );
+        } else {
+          ?> <input style='text-align:right;' type='text' name='extra_soll' size='10' value='<? printf( "%.2lf", $bestellung['extra_soll'] ); ?>'> <?
+        }
+
+    open_tr( 'summe' );
+      open_td( '', "colspan='3'", 'Summe:' );
+      open_td( 'number', '', sprintf( "%.2lf", sql_bestellung_rechnungssumme( $bestell_id ) ) );
+      open_td();
+
+    open_tr();
+      if( $status >= STATUS_ABGERECHNET ) {
+        open_td( 'right', "colspan='5' style='padding-top:1em;text-align:right;'" );
+          ?> Abrechnung durchgeführt: <?
+           echo dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ) .", "
+                . $bestellung['abrechnung_datum'];
+          if( $hat_dienst_IV ) {
+            ?> <span style='padding-left:3em;'>Nochmal öffnen: <input type='checkbox' name='rechnung_abschluss' value='reopen' style='padding-right:4em'>
+                <input type='submit' value='Abschicken'></span> <?
+          }
+      } else {
+        if( $hat_dienst_IV ) {
+          if( abs( $warenwert_basar_brutto ) < 0.05 ) {
+            open_td( '', "colspan='4' style='padding-top:0.8em;text-align:right;border-right:none;'"
+                     , "Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>" );
+          } else {
+            open_td( '', "colspan='4' style='padding-top:1ex;text-align:left;font-size:smaller;'"
+                     , " Reste im Basar --- bitte vor Abschluss leermachen!" );
+          }
+          open_td( 'right', "style='padding-top:1em;text-align:right;border-left:none;'", "<input type='submit' value='Speichern'>" );
+        }
+      }
+
+  close_table();
+close_form();
+
 ?>
-<h2>Abrechnung: Bestellung <? echo "$bestellung_name ($lieferant_name) ". fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" ); ?></h2>
-
-<form method='post' action='<? echo self_url(); ?>'>
-<?echo self_post(); ?>
-  <input type='hidden' name='action' value='save'>
-
-  <table class='list'>
-    <tr>
-      <th>Abrechnungsschritt</th>
-      <th>Details</th>
-      <th style='text-align:right;'>Netto</th>
-      <th style='text-align:right;'>Brutto</th>
-      <th>Aktionen</th>
-    </tr>
-
-<tr>
-  <th colspan='6' style='padding-top:2em;'>Bestellgruppen: </th>
-</tr>
-    <tr>
-      <td>
-        Basarkäufe eintragen:
-      </td>
-      <td style='text-align:right;'>
-        Reste im Basar:
-      </td>
-      <td>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", $warenwert_basar_brutto ); ?></b></td>
-      <td style='vertical-align:bottom;'><? echo fc_alink( 'basar', "text=zum Basar...,img=" ); ?></td>
-    </tr>
-    <tr>
-      <td rowspan='2'>
-        Verteilmengen abgleichen:
-      </td>
-      <td style='text-align:right;'>
-        Warenwert Gruppen:
-      </td>
-      <td class='number'>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", $warenwert_verteilt_brutto ); ?></b></td>
-      <td rowspan='2' style='vertical-align:middle;'>
-        <? echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,img=" ); ?></td>
-    </tr>
-    <tr>
-      <td style='text-align:right;'>
-        auf den Müll gewandert:
-      </td>
-      <td class='number'>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", $warenwert_muell_brutto ); ?></b></td>
-    </tr>
-    <tr class='summe'>
-      <td colspan='3'>Summe:</td>
-      <td class='number'>
-        <? printf( "%.2lf", $warenwert_verteilt_brutto + $warenwert_muell_brutto + $warenwert_basar_brutto ); ?>
-      </td>
-      <td>&nbsp;</td>
-    </tr>
-  <? if( $lieferant['anzahl_pfandverpackungen'] > 0 ) { ?>
-    <tr>
-      <td rowspan='2'>Pfandabrechnung Bestellgruppen:</td>
-      <td style='text-align:right;'>berechnet (Kauf):</td>
-      <td>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", -$gruppenpfand['pfand_voll_brutto_soll'] ); ?></b></td>
-      <td rowspan='2' style='vertical-align:middle;'>
-        <? echo fc_alink( 'gruppenpfand', "bestell_id=$bestell_id,img=,text=zur Pfandabrechnung..." ); ?>
-      </td>
-    </tr>
-    <tr>
-      <td style='text-align:right;'>gutgeschrieben (Rückgabe):</td>
-      <td>&nbsp;</td>
-      <td class='number'><b><? printf( "%.2lf", -$gruppenpfand['pfand_leer_brutto_soll'] ); ?></b></td>
-    </tr>
-  <? } ?>
-
-<tr>
-  <th colspan='6' style='padding-top:2em;'>
-    <div style='text-align:center;'>Lieferant <? echo $lieferant_name; ?>: </div>
-    <div style='text-align:left;'>
-      Rechnungsnummer des Lieferanten:
-      <input <? echo $ro_tag; ?> type='text' size='40' name='rechnungsnummer' value='<? echo $bestellung['rechnungsnummer']; ?>'>
-    </div>
-  </th>
-</tr>
-    <tr>
-      <td>
-        Liefermengen und -preise abgleichen:
-      </td>
-      <td style='text-align:right;'>Warenwert:</td>
-      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll'] ); ?></b></td>
-      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['waren_brutto_soll'] ); ?></b></td>
-      <td style='vertical-align:bottom;'>
-        <? echo fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=zum Lieferschein..." ); ?>
-      </td>
-    </tr>
-  <? if( $lieferant['anzahl_pfandverpackungen'] > 0 ) { ?>
-    <tr>
-      <td rowspan='2'>
-        Pfandabrechnung Lieferant:
-        <div class='small'>(falls zutreffend, etwa bei Terra!)</div>
-      </td>
-      <td style='text-align:right;'>berechnet (Kauf):</td>
-      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_netto_soll'] ); ?></b></td>
-      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ); ?></b></td>
-      </td>
-      <td rowspan='2' style='vertical-align:middle;'>
-        <? echo fc_alink( 'pfandzettel', "bestell_id=$bestell_id,lieferanten_id=$lieferant_id,img=,text=zum Pfandzettel..." ); ?>
-      </td>
-    </tr>
-    <tr>
-      <td style='text-align:right;'>gutgeschrieben (Rückgabe):</td>
-      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_netto_soll'] ); ?></b></td>
-      <td class='number'><b><? printf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ); ?></b></td>
-    </tr>
-  <? } ?>
-    <tr class='summe'>
-      <td colspan='2'>Zwischensumme:</td>
-      <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_netto_soll']
-                              + $lieferanten_soll['pfand_leer_netto_soll']
-                              + $lieferanten_soll['pfand_voll_netto_soll']  ); ?>
-      </td>
-      <td class='number'><? printf( "%.2lf", $lieferanten_soll['waren_brutto_soll']
-                              + $lieferanten_soll['pfand_leer_brutto_soll']
-                              + $lieferanten_soll['pfand_voll_brutto_soll']  ); ?>
-      </td>
-      <td colspan='2'>&nbsp;</td>
-    </tr>
-    <tr>
-      <td colspan='3'>
-        Sonstiges:
-        <br>
-        <input <? echo $ro_tag; ?> type='text' name='extra_text' size='40' value='<? echo $bestellung['extra_text']; ?>'>
-      </td>
-      <td class='number' style='text-align:right;vertical-align:bottom;'>
-        <input <? echo $ro_tag; ?> style='text-align:right;' type='text' name='extra_soll' size='10' value='<? printf( "%.2lf", $bestellung['extra_soll'] ); ?>'>
-      </td>
-    </tr>
-    <tr class='summe'>
-      <td colspan='3'>Summe:</td>
-      <td class='number'>
-        <? printf( "%.2lf", sql_bestellung_rechnungssumme( $bestell_id ) ); ?>
-      </td>
-      <td>&nbsp;</td>
-    </tr>
-    <tr>
-      <? if( $status >= STATUS_ABGERECHNET ) { ?>
-        <td colspan='5' style='padding-top:1em;text-align:right;'>
-          Abrechnung durchgeführt: <? echo dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ); ?>,
-          <? echo $bestellung['abrechnung_datum']; ?>
-          <? if( $hat_dienst_IV ) { ?>
-            <span style='padding-left:3em;'>Nochmal öffnen: <input type='checkbox' name='rechnung_abschluss' value='reopen' style='padding-right:4em'>
-            <input type='submit' value='Abschicken'>
-            </span>
-          <? } ?>
-        </td>
-      <? } else { ?>
-        <? if( $hat_dienst_IV ) { ?>
-          <? if( abs( $warenwert_basar_brutto ) < 0.05 ) { ?>
-            <td colspan='4' style='padding-top:0.8em;text-align:right;border-right:none;'>
-            Rechnung abschliessen: <input type='checkbox' name='rechnung_abschluss' value='yes' style='padding-right:4em'>
-            </td>
-          <? } else { ?>
-            <td colspan='4' style='padding-top:1ex;text-align:left;font-size:smaller;'>
-              Reste im Basar --- bitte vor Abschluss leermachen!
-            </td>
-          <? } ?>
-          <td style='padding-top:1em;text-align:right;border-left:none;'>
-            <input type='submit' value='Speichern'>
-          </td>
-        <? } ?>
-      <? } ?>
-    </tr>
-  </table>
-
-</form>
-
