@@ -34,8 +34,8 @@ function debug_args( $args, $tag = '' ) {
 
 function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".htmlspecialchars($sql)."</p>";
-	$result = mysql_query($sql) or
-	error(__LINE__,__FILE__,$error_text."(".htmlspecialchars($sql).")",mysql_error(), debug_backtrace());
+  $result = mysql_query($sql)
+    or error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysql_error() );
 	return $result;
 }
 
@@ -247,7 +247,7 @@ function sql_dienst_akzeptieren($dienst){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
   if($row["gruppen_id"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
-       error(__LINE__,__FILE__,"Falsche gruppen_id (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
+       error( "Falsche gruppen_id (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
   //OK, wir dürfen den Dienst ändern
   $sql = "UPDATE Dienste SET Status = 'Akzeptiert' WHERE ID = ".$dienst;
@@ -263,7 +263,7 @@ function sql_dienst_wird_offen($dienst){
   $row = sql_get_dienst_by_id($dienst);
   if($row["gruppen_id"]!=$login_gruppen_id || 
          ($row["Status"]!="Vorgeschlagen" && $row["Status"]!="Bestaetigt" && $row["Status"]!="Akzeptiert")){
-       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
+       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
   //OK, wir dürfen den Dienst ändern
   $sql = "UPDATE Dienste SET Status = 'Offen' WHERE ID = ".$dienst;
@@ -277,7 +277,7 @@ function sql_dienst_abtauschen($dienst, $bevorzugt){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
   if($row["gruppen_id"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
-       error(__LINE__,__FILE__,"Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
+       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
   $sql = "SELECT * from Dienste 
           WHERE Lieferdatum = '".$bevorzugt.
@@ -285,7 +285,7 @@ function sql_dienst_abtauschen($dienst, $bevorzugt){
 	  AND Dienst = '".$row["Dienst"]."'";
   $result = doSql($sql, LEVEL_ALL, "Error while reading Dienste");
   if(mysql_num_rows($result)==0){
-       error(__LINE__,__FILE__,"Kein ausweichsdienst an diesem Datum ".$bevorzugt." für Dienst ".$row["Dienst"]);
+       error( "Kein ausweichsdienst an diesem Datum ".$bevorzugt." für Dienst ".$row["Dienst"]);
   }
   
   //OK, wir dürfen den Dienst ändern
@@ -304,7 +304,7 @@ function sql_dienst_uebernehmen($dienst){
   echo "uebernehmen $dienst";
   $row = sql_get_dienst_by_id($dienst);
   if( ($row["Status"]!="Offen" && $row["Status"]!="Akzeptiert"&& $row["Status"]!="Vorgeschlagen")){
-       error(__LINE__,__FILE__,"Falscher Status ".$row["Status"]);
+       error( "Falscher Status ".$row["Status"]);
   }
   //OK, wir dürfen den Dienst ändern
   $sql = "UPDATE Dienste SET Status = 'Nicht geleistet' WHERE ID = ".$dienst;
@@ -437,7 +437,7 @@ function create_dienste($start, $end, $spacing) {
  */
 function sql_date_list($start, $end, $spacing) {
    if(compare_date2($end,$start)){
-   	error(__LINE__,__FILE__,"Enddatum muss später sein als Anfangsdatum", "");
+   	error( "Enddatum muss später sein als Anfangsdatum" );
    }
 	$list = array();
 	$newer=$start;
@@ -889,16 +889,17 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
   $telefon = mysql_real_escape_string($telefon);
   $name = mysql_real_escape_string($name);
   if( $dienstkontrollblatt_id ) {
-    mysql_query( "
+    doSql( "
       UPDATE dienstkontrollblatt SET
         name = " . ( $name ? "'$name'" : "name" ) . "
       , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
       , notiz = " . ( $notiz ? "IF( notiz = '$notiz', notiz, CONCAT( notiz, ' --- $notiz' ) )" : "notiz" ) . "
       WHERE id='$dienstkontrollblatt_id'
-    " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+    ", "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
+    );
     return $dienstkontrollblatt_id;
   } else {
-    mysql_query( "
+    doSql( "
       INSERT INTO dienstkontrollblatt (
           gruppen_id
         , dienst
@@ -922,7 +923,8 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
         , notiz = CONCAT( notiz, ' --- ', '$notiz' )
         , zeit = CURTIME()
         , id = LAST_INSERT_ID(id)
-    " ) or error( __LINE__,__FILE__,"Eintrag im Dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+    ", "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
+    );
     return mysql_insert_id();
     //  WARNING: ^ does not always work (see http://bugs.mysql.com/bug.php?id=27033)
     //  (fixed in mysql-5.0.45)
@@ -935,7 +937,7 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
   if( $from_id ) {
     $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
   }
-  $result = mysql_query( "
+  doSql( "
     SELECT
       bestellgruppen.id as gruppen_id
     , bestellgruppen.name as gruppen_name
@@ -950,7 +952,8 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
     INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
     $where
     ORDER BY dienstkontrollblatt.id
-  " ) or error( __LINE__, __FILE__, "Suche in dienstkontrollblatt fehlgeschlagen: ", mysql_error() );
+  ", "Suche in dienstkontrollblatt fehlgeschlagen: "
+  );
   return $result;
 }
 
@@ -1428,7 +1431,7 @@ function changeState($bestell_id, $state){
       //   - basarreste?
       break;
     default:
-      error(__LINE__,__FILE__, "Ungültiger Statuswechsel");
+      error( "Ungültiger Statuswechsel" );
       return false;
   }
   $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
@@ -1976,7 +1979,7 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
     case STATUS_LIEFERANT:
       break;
     default:
-      error( __LINE__, __FILE__, "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
+      error( "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
       return false;
   }
   fail_if_readonly();
@@ -2564,7 +2567,6 @@ function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = 
     $filter
     ORDER BY valuta_kan DESC
   ";
-  // LIMIT ".mysql_escape_string($start_pos).", ".mysql_escape_string($size).";") or error(__LINE__,__FILE__,"Konnte Gruppentransaktionsdaten nicht lesen.",mysql_error());
   return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
 }
 
@@ -2861,7 +2863,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
       $query = 'pfand';
       break;
     default:
-      error(__LINE__,__FILE__, "select_bestellungen_soll_gruppen: bitte Funktionsaufruf anpassen!", debug_backtrace());
+      error( "select_bestellungen_soll_gruppen: bitte Funktionsaufruf anpassen!" );
   }
   switch( $query ) {
     case 'waren':
@@ -2941,7 +2943,7 @@ function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
       $query = 'extra';
       break;
     default:
-      error(__LINE__,__FILE__, "select_bestellungen_soll_lieferanten: bitte Funktionsaufruf anpassen!", debug_backtrace());
+      error( "select_bestellungen_soll_lieferanten: bitte Funktionsaufruf anpassen!" );
   }
   switch( $query ) {
     case 'waren':
@@ -3585,7 +3587,7 @@ function is_expired_produktpreis($id){
  */
 function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestellende=NULL){
 	
-	if($produkt_id=="") error(__LINE__,__FILE__, "Produkt_ID must not be empty");
+	if($produkt_id=="") error( "Produkt_ID must not be empty" );
 	//Read start and ende from Database
 	if($bestellende===NULL){
 		$query = "SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id;

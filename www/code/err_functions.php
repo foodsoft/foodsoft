@@ -4,7 +4,7 @@
 // (these functions must not depend on a working database connection)
 //
 
-function log_error($line,$file,$string,$error="",$stack) {
+function log_error($string,$stack) {
   global $logfile;
   if( isset($logfile) and $logfile ) {
     $fp = fopen( $logfile,"a" );
@@ -14,20 +14,17 @@ function log_error($line,$file,$string,$error="",$stack) {
   }
 }
 
-function error( $line, $file, $string, $error="", $stack="" ){
-  // global $test_title;
-
-  log_error($line,$file,$string,$error,$stack);
-
-  $fehler = "<div class='warn'><b>Fehler in Zeile ".$line." in ".$file."</b> ";
-  $fehler .= "<br>" . htmlspecialchars($string) . "<br>";
-  if($error) $fehler .= "<b>Error:</b> ". $error;
-  if($stack) $fehler .= "<br><b>Stack:</b><br><pre><code>".htmlspecialchars(var_export($stack, TRUE))."</code></pre>";
-  $fehler .= "</div>";
-
+function error( $string ) {
+  $stack = debug_backtrace();
+  // log_error($string,$stack);
+  ?> <div class='warn'>Fehler: <? echo htmlspecialchars( $string ); ?>
+     <br>
+     <pre><? echo htmlspecialchars( var_export($stack) ); ?>
+     </pre>
+     </div>
+   <?
   // if ($error_report_adress != "") mail($error_report_adress,$test_title." - Error mail!!",$fehler);
-
-  die($fehler);
+  die($string);
 }
 
 function need( $exp, $comment = "Fataler Fehler" ) {

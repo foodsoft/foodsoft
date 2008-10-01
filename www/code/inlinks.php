@@ -328,7 +328,7 @@ function fc_window( $name ) {
     // case 'insertGroup': // nicht benutzt
     //
     default:
-      error( __LINE__, __FILE__, "undefiniertes Fenster: $name ", debug_backtrace());
+      error( "undefiniertes Fenster: $name " );
   }
   if( $parameters )
     return array( 'parameters' => $parameters, 'options' => $options );
@@ -396,7 +396,7 @@ function fc_url( $name, $parameters = array(), $options = array(), $context = 'h
     if( $value === NULL )
       continue;
     if( $value === false )
-      error( __LINE__, __FILE__, "parameter $key nicht uebergeben", debug_backtrace() );
+      error( "parameter $key nicht uebergeben" );
     $query .= "$and$key=$value";
     $and = '&';
   }
