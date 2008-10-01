@@ -5,13 +5,9 @@
 // - $title (<title>) und $subtitle (im Fenster) werden angezeigt
 // - ein "Close" Knopf wird automatisch erzeugt
 
-  global $angemeldet, $login_gruppen_name, $coopie_name
-       , $dienst, $title, $subtitle, $wikitopic, $onload_str, $readonly
-       , $kopf_schon_ausgegeben, $print_on_exit
-       , $foodsoftpath, $area;
-
-if( isset( $kopf_schon_ausgegeben ) && $kopf_schon_ausgegeben )
-  return;
+global $angemeldet, $login_gruppen_name, $coopie_name
+     , $dienst, $title, $subtitle, $wikitopic, $onload_str, $readonly
+     , $foodsoftpath, $area;
 
 if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
 if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
