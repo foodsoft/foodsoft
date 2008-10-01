@@ -895,7 +895,7 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
       , telefon = " . ( $telefon ? "'$telefon'" : "telefon" ) . "
       , notiz = " . ( $notiz ? "IF( notiz = '$notiz', notiz, CONCAT( notiz, ' --- $notiz' ) )" : "notiz" ) . "
       WHERE id='$dienstkontrollblatt_id'
-    ", "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
+    ", LEVEL_ALL, "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
     );
     return $dienstkontrollblatt_id;
   } else {
@@ -923,7 +923,7 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
         , notiz = CONCAT( notiz, ' --- ', '$notiz' )
         , zeit = CURTIME()
         , id = LAST_INSERT_ID(id)
-    ", "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
+    ", LEVEL_ALL, "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
     );
     return mysql_insert_id();
     //  WARNING: ^ does not always work (see http://bugs.mysql.com/bug.php?id=27033)
@@ -937,7 +937,7 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
   if( $from_id ) {
     $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
   }
-  doSql( "
+  return doSql( "
     SELECT
       bestellgruppen.id as gruppen_id
     , bestellgruppen.name as gruppen_name
@@ -952,9 +952,8 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
     INNER JOIN bestellgruppen ON ( bestellgruppen.id = dienstkontrollblatt.gruppen_id )
     $where
     ORDER BY dienstkontrollblatt.id
-  ", "Suche in dienstkontrollblatt fehlgeschlagen: "
+  ", LEVEL_IMPORTANT, "Suche in dienstkontrollblatt fehlgeschlagen: "
   );
-  return $result;
 }
 
 function dienstkontrollblatt_name( $id ) {
