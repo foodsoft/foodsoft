@@ -200,54 +200,59 @@ table.list tr th {
 
 /* zellen mit zahlen: rechtsbuendig, nicht umbrechen: */
 
-td.number, th.number, table.list tr td.number, table.list tr th.number {
-  white-space:nowrap;
-  text-align:right;
+td.number, th.number {
+  white-space:nowrap !important;
+  text-align:right !important;
+}
+td.boldnumber, th.boldnumber {
+  white-space:nowrap !important;
+  text-align:right !important;
+  font-weight:bold !important;
 }
 
-td.mult, th.mult, table.list tr td.mult, table.list tr th.mult {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:0.8ex;
+td.mult, th.mult {
+  white-space:nowrap !important;
+  text-align:right !important;
+  border-right-style:none !important;
+  margin-right:0pt !important;
+  padding-right:0.8ex !important;
 }
-td.unit, th.unit, table.list tr td.unit, table.list tr th.unit {
-  white-space:nowrap;
-  text-align:left;
-  border-left-style:none;
-  margin-left:0pt;
-  padding-left:0pt;
+td.unit, th.unit {
+  white-space:nowrap !important;
+  text-align:left !important;
+  border-left-style:none !important;
+  margin-left:0pt !important;
+  padding-left:0pt !important;
 }
 
 
 /* fuer farbige zellen im bestellformular: */
 
-td.mult_outdated, table.list tr td.mult_outdated {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:0.8ex;
-  background-color:#ffffaa;
+td.mult_outdated {
+  white-space:nowrap !important;
+  text-align:right !important;
+  border-right-style:none !important;
+  margin-right:0pt !important;
+  padding-right:0.8ex !important;
+  background-color:#ffffaa !important;
 }
-td.mult_highlight, table.list tr td.mult_highlight {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:0.8ex;
-  font-weight:bold;
-  background-color:#d0ffc0;
+td.mult_highlight {
+  white-space:nowrap !important;
+  text-align:right !important;
+  border-right-style:none !important;
+  margin-right:0pt !important;
+  padding-right:0.8ex !important;
+  font-weight:bold !important;
+  background-color:#d0ffc0 !important;
 }
-td.mult_crit, table.list tr td.mult_crit {
-  white-space:nowrap;
-  text-align:right;
-  border-right-style:none;
-  margin-right:0pt;
-  padding-right:0.8ex;
-  font-weight:bold;
-  background-color:#fff0c0;
+td.mult_crit {
+  white-space:nowrap !important;
+  text-align:right !important;
+  border-right-style:none !important;
+  margin-right:0pt !important;
+  padding-right:0.8ex !important;
+  font-weight:bold !important;
+  background-color:#fff0c0 !important;
 }
 
 td.wide, th.wide {
