@@ -49,7 +49,7 @@
     $result = mysql_query( "SELECT id FROM dienstkontrollblatt ORDER BY id DESC LIMIT 5" );
     $row = mysql_fetch_array( $result );
     if( ! $row )
-      error( __LINE__, __FILE__, "konnte dienstkontrollblatt nicht lesen" );
+      error( "konnte dienstkontrollblatt nicht lesen" );
     $id_max = $row['id'];
     get_http_var( 'id_to', 'u', $id_max, true );
     $id_from = $id_to - 10;
