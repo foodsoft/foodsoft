@@ -16,7 +16,7 @@ setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
 //
 $konten = sql_konten();
 if( mysql_num_rows($konten) < 1 ) {
-  echo div_msg( 'warn', "Keine Konten definiert!", 'index' );
+  div_msg( 'warn', "Keine Konten definiert!", 'index' );
   return;
 }
 

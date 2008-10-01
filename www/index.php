@@ -45,19 +45,15 @@ switch( $window_id ) {
           include('menu.php');
         }
     }
-    ?>
-      <table width='100%' class='footer'>
-        <tr>
-          <td style='padding-left:1em;text-align:left;'>aktueller Server: <kbd><? echo $foodsoftserver; ?></kbd></td>
-          <td style='padding-right:1em;text-align:right;'>
-          <? echo $mysqljetzt; ?>
-            <?  if( $readonly ) { ?>
-              <span style='font-weight:bold;color:440000;'> --- !!! Datenbank ist schreibgeschuetzt !!!</span>";
-            <? } ?>
-          </td>
-        </tr>
-      </table>
-    <?
+    open_table( 'footer', "width='100%'" );
+      open_td();
+        echo "aktueller Server: <kbd>$foodsoftserver</kbd>";
+      open_td( 'right' );
+        echo $mysqljetzt;
+        if( $readonly ) {
+          echo "<span style='font-weight:bold;color:440000;'> --- !!! Datenbank ist schreibgeschuetzt !!!</span>";
+        }
+    close_table();
     break;
   default:   // anzeige in einem unterfenster
     require_once( 'windows/head.php' );
@@ -69,12 +65,8 @@ switch( $window_id ) {
     break;
 }
 
-?>
-<form name='update_form' method='post' action='<? echo self_url(); ?>'>
-  <? echo self_post(); ?>
-  <input type='hidden' name='message' value=''>
-</form>
-<?
-echo $print_on_exit;
-exit();
+open_form( 'update_form' );
+  echo "<input type='hidden' name='message' value=''>";
+close_form();
 
+?>

@@ -81,6 +81,7 @@ global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $coopie_nam
 $angemeldet = false;
 
 require_once('code/views.php');
+require_once('code/html.php');
 require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
 require_once('code/katalogsuche.php');

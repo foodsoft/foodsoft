@@ -2133,10 +2133,6 @@ function switchable_form( $tag, $legend, $initially_on, $formfields ) {
   ";
 }
 
-function div_message( $class, $msg, $backlink = false ) {
-  return "<div class='$class'>$msg " . ( $backlink ? fc_alink( $backlink, 'text=zur&uuml;ck...' ) : '' ) ."</div>";
-}
-
 /**
  * Produziert ein neues select-Feld mit den möglichen
  * Diensten.
