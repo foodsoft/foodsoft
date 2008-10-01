@@ -31,24 +31,17 @@ switch( $window_id ) {
         //  ?><!-- <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> --> <?
         //  include('dienstplan.php');
         // } else {
-          include('bestellen.php');
+          include('windows/bestellen.php');
         // }
-        break;
-      case "lieferschein":
-      case "bestellungen_overview":
-        //Fast gleich
-        include('bestellschein.php');
         break;
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
         break;
       default:
-        if( is_readable( "$window.php" ) ) {
-          include( "$window.php" );
-        } elseif( is_readable( "windows/$window.php" ) ) {
+        if( is_readable( "windows/$window.php" ) ) {
           include( "windows/$window.php" );
         } else {
-          ?> <div class='warn'>Ung&uuml;ltiger Bereich: <? echo($window); ?></div> <?
+          div_msg( 'warn', "Ung&uuml;ltiger Bereich: $window" );
           include('menu.php');
         }
     }
@@ -68,10 +61,11 @@ switch( $window_id ) {
     break;
   default:   // anzeige in einem unterfenster
     require_once( 'windows/head.php' );
-    if( is_readable( "windows/$window.php" ) )
+    if( is_readable( "windows/$window.php" ) ) {
       include( "windows/$window.php" );
-    else
-      include( "$window.php" );
+    } else {
+      div_msg( 'warn', "Ung&uuml;ltiger Bereich: $window" );
+    }
     break;
 }
 
