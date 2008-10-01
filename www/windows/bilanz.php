@@ -38,92 +38,74 @@ function posten( $name, $wert ) {
   $seitensumme += $wert;
 }
 
-?>
-  <table width='100%'>
-    <colgroup>
-      <col width='*'><col width='*'>
-    </colgroup>
-    <tr><th style='padding:4px;'> Aktiva </th><th style='padding:4px;'> Passiva </th></tr>
-    <tr>
-      <td>
+open_table( '', "width='100%'" );
+  ?> <colgroup><col width='*'><col width='*'></colgroup> <?
+  open_th( '', "style='padding:4px;'", 'Aktiva' ); open_th( '', "style='padding:4px;'", 'Passiva' );
+  open_tr();
 
-      <table class='inner' width='100%'>
-<?
+    //////////////////
+    //  aktiva:
+    //
+    open_td();
+      open_table( 'inner', "width='100%'" );
+      $seitensumme = 0;
 
-// aktiva:
-//
+      rubrik( "Bankguthaben" );
+        $kontosalden = sql_bankkonto_salden();
+        while( $konto = mysql_fetch_array( $kontosalden ) ) {
+          posten(
+            fc_alink( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'img' => false, 'text' => "Konto {$konto['kontoname']}" ) )
+          , $konto['saldo']
+          );
+        }
+        posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
 
-$seitensumme = 0;
+      rubrik( "Umlaufvermögen" );
+        posten( fc_alink( 'basar', "img=,text=Warenbestand Basar" ), basar_wert_brutto() );
+        posten( fc_alink( 'pfandzettel', "img=,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
 
-rubrik( "Bankguthaben" );
-  $kontosalden = sql_bankkonto_salden();
-  while( $konto = mysql_fetch_array( $kontosalden ) ) {
-    posten(
-      fc_alink( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'img' => false, 'text' => "Konto {$konto['kontoname']}" ) )
-    , $konto['saldo']
-    );
-  }
+      rubrik( "Forderungen" );
+        posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
 
-  posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
+      $aktiva = $seitensumme;
+      close_table();
 
-rubrik( "Umlaufvermögen" );
-  posten( fc_alink( 'basar', "img=,text=Warenbestand Basar" ), basar_wert_brutto() );
-  posten( fc_alink( 'pfandzettel', "img=,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
+    //////////////////
+    //  passiva:
+    //
+    open_td();
+      open_table( 'inner', "width='100%'" );
+        $seitensumme = 0;
 
-rubrik( "Forderungen" );
-  posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
+        rubrik( "Einlagen der Gruppen" );
+          posten( fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'img' => '' ) ), sockel_gruppen_summe() );
+          posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
+          posten( fc_alink( 'gruppenpfand', "img=,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
 
+        $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
+        rubrik( "Verbindlichkeiten" );
+          while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
+            posten( fc_alink( 'lieferantenkonto', array( 'img' => false, 'lieferanten_id' => $vkeit['lieferanten_id'], 'text' => $vkeit['name'] ) )
+            , $vkeit['soll']
+            );
+          }
 
-$aktiva = $seitensumme;
+        $passiva = $seitensumme;
 
+        $bilanzverlust = $aktiva - $passiva;
+        $passiva += $bilanzverlust;
 
-// passiva:
-//
+        rubrik( "Bilanzausgleich" );
+          posten( fc_alink( 'verluste', "text=". ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) )
+          , $bilanzverlust
+          );
 
-?>
-    </table>
-    </td><td>
+      close_table();
 
-    <table class='inner' width='100%'>
-<?
+  open_tr( 'summe' );
+    open_td( 'number', '', sprintf( "%.2lf", $aktiva ) );
+    open_td( 'number', '', sprintf( "%.2lf", $passiva ) );
 
-$seitensumme = 0;
-
-
-rubrik( "Einlagen der Gruppen" );
-  posten( fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'img' => '' ) ), sockel_gruppen_summe() );
-  posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
-  posten( fc_alink( 'gruppenpfand', "img=,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
-
-$verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
-rubrik( "Verbindlichkeiten" );
-  while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-    posten( fc_alink( 'lieferantenkonto', array( 'img' => false, 'lieferanten_id' => $vkeit['lieferanten_id'], 'text' => $vkeit['name'] ) )
-    , $vkeit['soll']
-    );
-  }
-
-
-$passiva = $seitensumme;
-
-$bilanzverlust = $aktiva - $passiva;
-$passiva += $bilanzverlust;
-
-rubrik( "Bilanzausgleich" );
-  posten( fc_alink( 'verluste', "text=". ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) )
-  , $bilanzverlust
-  );
+close_table();
 
 ?>
-      </table>
-      </td>
-    </tr>
-
-    <tr class='summe'>
-      <td class='number'><? printf( "%.2lf", $aktiva ); ?></td>
-      <td class='number'><? printf( "%.2lf", $passiva ); ?></td>
-    </tr>
-
-</table>
-
-
