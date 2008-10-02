@@ -16,9 +16,6 @@ img {
   border-style:none;
 }
 
-.small {
-  font-size:smaller;
-}
 
 div#payload {
   padding:1ex;
@@ -100,11 +97,7 @@ td {
   color:#000000;
   background-color:#ffffff;
 }
-td.right {
-  text-align:right !important;
-}
-
-th {
+th, .th {
   font-weight:bold;
   background-color:#dddddd;
 }
@@ -113,6 +106,52 @@ table.debug tr th, table.debug tr td {
   border:1px dotted black;
 }
 
+/*
+ *
+ * general properties
+ *
+ */
+.right {
+  text-align:right !important;
+}
+.left {
+  text-align:left !important;
+}
+.center {
+  text-align:center !important;
+}
+.top {
+  vertical-align:top !important;
+}
+.bottom {
+  vertical-align:bottom !important;
+}
+.vcenter {
+  vertical-align:middle !important;
+}
+.bold {
+  font-weight:bold !important;
+}
+.oneline {
+  white-space:nowrap;
+}
+.small {
+  font-size:smaller;
+}
+
+/* fuer farbige zellen im bestellformular: */
+
+.outdated {
+  background-color:#ffffaa !important;
+}
+.highlight {
+  font-weight:bold;
+  background-color:#d0ffc0 !important;
+}
+.crit {
+  font-weight:bold;
+  background-color:#fff0c0 !important;
+}
 
 /*
  *
@@ -216,24 +255,19 @@ table.list tr th {
 
 /* zellen mit zahlen: rechtsbuendig, nicht umbrechen: */
 
-td.number, th.number {
+.number, .number input {
   white-space:nowrap !important;
   text-align:right !important;
-}
-td.boldnumber, th.boldnumber {
-  white-space:nowrap !important;
-  text-align:right !important;
-  font-weight:bold !important;
 }
 
-td.mult, th.mult {
+.mult, .mult input {
   white-space:nowrap !important;
   text-align:right !important;
   border-right-style:none !important;
   margin-right:0pt !important;
   padding-right:0.8ex !important;
 }
-td.unit, th.unit {
+.unit {
   white-space:nowrap !important;
   text-align:left !important;
   border-left-style:none !important;
@@ -242,47 +276,12 @@ td.unit, th.unit {
 }
 
 
-/* fuer farbige zellen im bestellformular: */
-
-td.mult_outdated {
-  white-space:nowrap !important;
-  text-align:right !important;
-  border-right-style:none !important;
-  margin-right:0pt !important;
-  padding-right:0.8ex !important;
-  background-color:#ffffaa !important;
-}
-td.mult_highlight {
-  white-space:nowrap !important;
-  text-align:right !important;
-  border-right-style:none !important;
-  margin-right:0pt !important;
-  padding-right:0.8ex !important;
-  font-weight:bold !important;
-  background-color:#d0ffc0 !important;
-}
-td.mult_crit {
-  white-space:nowrap !important;
-  text-align:right !important;
-  border-right-style:none !important;
-  margin-right:0pt !important;
-  padding-right:0.8ex !important;
-  font-weight:bold !important;
-  background-color:#fff0c0 !important;
-}
 
 td.wide, th.wide {
   padding-left:1em;
   padding-right:1em;
 }
 
-.oneline {
-  white-space:nowrap;
-}
-.oneline_small {
-  white-space:nowrap;
-  font-size:smaller;
-}
 
 /* fuer auswahllisten (grosse knoepfe) und aehnliches */
 
@@ -451,6 +450,14 @@ div.kommentar {
   font-size:11pt;
 }
 
+span#floatingbuttons {
+  display:none;
+  z-index:999;
+  position:fixed;
+  top:8px;
+  left:8px;
+  padding:1em;
+}
 
 /*  warnings, alerts and oks */
 
