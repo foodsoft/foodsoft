@@ -25,18 +25,16 @@ switch( $window_id ) {
     include('head.php');
     include('dienst_info.php');
     switch( $window ) {
-      case "bestellen":
-        // if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
-        //  //darf nur bestellen, wenn Dienste akzeptiert
-        //  ?><!-- <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> --> <?
-        //  include('dienstplan.php');
-        // } else {
-          include('windows/bestellen.php');
-        // }
-        break;
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
         break;
+   // case "bestellen":
+   // if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
+   //  //darf nur bestellen, wenn Dienste akzeptiert
+   //  ?><!-- <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> --> <?
+   //  include('dienstplan.php');
+   //  break;
+   // }
       default:
         if( is_readable( "windows/$window.php" ) ) {
           include( "windows/$window.php" );
@@ -65,8 +63,7 @@ switch( $window_id ) {
     break;
 }
 
-open_form( '', "name='update_form'" );
-  echo "<input type='hidden' name='message' value=''>";
+open_form( '', "name='update_form'", '', array( 'message' => '' ) );
 close_form();
 
 ?>
