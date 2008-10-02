@@ -6,7 +6,7 @@
 // - ein "Close" Knopf wird automatisch erzeugt
 
 global $angemeldet, $login_gruppen_name, $coopie_name
-     , $dienst, $title, $subtitle, $wikitopic, $onload_str, $readonly
+     , $dienst, $title, $subtitle, $wikitopic, $readonly
      , $foodsoftpath, $area;
 
 if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
