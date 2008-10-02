@@ -140,7 +140,6 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
     if( $produkt_id ) {
       open_form( '', "name='anummer_setzen'", fc_url( 'produktpreise', "produkt_id=$produkt_id", '', 'action' ) );
       ?>
-        <input type='hidden' name='postform_id' value='<? echo $self_fields['postform_id']; ?>'>
         <input type='hidden' name='action' value='artikelnummer_setzen'>
         <input type='hidden' name='button_id' value=''>
         <div style='font-weight:bold;'>Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</div>
