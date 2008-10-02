@@ -134,15 +134,19 @@ function close_th() {
   close_td();
 }
 
-function open_form( $class = '', $attr = '', $action = '' ) {
+function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
+  global $self_fields;
   if( ! $action ) {
     $action = self_url();
     $hidden = self_post();
   } else {
-    $hidden = '';
+    $hidden = self_post(true);
   }
   open_tag( 'form', $class, "method='post' action='$action' $attr" );
   echo $hidden;
+  foreach( $hide as $key => $val ) {
+    echo "<input type='hidden' name='$key' value='$val'>";
+  }
 }
 
 function close_form() {

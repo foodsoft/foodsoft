@@ -4639,6 +4639,8 @@ function set_itan() {
 //
 // in jedem Formular wird automatisch eine eindeutige TAN, postform_id, einfgefuegt
 //
+// self_post(true) liefert _nur_ das TAN feld
+//
 function self_post( $exclude = array() ) {
   global $self_fields, $new_post_id;
 
@@ -4646,6 +4648,8 @@ function self_post( $exclude = array() ) {
   //
   if( ! isset( $self_fields['postform_id'] ) )
     set_itan();
+  if( $exclude === true )
+    return "<input type='hidden' name='postform_id' value='{$self_fields['postform_id']}'>";
 
   $output = '';
   if( ! $exclude ) {
