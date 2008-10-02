@@ -29,6 +29,19 @@ div#payload.payloadro {
   background:#ffeedd;
 }
 
+div.smallskip {
+  padding-top:1em;
+}
+div.bigskip {
+  padding-top:2em;
+}
+span.quad {
+  padding-left:1ex;
+}
+span.qquad {
+  padding-left:2ex;
+}
+
 a, a:visited {
   color:#e01010;
   text-decoration: none;
