@@ -162,7 +162,7 @@ $produkt_name = $produkt['name'];
          </tr>
          <tr>
            <td>
-             <div class='oneline_small'><? printf( "%s", $produkt['notiz'] ); ?></div>
+             <div class='oneline small'><? printf( "%s", $produkt['notiz'] ); ?></div>
            </td>
          </tr>
       </table></td>

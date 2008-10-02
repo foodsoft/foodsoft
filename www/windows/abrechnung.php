@@ -92,19 +92,19 @@ open_form();
       open_td( '', '', 'Basarkäufe eintragen:' );
       open_td( '', '', 'Reste im Basar:' );
       open_td();
-      open_td( 'boldnumber', sprintf( "%.2lf", $warenwert_basar_brutto ) );
+      open_td( 'bold number', sprintf( "%.2lf", $warenwert_basar_brutto ) );
       open_td( '', "style='vertical-align:bottom;'", fc_alink( 'basar', "text=zum Basar...,img=" ) );
     open_tr();
       open_td( '', "rowspan='2'", "Verteilmengen abgleichen:" );
       open_td( 'right', '', 'Warenwert Gruppen:' );
       open_td();
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $warenwert_verteilt_brutto ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $warenwert_verteilt_brutto ) );
       open_td( '', " rowspan='2' style='vertical-align:middle;'",
                fc_alink( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,img=" ) );
     open_tr();
       open_td( 'right', '', 'auf den Müll gewandert:' );
       open_td();
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $warenwert_muell_brutto ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $warenwert_muell_brutto ) );
 
     open_tr( 'summe' );
       open_td( '', "colspan='3'", 'Summe' );
@@ -116,13 +116,13 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
       open_td( '', "rowspan='2'", 'Pfandabrechnung Bestellgruppen:' );
       open_td( 'right', '', 'berechnet (Kauf):' );
       open_td();
-      open_td( 'boldnumber', '', sprintf( "%.2lf", -$gruppenpfand['pfand_voll_brutto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", -$gruppenpfand['pfand_voll_brutto_soll'] ) );
       open_td( '', "rowspan='2' style='vertical-align:middle;'",
                fc_alink( 'gruppenpfand', "bestell_id=$bestell_id,img=,text=zur Pfandabrechnung..." ) );
     open_tr();
       open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
       open_td();
-      open_td( 'boldnumber', '', sprintf( "%.2lf", -$gruppenpfand['pfand_leer_brutto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", -$gruppenpfand['pfand_leer_brutto_soll'] ) );
 }
 
     //
@@ -142,8 +142,8 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_tr();
       open_td( '', '', 'Liefermengen und -preise abgleichen:' );
       open_td( 'right', '', 'Warenwert:' );
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['waren_netto_soll'] ) );
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['waren_brutto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $lieferanten_soll['waren_netto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $lieferanten_soll['waren_brutto_soll'] ) );
       open_td( '', "style='vertical-align:bottom;'",
                 fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=zum Lieferschein..." ) );
 
@@ -151,15 +151,15 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_tr();
       open_td( '', "rowspan='2'", "Pfandabrechnung Lieferant: <div class='small'>(falls zutreffend, etwa bei Terra!)</div>" );
       open_td( 'right', '', 'berechnet (Kauf):' );
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_voll_netto_soll'] ) );
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $lieferanten_soll['pfand_voll_netto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $lieferanten_soll['pfand_voll_brutto_soll'] ) );
       open_td( '', "rowspan='2' style='vertical-align:middle;'",
                fc_alink( 'pfandzettel', "bestell_id=$bestell_id,lieferanten_id=$lieferant_id,img=,text=zum Pfandzettel..." ) );
 
     open_tr();
       open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_leer_netto_soll'] ) );
-      open_td( 'boldnumber', '', sprintf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $lieferanten_soll['pfand_leer_netto_soll'] ) );
+      open_td( 'bold number', '', sprintf( "%.2lf", $lieferanten_soll['pfand_leer_brutto_soll'] ) );
 }
     open_tr( 'summe' );
       open_td( '', "colspan='2'", 'Zwischensumme:' );

@@ -252,11 +252,11 @@ $gesamtpreis = 0.0;
 
     if( gebinde > 0 ) {
       document.getElementById('gv_'+produkt).firstChild.nodeValue = gebinde;
-      document.getElementById('gv_'+produkt).className = 'mult_highlight';
+      document.getElementById('gv_'+produkt).className = 'mult highlight';
     } else {
       document.getElementById('gv_'+produkt).firstChild.nodeValue = '0';
       if( festmenge + toleranzmenge > 0 ) {
-        document.getElementById('gv_'+produkt).className = 'mult_crit';
+        document.getElementById('gv_'+produkt).className = 'mult crit';
       } else {
         document.getElementById('gv_'+produkt).className = 'mult';
       }
@@ -275,11 +275,11 @@ $gesamtpreis = 0.0;
       document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
       document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
       if( gebinde > 0 ) {
-        document.getElementById('k_'+produkt).className = 'mult_highlight';
-        document.getElementById('m_'+produkt).className = 'mult_highlight';
+        document.getElementById('k_'+produkt).className = 'mult highlight';
+        document.getElementById('m_'+produkt).className = 'mult highlight';
       } else {
-        document.getElementById('k_'+produkt).className = 'mult_crit';
-        document.getElementById('m_'+produkt).className = 'mult_crit';
+        document.getElementById('k_'+produkt).className = 'mult crit';
+        document.getElementById('m_'+produkt).className = 'mult crit';
       }
     } else {
       document.getElementById('k_'+produkt).firstChild.nodeValue = '0.00'
@@ -480,13 +480,13 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
   ?>
     <input type='hidden' name='fest_<? echo $n; ?>' id='fest_<? echo $n; ?>' value='<? echo $festmenge; ?>'>
     <input type='hidden' name='toleranz_<? echo $n; ?>'  id='toleranz_<? echo $n; ?>' value='<? echo $toleranzmenge; ?>'>
-    <td><? printf( "<div class='oneline'>%s</div><div class='oneline_small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
+    <td><? printf( "<div class='oneline'>%s</div><div class='oneline small'>%s</div>", $produkt['produkt_name'], $produkt['notiz'] ); ?></td>
     <td
       <? if( $zuteilungen[gebinde] > 0 ) { ?>
-        class='mult_highlight'
+        class='mult highlight'
       <? } else { ?>
         <? if( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) { ?>
-         class='mult_crit'
+         class='mult crit'
         <? } else { ?>
          class='mult'
         <? } ?>
@@ -501,7 +501,7 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
         if( $dienst == 4 ) {
           $aktueller_preis_id = sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] );
           if( $aktueller_preis_id != $produkt['preis_id'] )
-            echo "<td class='mult_outdated' title='Preis nicht aktuell!'>";
+            echo "<td class='mult outdated' title='Preis nicht aktuell!'>";
           else
             echo "<td class='mult'>";
         } else {
@@ -515,9 +515,9 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
     <td
       <? if( $festmenge + $toleranzmenge > 0 ) { ?>
         <? if( $zuteilungen[gebinde] > 0 ) { ?>
-          class='mult_highlight' 
+          class='mult highlight' 
         <? } else { ?>
-          class='mult_crit'
+          class='mult crit'
         <? } ?>
       <? } else { ?>
           class='mult'
@@ -572,9 +572,9 @@ while( $produkt = mysql_fetch_array( $produkte ) ) {
     <td
       <? if( $festmenge + $toleranzmenge > 0 ) { ?>
         <? if( $zuteilungen[gebinde] > 0 ) { ?>
-          class='mult_highlight'
+          class='mult highlight'
         <? } else { ?>
-          class='mult_crit'
+          class='mult crit'
         <? } ?>
       <? } else { ?>
           class='mult'
