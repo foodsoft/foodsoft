@@ -60,29 +60,6 @@ function time_selector($stunde_feld, $stunde, $minute_feld, $minute){
     number_selector($minute_feld,0, 59, $minute,"%02d");
 }
 
-function floating_submission_button( $id ) {
-  ?>
-  <span id='<? echo $id; ?>' style='display:none;position:fixed;top:20px;left:20px;padding:1ex;z-index:999;' class='alert'>
-    <div style='margin:0.5ex;'>
-      <table class='alert'>
-        <tr>
-          <td class='alert'>
-            <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("<? echo $id; ?>").style.display = "none";'>
-          </td>
-          <td style='text-align:center' class='alert'> &Auml;nderungen sind noch nicht gespeichert! </td>
-        </tr>
-        <tr>
-          <td colspan='2' style='text-align:center;' class='alert'>
-            <input type='submit' class='bigbutton' value='Speichern'>
-            <input type='reset' class="bigbutton" value='Zur&uuml;cksetzen'
-              onClick='document.getElementById("<? echo $id; ?>").style.display = "none";'>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </span>
-  <?
-}
 
 /**
  *  Zeigt einen Dienst und die möglichen Aktionen
@@ -1029,35 +1006,56 @@ function select_products_not_in_list($bestell_id){
 }
 
 function distribution_tabellenkopf() {
-  ?>
-    <table class='list' width='800'>
-    <tr class="legende">
-       <th>Gruppe</th>
-       <th colspan='2'>bestellt (toleranz)</th>
-       <th colspan='2'>geliefert</th>
-       <th>Gesamtpreis</th>
-    </tr>
-  <?
+  open_tr('legende');
+    open_th(''       ,''           ,'Gruppe');
+    open_th('oneline','colspan="2"','bestellt (toleranz)');
+    open_th(''       ,'colspan="2"','geliefert');
+    open_th(''       ,''           ,'Gesamtpreis');
+  close_tr();
 }
+
+function amount_view( $mult, $unit, $toleranz = false, $class = '', $fieldname = false ) {
+  global $onchange_handler;;
+  $mult = sprintf( "%d", $mult );
+  $tag = ( html_in_tr() ? 'td' : 'span' );
+  $s = "<$tag class='mult $class'>";
+  if( $fieldname )
+    $s .= "<input type='text' size='6' name='$fieldname' value='$mult' $onchange_handler>";
+  else
+    $s .= $mult;
+  if( $toleranz !== false )
+    $s .= sprintf( " (%d)", $toleranz );
+  return $s . "</$tag><$tag class='unit $class'>$unit</$tag>";
+}
+
+function price_view( $price, $class = '', $fieldname = false ) {
+  $price = sprintf( "%.2lf", $price );
+  $tag = ( html_in_tr() ? 'td' : 'span' );
+  $s = "<$tag class='number $class'>";
+  if( $fieldname )
+    $s .= "<input type='text' size='8' name='$fieldname' value='$price' $onchange_handler>";
+  else
+    $s .= $price;
+  return $s . "</$tag>";
+}
+
 
 function distribution_produktdaten( $bestell_id, $produkt_id ) {
   $produkt = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
-  ?>
-  <tr><th colspan='6'>
-    <div style='font-size:1.2em; margin:5px;'>
-       <? echo fc_alink( 'produktpreise', array(
-         'text' => $produkt['produkt_name'], 'img' => '', 'produkt_id' => $produkt_id ) ); ?>
-    </div>
-     <div style='font-size:0.8em'>
-       <? printf( "Preis: %.2lf / %s, Produktgruppe: %s"
-         , $produkt['preis']
-         , $produkt['verteileinheit']
-         , $produkt['produktgruppen_name']
-         );
-       ?>
-    </div>
-  </th></tr>
-  <?
+  open_tr();
+    open_th( '', "colspan='6'" );
+      open_div( '', "style='font-size:1.2em; margin:5px;'" );
+        echo fc_alink( 'produktpreise', array(
+         'text' => $produkt['produkt_name'], 'img' => '', 'produkt_id' => $produkt_id ) );
+      close_div();
+      open_div('small');
+        printf( "Preis: %.2lf / %s, Produktgruppe: %s"
+          , $produkt['preis']
+          , $produkt['verteileinheit']
+          , $produkt['produktgruppen_name']
+        );
+      close_div();
+  close_tr();
 }
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
@@ -1067,38 +1065,13 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $verteileinheit = $vorschlag['kan_verteileinheit'];
   $preis = $vorschlag['preis'];
 
-  ?>
-    <tr class='summe'>
-      <th colspan='3' style='text-align:left;'>Liefermenge:</th>
-      <th class='mult'>
-        <?
-          $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
-          if( $editable ) {
-            $feldname = "liefermenge_{$bestell_id}_{$produkt_id}";
-            global $$feldname;
-            if( get_http_var( $feldname, 'f' ) ) {
-              $liefermenge_form = $$feldname;
-              if( $liefermenge != $liefermenge_form ) {
-                changeLiefermengen_sql( $liefermenge_form / $verteilmult, $produkt_id, $bestell_id );
-                $liefermenge = $liefermenge_form;
-              }
-            }
-            printf(
-              "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'
-               onchange=\"document.getElementById('reminder').style.display = 'inline';\">"
-            , $liefermenge
-            );
-          } else {
-            printf( "%d", $liefermenge );
-          }
-        ?>
-      </th>
-      <th class='unit'>
-        <? echo $verteileinheit; ?>
-      </th>
-      <th class='number'><? printf( "%.2lf", $preis * $liefermenge / $verteilmult ); ?></td>
-    </tr>
-  <?
+  open_tr('summe');
+    open_th('', "colspan='3'", 'Liefermenge:' );
+      $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
+      $feldname = ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false );
+      echo amount_view( $liefermenge, $verteileinheit, false, 'th', $feldname );
+      echo price_view( $preis * $liefermenge / $verteilmult );
+  close_tr();
 
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
@@ -1124,81 +1097,21 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
         $muellmenge = $mengen['muellmenge'] * $verteilmult;
         continue 2;
       case $basar_id;
-        $basar_toleranzmenge = $toleranzmenge;
-        $basar_festmenge = $festmenge;
         continue 2;
     }
-    ?>
-      <tr>
-        <td><? echo "{$gruppe['gruppennummer']} {$gruppe['name']}"; ?></td>
-        <td class='mult'><? printf( "%d (%d)", $festmenge, $toleranzmenge ); ?></td>
-        <td class='unit'><? echo $verteileinheit ?></td>
-        <td class='mult'>
-    <?
-    if( $editable ) {
-      $feldname = "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}";
-      global $$feldname;
-      if( get_http_var( $feldname, 'f' ) ) {
-        $menge_form = $$feldname;
-        if( $verteilmenge != $menge_form ) {
-          changeVerteilmengen_sql( $menge_form / $verteilmult, $gruppen_id, $produkt_id, $bestell_id );
-          $verteilmenge = $menge_form;
-        }
-      }
-      printf(
-        "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'
-         onchange=\"document.getElementById('reminder').style.display = 'inline';\">"
-      , $verteilmenge
-      );
-    } else {
-      printf( "%d", $verteilmenge );
-    }
-    ?>
-      </td>
-      <td class='unit'><? echo $verteileinheit ?></td>
-      <td class='number'><? printf( "%.2lf", $preis * $verteilmenge / $verteilmult ); ?></td>
-      </tr>
-    <?
+    open_tr();
+      open_td( '', '', "{$gruppe['gruppennummer']} {$gruppe['name']}" );
+      echo amount_view( $festmenge, $verteileinheit, $toleranzmenge );
+      $feldname = ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false );
+      echo amount_view( $verteilmenge, $verteileinheit, false, '', $feldname );
+      echo price_view( $preis * $verteilmenge / $verteilmult );
   }
-  ?>
-    <tr class='summe'>
-      <td colspan='3'>M&uuml;ll:</td>
-      <td class='mult'>
-      <?
-        if( $editable ) {
-          $feldname = "menge_{$bestell_id}_{$produkt_id}_{$muell_id}";
-          global $$feldname;
-          if( get_http_var( $feldname, 'f' ) ) {
-            $menge_form = $$feldname;
-            if( $muellmenge != $menge_form ) {
-              changeVerteilmengen_sql( $menge_form / $verteilmult, $muell_id, $produkt_id, $bestell_id );
-              $muellmenge = $menge_form;
-            }
-          }
-          printf(
-            "<input name='$feldname' type='text' size='5' style='text-align:right;' value='%d'
-             onchange=\"document.getElementById('reminder').style.display = 'inline';\">"
-          , $muellmenge
-          );
-        } else {
-          printf( "%d", $muellmenge );
-        }
-      ?>
-      </td>
-      <td class='unit'><? echo $verteileinheit ?></td>
-      <td class='number'><? printf( "%.2lf", $preis * $muellmenge / $verteilmult ); ?></td>
-    </tr>
-    <tr class='summe'>
-      <td colspan='1'>Basar:</td>
-      <td class='mult'>
-        <? printf( "%d (%d)", $basar_festmenge, $basar_toleranzmenge ); ?>
-      </td>
-      <td class='unit'><? echo $verteileinheit ?></td>
-      <td class='mult'><? echo $basarmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult; ?></td>
-      <td class='unit'><? echo $verteileinheit ?></td>
-      <td class='number'><? printf( "%.2lf", $preis * $basarmenge / $verteilmult ); ?></td>
-    </tr>
-  <?
+  open_tr('summe');
+    open_td('', "colspan='3'", "M&uuml;ll:" );
+    $feldname = ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false );
+    echo amount_view( $muellmenge, $verteileinheit, false, '', $feldname );
+    echo price_view( $preis * $muellmenge / $verteilmult );
+  close_tr();
 }
 
 
