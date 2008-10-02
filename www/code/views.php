@@ -254,16 +254,13 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   $muell_id = sql_muell_id();
 
   if( $editAmounts ) {
-    ?> <form action='<? echo self_url(); ?>' method='post'>
-       <? echo self_post(); ?>
-       <input type='hidden' name='action' value='basarzuteilung'>
-    <?
+    open_form( '', '', '', array( 'action' => 'basarzuteilung' ) );
     $cols=11;
   } else {
     $cols=9;
   }
 
-  ?> <table class='list'> <?
+  open_table('list');
 
   $legend = array(
     "<th>" . fc_alink( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
@@ -359,31 +356,27 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      }
      vprintf( "<tr>$rowformat</tr>\n", $row );
   }
-  ?>
-    <tr class='summe'>
-      <td colspan='8' style='text-align:right'>Summe:</td>
-      <td class='number'><? printf( "%8.2lf", $gesamtwert ); ?></td>
-      <td>&nbsp;</td>
-    </tr>
-  <?
+  open_tr('summe');
+    open_td( 'right', "colspan='8'", 'Summe:' );
+    open_td( 'number', sprintf( "%8.2lf", $gesamtwert ) );
+    open_td();
+
   echo $js;
 
   if( $editAmounts ) {
-    ?>
-      <tr style='border:none'>
-        <td colspan='<? echo $cols; ?>' style='border:none;padding-top:1ex;text-align:right;'>
-          <select name='gruppe'>
-            <? echo optionen_gruppen( false, false, false, false, false, array($muell_id => 'Müll' ) ); ?>
-          </select>
-          <input type='submit' value='Zuteilen' style='margin-left:2em;'>
-        </td>
-      </tr>
-      </table>
-      <input type='hidden' name='fieldcount' value='<? echo $fieldcount; ?>'>
-      </form>
-    <?
+    open_tr();
+      open_td( 'right', "colspan='$cols' style='padding-top:1ex;'" );
+      ?>
+        <select name='gruppe'>
+          <? echo optionen_gruppen( false, false, false, false, false, array($muell_id => 'Müll' ) ); ?>
+        </select>
+        <input type='submit' value='Zuteilen' style='margin-left:2em;'>
+        <input type='hidden' name='fieldcount' value='<? echo $fieldcount; ?>'>
+      <?
+    close_table();
+    close_form();
   } else {
-    ?> </table> <?
+    close_table();
   }
 }
 
