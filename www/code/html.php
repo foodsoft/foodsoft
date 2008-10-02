@@ -6,7 +6,9 @@ $print_on_exit = array();
 
 function open_tag( $tag, $class = '', $attr = '' ) {
   global $open_tags;
-  echo "<$tag class='$class' $attr>\n";
+  if( $class )
+    $class = "class='$class'";
+  echo "<$tag $class $attr>\n";
   $n = count( $open_tags );
   $open_tags[$n+1] = $tag;
 }
@@ -82,6 +84,8 @@ function close_tr() {
     case 'tr':
       close_tag( 'tr' );
       break;
+    case 'table':
+      break;  // already closed, never mind...
     default:
       error( 'unmatched close_tr' );
   }
@@ -125,6 +129,9 @@ function close_td() {
     case 'th':
       close_tag( $open_tags[$n] );
       break;
+    case 'tr':
+    case 'table':
+      break; // already closed, never mind...
     default:
       error( 'unmatched close_td' );
   }
@@ -132,6 +139,12 @@ function close_td() {
 
 function close_th() {
   close_td();
+}
+
+function html_in_tr() {
+  global $open_tags;
+  $n = count( $open_tags );
+  return ( $open_tags[$n] == 'tr' );
 }
 
 function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
@@ -150,6 +163,8 @@ function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
 }
 
 function close_form() {
+  global $onchange_handler;;
+  $onchange_handler = '';
   close_tag( 'form' );
 }
 
@@ -161,6 +176,27 @@ function open_fieldset( $class = '', $attr = '', $legend = '' ) {
 
 function close_fieldset() {
   close_tag( 'fieldset' );
+}
+
+global $onchange_handler;;
+$onchange_handler = '';
+
+function floating_submission_button() {
+  global $onchange_handler;;
+  $onchange_handler = "onchange='document.getElementById(\"floatingbuttons\").style.display = \"inline\";'";
+
+  open_tag( 'span', 'alert', "id='floatingbuttons'" );
+    open_table();
+      open_td('alert left');
+        ?> <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("floatingbuttons").style.display = "none";'> <?
+      open_td('alert center', '', "&Auml;nderungen sind noch nicht gespeichert!" );
+    open_tr();
+      open_td( 'alert center', "colspan='2'" );
+        ?> <input type='submit' class='bigbutton' value='Speichern'>
+           <input type='reset' class="bigbutton" value='Zur&uuml;cksetzen'
+            onClick='document.getElementById("floatingbuttons").style.display = "none";'> <?
+    close_table();
+  close_tag('span');
 }
 
 function close_all_tags() {
