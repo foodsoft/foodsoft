@@ -24,8 +24,8 @@
 	     if (!isset($dienstfrequenz)){
 	     	$dienstfrequenz = "7";
 	     } else {
-	          get_http_var("startdatum", '/^[0-9 -]+$/' ); //ToDo check for date
-	          get_http_var("enddatum", '/^[0-9 -]+$/' ); //ToDo check for date
+	          get_http_var("startdatum", '/^[0-9 .-]+$/' ); //ToDo check for date
+	          get_http_var("enddatum", '/^[0-9 .-]+$/' ); //ToDo check for date
 		  fail_if_readonly();
 	          create_dienste($startdatum,$enddatum,$dienstfrequenz);
 		  ?>echo <p><b> Dienste erstellt </b></p><?
@@ -55,7 +55,7 @@
    <form name="rotationsplan" action="<? self_url(); ?>" method="post">
 	   <? 
        echo self_post();
-	     get_http_var("plan_dienst",'/^[0-9/]+$/');
+	     get_http_var("plan_dienst",'/^[0-9\/]+$/');
 	     if (!isset($plan_dienst)) $plan_dienst = "1/2";
              foreach (array_keys($_REQUEST) as $submitted){
 	 	if(strstr($submitted, "up_")!==FALSE){
@@ -105,12 +105,6 @@
    <!-- Zeige bisherige Dienste-->
 
    
-     <table class='list'><tr>
-      <th> Datum </th>
-      <th> Dienst 1/2 </th>
-      <th> Dienst 3 </th>
-      <th> Dienst 4 </th>
-      </tr><tr>
 	   <? 
 	   /*
 	       Abgeschickte Befehle auffangen und ausführen
@@ -152,7 +146,7 @@
 		case "abtauschen":
                    $row = sql_get_dienst_by_id($command[1]);
 		   //Datumsvorschlag unterbreiten
-		   get_http_var("abtauschdatum",);
+		   get_http_var("abtauschdatum","R");
 		   if(!isset($abtauschdatum)){
 		       $dates = sql_get_dienst_date($row["Dienst"], "Vorgeschlagen");
 		       if(mysql_num_rows($dates)<=1){
@@ -163,7 +157,7 @@
 		           sql_dienst_wird_offen($command[1]);
 		       } else {
 		           ?> 
-			   <div class='warn'>Bitte Ausweichdatum auswählen:</div>
+			   <div class='warn'>Bitte Ausweichdatum auswählen:
 			   <form name=tauschdatum" action="<? self_url(); ?>" method="post">
                 <? echo self_post(); ?>
 		            <input type="hidden" name="aktion" value="abtauschen_<?echo $command[1]?>">
@@ -178,7 +172,7 @@
 			   ?>
 			   </select>
 			   <input type="submit" value="Dieses Datum geht">  
-			   </form>
+			   </form> </div>
 			   <p>
 			   <?
 		       }
@@ -199,6 +193,14 @@
 	     }
 
 	  //Formular vorbereiten und anzeigen
+?>
+     <table class='list'><tr>
+      <th> Datum </th>
+      <th> Dienst 1/2 </th>
+      <th> Dienst 3 </th>
+      <th> Dienst 4 </th>
+      </tr><tr>
+<?
 
 	    $dienste =  sql_get_dienste();
 	    $currentDienst = "initial";

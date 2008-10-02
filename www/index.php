@@ -28,13 +28,13 @@ switch( $window_id ) {
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
         break;
-   // case "bestellen":
-   // if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
-   //  //darf nur bestellen, wenn Dienste akzeptiert
-   //  ?><!-- <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> --> <?
-   //  include('dienstplan.php');
-   //  break;
-   // }
+    case "bestellen":
+    if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
+     //darf nur bestellen, wenn Dienste akzeptiert
+     ?><!-- <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> --> <?
+     include('windows/dienstplan.php');
+     break;
+    }
       default:
         if( is_readable( "windows/$window.php" ) ) {
           include( "windows/$window.php" );

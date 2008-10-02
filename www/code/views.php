@@ -91,20 +91,21 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        $critical_date = in_two_weeks();
        if(compare_date2($row["Lieferdatum"], $critical_date)){
 	  //soon
-	  $color_norm="#00FF00";
-	  $color_not_confirmed="#FFC800";
-	  $color_not_accepted="#FF0000";
+	  $color_norm="#00FF00";   //grün
+	  $color_not_confirmed="#FFC800";   //yellow
+	  $color_not_accepted="#FF0000";    //red
 	  $soon=TRUE;
        } else {
-	  $color_norm="#00FF00";
-	  $color_not_confirmed="#00FF00";
-	  $color_not_accepted="#000000";
+	  $color_norm="#00FF00";   //grün
+	  $color_not_confirmed="#00FF00";   //grün
+	  $color_not_accepted="#000000";    //black
 	  $soon=FALSE;
        }
        switch($row["Status"]){
        case "Vorgeschlagen":
 	    if($gruppe == $row["gruppen_id"]){
 	    ?>
+              <div class=alert>
 	       <b>
                 <?    show_dienst_gruppe($row, $color_not_accepted); ?>
                 Dieser Dienst ist euch zugeteilt</b> <br>
@@ -121,6 +122,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	       <input type="hidden" name="aktion" value="abtauschen_<?echo $row["ID"]?>">
 	       <input type="submit" value="geht nicht">  
 	       </form>
+           </div>
 	       <?}?>
 	       </font>
 	    <?
