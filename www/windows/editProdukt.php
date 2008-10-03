@@ -65,74 +65,49 @@ if( $action == 'save' ) {
   }
 }
 
-
 open_form( 'small_form', '', '', array( 'action' => 'save' ) );
-  open_fieldset( 'small_form', "style='width:400px;', ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ) );
+  open_fieldset( 'small_form', "style='width:400px;'", ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ) );
     echo $msg . $problems;
     open_table('small_form');
-          <tr>
-           <td><label>Lieferant:</label></td>
-           <td><? echo $lieferant_name; ?></td>
-			    </tr>
-         <tr>
-				    <td><label>Bezeichnung:</label></td>
-						<td><input <? echo $ro_tag; ?> type='text' size='40' value="<? echo $name; ?>" name='name'
-       <? if( $produkt_id ) { ?>
-                onFocus="document.getElementById('name_change_warning').style.display='inline';"
-                onBlur="document.getElementById('name_change_warning').style.display='none';"
-       <? } ?>
-                ></td>
-         </tr>
-		     <tr>
-			    <td valign="top"><label>Artikelnummer:</label></td>
-					<td>
-						 <input <? echo $ro_tag; ?> name="artikelnummer" type='text' size='10' value='<? echo $artikelnummer; ?>'>
-					</td>
-			   </tr>	 
-		     <tr>
-			    <td><label><? echo fc_alink( 'produktgruppen', 'text=Produktgruppe:' ); ?></label></td>
-					<td>
-						<select <? echo $ro_tag; ?> name="produktgruppen_id">
-            <? echo optionen_produktgruppen( isset( $produktgruppen_id ) ? $produktgruppen_id : 0 ); ?>
-	          </select>
-					</td>
-			   </tr>
-		   <tr>
-			    <td valign="top"><label>Notiz:</label></td>
-					<td>
-						 <input <? echo $ro_tag; ?> name="notiz" type='text' size='40' value='<? echo $notiz; ?>'>
-					</td>
-			 </tr>	 
-       <tr>
-			   <td style='text-align:left;white-space:nowrap;'>
-           <? if( ! $ro ) { ?>
-             <input type='submit' value='<? echo ( $produkt_id ? 'Ändern' : 'Einfügen'); ?>'>
-             &nbsp;
-           <? } ?>
-           <?  if( $ro or $done ) { ?>
-             <input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>
-           <? } ?>
-         </td>
-         <td style='text-align:right;'>
-           <?
-             if( $produkt_id > 0 ) {
-               echo fc_alink( 'produktpreise', "produkt_id=$produkt_id,text=Details und Preise..." );
-              }
-           ?>
-         </td>
-			 </tr>
-		</table>
+        open_td('label', '', 'Lieferant:' );
+        open_td('kbd', '', $lieferant_name );
+      open_tr();
+        open_td('label', '', 'Bezeichnung:' );
+        open_td('kbd');
+          $attr = '';
+          if( $produkt_id )
+            $attr = "onFocus=\"document.getElementById('name_change_warning').style.display='inline';\"
+                     onBlur=\"document.getElementById('name_change_warning').style.display='none';\"";
+          echo text_view( $name, 40, 'kbd', ( $editable ? 'name' : false ), $attr );
+      open_tr();
+        open_td('label', '', 'Artikelnummer:' );
+        open_td( 'kbd', '', text_view( $artikelnummer, 10, 'kbd', ( $editable ? 'artikelnummer' : false ) ) );
+      open_tr();
+        open_td('label', '', fc_alink( 'produktgruppen', 'text=Produktgruppe:' ) );
+        open_td('kbd', '', produktgruppen_view( $produktgruppen_id, 'produktgruppen_id' ) );
+      open_tr();
+        open_td('label', '', 'Notiz:' );
+        open_td( 'kbd', '', text_view( $notiz, 40, 'kbd', ( $editable ? 'notiz' : false ) ) );
+      open_tr();
+        open_td('right smallskip', "colspan='2'");
+          if( $produkt_id > 0 )
+            echo fc_alink( 'produktpreise', "produkt_id=$produkt_id,text=Details und Preise..." );
+          open_span('qquad');
+          if( $editable and ! $done )
+            submission_button();
+          else
+            close_button();
+          close_span();
+    close_table();
 
-    <? if( $produkt_id ) { ?>
-        <div class='warn' id='name_change_warning' style='display:none;'>
-        <p>
-          Warnung: die Produktbezeichnung sollte möglichst nicht geändert werden,
-          da sich Änderungen auch rückwirkend auf alte Abrechnungen auswirken!
-        </p>
-        <p> Aktuelle und veränderliche Angaben bitte als 'Notiz' speichern!  </p>
-        </span>
-        </div>
-    <? } ?>
-    </fieldset>
-	 </form>
+    if( $produkt_id ) {
+      open_div( 'kommentar', "id='name_change_warning' style='display:none;'" );
+        open_div( 'smallskip', '', "Hinweis: die Produktbezeichnung sollte möglichst nicht geändert werden,
+                                    da sich Änderungen auch rückwirkend auf alte Abrechnungen auswirken! " );
+        open_div( 'smallskip', '', "Aktuelle und veränderliche Angaben bitte als 'Notiz' speichern!" );
+      close_div();
+    }
+  close_fieldset();
+close_form();
 
+?>
