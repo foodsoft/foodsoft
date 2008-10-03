@@ -125,13 +125,11 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 //  FIXME in obiges switch-statement integrieren
   //
   if( $editable and $state == STATUS_VERTEILT ) {
-    $produkte = sql_bestellprodukte($bestell_id, 0, 0 );
-    while  ($produkte_row = mysql_fetch_array($produkte)) {
-      $produkt_id =$produkte_row['produkt_id'];
+    foreach( sql_bestellprodukte($bestell_id, 0, 0 ) as $produkt ) {
+      $produkt_id =$produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
-        preisdatenSetzen( & $produkte_row );
-        $mengenfaktor = $produkte_row['mengenfaktor'];
-        $liefermenge = $produkte_row['liefermenge'] / $mengenfaktor;
+        $mengenfaktor = $produkt['mengenfaktor'];
+        $liefermenge = $produkt['liefermenge'] / $mengenfaktor;
         if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
           $liefermenge = ${"liefermenge$produkt_id"};
           changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
