@@ -450,13 +450,13 @@ div.kommentar {
   font-size:11pt;
 }
 
-span#floatingbuttons {
+span.floatingbuttons {
   display:none;
   z-index:999;
   position:fixed;
   top:8px;
   left:8px;
-  padding:1em;
+  padding:1em !important;
 }
 
 /*  warnings, alerts and oks */
@@ -549,6 +549,11 @@ span.radiooption {
 
 input.checkbox {
   margin-left:2em;
+}
+
+input.inactive, input.inactive:hover {
+  color:#888888;
+  background-color:#cccccc;
 }
 
 /* simulierte radioknoepfe (auswahl preiseintrag!) */
