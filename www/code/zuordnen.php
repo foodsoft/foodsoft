@@ -143,12 +143,18 @@ function adefault( $array, $index, $default ) {
     return $default;
 }
 
-function mysql2array( $result, $key, $val ) {
+function mysql2array( $result, $key = false, $val = false ) {
+  if( is_array( $result ) )  // temporary kludge: make me idempotent
+    return $result;
   $r = array();
   while( $row = mysql_fetch_array( $result ) ) {
-    need( isset( $row[$key] ) );
-    need( isset( $row[$val] ) );
-    $r[$row[$key]] = $row[$val];
+    if( $key ) {
+      need( isset( $row[$key] ) );
+      need( isset( $row[$val] ) );
+      $r[$row[$key]] = $row[$val];
+    } else {
+      $r[] = $row;
+    }
   }
   return $r;
 }
@@ -1047,7 +1053,7 @@ function gruppe_ist_aktiv($gruppen_id) {
 }
 
 /*
- * sql_beteiligte_gruppen: SELECT
+ * sql_beteiligte_bestellgruppen: SELECT
  * - alle an einer gesamtbestellung beteiligten (durch bestellung oder zuordnung!) gruppen,
  * - optional eingeschraenkt auf einen bestimmten artikel dieser bestellung
  * auch pfandrueckgabe zaehlt als teilnahme an einer bestellung
@@ -1067,7 +1073,7 @@ function sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id = FALSE ){
     $query .= " AND bestellzuordnung.produkt_id = $produkt_id";
   }
   $query .= " GROUP BY bestellgruppen.id ORDER BY gruppennummer";
-  return doSql( $query );
+  return mysql2array( doSql( $query ) );
 }
 
 function optionen_gruppen(
@@ -1087,7 +1093,7 @@ function optionen_gruppen(
   if( $bestell_id ) {
     $gruppen = sql_beteiligte_bestellgruppen($bestell_id,$produkt_id);
   } else {
-    $gruppen = sql_aktive_bestellgruppen();
+    $gruppen = mysql2array( sql_aktive_bestellgruppen() );
   }
   $output='';
   if( $option_0 ) {
@@ -1107,7 +1113,7 @@ function optionen_gruppen(
         }
         $output = $output . ">" . ( $name ? $name : sql_gruppenname( $id ) ) . "</option>";
   }
-  while($gruppe = mysql_fetch_array($gruppen)){
+  foreach( $gruppen as $gruppe ) {
     $id = $gruppe['id'];
     if( in_array( $id, $additionalgroups ) )
       continue;
@@ -1736,7 +1742,11 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, 
 }
 
 function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
-  return doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id, $orderby ) );
+  $result = doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id, $orderby ) );
+  $r = mysql2array( $result );
+  foreach( $r as & $val )
+    preisdatenSetzen( & $val );
+  return $r;
 }
 
 // zuteilungen_berechnen():
@@ -2014,8 +2024,7 @@ function verteilmengenZuweisen($bestell_id){
 
   need( getState($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
-  $produkte = sql_bestellprodukte( $bestell_id );
-  while( $produkt = mysql_fetch_array( $produkte ) ) {
+  foreach( sql_bestellprodukte( $bestell_id ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $zuteilungen = zuteilungen_berechnen( $produkt );
     sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id ), array(
@@ -4781,73 +4790,6 @@ function move_html( $id, $into_id ) {
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
-
-////////////////////////////////////
-//
-// momentan unbenutzte funktionen:
-//
-////////////////////////////////////
-
-// function sql_delete_bestellzuordnung ($id){
-//     $query= "DELETE FROM bestellzuordnung WHERE id='$id'"; 
-//     doSql($query, LEVEL_IMPORTANT, "Löschen fehlgeschlagen...");
-// }
-//
-//
-// /**
-//  *
-//  */
-// function from_basar(){
-//    return "((`verteilmengen` join `bestellvorschlaege` on(((`verteilmengen`.`bestell_id` = `bestellvorschlaege`.`gesamtbestellung_id`) and (`bestellvorschlaege`.`produkt_id` = `verteilmengen`.`produkt_id`)))) join `produkte` on((`verteilmengen`.`produkt_id` = `produkte`.`id`)))";
-// }
-//
-// function sql_liefermenge($bestell_id,$produkt_id){
-//   $row = sql_select_single_row( "
-//     SELECT liefermenge FROM bestellvorschlaege
-//     WHERE (gesamtbestellung_id='$bestell_id') and (produkt_id='$produkt_id')
-//   " );
-//   return $row['liefermenge'];
-// }
-//
-// function select_bestellungen_pfand( $using = array() ) {
-//   return "
-//     SELECT IFNULL( sum( bestellzuordnung.menge * produktpreise.pfand ), 0.0 )
-//     FROM gruppenbestellungen
-//   " . need_joins( $using, array(
-//       'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
-//                                ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
-//     ) ) . "
-//     JOIN bestellzuordnung
-//       ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-//     JOIN bestellvorschlaege
-//       ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
-//          AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
-//     JOIN produktpreise
-//       ON produktpreise.id = bestellvorschlaege.produktpreise_id
-//     WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
-//       'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
-//     , 'lieferanten' => 'gesamtbestellungen.lieferanten_id = lieferanten.id'
-//     , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
-//     ) );
-// }
-// function select_transaktionen_pfand( $using = array() ) {
-//   return "
-//     SELECT IFNULL( sum( summe * IF( type=1, 1, 0 ) ), 0.0 )
-//       FROM gruppen_transaktion
-//      WHERE ( gruppen_transaktion.gruppen_id > 0 ) " . use_filters( $using, array(
-//         'bestellgruppen' => 'bestellgruppen.id = gruppen_transaktion.gruppen_id'
-//       , 'lieferanten' => 'lieferanten.id = gruppen_transaktion.lieferanten_id'
-//   ) );
-// }
-// function writeVerteilmengen_sql($gruppenMengeInGebinde, $gruppenbestellung_id, $produkt_id){
-// 	if($gruppenMengeInGebinde > 0){
-// 		$query = "INSERT INTO  bestellzuordnung (menge, produkt_id, gruppenbestellung_id, art) 
-// 			  VALUES (".$gruppenMengeInGebinde.
-// 			 ", ".$produkt_id.
-// 			 ", ".$gruppenbestellung_id.", 2);";
-//                 doSql($query, LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB schreiben...");
-// 	}
-// }
 
 
 
