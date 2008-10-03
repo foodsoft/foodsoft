@@ -39,10 +39,7 @@ switch( $action ) {
 }
 
 function update_distribution( $bestell_id, $produkt_id ) {
-  $produkte = sql_bestellprodukte( $bestell_id, 0, $produkt_id );
-
-  while( $produkt = mysql_fetch_array( $produkte ) ) {
-    preisdatenSetzen( & $produkt );
+  foreach( sql_bestellprodukte( $bestell_id, 0, $produkt_id ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $verteilmult = $produkt['kan_verteilmult'];
     $verteileinheit = $produkt['kan_verteileinheit'];
@@ -59,7 +56,8 @@ function update_distribution( $bestell_id, $produkt_id ) {
     }
 
     $gruppen = sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id );
-    while( $gruppe = mysql_fetch_array( $gruppen ) ) {
+    $gruppen[] = array( 'id' => sql_muell_id() );
+    foreach( $gruppen as $gruppe ) {
       $gruppen_id = $gruppe['id'];
       $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ), true );
       if( $mengen ) {
@@ -93,9 +91,7 @@ if( ! $ro_tag ) {
 open_table('list');
   distribution_tabellenkopf(); 
 
-  $produkte = sql_bestellprodukte( $bestell_id, 0, $produkt_id );
-
-  while( $produkt = mysql_fetch_array( $produkte ) ) {
+  foreach( sql_bestellprodukte( $bestell_id, 0, $produkt_id ) as $produkt ) {
     if( ( $produkt['liefermenge'] < 0.5 ) and ( $produkt['verteilmenge'] < 0.5 ) )
       continue;
     $produkt_id = $produkt['produkt_id'];
