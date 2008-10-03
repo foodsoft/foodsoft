@@ -110,10 +110,9 @@ switch( $action ) {
     sql_insert_bestellvorschlaege( $produkt_id, $bestell_id );
     break;
   case 'bestellen':
-    $produkte = sql_bestellprodukte( $bestell_id, 0, 0 );
     $gesamtpreis = 0;
     $bestellungen = array();
-    while( $produkt = mysql_fetch_array( $produkte ) ) {
+    foreach( sql_bestellprodukte( $bestell_id, 0, 0 ) as $produkt ) {
       $n = $produkt['produkt_id'];
       get_http_var( "fest_$n", 'u', 0 );
       $fest = ${"fest_$n"};
@@ -141,7 +140,7 @@ switch( $action ) {
 
 $produkte = sql_bestellprodukte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
 // ^ brauchen wir gleich im java-script!
-$anzahl_produkte = mysql_num_rows( $produkte );
+$anzahl_produkte = count( $produkte );
 $gesamtpreis = 0.0;
 
 ?>
@@ -430,8 +429,7 @@ $produktgruppe_alt = '';
 $rowspan = 1;
 $pg_id = 0;
 $js = '';
-while( $produkt = mysql_fetch_array( $produkte ) ) {
-  preisdatenSetzen( $produkt );
+foreach( $produkte as $produkt ) {
   $produkt_id = $produkt['produkt_id'];
   $n = $produkt_id;
 
