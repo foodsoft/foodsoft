@@ -3788,7 +3788,6 @@ function optionen_produktgruppen( $selected = 0 ) {
   $produktgruppen = sql_produktgruppen();
   $output = "";
   while( $pg = mysql_fetch_array($produktgruppen) ) {
-    echo "pg name: {$pg['name']}<br>";
     $id = $pg['id'];
     $output .= "<option value='$id'";
     if( $selected == $id ) {
@@ -3803,6 +3802,9 @@ function optionen_produktgruppen( $selected = 0 ) {
   return $output;
 }
 
+function sql_produktgruppen_name( $id ) {
+  return sql_select_single_field( "SELECT name FROM produktgruppen WHERE id=$id" , 'name' );
+}
 
 
 /**
