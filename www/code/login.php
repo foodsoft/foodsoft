@@ -169,9 +169,7 @@ if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
 }
 
 open_div( 'kommentar', '', $motd );
-open_form( 'small_form', '', $form_action );
-  echo self_post();
-  ?> <input type='hidden' name='login' value='login'> <?
+open_form( 'small_form', '', $form_action, array( 'login' => 'login' ) );
   open_fieldset( 'small_form', "style='padding:2em;'", 'Anmelden' );
     if( "$problems" )
       echo "$problems";
@@ -278,6 +276,15 @@ function nur_fuer_dienst() {
   div_msg( 'warn', 'Keine Berechtigung' );
   exit();
 }
+function hat_dienst() {
+  global $dienst;
+  for( $i = 0; $i < func_num_args(); $i++ ) {
+    if( $dienst == func_get_arg($i) )
+      return true;
+  }
+  return false;
+}
+
 function nur_fuer_dienst_I() {
   nur_fuer_dienst(1);
 }
