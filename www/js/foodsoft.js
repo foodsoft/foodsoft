@@ -95,6 +95,19 @@ function submit_form( form, window_id, optionen, button_id ) {
     alert( 'no such form: ' + form + ' button_id: ' + button_id );
 }
 
+
+function on_change( $id ) {
+  if( $id ) {
+    if( s = document.getElementById( 'submit_button_'+$id ) )
+      s.className = 'button';
+    if( s = document.getElementById( 'floating_submit_button_'+$id ) )
+      s.style.display = 'inline';
+  }
+}
+
+
+
+
 // experimenteller code - funktioniert noch nicht richtig...
 // 
 // var child_windows = new Array();
