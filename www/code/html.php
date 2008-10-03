@@ -1,8 +1,17 @@
 <?
 
-global $open_tags, $print_on_exit;
+global $open_tags, $print_on_exit, $html_id;
 $open_tags = array();
 $print_on_exit = array();
+$html_id = 0;
+global $input_event_handlers, $form_id;
+$input_event_handlers = '';
+
+function new_html_id() {
+  global $html_id;
+  ++$html_id;
+  return $html_id;
+}
 
 function open_tag( $tag, $class = '', $attr = '' ) {
   global $open_tags;
@@ -34,6 +43,18 @@ function open_div( $class = '', $attr = '', $payload = '' ) {
 
 function close_div() {
   close_tag( 'div' );
+}
+
+function open_span( $class = '', $attr = '', $payload = '' ) {
+  open_tag( 'span', $class, $attr );
+  if( $payload ) {
+    echo $payload;
+    close_span();
+  }
+}
+
+function close_span() {
+  close_tag( 'span' );
 }
 
 function open_table( $class = '', $attr = '' ) {
@@ -148,7 +169,8 @@ function html_in_tr() {
 }
 
 function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
-  global $self_fields;
+  global $self_fields, $form_id, $input_event_handlers;
+  $form_id = new_html_id();
   if( ! $action ) {
     $action = self_url();
     $hidden = self_post();
@@ -160,11 +182,12 @@ function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
   foreach( $hide as $key => $val ) {
     echo "<input type='hidden' name='$key' value='$val'>";
   }
+  $input_event_handlers = " onChange='on_change($form_id);' ";
 }
 
 function close_form() {
-  global $onchange_handler;;
-  $onchange_handler = '';
+  global $input_event_handlers;
+  $input_event_handlers = '';
   close_tag( 'form' );
 }
 
@@ -178,26 +201,34 @@ function close_fieldset() {
   close_tag( 'fieldset' );
 }
 
-global $onchange_handler;;
-$onchange_handler = '';
 
 function floating_submission_button() {
-  global $onchange_handler;;
-  $onchange_handler = "onchange='document.getElementById(\"floatingbuttons\").style.display = \"inline\";'";
+  global $form_id;
 
-  open_tag( 'span', 'alert', "id='floatingbuttons'" );
+  open_span( 'alert floatingbuttons', "id='floating_submit_button_$form_id'" );
     open_table();
       open_td('alert left');
-        ?> <img class='button' src='img/close_black_trans.gif' onClick='document.getElementById("floatingbuttons").style.display = "none";'> <?
+        ?> <img class='button' src='img/close_black_trans.gif'
+           onClick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
       open_td('alert center', '', "&Auml;nderungen sind noch nicht gespeichert!" );
     open_tr();
       open_td( 'alert center', "colspan='2'" );
         ?> <input type='submit' class='bigbutton' value='Speichern'>
            <input type='reset' class="bigbutton" value='Zur&uuml;cksetzen'
-            onClick='document.getElementById("floatingbuttons").style.display = "none";'> <?
+            onClick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
     close_table();
   close_tag('span');
 }
+
+function submission_button( $text = 'Speichern' ) {
+  global $form_id;
+  echo "<input class='inactive' type='submit' id='submit_button_{$form_id}' value='$text'>";
+}
+
+function close_button( $class = 'button' ) {
+  echo "<input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>";
+}
+
 
 function close_all_tags() {
   global $open_tags, $print_on_exit;
