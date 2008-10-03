@@ -70,6 +70,8 @@ $mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
 // gruppen mit sonderbedeutung merken:
 global $specialgroups;
 $specialgroups = array();
+$basar_id or error( "Spezielle Basar-Gruppe nicht gesetzt (in tabelle leitvariablen!)" ); 
+$muell_id or error( "Spezielle Muell-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
 $specialgroups[] = $basar_id;
 $specialgroups[] = $muell_id;
 
