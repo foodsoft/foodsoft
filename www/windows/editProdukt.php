@@ -1,86 +1,75 @@
 <?PHP
-  assert( $angemeldet ) or exit();
+assert( $angemeldet ) or exit();
 
+$editable = hat_dienst(4);
+get_http_var( 'ro', 'u', 0, true );
+if( $ro or $readonly )
+  $editable = false;
 
-  get_http_var( 'ro', 'u', 0, true );
-  if( $readonly )
-    $ro = 1;
+$msg = "";
+$problems = "";
+$done = "";
 
-  $onload_str = "";       // befehlsstring der beim laden ausgef¸hrt wird...
+get_http_var( 'produkt_id', 'u', 0, true );
+if( $produkt_id ) {
+  $row = sql_produkt_details( $produkt_id );
+  setWindowSubtitle( 'Artikeldaten' );
+  setWikiHelpTopic( 'foodsoft:artikeldaten' );
+  $lieferanten_id = $row['lieferanten_id'];
+} else {
+  need_http_var( 'lieferanten_id', 'u', true );
+  setWindowSubtitle( 'Neuen Artikel eintragen' );
+  setWikiHelpTopic( 'foodsoft:artikeldaten' );
+  $row = false;
+}
+get_http_var('name','H',$row);
+get_http_var('produktgruppen_id','u',$row);
+get_http_var('notiz','H',$row);
+get_http_var('artikelnummer','H',$row);
+$lieferant_name = lieferant_name( $lieferanten_id );
 
-  ( $dienst == 4 ) or $ro = 1;
+$action = '';
+get_http_var( 'action', 'w', '' );
+$editable or $action = '';
 
-  $msg = "";
-  $problems = "";
-  $done = "";
+if( $action == 'save' ) {
+  $values = array(
+    'name' => $name
+  , 'produktgruppen_id' => $produktgruppen_id
+  , 'lieferanten_id' => $lieferanten_id
+  , 'artikelnummer' => $artikelnummer
+  , 'notiz' => $notiz
+  );
 
-  get_http_var( 'produkt_id', 'u', 0, true );
-  if( $produkt_id ) {
-    $row = sql_produkt_details( $produkt_id );
-    setWindowSubtitle( 'Artikeldaten' );
-    setWikiHelpTopic( 'foodsoft:artikeldaten' );
-    $lieferanten_id = $row['lieferanten_id'];
-  } else {
-    need_http_var( 'lieferanten_id', 'u', true );
-    setWindowSubtitle( 'Neuen Artikel eintragen' );
-    setWikiHelpTopic( 'foodsoft:artikeldaten' );
-    $row = false;
-  }
-  get_http_var('name','H',$row);
-  get_http_var('produktgruppen_id','u',$row);
-  get_http_var('notiz','H',$row);
-  get_http_var('artikelnummer','H',$row);
-  $lieferant_name = lieferant_name( $lieferanten_id );
+  if( ! $name ) $problems .= "<div class='warn'>Das neue Produkt muﬂ einen Name haben!</div>";
+  if( ! $produktgruppen_id ) $problems .= "<div class='warn'>Das neue Produkt mu√ü zu einer Produktgruppe geh√∂ren!</div>";
 
-  $action = '';
-  get_http_var( 'action', 'w', '' );
-  if( $ro )
-    $action = '';
-
-  if( $action == 'save' ) {
-    $values = array(
-      'name' => $name
-    , 'produktgruppen_id' => $produktgruppen_id
-    , 'lieferanten_id' => $lieferanten_id
-    , 'artikelnummer' => $artikelnummer
-    , 'notiz' => $notiz
-    );
-    // $newEinheit                                     = str_replace("'", "", str_replace('"',"'",$HTTP_GET_VARS['newProdukt_einheit']));
-
-    if( ! $name ) $problems .= "<div class='warn'>Das neue Produkt muﬂ einen Name haben!</div>";
-    if( ! $produktgruppen_id ) $problems .= "<div class='warn'>Das neue Produkt mu√ü zu einer Produktgruppe geh√∂ren!</div>";
-
-    // Wenn keine Fehler, dann einf¸gen...
-    if( ! $problems ) {
-      if( $produkt_id ) {
-        if( sql_update( 'produkte', $produkt_id, $values ) ) {
-          $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
-          $done = true;
-        } else {
-          $problems = $problems . "<div class='warn'>√Ñnderung fehlgeschlagen: " . mysql_error() . '</div>';
-        }
+  // Wenn keine Fehler, dann einf¸gen...
+  if( ! $problems ) {
+    if( $produkt_id ) {
+      if( sql_update( 'produkte', $produkt_id, $values ) ) {
+        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
+        $done = true;
       } else {
-        if( ( $produkt_id = sql_insert( 'produkte', $values ) ) ) {
-          $self_fields['produkt_id'] = $produkt_id;
-          $msg = $msg . "<div class='ok'>Produkt erfolgreich eingetragen:</div>";
-          $done = true;
-        } else {
-          $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
-        }
+        $problems = $problems . "<div class='warn'>√Ñnderung fehlgeschlagen: " . mysql_error() . '</div>';
+      }
+    } else {
+      if( ( $produkt_id = sql_insert( 'produkte', $values ) ) ) {
+        $self_fields['produkt_id'] = $produkt_id;
+        $msg = $msg . "<div class='ok'>Produkt erfolgreich eingetragen:</div>";
+        $done = true;
+      } else {
+        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
       }
     }
   }
+}
 
-  $ro_tag = ( $ro ? 'readonly' : '' );
 
-  ?>
-   <form action='<? echo self_url(); ?>' method='post' class='small_form'>
-   <? echo self_post(); ?>
-   <input type='hidden' name='action' value='save'>
-      <fieldset style='width:400px;' class='small_form'>
-      <legend><? echo ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ); ?></legend>
-      <? echo $msg . $problems; ?>
-			  <table class='small_form'>
+open_form( 'small_form', '', '', array( 'action' => 'save' ) );
+  open_fieldset( 'small_form', "style='width:400px;', ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ) );
+    echo $msg . $problems;
+    open_table('small_form');
           <tr>
            <td><label>Lieferant:</label></td>
            <td><? echo $lieferant_name; ?></td>
