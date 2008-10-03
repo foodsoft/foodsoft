@@ -2,16 +2,18 @@
 //This file defines views for foodsoft data
 
 
-function number_selector($name, $min, $max, $selected, $format){
- ?>
-    <select name="<?echo $name?>">
-          <?PHP 
-	  for ($i=$min; $i <= $max; $i++) { 
+function number_selector($name, $min, $max, $selected, $format, $to_stdout = true ){
+  global $input_event_handlers;
+  $s = "<select name='$name' $input_event_handlers>";
+  for ($i=$min; $i <= $max; $i++) { 
 	       if ($i == $selected) $select_str="selected";
      	       else $select_str = ""; 
-	       echo "<option value='".$i."' ".$select_str.">".sprintf($format,$i)."</option>\n"; } ?>
-    </select>
-  <?
+	       $s .= "<option value='".$i."' ".$select_str.">".sprintf($format,$i)."</option>\n";
+  }
+  $s .= "</select>";
+  if( $to_stdout )
+    echo $s;
+  return $s;
 }
 /**
  * Stellt eine komplette Editiermöglichkeit für
@@ -24,40 +26,52 @@ function number_selector($name, $min, $max, $selected, $format){
  *   <prefix>_monat
  *   <prefix>_jahr
  */
-function date_time_selector($sql_date, $prefix, $show_time=true){
+function date_time_selector($sql_date, $prefix, $show_time=true, $to_stdout = true ) {
   echo "<!-- sql_date :$sql_date -->";
 	$datum = date_parse($sql_date);
 
-?>     <table class='inner'>
+  $s = "
+    <table class='inner'>
                   <tr>
                      <td><label>Datum:</label></td>
                       <td style='white-space:nowrap;'>
-         <?date_selector($prefix."_tag", $datum['day'],$prefix."_monat", $datum['month'], $prefix."_jahr", $datum['year'])?>
-                     </td>
+    ". date_selector($prefix."_tag", $datum['day'],$prefix."_monat", $datum['month'], $prefix."_jahr", $datum['year'], false) ."
+                   </td>
        </tr>
-<? if( $show_time ) { ?>
-       <tr>
-                 <td><label>Zeit:</label></td>
-                         <td style='white-space:nowrap;'>
-         <?time_selector($prefix."_stunde", $datum['hour'],$prefix."_minute", $datum['minute'])?>
-                         </td>
-                     </tr>
-<? } ?>
-                  </table>   
-<?
+  ";
+  if( $show_time ) {
+    $s .= "
+         <tr>
+                   <td><label>Zeit:</label></td>
+                           <td style='white-space:nowrap;'>
+      ". time_selector($prefix."_stunde", $datum['hour'],$prefix."_minute", $datum['minute'], false ) ."
+                           </td>
+                       </tr>
+    ";
+  }
+  $s .= "</table>";
+  if( $to_stdout )
+    echo $s;
+  return $s;
 }
 
-function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr){
-    number_selector($tag_feld, 1, 31, $tag,"%02d");
-    echo ".";
-    number_selector($monat_feld,1, 12, $monat,"%02d");
-    echo ".";
-    number_selector($jahr_feld, 2004, 2011, $jahr,"%04d");
+function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr, $to_stdout = true ){
+  $s = number_selector($tag_feld, 1, 31, $tag,"%02d",false);
+  $s .= '.';
+  $s .= number_selector($monat_feld,1, 12, $monat,"%02d",false);
+  $s .= '.';
+  $s .=  number_selector($jahr_feld, 2004, 2011, $jahr,"%04d",false);
+  if( $to_stdout )
+    echo $s;
+  return $s;
 }
-function time_selector($stunde_feld, $stunde, $minute_feld, $minute){
-    number_selector($stunde_feld, 0, 23, $stunde,"%02d");
-    echo ":";
-    number_selector($minute_feld,0, 59, $minute,"%02d");
+function time_selector($stunde_feld, $stunde, $minute_feld, $minute, $to_stdout = true ){
+  $s =  number_selector($stunde_feld, 0, 23, $stunde,"%02d",false);
+  $s .= '.';
+  $s .= number_selector($minute_feld,0, 59, $minute,"%02d",false);
+  if( $to_stdout )
+    echo $s;
+  return $s;
 }
 
 
@@ -394,7 +408,7 @@ function products_overview(
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  $result = sql_bestellprodukte( $bestell_id, $gruppen_id, 0 );
+  $produkte = sql_bestellprodukte( $bestell_id, $gruppen_id, 0 );
   $state = getState($bestell_id);
 
   $warnung_vorlaeufig = "";
@@ -574,7 +588,7 @@ function products_overview(
   $haben_nichtgeliefert = false;
   $haben_nichtgefuellt = false;
 
-  while  ($produkte_row = mysql_fetch_array($result)) {
+  foreach( $produkte as $produkte_row ) {
     $produkt_id =$produkte_row['produkt_id'];
 
     if( $produkte_row['menge_ist_null'] && ! $haben_nichtgeliefert ) {
@@ -587,8 +601,6 @@ function products_overview(
         break;
       }
     }
-
-    preisdatenSetzen( & $produkte_row );
 
     // preise je V-einheit:
     $nettopreis = $produkte_row['nettopreis'];
@@ -1015,12 +1027,12 @@ function distribution_tabellenkopf() {
 }
 
 function amount_view( $mult, $unit, $toleranz = false, $class = '', $fieldname = false ) {
-  global $onchange_handler;;
+  global $input_event_handlers;
   $mult = sprintf( "%d", $mult );
   $tag = ( html_in_tr() ? 'td' : 'span' );
   $s = "<$tag class='mult $class'>";
   if( $fieldname )
-    $s .= "<input type='text' size='6' name='$fieldname' value='$mult' $onchange_handler>";
+    $s .= "<input type='text' size='6' name='$fieldname' value='$mult' $input_event_handlers>";
   else
     $s .= $mult;
   if( $toleranz !== false )
@@ -1029,16 +1041,37 @@ function amount_view( $mult, $unit, $toleranz = false, $class = '', $fieldname =
 }
 
 function price_view( $price, $class = '', $fieldname = false ) {
+  global $input_event_handlers;
   $price = sprintf( "%.2lf", $price );
   $tag = ( html_in_tr() ? 'td' : 'span' );
   $s = "<$tag class='number $class'>";
   if( $fieldname )
-    $s .= "<input type='text' size='8' name='$fieldname' value='$price' $onchange_handler>";
+    $s .= "<input type='text' size='8' name='$fieldname' value='$price' $input_event_handlers>";
   else
     $s .= $price;
   return $s . "</$tag>";
 }
 
+function text_view( $text, $length = 20, $class = '', $fieldname = false ) {
+  global $input_event_handlers;
+  if( $fieldname )
+    return "<input type='text' size='$length' class='$class' name='$fieldname' value='$text' $input_event_handlers>";
+  else
+    return "<span class='$class'>$text</span>";
+}
+
+function date_time_view( $datetime, $class = '', $fieldname = '' ) {
+  if( $fieldname )
+    return date_time_selector( $datetime, $fieldname, true, false );
+  else
+    return "<span class='$class'>$datetime</span>";
+}
+function date_view( $date, $class = '', $fieldname = '' ) {
+  if( $fieldname )
+    return date_time_selector( $date, $fieldname, false, false );
+  else
+    return "<span class='$class'>$date</span>";
+}
 
 function distribution_produktdaten( $bestell_id, $produkt_id ) {
   $produkt = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
@@ -1077,10 +1110,10 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $muell_id = sql_muell_id();
   $basar_festmenge = 0;
   $basar_toleranzmenge = 0;
+  $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id );
   $muellmenge = 0;
 
-  $gruppen = sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id );
-  while( $gruppe = mysql_fetch_array( $gruppen ) ) {
+  foreach( sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
     $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ), true );
     if( $mengen ) {
@@ -1097,6 +1130,8 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
         $muellmenge = $mengen['muellmenge'] * $verteilmult;
         continue 2;
       case $basar_id;
+        $basar_toleranzmenge = $mengen['toleranzbestellmenge'];
+        $basar_festmenge = $mengen['gesamtbestellmenge'] - $basar_toleranzmenge;
         continue 2;
     }
     open_tr();
@@ -1111,6 +1146,11 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     $feldname = ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false );
     echo amount_view( $muellmenge, $verteileinheit, false, '', $feldname );
     echo price_view( $preis * $muellmenge / $verteilmult );
+  open_tr('summe');
+    open_td('', '', "Basar:" );
+    echo amount_view( $basar_festmenge, $verteileinheit, $basar_toleranzmenge );
+    echo amount_view( $basar_verteilmenge, $verteileinheit );
+    echo price_view( $preis * $basar_verteilmenge / $verteilmult );
   close_tr();
 }
 
