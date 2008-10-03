@@ -7,7 +7,7 @@ $window_id = 'main';
 
 require_once( 'code/login.php' );
 if( ! $angemeldet ) {
-  ?> <div class='warn'>Bitte erst <a href='/foodsoft/index.php'>Anmelden...</a></div></body></html> <?
+  div_msg( 'warn', "Bitte erst <a href='/foodsoft/index.php'>Anmelden...</a>" );
   exit();
 }
 
@@ -31,7 +31,7 @@ switch( $window_id ) {
     case "bestellen":
     if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
      //darf nur bestellen, wenn Dienste akzeptiert
-     ?><!-- <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> --> <?
+     ?> <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> <?
      include('windows/dienstplan.php');
      break;
     }
