@@ -64,7 +64,7 @@ function check_1() {
   $egid = posix_getegid();
 
   ?>
-    <table>
+    <table class='list'>
       <tr>
         <th>Name / Port:</th>
         <td><? echo getenv( 'SERVER_NAME' ) . ' / ' . getenv( 'SERVER_PORT' );  ?></td>
@@ -163,7 +163,7 @@ function check_3() {
   $problems = false;
   do {
     ?>
-      <table>
+      <table class='list'>
         <tr>
           <th>Server:</th>
             <? if( isset( $db_server ) ) { ?>
@@ -393,7 +393,7 @@ function check_4() {
   if( count( $changes ) > 0 )
     return 0;
 
-  ?> <table> <?
+  ?> <table class='list'> <?
 
   $thead = "
     <tr>
@@ -671,7 +671,7 @@ function check_5() {
     return 0;
 
   ?>
-  <table>
+  <table class='list'>
     <tr>
       <th>Variable</th>
       <th>Bedeutung</th>
@@ -807,7 +807,7 @@ function check_6() {
   }
 
   ?>
-    <table>
+    <table class='list'>
       <tr>
         <th>Gruppe</th>
         <th>Status</th>
@@ -958,7 +958,7 @@ foreach( $checks as $f => $title ) {
 if( count( $changes ) > 0 ) {
   ?>
     <h3 clas='alert' style='padding-top:2em;'>Korrekturen an der Datenbank:</h3>
-    <table>
+    <table class='list'>
       <tr>
         <th>SQL Befehl:</th>
         <th>Ergebnis:</th>
