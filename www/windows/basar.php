@@ -10,13 +10,9 @@ $editable = ( ! $readonly and ( $dienst == 4 ) );
 
 get_http_var( 'action','w','' );
 $editable or $action = '';
-
-$muell_id = sql_muell_id();
-
 if( $action == 'basarzuteilung' ) {
   need_http_var('fieldcount','u' );
-  need_http_var('gruppe','u', false );
-  need( $gruppe > 0, "Keine aktive Bestellgruppe ausgewaehlt!" );
+  need_http_var('gruppe','U', false );
   if( $gruppe != sql_muell_id() ) {
     $gruppendaten = sql_gruppendaten( $gruppe );
     need( $gruppendaten['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );
@@ -30,8 +26,6 @@ if( $action == 'basarzuteilung' ) {
     if( getState( $id ) >= STATUS_ABGERECHNET )
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
-        fail_if_readonly();
-        nur_fuer_dienst(4);
         $pr = sql_bestellvorschlag_daten( $id, ${"produkt$i"} );
         preisdatenSetzen( & $pr );
         $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
@@ -40,7 +34,6 @@ if( $action == 'basarzuteilung' ) {
     }
   }
 }
-
 
 
 ?> <h1>Basar</h1> <?
