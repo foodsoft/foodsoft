@@ -27,16 +27,19 @@ div#payload.payloadro {
 }
 
 div.smallskip {
+  padding-top:0.5em;
+}
+div.smallskip {
   padding-top:1em;
 }
 div.bigskip {
   padding-top:2em;
 }
 span.quad {
-  padding-left:1ex;
+  padding-left:1em;
 }
 span.qquad {
-  padding-left:2ex;
+  padding-left:2em;
 }
 
 a, a:visited {
