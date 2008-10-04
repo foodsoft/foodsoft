@@ -78,16 +78,16 @@ open_form( 'small_form', '', '', array( 'action' => 'save' ) );
           if( $produkt_id )
             $attr = "onFocus=\"document.getElementById('name_change_warning').style.display='inline';\"
                      onBlur=\"document.getElementById('name_change_warning').style.display='none';\"";
-          echo text_view( $name, 40, 'kbd', ( $editable ? 'name' : false ), $attr );
+          echo string_view( $name, 40, ( $editable ? 'name' : false ), $attr );
       open_tr();
         open_td('label', '', 'Artikelnummer:' );
-        open_td( 'kbd', '', text_view( $artikelnummer, 10, 'kbd', ( $editable ? 'artikelnummer' : false ) ) );
+        open_td( 'kbd', '', string_view( $artikelnummer, 10, ( $editable ? 'artikelnummer' : false ) ) );
       open_tr();
         open_td('label', '', fc_alink( 'produktgruppen', 'text=Produktgruppe:' ) );
         open_td('kbd', '', produktgruppen_view( $produktgruppen_id, 'produktgruppen_id' ) );
       open_tr();
         open_td('label', '', 'Notiz:' );
-        open_td( 'kbd', '', text_view( $notiz, 40, 'kbd', ( $editable ? 'notiz' : false ) ) );
+        open_td( 'kbd', '', string_view( $notiz, 40, ( $editable ? 'notiz' : false ) ) );
       open_tr();
         open_td('right smallskip', "colspan='2'");
           if( $produkt_id > 0 )

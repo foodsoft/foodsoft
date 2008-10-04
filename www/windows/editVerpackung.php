@@ -61,24 +61,25 @@ if( $action == 'save' ) {
 open_form( 'small_form', '', '', array( 'action' => 'save' ) );
   open_fieldset( 'small_form', "style='width:460px;'", ( $verpackung_id ? 'Stammdaten Verpackung' : 'Neue Verpackung' ) );
     echo $msg . $problems;
-    open_table('small_form');
+    open_table('small_form', "width='95%'" );
         open_td('label', '', 'Lieferant:' );
         open_td('kbd', '', $lieferant_name );
       open_tr();
         open_td('label', '', 'Bezeichnung:' );
-        open_td('kbd', '', text_view( $name, 30, 'kbd', ( $editable ? 'name' : false ) ) );
+        open_td('kbd', '', string_view( $name, 30, ( $editable ? 'name' : false ) ) );
       open_tr();
         open_td('label', '', 'Wert:' );
-        open_td('kbd', '', price_view( $wert, 'kbd', ( $editable ? 'wert' : false ) ) );
+        open_td('kbd', '', price_view( $wert, ( $editable ? 'wert' : false ) ) );
       open_tr();
         open_td('label', '', 'MWSt:' );
-        open_td('kbd', '', price_view( $mwst, 'kbd', ( $editable ? 'mwst' : false ) ) );
+        open_td('kbd', '', price_view( $mwst, ( $editable ? 'mwst' : false ) ) );
       open_tr();
         open_td('right smallskip', "colspan='2'");
-          if( $editable )
-            submission_button();
-          else
+          if( $editable ) {
+            reset_button(); submission_button();
+          } else {
             close_button();
+          }
     close_table();
 
     if( $verpackung_id and $editable and ! $done )
