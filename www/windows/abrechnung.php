@@ -59,7 +59,7 @@ if( ! $editable or ( $status >= STATUS_ABGERECHNET ) ) {
 }
 
 $result = sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" );
-$gruppenpfand = mysql_fetch_array( $result );
+$gruppenpfand = $result[0];
 
 $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 
