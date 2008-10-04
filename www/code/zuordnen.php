@@ -3072,7 +3072,7 @@ function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'be
   if( $bestell_id ) {
     $on .= " AND gesamtbestellungen.id = $bestell_id";
   }
-  return doSql( "
+  return mysql2array( doSql( "
     SELECT
       bestellgruppen.id as gruppen_id
     , bestellgruppen.aktiv as aktiv
@@ -3089,7 +3089,7 @@ function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'be
          AND gruppenpfand.gruppen_id = bestellgruppen.id
     GROUP BY $group_by
     ORDER BY bestellgruppen.aktiv, bestellgruppen.id
-  " );
+  " ) );
 }
 
 function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'pfandverpackungen.id' ) {
@@ -4792,7 +4792,5 @@ function move_html( $id, $into_id ) {
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
-
-
 
 ?>
