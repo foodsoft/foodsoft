@@ -1,4 +1,3 @@
-
 //  das  javascript der foodsoft  
 // copyright Fc Schinke09 2006 
 
@@ -95,18 +94,27 @@ function submit_form( form, window_id, optionen, button_id ) {
     alert( 'no such form: ' + form + ' button_id: ' + button_id );
 }
 
-
 function on_change( $id ) {
   if( $id ) {
     if( s = document.getElementById( 'submit_button_'+$id ) )
+      s.className = 'button';
+    if( s = document.getElementById( 'reset_button_'+$id ) )
       s.className = 'button';
     if( s = document.getElementById( 'floating_submit_button_'+$id ) )
       s.style.display = 'inline';
   }
 }
 
-
-
+function on_reset( $id ) {
+  if( $id ) {
+    if( s = document.getElementById( 'submit_button_'+$id ) )
+      s.className = 'inactive';
+    if( s = document.getElementById( 'reset_button_'+$id ) )
+      s.className = 'inactive';
+    if( s = document.getElementById( 'floating_submit_button_'+$id ) )
+      s.style.display = 'none';
+  }
+}
 
 // experimenteller code - funktioniert noch nicht richtig...
 // 
@@ -149,4 +157,3 @@ function on_change( $id ) {
 //     notify_down();
 //   }
 // }
-
