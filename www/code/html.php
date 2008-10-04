@@ -206,7 +206,7 @@ function floating_submission_button() {
   global $form_id;
 
   open_span( 'alert floatingbuttons', "id='floating_submit_button_$form_id'" );
-    open_table();
+    open_table('layout');
       open_td('alert left');
         ?> <img class='button' src='img/close_black_trans.gif'
            onClick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
@@ -222,7 +222,15 @@ function floating_submission_button() {
 
 function submission_button( $text = 'Speichern' ) {
   global $form_id;
-  echo "<input class='inactive' type='submit' id='submit_button_{$form_id}' value='$text'>";
+  echo "<span class='qquad'><input class='inactive' type='submit' id='submit_button_{$form_id}' value='$text'></span>";
+}
+
+function reset_button( $text = 'Zur&uuml;cksetzen' ) {
+  global $form_id;
+  echo "<span class='qquad'>
+        <input class='inactive' title='&Auml;nderungen r&uuml;g&auml;ngig machen' type='reset'
+          id='reset_button_{$form_id}' value='$text' onClick='on_reset($form_id);'>
+        </span>";
 }
 
 function close_button( $class = 'button' ) {
