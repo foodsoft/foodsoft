@@ -29,17 +29,17 @@ div#payload.payloadro {
 div.smallskip {
   padding-top:0.5em;
 }
-div.smallskip {
+div.medskip {
   padding-top:1em;
 }
 div.bigskip {
   padding-top:2em;
 }
 span.quad {
-  padding-left:1em;
+  padding-left:1ex;
 }
 span.qquad {
-  padding-left:2em;
+  padding-left:2ex;
 }
 
 a, a:visited {
@@ -86,17 +86,22 @@ kbd {
 }
 
 table, table tr td, table tr th {
+  border-collapse:collapse !important;
+  empty-cells:show !important;
   border-style:none;
   margin:0pt;
   border-spacing:0px;
   border-width:0pt;
-  border-collapse:collapse;
-  empty-cells:show;
   text-align:left;
   vertical-align:top;
   font-size:11pt;
 }
+table.layout tr td, table.layout tr th {
+  border-style:none !important;
+}
+
 td {
+  border-style:none;
   color:#000000;
   background-color:#ffffff;
 }
@@ -505,7 +510,6 @@ div.alert, span.alert, div.warn, span.warn, div.ok, span.ok {
   background-color:#ffa0a0;
   font-weight:bold;
 }
-
 
 a.button, span.button {
   text-decoration:none;
