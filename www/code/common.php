@@ -64,8 +64,9 @@ global $mysqlheute, $mysqljetzt;
 // $mysqljetzt: Alternative zu NOW(), Vorteile:
 //  - kann quotiert werden
 //  - in einem Skriptlauf wird garantiert immer dieselbe Zeit verwendet
-$mysqlheute = date('Y') . '-' . date('m') . '-' . date('d');
-$mysqljetzt = $mysqlheute . ' ' . date('H') . ':' . date('i') . ':' . date('s');
+$now = explode( ',' , date( 'Y,m,d,H,i,s' ) );
+$mysqlheute = $now[0] . '-' . $now[1] . '-' . $now[2];
+$mysqljetzt = $mysqlheute . ' ' . $now[3] . ':' . $now[4] . ':' . $now[5];
 
 // gruppen mit sonderbedeutung merken:
 global $specialgroups;
@@ -86,6 +87,7 @@ $angemeldet = false;
 require_once('code/views.php');
 require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
+require_once('code/forms.php');
 require_once('code/katalogsuche.php');
 
 update_database($database_version);
