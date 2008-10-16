@@ -134,8 +134,6 @@ function logger( $notiz ) {
   return sql_insert( 'logbook', array( 'notiz' => $notiz, 'session_id' => $session_id ) );
 }
 
-
-
 function adefault( $array, $index, $default ) {
   if( isset( $array[$index] ) )
     return $array[$index];
@@ -322,8 +320,7 @@ function sql_dienst_uebernehmen($dienst){
        $status = "Akzeptiert";
   }
 
-  $personen = sql_gruppen_members($login_gruppen_id);
-  $person = mysql_fetch_array($personen);
+  $person = current( sql_gruppen_members($login_gruppen_id) );
   sql_create_dienst2($person["id"],$row["Dienst"], "'".$row["Lieferdatum"]."'", $status);
 
 }
@@ -937,13 +934,13 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
   }
 }
 
-function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
+function sql_dienstkontrollblatt( $from_id = 0, $to_id = 0 ) {
   $to_id or $to_id = $from_id;
   $where = '';
   if( $from_id ) {
     $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
   }
-  return doSql( "
+  return mysql2array( doSql( "
     SELECT
       bestellgruppen.id as gruppen_id
     , bestellgruppen.name as gruppen_name
@@ -959,10 +956,10 @@ function dienstkontrollblatt_select( $from_id = 0, $to_id = 0 ) {
     $where
     ORDER BY dienstkontrollblatt.id
   ", LEVEL_IMPORTANT, "Suche in dienstkontrollblatt fehlgeschlagen: "
-  );
+  ) );
 }
 
-function dienstkontrollblatt_name( $id ) {
+function sql_dienstkontrollblatt_name( $id ) {
   return sql_select_single_field( "SELECT name FROM dienstkontrollblatt WHERE id=$id", 'name' );
 }
 
@@ -990,9 +987,9 @@ function sql_gruppen_members( $gruppen_id, $member_id = FALSE){
   if($member_id!==FALSE){
 	  $sql.=" AND id = ".mysql_escape_string($member_id);
   }
-  $result = doSql($sql, LEVEL_ALL);
+  $result = mysql2array( doSql($sql, LEVEL_ALL) );
   if($member_id!==FALSE){
-	  $result = mysql_fetch_array($result);
+	  $result = current($result);
   }
   return $result;
 }
@@ -1029,11 +1026,11 @@ function select_aktive_bestellgruppen() {
 }
 
 function sql_bestellgruppen( $filter = '' ) {
-  return doSql( select_bestellgruppen( $filter ) . " ORDER BY gruppennummer" );
+  return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY gruppennummer" ) );
 }
 
 function sql_aktive_bestellgruppen() {
-  return doSql( select_aktive_bestellgruppen() . " ORDER BY gruppennummer" );
+  return mysql2array( doSql( select_aktive_bestellgruppen() . " ORDER BY gruppennummer" ) );
 }
 
 function sql_gruppendaten( $gruppen_id ) {
@@ -1048,17 +1045,17 @@ function sql_gruppennummer($gruppen_id){
   return $gruppen_id % 1000;
 }
 
-function gruppe_ist_aktiv($gruppen_id) {
+function sql_gruppe_aktiv($gruppen_id) {
   return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ) , 'aktiv' );
 }
 
 /*
- * sql_beteiligte_bestellgruppen: SELECT
+ * sql_bestellung_gruppen: liefert
  * - alle an einer gesamtbestellung beteiligten (durch bestellung oder zuordnung!) gruppen,
  * - optional eingeschraenkt auf einen bestimmten artikel dieser bestellung
  * auch pfandrueckgabe zaehlt als teilnahme an einer bestellung
  */
-function sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id = FALSE ){
+function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE ){
   $query = select_bestellgruppen( '', 'gruppenbestellungen.id as gruppenbestellungen_id' )
   . " INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.bestellguppen_id = bestellgruppen.id )";
@@ -1077,24 +1074,10 @@ function sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id = FALSE ){
 }
 
 function optionen_gruppen(
-  $bestell_id = false
-, $produkt_id = false
-, $selected = 0
-, $option_0 = false       /* erzeuge option value='0' mit diesem titel (z.b. 'Alle') */
-, $allowedgroups = false  /* array erlaubter gruppen_ids */
-, $additionalgroups = array() /* zusaetzlich in jedem fall anzubietende gruppen (z.b. basar) */
+  $selected = 0
+, $filter = 'aktiv'
+, $option_0 = false
 ) {
-  global $specialgroups;
-  if( $allowedgroups )
-    if( ! is_array( $allowedgroups ) )
-      $allowedgroups = array( $allowedgroups );
-  if( ! is_array( $additionalgroups ) )
-    $additionalgroups = array( $additionalgroups );
-  if( $bestell_id ) {
-    $gruppen = sql_beteiligte_bestellgruppen($bestell_id,$produkt_id);
-  } else {
-    $gruppen = mysql2array( sql_aktive_bestellgruppen() );
-  }
   $output='';
   if( $option_0 ) {
     $output = "<option value='0'";
@@ -1104,24 +1087,8 @@ function optionen_gruppen(
     }
     $output = $output . ">$option_0</option>";
   }
-  foreach( $additionalgroups as $id => $name ) {
-    $output = "$output
-      <option value='$id'";
-        if( $selected == $id ) {
-          $output = $output . " selected";
-          $selected = -1;
-        }
-        $output = $output . ">" . ( $name ? $name : sql_gruppenname( $id ) ) . "</option>";
-  }
-  foreach( $gruppen as $gruppe ) {
+  foreach( sql_bestellgruppen( $filter ) as $gruppe ) {
     $id = $gruppe['id'];
-    if( in_array( $id, $additionalgroups ) )
-      continue;
-    if( in_array( $id, $specialgroups ) )
-      continue;
-    if( $allowedgroups and ! in_array( $id, $allowedgroups ) )
-      continue;
-
     $output = "$output
       <option value='$id'";
     if( $selected == $id ) {
@@ -1136,6 +1103,7 @@ function optionen_gruppen(
   }
   return $output;
 }
+
 
 /**
  * Überprüft, ob die gewählte Gruppennummer verfügbar ist.
@@ -1267,14 +1235,13 @@ function sql_insert_group($newNumber, $newName, $pwd){
 	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
 	    if( ! $problems ) {
-        $salt = crypto_random();
-        return sql_insert( 'bestellgruppen', array(
+        $id = sql_insert( 'bestellgruppen', array(
           'id' => $new_id
         , 'aktiv' => 1
         , 'name' => $newName
-        , 'salt' => $salt
-        , 'passwort' => crypt( $pwd, $salt )
         ) );
+        set_password( $new_id, $pwd );
+        return $id;
 	   } else {
 		   return FALSE;
 	   }
@@ -1309,19 +1276,18 @@ function select_lieferanten( $id = false, $orderby = 'name' ) {
 }
 
 function sql_lieferanten( $id = false ) {
-  return doSql( select_lieferanten( $id ) );
+  return mysql2array( doSql( select_lieferanten( $id ) ) );
 }
 
 function sql_getLieferant( $id ) {
   return sql_select_single_row( select_lieferanten( $id ) );
 }
 
-function lieferant_name($id){
+function sql_lieferant_name($id){
   return sql_select_single_field( select_lieferanten( $id ) , 'name' );
 }
 
 function optionen_lieferanten( $selected = false, $option_0 = false ) {
-  $lieferanten = sql_lieferanten();
   $output = "";
   if( $option_0 ) {
     $output = "<option value='0'";
@@ -1331,7 +1297,7 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
     }
     $output .= ">$option_0</option>";
   }
-  while( $lieferant = mysql_fetch_array($lieferanten) ) {
+  foreach( sql_lieferanten() as $lieferant ) {
     $id = $lieferant['id'];
     $output .= "<option value='$id'";
     if( $selected == $id ) {
@@ -1347,16 +1313,16 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
   return $output;
 }
 
-function references_lieferant( $lieferanten_id ) {
+function sql_references_lieferant( $lieferanten_id ) {
   return sql_select_single_field(
     "SELECT count(*) as count FROM gesamtbestellungen WHERE lieferanten_id=$lieferanten_id"
   , 'count'
   );
 }
 
-function delete_lieferant( $lieferanten_id ) {
-  $name = lieferant_name( $lieferanten_id );
-  need( references_lieferant( $lieferanten_id ) == 0, 'Bestellungen vorhanden: Lieferant $name kann nicht gelöpscht werden!' );
+function sql_delete_lieferant( $lieferanten_id ) {
+  $name = sql_lieferant_name( $lieferanten_id );
+  need( sql_references_lieferant( $lieferanten_id ) == 0, 'Bestellungen vorhanden: Lieferant $name kann nicht gelöpscht werden!' );
   need( abs( lieferantenkontostand( $lieferanten_id )) < 0.01
     , 'Lieferantenkonto nicht ausgeglichen: Lieferant $name kann nicht gelöpscht werden!' );
   doSql(
@@ -1383,7 +1349,7 @@ function bestellung_name($bestell_id){
   return sql_select_single_field( "SELECT name FROM gesamtbestellungen WHERE id=$bestell_id", 'name' );
 }
 
-function getProduzentBestellID($bestell_id){
+function sql_bestellung_lieferant_id($bestell_id){
   return sql_select_single_field( "SELECT lieferanten_id FROM gesamtbestellungen WHERE id=$bestell_id", 'lieferanten_id' );
 }
 
@@ -1473,7 +1439,7 @@ function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
     $where.= " $add_and (id =$id)";
     $add_and = 'AND';
   }
-  return doSql( "SELECT * FROM gesamtbestellungen $where ORDER BY bestellende DESC,name" );
+  return mysql2array( doSql( "SELECT * FROM gesamtbestellungen $where ORDER BY bestellende DESC,name" ) );
 }
 
 /* function select_gesamtbestellungen_schuldverhaeltnis():
@@ -1490,7 +1456,7 @@ function select_gesamtbestellungen_schuldverhaeltnis() {
  *  Gesamtbestellung einfügen
  */
 function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $lieferanten_id ){
-  nur_fuer_dienst_IV();
+  nur_fuer_dienst(4);
   return sql_insert( 'gesamtbestellungen', array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
   , 'lieferung' => $lieferung, 'lieferanten_id' => $lieferanten_id
@@ -1499,7 +1465,7 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $liefera
 }
 
 function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
-  nur_fuer_dienst_IV();
+  nur_fuer_dienst(4);
   need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
@@ -1509,7 +1475,7 @@ function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell
 /**
  *  Bestellvorschläge einfügen
  */
-function sql_insert_bestellvorschlaege(
+function sql_insert_bestellvorschlag(
   $produkt_id
 , $gesamtbestellung_id
 , $preis_id = 0
@@ -1559,7 +1525,7 @@ function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
   " );
 }
 
-function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
+function sql_bestellvorschlag( $bestell_id, $produkt_id ) {
   return sql_select_single_row( "
       SELECT *
                , produktpreise.id as preis_id
@@ -1580,7 +1546,7 @@ function sql_bestellvorschlag_daten($bestell_id, $produkt_id){
   " );
 }
 
-function references_gesamtbestellung( $bestell_id ) {
+function sql_references_gesamtbestellung( $bestell_id ) {
   return sql_select_single_field( " SELECT (
      ( SELECT count(*) FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id )
    + ( SELECT count(*) FROM gruppenbestellungen WHERE gesamtbestellung_id = $bestell_id ) 
@@ -1589,13 +1555,13 @@ function references_gesamtbestellung( $bestell_id ) {
   );
 }
 
-function sql_bestellpreis($bestell_id, $produkt_id){
-	$row = sql_bestellvorschlag_daten($bestell_id, $produkt_id);
+function sql_bestellpreis( $bestell_id, $produkt_id ) {
+	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
 	return $row['preis_id'];
 }
 
-function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
-  need( gruppe_ist_aktiv( $gruppe ) or ($gruppe == sql_muell_id()), "sql_create_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
+function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
+  need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()), "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
   need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
@@ -1604,14 +1570,13 @@ function sql_create_gruppenbestellung( $gruppe, $bestell_id ){
 }
 
 
-
 ////////////////////////////////////
 //
 // funktionen fuer bestellmengen und verteil/liefermengen
 //
 ////////////////////////////////////
 
-function sql_bestellmengen( $bestell_id, $produkt_id, $art = -1, $orderby = 'bestellzuordnung.zeitpunkt' ) {
+function sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, $art, $orderby = 'bestellzuordnung.zeitpunkt' ) {
   $query = "
     SELECT  *, bestellzuordnung.id as bestellzuordnung_id
     FROM gruppenbestellungen
@@ -1619,19 +1584,15 @@ function sql_bestellmengen( $bestell_id, $produkt_id, $art = -1, $orderby = 'bes
        ON (bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
     WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id 
       AND bestellzuordnung.produkt_id = $produkt_id
+      AND art = $art
   ";
-  if( $art >= 0 ){
-    $query = $query." AND bestellzuordnung.art=$art";
-  } else {
-    $query = $query." AND bestellzuordnung.art < 2";
-  }
   if( $orderby ) {
     $query = $query." ORDER BY $orderby ";
   }
-  return doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..");
+  return mysql2array( doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..") );
 }
 
-function gruppengesamtmenge( $bestell_id, $produkt_id, $gruppen_id, $art ) {
+function sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, $art ) {
   return sql_select_single_field( "
     SELECT IFNULL( SUM( menge ), 0 ) as summe
     FROM gruppenbestellungen
@@ -1645,12 +1606,12 @@ function gruppengesamtmenge( $bestell_id, $produkt_id, $gruppen_id, $art ) {
   );
 }
 
-function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
+function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
   $state = getState( $bestell_id );
 
-  // echo "select_bestellprodukte: $gruppen_id, $produkt_id, $empty <br>";
+  // echo "select_bestellung_produkte: $gruppen_id, $produkt_id, $empty <br>";
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) ), 0.0 )
@@ -1695,7 +1656,7 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, 
       break;
   }
 
-  // echo "<br>select_bestellprodukte: $having</br>";
+  // echo "<br>select_bestellung_produkte: $having</br>";
   return "SELECT
       produkte.name as produkt_name
     , produktgruppen.name as produktgruppen_name
@@ -1741,8 +1702,8 @@ function select_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, 
   ORDER BY $orderby ";
 }
 
-function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
-  $result = doSql( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id, $orderby ) );
+function sql_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
+  $result = doSql( select_bestellung_produkte( $bestell_id, $gruppen_id, $produkt_id, $orderby ) );
   $r = mysql2array( $result );
   foreach( $r as & $val )
     preisdatenSetzen( & $val );
@@ -1750,10 +1711,10 @@ function sql_bestellprodukte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $or
 }
 
 // zuteilungen_berechnen():
-// wo benoetigt, ist sql_bestellprodukte() schon aufgerufen; zwecks effizienz uebergeben wir der funktion
-// eine Ergebniszeile, um den komplexen query in sql_bestellprodukte() nicht wiederholen zu muessen:
+// wo benoetigt, ist sql_bestellung_produkte() schon aufgerufen; zwecks effizienz uebergeben wir der funktion
+// eine Ergebniszeile, um den komplexen query in sql_bestellung_produkte() nicht wiederholen zu muessen:
 //
-function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) {
+function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte */ ) {
   $produkt_id = $mengen['produkt_id'];
   $bestell_id = $mengen['gesamtbestellung_id'];
   $gebindegroesse = $mengen['gebindegroesse'];
@@ -1775,10 +1736,12 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
   // erste zuteilungsrunde: festbestellungen in bestellreihenfolge erfuellen, dabei berechnete
   // negativ-toleranz abziehen:
   //
-  $festbestellungen = sql_bestellmengen( $bestell_id, $produkt_id, 0 );
+  $festbestellungen = sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, 0 );
   $festzuteilungen = array();
   $offen = array();
-  while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $festbestellungen ) ) ) {
+  foreach( $festbestellungen as $row ) {
+    if( $restmenge <= 0 )
+      break; // nix mehr da...
     $gruppe = $row['bestellguppen_id'];
     $menge = $row['menge'];
     if( isset( $offen[$gruppe] ) ) {
@@ -1807,8 +1770,9 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
 
   // zweite zuteilungsrunde: ebenfalls in bestellreihenfolge noch offene festbestellungen erfuellen:
   //
-  mysql_data_seek( $festbestellungen, 0 );
-  while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $festbestellungen ) ) ) {
+  foreach( $festbestellungen as $row ) {
+    if( $restmenge <= 0 )
+      break;
     $gruppe = $row['bestellguppen_id'];
     $menge = min( $row['menge'], $offen[$gruppe], $restmenge );
     $festzuteilungen[$gruppe] += $menge;
@@ -1820,10 +1784,12 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellprodukte */ ) 
   //
   $toleranzzuteilungen = array();
   if( $toleranzbestellmenge > 0 ) {
-    $toleranzbestellungen = sql_bestellmengen( $bestell_id, $produkt_id, 1, '-menge' );
+    $toleranzbestellungen = sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, 1, '-menge' );
     $quote = ( 1.0 * $restmenge ) / $toleranzbestellmenge;
     need( $quote <= 1 );
-    while( ( $restmenge > 0 ) and ( $row = mysql_fetch_array( $toleranzbestellungen ) ) ) {
+    foreach( $toleranzbestellungen as $row ) {
+      if( $restmenge <= 0 )
+        break;
       $gruppe = $row['bestellguppen_id'];
       $menge = (int) ceil( $quote * $row['menge'] );
       if( $menge > $restmenge )
@@ -1916,7 +1882,7 @@ function sql_basar( $bestell_id = 0, $order='produktname' ) {
       $order_by = 'produkt_name';
       break;
   }
-  return doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" );
+  return mysql2array( doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" ) );
 }
 
 /**
@@ -1960,7 +1926,7 @@ function basar_wert_brutto( $bestell_id = 0 ) {
 function muell_wert_brutto( $bestell_id = 0 ) {
   return sql_select_single_field(
     " SELECT IFNULL( sum( bestellprodukte.bruttopreis * bestellprodukte.muellmenge ), 0.0 ) as muell
-      FROM ( " .select_bestellprodukte( $bestell_id ). " ) AS bestellprodukte "
+      FROM ( " .select_bestellung_produkte( $bestell_id ). " ) AS bestellprodukte "
   , 'muell'
   );
 }
@@ -1968,7 +1934,7 @@ function muell_wert_brutto( $bestell_id = 0 ) {
 function verteilung_wert_brutto( $bestell_id = 0 ) {
   return sql_select_single_field(
     " SELECT IFNULL( sum( bestellprodukte.bruttopreis * bestellprodukte.verteilmenge ), 0.0 ) as wert
-      FROM ( " .select_bestellprodukte( $bestell_id ). " ) AS bestellprodukte "
+      FROM ( " .select_bestellung_produkte( $bestell_id ). " ) AS bestellprodukte "
   , 'wert'
   );
 }
@@ -2024,7 +1990,7 @@ function verteilmengenZuweisen($bestell_id){
 
   need( getState($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
-  foreach( sql_bestellprodukte( $bestell_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $zuteilungen = zuteilungen_berechnen( $produkt );
     sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id ), array(
@@ -2040,7 +2006,7 @@ function verteilmengenZuweisen($bestell_id){
         $menge += $toleranzzuteilungen[$gruppen_id];
         unset( $toleranzzuteilungen[$gruppen_id] );
       }
-      $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+      $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
       , 'art' => 2, 'menge' => $menge
@@ -2049,7 +2015,7 @@ function verteilmengenZuweisen($bestell_id){
     foreach( $toleranzzuteilungen as $gruppen_id => $menge ) {
       if( $gruppen_id == $basar_id )
         continue;
-      $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+      $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
       , 'art' => 2, 'menge' => $menge
@@ -2088,7 +2054,7 @@ function nichtGeliefert( $bestell_id, $produkt_id ) {
 
 function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge = -1, $toleranzmenge = -1 ) {
   need( getState( $bestell_id ) == STATUS_BESTELLEN, "Bestellen bei dieser Bestellung nicht mehr moeglich" );
-  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   if( $festmenge >= 0 ) {
     $festmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS festmenge FROM bestellzuordnung
@@ -2137,7 +2103,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
 }
 
 function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id ) {
-  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   doSql( " DELETE FROM bestellzuordnung
            WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
@@ -2151,7 +2117,7 @@ function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id 
 
 function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
   need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
-  $gruppenbestellung_id = sql_create_gruppenbestellung( $gruppe, $bestell_id );
+  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppe, $bestell_id );
   $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
      VALUES ('$produkt','$gruppenbestellung_id','$menge', 2)
      ON DUPLICATE KEY UPDATE menge = menge + $menge
@@ -2169,8 +2135,8 @@ function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
  */
 function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
   need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
-   sql_insert_bestellvorschlaege( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
-   $gruppenbestellung_id = sql_create_gruppenbestellung( sql_basar_id(), $bestell_id );
+   sql_insert_bestellvorschlag( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
+   $gruppenbestellung_id = sql_insert_gruppenbestellung( sql_basar_id(), $bestell_id );
    return sql_insert( 'bestellzuordnung', array(
      'produkt_id' => $produkt_id
    , 'gruppenbestellung_id' => $gruppenbestellung_id
@@ -2216,8 +2182,7 @@ function sql_gruppen_transaktion(
 }
 
 function sql_gruppen_umlage( $betrag, $valuta, $notiz ) {
-  $gruppen = sql_aktive_bestellgruppen();
-  while( $gruppe = mysql_fetch_array( $gruppen ) ) {
+  foreach( sql_aktive_bestellgruppen() as $gruppe ) {
     if( $gruppe['mitgliederzahl'] > 0 ) {
       sql_doppelte_transaktion(
         array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
@@ -2519,29 +2484,6 @@ function buchung_bank_bank() {
 }
 
 
-/**
- *
- */
-function sql_finish_transaction( $soll_id , $konto_id , $receipt_nr , $receipt_year, $valuta, $notiz ){
-  global $dienstkontrollblatt_id;
-  fail_if_readonly();
-  nur_fuer_dienst_IV();
-
-  $row = sql_select_single_row( "SELECT * FROM gruppen_transaktion WHERE id=$soll_id" );
-
-  $haben_id = sql_bank_transaktion(
-    $konto_id, $receipt_year, $receipt_nr
-  , $row['summe'], $valuta
-  , $dienstkontrollblatt_id, $notiz, 0
-  );
-
-  sql_link_transaction( -$soll_id, $haben_id );
-
-  return sql_update( 'gruppen_transaktion', $soll_id, array(
-    'dienstkontrollblatt_id' => $dienstkontrollblatt_id
-  ) );
-}
-
 
 function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
   $filter = "";
@@ -2575,14 +2517,14 @@ function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = 
     $filter
     ORDER BY valuta_kan DESC
   ";
-  return doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ");
+  return mysql2array( doSql( $sql, LEVEL_IMPORTANT, "Konnte Gruppentransaktionen nicht lesen ") );
 }
 
 function sql_get_transaction( $id ) {
   if( $id > 0 ) {
     $sql = "
       SELECT kontoauszug_jahr, kontoauszug_nr
-           , betrag as haben
+           , betrag as haben, -betrag as soll
            , bankkonto.kommentar as kommentar
            , bankkonto.valuta as valuta
            , bankkonto.buchungsdatum as buchungsdatum
@@ -2599,7 +2541,7 @@ function sql_get_transaction( $id ) {
     $sql = "
       SELECT bankkonto.kontoauszug_jahr
            , bankkonto.kontoauszug_nr
-           , (-summe) as haben
+           , (-summe) as haben, summe as soll
            , gruppen_transaktion.notiz as kommentar
            , gruppen_transaktion.type as transaktionstyp
            , gruppen_transaktion.kontobewegungs_datum as valuta
@@ -2655,7 +2597,7 @@ function sql_bankkonto_saldo( $konto_id, $auszug_jahr = 0, $auszug_nr = FALSE ) 
 }
 
 function sql_konten() {
-  return doSql( "SELECT * FROM bankkonten ORDER BY name" );
+  return mysql2array( doSql( "SELECT * FROM bankkonten ORDER BY name" ) );
 }
 
 function sql_kontodaten( $konto_id ) {
@@ -2667,9 +2609,8 @@ function sql_kontoname($konto_id){
 }
 
 function optionen_konten( $selected = 0 ) {
-  $konten = sql_konten();
   $output = "";
-  while( $konto = mysql_fetch_array($konten) ) {
+  foreach( sql_konten() as $konto ) {
     $id = $konto['id'];
     $output .= "<option value='$id'";
     if( $selected == $id ) {
@@ -2703,7 +2644,7 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
       $groupby = "";
     }
   }
-  return doSql( "
+  return mysql2array( doSql( "
     SELECT *
     , bankkonto.id as id
     , bankkonto.kommentar as kommentar
@@ -2716,7 +2657,7 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
     $where
     $groupby
     ORDER BY konto_id, kontoauszug_jahr, kontoauszug_nr
-  " );
+  " ) );
 }
 
 
@@ -2753,7 +2694,7 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
   need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   if( $anzahl_leer > 0 ) {
     // pfandrueckgabe ist jetzt an eine gesamtbestellung gebunden, und wir brauchen eine gruppenbestellung:
-    sql_create_gruppenbestellung( $gruppen_id, $bestell_id );
+    sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
     return sql_insert( 'gruppenpfand', array(
         'gruppen_id' => $gruppen_id
       , 'bestell_id' => $bestell_id
@@ -3097,7 +3038,7 @@ function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'pf
   if( $bestell_id ) {
     $more_on = "AND gesamtbestellungen.id = $bestell_id";
   }
-  return doSql( "
+  return mysql2array( doSql( "
     SELECT
       pfandverpackungen.id as verpackung_id
     , pfandverpackungen.name as name
@@ -3123,17 +3064,17 @@ function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'pf
       AND lieferantenpfand.bestell_id = gesamtbestellungen.id
     GROUP BY $group_by
     ORDER BY sort_id
-  " );
+  " ) );
 }
 
 function sql_verbindlichkeiten_lieferanten() {
-  return doSql( "
+  return mysql2array( doSql( "
     SELECT lieferanten.id as lieferanten_id
          , lieferanten.name as name
          , ( ".select_soll_lieferanten('lieferanten')." ) as soll
     FROM lieferanten
     HAVING (soll <> 0)
-  " );
+  " ) );
 }
 
 function forderungen_gruppen_summe() {
@@ -3182,7 +3123,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
     WHERE ( gruppenbestellungen.bestellguppen_id = $gruppen_id ) $more_where
     ORDER BY valuta_kan DESC;
   ";
-  return doSql($query, LEVEL_ALL, "sql_bestellungen_soll_gruppe() fehlgeschlagen: ");
+  return mysql2array( doSql($query, LEVEL_ALL, "sql_bestellungen_soll_gruppe() fehlgeschlagen: ") );
 }
 
 
@@ -3214,13 +3155,13 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
     $having
     ORDER BY valuta_kan DESC;
   ";
-  return doSql( $query, LEVEL_ALL, "sql_bestellungen_soll_lieferant fehlgeschlagen: " );
+  return mysql2array( doSql( $query, LEVEL_ALL, "sql_bestellungen_soll_lieferant fehlgeschlagen: " ) );
 }
 
 function sql_bestellung_soll_lieferant( $bestell_id ) {
-  $result = sql_bestellungen_soll_lieferant( getProduzentBestellID( $bestell_id ), $bestell_id );
-  need( mysql_num_rows( $result ) == 1 );
-  return mysql_fetch_array( $result );
+  $result = sql_bestellungen_soll_lieferant( sql_bestellung_lieferant_id( $bestell_id ), $bestell_id );
+  need( count( $result ) == 1 );
+  return current( $result );
 }
 
 
@@ -3317,7 +3258,7 @@ function select_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
 }
 
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
-  return doSql( select_ungebuchte_einzahlungen( $gruppen_id ) );
+  return mysql2array( doSql( select_ungebuchte_einzahlungen( $gruppen_id ) ) );
 }
 
 
@@ -3353,7 +3294,7 @@ function select_verluste( $type, $not = false ) {
 }
 
 function sql_verluste( $type ) {
-  return doSql( select_verluste( $type ) );
+  return mysql2array( doSql( select_verluste( $type ) ) );
 }
 
 function sql_verluste_summe( $type ) {
@@ -3362,22 +3303,6 @@ function sql_verluste_summe( $type ) {
     FROM ( " .select_verluste( $type ). " ) as verluste
   ", 'soll'
   );
-}
-
-function sql_spenden( $orderby = 'valuta' ) {
-  return doSql( "
-    SELECT spenden.id as id
-         , spenden.summe as haben
-         , spenden.kontobewegungs_datum as valuta
-         , spenden.notiz as notiz
-         , bestellgruppen.name as name
-    FROM ( " .select_verluste( TRANSAKTION_TYP_SPENDE ). " ) as spenden
-    JOIN gruppen_transaktion
-      ON  gruppen_transaktion.id = -spenden.konterbuchung_id
-    JOIN bestellgruppen
-      ON bestellgruppen.id = gruppen_transaktion.gruppen_id
-    ORDER BY $orderby
-  " );
 }
 
 
@@ -3397,7 +3322,7 @@ function references_produktpreise( $preis_id ) {
 /**
  *
  */
-function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
+function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
   if( $zeitpunkt ) {
     $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
                     AND (zeitstart <= '$zeitpunkt' OR ISNULL(zeitstart))";
@@ -3417,7 +3342,7 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
     WHERE produkt_id= $produkt_id $zeitfilter
     ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31'), id";
   //  ORDER BY IFNULL(zeitende,'9999-12-31'), id";
-  return doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..");
+  return mysql2array( doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..") );
 }
 
 /* sql_aktueller_produktpreis:
@@ -3425,12 +3350,7 @@ function sql_produktpreise2( $produkt_id, $zeitpunkt = false ){
  *  oder false falls es keinen gueltigen preis gibt:
  */
 function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
-  $result = sql_produktpreise2( $produkt_id, $zeitpunkt );
-  $rows = mysql_num_rows( $result );
-  if( $rows < 1 )
-    return false;
-  mysql_data_seek( $result, $rows - 1 );
-  return mysql_fetch_array( $result );
+  return end( sql_produktpreise( $produkt_id, $zeitpunkt ) );
 }
 
 /* sql_aktueller_produktpreis_id:
@@ -3440,21 +3360,6 @@ function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
 function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
   $row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
   return $row ? $row['id'] : 0;
-}
-
-function sql_expire_produktpreise($produkt_id, $zeitende = false ) {
-  global $mysqljetzt;
-  if( $zeitende )
-    $zeitende = mysql_real_escape_string( $zeitende );
-  else
-    $zeitende = "$mysqljetzt";
-  $query = "
-    UPDATE produktpreise
-    SET zeitende='$zeitende'
-    WHERE ( produkt_id = '$produkt_id' )
-          AND ( ISNULL(zeitende) OR ( zeitende > '$zeitende' ) )
-  ";
-  return doSql( $query, LEVEL_IMPORTANT, "sql_expire_produktpreise() fehlgeschlagen: " );
 }
 
 // produktpreise_konsistenztest:
@@ -3467,9 +3372,8 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
   global $mysqljetzt;
   need( $produkt_id );
   $rv = true;
-  $produktpreise = sql_produktpreise2( $produkt_id );
   $pr0 = FALSE;
-  while( $pr1 = mysql_fetch_array($produktpreise) ) {
+  foreach( sql_produktpreise( $produkt_id ) as $pr1 ) {
     if( $pr0 ) {
       $monat = $pr1['monat_start'];
       $jahr = $pr1['jahr_start'];
@@ -3485,26 +3389,20 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
         $rv = false;
       }
       if( $editable && $show_button )
-        echo action_button( "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
-          , "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
-          , array(
-              'action' => 'zeitende_setzen'
-            , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr"
-            , 'vortag' => '1'
-            , 'preis_id' => $pr0['id']
-            )
-        , $mod_id, 'warn'
-        );
+        div_msg( 'warn', fc_action(  array( 'text' => "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
+                                          , 'title' => "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen" )
+                                   , array(  'action' => 'zeitende_setzen', 'vortag' => '1', 'preis_id' => $pr0['id']
+                                          , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr" ) ) );
     }
     $pr0 = $pr1;
   }
   if( ! $pr0 ) {
-    ?> <div class='alert'>HINWEIS: kein Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+    div_msg( 'alert', 'HINWEIS: kein Preiseintrag fuer diesen Artikel vorhanden!' );
   } else if ( $pr0['zeitende'] != '' ) {
     if ( $pr0['zeitende'] < $mysqljetzt ) {
-      ?> <div class='alert'>HINWEIS: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!</div> <?
+        div_msg( 'alert', 'HINWEIS: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!' );
     } else {
-      ?> <div class='alert'>HINWEIS: aktueller Preis l&auml;uft aus!</div> <?
+        div_msg( 'alert', 'HINWEIS: aktueller Preis l&auml;uft aus!' );
     }
   }
   return $rv;
@@ -3579,54 +3477,6 @@ function action_form_produktpreis() {
   );
 }
 
-
-/**
- * Prüft, ob ein Preis noch gültig ist
- */
-function is_expired_produktpreis($id){
-
-   $sql ="SELECT id FROM produktpreise WHERE id=".$id." AND (ISNULL(zeitende) OR zeitende >= NOW());";
-   $result = doSql($sql, LEVEL_ALL, "Konnte Preisdaten nicht aus DB laden..");
-   return (mysql_num_rows($result) == 0);
-}
-
-/**
- *
- */
-function sql_produktpreise($produkt_id, $bestell_id, $bestellstart=NULL, $bestellende=NULL){
-	
-	if($produkt_id=="") error( "Produkt_ID must not be empty" );
-	//Read start and ende from Database
-	if($bestellende===NULL){
-		$query = "SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id;
-		//echo "<p>".$query."</p>";
-		$result = doSql($query, LEVEL_ALL,"Konnte Bestellung nicht aus DB laden ..");
-		$row = mysql_fetch_array($result);
-		$bestellende=$row["bestellende"];
-	}
-	if($bestellstart===NULL){
-		$bestellstart = $bestellende;
-	}
-	$query = "SELECT gebindegroesse,preis,bestellnummer, id FROM produktpreise 
-		  WHERE zeitstart <= '".mysql_escape_string($bestellstart)."' 
-		        AND (ISNULL(zeitende) OR zeitende >= '".mysql_escape_string($bestellende)."')
-			AND produkt_id= ".mysql_escape_string($produkt_id)."
-			ORDER BY gebindegroesse DESC;";
-	//echo "<p>".$query."</p>";
-	$result = doSql($query, LEVEL_ALL, "Konnte Gebindegroessen nich aus DB laden..");
-       if(mysql_num_rows($result)==0) {
-		$query = "SELECT gebindegroesse, preis FROM produktpreise 
-		          WHERE id IN 
-			  	(SELECT produktpreise_id 
-				 FROM bestellvorschlaege WHERE 
-				 produkt_id = ".mysql_escape_string($produkt_id)."  
-				 AND gesamtbestellung_id = ".mysql_escape_string($bestell_id)." 
-				)";
-		$result = doSql($query, LEVEL_ALL,"Konnte Gebindegroessen nich aus DB laden.. ");
-       }
-
-	return $result;
-}
 
 global $masseinheiten;
 $masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC' );
@@ -3770,10 +3620,8 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
  *  Produktgruppen abfragen
  */
 function sql_produktgruppen(){
-     $sql = "SELECT * FROM produktgruppen ORDER BY name"; 
-    $result = doSql($sql, LEVEL_ALL, "Konnte Produktgruppen nicht aus DB laden..");
-    return $result;
-	
+  return mysql2array( doSql( "SELECT * FROM produktgruppen ORDER BY name"
+  , LEVEL_ALL, "Konnte Produktgruppen nicht aus DB laden.." ) );
 }
 
 function references_produktgruppe( $produktgruppen_id ) {
@@ -3785,9 +3633,8 @@ function references_produktgruppe( $produktgruppen_id ) {
 
 
 function optionen_produktgruppen( $selected = 0 ) {
-  $produktgruppen = sql_produktgruppen();
   $output = "";
-  while( $pg = mysql_fetch_array($produktgruppen) ) {
+  foreach( sql_produktgruppen() as $pg ) {
     $id = $pg['id'];
     $output .= "<option value='$id'";
     if( $selected == $id ) {
@@ -3838,7 +3685,7 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
     WHERE produkte.id=$produkt_id
   " );
-  $produkt_row['lieferanten_name'] = lieferant_name( $produkt_row['lieferanten_id'] );
+  $produkt_row['lieferanten_name'] = sql_lieferant_name( $produkt_row['lieferanten_id'] );
   if( $preis_id ) {
     $preis_row = sql_select_single_row( "SELECT * FROM produktpreise WHERE id=$preis_id" );
   } else {
@@ -3915,15 +3762,14 @@ function sql_update_produkt ($id, $name, $produktgruppen_id, $einheit, $notiz){
 /**
  * Alle Produkte von einem Lieferanten, auch mit ungültigem Preis
  */
-function sql_produkte_von_lieferant_ids( $lieferanten_id ) {
-  $sql = "
+function sql_lieferant_produkt_ids( $lieferanten_id ) {
+  return mysql2array( doSql( "
     SELECT produkte.id as id
     FROM produkte
     LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
     WHERE lieferanten_id = '$lieferanten_id'
     ORDER BY produktgruppen.name, produkte.name
-  ";
-  return doSql($sql, LEVEL_ALL, "Konnte Produkte nicht aus DB laden..");
+  " ), 'id', 'id' );
 }
 
 /**
@@ -4010,9 +3856,8 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
       break;
     }
   }
-  $sql .= " ORDER BY produktgruppen.id, produkte.name ";
-  $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
-  return $result;
+  $sql .= " ORDER BY produktgruppen.name, produkte.name ";
+  return mysql2array( doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..") ) ;
 }
 
 ////////////////////////////////////
@@ -4060,8 +3905,8 @@ $foodsoft_get_vars = array(
 , 'lieferanten_id' => 'u'
 , 'meinkonto' => 'u'
 , 'optionen' => 'u'
+, 'options' => 'u'
 , 'orderby' => 'w'
-, 'postform_id' => 'u'
 , 'prev_id' => 'u'
 , 'produkt_id' => 'u'
 , 'ro' => 'u'
@@ -4274,6 +4119,15 @@ function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
   need( get_http_var( $name, $typ, NULL, $is_self_field ), "variable $name nicht uebergeben" );
   return TRUE;
 }
+
+function self_field( $name, $default = NULL ) {
+  global $self_fields;
+  if( isset( $self_fields[$name] ) )
+    return $self_fields[$name];
+  else
+    return $default;
+}
+
 /**
  *
  */
@@ -4612,67 +4466,25 @@ function setWindowSubtitle( $subtitle ) {
   ";
 }
 
-// self_url:
-// liefert url zum neuladen derselben seite, mit QUERY_STRING aus allen variablen
-// in global $self_fields, mit ausnahme der variablen in $exclude:
-// 
-function self_url( $exclude = array() ) {
-  global $self_fields;
-
-  $output = 'index.php?';
-  if( ! $exclude ) {
-    $exclude = array();
-  } elseif( is_string( $exclude ) ) {
-    $exclude = array( $exclude );
-  }
-  $exclude[] = 'postform_id';
-  foreach( $self_fields as $key => $value ) {
-    if( ! in_array( $key, $exclude ) )
-      $output = $output . "&$key=$value";
-  }
-  return $output;
-}
+global $postform_id;
+$postform_id = false;
 
 function set_itan() {
-  global $self_fields, $session_id;
+  global $postform_id, $session_id;
   $itan = random_hex_string(5);
   $id = sql_insert( 'transactions' , array(
     'used' => 0
   , 'session_id' => $session_id
   , 'itan' => $itan
   ) );
-  $self_fields['postform_id'] = $id.'_'.$itan;
+  $postform_id = $id.'_'.$itan;
 }
 
-// self_post:
-// liefert 'hidden' input elemente, zum neuladen derselben seite per post, zu allen
-// variablen in global $self_fields, mit ausnahme der variablen in $exclude:
-//
-// in jedem Formular wird automatisch eine eindeutige TAN, postform_id, einfgefuegt
-//
-// self_post(true) liefert _nur_ das TAN feld
-//
-function self_post( $exclude = array() ) {
-  global $self_fields, $new_post_id;
-
-  // bei bedarf neue nummer ziehen, aber nur einmal pro script:
-  //
-  if( ! isset( $self_fields['postform_id'] ) )
+function postform_id() {
+  global $postform_id;
+  if( ! $postform_id )
     set_itan();
-  if( $exclude === true )
-    return "<input type='hidden' name='postform_id' value='{$self_fields['postform_id']}'>";
-
-  $output = '';
-  if( ! $exclude ) {
-    $exclude = array();
-  } elseif( is_string( $exclude ) ) {
-    $exclude = array( $exclude );
-  }
-  foreach( $self_fields as $key => $value ) {
-    if( ! in_array( $key, $exclude ) )
-      $output = $output . "<input type='hidden' name='$key' value='$value'>";
-  }
-  return $output;
+  return $postform_id;
 }
 
 function optionen( $values, $selected ) {
