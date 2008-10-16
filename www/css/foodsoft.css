@@ -26,32 +26,22 @@ div#payload.payloadro {
   background:#ffeedd;
 }
 
-div.smallskip {
+.smallskip {
   padding-top:0.5em;
 }
-div.medskip {
+.medskip {
   padding-top:1em;
 }
-div.bigskip {
+.bigskip {
   padding-top:2em;
 }
-span.quad {
+.quad {
   padding-left:1ex;
 }
-span.qquad {
+.qquad {
   padding-left:2ex;
 }
 
-a, a:visited {
-  color:#e01010;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-} 
-a + a {
-  margin-left:1ex;
-}
 
 h1, h2, h3, h4 {
   color:#000000;
@@ -85,7 +75,8 @@ kbd {
   color:#000000;
 }
 
-table, table tr td, table tr th {
+/* reasonable defaults for all tables: */
+table, table * td, table * th {
   border-collapse:collapse !important;
   empty-cells:show !important;
   border-style:none;
@@ -96,8 +87,41 @@ table, table tr td, table tr th {
   vertical-align:top;
   font-size:11pt;
 }
-table.layout tr td, table.layout tr th {
-  border-style:none !important;
+
+table.layout tr td, table table.layout tr td, table table table.layout tr td {
+  /* <rant author='timo' mood='desperate' date='20081013.074606'>
+   *    Yes I now that some people frown on using <table> for layout.
+   *
+   *    The problem is, even <table> is a very inferior tool for someone used to
+   *    enjoy the power of \halign, and all substitutes suggested to me so far
+   *    are even worse (like, manually stacking little <div>-boxes, most of them
+   *    with absolute and literal(!) size specifications - ugh!
+   *    (a macro processor, like in TeX or even in good old K&R C, would help a
+   *    lot here - but they forgot even that essential thing in that kludge
+   *    called HTML. Probably they wanted to take over the "last language without
+   *    a preprocessing facility" award from BASIC).
+   *    (Timo, who still can't get how aboute one decade after the introduction 
+   *    of an excellent typesetting/markup language combo (TeX/LaTeX) something as
+   *    crippled as HTML/CSS could be seriously suggested, and even win the
+   *    competition)
+   *
+   *    (and yes, these rules for table.layout and table.list are ugly hacks.
+   *     better suggestions welcome.)
+   * </rant>
+  */
+  border-style:none;
+}
+
+/*
+ * table.list: standardtabelle fuer bestellscheine, kontoanzeigen, ...
+*/
+
+table.list tr td, table table.list tr td, table table table.list tr td, table.list tr th, table table.list tr th, table table table.list tr th {
+  border:dotted 1pt #404040;
+  padding: 0.4ex 1ex 0.4ex 1ex;
+}
+table.list tr th, table table.list tr th, table table table.list tr th {
+  text-align:center;
 }
 
 td {
@@ -112,6 +136,19 @@ th, .th {
 
 table.debug tr th, table.debug tr td {
   border:1px dotted black;
+}
+
+ul {
+  padding:0px 1ex 0px 1em;
+  margin:0px;
+}
+ul.plain {
+  list-style-type:none;
+}
+
+li {
+  margin-top:5px;
+  margin-bottom:5px;
 }
 
 /*
@@ -140,11 +177,17 @@ table.debug tr th, table.debug tr td {
 .bold {
   font-weight:bold !important;
 }
+.italic {
+  font-style:italic;
+}
 .oneline {
   white-space:nowrap;
 }
 .small {
   font-size:smaller;
+}
+.large {
+  font-size:larger;
 }
 
 /* fuer farbige zellen im bestellformular: */
@@ -159,6 +202,10 @@ table.debug tr th, table.debug tr td {
 .crit {
   font-weight:bold;
   background-color:#fff0c0 !important;
+}
+
+.nodisplay {
+  display:none;
 }
 
 /*
@@ -247,17 +294,6 @@ ul#menu li a.wikilink {
 */
 
 
-/*
- * table.list: standardtabelle fuer bestellscheine, kontoanzeigen, ...
-*/
-
-table.list tr td, table.list tr th {
-  padding: 0.4ex 1ex 0.4ex 1ex;
-  border:dotted 1pt #404040;
-}
-table.list tr th {
-  text-align:center;
-}
 
 /* tabellenzeilen und -spalten mit sonderbedeutung */
 
@@ -474,7 +510,9 @@ span.floatingbuttons {
   color:#000000;
   font-weight:bold;
 }
-.alert, .alert th, .alert td, .alert div, .alert span  {
+
+/* .alert, .alert th, .alert td, .alert div, .alert span  { */
+.alert {
   background-color:#ffffa0;
   color:#000000;
   font-weight:bold;
@@ -495,39 +533,129 @@ div.alert, span.alert, div.warn, span.warn, div.ok, span.ok {
  *
  */
 
-.bigbutton, .bigbutton_warn {
-  min-width:200px;
-  min-height:30px;
-  font-size:11pt;
-  text-align:center;
-  vertical-align:middle;
-  margin:4px 1em 4px 1em;
+a, a:visited, .href, .href:visited {
+  color:#d01010;
+  text-decoration: none;
 }
-.bigbutton:hover {
-  font-weight:bold;
-}
-.bigbutton_warn {
-  background-color:#ffa0a0;
-  font-weight:bold;
+a:hover, .href:hover {
+  text-decoration: underline;
+} 
+a + a , .link + .link {
+  margin-left:1ex;
 }
 
-a.button, span.button {
+.bigbutton, .bigbutton:visited {
+  width:200px;
+  height:20px;
+  font-size:11pt;
   text-decoration:none;
+  text-align:center !important;
+  vertical-align:middle !important;
+  margin:2px 1em 2px 1em;
+  padding:0.3ex 1ex 0.1ex 1ex;
   color:#000000;
-  background-color:#d0e0f0;
-  padding:0.3ex 1ex 0.3ex 1ex;
-  margin:0pt 1em 0pt 1em;
+  background-color:#d0e0ff;
   border-style:solid;
   border-width:1px;
-  border-color:#666666;
-  font-weight:bold;
+  border-color:#888888;
+  white-space:nowrap;
+  min-width:200px;
+  display:block;
+}
+.button, .button:visited {
   font-size:11pt;
+  text-decoration:none;
+  text-align:center;
+  vertical-align:middle;
+  margin:0pt 1em 0pt 1em;
+  padding:1px 0.3ex 1px 0.3ex;
+  color:#000000;
+  background-color:#d0e0ff;
+  border-style:solid;
+  border-width:1px;
+  border-color:#888888;
   white-space:nowrap;
 }
-a.button:hover, span.button:hover {
+.button:hover, .bigbutton:hover {
   text-decoration:underline;
-  background-color:#ffffd0;
+  background-color:#e0ffff;
 }
+.inactive, .inactive:hover {
+  color:#888888;
+  background-color:#cccccc;
+  text-decoration:none;
+}
+
+
+.drop, .edit, .record, .browse, .people, .cash, .chart, .fant, .question {
+  background-repeat:no-repeat;
+  background-position:8px 0px;
+  white-space:nowrap;
+}
+
+.drop, .edit, .record, .browse, .people, .cash, .chart, .question {
+  padding:0px 1ex 1px 30px;
+}
+
+.fant {
+  padding:0px 1ex 1px 36px;
+}
+
+
+.drop {
+  background-image:url(../img/b_drop.png);
+}
+
+.edit {
+  background-image:url(../img/b_edit.png);
+}
+
+.record {
+  background-image:url(../img/card.png);
+}
+
+.browse {
+  background-image:url(../img/b_browse.png);
+}
+
+.cash {
+  background-image:url(../img/euro.png);
+}
+
+.people {
+  background-image:url(../img/people.png);
+}
+
+.question {
+  background-image:url(../img/question_small.png);
+}
+
+.chart {
+  background-image:url(../img/chart.png);
+}
+
+.fant {
+  background-image:url(../img/fant.gif);
+}
+
+.close {
+  background-image:url(../img/close_black.gif);
+  background-repeat:no-repeat;
+  background-position:0px 0px;
+  padding:0px 15px 0px 0px;
+}
+.close:hover {
+  background-image:url(../img/close_black_hover.gif);
+}
+.reload {
+  background-image:url(../img/reload_black.gif);
+  background-repeat:no-repeat;
+  background-position:0px 0px;
+  padding:0px 15px 0px 0px;
+}
+  
+
+
 img.button {
   background-color:#f0f0ff;
 }
@@ -558,46 +686,31 @@ input.checkbox {
   margin-left:2em;
 }
 
-input.inactive, input.inactive:hover {
-  color:#888888;
-  background-color:#cccccc;
-}
-
 /* simulierte radioknoepfe (auswahl preiseintrag!) */
 
 .buttonup {
   color:#000000;
-  background-color:#eecccc;
+  background-color:#cccccc;
   border-style:outset;
   border-width:3px;
+  border-color:#666666;
   padding:0.2ex 1ex 0.2ex 1ex;
   text-align:center;
   font-weight:normal;
 }
 .buttonup:hover {
-  font-weight: bold;
-  color:#000000;
-  background-color:#ddeecc;
-  border-style:outset;
-  border-width:3px;
-  padding:0.2ex 1ex 0.2ex 1ex;
-  text-align:center;
+  background-color:#dddddd;
+  font-weight:bold;
 }
-.buttondown {
+.buttondown, .buttondown:hover {
   color:#000000;
-  background-color:#ccffcc;
+  background-color:#ffcccc;
   border-style:inset;
   border-width:3px;
   padding:0.2ex 1ex 0.2ex 1ex;
   text-align:center;
   font-weight:bold;
 }
-.buttondown:hover {
-  background-color:#ccffcc;
-}
-
-
-
 
 
 div.untertabelle {
