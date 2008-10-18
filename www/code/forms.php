@@ -69,7 +69,7 @@ function form_row_date( $label, $fieldname, $initial = 0 ) {
 function form_row_betrag( $label = 'Betrag:' , $fieldname = 'betrag', $initial = 0.0 ) {
   open_tr();
     open_td( 'label', '', $label );
-    open_td( 'kbd number' ); echo price_view( $initial, $fieldname );
+    open_td( 'kbd' ); echo price_view( $initial, $fieldname );
 }
 
 function form_row_text( $label = 'Notiz:', $fieldname = 'notiz', $size = 60, $initial = '' ) {
@@ -143,6 +143,40 @@ function formular_buchung_gruppe_bank( $notiz_initial = 'Einzahlung' ) {
   close_form();
 }
 
+function action_buchung_gruppe_bank() {
+  global $gruppen_id, $konto_id, $auszug_nr, $auszug_jahr, $valuta_day, $valuta_month, $valuta_year, $betrag, $notiz;
+  global $specialgroups;
+  $problems = false;
+
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'gruppen_id', 'U' );
+  $gruppen_name = sql_gruppenname( $gruppen_id );
+  if( $betrag < 0 ) {
+    need_http_var( 'notiz', 'H' );
+  } else {
+    get_http_var( 'notiz', 'H', "Einzahlung Gruppe $gruppen_name" );
+  }
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  need_http_var( 'konto_id', 'U' );
+  need_http_var( 'auszug_jahr', 'U' );
+  need_http_var( 'auszug_nr', 'U' );
+  need( ! in_array( $gruppen_id, $specialgroups ) );
+  need( sql_gruppenname( $gruppen_id ) );
+
+  if( ! $problems ) {
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+    , array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , $betrag
+    , "$valuta_year-$valuta_month-$valuta_day"
+    , "$notiz"
+    );
+  }
+}
+
+
 function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung Lieferant' ) {
   open_form( 'small_form', '', '', 'action=buchung_lieferant_bank' );
     open_fieldset( '', '', 'Überweisung / Lastschrift Lieferant' );
@@ -159,6 +193,28 @@ function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung Lieferant'
       close_table();
     close_fieldset();
   close_form();
+}
+
+function action_buchung_lieferant_bank() {
+  global $lieferanten_id, $konto_id, $auszug_jahr, $auszug_nr, $betrag, $notiz, $valuta_day, $valuta_month, $valuta_year;
+  $problems = false;
+
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'lieferanten_id', 'U' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  need_http_var( 'konto_id', 'U' );
+  need_http_var( 'auszug_jahr', 'U' );
+  need_http_var( 'auszug_nr', 'U' );
+  need_http_var( 'notiz', 'H' );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
+  , $betrag
+  , "$valuta_year-$valuta_month-$valuta_day"
+  , "$notiz"
+  );
 }
 
 function formular_buchung_gruppe_lieferant( $notiz_initial = 'Zahlung an Lieferant' ) {
@@ -178,6 +234,24 @@ function formular_buchung_gruppe_lieferant( $notiz_initial = 'Zahlung an Liefera
   close_form();
 }
 
+function action_buchung_gruppe_lieferant() {
+  global $betrag, $lieferanten_id, $gruppen_id, $notiz, $valuta_day, $valuta_month, $valuta_year;
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'lieferanten_id', 'U' );
+  need_http_var( 'gruppen_id', 'U' );
+  need_http_var( 'notiz', 'H' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
+  , $betrag
+  , "$valuta_year-$valuta_month-$valuta_day"
+  , "$notiz"
+  );
+}
+
 function formular_buchung_gruppe_gruppe( $notiz_initial = 'Umbuchung' ) {
   open_form( 'small_form', '', '', 'action=buchung_gruppe_gruppe' );
     open_fieldset( '', '', 'Umbuchung von Gruppe an Gruppe' );
@@ -192,6 +266,26 @@ function formular_buchung_gruppe_gruppe( $notiz_initial = 'Umbuchung' ) {
       close_table();
     close_fieldset();
   close_form();
+}
+
+function buchung_gruppe_gruppe() {
+  global $betrag, $gruppen_id, $nach_gruppen_id, $notiz, $valuta_day, $valuta_month, $valuta_year;
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'gruppen_id', 'U' );
+  need_http_var( 'nach_gruppen_id', 'U' );
+  $notiz or need_http_var( 'notiz', 'H' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  need( sql_gruppe_aktiv( $gruppen_id ) );
+  need( sql_gruppe_aktiv( $nach_gruppen_id ) );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id )
+  , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+  , $betrag
+  , "$year-$month-$day"
+  , "$notiz"
+  );
 }
 
 function formular_buchung_bank_bank( $notiz_initial = 'Überweisung' ) {
@@ -211,7 +305,30 @@ function formular_buchung_bank_bank( $notiz_initial = 'Überweisung' ) {
     close_fieldset();
   close_form();
 }
-    
+
+function action_buchung_bank_bank() {
+  global $betrag, $konto_id, $auszug_jahr, $auszug_nr
+       , $nach_konto_id , $nach_auszug_jahr, $nach_auszug_nr
+       , $notiz, $valuta_day, $valuta_month, $valuta_year;
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'konto_id', 'U' );
+  need_http_var( 'auszug_jahr', 'U' );
+  need_http_var( 'auszug_nr', 'U' );
+  need_http_var( 'nach_konto_id', 'U' );
+  need_http_var( 'nach_auszug_jahr', 'U' );
+  need_http_var( 'nach_auszug_nr', 'U' );
+  need_http_var( 'notiz', 'H' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  sql_doppelte_transaktion(
+    array( 'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr )
+  , array( 'konto_id' => $nach_konto_id, 'auszug_jahr' => $nach_auszug_jahr, 'auszug_nr' => $nach_auszug_nr )
+  , $betrag
+  , "$valuta_year-$valuta_month-$valuta_day"
+  , "$notiz"
+  );
+}
 
 function formular_buchung_bank_sonderausgabe() {
   open_form( 'small_form', '', '', 'action=buchung_bank_sonderausgabe' );
@@ -230,6 +347,29 @@ function formular_buchung_bank_sonderausgabe() {
   close_form();
 }
 
+function action_buchung_bank_sonderausgabe() {
+  global $betrag, $notiz, $valuta_day, $valuta_month, $valuta_year, $auszug_jahr, $auszug_nr, $konto_id;
+  $problems = false;
+  // echo "buchung_sonderausgabe: 1";
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'notiz', 'H' );
+  need_http_var( 'day', 'U' );
+  need_http_var( 'month', 'U' );
+  need_http_var( 'year', 'U' );
+  need_http_var( 'konto_id', 'U' );
+  need_http_var( 'auszug_jahr', 'U' );
+  need_http_var( 'auszug_nr', 'U' );
+  if( ! $problems ) {
+    sql_doppelte_transaktion(
+      array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
+    , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+    , $betrag
+    , "$valuta_year-$valuta_month-$valuta_day"
+    , "$notiz"
+    );
+  }
+}
+
 function formular_buchung_gruppe_sonderausgabe() {
   open_form( 'small_form', '', '', 'action=buchung_gruppe_sonderausgabe' );
     open_fieldset( '', '', 'Sonderausgabe durch eine Gruppe' );
@@ -244,6 +384,34 @@ function formular_buchung_gruppe_sonderausgabe() {
       close_table();
     close_fieldset();
   close_form();
+}
+
+function action_buchung_gruppe_sonderausgabe() {
+  global $betrag, $notiz, $valuta_day, $valuta_month, $valuta_year, $gruppen_id, $specialgroups;
+  $problems = false;
+  // echo "buchung_sonderausgabe: 1";
+  $betrag or need_http_var( 'betrag', 'f' );
+  $notiz or need_http_var( 'notiz', 'H' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  $gruppen_id or need_http_var( 'gruppen_id', 'U' );
+  if( ! $notiz ) {
+    div_msg( 'warn', 'Bitte Notiz eingeben!' );
+    $problems = true;
+  }
+  need( sql_gruppe_aktiv( $gruppen_id ) );
+  need( sql_gruppenname( $gruppen_id ) );
+
+  if( ! $problems ) {
+    sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+    , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+    , $betrag
+    , "$valuta_year-$valuta_month-$valuta_day"
+    , "$notiz"
+    );
+  }
 }
 
 function formular_umbuchung_verlust( $typ = 0 ) {
@@ -285,6 +453,40 @@ function formular_umbuchung_verlust( $typ = 0 ) {
   close_form();
 }
 
+function action_umbuchung_verlust() {
+  global $von_typ, $nach_typ, $valuta_day, $valuta_month, $valuta_year, $betrag, $notiz;
+
+  need_http_var( 'von_typ', 'U' );
+  need_http_var( 'nach_typ', 'U' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'notiz', 'H' );
+  need( in_array( $von_typ, array( TRANSAKTION_TYP_SPENDE, TRANSAKTION_TYP_UMLAGE ) ) );
+  need( in_array( $nach_typ, array( TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
+                                  , TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
+                                  , TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE ) ) );
+  switch( $von_typ ) {
+    case TRANSAKTION_TYP_SPENDE:
+      $von_typ = TRANSAKTION_TYP_UMBUCHUNG_SPENDE;
+      break;
+    case TRANSAKTION_TYP_UMLAGE:
+      $von_typ = TRANSAKTION_TYP_UMBUCHUNG_UMLAGE;
+  }
+  if( ! $notiz ) {
+    div_msg( 'warn', 'Bitte Notiz eingeben!' );
+    break;
+  }
+  sql_doppelte_transaktion(
+    array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $nach_typ )
+  , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $von_typ )
+  , $betrag
+  , "$valuta_year-$valuta_month-$valuta_day"
+  , "$notiz"
+  );
+}
+
 function formular_gruppen_umlage() {
   open_form( 'small_form', '', '', 'action=buchung_umlage' );
     open_fieldset( '', '', 'Verlustumlage auf Gruppenmitglieder' );
@@ -301,6 +503,33 @@ function formular_gruppen_umlage() {
   close_form();
 }
 
+function action_gruppen_umlage() {
+  global $valuta_day, $valuta_month, $valuta_year, $betrag, $notiz;
+
+  $problems = false;
+  need_http_var( 'betrag', 'f' );
+  need_http_var( 'valuta_day', 'U' );
+  need_http_var( 'valuta_month', 'U' );
+  need_http_var( 'valuta_year', 'U' );
+  need_http_var( 'notiz', 'H' );
+  if( ! $notiz ) {
+    div_msg( 'warn', 'Bitte Notiz eingeben!' );
+    $problems = true;
+  }
+  if( ! $problems ) {
+    foreach( sql_aktive_bestellgruppen() as $gruppe ) {
+      if( $gruppe['mitgliederzahl'] > 0 ) {
+        sql_doppelte_transaktion(
+          array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
+        , array( 'konto_id' => -1, 'gruppen_id' => $gruppe['id'], 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
+        , $betrag * $gruppe['mitgliederzahl']
+        , "$valuta_year-$valuta_month-$valuta_day"
+        , "$notiz"
+        );
+      }
+    }
+  }
+}
 
 function mod_onclick( $id ) {
   return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
