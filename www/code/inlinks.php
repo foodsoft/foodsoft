@@ -435,7 +435,7 @@ function fc_url( $parameters, $options, $context ) {
         $button_id = $value;
         continue 2;
       case 'form':
-        $form = ( $value ? $value : 'form_$form_id' );
+        $form = ( $value ? $value : "form_$form_id" );
         continue 2;
       case 'url':
         $url = $value;
@@ -462,27 +462,24 @@ function fc_url( $parameters, $options, $context ) {
   else
     $js_window_name = $window_id;
 
+  $prefix = '';
+  $reload = '';
   switch( $context ) {
     case 'action':
       return $url;
+    case 'href':
+      $prefix = 'javascript:';
     case 'handler':
       if( $form ) {
-        return "$confirm submit_form( '$form', '$url', '$js_window_name', '$option_string', '$button_id' );";
-      } elseif( $window_id == $GLOBALS['window_id'] ) {
-        return "$confirm self.location.href='$url';";
+        if( $window_id != $GLOBALS['window_id'] )
+          $reload = "self.location.href='" .self_url(). "';"; // force reload to issue new iTAN
+        return "$prefix $confirm submit_form( '$form', '$url', '$js_window_name', '$option_string', '$button_id' ); $reload";
       } else {
-        return "$confirm window.open( '$url', '$js_window_name', '$option_string' ).focus();";
-      }
-    case 'href':
-      if( $form ) {
-        return "javascript:$confirm submit_form( '$form', '$url', '$js_window_name', '$option_string', '$button_id' );";
-      } elseif( $window_id == $GLOBALS['window_id'] ) {
-        if( $confirm )
-          return "javascript:$confirm self.location.href='$url';";
-        else
-          return $url;
-      } else {
-        return "javascript:window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+        if( $window_id != $GLOBALS['window_id'] ) {
+          return "$prefix $confirm window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+        } else {
+          return "$prefix $confirm self.location.href='$url';";
+        }
       }
     default:
       error( "undefinierter context: $context" );
@@ -591,7 +588,7 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   // we may be inside another form, but forms cannot be nested; so we append this form at the end:
   $print_on_exit[] = $form;
 
-  $get_parameters['context'] = 'href';
+  // $get_parameters['context'] = 'href';
   $get_parameters['form'] = "form_$form_id";
 
   return fc_link( $window, $get_parameters, $options );
@@ -602,4 +599,9 @@ function fc_openwindow( $window, $parameters = array(), $options = array() ) {
   open_javscript( fc_url( $parameters, $options, 'handler' ) );
 }
 
+function reload_immediately( $url ) {
+  open_form( '', "name='reload_now_form'", array( 'url' => $url ) ); close_form();
+  open_javascript( "document.forms['reload_now_form'].submit();" );
+  exit();
+}
 ?>
