@@ -26,7 +26,7 @@ get_http_var('name','H',$row);
 get_http_var('produktgruppen_id','u',$row);
 get_http_var('notiz','H',$row);
 get_http_var('artikelnummer','H',$row);
-$lieferant_name = lieferant_name( $lieferanten_id );
+$lieferant_name = sql_lieferant_name( $lieferanten_id );
 
 $action = '';
 get_http_var( 'action', 'w', '' );
@@ -83,15 +83,15 @@ open_form( 'small_form', '', '', array( 'action' => 'save' ) );
         open_td('label', '', 'Artikelnummer:' );
         open_td( 'kbd', '', string_view( $artikelnummer, 10, ( $editable ? 'artikelnummer' : false ) ) );
       open_tr();
-        open_td('label', '', fc_alink( 'produktgruppen', 'text=Produktgruppe:' ) );
-        open_td('kbd', '', produktgruppen_view( $produktgruppen_id, 'produktgruppen_id' ) );
+        open_td('label', '', fc_link( 'produktgruppen', 'class=href,text=Produktgruppe:' ) );
+        open_td('kbd', '', produktgruppe_view( $produktgruppen_id, 'produktgruppen_id' ) );
       open_tr();
         open_td('label', '', 'Notiz:' );
         open_td( 'kbd', '', string_view( $notiz, 40, ( $editable ? 'notiz' : false ) ) );
       open_tr();
         open_td('right smallskip', "colspan='2'");
           if( $produkt_id > 0 )
-            echo fc_alink( 'produktpreise', "produkt_id=$produkt_id,text=Details und Preise..." );
+            echo fc_link( 'produktpreise', "produkt_id=$produkt_id,text=Details / Preise..." );
           open_span('qquad');
           if( $editable and ! $done )
             submission_button();
