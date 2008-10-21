@@ -11,7 +11,6 @@ global $angemeldet, $login_gruppen_name, $coopie_name
 
 if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
 if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
-$img = "$foodsoftdir/img/close_black_trans.gif";
 
 if( $readonly ) {
   $headclass='headro';
@@ -37,11 +36,10 @@ open_tag( 'body' );
 open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;'" );
   open_table( $headclass, "width='100%'" );
     open_tr();
-      open_td();
-        ?> <img src='img/close_black_trans.gif' class='button' alt='Schlie&szlig;en' title='Schlie&szlig;en'
-             width='15' onClick='if(opener) opener.focus(); window.close();'> <?
-      open_td( '', "id='subtitle'" );
-        echo $subtitle;
+      open_td( '', 'style="width:60px;"'
+                   , "<a class='close' title='Schließen' href='javascript:if(opener)opener.focus();window.close();'>
+                      <a class='reload' title='Neu Laden' href='javascript:document.forms.update_form.submit();'>" );
+      open_td( 'quad', "id='subtitle' ", $subtitle );
       open_td( '', "style='text-align:right;'" );
         wikiLink( ( $area ? "foodsoft:$area" : 'start' ) , "Hilfe-Wiki...", true );
     open_tr();
@@ -54,9 +52,9 @@ open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt
             echo "angemeldet: $login_gruppen_name";
           }
         }
-        if( $readonly ) {
-          echo "<span style='padding-left:3em;'>schreibgeschuetzt!</span>";
-        }
+        if( $readonly )
+          open_span( 'qquad', '', 'schreibgesch&uuml;tzt!' );
+      open_td();
   close_table();
 close_div();
 
