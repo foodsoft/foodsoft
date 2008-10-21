@@ -934,7 +934,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'sort_id' => array( 'unique' => 0, 'collist' => 'sort_id' )
+      , 'sort_id' => array( 'unique' => 1, 'collist' => 'sort_id' )
     )
   )
 , 'produkte' => array(

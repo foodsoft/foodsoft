@@ -149,7 +149,7 @@ function check_2() {
   // tut noch nichts:
   // recurse_dir( $foodsoft_path );
 
-  echo "(men at work: hier werden bisher noch keine tests durchgefuehrt)";
+  echo "(Baustelle! Hier werden bisher noch keine tests durchgefuehrt)";
   
   return 0;
 }
