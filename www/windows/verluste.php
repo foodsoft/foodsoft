@@ -106,7 +106,7 @@ switch( $action ) {
   case 'umbuchung_verlust':
     action_umbuchung_verlust();
     break;
-  case 'umlage':
+  case 'gruppen_umlage':
     action_gruppen_umlage();
     break;
 }
@@ -134,7 +134,7 @@ if( $editable ) {
     alternatives_radio( array(
       'umbuchung_form' => array( 'Umbuchung Verlustausgleich'
                                , 'Umbuchung von Spenden oder Umlagen zur Schuldentilgung' )
-    , 'umlage_form' => array( 'Umlage erhebel'
+    , 'umlage_form' => array( 'Umlage erheben'
                             , 'Umlage von allen(!) aktiven Gruppenmitgliedern erheben' )
     ) );
     open_div( 'nodisplay', "id='umbuchung_form'" );
