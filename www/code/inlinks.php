@@ -244,7 +244,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'produktpreise';
       $parameters['window_id'] = 'produktpreise';
       $parameters['text'] = 'Produktpreise';
-      $parameters['title'] = 'Preise und andere Produktdetails...';
+      $parameters['title'] = 'Produktdetails und Preise...';
       $parameters['class'] = 'browse';
       $options = $large_window_options;
       break;
@@ -548,10 +548,6 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
       $class = adefault( $parameters, 'class', 'href' );
       return alink( $url, $class, $text, $title, $img );
   }
-}
-
-function fc_alink( $window = '', $parameters = array(), $options = array() ) {  // temporary kludge...
-  return fc_link( $window, $parameters, $options );
 }
 
 // fc_action: generates simple form and one submit button.
