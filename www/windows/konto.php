@@ -15,58 +15,48 @@ setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
 // konto auswaehlen:
 //
 $konten = sql_konten();
-if( mysql_num_rows($konten) < 1 ) {
-  div_msg( 'warn', "Keine Konten definiert!", 'index' );
+if( ! $konten ) {
+  div_msg( 'warn', 'Keine Konten definiert!', 'index' );
   return;
 }
 
-if( mysql_num_rows($konten) == 1 ) {
-  $row = mysql_fetch_array($konten);
+if( count($konten) == 1 ) {
+  $row = current( $konten );
   $konto_id = $row['id'];
-  mysql_data_seek( $konten, 0 );
 } else {
   $konto_id = 0;
 }
 get_http_var( 'konto_id', 'u', $konto_id, true );
 
-?>
-  <h4>Konten der Foodcoop:</h4>
-  <div style='padding-bottom:2em;'>
-  <table style='padding-bottom:2em;' class='list'>
-    <tr>
-      <th>Name</th>
-      <th>BLZ</th>
-      <th>Konto-Nr</th>
-      <th>Saldo</th>
-      <th>Online-Banking</th>
-      <th>Kommentar</th>
-    </tr>
-<?
-while( $row = mysql_fetch_array($konten) ) {
+?> <h4>Konten der Foodcoop:</h4> <?
+
+open_table('list');
+  open_th('','','Name');
+  open_th('','','BLZ');
+  open_th('','','Konto-Nr');
+  open_th('','','Saldo');
+  open_th('','','Online-Banking');
+  open_th('','','Kommentar');
+
+foreach( $konten as $row ) {
   if( $row['id'] != $konto_id ) {
-    echo "
-      <tr onclick=\"window.location.href='" . self_url('konto_id') . "&konto_id={$row['id']}';\">
-        <td><a class='tabelle' href='" . self_url('konto_id') . "&konto_id={$row['id']}'>{$row['name']}</a></td>
-    ";
+    open_tr( '', 'onclick="' .fc_link( 'self', "konto_id={$row['id']},context=handler" ).';"' );
   } else {
-    echo "<tr class='active'><td style='font-weight:bold;'>{$row['name']}</td>";
+    open_tr( 'active' );
   }
-  echo "
-      <td class='number'>{$row['blz']}</td>
-      <td class='number'>{$row['kontonr']}</td>
-  ";
-  printf( "<td class='number'>%.2lf</td>", sql_bankkonto_saldo( $row['id'] ) );
-  if( ( $url = $row['url'] ) ) {
-    echo "<td><a href=\"javascript:window.open('$url','onlinebanking').focus();\">$url</a></td>";
-  } else {
-    echo "<td> - </td>";
-  }
-  echo "
-      <td>{$row['kommentar']}</td>
-    </tr>
-  ";
+    open_td( 'bold', '', $row['name'] );
+    open_td( '', '', $row['blz'] );
+    open_td( '', '', $row['kontonr'] );
+    open_td( 'number', '', price_view( sql_bankkonto_saldo( $row['id'] ) ) );
+    if( ( $url = $row['url'] ) ) {
+      open_td( '', '',"<a href=\"javascript:window.open('$url','onlinebanking').focus();\">$url</a></td>" );
+    } else {
+      open_td( '', '', '-' );
+    }
+    open_td( '', '', $row['kommentar'] );
 }
-?> </table></div> <?
+close_table();;
+open_div('medskip', '', '' );
 
 if( ! $konto_id )
   return;
@@ -76,122 +66,101 @@ if( ! $konto_id )
 // auszug auswaehlen:
 //
 
-get_http_var( 'auszug', '/^\d+-\d+$/', 0 );
+get_http_var( 'auszug', '/^\d+-\d+$/', 0, true );
 if( $auszug ) {
-  list( $auszug_jahr, $auszug_nr ) = explode( '-', $auszug );
-  $self_fields['auszug_jahr'] = $auszug_jahr;
-  $self_fields['auszug_nr'] = $auszug_nr;
+  sscanf( $auszug, "%u-%u", & $auszug_jahr, & $auszug_nr );
+  // $self_fields['auszug_jahr'] = $auszug_jahr;
+  // $self_fields['auszug_nr'] = $auszug_nr;
 } else {
-  get_http_var( 'auszug_jahr', 'u', 0, true ) or $auszug_jahr = 0;
-  get_http_var( 'auszug_nr', 'u', 0, true ) or $auszug_nr = 0;
+  get_http_var( 'auszug_jahr', 'u', 0 ) or $auszug_jahr = 0;
+  get_http_var( 'auszug_nr', 'u', 0 ) or $auszug_nr = 0;
+  $self_fields['auszug'] = "$auszug_jahr-$auszug_nr";
 }
-
-$auszuege = sql_kontoauszug( $konto_id );
 
 $ungebuchte_einzahlungen = sql_ungebuchte_einzahlungen();
 
-?>
-  <table>
-  <tr><td colspan='2'>
-    <h3>Erfasste Auszüge:</h3>
-  </td>
-<? if( $editable and mysql_num_rows( $ungebuchte_einzahlungen ) > 0 ) { ?>
-  <td>
-    <h3>Ungebuchte Einzahlungen:</h3>
-  </td>
-<? } ?>
-  </tr>
-  <tr><td>
-      <select id='select_auszug'
-       onchange='select_auszug("<? echo self_url( array( 'auszug_jahr', 'auszug_nr' ) ); ?>");'>
-<?
+open_table('layout');
+  open_td('', "colspan='2'", '<h3>Erfasste Auszüge:</h3' );
+  if( $editable and $ungebuchte_einzahlungen )
+    open_td('', "colspan='2'", '<h3>Ungebuchte Einzahlungen:</h3>' );
 
-$selected = false;
-$options = '';
-while( $auszug = mysql_fetch_array( $auszuege ) ) {
-  $jahr = $auszug['kontoauszug_jahr'];
-  $nr = $auszug['kontoauszug_nr'];
+  open_tr();
+    open_td();
+      open_select( 'auszug', true );
+        $selected = false;
+        $options = '';
+        foreach( sql_kontoauszug( $konto_id ) as $auszug ) {
+          $jahr = $auszug['kontoauszug_jahr'];
+          $nr = $auszug['kontoauszug_nr'];
 
-  $posten = mysql_num_rows( sql_kontoauszug( $konto_id, $jahr, $nr ) );
-  $saldo = sql_bankkonto_saldo( $konto_id, $auszug['kontoauszug_jahr'], $auszug['kontoauszug_nr'] );
+          $posten = count( sql_kontoauszug( $konto_id, $jahr, $nr ) );
+          $saldo = sql_bankkonto_saldo( $konto_id, $auszug['kontoauszug_jahr'], $auszug['kontoauszug_nr'] );
 
-  // $detailurl = self_url( array( 'auszug_jahr', 'auszug_nr' ) ) . "&auszug_nr=$nr&auszug_jahr=$jahr";
+          // $detailurl = self_url( array( 'auszug_jahr', 'auszug_nr' ) ) . "&auszug_nr=$nr&auszug_jahr=$jahr";
 
-  $options .= "<option value='$jahr-$nr'";
-  if( $jahr == $auszug_jahr and $nr == $auszug_nr ) {
-    $options .= " selected";
-    $selected = true;
-  }
-  $options .= ">$jahr / $nr ($posten Posten, Saldo: $saldo)</option>";
-}
-if( ! $selected ) {
-  $options = "<option value='0' selected>(Bitte Auszug wählen)</option>" . $options;
-}
-echo $options;
-?> </select>
-  </td>
-  <td>
-  <?
-  switchable_form( 'neuer_auszug', 'Neuen Auszug anlegen', false, "
-    <input type='hidden' name='action' value='neuer_auszug'>
-    <div style='white-space:nowrap;'>
-      <label>Jahr:</label>
-      <input id='input_auszug_jahr' type='text' size='4' name='neuer_auszug_jahr' value='<? echo date('Y'); ?>'>
-              / <label>Nr:</label> <input id='input_auszug_nr' type='text' size='2' name='neuer_auszug_nr' value=''>
-      &nbsp; <input type='submit' value='OK'>
-    </div>
-  " );
-  ?> </td> <?
-  if( $editable and mysql_num_rows( $ungebuchte_einzahlungen ) > 0 ) {
-    ?>
-    <td>
-      <table>
-        <tr>
-          <th>Datum</th>
-          <th>Gruppe</th>
-          <th>Betrag</th>
-          <th>Optionen</th>
-        </tr>
-        <? while( $trans = mysql_fetch_array( $ungebuchte_einzahlungen ) ) { ?>
-          <tr>
-            <td><? echo $trans['eingabedatum_trad']; ?></td>
-	    <td><? echo sql_gruppenname( $trans['gruppen_id'] )
-           . " (".sql_gruppennummer( $trans['gruppen_id'] ).")<ul>";
-                   $members=sql_gruppen_members($trans['gruppen_id']);
-                   while($pers = mysql_fetch_array($members)){
-			   echo "<li>".$pers["vorname"]." ".$pers["name"]."</li>";
-                   }
-                ?></ul></td>
-            <td><? printf( "%.2lf", $trans['summe'] ); ?></td>
-            <td>
-              <? if( $editable and $auszug_jahr and $auszug_nr ) { ?>
-                <form method='post' action='<? echo self_url(); ?>'>
-                  <input type='hidden' name='transaction_id' value='<? echo $trans['id']; ?>'>
-                  <input type='hidden' name='action' value='confirm_payment'>
-                  <label>Valuta:</label>
-                    <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
-                  <input type='submit' class='button' name='Bestätigen' value='Bestätigen'
-                   title='Bestätigen: diese Gutschrift ist auf Auszug <? echo "$auszug_jahr / $auszug_nr"; ?> verbucht'
-                  >
-                </form>
-                <hr>
-              <? } ?>
-              <?
-                if( $editable ) {
-                  echo action_button( 'L&ouml;schen', 'diese ungebuchte Gutschrift stornieren', array(
-                    'action' => 'cancel_payment', 'transaction_id' => $trans['id']  ) );
+          $options .= "<option value='$jahr-$nr'";
+          if( $jahr == $auszug_jahr and $nr == $auszug_nr ) {
+            $options .= " selected";
+            $selected = true;
+          }
+          $options .= ">$jahr / $nr ($posten Posten, Saldo: $saldo)</option>";
+        }
+        if( ! $selected ) {
+          $options = "<option value='0' selected>(Bitte Auszug wählen)</option>" . $options;
+        }
+        echo $options;
+      close_select();
+
+    open_td();
+
+      open_fieldset('', '','Neuen Auszug anlegen', 'off' );
+        open_form( '', '', '', array( 'action' => 'neuer_auszug' ) );
+          open_div('oneline');
+            echo "<label>Jahr:</label> " . string_view( date('Y'), 4, 'neuer_auszug_jahr' );
+            echo " / <label>Nr:</label>" . string_view( '', 2, 'neuer_auszug_nr' );
+            submission_button();
+          close_div();
+        close_form();
+      close_fieldset();
+
+    open_td();
+      if( $editable and $ungebuchte_einzahlungen ) {
+        open_table('list');
+          open_th('','','Datum');
+          open_th('','','Gruppe');
+          open_th('','','Betrag');
+          open_th('','','Aktionen');
+
+          foreach( $ungebuchte_einzahlungen as $trans ) {
+            open_tr();
+              open_td('','', $trans['eingabedatum_trad'] );
+              open_td();
+                echo gruppe_view( $trans['gruppen_id'] );
+                open_ul();
+                  foreach( sql_gruppen_members($trans['gruppen_id']) as $pers )
+                    open_li( '', '', $pers["vorname"]." ".$pers["name"] );
+                close_ul();
+              open_td( 'number', '', price_view( $trans['summe'] ) );
+              open_td();
+                if( $editable and $auszug_jahr and $auszug_nr ) {
+                  open_form( '', '', '', array( 'action' => 'confirm_payment', 'transaction_id' => $trans['id'] ) );
+                    echo "<label>Valuta:</label> ". date_view( '', 'valuta' );
+                      open_span( 'quad', "title='Best&auml;tigen: diese Gutschrift ist auf Auszug $auszug_jahr / $auszug_nr verbucht'" );
+                        submission_button( 'Best&auml;tigen' );
+                      close_span();
+                  close_form();
                 }
-              ?>
-            </td>
-          </tr>
-        <? } ?>
-      </table>
-    </td>
-  <? } ?>
+                echo "<hr>";
+                if( $editable ) {
+                  echo fc_action( 'title=diese ungebuchte Gutschrift stornieren,class=drop'
+                                , "action=cancel_payment,transaction_id={$trans['id']}" );
+                }
+          }
+        close_table();
+      }
 
-  </tr>
-  </table>
-<?
+close_table();
+
 
 get_http_var( 'action', 'w', false );
 $editable or $action = '';
@@ -200,7 +169,7 @@ switch( $action ) { // aktionen die keinen auszug brauchen
   case 'cancel_payment':
     need_http_var( 'transaction_id', 'u' );
     doSql( "DELETE FROM gruppen_transaktion WHERE id=$transaction_id" );
-    reload_immediately( self_url() );
+    reload_immediately( fc_link( '', 'context=action' ) );
     break;
     need_http_var( 'transaction_id', 'u' );
   case 'neuer_auszug':
@@ -219,13 +188,13 @@ echo "<h3>$kontoname - Auszug $auszug_jahr / $auszug_nr</h3>";
 
 switch( $action ) { // aktionen, die einen auszug brauchen
   case 'zahlung_gruppe':
-    buchung_gruppe_bank();
+    action_buchung_gruppe_bank();
     break;
   case 'zahlung_lieferant':
-    buchung_lieferant_bank();
+    action_buchung_lieferant_bank();
     break;
   case 'ueberweisung_konto_konto':
-    buchung_bank_bank();
+    action_buchung_bank_bank();
     break;
   case 'ueberweisung_sonderausgabe':
     buchung_bank_sonderausgabe();
@@ -240,172 +209,108 @@ switch( $action ) { // aktionen, die einen auszug brauchen
     break;
 }
 
-  ?>
-  <div id='transactions_button' style='padding-bottom:1em;'>
-  <span class='button'
-    onclick="document.getElementById('transactions_menu').style.display='block';
-             document.getElementById('transactions_button').style.display='none';"
-    >Transaktion eintragen...</span>
-  </div>
+open_fieldset( 'small_form', '', 'Transaktion eintragen', 'off' );
+  alternatives_radio( array(
+    'gruppe_bank_form' => "Einzahlung / Auszahlung Gruppe"
+  , 'lieferant_bank_form' => "Überweisung / Lastschrift Lieferant"
+  , 'bank_bank_form' => "Überweisung auf ein anderes Konto der FC"
+  , 'sonderausgabe_bank_form' => "Überweisung/Abbuchung Sonderausgabe"
+  , 'anfangsguthaben_bank_form' => "Anfangskontostand erfassen"
+  ) );
 
-  <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
-    <legend>
-      <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-      onclick="document.getElementById('transactions_button').style.display='block';
-               document.getElementById('transactions_menu').style.display='none';">
-      Transaktionen
-    </legend>
+  open_div( 'nodisplay', "id='gruppe_bank_form'" );
+    formular_buchung_gruppe_bank();
+  close_div();
 
-    Art der Transaktion:
+  open_div( 'nodisplay', "id='lieferant_bank_form'" );
+    formular_buchung_lieferant_bank();
+  close_div();
 
-    <ul style='list-style:none;'>
-      <li title='Einzahlung von oder Auszahlung an Gruppe'>
-        <input type='radio' name='transaktionsart'
-          onclick="document.getElementById('gruppe_form').style.display='block';
-                   document.getElementById('lieferant_form').style.display='none';
-                   document.getElementById('konto_form').style.display='none';
-                   document.getElementById('sonderausgabe_form').style.display='none';"
-        ><b>Einzahlung / Auszahlung Gruppe</b>
-      </li>
+  open_div( 'nodisplay', "id='bank_bank_form'" );
+    formular_buchung_bank_bank();
+  close_div();
 
-      <li title='Überweisung an oder Lastschrift von Lieferant'>
-        <input type='radio' name='transaktionsart'
-          onclick="document.getElementById('gruppe_form').style.display='none';
-                   document.getElementById('lieferant_form').style.display='block';
-                   document.getElementById('konto_form').style.display='none';
-                   document.getElementById('sonderausgabe_form').style.display='none';"
-        ><b>Überweisung / Lastschrift Lieferant</b>
-      </li>
+  open_div( 'nodisplay', "id='sonderausgabe_bank_form'" );
+    formular_buchung_bank_sonderausgabe();
+  close_div();
 
-      <li title='Überweisung von diesem auf ein anderes Bankkonto der FC'>
-        <input type='radio' name='transaktionsart'
-          onclick="document.getElementById('gruppe_form').style.display='none';
-                   document.getElementById('lieferant_form').style.display='none';
-                   document.getElementById('konto_form').style.display='block';
-                   document.getElementById('sonderausgabe_form').style.display='none';"
-        ><b>Überweisung auf ein anderes Konto der FC</b>
-      </li>
+  open_div( 'nodisplay', "id='anfangsguthaben_bank_form'" );
+    formular_buchung_bank_anfangsguthaben();
+  close_div();
 
-      <li title='&Uuml;berweisung/Abbuchung Sonderausgabe: Kontogeb&uuml;hren, Mitgliedsbeitrag, ...'>
-        <input type='radio' name='transaktionsart'
-          onclick="document.getElementById('gruppe_form').style.display='none';
-                   document.getElementById('lieferant_form').style.display='none';
-                   document.getElementById('konto_form').style.display='none';
-                   document.getElementById('sonderausgabe_form').style.display='block';"
-        ><b>Überweisung/Abbuchung Sonderausgabe</b>
-      </li>
+close_fieldset();
+medskip();
 
-    </ul>
-
-    <div id='gruppe_form' style='display:none;'>
-      <? formular_buchung_gruppe_bank( 0, $konto_id, $auszug_jahr, $auszug_nr ); ?>
-    </div>
-
-    <div id='lieferant_form' style='display:none;'>
-      <? formular_buchung_lieferant_bank( 0, $konto_id, $auszug_jahr, $auszug_nr ); ?>
-    </div>
-
-    <div id='konto_form' style='display:none;'>
-      <? formular_buchung_bank_bank( $konto_id, $auszug_jahr, $auszug_nr ); ?>
-    </div>
-
-    <div id='sonderausgabe_form' style='display:none;'>
-      <? formular_buchung_bank_sonderausgabe( $konto_id, $auszug_jahr, $auszug_nr ); ?>
-    </div>
-
-  </fieldset>
-  <?
-
-$auszug = sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr );
 $startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
 $saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
 
-?>
-
-<table class='list'>
-  <tr class='legende'>
-    <th>Posten</th>
-    <th>Valuta</th>
-    <th>Buchung</th>
-    <th>Kommentar</th>
-    <th>Betrag</th>
-    <th>Aktionen</th>
-  </tr>
-  <tr class='summe'>
-    <td colspan='4' style='text-align:right;'>Startsaldo:</td>
-    <td class='number'><? printf( "%.2lf", $startsaldo ); ?></td>
-    <td>&nbsp;</td>
-  </tr>
-<?
+open_table('list');
+    open_th('','','Posten');
+    open_th('','','Valuta');
+    open_th('','','Buchung');
+    open_th('','','Kommentar');
+    open_th('','','Betrag');
+    open_th('','','Aktionen');
+  open_tr('summe');
+    open_td( 'right', "colspan='4'", 'Startsaldo:');
+    open_td( 'number', '', price_view( $startsaldo ) );
+    open_td();
 
 $n=0;
-while( $row = mysql_fetch_array( $auszug ) ) {
+foreach( sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr ) as $row ) {
   $n++;
   $kommentar = $row['kommentar'];
   $konterbuchung_id = $row['konterbuchung_id'];
-  ?>
-    <tr>
-      <td class='number'><? echo $n; ?></td>
-      <td class='number'><? echo $row['valuta_trad']; ?></td>
-      <td class='number'>
-        <div><? echo $row['buchungsdatum_trad']; ?></div>
-        <div style='font-size:1;'><? echo $row['dienst_name']; ?></div>
-      </td>
-      <td><div><? echo $kommentar; ?></div>
-  <?
-  if( $konterbuchung_id ) {
-    $konterbuchung = sql_get_transaction( $konterbuchung_id );
-    if( $konterbuchung_id > 0 ) {
-      $k_konto_id = $konterbuchung['konto_id'];
-      $k_auszug_jahr = $konterbuchung['kontoauszug_jahr'];
-      $k_auszug_nr = $konterbuchung['kontoauszug_nr'];
-      ?> <div>Gegenbuchung: <?
-      echo fc_alink( 'kontoauszug', array(
-        'konto_id' => $k_konto_id, 'auszug_jahr' => $k_auszug_jahr, 'auszug_nr' => $k_auszug_nr
-      , 'img' => false, 'text' => "{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr"
-      ) );
-      ?> </div> <?
-    } else {
-      $gruppen_id = $konterbuchung['gruppen_id'];
-      $lieferanten_id=$konterbuchung['lieferanten_id'];
-      if( $gruppen_id ) {
-        if( $gruppen_id == sql_muell_id() ) {
-         $typ = $konterbuchung['transaktionstyp'];
-          echo "<div>" . fc_alink( 'verlust_details', array(
-            'detail' => $typ, 'img' => '', 'text' => transaktion_typ_string( $typ ) ) ) . "</div>";
+
+  open_tr();
+    open_td( 'number', '', $n );
+    open_td( 'number', '', $row['valuta_trad'] );
+    open_td( 'number', '', $row['buchungsdatum_trad']."<div style='small'>{$row['dienst_name']}</div>" );
+    open_td();
+      echo $kommentar;
+
+      if( $konterbuchung_id ) {
+        $konterbuchung = sql_get_transaction( $konterbuchung_id );
+        if( $konterbuchung_id > 0 ) {
+          $k_konto_id = $konterbuchung['konto_id'];
+          $k_auszug_jahr = $konterbuchung['kontoauszug_jahr'];
+          $k_auszug_nr = $konterbuchung['kontoauszug_nr'];
+          open_div( '', '', 'Gegenbuchung: ' . fc_link( 'kontoauszug', array(
+              'konto_id' => $k_konto_id, 'auszug_jahr' => $k_auszug_jahr, 'auszug_nr' => $k_auszug_nr
+            , 'text' => "{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr", 'class' => 'href'
+          ) ) );
         } else {
-          $gruppen_name = sql_gruppenname( $gruppen_id );
-          ?> <div>Überweisung Gruppe <?
-          echo fc_alink( 'gruppenkonto', array( 'gruppen_id' => $gruppen_id , 'img' => false, 'text' => $gruppen_name ) );
-          ?> </div> <?
+          $gruppen_id = $konterbuchung['gruppen_id'];
+          $lieferanten_id=$konterbuchung['lieferanten_id'];
+          if( $gruppen_id ) {
+            if( $gruppen_id == sql_muell_id() ) {
+              $typ = $konterbuchung['transaktionstyp'];
+              div_msg( '', fc_link( 'verlust_details', array(
+                           'detail' => $typ, 'class' => 'href', 'text' => transaktion_typ_string( $typ ) ) ) );
+            } else {
+              $gruppen_name = sql_gruppenname( $gruppen_id );
+              div_msg( '', 'Überweisung Gruppe '. fc_link( 'gruppenkonto', array(
+                         'gruppen_id' => $gruppen_id , 'class' => 'href', 'text' => $gruppen_name ) ) );
+            }
+          } elseif ( $lieferanten_id ) {
+            $lieferanten_name = sql_lieferant_name( $lieferanten_id );
+            div_msg( '', 'Überweisung/Lastschrift Lieferant ' . fc_link( 'lieferantenkonto', array(
+                         'lieferanten_id' => $lieferanten_id , 'class' => 'href', 'text' => $lieferanten_name ) ) );
+          } else {
+            div_msg( 'warn', 'fehlerhafte Buchung' );
+          }
         }
-      } else if ( $lieferanten_id ) {
-        $lieferanten_name = lieferant_name( $lieferanten_id );
-        ?> <div>Überweisung/Lastschrift Lieferant <?
-        echo fc_alink( 'lieferantenkonto', array( 'lieferanten_id' => $lieferanten_id , 'img' => false, 'text' => $lieferanten_name ) );
-        ?> </div> <?
       } else {
-        ?> <div class='warn'>fehlerhafte Buchung</div> <?
+        div_msg( 'warn', 'unvollständige oder fehlerhafte Buchung' );
       }
-    }
-  } else {
-    ?> <div class='warn'>einfache Buchung</div> <?
-  }
-  ?>
-    <td class='number' style='vertical-align:bottom;'>
-      <? printf( "%.2lf", $row['betrag'] ); ?>
-    </td>
-    <td style='vertical-align:bottom;'>
-      <?  echo fc_alink( 'edit_buchung', "buchung_id={$row['id']}" ); ?>
-    </tr>
-  <?
+    open_td( 'number bottom', '', price_view( $row['betrag'] ) );
+    open_td( '', 'bottom', fc_link( 'edit_buchung', "buchung_id={$row['id']}" ) );
 }
 
-?>
-  <tr class='summe'>
-    <td colspan='4' style='text-align:right;'>Saldo:</td>
-    <td class='number'><? printf( "%.2lf", $saldo ); ?></td>
-    <td>&nbsp;</td>
-  </tr>
-</table>
+  open_tr('summe');
+    open_td( 'right', "colspan='4'", 'Saldo:');
+    open_td( 'number', '', price_view( $saldo ) );
+    open_td();
+open_table();
 
+?>
