@@ -65,8 +65,7 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
     $problems = $problems .  "<div class='warn'>interner fehler: ungueltiger dienst</div>";
   if( $dienst > 0 ) {
     if( $dienstkontrollblatt_id > 0 ) {
-      $result = dienstkontrollblatt_select( $dienstkontrollblatt_id );
-      $row = mysql_fetch_array($result)
+      ( $row =  current( sql_dienstkontrollblatt( $dienstkontrollblatt_id ) ) )
         or $problems = $problems .  "<div class='warn'>Dienstkontrollblatt-Eintrag nicht gefunden</div>";
       $coopie_name = $row['name'];
     } else {
@@ -169,7 +168,7 @@ if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
 }
 
 open_div( 'kommentar', '', $motd );
-open_form( 'small_form', '', $form_action, array( 'login' => 'login' ) );
+open_form( 'small_form', '', "url=$form_action", array( 'login' => 'login' ) );
   open_fieldset( 'small_form', "style='padding:2em;'", 'Anmelden' );
     if( "$problems" )
       echo "$problems";
@@ -216,7 +215,7 @@ open_form( 'small_form', '', $form_action, array( 'login' => 'login' ) );
         Funktionen der Foodsoft nutzen; ausserdem wirst Du 
         automatisch ins Dienstkontrollblatt eingetragen:
       " );
-      open_fieldset( 'small_form', '', 'Dienstkontrollblatt</legend>' );
+      open_fieldset( 'small_form', '', 'Dienstkontrollblatt' );
         open_div( 'newfield' );
           ?> <label>Dein Name:</label>
              <input type='text' size='20' name='coopie_name' value='<? echo $coopie_name; ?>'>
