@@ -1,258 +1,158 @@
 <?PHP
 
- assert($angemeldet) or exit();
+assert($angemeldet) or exit();
  
- //Vergleicht das Datum der beiden mysql-records
- //gibt +1 zurück, wenn Datum in $konto älter ist
- //gibt 0 zurück, wenn Daten gleich sind
- //gibt -1 zurück, wen Datum in $veteil älter ist
- function compare_date($konto, $verteil){
-	//Kein weiterer Eintrag in Konto
- 	if(!$konto) return 1;
-	if(!$verteil) return -1;
- 	$konto_date = $konto['valuta_kan'];
-	$verteil_date = $verteil['valuta_kan'];
-  if( $konto_date < $verteil_date )
-    return 1;
-  if( $konto_date > $verteil_date )
-    return -1;
-  return 0;
- }
-
 $editable = ( ! $readonly and ( $dienst == 4 ) );
 get_http_var( 'lieferanten_id', 'u', 0, true );
 
-?>
- <h1>Lieferantenkonto</h1>
- <div id='option_menu'></div>
-<?
+?> <h1>Lieferantenkonto</h1> <?
 
-option_menu_row( "<th colspan='2'>Anzeigeoptionen</th>" );
+open_table( 'menu' );
+    open_th( '', "colspan='2'", 'Optionen' );
+  open_tr();
+    open_td('', '', 'Lieferant:' );
+    open_td();
+      open_select( 'lieferanten_id', true );
+        echo optionen_lieferanten( $lieferanten_id );
+      close_select();
+close_table();
 
-option_menu_row(
-  " <td>Lieferant:</td>
-    <td><select id='select_lieferant' onchange=\"select_lieferant('"
-    . self_url( 'lieferanten_id' ) . "');\">
-  " . optionen_lieferanten( $lieferanten_id ) . "
-    </select></td>"
-);
 if( ! $lieferanten_id )
   return;
 
-$lieferanten_name = lieferant_name( $lieferanten_id );
+$lieferanten_name = sql_lieferant_name( $lieferanten_id );
 
 if( $editable ) {
   get_http_var( 'action', 'w', '' );
   switch( $action ) {
-    case 'zahlung_lieferant':
-      buchung_lieferant_bank();
+    case 'buchung_lieferant_bank':
+      action_buchung_lieferant_bank();
       break;
-   case 'zahlung_gruppe_lieferant':
-     buchung_gruppe_lieferant();
-     break;
+    case 'buchung_gruppe_lieferant':
+      action_buchung_gruppe_lieferant();
+      break;
+    case 'buchung_lieferant_anfangsguthaben':
+      action_buchung_lieferant_anfangsguthaben();
+      break;
   }
 
-  ?>
-    <div id='transactions_button' style='padding-bottom:1em;'>
-    <span class='button'
-      onclick="document.getElementById('transactions_menu').style.display='block';
-               document.getElementById('transactions_button').style.display='none';"
-      >Transaktionen...</span>
-    </div>
+  medskip();
+  open_fieldset( 'small_form', '', 'Transaktionen', 'off' );
+    alternatives_radio( array(
+      'lieferant_bank_form' => 'Ãœberweisung oder Abbuchung von Bankkonto der Foodcoop'
+    , 'gruppe_lieferant_form' => 'Direktzahlung von Gruppe an Lieferant'
+    , 'lieferant_anfangsguthaben_form' => 'Erfassung Anfangsguthaben Lieferant'
+    ) );
 
-    <fieldset class='small_form' id='transactions_menu' style='display:none;margin-bottom:2em;'>
-      <legend>
-        <img src='img/close_black_trans.gif' class='button' title='Schliessen' alt='Schliessen'
-        onclick="document.getElementById('transactions_button').style.display='block';
-                 document.getElementById('transactions_menu').style.display='none';">
-        Transaktionen
-      </legend>
+    open_div( 'nodisplay', "id='lieferant_bank_form'" );
+      formular_buchung_lieferant_bank();
+    close_div();
 
-      Art der Transaktion:
-        <span style='padding-left:1em;' title='Ãœberweisung oder Abbuchung von Bankkonto der Foodcoop'>
-        <input type='radio' name='transaktionsart'
-          onclick="document.getElementById('zahlungbank_form').style.display='block';
-                   document.getElementById('zahlunggruppe_form').style.display='none';"
-        ><b>Ãœberweisung/Lastschrift</b>
-        </span>
+    open_div( 'nodisplay', "id='gruppe_lieferant_form'" );
+      formular_buchung_gruppe_lieferant();
+    close_div();
 
-        <span style='padding-left:1em;' title='Direktzahlung von Gruppe an Lieferant'>
-        <input type='radio' name='transaktionsart'
-          onclick="document.getElementById('zahlungbank_form').style.display='none';
-                   document.getElementById('zahlunggruppe_form').style.display='block';"
-        ><b>Direktzahlung durch Gruppe</b>
-        </span>
+    open_div( 'nodisplay', "id='lieferant_anfangsguthaben_form'" );
+      formular_buchung_lieferant_anfangsguthaben();
+    close_div();
 
-        <div id='zahlungbank_form' style='display:none;'>
-          <? formular_buchung_lieferant_bank( $lieferanten_id ); ?>
-        </div>
-
-        <div id='zahlunggruppe_form' style='display:none;'>
-          <? formular_buchung_gruppe_lieferant( 0, $lieferanten_id ); ?>
-        </div>
-
-     </fieldset>
-
-  <?
+  close_fieldset();
 }
 
-  $kontostand = lieferantenkontostand($lieferanten_id);
-  $pfandkontostand = lieferantenpfandkontostand($lieferanten_id);
+$kontostand = lieferantenkontostand($lieferanten_id);
+$pfandkontostand = lieferantenpfandkontostand($lieferanten_id);
 
-  $cols = 9;
-  ?>
-  <table class="list">
-    <tr>
-      <th>Typ</th>
-      <th>Valuta</th>
-      <th>Buchung</th>
-      <th>Informationen</th>
-      <th>Pfand</th>
-      <th>Pfandkonto</th>
-      <th>Waren</th>
-      <th>Sonstiges</th>
-      <th>Buchung</th>
-      <th>Kontostand</th>
-    </tr>
-    <tr class='summe'>
-      <td colspan='5' style='text-align:right;'>Kontostand:</td>
-      <td class='number'>
-        <? printf( "%.2lf", $pfandkontostand ); ?>
-      </td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td class='number'>
-        <? printf( "%.2lf", $kontostand ); ?>
-      </td>
-    </tr>
-  <?
+medskip();
+$cols = 9;
+open_table('list');
+    open_th( '', '', 'Typ' );
+    open_th( '', '', 'Valuta' );
+    open_th( '', '', 'Buchung' );
+    open_th( '', '', 'Informationen' );
+    open_th( '', '', 'Pfand' );
+    open_th( '', '', 'Pfandkonto' );
+    open_th( '', '', 'Waren' );
+    open_th( '', '', 'Sonstiges' );
+    open_th( '', '', 'Buchung' );
+    open_th( '', '', 'Kontostand' );
+
+  open_tr( 'summe' );
+    open_td( 'right', "colspan='5'", 'Kontostand:' );
+    open_td( 'number', '', price_view( $pfandkontostand ) );
+    open_td();
+    open_td();
+    open_td();
+    open_td( 'number', '', price_view( $kontostand ) );
 
   $konto_result = sql_get_group_transactions( 0, $lieferanten_id );
   $vert_result = sql_bestellungen_soll_lieferant( $lieferanten_id );
 
   $summe = $kontostand;
   $pfandsumme = $pfandkontostand;
-  $konto_row = mysql_fetch_array($konto_result);
-  $vert_row = mysql_fetch_array($vert_result);
+  $konto_row = current($konto_result);
+  $vert_row = current($vert_result);
   while( $konto_row or $vert_row ) {
-    if( compare_date($konto_row, $vert_row) == 1 ) {
+    open_tr();
+    if( ( $vert_row ? $vert_row['valuta_kan'] : '0' ) > ( $konto_row ? $konto_row['valuta_kan'] : '0' ) ) {
       //Eintrag in Konto ist Älter -> Verteil ausgeben
       $bestell_id = $vert_row['gesamtbestellung_id'];
-//              . "&spalten=" . ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS
-//                                | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
       $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
       $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
       $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
       $waren_soll = $vert_row['waren_brutto_soll'];
       $extra_soll = $vert_row['extra_brutto_soll'];
       $soll = $pfand_soll + $waren_soll + $extra_soll;
-      ?>
-      <tr>
-        <td style='vertical-align:top;font-weight:bold;'>Bestellung</td>
-        <td><? echo $vert_row['valuta_trad']; ?></td>
-        <td><? echo $vert_row['lieferdatum_trad']; ?></td>
-        <td>Bestellung:
-          <? echo fc_alink( 'lieferschein', array(
-             'img' => false, 'bestell_id' => $bestell_id, 'text' => $vert_row['name']
-             , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME )
-          ) ); ?>
-        </td>
-        <td class='number'>
-          <? printf("%.2lf", $pfand_soll ); ?>
-        </td>
-        <td class='number'>
-          <? printf("%.2lf", $pfandsumme ); ?>
-        </td>
-        <td class='number'>
-          <? printf("%.2lf", $waren_soll ); ?>
-        </td>
-        <td class='number'>
-          <? printf("%.2lf", $extra_soll ); ?>
-        </td>
-        <td class='number'>
-          <div style='font-weight:bold;'><? printf("%.2lf", $soll ); ?></div>
-        </td>
-        <td class='number'>
-          <? printf("%.2lf", $summe ); ?>
-        </td>
-      </tr>
-      <?
+
+      open_td('bold', '', 'Bestellung' );
+      open_td('', '', $vert_row['valuta_trad'] );
+      open_td('', '', $vert_row['lieferdatum_trad'] );
+      open_td( '', '', 'Bestellung: ' . fc_link( 'lieferschein', array(
+         'bestell_id' => $bestell_id, 'text' => $vert_row['name'], 'class' => 'href'
+       , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME )
+      ) ) );
+      open_td( 'number', '', price_view( $pfand_soll ) );
+      open_td( 'number', '', price_view( $pfandsumme ) );
+      open_td( 'number', '', price_view( $waren_soll ) );
+      open_td( 'number', '', price_view( $extra_soll ) );
+      open_td( 'number bold', '', price_view( $soll ) );
+      open_td( 'number', '', price_view( $summe ) );
+
       $summe -= $soll;
       $pfandsumme -= $pfand_soll;
-      $vert_row = mysql_fetch_array($vert_result);
+      $vert_row = next($vert_result);
+
     } else {
-      ?>
-      <tr>
-        <td valign='top' style='font-weight:bold;'>
-          <?
-          if( $konto_row['konterbuchung_id'] >= 0 ) {
-            $text = 'Zahlung';
-          } else {
-            $text = 'Verrechnung';
-            echo fc_alink( 'edit_buchung', "transaktion_id={$konto_row['id']},text=$text,img=" );
-          }
-          ?>
-        </td>
-        <td><? echo $konto_row['valuta_trad']; ?></td>
-        <td><? echo $konto_row['date']; ?></td>
-        <td>
-          <div>
-            <? echo fc_alink( 'edit_buchung', array(
-              'img' => false, 'transaktion_id' => $konto_row['id'], 'text' => $konto_row['notiz'] ) );
-            ?>
-          </div>
-          <div>
-            <?
-            $k_id = $konto_row['konterbuchung_id'];
-            $k_row = sql_get_transaction( $k_id );
-            if( $k_id > 0 ) { // bankueberweisung oder lastschrift
-              $konto_id = $k_row['konto_id'];
-              $auszug_nr = $k_row['kontoauszug_nr'];
-              $auszug_jahr = $k_row['kontoauszug_jahr'];
-              echo "Auszug: " . fc_alink( 'kontoauszug', array(
-                'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr
-              , 'img' => false, 'text' => "$auszug_jahr / $auszug_nr ({$k_row['kontoname']})" ) );
-            } else {  // zahlung durch gruppe
-              $gruppen_id = $k_row['gruppen_id'];
-              $gruppen_name = sql_gruppenname($gruppen_id);
-              echo "Zahlung durch Gruppe: " . fc_alink( 'gruppenkonto', array(
-                'img' => false, 'gruppen_id' => $gruppen_id, 'text' => $gruppen_name ) );
-            }
-            ?>
-          </div>
-        </td>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td>&nbsp;</td>
-        <td class='number'>
-          <div style='font-weight:bold;'>
-            <? printf("%.2lf" , $konto_row['summe']); ?>
-          </div>
-        </td>
-        <td class='number'>
-          <? printf( "%.2lf", $summe ); ?>
-        </td>
-      </tr>
-      <?
+
+      $text = ( ( $konto_row['konterbuchung_id'] >= 0 ) ? 'Zahlung' : 'Verrechnung' );
+      open_td( 'bold', '', fc_link( 'edit_buchung', "transaktion_id={$konto_row['id']},text=$text,class=href" ) );
+      open_td('', '', $konto_row['valuta_trad'] );
+      open_td('', '', $konto_row['date'] );
+      open_td();
+        open_div( '', '', fc_link( 'edit_buchung', array(
+          'transaktion_id' => $konto_row['id'], 'text' => $konto_row['notiz'], 'class' => 'href' ) ) );
+        open_div();
+          buchung_kurzinfo( $konto_row['konterbuchung_id'] );
+        close_div();
+      open_td();
+      open_td();
+      open_td();
+      open_td();
+      open_td( 'number bold', '', price_view( $konto_row['summe'] ) );
+      open_td( 'number', '', price_view( $summe ) );
+
       $summe -= $konto_row['summe'];
-      $konto_row = mysql_fetch_array($konto_result);
+      $konto_row = next($konto_result);
     }
   }
 
-  ?>
-    <tr class='summe'>
-      <td colspan='5' style='text-align:right;'>Startsaldo:</td>
-      <td class='number'>
-        <? printf( "%8.2lf", $pfandsumme ); ?>
-      </td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td class='number'>
-        <? printf( "%8.2lf", $summe ); ?>
-      </td>
-    </tr>
-   </table>
+  open_tr( 'summe' );
+    open_td( 'right', "colspan='5'", 'Startsaldo:' );
+    open_td( 'number', '',  price_view( $pfandsumme ) );
+    open_td();
+    open_td();
+    open_td();
+    open_td( 'number', '', price_view( $summe ) );
 
+close_table();
+
+?>
