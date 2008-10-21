@@ -19,7 +19,7 @@ if( $verpackung_id ) {
   setWindowSubtitle( 'Neue Pfandverpackung eintragen' );
   $row = array( 'name' => '', 'wert' => 0.00, 'mwst' => 7.00 );
 }
-$lieferant_name = lieferant_name( $lieferanten_id );
+$lieferant_name = sql_lieferant_name( $lieferanten_id );
 
 get_http_var('name','H',$row);
 get_http_var('wert','f',$row);
@@ -49,6 +49,7 @@ if( $action == 'save' ) {
     } else {
       if( ( $verpackung_id = sql_insert( 'pfandverpackungen', $values ) ) ) {
         $self_fields['verpackung_id'] = $verpackung_id;
+        sql_update( 'pfandverpackungen', $verpackung_id, array( 'sort_id' => $verpackung_id ) );
         $msg = $msg . "<div class='ok'>Verpackung erfolgreich eingetragen:</div>";
         $done = true;
       } else {
@@ -62,17 +63,10 @@ open_form( 'small_form', '', '', array( 'action' => 'save' ) );
   open_fieldset( 'small_form', "style='width:460px;'", ( $verpackung_id ? 'Stammdaten Verpackung' : 'Neue Verpackung' ) );
     echo $msg . $problems;
     open_table('small_form', "width='95%'" );
-        open_td('label', '', 'Lieferant:' );
-        open_td('kbd', '', $lieferant_name );
-      open_tr();
-        open_td('label', '', 'Bezeichnung:' );
-        open_td('kbd', '', string_view( $name, 30, ( $editable ? 'name' : false ) ) );
-      open_tr();
-        open_td('label', '', 'Wert:' );
-        open_td('kbd', '', price_view( $wert, ( $editable ? 'wert' : false ) ) );
-      open_tr();
-        open_td('label', '', 'MWSt:' );
-        open_td('kbd', '', price_view( $mwst, ( $editable ? 'mwst' : false ) ) );
+      form_row_lieferant( 'Lieferant:', false, $lieferanten_id );
+      form_row_text( 'Bezeichnung:', 'name', 30, $name );
+      form_row_betrag( 'Wert:', 'wert', $wert );
+      form_row_betrag( 'MWSt:', 'mwst', $mwst );
       open_tr();
         open_td('right smallskip', "colspan='2'");
           if( $editable ) {
