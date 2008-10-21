@@ -2,41 +2,33 @@
 // copyright Fc Schinke09 2006 
 
 
-function deleteProduktpreis(id)
-{
-   document.forms['reload_form'].action.value="delete_price";
-   document.forms['reload_form'].preis_id.value=id;
-   document.forms['reload_form'].submit();
-}	
 
-function checkAll(thisForm,elmnt,tf,x) {
-  var o = document.forms[thisForm].elements
-  if (o){
-    for (i=0; i<o.length; i++){
-      if (elmnt != ''){
-        if ((o[i].type == 'checkbox')&&(o[i].name.indexOf(elmnt+"") != -1)){
-          o[i].checked = tf
-        }
-      }
-      else {
-        if (o[i].type == 'checkbox'){
-          o[i].checked = tf
-        }
-      }			
+function checkAll( form_id ) {
+  var o = document.forms[ 'form_'+form_id ].elements;
+  if (o) {
+    for (i=0; i<o.length; i++) {
+      if (o[i].type == 'checkbox')
+        o[i].checked = 1;
     }
   }	
-  for (var j = 0; j < document.links.length; j++){
-    if ((document.links[j].href.indexOf(thisForm) != -1) && (document.links[j].href.indexOf('checkAll') != -1)){
-      if (tf == true){
-        document.links[j].href = "javascript:checkAll('"+thisForm+"','"+elmnt+"',false)";
-        //document.links[j].innerText = "- all";
-      }
-      else {
-        document.links[j].href = "javascript:checkAll('"+thisForm+"','"+elmnt+"',true)";
-        //document.links[j].innerText = "+ all";
-      }
+  // if( s = document.getElementById('checkall_'+form_id) )
+  //   s.className = 'button inactive';
+  // if( s = document.getElementById('uncheckall_'+form_id) )
+  //   s.className = 'button';
+}
+
+function uncheckAll( form_id ) {
+  var o = document.forms[ 'form_'+form_id ].elements;
+  if (o){
+    for (i=0; i<o.length; i++) {
+      if (o[i].type == 'checkbox')
+        o[i].checked = 0;
     }
-  }
+  }	
+  // if( s = document.getElementById('uncheckall_'+form_id) )
+  //   s.className = 'button inactive';
+  // if( s = document.getElementById('checkall_'+form_id) )
+  //   s.className = 'button';
 }
 
 // neuesfenster: neues (grosses) Fenster oeffnen (fuer wiki)
@@ -56,21 +48,6 @@ function insert_col(self,spalten) {
   s = document.getElementById('select_insert_cols').options[i].value;
   window.location.href = self + '&spalten=' + ( spalten + parseInt(s) );
 }
-function select_group(self) {
-  i = document.getElementById('select_group').selectedIndex;
-  s = document.getElementById('select_group').options[i].value;
-  window.location.href = self + '&gruppen_id=' + s;
-}
-function select_lieferant(self) {
-  i = document.getElementById('select_lieferant').selectedIndex;
-  s = document.getElementById('select_lieferant').options[i].value;
-  window.location.href = self + '&lieferanten_id=' + s;
-}
-function select_auszug(self) {
-  i = document.getElementById('select_auszug').selectedIndex;
-  s = document.getElementById('select_auszug').options[i].value;
-  window.location.href = self + '&auszug=' + s;
-}
 
 function closeCurrentWindow() {
   // this function is a workaround for the spurious " 'window.close()' is not a function" -bug
@@ -78,13 +55,16 @@ function closeCurrentWindow() {
   window.close();
 }
 
-// submit_form: erlaubt POST an script in anderem fenster:
-//  - $form ist name eines <form> im aktuellen skript, action="neues skript"
-//  - $window ist ein fenstename
-//  - $button_id ist eine optionale POST variable, um den gedrueckten submit-knopf zu identifizieren
-function submit_form( form, window_id, optionen, button_id ) {
+// submit_form: submit form (ie, POST input) to script in different window:
+//  - form: name of the <form> to be submitted
+//  - url: the action of the <form> (empty: use existing action)
+//  - window: the target of the form name of the window to POST into
+//  - button_id: optonal additional variable to be POSTed (to distinguish which button was clicked on)
+function submit_form( form, url, window_id, optionen, button_id ) {
   window.open( '', window_id, optionen ).focus();
   document.forms[form].target = window_id;
+  if( url )
+    document.forms[form].action = url;
   if( button_id != '' )
     if( document.forms[form].button_id )
       document.forms[form].button_id.value = button_id;
@@ -94,27 +74,28 @@ function submit_form( form, window_id, optionen, button_id ) {
     alert( 'no such form: ' + form + ' button_id: ' + button_id );
 }
 
-function on_change( $id ) {
-  if( $id ) {
-    if( s = document.getElementById( 'submit_button_'+$id ) )
+function on_change( id ) {
+  if( id ) {
+    if( s = document.getElementById( 'submit_button_'+id ) )
       s.className = 'button';
-    if( s = document.getElementById( 'reset_button_'+$id ) )
+    if( s = document.getElementById( 'reset_button_'+id ) )
       s.className = 'button';
-    if( s = document.getElementById( 'floating_submit_button_'+$id ) )
+    if( s = document.getElementById( 'floating_submit_button_'+id ) )
       s.style.display = 'inline';
   }
 }
 
-function on_reset( $id ) {
-  if( $id ) {
-    if( s = document.getElementById( 'submit_button_'+$id ) )
-      s.className = 'inactive';
-    if( s = document.getElementById( 'reset_button_'+$id ) )
-      s.className = 'inactive';
-    if( s = document.getElementById( 'floating_submit_button_'+$id ) )
+function on_reset( id ) {
+  if( id ) {
+    if( s = document.getElementById( 'submit_button_'+id ) )
+      s.className = 'button inactive';
+    if( s = document.getElementById( 'reset_button_'+id ) )
+      s.className = 'button inactive';
+    if( s = document.getElementById( 'floating_submit_button_'+id ) )
       s.style.display = 'none';
   }
 }
+
 
 // experimenteller code - funktioniert noch nicht richtig...
 // 
