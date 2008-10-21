@@ -5,181 +5,107 @@ assert( $angemeldet ) or exit();
 $problems="";
 $msg="";
 
-
 get_http_var( 'optionen', 'u', 0, true );
 $show_member_details= $optionen & GRUPPEN_OPT_DETAIL;
-	
+
+if( $dienst == 4 or $dienst == 5 ) {
+  open_table('menu');
+      open_th('', '', 'Optionen' );
+    open_tr();
+      open_td();
+        option_checkbox( 'optionen', GRUPPEN_OPT_DETAIL, 'Details f&uuml;r Gruppenmitglieder anzeigen' );
+    open_tr();
+      open_td();
+        option_checkbox( 'optionen', GRUPPEN_OPT_INAKTIV, 'inaktive Gruppen zeigen'
+            , 'Auch inaktive/gelÃ¶schte Gruppen anzeigen?' );
+    open_tr();
+      open_td();
+        option_checkbox( 'optionen', GRUPPEN_OPT_UNGEBUCHT, 'nur ungebuchte Einzahlungen'
+            , 'Nur Gruppen mit ungebuchten Einzahlungen anzeigen?' );
+    open_tr();
+      open_td();
+        option_radio( 'optionen', 0, GRUPPEN_OPT_SCHULDEN | GRUPPEN_OPT_GUTHABEN, 'alle' );
+        option_radio( 'optionen', GRUPPEN_OPT_SCHULDEN, GRUPPEN_OPT_GUTHABEN, 'Gruppen mit Schulden' );
+        option_radio( 'optionen', GRUPPEN_OPT_GUTHABEN, GRUPPEN_OPT_SCHULDEN, 'Gruppen mit Guthaben' );
+  close_table();
+  bigskip();
+}
+
+if( ! $readonly and hat_dienst(5) ) {
+  open_fieldset( 'small_form', '', 'Neue Gruppe anlegen', 'off' );
+    open_form( 'small_form', '', '', array( 'action' => 'insert' ) );
+      open_table();
+        open_tr(); open_td( 'label', '', 'Nr:' ); open_td( 'kbd', '', string_view( '', 4, 'newNumber' ) );
+        open_tr(); open_td( 'kbd', '', string_view( '', 20, 'newName' ) );
+        open_tr(); open_td( 'right', "colspan='2'" ); submission_button();
+      close_table();
+    close_form();
+  close_fieldset();
+}
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
 get_http_var('action','w','');
 $readonly and $action = '';
+switch( $action ) {
+  case 'delete':
+    nur_fuer_dienst(5);
+    need_http_var('gruppen_id','u');
 
-?> <div style='padding-bottom:2em;'> <?
-  if( $dienst == 4 or $dienst == 5 ) {
-    ?>
-      <table class='menu' style='padding-bottom:2em;'>
-      <tr>
-        <th>Optionen</th>
-      </tr>
-      <tr>
-        <td>
-          <input type='checkbox'
-            <? if( $optionen & GRUPPEN_OPT_DETAIL ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_DETAIL );
-            ?>';"
-            title='Details f&uuml;r Gruppenmitglieder anzeigen'
-          >Details f&uuml;r Gruppenmitglieder anzeigen
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <input type='checkbox'
-            <? if( $optionen & GRUPPEN_OPT_INAKTIV ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_INAKTIV);
-            ?>';"
-            title='Auch inaktive/gelÃ¶schte Gruppen anzeigen?'
-          > inaktive Gruppen zeigen
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <input type='checkbox'
-            <? if( $optionen & GRUPPEN_OPT_UNGEBUCHT ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen ^ GRUPPEN_OPT_UNGEBUCHT );
-            ?>';"
-            title='Nur Gruppen mit ungebuchten Einzahlungen anzeigen?'
-          > nur ungebuchte Einzahlungen
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <span class='radiooption'>
-            <input type='radio' name='schuldoderguthaben'
-            <? if( ( $optionen & (GRUPPEN_OPT_SCHULDEN | GRUPPEN_OPT_GUTHABEN) ) == 0 ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", ($optionen & ~(GRUPPEN_OPT_SCHULDEN | GRUPPEN_OPT_GUTHABEN) );
-            ?>';"
-            > alle
-          </span>
-          <span class='radiooption'>
-            <input type='radio' name='schuldoderguthaben'
-            <? if( $optionen & GRUPPEN_OPT_SCHULDEN ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", (($optionen | GRUPPEN_OPT_SCHULDEN) & ~ GRUPPEN_OPT_GUTHABEN);
-            ?>';"
-            > Gruppen mit Schulden
-          </span>
-          <span class='radiooption'>
-            <input type='radio' name='schuldoderguthaben'
-            <? if( $optionen & GRUPPEN_OPT_GUTHABEN ) echo " checked"; ?>
-            onclick="window.location.href='<?
-              echo self_url('optionen'), "&optionen=", (($optionen | GRUPPEN_OPT_GUTHABEN) & ~GRUPPEN_OPT_SCHULDEN);
-            ?>';"
-            > Gruppen mit Guthaben
-          </span>
-        </td>
-      </tr>
-      </table>
-    <? } ?>
-    </div>
+    $row = sql_gruppendaten( $gruppen_id );
+    $kontostand = kontostand( $gruppen_id );
+    if( abs($kontostand) > 0.005 ) {
+      div_msg( 'warn', "Kontostand ($kontostand EUR) ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
+    } elseif( $row['mitgliederzahl'] != 0 ) {
+      div_msg( 'warn', "Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
+      div_msg( 'warn', "(bitte erst Mitglieder l&ouml;schen, um Sockelbetrag zu verbuchen)" );
+    } else {
+      sql_update( 'bestellgruppen', $gruppen_id, array( 'aktiv' => 0 ) );
+    }
+    break;
+  case 'insert':
+    nur_fuer_dienst(5);
+    need_http_var('newNumber', 'u');
+    need_http_var('newName','H');
+    // vorläufiges Passwort für die Bestellgruppe erzeugen...
+    $pwd = strval(rand(1010,9999));
 
-  <?
-
-  if( $hat_dienst_V and ! $readonly ) {
-    echo switchable_form( "Neue Gruppe anlegen", "newgroup", false, "
-      <input type='hidden' name='action' value='insert'>
-      <table>
-        <tr><td>Nr:</td><td><input type='text' size='4' name='newNumber' /></td></tr>
-        <tr><td>Name:</td><td><input type='text' size='12' name='newName' /></td></tr>
-        <tr><td></td><td style='text-align:right;'><input type='submit' value='Anlegen' /></td></tr>
-      </table>
-    " );
-
-    if( $action == 'delete' ) {
-      nur_fuer_dienst(5);
-      need_http_var('gruppen_id','u');
-    
-      $row = sql_gruppendaten( $gruppen_id );
-    
-      $kontostand = kontostand( $row['id'] );
-      if( abs($kontostand) > 0.005 ) {
-        ?>
-          <div class='warn'>Kontostand (<? echo $kontostand; ?> EUR) ist nicht null: L&ouml;schen nicht m&ouml;glich!</div>
-        <?
-      } elseif( $row['mitgliederzahl'] != 0 ) {
-        ?>
-          <div class='warn'>Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich (Sockelbetrag!)</div>
-          <div class='warn'>(bitte erst auf null setzen, um Sockelbetrag zu verbuchen!)</div>
-        <?
-      } else {
-        sql_update( 'bestellgruppen', $gruppen_id, array( 'aktiv' => 0 ) );
-      }
-   }
-    if( $action == 'insert' ) {
-	    need_http_var('newNumber', 'u');
-		  need_http_var('newName','H');
-		      // vorläufiges Passwort für die Bestellgruppe erzeugen...
-		      $pwd = strval(rand(1010,9999));
-
-		      if(sql_insert_group($newNumber, $newName, $pwd)){
-			//ToDo Forward to corresponding 
-			      //gruppen_mitglieder
-			$msg = $msg . "
-			  <div class='ok'>Gruppe erfolgreich angelegt</div>
-			  <div class='ok'>Vorl&auml;ufiges Passwort: <b>$pwd</b> (bitte notieren!)</div>
-			";
-		      }
-	  }
-  }
-
-if( $action == 'cancel_payment' ) {
-  need_http_var( 'transaction_id', 'u' );
-  // echo "id: $gruppen_id, trans: $transaction_id <br>";
-  $trans = sql_get_transaction( -$transaction_id );
-  if( $trans['gruppen_id'] != $login_gruppen_id )
-    nur_fuer_dienst(4,5);
-  doSql( "DELETE FROM gruppen_transaktion WHERE id=$transaction_id" );
+    if(sql_insert_group($newNumber, $newName, $pwd))
+      //ToDo Forward to corresponding gruppen_mitglieder
+      $msg = $msg . "
+        <div class='ok'>Gruppe erfolgreich angelegt</div>
+        <div class='ok'>Vorl&auml;ufiges Passwort: <b>$pwd</b> (bitte notieren!)</div>
+      ";
+    break;
+  case 'cancel_payment':
+    need_http_var( 'transaction_id', 'u' );
+    // echo "id: $gruppen_id, trans: $transaction_id <br>";
+    $trans = sql_get_transaction( -$transaction_id );
+    if( $trans['gruppen_id'] != $login_gruppen_id )
+      nur_fuer_dienst(4,5);
+    need( $trans['konterbuchung_id'] == 0, 'bereits verbucht, kann nicht mehr gel&ouml;scht werden!' );
+    doSql( "DELETE FROM gruppen_transaktion WHERE id=$transaction_id" );
+    break;
 }
 
+echo $problems; echo $msg; 
 
-// Hier ändern. Code in views verschieben, details in editGroup verschieben
-   //$show_member_details=TRUE;
+medskip();
 
-  echo $problems; echo $msg; 
-
-  ?>
-
- 
- 
-    <br><br>
-
-    <table class='list'>
-      <tr>
-         <th>Nr</th>
-         <th>Gruppenname</th>
-	 <!--
-         <th>AnsprechpartnerIn</th>
-         <th>Mail</th>
-         <th>Telefon</th>
-         -->
-         <th>Kontostand</th>
-         <th>Mitgliederzahl</th>
-	 <!--
-         <th>Diensteinteilung</th>
-         -->
-         <th>Optionen</th>
-      </tr>
-  <?
+open_table('list');
+  open_th( '','','Nr' );
+  open_th( '','','Gruppenname' );
+  open_th( '','','Kontostand' );
+  open_th( '','','Mitgliederzahl' );
+  open_th( '','','Aktionen' );
 
   $summe = 0;
   $mitglieder_summe = 0;
-  $result = ( $optionen & GRUPPEN_OPT_INAKTIV ? sql_bestellgruppen() : sql_aktive_bestellgruppen() );
-  while ($row = mysql_fetch_array($result)) {
+  $gruppen = ( $optionen & GRUPPEN_OPT_INAKTIV ? sql_bestellgruppen() : sql_aktive_bestellgruppen() );
+  foreach( $gruppen as $row ) {
     $id = $row['id'];
-    if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
+    if( in_array( $id, $specialgroups ) )
+      continue;
+    if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) ) {
       $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
       if( $optionen & GRUPPEN_OPT_SCHULDEN )
         if( $kontostand >= 0 )
@@ -189,56 +115,41 @@ if( $action == 'cancel_payment' ) {
           continue;
       $offene_einzahlungen = sql_ungebuchte_einzahlungen( $id );
       if( $optionen & GRUPPEN_OPT_UNGEBUCHT )
-        if( mysql_num_rows($offene_einzahlungen) < 1 )
+        if( count($offene_einzahlungen) < 1 )
           continue;
       $summe += $kontostand;
     }
     $nr = $row['gruppennummer'];
-    echo "
-      <tr>
-        <td>$nr</td>
-        <td>{$row['name']}</td>
-	";
-      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
-        echo "<td align='right'>$kontostand</td>";
-	} else {
-		
-        echo "<td></td>";
-	}
-    echo"
-      <td class='number'>{$row['mitgliederzahl']}</td>
-      <td>
-    ";
     $mitglieder_summe += $row['mitgliederzahl'];
-    if( $row['aktiv'] > 0 ) {
-      echo fc_alink( 'gruppenmitglieder', "gruppen_id=$id,title=Personen" );
-      if( ! $readonly ) {
+
+    open_tr();
+      open_td( '', '', $nr );
+      open_td( '', '', $row['name'] );
+      open_td( 'number' );
+      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) )
+        echo price_view( $kontostand );
+      open_td( 'number', '', $row['mitgliederzahl'] );
+      open_td();
+
+      if( $row['aktiv'] > 0 ) {
+        echo fc_link( 'gruppenmitglieder', "gruppen_id=$id,title=Mitglieder,text=" );
         if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
-          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt" );
+          echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,text=" );
         } elseif( $login_gruppen_id == $id ) {
-          echo fc_alink( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,meinkonto=1" );
+          echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,meinkonto=1,text=" );
         }
         if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
-          if( mysql_num_rows($offene_einzahlungen) > 0 ) {
-            ?>
-              <table>
-                <tr>
-                  <th colspan='3'>ungebuchte Einzahlungen:</th>
-                </tr>
-              <? while( $trans = mysql_fetch_array( $offene_einzahlungen ) ) { ?>
-                <tr>
-                  <td><? echo $trans['eingabedatum_trad']; ?></td>
-                  <td><? printf( "%.2lf", $trans['summe'] ); ?></td>
-                  <td>
-                    <? echo fc_action( array( 'action' => 'cancel_payment', 'transaction_id' => $trans['id']
-                       , 'img' => 'img/b_drop.png', 'title' => 'L&ouml;schen?'
-                       ) );
-                    ?>
-                  </td>
-                </tr>
-              <? } ?>
-              </table>
-            <?
+          if( $offene_einzahlungen ) {
+            open_table('list');
+                open_th( '', "colspan='3'", 'ungebuchte Einzahlungen:' );
+              foreach( $offene_einzahlungen as $trans ) {
+                open_tr();
+                  open_td( 'left', '', $trans['eingabedatum_trad'] );
+                  open_td( 'number', '', price_view( $trans['summe'] ) );
+                  open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'L&ouml;schen?' )
+                                            , array( 'action' => 'cancel_payment', 'transaction_id' => $trans['id'] ) ) );
+              }
+            close_table();
           }
         }
         // loeschen nur wenn
@@ -249,39 +160,30 @@ if( $action == 'cancel_payment' ) {
             && ( $row['mitgliederzahl'] == 0 )
             && ( ! in_array( $id, $specialgroups ) )
         ) {
-          echo fc_action( array( 'action' => 'delete', 'gruppen_id' => $row['id']
-          , 'img' => 'img/b_drop.png', 'title' => 'Gruppe l&ouml;schen?'
-          , 'confirm' => 'Soll die Gruppe wirklich GEL&Ouml;SCHT werden?'
-          ) );
+          echo fc_action( array( 'class' => 'drop', 'title' => 'Gruppe l&ouml;schen?', 'text' => ''
+                               , 'confirm' => 'Soll die Gruppe wirklich GEL&Ouml;SCHT werden?' )
+                        , array( 'action' => 'delete', 'gruppen_id' => $row['id'] ) );
         }
+      } else {
+        ?>(inaktiv)<?
       }
-    } else {
-      ?>(inaktiv)<?
-    }
-    ?> </td> </tr> <?
 
-    if($show_member_details){
-?>
-	<tr>
-          <td/>
-          <td colspan="4">
-	<? membertable_view( $id, FALSE,FALSE, FALSE); ?>
-         <td/>
-<?
+    if($show_member_details) {
+      open_tr();
+        open_td();
+        open_td('', "colspan='4'" );
+          membertable_view( $id, FALSE,FALSE, FALSE);
     }
   }
 
   if( $dienst == 4 or $dienst == 5 ) {
-    ?>
-      <tr class='summe'>
-        <td colspan='2' style='text-align:right;'>Summe:</td>
-        <td class='number'><? printf( "%.2lf", $summe ); ?></td>
-        <td class='number'><? echo $mitglieder_summe; ?></td>
-        <td colspan='1'>&nbsp;</td>
-      </tr>
-    <?
+    open_tr('summe');
+      open_td('right', "colspan='2'", 'Summe:' );
+      open_td('number', '', price_view( $summe ) );
+      open_td('number', '', $mitglieder_summe );
+      open_td();
   }
+
+close_table();
+
 ?>
-
-</table>
-
