@@ -47,9 +47,9 @@ switch( $action ) {
   case 'delete':
     nur_fuer_dienst(4);
     need_http_var( 'delete_id', 'U' );
-    need( references_gesamtbestellung( $bestell_id ) == 0 );
+    need( sql_references_gesamtbestellung( $bestell_id ) == 0 );
     doSql( "DELETE FROM gesamtbestellungen WHERE id = $delete_id " );
-    unset( $bestell_id );
+    $bestell_id = 0;
     unset( $self_fields['bestell_id'] );
     break;
 
@@ -58,10 +58,7 @@ switch( $action ) {
 }
 
 if( ! $bestell_id ) {
-  // auswahl praesentieren, abhaengig von $state oder $window:
-  get_http_var( 'state', 'u', 0, true );
-  $result = sql_bestellungen( $state );
-  select_bestellung_view($result, 'Liste der Bestellungen', $hat_dienst_IV, $dienst > 0 );
+  select_bestellung_view();
   return;
 }
 
@@ -114,7 +111,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
     $title="Lieferschein";
     break;
   default: 
-    ?> <div class='warn'>Keine Detailanzeige verfügbar</div> <?
+    div_msg( 'warn', 'Keine Detailanzeige verfügbar' );
     return;
 }
 
@@ -125,8 +122,8 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 //  FIXME in obiges switch-statement integrieren
   //
   if( $editable and $state == STATUS_VERTEILT ) {
-    foreach( sql_bestellprodukte($bestell_id, 0, 0 ) as $produkt ) {
-      $produkt_id =$produkt['produkt_id'];
+    foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
+      $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
         $mengenfaktor = $produkt['mengenfaktor'];
         $liefermenge = $produkt['liefermenge'] / $mengenfaktor;
@@ -147,66 +144,66 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
   //infos zur gesamtbestellung auslesen 
   $bestellung = sql_bestellung($bestell_id);
 
-  ?><h1><? echo $title; ?></h1>
+  echo "<h1>$title</h1>";
 
-    <table width='100%' class='layout'>
-      <tr>
-        <td style='text-align:left;padding-bottom:1em;'>
-         <?  bestellung_overview($bestellung,$gruppen_id,$gruppen_id); ?>
-        </td>
-        <td style='text-align:right;padding-bottom:1em;' id='option_menu'>
-        </td>
-      </tr>
-    </table>
-  <?
+open_table( 'layout' );
+    open_td( 'left' );
+      bestellung_overview($bestellung,$gruppen_id,$gruppen_id);
+    open_td( 'right qquad', "id='option_menu'", '' );
+close_table();
 
-  option_menu_row( "<th colspan='2'>Anzeigeoptionen</th>" );
+open_option_menu_row( "<th colspan='2'>Anzeigeoptionen</th>" );
 
-  option_menu_row(
-    " <td>Gruppenansicht:</td>
-      <td><select id='select_group' onchange=\"select_group('"
-      . self_url( 'gruppen_id' ) . "');\">
-    " . optionen_gruppen(
-        $bestell_id
-       , false
-       , $gruppen_id
-       , "Alle (Gesamtbestellung)"
-      , ( $hat_dienst_IV ? false : $login_gruppen_id )
-      , array( sql_basar_id() => 'Basar', sql_muell_id() => 'Müll' )
-      ) . " </select></td>"
-  );
+open_option_menu_row();
+  open_td( '', '', 'Gruppenansicht:' );
+  open_td();
+    open_select( 'gruppen_id', 'autoreload' );
+      echo optionen_gruppen(
+        $gruppen_id
+      , ( hat_dienst(4) ? '' : "( id in ( $login_gruppen_id , sql_muell_id(), sql_basar_id() ) )" )
+      , "Alle (Gesamtbestellung)"
+      , $bestell_id
+      );
+    close_select();
+close_option_menu_row();
 
-  products_overview(
-    $bestell_id,
-    $editable,   // Liefermengen edieren zulassen?
-    $editable,   // Preise edieren zulassen?
-    $spalten,    // welche Tabellenspalten anzeigen
-    $gruppen_id, // Gruppenansichte (0: alle)
-    true,        // angezeigte Spalten auswaehlen lassen
-    true,        // Gruppenansicht auswaehlen lassen
-    true         // Option: Anzeige nichtgelieferte zulassen
-  );
+medskip();
 
-  switch( $state ) {
-    case STATUS_LIEFERANT:
-    case STATUS_VERTEILT:
-      if( ! $readonly and ! $gruppen_id and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
-        echo "
-          <h3>Zusätzliches Produkt eintragen (wirkt wie Basar<b>bestellung</b>):</h3>
-          <form method='post' action='" . self_url() . "'> " . self_post() . "
-            <input type='hidden' name='action' value='insert'>
-        ";
-        select_products_not_in_list($bestell_id);
-        echo "
-          <label>Menge:</label>
-          <input type='text' size='6' style='text-align:right;' name='menge' value='0'>
-          <input type='submit' value='Produkt hinzufügen'>
-          </form>
-        ";
-      }
-      break;
-    default:
-      break;
-  }
+products_overview(
+  $bestell_id,
+  $editable,   // Liefermengen edieren zulassen?
+  $editable,   // Preise edieren zulassen?
+  $spalten,    // welche Tabellenspalten anzeigen
+  $gruppen_id, // Gruppenansichte (0: alle)
+  true,        // angezeigte Spalten auswaehlen lassen
+  true,        // Gruppenansicht auswaehlen lassen
+  true         // Option: Anzeige nichtgelieferte zulassen
+);
+
+switch( $state ) {
+  case STATUS_LIEFERANT:
+  case STATUS_VERTEILT:
+    if( ! $readonly and ! $gruppen_id and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
+      open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
+        open_form( '', '', '', 'action=insert' );
+          open_div( 'kommentar' )
+            ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
+            open_ul();
+              open_li( '', '', 'das Produkt muss ggf. vorher in der Produkt-Datenbank erfasst sein' );
+              open_li( '', '', 'eine Eintragung hier erzeugt erstmal nur eine Basar-<em>Bestellung</em>
+                                die <em>Liefer</em>menge ist noch null und muss hinterher gesetzt werden!' );
+            close_ul();
+          close_div();
+          select_products_not_in_list($bestell_id);
+          ?> <label>Menge:</label> <?
+          echo int_view( 0, 'menge' );
+          submission_button();
+        close_form();
+      close_fieldset();
+    }
+    break;
+  default:
+    break;
+}
+
 ?>
-
