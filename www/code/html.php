@@ -11,6 +11,8 @@ global $td_title, $tr_title;
 $td_title = '';
 $tr_title = '';
 
+// new_html_id(): liefert bei jedem Aufruf eine neue Nummer, zur Generierung eindeutiger id-Attribute:
+//
 function new_html_id() {
   global $html_id;
   ++$html_id;
@@ -233,16 +235,14 @@ function close_li() {
   }
 }
 
-function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
+function open_form( $class = '', $attr = '', $action = array(), $hide = array() ) {
   global $form_id, $input_event_handlers, $hidden_input;
   $form_id = new_html_id();
   $hidden_input = '';
-  if( ! $action )
-    $action = array();
-  if( is_array( $action ) ) {
-    $action['context'] = 'action';
-    $action = fc_link('',$action);
-  }
+  if( is_string( $action ) )
+    $action = parameters_explode( $action );
+  $action['context'] = 'action';
+  $action = fc_link('',$action);
   if( is_string( $hide ) )
     $hide = parameters_explode( $hide );
   open_tag( 'form', $class, "method='post' action='$action' $attr name='form_$form_id'" );
@@ -257,6 +257,7 @@ function open_form( $class = '', $attr = '', $action = '', $hide = array() ) {
 function close_form() {
   global $input_event_handlers;
   $input_event_handlers = '';
+  echo "<span class='nodisplay'><input type='submit'></span>";
   close_tag( 'form' );
 }
 
@@ -266,20 +267,19 @@ function open_fieldset( $class = '', $attr = '', $legend = '', $toggle = false )
       $buttondisplay = 'none';
       $fieldsetdisplay = 'block';
     } else {
-      $buttondisplay = 'block';
+      $buttondisplay = 'inline';
       $fieldsetdisplay = 'none';
     }
     $id = new_html_id();
-    open_span( $class, "$attr id='button_$id' style='display:$buttondisplay;'" );
-      echo "<input class='button' type='button'
-               onclick=\"document.getElementById('fieldset_$id').style.display='block';
+    open_span( '', "$attr id='button_$id' style='display:$buttondisplay;'" );
+      echo "<a class='button' onclick=\"document.getElementById('fieldset_$id').style.display='block';
                             document.getElementById('button_$id').style.display='none';\"
-               value='$legend...' >";
+            >$legend...</a>";
     close_span();
 
     open_fieldset( $class, "$attr style='display:$fieldsetdisplay;' id='fieldset_$id'" );
     echo "<legend><img src='img/close_black_trans.gif'
-            onclick=\"document.getElementById('button_$id').style.display='block';
+            onclick=\"document.getElementById('button_$id').style.display='inline';
                      document.getElementById('fieldset_$id').style.display='none';\">
           $legend</legend>";
   } else {
@@ -313,57 +313,57 @@ function floating_submission_button() {
   open_span( 'alert floatingbuttons', "id='floating_submit_button_$form_id'" );
     open_table('layout');
       open_td('alert left');
-        ?> <img class='button' src='img/close_black_trans.gif'
-           onClick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
-      open_td('alert center', '', "&Auml;nderungen sind noch nicht gespeichert!" );
+        ?> <a class='close' title='Schließen'
+          onclick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
+      open_td('alert center quad', '', "&Auml;nderungen sind noch nicht gespeichert!" );
     open_tr();
-      open_td( 'alert center', "colspan='2'" );
-        ?> <input type='submit' class='bigbutton' value='Speichern'>
-           <input type='reset' class="bigbutton" value='Zur&uuml;cksetzen'
-            onClick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
+      open_td( 'alert center oneline smallskip', "colspan='2'" );
+        reset_button();
+        submission_button();
     close_table();
   close_tag('span');
 }
 
-function submission_button( $text = 'Speichern' ) {
+function submission_button( $text = 'Speichern', $active = false ) {
   global $form_id;
-  echo "<span class='qquad'><input class='button inactive' type='submit' id='submit_button_{$form_id}' value='$text'></span>";
+  $class = ( $active ? 'button' : 'button inactive' );
+  open_span( 'qquad', '', "<a class='$class' id='submit_button_$form_id' title='$text' onClick='document.forms.form_$form_id.submit();'>$text</a>" );
 }
 
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
   global $form_id;
-  echo "<span class='qquad'>
-        <input class='button inactive' title='&Auml;nderungen r&uuml;g&auml;ngig machen' type='reset'
-          id='reset_button_{$form_id}' value='$text' onClick='on_reset($form_id);'>
-        </span>";
+  open_span( 'qquad', '', "<a class='button inactive' id='reset_button_$form_id' title='Änderungen zurücknehmen'
+                              onClick='document.forms.form_$form_id.reset(); on_reset($form_id); '>$text</a>" );
 }
 
 function check_all_button( $text = 'Alle ausw&auml;hlen', $title = '' ) {
   global $form_id;
   $title or $title = $text;
-  echo "<input class='button' title='$text' value='$text' onClick='checkAll($form_id);'>";
+  echo "<a class='button' title='$text' onClick='checkAll($form_id);'>$text</a>";
 }
 function uncheck_all_button( $text = 'Alle abw&auml;hlen', $title = '' ) {
   global $form_id;
   $title or $title = $text;
-  echo "<input class='button' title='$text' value='$text' onClick='uncheckAll($form_id);'>";
+  echo "<a class='button' title='$text' onClick='uncheckAll($form_id);'>$text</a>";
 }
 
-function close_button( $class = 'button' ) {
-  echo "<input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>";
+function close_button( $text = 'Schließen' ) {
+  echo "<a class='button' onclick='if(opener) opener.focus(); closeCurrentWindow();'>$text</a>";
+  // echo "<input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>";
 }
 
 function open_select( $fieldname, $autoreload = false ) {
+  global $input_event_handlers;
   if( $autoreload ) {
     $id = new_html_id();
-    $url = fc_link( 'self', array( $fieldname => 'X', 'context' => 'action' ) );
+    $url = fc_link( 'self', array( 'XXX' => 'X', 'context' => 'action' ) );
     open_tag( 'select', '', "id='$id' onchange=\"
       i = document.getElementById('$id').selectedIndex;
       s = document.getElementById('$id').options[i].value;
-      self.location.href = '$url'.replace( /$fieldname=X/, '$fieldname='+s );
+      self.location.href = '$url'.replace( /XXX=X/, '&$fieldname='+s );
     \" " );
   } else {
-    open_tag( 'select', '', "name='$fieldname'" );
+    open_tag( 'select', '', "$input_event_handlers name='$fieldname'" );
   }
 }
 
@@ -425,7 +425,7 @@ function close_all_tags() {
 register_shutdown_function( 'close_all_tags' );
 
 function div_msg( $class, $msg, $backlink = false ) {
-  echo "<div class='$class'>$msg " . ( $backlink ? fc_alink( $backlink, 'text=zur&uuml;ck...' ) : '' ) ."</div>";
+  echo "<div class='$class'>$msg " . ( $backlink ? fc_link( $backlink, 'text=zur&uuml;ck...' ) : '' ) ."</div>";
 }
 
 function hidden_input( $name, $val = false ) {
@@ -451,6 +451,47 @@ function quad() {
 }
 function qquad() {
   open_span('qquad', '', '' );
+}
+
+
+// option_menu_row:
+// fuegt eine zeile in die <table id="option_menu_table"> ein.
+// die tabelle wird beim ersten aufruf erzeugt, und nach ausgabe des dokuments
+// in ein beliebiges elternelement mit id="option_menu" verschoben:
+//
+function open_option_menu_row( $payload = false ) {
+  global $option_menu_counter, $print_on_exit;
+  if( ! $option_menu_counter ) {
+    // menu erstmal erzeugen (so dass wir einfuegen koennen):
+    echo "<table class='menu' id='option_menu_table'></table>";
+    $option_menu_counter = 0;
+    // positionieren erst ganz am schluss (wenn parent sicher vorhanden ist):
+    $print_on_exit[] = "
+      <script type='text/javascript'>
+        var option_menu_parent, option_menu_table;
+        option_menu_table = document.getElementById('option_menu_table');
+        if( option_menu_table ) {
+          option_menu_parent = document.getElementById('option_menu');
+          if( option_menu_parent ) {
+            option_menu_parent.appendChild(option_menu_table);
+          }
+        }
+      </script>
+    ";
+  }
+  $option_menu_counter = new_html_id();
+  open_table();
+  open_tr( '', "id='option_entry_$option_menu_counter'" );
+  if( $payload ) {
+    echo $payload;
+    close_option_menu_row();
+  }
+}
+
+function close_option_menu_row() {
+  global $option_menu_counter;
+  close_table();
+  open_javascript( move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' ) );
 }
 
 ?>
