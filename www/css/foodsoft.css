@@ -426,8 +426,12 @@ table.list tr.active td {
  *
 */
 
-.small_form fieldset, fieldset.small_form {
-  background-color:#ffffd0;
+fieldset.small_form, .small_form td {
+  background-color:#f0ffc0 !important;
+  /* background-color:#d0f0c0; */
+}
+
+fieldset.small_form {
   margin:1ex;
   border-style:solid;
   border-color:#404040;
@@ -435,12 +439,11 @@ table.list tr.active td {
   padding:1ex;
   margin:1ex;
 }
-.small_form table, .small_form table tr td {
-  background-color:#ffffd0;
+.small_form table.layout td {
   padding:0.5ex;
 }
 .small_form table tr th {
-  background-color:#e0e0f0;
+  background-color:#d0d0f0;
   padding:0.5ex;
 }
 .small_form table tr td label a {
