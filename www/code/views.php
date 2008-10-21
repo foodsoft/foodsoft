@@ -1,6 +1,10 @@
 <?php
 //This file defines views for foodsoft data
 
+//////////////////
+//
+// views for "primitive" types:
+//
 
 function number_selector($name, $min, $max, $selected, $format, $to_stdout = true ){
   global $input_event_handlers;
@@ -78,18 +82,18 @@ function int_view( $num, $fieldname = false ) {
   global $input_event_handlers;
   $num = sprintf( "%d", $num );
   if( $fieldname )
-    return "<input type='text' class='int' size='6' name='$fieldname' value='$num' $input_event_handlers>";
+    return "<input type='text' class='int number' size='6' name='$fieldname' value='$num' $input_event_handlers>";
   else
-    return "<span class='int'>$num</span>";
+    return "<span class='int number'>$num</span>";
 }
 
 function price_view( $price, $fieldname = false ) {
   global $input_event_handlers;
   $price = sprintf( "%.2lf", $price );
   if( $fieldname )
-    return "<input type='text' class='int' size='8' name='$fieldname' value='$price' $input_event_handlers>";
+    return "<input type='text' class='price number' size='8' name='$fieldname' value='$price' $input_event_handlers>";
   else
-    return "<span class='price'>$price</span>";
+    return "<span class='price number'>$price</span>";
 }
 
 function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
@@ -101,25 +105,96 @@ function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
 }
 
 function date_time_view( $datetime, $fieldname = '' ) {
-  if( $fieldname )
-    return date_time_selector( $datetime, $fieldname, true, false );
-  else
+  global $mysqljetzt;
+  if( ! $datetime )
+    $datetime = $mysqljetzt;
+  if( $fieldname ) {
+    sscanf( $datetime, '%u-%u-%u %u:%u', &$year, &$month, &$day, &$hour, &$minute );
+    return date_selector( $fieldname.'_day', $day, $fieldname.'_month', $month, $fieldname.'_year', $year, false )
+           .' '. time_selector( $fieldname.'_hour', $hour, $fieldname.'_minute', $minute, false );
+  } else {
     return "<span class='datetime'>$datetime</span>";
+  }
 }
 function date_view( $date, $fieldname = '' ) {
-  if( $fieldname )
-    return date_time_selector( $date, $fieldname, false, false );
-  else
+  global $mysqlheute;
+  if( ! $date )
+    $date = $mysqlheute;
+  if( $fieldname ) {
+    sscanf( $date, '%u-%u-%u', &$year, &$month, &$day );
+    return date_selector( $fieldname.'_day', $day, $fieldname.'_month', $month, $fieldname.'_year', $year, false );
+  } else {
     return "<span class='date'>$date</span>";
+  }
 }
 
-function produktgruppen_view( $produktgruppen_id = 0, $fieldname = false ) {
-  global $input_event_handlers;
-  if( $fieldname )
+function produktgruppe_view( $produktgruppen_id = 0, $fieldname = false ) {
+  global $input_event_handlers, $window_id;
+  if( $fieldname ) {
      return "<select name='$fieldname' $input_event_handlers>".optionen_produktgruppen( $produktgruppen_id )."</select>";
-  else
-    return ( $produktgruppen_id ? sql_produktgruppen_name( $produktgruppen_id ) : '-' );
+  } else {
+    $text = ( $produktgruppen_id ? sql_produktgruppen_name( $produktgruppen_id ) : '-' );
+    if( $produktgruppen_id and ( $window_id != 'produktgruppen' ) )
+      return fc_link( 'produktgruppen', array( 'class' => 'href', 'text' => $text ) );
+    else
+      return $text;
+  }
 }
+
+function gruppe_view( $gruppen_id = 0, $fieldname = '', $filter = 'aktiv', $option_0 = '' ) {
+  global $input_event_handlers, $window_id;
+  if( $fieldname ) {
+     return "<select name='$fieldname' $input_event_handlers>".optionen_gruppen( $gruppen_id, $filter, $option_0 )."</select>";
+  } else {
+    $text = ( $gruppen_id ? sql_gruppenname( $gruppen_id )." (".sql_gruppennummer( $gruppen_id ).")" : $option_0 );
+    if(  $gruppen_id and ( $window_id != 'gruppenmitglieder' ) )
+      return fc_link( 'gruppenmitglieder', array( 'class' => 'href', 'gruppen_id' => $gruppen_id, 'text' => $text ) );
+    else
+      return $text;
+  }
+}
+
+function konto_view( $konto_id = 0, $fieldname = '' ) {
+  global $input_event_handlers, $window_id;
+  if( $fieldname ) {
+     return "<select name='$fieldname' $input_event_handlers>".optionen_konten( $konto_id )."</select>";
+  } else {
+    $text = ( $konto_id ? sql_kontoname( $konto_id ) : '-' );
+    if( $window_id != 'kontoauszug' )
+      return fc_link( 'konto', array( 'class' => 'href', 'konto_id' => $konto_id, 'text' => $text ) );
+    else
+      return $text;
+  }
+}
+
+function kontoauszug_view( $konto_id = 0, $auszug_jahr = '', $auszug_nr = '', $fieldname = '' ) {
+  global $input_event_handlers, $window_id;
+  if( $fieldname ) {
+    return "Jahr: ".string_view( $auszug_jahr, 4, $fieldname.'_jahr' )
+         . " / Nr.: " .string_view( $auszug_nr,   2, $fieldname.'_nr' );
+  } else {
+    $text = "$auszug_jahr / $auszug_nr";
+    if( $konto_id and ( $window_id != 'kontoauszug' ) )
+      return fc_link( 'kontoauszug', array( 'class' => 'href', 'konto_id' => $konto_id, 'text' => $text
+                                          , 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr ) );
+    else
+      return $text;
+  }
+}
+
+function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
+  global $input_event_handlers, $window_id;
+  if( $fieldname ) {
+    return "<select name='fieldname' $input_event_handlers>".optionen_lieferanten( $lieferant_id, $option_0 )."</select>";
+  } else {
+    $text = ( $lieferant_id ? sql_lieferant_name( $lieferant_id ) : $option_0 );
+    if( $window_id != 'edit_lieferant' )
+      return fc_link( 'edit_lieferant', array( 'class' => 'href', 'lieferanten_id' => $lieferant_id, 'text' => $text ) );
+    else
+      return $text;
+  }
+}
+
 
 
 /**
@@ -251,19 +326,17 @@ function show_dienst_gruppe($row, $color_use){
  * Ausgabe der Links im Hauptmenue und im Foodsoft-Kopf
  */
 function areas_in_menu($area){
-  ?> <tr> <td> <?
-    echo fc_button( $area['area'], array(
-       'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] 
-     ) );
-  ?> </td><td class='small' style='vertical-align:middle;'><? echo $area['hint']; ?></td></tr><?
+  open_tr();
+    open_td('', '', fc_link( $area['area'], array(
+      'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] , 'class' => 'bigbutton'
+    ) ) );
+    open_td( 'small middle', '', $area['hint'] );
 }
 
 function areas_in_head($area){
-  ?> <li> <?
-  echo fc_alink( $area['area'], array(
-    'window_id' => 'main', 'img' => '', 'text' => $area['title'], 'title' => $area['hint'] 
-  ) );
-  ?> </li> <?
+  open_li( '', '', fc_link( $area['area'], array(
+    'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] , 'class' => 'href'
+  ) ) );
 }
 
 function rotationsplanView($row){
@@ -294,7 +367,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   global $muell_id, $input_event_handlers;
 
   if( $editAmounts ) {
-    open_form( '', '', '', array( 'action' => 'basarzuteilung' ) );
+    open_form( '', '', '', 'action=basarzuteilung' );
     $cols=11;
   } else {
     $cols=9;
@@ -303,9 +376,9 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   open_table('list');
 
   $legend = array(
-    "<th>" . fc_alink( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
-  , "<th>" . fc_alink( 'self', "orderby=bestellung,text=Bestellung,title=Sortieren nach Bestellung" ) ."</th>"
-  , "<th>" . fc_alink( 'self', "orderby=datum,text=Lieferdatum,title=Sortieren nach Lieferdatum" ) ."</th>"
+    "<th>" . fc_link( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
+  , "<th>" . fc_link( 'self', "orderby=bestellung,text=Bestellung,title=Sortieren nach Bestellung" ) ."</th>"
+  , "<th>" . fc_link( 'self', "orderby=datum,text=Lieferdatum,title=Sortieren nach Lieferdatum" ) ."</th>"
   , "<th colspan='2'>Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
   , "<th title='Wert incl. MWSt. und Pfand'>Wert</th>"
@@ -328,14 +401,12 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   }
   vprintf( "<tr class='legende'>$rowformat</tr>", $legend );
 
-  $result = sql_basar( $bestell_id, $order );
-
   $last_key = '';
   $row_index=0;
   $js = '';
   $fieldcount = 0;
   $gesamtwert = 0;
-  while( $basar_row = mysql_fetch_array($result) ) {
+  foreach( sql_basar( $bestell_id, $order ) as $basar_row ) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
      $menge=$basar_row['basar'];
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
@@ -346,22 +417,22 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
 
      $row = array( 
        "<td>{$basar_row['produkt_name']}</td>"
-     , "<td>" . fc_alink( 'bestellschein', array(
-          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'img' => false
+     , "<td>" . fc_link( 'bestellschein', array(
+          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'class' => 'href'
         ) ) . "</td>"
      , "<td>{$basar_row['lieferung']}</td>"
      , "<td class='mult'>"
-         . fc_alink( 'produktdetails', array(
-             'img' => '', 'produkt_id' => $basar_row['produkt_id']
+         . fc_link( 'produktdetails', array(
+             'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
            , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] )
            ) )
          . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
      , "<td class='mult'><b>$menge</b></td>
         <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
-        <td style='border-left-style:none;'>"
-        . fc_alink( 'produktverteilung', array(
-           'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
+        <td class='unit'>"
+        . fc_link( 'produktverteilung', array( 'class' => 'question', 'text' => false
+           , 'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
         ) ) . "</td>"
      , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
      , ( $editAmounts ? ( $rechnungsstatus < STATUS_ABGERECHNET ?
@@ -398,7 +469,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   }
   open_tr('summe');
     open_td( 'right', "colspan='8'", 'Summe:' );
-    open_td( 'number', sprintf( "%8.2lf", $gesamtwert ) );
+    open_td( 'number', price_view( $gesamtwert ) );
     open_td();
 
   echo $js;
@@ -406,15 +477,12 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   if( $editAmounts ) {
     open_tr();
       open_td( 'right medskip', "colspan='$cols'" );
-      ?>
-        <select name='gruppe' <? echo $input_event_handlers; ?>>
-          <? echo optionen_gruppen( false, false, false, false, false, array($muell_id => 'Müll' ) ); ?>
-        </select>
-        <input type='hidden' name='fieldcount' value='<? echo $fieldcount; ?>'>
-      <?
-      open_span('qquad');
+        open_select( 'gruppen_id' );
+          echo optionen_gruppen( false, "( aktiv or ( id = $muell_id ) )" );
+        close_select();
+        hidden_input( 'fieldcount', $fieldcount );
+        qquad();
         submission_button('Zuteilen');
-      close_span();
     close_table();
     close_form();
   } else {
@@ -454,10 +522,12 @@ function products_overview(
     $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
     $select_columns = false, $select_nichtgeliefert = false
   ) {
+  global $input_event_handlers;
+
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  $produkte = sql_bestellprodukte( $bestell_id, $gruppen_id, 0 );
+  $produkte = sql_bestellung_produkte( $bestell_id, $gruppen_id, 0 );
   $state = getState($bestell_id);
 
   $warnung_vorlaeufig = "";
@@ -566,27 +636,32 @@ function products_overview(
       }
     }
     if( $opts_insert ) {
-      option_menu_row( "
-        <td>Spalten einblenden:</td><td>
-        <select id='select_insert_cols'
-          onchange=\"insert_col('" . self_url('spalten') . "',$spalten);\"
-          ><option selected>(bitte wählen)</option>$opts_insert</select></td>
-      " );
+      open_option_menu_row();
+        open_td( '', '', 'Spalten einblenden:' );
+        open_td( '', '', "<select id='select_insert_cols'
+            onchange=\"insert_col('" . self_url('spalten') . "',$spalten);\"
+            ><option selected>(bitte wählen)</option>$opts_insert</select></td>
+        " );
+      close_option_menu_row();
     }
     if( $opts_drop ) {
-      option_menu_row( "
-        <td>Spalten ausblenden:</td><td>
-          <select id='select_drop_cols'
+      open_option_menu_row();
+        open_td( '', '', 'Spalten ausblenden:' );
+        open_td( '', '', "<select id='select_drop_cols'
           onchange=\"drop_col('" . self_url('spalten') . "',$spalten);\"
            ><option selected>(bitte wählen)</option>$opts_drop</select></td>
-      " );
+        " );
+      close_option_menu_row();
     }
   }
 
   if( $editAmounts ) {
-    echo "<form action='" . self_url() . "' method='post'>" . self_post();
+    open_form();
+    floating_submission_button();
   }
-  ?> <table class='list' width='100%'><tr class='legende'> <?
+
+  open_table('list', "style='width:100%;'" );
+    open_tr('legende');
 
   $cols = 0;
   $cols_vor_summe = 0;
@@ -733,11 +808,7 @@ function products_overview(
     }
     if( $spalten & PR_COL_LPREIS ) {
       echo "<td class='mult'>";
-      // if($editPrice){
-        echo fc_alink( 'produktdetails', "img=,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) );
-      // } else {
-      //  printf( "%8.2lf", $nettolieferpreis );
-      // }
+        echo fc_link( 'produktdetails', "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) );
       echo "</td><td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>";
     }
     if( $spalten & PR_COL_MWST ) {
@@ -785,12 +856,7 @@ function products_overview(
         if( $editAmounts ) {
           printf( "
             <input name='liefermenge$produkt_id' style='text-align:right;' type='text' size='6' value='%.3lf'
-              onchange=\"
-                document.getElementById('reminder').style.display='inline';
-                document.getElementById('row$produkt_id').className='modified';
-                document.getElementById('row_total').className='modified';\"
-              title='tats&auml;chliche Liefermenge eingeben'
-            >"
+              title='tats&auml;chliche Liefermenge eingeben' $input_event_handlers >"
           , $liefermenge_scaled
           );
 	
@@ -806,7 +872,7 @@ function products_overview(
 		//die Einträge in der Verteiltabelle
           ?> <td style='border-left-style:none;border-right-style:none;'>
                 <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
-                  onchange="document.getElementById('reminder').style.display='inline';">
+                  $input_event_handlers>
              </td>
           <?
 	} else {
@@ -816,7 +882,7 @@ function products_overview(
       }
       if( ! $gruppen_id ) {
         ?> <td style='border-left-style:none;'> <?
-        echo fc_alink( 'produktverteilung', "bestell_id=$bestell_id,produkt_id=$produkt_id" );
+        echo fc_link( 'produktverteilung', "class='question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" );
         ?> </td> <?
       }
     }
@@ -843,69 +909,25 @@ function products_overview(
 
   eval( $summenzeile );
 
-  ?> </table> <?
+  close_table();
   if($editAmounts){
-    floating_submission_button( 'reminder' );
-    ?> </form> <?
+    floating_submission_button();
+    close_form();
   };
 
   if( $haben_nichtgeliefert && $select_nichtgeliefert ) {
-    option_menu_row( "
-      <td colspan='2'>$nichtgeliefert_header zeigen:
-        <input type='checkbox'
-         " . ( ( $spalten & PR_ROWS_NICHTGELIEFERT ) ? ' checked' : '' ) . "'
-         onclick=\"window.location.href='" . self_url('spalten') . "&spalten="
-                 . ($spalten ^ PR_ROWS_NICHTGELIEFERT) . "';\"
-         title='$nichtgeliefert_header vorhanden; diese auch anzeigen?'></td>
-    " );
+    open_option_menu_row();
+      open_td( '', "colspan='2'" );
+        option_checkbox( 'spalten', PR_ROWS_NICHTGELIEFERT, "$nichtgeliefert_header zeigen"
+                       , "$nichtgeliefert_header vorhanden; diese auch anzeigen?" );
+    close_option_menu_row();
   }
   if( $option_nichtgefuellt && $haben_nichtgefuellt ) {
-    option_menu_row( "
-      <td colspan='2'>nicht-volle Gebinde zeigen:
-        <input type='checkbox'
-         " . ( ( $spalten & PR_ROWS_NICHTGEFUELLT ) ? ' checked' : '' ) . "'
-         onclick=\"window.location.href='" . self_url('spalten') . "&spalten="
-                 . ($spalten ^ PR_ROWS_NICHTGEFUELLT) . "';\"
-         title='nicht gefuellte Gebinde vorhanden; diese auch anzeigen?'></td>
-    " );
-  }
-}
-
-// option_menu_row:
-// fuegt eine zeile in die <table id="option_menu_table"> ein.
-// die tabelle wird beim ersten aufruf erzeugt, und nach ausgabe des dokuments
-// in ein beliebiges elternelement mit id="option_menu" verschoben:
-//
-function option_menu_row( $option = false ) {
-  global $option_menu_counter, $print_on_exit;
-  if( ! $option_menu_counter ) {
-    // menu erstmal erzeugen (so dass wir einfuegen koennen):
-    echo "<table class='menu' id='option_menu_table'></table>";
-    $option_menu_counter = 0;
-    // positionieren erst ganz am schluss (wenn parent sicher vorhanden ist):
-    $print_on_exit[] = "
-      <script type='text/javascript'>
-        var option_menu_parent, option_menu_table;
-        option_menu_table = document.getElementById('option_menu_table');
-        if( option_menu_table ) {
-          option_menu_parent = document.getElementById('option_menu');
-          if( option_menu_parent ) {
-            option_menu_parent.appendChild(option_menu_table);
-          }
-        }
-      </script>
-    ";
-  }
-  if( $option ) {
-    $option_menu_counter++;
-    echo "
-      <table>
-        <tr id='option_entry_$option_menu_counter'>$option</tr>
-      </table>
-      <script type='text/javascript'>
-    " .  move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' ) . "
-      </script>
-    ";
+    open_option_menu_row();
+      open_td( '', "colspan='2'" );
+        option_checkbox( 'spalten', PR_ROWS_NICHTGEFUELLT, "nicht-volle Gebinde zeigen"
+                       , 'nicht gefuellte Gebinde vorhanden; diese auch anzeigen?' );
+    close_option_menu_row();
   }
 }
 
@@ -913,157 +935,135 @@ function option_menu_row( $option = false ) {
 /**
  * Liste zur Auswahl einer Bestellung via Link
  */
-function select_bestellung_view( $result, $head="Bitte eine Bestellung wählen:", $editDates = false, $changeState = false ) {
-  global $self, $foodsoftdir, $dienst, $login_gruppen_id, $hat_dienst_IV, $mysqljetzt;
+function select_bestellung_view() {
+  global $self, $foodsoftdir, $dienst, $login_gruppen_id, $mysqljetzt;
 
-  if( $head )
-    echo "<h1 style='margin-bottom:2em;'>$head</h1>";
-?>
-  <table style="width:100%" class="list">
-    <tr>
-      <th>Name</th>
-      <th>Status</th>
-      <th>Bestellzeitraum</th>
-      <th>Lieferung</th>
-      <th>Summe</th>
-      <th>Detailansichten</th>
-<?
-  if( $changeState || $editDates )
-    echo "<th>Aktionen</th>";
-  echo "</tr>";
+  echo "<h1 class='bigskip'>Liste aller Bestellungen</h1>";
 
-  while ($row = mysql_fetch_array($result)) {
+  open_table('list', "width='100%'" );
+    open_th('','','Name');
+    open_th('','','Status');
+    open_th('','','Bestellzeitraum');
+    open_th('','','Lieferung');
+    open_th('','','Summe');
+    open_th('','','Detailansichten');
+    if( $dienst != 0 )
+      open_th('','','Aktionen');
+
+  foreach( sql_bestellungen() as $row ) {
     $bestell_id = $row['id'];
     $rechnungsstatus = getState( $bestell_id );
-    // $fax_url = ?
-    $self_form = "<form action='" . self_url() . "' name='self_form' method='post'>" . self_post();
-    $edit_link = fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" );
-    $aktionen = "";
+    $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
+    $views = array();
+    $actions = array();
 
-    ?>
-      <tr id='row<?echo $bestell_id; ?>'>
-      <td><?echo $row['name']?></td>
-      <td><? echo rechnung_status_string( $row['rechnungsstatus'] ); ?></td>
-      <td>
-        <div><? echo $row['bestellstart']; ?></div>
-        <div> - <? echo $row['bestellende']; ?></div>
-      </td>
-      <td><? echo $row['lieferung']; ?></td>
-      <td><?
-        $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
-        if( $rechnungsstatus == STATUS_ABGERECHNET ) {
-          printf( "<div>%.2lf</div><div style='font-size:smaller;'>%s</div"
-          , sql_bestellung_rechnungssumme( $bestell_id )
-          , dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id )
-          );
-        } else {
-          echo "-";
-        }
-      ?></td>
-    <?
-  
     switch( $rechnungsstatus ) {
-  
+
       case STATUS_BESTELLEN:
-        ?> <td> <?
-          echo  fc_alink( 'bestellschein', "bestell_id=$bestell_id,img=,text=Bestellschein (vorl&auml;ufig)" );
-        ?> </td> <?
-        if( $editDates )
-          $aktionen .= "<li>$edit_link</li>";
-        if( $changeState ) {
-          if( $dienst == 4 )  {
-            if ( $row['bestellende'] < $mysqljetzt ) {
-              $aktionen .= ( "<li>" . fc_action( array( 'action' => 'changeState', 'class' => 'action'
-                             , 'change_id' => $bestell_id, 'change_to' => STATUS_LIEFERANT
-                             , 'title' => 'Jetzt Bestellschein für Lieferanten fertigmachen?'
-                             , 'text' => '>>> Bestellschein fertigmachen >>>' ) ) . "</li>" );
-            } else {
-              $aktionen .= "<li style='font-weight:bold;'>Bestellung läuft noch!</li>";
-            }
-            if( references_gesamtbestellung( $bestell_id ) == 0 ) {
-              $aktionen .= ( "<li>" . fc_action( "action=delete,title=Bestellung löschen,delete_id=$bestell_id,img=img/b_drop.png" ) . "</li>" );
-            }
+        $views[] = fc_link( 'bestellschein', "class=href,bestell_id=$bestell_id,text=Bestellschein (vorl&auml;ufig)" );
+        if( hat_dienst(4) ) {
+          if ( $row['bestellende'] < $mysqljetzt ) {
+            $actions[] = fc_action( array( 'text' => '>>> Bestellschein fertigmachen >>>'
+                                         , 'title' => 'Jetzt Bestellschein für Lieferanten fertigmachen?'
+                                         , 'confirm' => 'Jetzt Bestellschein für Lieferanten fertigmachen?' )
+                                  , array( 'action' => 'changeState'
+                                         , 'change_id' => $bestell_id, 'change_to' => STATUS_LIEFERANT ) );
+          } else {
+            $actions[] = "<div class='alert qquad'>Bestellung läuft noch!</div>";
+          }
+          $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
+          if( sql_references_gesamtbestellung( $bestell_id ) == 0 ) {
+            $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen", "action=delete,delete_id=$bestell_id" );
           }
         }
         break;
-  
+
       case STATUS_LIEFERANT:
-        ?> <td> <?
-          echo  fc_alink( 'bestellschein', "bestell_id=$bestell_id,img=,text=Bestellschein" );
-          // if( $hat_dienst_IV ) {
-          //    fax-download: im Moment ausser Betrieb!
-          // }
-        ?> </td> <?
-        if( $editDates )
-          $aktionen .= "<li>$edit_link</li>";
-        if( $changeState ) {
-          if( $hat_dienst_IV ) {
-            $aktionen .= ( "<li>" . fc_action( array( 'action' => 'changeState', 'class' => 'action'
-                   , 'change_id' => $bestell_id, 'change_to' => STATUS_BESTELLEN
-                   , 'title' => 'Bestellung nochmal zum Bestellen freigeben?'
-                   , 'text' => '<<< Nachbestellen lassen <<<' ) ) . "</li>" );
-          }
-          if( $dienst > 0 ) {
-            $aktionen .= ( "<li>" . fc_action( array( 'action' => 'changeState', 'class' => 'action'
-                  , 'change_id' => $bestell_id, 'change_to' => STATUS_VERTEILT
-                  , 'title' => 'Bestellung wurde geliefert, Lieferschein abgleichen?'
-                  , 'text' => '>>> Lieferschein erstellen >>>' ) ) . "</li>" );
-          }
+        $views[] = fc_link( 'bestellschein', "class=href,bestell_id=$bestell_id,text=Bestellschein" );
+        if( hat_dienst(4) ) {
+          $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
+          $actions[] = fc_action( array( 'text' => '<<< Nachbestellen lassen <<<'
+                                       , 'title' => 'Bestellung nochmal zum Bestellen freigeben?' )
+                                , array( 'action' => 'changeState'
+                                       , 'change_id' => $bestell_id, 'change_to' => STATUS_BESTELLEN ) );
         }
+        if( $dienst > 0 )
+          $actions[] = fc_action( array( 'text' => '>>> Lieferschein erstellen >>>'
+                                       , 'title' => 'Bestellung wurde geliefert, Lieferschein abgleichen?'
+                                       , 'confirm' => 'Bestellung wurde geliefert, Lieferschein abgleichen?' )
+                                , array( 'action' => 'changeState'
+                                       , 'change_id' => $bestell_id, 'change_to' => STATUS_VERTEILT ) );
         break;
 
       case STATUS_VERTEILT:
-        ?> <td> <?
-          echo  fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=Lieferschein" );
-          if( $dienst > 0 ) {
-           ?> <br> <?
-            echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,img=" );
-          }
-        ?> </td> <?
-        if( $editDates )
-          $aktionen .= "<li>$edit_link</li>";
-        if( $dienst == 4 )
-           $aktionen .= ( "<li>" . fc_alink( 'abrechnung', "bestell_id=$bestell_id,text=Abrechnung beginnen..." ) . "</li>" );
+        $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
+        if( $dienst > 0 )
+          $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
+        if( hat_dienst(4) ) {
+          $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
+          $actions[] = fc_link( 'abrechnung', "bestell_id=$bestell_id,text=Abrechnung beginnen..." );
+        }
         break;
 
       case STATUS_ABGERECHNET:
-        ?> <td> <?
-          echo  fc_alink( 'lieferschein', "bestell_id=$bestell_id,img=,text=Lieferschein" );
-          ?> <br> <?
-          echo  fc_alink( 'abrechnung', "bestell_id=$bestell_id,img=" );
-          if( $dienst > 0 ) {
-           ?> <br> <?
-            echo fc_alink( 'verteilliste', "bestell_id=$bestell_id,img=" );
-          }
-        ?> </td> <?
+        $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
+        $views[] = fc_link( 'abrechnung', "class=href,bestell_id=$bestell_id" );
+        if( $dienst > 0 )
+          $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
         break;
 
       case STATUS_ARCHIVIERT:
       default:
-        ?> <td>(keine Details verf&uuml;gbar)</td> <?
         break;
     }
-    if( $changeState || $editDates ) {
-      if( $aktionen )
-        echo "<td><ul class='inner'>$aktionen</ul></td>";
-      else
-        echo "<td> - </td>";
-    }
-    echo "</tr>";
+
+    open_tr('',"id='row$bestell_id'" );
+      open_td('','', $row['name'] );
+      open_td('','', rechnung_status_string( $row['rechnungsstatus'] ) );
+      open_td();
+        open_div( 'left', '',  $row['bestellstart'] );
+        open_div( 'right', '', "- ".$row['bestellende'] );
+      open_td( '', '', $row['lieferung'] );
+      open_td();
+        if( $rechnungsstatus == STATUS_ABGERECHNET ) {
+          open_div( '', '', price_view( sql_bestellung_rechnungssumme( $bestell_id ) ) );
+          open_div( 'small', '', sql_dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id ) );
+        } else {
+          echo '-';
+        }
+      open_td();
+        if( $views ) {
+          open_ul('plain');
+            foreach( $views as $view )
+              open_li( '', '', $view );
+          close_ul();
+        } else {
+          echo '-';
+        }
+      if( $dienst != 0 ) {
+        open_td();
+          if( $actions ) {
+            open_ul('plain');
+              foreach( $actions as $action )
+                open_li( '', '',  $action ); 
+            close_ul();
+          } else {
+            echo '-';
+          }
+      }
   }
-  ?> </table> <?
+  close_table();
 }
 
 function select_products_not_in_list($bestell_id){
-  ?> Produkt: <select name='produkt_id'> <?
-  if( $bestell_id ) {
-    $produkte = getProdukteVonLieferant( getProduzentBestellID( $bestell_id ), $bestell_id );
-    while( $prod = mysql_fetch_array( $produkte ) ) {
+  ?> Produkt: <?
+  open_select( 'produkt_id' );
+    echo "<option value='0' selected>(Bitte Produkt wählen)</option>";
+    foreach( getProdukteVonLieferant( sql_bestellung_lieferant_id( $bestell_id ), $bestell_id ) as $prod ) {
       echo "<option value='".$prod['produkt_id']."'>"
       . $prod['name'] . " (" . $prod['verteileinheit']. ") " ."</option>";
     }
-  }
-  ?> </select> <?
+  close_select();
 }
 
 function distribution_tabellenkopf() {
@@ -1075,14 +1075,13 @@ function distribution_tabellenkopf() {
   close_tr();
 }
 
-
 function distribution_produktdaten( $bestell_id, $produkt_id ) {
-  $produkt = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
+  $produkt = sql_bestellvorschlag( $bestell_id, $produkt_id );
   open_tr();
     open_th( '', "colspan='6'" );
       open_div( '', "style='font-size:1.2em; margin:5px;'" );
-        echo fc_alink( 'produktpreise', array(
-         'text' => $produkt['produkt_name'], 'img' => '', 'produkt_id' => $produkt_id ) );
+        echo fc_link( 'produktpreise', array(
+         'text' => $produkt['produkt_name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
       close_div();
       open_div('small');
         printf( "Preis: %.2lf / %s, Produktgruppe: %s"
@@ -1095,7 +1094,7 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
 }
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
-  $vorschlag = sql_bestellvorschlag_daten($bestell_id,$produkt_id);
+  $vorschlag = sql_bestellvorschlag($bestell_id,$produkt_id);
   preisdatenSetzen( & $vorschlag );
   $verteilmult = $vorschlag['kan_verteilmult'];
   $verteileinheit = $vorschlag['kan_verteileinheit'];
@@ -1113,12 +1112,12 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $muell_id = sql_muell_id();
   $basar_festmenge = 0;
   $basar_toleranzmenge = 0;
-  $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id );
+  $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult;
   $muellmenge = 0;
 
-  foreach( sql_beteiligte_bestellgruppen( $bestell_id, $produkt_id ) as $gruppe ) {
+  foreach( sql_bestellung_gruppen( $bestell_id, $produkt_id ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
-    $mengen = sql_select_single_row( select_bestellprodukte( $bestell_id, $gruppen_id, $produkt_id ), true );
+    $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $gruppen_id, $produkt_id ), true );
     if( $mengen ) {
       $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
       $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
@@ -1133,8 +1132,8 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
         $muellmenge = $mengen['muellmenge'] * $verteilmult;
         continue 2;
       case $basar_id;
-        $basar_toleranzmenge = $mengen['toleranzbestellmenge'];
-        $basar_festmenge = $mengen['gesamtbestellmenge'] - $basar_toleranzmenge;
+        $basar_toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
+        $basar_festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $basar_toleranzmenge;
         continue 2;
     }
     open_tr();
@@ -1154,100 +1153,63 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     open_td('', '', "Basar:" );
     open_td( 'mult', '', int_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'mult', '', $basar_verteilmenge );
+    open_td( 'mult', '', int_view( $basar_verteilmenge ) );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $preis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
 }
 
-
-function sum_row($sum){
-  ?>
-  <tr style='border:none' class='summe'>
-    <td colspan='7' style='border:none;text-align:right;'>Summe:</td>
-    <td class='number'><? printf( "%8.2lf", $sum); ?></td>
-  </tr>
-  <?
-}
-
 function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
-  global $hat_dienst_IV, $window_id;
+  global $login_gruppen_id, $window_id;
   $bestell_id = $row['id'];
-  ?>
-    <table class="list">
-      <tr>
-        <th> Bestellung: </th>
-          <td style="font-size:1.2em;font-weight:bold">
-            <?
-              echo fc_alink( 'lieferschein', array(
-                'img' => false, 'text' => $row['name'], 'bestell_id' => $row['id']
-                , 'title' => 'zum Bestellschein/Lieferschein...'
-              ) );
-              if( $hat_dienst_IV and getState( $bestell_id ) < STATUS_ABGERECHNET ) {
-                echo fc_alink( 'edit_bestellung', "bestell_id=$bestell_id" );
-              }
-              if(sql_dienste_nicht_bestaetigt($row['lieferung'])){
-                ?> <br> <b>Vorsicht:</b> <?
-                echo fc_alink( 'dienstplan', 'text=Dienstegruppen abwesend?' );
-              }
-            ?>
-          </td>
-        </tr>
-        <tr>
-          <th>Lieferant:</th>
-          <td><?
-            echo fc_alink( 'edit_lieferant', array( 'text' => lieferant_name( $row['lieferanten_id'] )
-                                                     , 'img' => '' , 'lieferanten_id' => $row['lieferanten_id'] ) );
-          ?></td>
-        </tr>
-        <tr>
-          <th> Bestellzeitraum: </th>
-          <td><?PHP echo $row['bestellstart'] .' - '. $row['bestellende']; ?></td>
-        </tr>
-        <tr>
-          <th> Lieferung: </th>
-          <td><?PHP echo $row['lieferung']; ?></td>
-        </tr>
-    <?
-    if( $showGroup and $gruppen_id ){
-      $gruppendaten = sql_gruppendaten( $gruppen_id );
-      ?>
-        <tr>
-          <th> Gruppe: </th>
-          <td>
-            <?PHP
-              if( $gruppen_id == sql_basar_id() )
-                echo "<span class='warn'> BASAR </span>";
-              else
-                echo "{$gruppendaten['name']} ({$gruppendaten['gruppennummer']})";
-            ?>
-          </td>
-        </tr>	
-        <tr>
-          <th> Kontostand: </th>
-          <td>
-            <?
-              // überprüfen ob negeativer kontostand. wenn ja, dann rot und fett !!
-              $kontostand = kontostand($gruppen_id);
-              if( $kontostand < 0 ) { 
-                ?><span style'color:red;font-weight:bold;'><? printf( "%.2lf", $kontostand ); ?></span><?
-              } else {
-                ?><span style='color:green;font-weight:normal;'><? printf( "%.2lf", $kontostand ); ?></span><?
-              }	
-            ?>
-          </td>
-        </tr>	
-      <?
-    }
-    if( $window_id != 'abrechnung' ) {
-      ?>
-        <tr>
-          <th>Status:</th>
-          <td> <? abrechnung_kurzinfo( $bestell_id ); ?> </td>
-        </tr>
-      <?
-    }
-  ?> </table> <?
+
+  open_table('list');
+      open_th('','','Bestellung:');
+      open_td('bold large');
+        echo fc_link( 'lieferschein', array(
+          'class' => 'href', 'text' => $row['name'], 'bestell_id' => $row['id']
+          , 'title' => 'zum Bestellschein/Lieferschein...'
+        ) );
+        if( hat_dienst(4) and getState( $bestell_id ) < STATUS_ABGERECHNET )
+          echo fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=" );
+        if(sql_dienste_nicht_bestaetigt($row['lieferung']))
+          div_msg( 'bold warn', "Vorsicht:". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
+    open_tr();
+      open_th('','','Lieferant:');
+      open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $row['lieferanten_id'] )
+                                                     , 'class' => 'href' , 'lieferanten_id' => $row['lieferanten_id'] ) ) );
+    open_tr();
+      open_th('','','Bestellzeitraum:');
+      open_td('','', $row['bestellstart'] .' - '. $row['bestellende'] );
+    open_tr();
+      open_th('','','Lieferung:');
+      open_td('','', $row['lieferung'] );
+  if( $window_id != 'abrechnung' ) {
+    open_tr();
+      open_th('','','Status:');
+      open_td();
+        abrechnung_kurzinfo( $bestell_id );
+  }
+  if( $showGroup and $gruppen_id ){
+    open_tr();
+      open_th('','','Gruppe:');
+        if( $gruppen_id == sql_basar_id() ) {
+          open_td( 'warn', '', 'Basar' );
+        } elseif( $gruppen_id == sql_muell_id() ) {
+          open_td( 'warn', '', 'Müll' );
+        } else {
+          open_td( '', '', gruppe_view( $gruppen_id ) );
+          if( hat_dienst(4) or ( $gruppen_id == $login_gruppen_id ) ) {
+            $kontostand = kontostand($gruppen_id);
+            open_tr();
+              open_th('','','Kontostand:');
+              open_td( $kontostand < 0 ? 'crit' : '' );
+                echo fc_link( hat_dienst(4) ? 'gruppenkonto' : 'meinkonto'
+                            , array( 'gruppen_id' => $gruppen_id, 'class' => 'href', 'text' => price_view( $kontostand ) ) );
+          }
+        }
+  }
+  close_table();
 }
 
 function abrechnung_kurzinfo( $bestell_id ) {
@@ -1259,628 +1221,49 @@ function abrechnung_kurzinfo( $bestell_id ) {
   }
   if( $status == STATUS_ABGERECHNET ) {
     $text = "abgerechnet
-     <div style='padding-top:1ex;padding-left:1ex;'>
-     <table class='inner' width='100%' style='color:#ed0000;'>
+     <div class='quad smallskip'>
+     <table class='layout' style='color:#ed0000;width:100%;'>
       <tr>
         <td class='small'>Rechnungsnummer:</td>
-        <td style='text-align:right;' class='small'>". $row['rechnungsnummer'] ."</td>
+        <td class='small right'>". $row['rechnungsnummer'] ."</td>
       </tr>
       <tr>
         <td class='small'>Rechnungssumme:</td>
-        <td style='text-align:right;' class='small'>". sprintf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ) ."</td>
+        <td class='small right'>". sprintf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ) ."</td>
       </tr>
       <tr>
         <td class='small'>abgerechnet von:</td>
-        <td style='text-align:right;' class='small'>". dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ) ."</td>
+        <td class='small right'>". sql_dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ) ."</td>
       </tr>
     </table>
     </div>";
   } else {
     $text = rechnung_status_string( $status );
   }
-  echo fc_alink( 'abrechnung', array( 'bestell_id' => $bestell_id, 'img' => false , 'text' => $text ) );
+  echo fc_link( 'abrechnung', array( 'bestell_id' => $bestell_id, 'class' => 'href' , 'text' => $text ) );
 }
 
-function formular_buchung_gruppe_bank(
-  $gruppen_id = 0, $konto_id = 0, $auszug_jahr = '', $auszug_nr = '', $notiz = 'Einzahlung'
-) {
-  ?>
-    <form method='post' class='small_form'
-          action='<? echo self_url(array('konto_id','auszug_jahr','auszug_nr','gruppen_id')); ?>'>
-      <? echo self_post(array('konto_id','auszug_jahr','auszug_nr','gruppen_id')); ?>
-      <input type='hidden' name='action' value='zahlung_gruppe'>
-      <fieldset>
-        <legend>
-          Einzahlung / Auszahlung Gruppe
-        </legend>
-        <table>
-          <tr>
-            <td><label>Gruppe:</label></td>
-            <td>
-            <? if ( $gruppen_id ) { ?>
-              <kbd>
-                <? echo sql_gruppenname( $gruppen_id ); ?>
-                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
-              </kbd>
-            <? } else { ?>
-              <select name='gruppen_id'><? echo optionen_gruppen(); ?></select>
-            <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Konto:</label></td>
-            <td>
-              <? if( $konto_id ) { ?>
-                <kbd><? echo sql_kontoname( $konto_id ); ?>
-                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
-                </kbd>
-              <? } else { ?>
-                <select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
-              <? } ?>
-               &nbsp; <label>Auszug:</label>
-              <? if( $auszug_nr ) { ?>
-                <kbd><? echo "$auszug_jahr / $auszug_nr"; ?></kbd>
-                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
-                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
-              <? } else { ?>
-                  <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
-                  <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
-              <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label title'positiv: Einzahlung / negativ: Auszahlung!'>Haben Konto:</label></td>
-            <td>
-              <input type="text" name="betrag" size='6' value="" title='positiv: Einzahlung / negativ: Auszahlung!'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td>
-              <input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_buchung_lieferant_bank(
-  $lieferanten_id = 0, $konto_id = 0, $auszug_jahr='', $auszug_nr = ''
-, $notiz = 'Abbuchung Lieferant'
-) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url('lieferanten_id'); ?>'>
-      <? echo self_post('lieferanten_id'); ?>
-      <input type='hidden' name='action' value='zahlung_lieferant'>
-      <fieldset>
-        <legend>
-          Überweisung / Lastschrift Lieferant
-        </legend>
-        <table>
-          <tr>
-            <td><label>Lieferant:</label></td>
-            <td>
-              <? if( $lieferanten_id ) { ?>
-                <kbd>
-                  <? echo lieferant_name( $lieferanten_id ); ?>
-                  <input type='hidden' name='lieferanten_id' value='<? echo $lieferanten_id; ?>'>
-                </kbd>
-              <? } else { ?>
-                <select name='lieferanten_id'><? echo optionen_lieferanten(); ?></select>
-              <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Konto:</label></td>
-            <td>
-              <? if( $konto_id ) { ?>
-                <kbd><? echo sql_kontoname( $konto_id ); ?>
-                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
-                </kbd>
-              <? } else { ?>
-                <select name='konto_id'><? echo optionen_konten( $konto_id ); ?></select>
-              <? } ?>
-               &nbsp; <label>Auszug:</label>
-              <? if( $auszug_nr ) { ?>
-                <kbd><? echo "$auszug_jahr / $auszug_nr"; ?></kbd>
-                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
-                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
-              <? } else { ?>
-                  <input type='text' size='4' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'> /
-                  <input ty[e='text' size='2' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
-              <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label title='positiv: Einzahlung / negativ: Auszahlung!'>Haben Konto:</label></td>
-            <td>
-              <input type="text" name="betrag" value="" size='6'
-                   title='positiv: Einzahlung / negativ: Auszahlung!'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_buchung_gruppe_lieferant(
-  $gruppen_id = 0, $lieferanten_id = 0, $notiz = 'Direktzahlung von Gruppe an Lieferant'
-) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url(array('gruppen_id','lieferanten_id')); ?>'>
-      <? echo self_post(array('gruppen_id','lieferanten_id')); ?>
-      <input type='hidden' name='action' value='zahlung_gruppe_lieferant'>
-      <fieldset>
-        <legend>
-          Zahlung von Gruppe an Lieferant
-        </legend>
-        <table>
-          <tr>
-            <td><label>von Gruppe:</label></td>
-            <td>
-            <? if ( $gruppen_id ) { ?>
-              <kbd>
-                <? echo sql_gruppenname( $gruppen_id ); ?>
-                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
-              </kbd>
-            <? } else { ?>
-              <select name='gruppen_id'><? echo optionen_gruppen(); ?></select>
-            <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>an Lieferant:</label></td>
-            <td>
-              <? if( $lieferanten_id ) { ?>
-                <kbd>
-                  <? echo lieferant_name( $lieferanten_id ); ?>
-                  <input type='hidden' name='lieferanten_id' value='<? echo $lieferanten_id; ?>'>
-                </kbd>
-              <? } else { ?>
-                <select name='lieferanten_id'><? echo optionen_lieferanten(); ?></select>
-              <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label title='positiv: Zahlung an / negativ: Zahlung von Lieferant'>Haben Lieferant:</label></td>
-            <td>
-              <input type="text" name="betrag" value="" size='6'
-                title='positiv: Zahlung an Lieferant/ negativ: Zahlung von Lieferant'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_buchung_gruppe_gruppe(
-  $gruppen_id = 0, $nach_gruppen_id = 0, $notiz = 'Umbuchung von Gruppe an Gruppe'
-) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url('gruppen_id'); ?>'>
-      <? echo self_post('gruppen_id'); ?>
-      <input type='hidden' name='action' value='umbuchung_gruppe_gruppe'>
-      <fieldset>
-        <legend>
-          Umbuchung von Gruppe an Gruppe
-        </legend>
-        <table>
-          <tr>
-            <td><label>von Gruppe:</label></td>
-            <td>
-            <? if ( $gruppen_id ) { ?>
-              <kbd>
-                <? echo sql_gruppenname( $gruppen_id ); ?>
-                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
-              </kbd>
-            <? } else { ?>
-              <select name='gruppen_id'><?
-                echo optionen_gruppen();
-              ?></select>
-            <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>an Gruppe:</label></td>
-            <td><select name='nach_gruppen_id'><?
-              echo optionen_gruppen( false, false, $nach_gruppen_id );
-            ?></select></td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label>Betrag:</label></td>
-            <td>
-              <input type="text" name="betrag" value="" size='6'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_buchung_bank_bank(
-  $konto_id, $auszug_jahr, $auszug_nr, $notiz = 'Überweisung von Konto zu Konto'
-) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='action' value='ueberweisung_konto_konto'>
-      <fieldset>
-        <legend>
-          Überweisung von Konto zu Konto
-        </legend>
-        <table>
-          <tr>
-            <td><label>von Konto:</label></td>
-            <td>
-              <kbd>
-                <? echo sql_kontoname( $konto_id ); ?>
-                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
-              </kbd>
-              &nbsp; Auszug:
-              <kbd>
-                <? echo "$auszug_jahr / $auszug_nr"; ?>
-                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
-                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
-              </kbd>
-            </td>
-          </tr>
-          <tr>
-            <td><label>an Konto:</label></td>
-            <td><select name='nach_konto_id'><? echo optionen_konten( $nach_konto_id ); ?></select>
-               &nbsp; <label>Auszug:</label>
-                  <input type='text' size='4' name='nach_auszug_jahr' value=''> /
-                  <input ty[e='text' size='2' name='nach_auszug_nr' value=''>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label>Betrag:</label></td>
-            <td>
-              <input type="text" name="betrag" value="" size='6'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_buchung_bank_sonderausgabe(
-  $konto_id, $auszug_jahr, $auszug_nr, $notiz = ''
-) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='action' value='ueberweisung_sonderausgabe'>
-      <fieldset>
-        <legend>
-          &Uuml;berweisung Sonderausgabe
-        </legend>
-        <table>
-          <tr>
-            <td><label>von Konto:</label></td>
-            <td>
-              <kbd>
-                <? echo sql_kontoname( $konto_id ); ?>
-                <input type='hidden' name='konto_id' value='<? echo $konto_id; ?>'>
-              </kbd>
-              &nbsp; Auszug:
-              <kbd>
-                <? echo "$auszug_jahr / $auszug_nr"; ?>
-                <input type='hidden' name='auszug_jahr' value='<? echo $auszug_jahr; ?>'>
-                <input type='hidden' name='auszug_nr' value='<? echo $auszug_nr; ?>'>
-              </kbd>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label title='positiv: Gewinn der FC / negativ: Verlust der FC'>Haben FC:</label></td>
-            <td>
-              <input type="text" name="betrag" value="" size='6'
-                title='positiv: Gewinn der FC / negativ: Verlust der FC'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_buchung_gruppe_sonderausgabe( $gruppen_id = 0, $notiz = '' ) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url('gruppen_id'); ?>'>
-      <? echo self_post('gruppen_id'); ?>
-      <input type='hidden' name='action' value='sonderausgabe_gruppe'>
-      <fieldset>
-        <legend>
-          Sonderausgabe durch eine Gruppe
-        </legend>
-        <table>
-          <tr>
-            <td><label>von Gruppe:</label></td>
-            <td>
-            <? if ( $gruppen_id ) { ?>
-              <kbd>
-                <? echo sql_gruppenname( $gruppen_id ); ?>
-                <input type='hidden' name='gruppen_id' value='<? echo $gruppen_id; ?>'>
-              </kbd>
-            <? } else { ?>
-              <select name='gruppen_id'><?
-                echo optionen_gruppen();
-              ?></select>
-            <? } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label title='positiv: Gewinn der FC / negativ: Verlust der FC'>Betrag:</label></td>
-            <td>
-              <input type="text" name="betrag" value="" size='6'
-                title='positiv: Gewinn der FC / negativ: Verlust der FC'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value='<? echo $notiz; ?>'>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </form>
-  <?
-  return true;
-}
-
-function formular_umbuchung_verlust( $typ = 0 ) {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='action' value='umbuchung_verlust'>
-      <input type='hidden' name='typ' value='<? echo $typ; ?>'>
-        <table>
-          <tr>
-            <td><label>von:</label></td>
-            <td>
-              <?  if( $typ ) { ?>
-                <? need( in_array( $typ, array( TRANSAKTION_TYP_SPENDE, TRANSAKTION_TYP_UMLAGE ) ) ); ?>
-                <kbd><? echo transaktion_typ_string( $typ ); ?></kbd>
-                <input type='hidden' name='von_typ' value='<? echo $typ; ?>'>
-              <? } else { ?>
-                <select name='von_typ'>
-                  <option value=''>(bitte Quelle w&auml;hlen)</option>
-                  <?
-                    foreach( array( TRANSAKTION_TYP_SPENDE , TRANSAKTION_TYP_UMLAGE ) as $t ) {
-                      ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
-                    }
-                  ?>
-                </select>
-              <?  } ?>
-            </td>
-          </tr>
-          <tr>
-            <td><label>nach:</label></td>
-            <td>
-              <select name='nach_typ'>
-                <option value=''>(bitte Ziel w&auml;hlen)</option>
-                <?
-                  foreach( array( TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
-                                , TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
-                                , TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE ) as $t ) {
-                    ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
-                  }
-                ?>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td><label>Betrag:</label></td>
-            <td>
-              <input type="text" size='6' name="betrag" value="" size='6'>
-              <kbd>EUR</kbd>
-            </td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value=''>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-    </form>
-  <?
-  return true;
-}
-
-function formular_gruppen_umlage() {
-  ?>
-    <form method='post' class='small_form' action='<? echo self_url(); ?>'>
-      <? echo self_post(); ?>
-      <input type='hidden' name='action' value='umlage'>
-        <table>
-          <tr>
-            <td colspan='2'>
-              Von <span style='font-weight:bold;font-style:italic'>allen aktiven Bestellgruppen</span> eine Umlage
-            </td>
-          </tr>
-          <tr>
-            <td class='oneline'>in Höhe von</td>
-            <td><input type="text" size='6' name="betrag" value="" size='6'>
-              EUR je Gruppenmitglied erheben
-            </td>
-          </tr>
-          <tr>
-            <td><label>Valuta:</label></td>
-            <td><? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?></td>
-          </tr>
-          <tr>
-            <td>Notiz:</td>
-            <td><input type="text" size="60" name="notiz" value=''>
-              &nbsp;
-              <input style='margin-left:2em;' type='submit' name='Ok' value='Ok'>
-            </td>
-          </tr>
-        </table>
-    </form>
-  <?
-  return true;
-}
-
-function mod_onclick( $id ) {
-  return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
-}
-
-function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on = false, $mod_id = false ) {
-  $produkt = sql_produkt_details( $produkt_id );
-  $anummer = $produkt['artikelnummer'];
-  $lieferanten_id = $produkt['lieferanten_id'];
-  $can_toggle or $default_on = true;
-  if( $can_toggle ) {
-    if( $default_on ) {
-      $form_display = 'inline'; $button_display = 'none';
-    } else {
-      $form_display = 'none'; $button_display = 'inline';
-    }
-    ?>
-      <span class='button' id='anummer_button' style='display:<? echo $button_display; ?>;'
-        onclick="document.getElementById('anummer_button').style.display = 'none';
-                 document.getElementById('anummer_form').style.display = 'block';"
-      >Artikelnummer (<? echo $anummer; ?>) &auml;ndern...</span>
-    <?
-  } else {
-    $form_display = 'inline';
+function buchung_kurzinfo( $id ) {
+  $row = sql_get_transaction( $id );
+  $dir = ( ( $row['haben'] > 0 ) ? 'durch' : 'an' );
+  if( $id > 0 ) { // bankueberweisung oder lastschrift
+    $konto_id = $row['konto_id'];
+    $auszug_nr = $row['kontoauszug_nr'];
+    $auszug_jahr = $row['kontoauszug_jahr'];
+    echo "Auszug: " . fc_link( 'kontoauszug', array(
+                'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr
+              , 'text' => "$auszug_jahr / $auszug_nr ({$row['kontoname']})", 'class' => 'href' ) );
+  } elseif( ( $gruppen_id = $row['gruppen_id'] ) > 0 ) {  // zahlung gruppe
+     $gruppen_name = sql_gruppenname($gruppen_id);
+     echo "Zahlung $dir Gruppe: " . fc_link( 'gruppenkonto', array(
+              'gruppen_id' => $gruppen_id, 'class' => 'href', 'text' => sql_gruppenname( $gruppen_id ) ) );
+  } else { // zahlung lieferant:
+     $lieferanten_id = $row['lieferanten_id'];
+     echo "Zahlung $dir Lieferant: " . fc_link( 'lieferantenkonto', array(
+          'class' => 'href', 'lieferanten_id' => $lieferanten_id, 'text' => sql_lieferant_name( $lieferanten_id ) ) );
   }
-  ?>
-    <div style='display:<? echo $form_display; ?>;' id='anummer_form' class='small_form'>
-      <fieldset class='small_form'>
-        <legend>
-          <?
-            if( $can_toggle ) {
-              ?>
-                <img class='button' src='img/close_black_trans.gif' title='Ausblenden'
-                  onclick="document.getElementById('anummer_button').style.display='inline';
-                  document.getElementById('anummer_form').style.display = 'none';"
-                >
-              <?
-            }
-          ?>
-          Artikelnummer (<? echo $anummer; ?>) &auml;ndern:
-        </legend>
-        <table>
-          <tr>
-            <td> neue Artikel-Nr. setzen: </td>
-            <td>
-              <form method='post' action='<? echo self_url(); ?>'> 
-                <? echo self_post(); ?>
-                <input type='hidden' name='action' value='artikelnummer_setzen'>
-                <input type='text' size='20' name='anummer' value='<? echo $anummer; ?>'>&nbsp;
-                <input type='submit' name='Submit' value='OK' <? echo mod_onclick( $mod_id ); ?>>
-              </form>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              ...oder: Katalogsuche nach:
-            </td>
-            <td>
-              <form name='artikelsuche' action="<? echo fc_url( 'artikelsuche', "lieferanten_id=$lieferanten_id", '', 'action' ); ?>" method='post'>
-                <input type='hidden' name='produkt_id' value='<? echo $produkt_id; ?>'>
-                <input name='name' value='<? echo $produkt['name']; ?>' size='40'>&nbsp;
-                <? echo fc_button( 'artikelsuche', 'text=Los!,form=artikelsuche,class=submit' ); ?>
-              </form>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </div>
-  <?
 }
+
 
 // preishistorie_view:
 //  - kann preishistorie anzeigen
@@ -1889,202 +1272,117 @@ function formular_artikelnummer( $produkt_id, $can_toggle = false, $default_on =
 function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $mod_id = false ) {
   global $mysqljetzt;
   need( $produkt_id );
+
   if( $bestell_id ) {
-    $bestellvorschlag = sql_bestellvorschlag_daten( $bestell_id, $produkt_id );
+    $bestellvorschlag = sql_bestellvorschlag( $bestell_id, $produkt_id );
     $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
     $rechnungsstatus = getState( $bestell_id );
-  }
-
-  ?>
-    <script type="text/javascript">
-      preishistorie_status = 1;
-      function preishistorie_toggle() {
-        preishistorie_status = ! preishistorie_status;
-        if( preishistorie_status ) {
-          document.getElementById("preishistorie").style.display = "block";
-          document.getElementById("preishistorie_knopf").src = "img/close_black_trans.gif";
-          document.getElementById("preishistorie_knopf").title = "Ausblenden";
-        } else {
-          document.getElementById("preishistorie").style.display = "none";
-          document.getElementById("preishistorie_knopf").src = "img/open_black_trans.gif";
-          document.getElementById("preishistorie_knopf").title = "Einblenden";
-        }
-      }
-    </script>
-    <fieldset class='big_form'>
-    <legend>
-      <img id='preishistorie_knopf' class='button' src='img/close_black_trans.gif'
-        onclick='preishistorie_toggle();' title='Ausblenden'>
-  <?
-  if( $bestell_id ) {
     $bestellung_name = bestellung_name( $bestell_id );
-    ?> Preiseintrag wählen für Bestellung <?
-    echo "$bestellung_name:";
+    $legend = "Preiseintrag wählen für Bestellung $bestellung_name";
   } else {
-    ?> Preis-Historie: <?
+    $legend = "Preis-Historie";
   }
-  ?>
-    </legend>
-    <div id='preishistorie'>
-      <table width='100%' class='list'>
-        <tr>
-          <th title='Interne eindeutige ID-Nummer des Preiseintrags'>id</th>
-          <th title='Bestellnummer'>B-Nr</th>
-          <th title='Preiseintrag gültig ab'>von</th>
-          <th title='Preiseintrag gültig bis'>bis</th>
-          <th title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'>L-Einheit</th>
-          <th title='Nettopreis beim Lieferanten' colspan='2'>L-Preis</th>
-          <th title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'>V-Einheit</th>
-          <th title='Gebindegröße in V-Einheiten'>Gebinde</th>
-          <th>MWSt</th>
-          <th title='Pfand je V-Einheit'>Pfand</th>
-          <th title='Endpreis je V-Einheit' colspan='2'>V-Preis</th>
-  <?
-  if( $bestell_id )
-    echo "<th title='Preiseintrag für Bestellung $bestellung_name'>Aktiv</th>";
-  ?> </tr> <?
 
-  $produktpreise = sql_produktpreise2( $produkt_id );
-  while( $pr1 = mysql_fetch_array($produktpreise) ) {
+  open_fieldset( 'big_form', '', $legend, 'on' );
+    open_table( 'list', "style='width:100%;'" );
+      open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'id' );
+      open_th( '', "title='Bestellnummer'", 'B-Nr' );
+      open_th( '', "title='Preiseintrag gültig ab'", 'von' );
+      open_th( '', "title='Preiseintrag gültig bis'", 'bis' );
+      open_th( '', "title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'", 'L-Einheit' );
+      open_th( '', "title='Nettopreis beim Lieferanten' colspan='2'", 'L-Preis' );
+      open_th( '', "title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'", 'V-Einheit' );
+      open_th( '', "title='Gebindegröße in V-Einheiten'", 'Gebinde' );
+      open_th( '', '', 'MWSt' );
+      open_th( '', "title='Pfand je V-Einheit'", 'Pfand' );
+      open_th( '', "title='Endpreis je V-Einheit' colspan='2'", 'V-Preis' );
+
+  if( $bestell_id )
+    open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
+
+  foreach( sql_produktpreise( $produkt_id ) as $pr1 ) {
     preisdatenSetzen( &$pr1 );
+    // var_export( $pr1 );
     $references = references_produktpreise( $pr1['id'] );
-    ?>
-      <tr>
-        <td style='white-space:nowrap;'><?
-          echo $pr1['id'];
-          if( $editable and ( $references == 0 ) and $pr1['zeitende'] ) {
-            ?>
-              &nbsp; <a class='png'
-                 href="javascript:deleteProduktpreis(<? echo $pr1['id']; ?>);"
-              ><img src='img/b_drop.png' border='0'
-                    alt='Preiseintrag löschen'
-                    title='Dieser Preiseintrag wird nicht verwendet; löschen?'/></a>
-            <?
+    open_tr();
+      open_td( 'oneline' );
+        echo $pr1['id'];
+        if( $editable and ( $references == 0 ) and $pr1['zeitende'] ) {
+          echo fc_action( array( 'class' => 'drop', 'text' => 'Preiseintrag löschen?'
+                               , 'title' => 'Dieser Preiseintrag wird nicht verwendet; löschen?' )
+                          , "action=delete_price,preis_id={pr1['id']}" );
+        }
+      open_td( '', '', $pr1['bestellnummer'] );
+      open_td( 'center', '', $pr1['datum_start'] );
+      open_td( 'center' );
+        if( $pr1['zeitende'] ) {
+          echo "{$pr1['datum_ende']}";
+        } else {
+          if( $editable ) {
+            echo fc_action( array( 'class' => 'button', 'text' => 'Abschließen'
+                                 , 'title' => "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)" )
+                          , array( 'action' => 'zeitende_setzen', 'preis_id' => $pr1['id']
+                                 , 'day' => date('d'), 'month' => date('m'), 'year' => date('Y') ) );
+          } else {
+            echo " - ";
           }
-        ?></td>
-        <td><? echo $pr1['bestellnummer']; ?></td>
-        <td style='text-align:center;'><? echo $pr1['datum_start']; ?></td>
-        <td style='text-align:center;'>
-    <?
-    if( $pr1['zeitende'] ) {
-      echo "{$pr1['datum_ende']}";
-    } else {
-      if( $editable ) {
-        echo action_button( "Abschließen"
-        , "Preisintervall abschließen (z.B. falls Artikel nicht lieferbar)"
-        , array( 'action' => 'zeitende_setzen'
-          , 'preis_id' => $pr1['id']
-          , 'day' => date('d'), 'month' => date('m'), 'year' => date('Y')
-          )
-        , $mod_id
-        );
-      } else {
-        echo " - ";
-      }
-    }
-    ?>
-        </td>
-        <td class='mult'><? echo $pr1['kan_liefermult']; ?></td>
-        <td class='unit'><? echo $pr1['kan_liefereinheit']; ?></td>
-        <td class='mult'><? printf( "%8.2lf", $pr1['lieferpreis'] ); ?></td>
-        <td class='unit'>/ <? echo $pr1['preiseinheit']; ?></td>
-        <td class='mult'><? echo $pr1['kan_verteilmult']; ?></td>
-        <td class='unit'><? echo $pr1['kan_verteileinheit']; ?></td>
-        <td class='number'><? echo $pr1['gebindegroesse']; ?></td>
-        <td class='number'><? echo $pr1['mwst']; ?></td>
-        <td class='number'><? echo $pr1['pfand']; ?></td>
-        <td class='mult'><? printf( "%8.2lf", $pr1['preis'] ); ?></td>
-        <td class='unit'> / <? echo "{$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}"; ?></td>
-    <?
+        }
+      open_td( 'mult', '', $pr1['kan_liefermult'] );
+      open_td( 'unit', '', $pr1['kan_liefereinheit'] );
+      open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
+      open_td( 'unit', '', $pr1['preiseinheit'] );
+      open_td( 'mult', '', $pr1['kan_verteilmult'] );
+      open_td( 'unit', '', $pr1['kan_verteileinheit'] );
+      open_td( 'number', '', $pr1['gebindegroesse'] );
+      open_td( 'number', '', $pr1['mwst'] );
+      open_td( 'number', '', $pr1['pfand'] );
+      open_td( 'mult', '', price_view( $pr1['preis'] ) );
+      open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
+
     if( $bestell_id ) {
-      ?> <td> <?
+      open_td( '', "style='padding:0.5ex;'" );
       if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
         ?>
-          <input type='submit' name='aktiv' value='aktiv' class='buttondown'
-          style='width:5em;'
-          title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>
+          <a class='buttondown' style='width:5em;'
+             title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>aktiv</a>
         <?
       } else {
         if( $editable and ( $rechnungsstatus < STATUS_ABGERECHNET ) ) {
-          echo action_button( "setzen"
-          , "diesen Preiseintrag für Bestellung $bestellung_name auswählen"
-          , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] )
-          );
+          ?>
+            <a class='buttonup' style='width:5em;'
+               title='diesen Preiseintrag für Bestellung <? echo $bestellung_name; ?> auswählen'
+               onclick="<? echo fc_action( 'context=handler'
+                                         , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] ) ); ?>"
+            >setzen</a>
+          <?
         } else {
           echo " - ";
         }
       }
-      ?> </td> <?
     }
-    ?> </tr> <?
   }
-  ?></table></div><?
+  close_table();
 
   produktpreise_konsistenztest( $produkt_id, $editable, 0 );
 
-  ?></fieldset><?
+  close_fieldset();
 }
 
 
 function auswahl_lieferant( $selected = 0 ) {
-  ?>
-  <table style="width:600px;" class="list">
-    <tr>
-      <th>Lieferanten</th>
-      <th>Produkte</th>
-      <th>Pfandverpackungen</th>
-    </tr>
-  <?
-  $lieferanten = sql_lieferanten();
-  while( $row = mysql_fetch_array($lieferanten) ) {
-    if( $row['id'] == $selected ) {
-      echo "<tr class='active'>";
-    } else {
-      echo "<tr>";
-    }
-    ?> <td> <?
-      echo fc_alink( 'self', array( 'lieferanten_id' => $row['id'], 'text' => $row['name'] ) );
-    ?>
-      </td>
-      <td><? echo $row['anzahl_produkte']; ?></td>
-      <td><? echo $row['anzahl_pfandverpackungen']; ?></td>
-      </tr>
-    <?
+  open_table('list',"width:600px;");
+      open_th( '', '', 'Lieferanten' );
+      open_th( '', '', 'Produkte' );
+      open_th( '', '', 'Pfandverpackungen' );
+  foreach( sql_lieferanten() as $row ) {
+    open_tr( ( $row['id'] == $selected ) ? 'active' : '' );
+      open_td( '', '', fc_link( 'self', array( 'lieferanten_id' => $row['id'], 'text' => $row['name'] ) ) );
+      open_td( '', '', $row['anzahl_produkte'] );
+      open_td( '', '', $row['anzahl_pfandverpackungen'] );
   }
-  ?> </table> <?
+  close_table();
 }
 
-function switchable_form( $tag, $legend, $initially_on, $formfields ) {
-  if( $initially_on ) {
-    $buttondisplay = 'none';
-    $formdisplay = 'block';
-  } else {
-    $buttondisplay = 'block';
-    $formdisplay = 'none';
-  }
-  return "
-    <div id='{$tag}_button' style='padding-bottom:1em;display:$buttondisplay;'>
-      <span class='button'
-        onclick=\"document.getElementById('{$tag}_form').style.display='block';
-                 document.getElementById('{$tag}_button').style.display='none';\"
-        >$legend...</span>
-    </div>
-
-    <div id='{$tag}_form' style='display:$formdisplay;padding-bottom:1em;'>
-      <form method='post' class='small_form' action='".self_url()."'>".self_post()."
-        <fieldset>
-          <legend>
-            <img src='img/close_black_trans.gif' class='button'
-            onclick=\"document.getElementById('{$tag}_button').style.display='block';
-                     document.getElementById('{$tag}_form').style.display='none';\">
-            $legend
-          </legend>
-          $formfields
-        </fieldset>
-      </form>
-    </div>
-  ";
-}
 
 /**
  * Produziert ein neues select-Feld mit den möglichen
@@ -2106,59 +1404,45 @@ function dienst_selector($pre_select, $id=""){
  * Argument: sql_members($group_id)
  */
 function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
-?>
-  <form method='post' class='big_form' action='<? echo self_url(); ?>'>
-  <? echo self_post(); ?>
-  <input type='hidden' name='action' value='edit'>
+  if( $editable or $super_edit )
+    open_form( 'big_form' , '', '', array( 'action' => 'edit' ) );
 
-    <table class='list'>
-<?
-  if($head){
-    ?>
-      <tr>
-         <th>Vorname</th>
-         <th>Name</th>
-         <th>Mail</th>
-         <th>Telefon</th>
-         <th>Diensteinteilung</th>
-         <? if($super_edit){ ?> <th>Optionen</th> <? } ?>
-      </tr>
-    <?
+  open_table('list');
+  if( $head ) {
+    open_th( '', '', 'Vorname' );
+    open_th( '', '', 'Name' );
+    open_th( '', '', 'Mail' );
+    open_th( '', '', 'Telefon' );
+    open_th( '', '', 'Diensteinteilung' );
+    if($super_edit)
+      open_th( '', '', 'Aktionen' );
   }
-  $rows = sql_gruppen_members( $gruppen_id );
-  while ($row = mysql_fetch_array($rows)) {
-    ?> <tr> <?
-    if($editable){
+
+  foreach( sql_gruppen_members( $gruppen_id ) as $row ) {
+    open_tr();
       $id = $row['id'];
-      ?>
-         <td><input type='input' size='16' name='vorname_<? echo $id; ?>' value='<? echo $row['vorname']; ?>'></td>
-         <td><input type='input' size='16' name='name_<? echo $id; ?>' value='<? echo $row['name']; ?>'></td>
-         <td><input type='input' size='16' name='email_<? echo $id; ?>' value='<? echo $row['email']; ?>'></td>
-         <td><input type='input' size='12' name='telefon_<? echo $id; ?>' value='<? echo $row['telefon']; ?>'></td>
-      <?
-    } else {
-      ?>
-         <td><? echo $row['vorname']; ?></td>
-         <td><? echo $row['name']; ?></td>
-         <td><? echo $row['email']; ?></td>
-         <td><? echo $row['telefon']; ?></td>
-      <?
-    }
-    if($super_edit){
-      ?> <td> <?
-      echo dienst_selector($row['diensteinteilung'], $id );
-      ?> </td><td> <?
-      echo fc_action( array( 'action' => 'delete', 'person_id' => $id, 'img' => 'img/b_drop.png'
-                           , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' ) );
-      ?> </td> <?
-    }else{
-      echo"<td>{$row['diensteinteilung']}</td> ";
-    }
-    ?> </tr> <?
+      open_td( '', '', string_view( $row['vorname'], 16, $editable ? "vorname_$id" : false ) );
+      open_td( '', '', string_view( $row['name'], 20, $editable ? "name_$id" : false ) );
+      open_td( '', '', string_view( $row['email'], 16, $editable ? "email_$id" : false ) );
+      open_td( '', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
+
+      if($super_edit){
+        open_td(); dienst_selector( $row['diensteinteilung'], $id );
+        open_td( '', '', fc_action( array( 'img' => 'img/b_drop.png'
+                                         , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
+                                  , array( 'action' => 'delete', 'person_id' => $id ) ) );
+      } else {
+        open_td( '', '',  $row['diensteinteilung'] );
+      }
   }
-  ?> </table> <?
   if($super_edit or $editable) {
-    ?> <input type="submit" value="Speichern"/> <?
+    open_tr();
+      open_td( '', "colspan='6'" );
+        submission_button();
   }
-  ?> </form> <?
+  close_table();
+  if( $editable or $super_edit )
+    close_form();
 }
+
+?>
