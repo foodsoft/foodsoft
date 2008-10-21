@@ -48,26 +48,26 @@ open_table( '', "width='100%'" );
     //
     open_td();
       open_table( 'inner', "width='100%'" );
-      $seitensumme = 0;
+        $seitensumme = 0;
 
-      rubrik( "Bankguthaben" );
-        $kontosalden = sql_bankkonto_salden();
-        while( $konto = mysql_fetch_array( $kontosalden ) ) {
-          posten(
-            fc_alink( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'img' => false, 'text' => "Konto {$konto['kontoname']}" ) )
-          , $konto['saldo']
-          );
-        }
-        posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
+        rubrik( "Bankguthaben" );
+          $kontosalden = sql_bankkonto_salden();
+          while( $konto = mysql_fetch_array( $kontosalden ) ) {
+            posten(
+              fc_link( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'class' => 'href', 'text' => "Konto {$konto['kontoname']}" ) )
+            , $konto['saldo']
+            );
+          }
+          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
 
-      rubrik( "Umlaufvermögen" );
-        posten( fc_alink( 'basar', "img=,text=Warenbestand Basar" ), basar_wert_brutto() );
-        posten( fc_alink( 'pfandzettel', "img=,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
+        rubrik( "Umlaufvermögen" );
+          posten( fc_link( 'basar', "class=href,text=Warenbestand Basar" ), basar_wert_brutto() );
+          posten( fc_link( 'pfandzettel', "class=href,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
 
-      rubrik( "Forderungen" );
-        posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
+        rubrik( "Forderungen" );
+          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
 
-      $aktiva = $seitensumme;
+        $aktiva = $seitensumme;
       close_table();
 
     //////////////////
@@ -78,14 +78,13 @@ open_table( '', "width='100%'" );
         $seitensumme = 0;
 
         rubrik( "Einlagen der Gruppen" );
-          posten( fc_alink( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'img' => '' ) ), sockel_gruppen_summe() );
-          posten( fc_alink( 'gruppen', "img=,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
-          posten( fc_alink( 'gruppenpfand', "img=,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
+          posten( fc_link( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'class' => 'href' ) ), sockel_gruppen_summe() );
+          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
+          posten( fc_link( 'gruppenpfand', "class=href,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
 
-        $verbindlichkeiten = sql_verbindlichkeiten_lieferanten();
         rubrik( "Verbindlichkeiten" );
-          while( $vkeit = mysql_fetch_array( $verbindlichkeiten ) ) {
-            posten( fc_alink( 'lieferantenkonto', array( 'img' => false, 'lieferanten_id' => $vkeit['lieferanten_id'], 'text' => $vkeit['name'] ) )
+          foreach( sql_verbindlichkeiten_lieferanten() as $vkeit ) {
+            posten( fc_link( 'lieferantenkonto', array( 'class' => 'href', 'lieferanten_id' => $vkeit['lieferanten_id'], 'text' => $vkeit['name'] ) )
             , $vkeit['soll']
             );
           }
@@ -96,7 +95,7 @@ open_table( '', "width='100%'" );
         $passiva += $bilanzverlust;
 
         rubrik( "Bilanzausgleich" );
-          posten( fc_alink( 'verluste', "text=". ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) )
+          posten( fc_link( 'verluste', "class=href,text=". ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) )
           , $bilanzverlust
           );
 
