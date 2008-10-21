@@ -13,6 +13,8 @@ setWikiHelpTopic( "foodsoft:katalogsuche" );
 
 need_http_var( 'lieferanten_id', 'U', true );
 
+get_http_var('action','w','');
+
 $filter = '';
 
 get_http_var( 'bnummer', 'w', '' ) or $bnummer = '';
@@ -35,6 +37,9 @@ $katalogtyp and $filter .= " AND katalogtyp = '$katalogtyp'";
 
 get_http_var( 'limit', 'u', 99 ) or $limit = 99;
 
+if( $action != 'search' )
+  $filter = '';
+
 // produkt_id: wenn gesetzt, erlaube update der artikelnummer!
 get_http_var( 'produkt_id', 'u', 0, true );
 if( $produkt_id ) {
@@ -43,14 +48,11 @@ if( $produkt_id ) {
 }
 
 ?>
-
 <h1>Lieferantenkatalog - bisher nur fuer Terra! </h1>
 
-<h3>Lieferant: <? echo lieferant_name( $lieferanten_id ); ?> --- Katalogeintraege: <? echo sql_anzahl_katalogeintraege( $lieferanten_id ); ?></h3>
-
+<h3>Lieferant: <? echo sql_lieferant_name( $lieferanten_id ); ?> --- Katalogeintraege: <? echo sql_anzahl_katalogeintraege( $lieferanten_id ); ?></h3>
 <?
 
-get_http_var('action','w','');
 $editable or $action = '';
 if( $action == 'delete' ) {
   need_http_var( 'katalogdatum', 'w' );
@@ -59,14 +61,14 @@ if( $action == 'delete' ) {
 }
 
 if( $editable and ( ! $produkt_id ) ) {
-   $kataloge = doSql( "
-     SELECT katalogdatum, katalogtyp
-     FROM lieferantenkatalog
-     WHERE lieferanten_id=$lieferanten_id
-     GROUP BY katalogdatum, katalogtyp
-     ORDER BY katalogtyp, katalogdatum
-   " );
-  open_form( 'small_form', "enctype='multipart/form-data'", 'index.php?window=terrakatalog_upload' );
+  $kataloge = doSql( "
+    SELECT katalogdatum, katalogtyp
+    FROM lieferantenkatalog
+    WHERE lieferanten_id=$lieferanten_id
+    GROUP BY katalogdatum, katalogtyp
+    ORDER BY katalogtyp, katalogdatum
+  " );
+  open_form( 'small_form', "enctype='multipart/form-data'" );
     open_fieldset( 'small_form', '', 'Kataloge' );
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
@@ -77,19 +79,18 @@ if( $editable and ( ! $produkt_id ) ) {
           open_tr();
             open_td( '', '', $row['katalogdatum'] );
             open_td( '', '', $row['katalogtyp'] );
-            open_td( '', '', fc_action( array(
-                  'img' => 'img/b_drop.png', 'title' => 'Katalog l&ouml;schen'
-                , 'action' => 'delete', 'confirm' => 'Soll der Katalog wirklich GEL&Ouml;SCHT werden?'
-                , 'katalogdatum' => $row['katalogdatum'], 'katalogtyp' => $row['katalogtyp'] ) )
-            );
+            open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Katalog l&ouml;schen'
+                                             , 'confirm' => 'Soll der Katalog wirklich GEL&Ouml;SCHT werden?' )
+                                      , array( 'action' => 'delete', 'katalogdatum' => $row['katalogdatum']
+                                                                   , 'katalogtyp' => $row['katalogtyp'] ) ) );
         }
       close_table();
 
       ?> <h3> Neuen Katalog einlesen: </h3> <?
-      open_table();
+      open_table('layout');
         open_td( '', '', "Datei (Format: .xls): <input type='file' name='terrakatalog'>" );
         open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='terrakw' size='8'>" );
-        open_td( '', '', " <input type='submit' value='start'>" );
+        open_td( '', '', fc_link( 'katalog_upload', 'form,class=button,text=Einlesen' ) );
       close_table();
     close_fieldset();
   close_form();
@@ -97,53 +98,46 @@ if( $editable and ( ! $produkt_id ) ) {
 
 open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer fuer <i>$produktname</i>" : "Artikelsuche im Katalog" );
 
-  open_form( 'small_form' );
+  open_form( 'small_form', '', '', 'action=search' );
     open_table();
         open_td( '', '', '<label>Bestellnummer:</label>' );
         open_td();
-          ?>
-            <input type='text' name='bnummer' value='<? echo $bnummer; ?>' size='10'>
-            &nbsp;
-            <label>Artikelnummer:</label>
-            <input type='text' name='anummer' value='<? echo $anummer; ?>' size='10'>
-            &nbsp;
-            <label>Katalog:</label>
-            <select name='katalogtyp' size='1'>
-              <? echo optionen( array( '', 'OG', 'Fr', 'Tr', 'drog' ), $katalogtyp ); ?>
-            </select>
-          <?
+          string_view( $bnummer, 10, 'bnummer' );
+          open_span( 'qquad', '', "<label>Artikelnummer:</label>". string_view( $anummer, 10, 'anummer' ) );
+          open_span( 'qquad' );
+            ?> <label>Katalog:</label> <?
+            open_select( 'katalogtyp' );
+              echo optionen( array( '', 'OG', 'Fr', 'Tr', 'drog' ), $katalogtyp );
+            close_select();
+          close_span();
       open_tr();
         open_td( '', '', '<label>Bezeichnung:</label>' );
-        open_td( '', '', " &nbsp; <input type='text' name='name' value='$name' size='60'> &nbsp; (Jokerzeichen ist % (Prozent))" );
+        open_td( '', '', string_view( $name, 60, 'name' ) ." &nbsp; (Jokerzeichen ist % (Prozent))" );
 
       open_tr();
         open_td( '', '', 'Preis (netto):' );
         open_td();
-          ?> &nbsp; von: <input type='text' name='minpreis' value='<? printf( "%.2lf", $minpreis ); ?>' size='10'>
-              &nbsp; bis: <input type='text' name='maxpreis' value='<? printf( "%.2lf", $maxpreis ); ?>' size='10'> <?
+          ?> &nbsp; von: <? echo price_view( $minpreis, 'minpreis' );
+          ?> &nbsp; bis: <? echo price_view( $maxpreis, 'maxpreis' );
       open_tr();
-        open_td( '', '', '<label>Limit:</label>' );
+        open_td( 'label', '', 'Limit:' );
         open_td();
-          ?> maximal <input type='text' name='limit' value='<? printf( "%u", $limit ); ?>' size='8'> Treffer anzeigen
-            <input style='margin-left:4em;' type='submit' value='Suche starten'> <?
+          ?> maximal <? echo int_view( $limit, 'limit' ); ?> Treffer anzeigen <?
+          submission_button( 'Suche starten', true );
     close_table();
   close_form();
 
   if( $filter != '' ) {
-  
+
     $result = doSql( "
       SELECT * FROM lieferantenkatalog WHERE lieferanten_id = $lieferanten_id
       $filter
-      limit $limit
+      LIMIT $limit
     " );
 
     if( $produkt_id ) {
-      open_form( '', "name='anummer_setzen'", fc_url( 'produktpreise', "produkt_id=$produkt_id", '', 'action' ) );
-      ?>
-        <input type='hidden' name='action' value='artikelnummer_setzen'>
-        <input type='hidden' name='button_id' value=''>
-        <div style='font-weight:bold;'>Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!</div>
-      <?
+      open_form( '' , '', '', 'action=artikelnummer_setzen,button_id=' );
+      div_msg( 'bold', 'Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!' );
     }
 
     ?> <h3> <? echo mysql_num_rows($result); ?> Treffer (Limit: <? echo $limit; ?>) </h3><?
@@ -168,7 +162,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( 'mult' );
             $anummer = $row['artikelnummer'];
             if ( $produkt_id > 0 ) {
-              echo fc_button( 'produktdetails', "text=$anummer,class=submit,form=anummer_setzen,button_id=$anummer" );
+              echo fc_link( 'produktdetails', "class=button,text=$anummer,form,button_id=$anummer" );
             } else {
               echo $anummer;
             }
@@ -178,9 +172,9 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( 'unit', '', $row['liefereinheit'] );
           open_td( '', '', $row['herkunft'] );
           open_td( '', '', $row['verband'] );
-          open_td( '', '', sprintf( "%.2lf", $netto ) );
-          open_td( 'mult', '', sprintf( "%.2lf", $mwst ) );
-          open_td( 'mult', '', sprintf( "%.2lf", $brutto ) );
+          open_td( '', '', price_view( $netto ) );
+          open_td( 'mult', '', price_view( $mwst ) );
+          open_td( 'mult', '', price_view( $brutto ) );
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
       }
     close_table();
