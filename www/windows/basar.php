@@ -12,9 +12,9 @@ get_http_var( 'action','w','' );
 $editable or $action = '';
 if( $action == 'basarzuteilung' ) {
   need_http_var('fieldcount','u' );
-  need_http_var('gruppe','U', false );
-  if( $gruppe != sql_muell_id() ) {
-    $gruppendaten = sql_gruppendaten( $gruppe );
+  need_http_var('gruppen_id','U', false );
+  if( $gruppen_id != sql_muell_id() ) {
+    $gruppendaten = sql_gruppendaten( $gruppen_id );
     need( $gruppendaten['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );
   }
 
@@ -26,19 +26,17 @@ if( $action == 'basarzuteilung' ) {
     if( getState( $id ) >= STATUS_ABGERECHNET )
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
-        $pr = sql_bestellvorschlag_daten( $id, ${"produkt$i"} );
+        $pr = sql_bestellvorschlag( $id, ${"produkt$i"} );
         preisdatenSetzen( & $pr );
         $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
-        if( $gruppen_menge > 0 or ( $gruppe == $muell_id ) )
-          sql_basar2group( $gruppe, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
+        if( $gruppen_menge > 0 or ( $gruppen_id == $muell_id ) )
+          sql_basar2group( $gruppen_id, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
     }
   }
 }
-
 
 ?> <h1>Basar</h1> <?
 
 basar_overview( $bestell_id, $orderby, $editable );
 
 ?>
-
