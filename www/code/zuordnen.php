@@ -1055,7 +1055,7 @@ function sql_gruppe_aktiv($gruppen_id) {
  * - optional eingeschraenkt auf einen bestimmten artikel dieser bestellung
  * auch pfandrueckgabe zaehlt als teilnahme an einer bestellung
  */
-function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE ){
+function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE, $filter = FALSE ){
   $query = select_bestellgruppen( '', 'gruppenbestellungen.id as gruppenbestellungen_id' )
   . " INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.bestellguppen_id = bestellgruppen.id )";
@@ -1065,11 +1065,13 @@ function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE ){
       ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
     ";
   }
-  $query .= " WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id";
-  if( $produkt_id ) {
-    $query .= " AND bestellzuordnung.produkt_id = $produkt_id";
-  }
-  $query .= " GROUP BY bestellgruppen.id ORDER BY gruppennummer";
+  $query .= " WHERE ( gruppenbestellungen.gesamtbestellung_id = $bestell_id ) ";
+  if( $produkt_id )
+    $query .= " AND ( bestellzuordnung.produkt_id = $produkt_id ) ";
+  if( $filter )
+    $query .= " AND ( $filter ) ";
+  $query .= " GROUP BY bestellgruppen.id
+              ORDER BY NOT(aktiv), gruppennummer"; //  13 (und andere inaktive) am ende zeigen
   return mysql2array( doSql( $query ) );
 }
 
@@ -1077,6 +1079,7 @@ function optionen_gruppen(
   $selected = 0
 , $filter = 'aktiv'
 , $option_0 = false
+, $bestell_id = 0
 ) {
   $output='';
   if( $option_0 ) {
@@ -1087,7 +1090,12 @@ function optionen_gruppen(
     }
     $output = $output . ">$option_0</option>";
   }
-  foreach( sql_bestellgruppen( $filter ) as $gruppe ) {
+  if( $bestell_id ) {
+    $gruppen = sql_bestellung_gruppen( $bestell_id, false, $filter );
+  } else {
+    $gruppen = sql_bestellgruppen( $filter );
+  }
+  foreach( $gruppen as $gruppe ) {
     $id = $gruppe['id'];
     $output = "$output
       <option value='$id'";
@@ -1484,7 +1492,7 @@ function sql_insert_bestellvorschlag(
   global $hat_dienst_IV;
 
   fail_if_readonly();
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( getState( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
 
   // finde NOW() aktuellen preis:
   if( ! $preis_id )
@@ -1561,7 +1569,8 @@ function sql_bestellpreis( $bestell_id, $produkt_id ) {
 }
 
 function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
-  need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()), "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
+  need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()) or ($gruppe == sql_basar_id())
+      , "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
   need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
@@ -2504,7 +2513,7 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 ////////////////////////////////////////////
 
 define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );      // noch nicht zugeordnet
-define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben gruppen _und_ lieferanten
+define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben: gruppen, lieferanten und bank
 define( 'TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN', 2 ); // Ausgleich/Umlage Differenz Anfangsguthaben
 define( 'TRANSAKTION_TYP_SPENDE', 3 );           // freiwillige Spende
 define( 'TRANSAKTION_TYP_SONDERAUSGABEN', 4 );   // Mitgliedsbeitrag Haus der Natur, Kontofuehrung, ...
@@ -2516,6 +2525,18 @@ define( 'TRANSAKTION_TYP_UMBUCHUNG_SPENDE', 9 );   // umbuchung von spenden nach
 define( 'TRANSAKTION_TYP_UMBUCHUNG_UMLAGE', 10 );  // umbuchung von umlagen nach TRANSAKTION_TYP_AUSGLEICH_*
 define( 'TRANSAKTION_TYP_STORNO', 98 );          // Buchungen, die sich gegenseitig neutralisieren
 // define( 'TRANSAKTION_TYP_SONSTIGES', 99 ); // nicht benutzt
+
+
+$selectable_types = array(
+  TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE
+, TRANSAKTION_TYP_ANFANGSGUTHABEN
+, TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
+, TRANSAKTION_TYP_SPENDE
+, TRANSAKTION_TYP_SONDERAUSGABEN
+, TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
+/// , TRANSAKTION_TYP_VERLUST
+, TRANSAKTION_TYP_UMLAGE
+);
 
 function transaktion_typ_string( $typ ) {
   switch( $typ ) {
