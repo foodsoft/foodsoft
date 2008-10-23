@@ -317,8 +317,34 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        }
 }
 
-function show_dienst_gruppe($row, $color_use){
-     echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
+     global $hat_dienst_V;
+     //Editiermöglichkeit für Dienst V
+     if($hat_dienst_V){
+?>
+	   <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
+	       <input type="hidden" name="area" value=<?echo $area?>>
+	       <input type="hidden" name="aktion" value="dienstPersonAendern_<?echo $row["Lieferdatum"]."_".$row['gruppenmitglieder_id']?>">
+	       <input type="submit" value="">  
+
+<?
+          echo "                   <select name=\"selector\" onchange=\"document.edit_dienste.submit()\">\n";
+	  foreach(sql_aktive_bestellgruppen() as $gruppe){
+		  foreach(sql_gruppen_members($gruppe['id']) as $member){
+		          $selected="";
+			  if($row['gruppenmitglieder_id']==$member['id']){
+				  $selected=" selected ";
+			  }
+			  echo "                    <option value=".$member['id'].$selected.">Gruppe ".$member['gruppen_id']%1000 .": ".$member['vorname']." ".$member['name']."</option>\n";
+		  }
+	  }
+
+	  echo "             </select>";
+	  echo "          </form>";
+     } else {
+          echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+     }
 
 }
 

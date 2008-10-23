@@ -188,6 +188,10 @@
 		  fail_if_readonly();
 		   sql_dienst_akzeptieren($command[1]);
 		   break;
+		case "dienstPersonAendern":
+			//ToDo hier auf geänderte Person reagieren
+			//Achtung: rechte überprüfen
+		   break;
 		
 	        }
 	     }
