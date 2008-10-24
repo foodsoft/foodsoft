@@ -17,7 +17,7 @@ function form_row_konto( $label = 'Konto:', $fieldname = 'konto_id', $initial = 
     open_td( 'kbd' ); echo konto_view( $konto_id, $fieldname );
 }
 
-function form_row_kontoauszug( $label = 'Kontoauszug:', $fieldname = 'auszug', $initial_jahr = 0, $initial_nr = 0 ) {
+function form_row_kontoauszug( $label = 'Auszug:', $fieldname = 'auszug', $initial_jahr = 0, $initial_nr = 0 ) {
   open_tr();
     open_td( 'label', '', $label );
     $auszug_jahr = self_field( $fieldname.'_jahr' );
@@ -28,7 +28,7 @@ function form_row_kontoauszug( $label = 'Kontoauszug:', $fieldname = 'auszug', $
       $auszug_jahr = $initial_jahr;
     if( $auszug_nr === NULL )
       $auszug_nr = $initial_nr;
-    open_td( 'kbd' ); echo kontoauszug_view( 0, $auszug_jahr, $auszug_nr, $fieldname );
+    open_td( 'kbd oneline' ); echo kontoauszug_view( 0, $auszug_jahr, $auszug_nr, $fieldname );
 }
 
 function form_row_gruppe( $label = 'Gruppe:', $fieldname = 'gruppen_id', $initial = 0 ) {
@@ -63,7 +63,7 @@ function form_row_date( $label, $fieldname, $initial = 0 ) {
   }
   open_tr();
     open_td( 'label', '', $label );
-    open_td( 'kbd' ); echo date_view( $date, $fieldname );
+    open_td( 'kbd oneline' ); echo date_view( $date, $fieldname );
 }
 
 function form_row_date_time( $label, $fieldname, $initial = 0 ) {
@@ -98,15 +98,15 @@ function form_row_text( $label = 'Notiz:', $fieldname = 'notiz', $size = 60, $in
 
 
 function form_finish_transaction( $transaction_id ) {
-  $trans = sql_get_transaction( $transaction_id );
-  open_form('', '', '', "action=finish_transaction,transaction_id=$transaction_id" );
+  global $input_event_handlers;
+  open_form('', '', "action=finish_transaction,transaction_id=$transaction_id" );
     open_table('layout');
       form_row_konto();
-      form_row_auszug();
+      form_row_kontoauszug();
       form_row_date( 'Valuta:', 'valuta' );
       open_tr();
         open_td( 'right', "colspan='2'" );
-        echo "Best&auml;tigen: <input type='checkbox' name='confirm' value='yes'>";
+        echo "Best&auml;tigen: <input type='checkbox' name='confirm' value='yes' $input_event_handlers>";
         qquad();
         submission_button( 'OK' );
     close_table();
@@ -147,14 +147,14 @@ function action_finish_transaction() {
 
 
 function formular_buchung_gruppe_bank( $notiz_initial = 'Einzahlung' ) {
-  open_form( 'small_form', '', '', 'action=buchung_gruppe_bank' );
+  open_form( 'small_form', '', 'action=buchung_gruppe_bank' );
     open_fieldset( 'small_form', '', 'Einzahlung / Auszahlung Gruppe' );
       open_table('layout');
         form_row_gruppe();
         form_row_konto();
         form_row_kontoauszug();
         form_row_date( 'Valuta:', 'valuta' );
-        tr_title( 'Betrag: positiv bei Einzahlung, negativ bei Auszahlung' );
+        tr_title( 'Haben Konto: positiv bei Einzahlung, negativ bei Auszahlung' );
         form_row_betrag( 'Haben Konto:' );
         form_row_text( 'Notiz:', 'notiz', 60, $notiz_initial );
         quad();
@@ -199,7 +199,7 @@ function action_buchung_gruppe_bank() {
 
 
 function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung Lieferant' ) {
-  open_form( 'small_form', '', '', 'action=buchung_lieferant_bank' );
+  open_form( 'small_form', '', 'action=buchung_lieferant_bank' );
     open_fieldset( '', '', 'Überweisung / Lastschrift Lieferant' );
       open_table('layout');
         form_row_lieferant();
@@ -239,13 +239,13 @@ function action_buchung_lieferant_bank() {
 }
 
 function formular_buchung_gruppe_lieferant( $notiz_initial = 'Zahlung an Lieferant' ) {
-  open_form( 'small_form', '', '', 'action=buchung_gruppe_lieferant' );
+  open_form( 'small_form', '', 'action=buchung_gruppe_lieferant' );
     open_fieldset( 'small_form', '', 'Zahlung von Gruppe an Lieferant' );
       open_table('layout');
         form_row_gruppe();
         form_row_lieferant();
         form_row_date( 'Valuta:', 'valuta' );
-        tr_title( 'Betrag: positiv: Zahlung an Lieferant / negativ: Zahlung an Gruppe' );
+        tr_title( 'Haben Lieferant: positiv: Zahlung an Lieferant / negativ: Zahlung an Gruppe' );
         form_row_betrag( 'Haben Lieferant:' );
         form_row_text( 'Notiz:', 'notiz', 60, $notiz_initial );
         quad();
@@ -274,13 +274,13 @@ function action_buchung_gruppe_lieferant() {
 }
 
 function formular_buchung_gruppe_gruppe( $notiz_initial = 'Umbuchung' ) {
-  open_form( 'small_form', '', '', 'action=buchung_gruppe_gruppe' );
+  open_form( 'small_form', '', 'action=buchung_gruppe_gruppe' );
     open_fieldset( '', '', 'Umbuchung von Gruppe an Gruppe' );
       open_table('layout');
         form_row_gruppe( 'von Gruppe:', 'gruppen_id' );
         form_row_gruppe( 'an Gruppe:', 'nach_gruppen_id' );
         form_row_date( 'Valuta:', 'valuta' );
-        form_row_betrag( 'Haben Lieferant:' );
+        form_row_betrag( 'Betrag:' );
         form_row_text( 'Notiz:', 'notiz', 60, $notiz_initial );
         quad();
         submission_button( 'OK' );
@@ -310,7 +310,7 @@ function buchung_gruppe_gruppe() {
 }
 
 function formular_buchung_bank_bank( $notiz_initial = 'Überweisung' ) {
-  open_form( 'small_form', '', '', 'action=buchung_gruppe_gruppe' );
+  open_form( 'small_form', '', 'action=buchung_gruppe_gruppe' );
     open_fieldset( '', '', 'Überweisung von Konto zu Konto' );
       open_table('layout');
         form_row_konto( 'von Konto:', 'konto_id' );
@@ -318,7 +318,7 @@ function formular_buchung_bank_bank( $notiz_initial = 'Überweisung' ) {
         form_row_konto( 'an Konto:', 'nach_konto_id' );
         form_row_kontoauszug( "<div class='right'>Auszug:</div>", 'nach_auszug' );
         form_row_date( 'Valuta:', 'valuta' );
-        form_row_betrag( 'Haben Lieferant:' );
+        form_row_betrag( 'Betrag' );
         form_row_text( 'Notiz:', 'notiz', 60, $notiz_initial );
         quad();
         submission_button( 'OK' );
@@ -352,7 +352,7 @@ function action_buchung_bank_bank() {
 }
 
 function formular_buchung_bank_sonderausgabe() {
-  open_form( 'small_form', '', '', 'action=buchung_bank_sonderausgabe' );
+  open_form( 'small_form', '', 'action=buchung_bank_sonderausgabe' );
     open_fieldset( '', '', 'Überweisung Sonderausgabe' );
       open_table('layout');
         form_row_konto( 'von Konto:', 'konto_id' );
@@ -392,7 +392,7 @@ function action_buchung_bank_sonderausgabe() {
 }
 
 function formular_buchung_gruppe_sonderausgabe() {
-  open_form( 'small_form', '', '', 'action=buchung_gruppe_sonderausgabe' );
+  open_form( 'small_form', '', 'action=buchung_gruppe_sonderausgabe' );
     open_fieldset( '', '', 'Sonderausgabe durch eine Gruppe' );
       open_table('layout');
         form_row_gruppe();
@@ -436,7 +436,7 @@ function action_buchung_gruppe_sonderausgabe() {
 }
 
 function formular_buchung_gruppe_anfangsguthaben() {
-  open_form( 'small_form', '', '', 'action=buchung_gruppe_anfangsguthaben' );
+  open_form( 'small_form', '', 'action=buchung_gruppe_anfangsguthaben' );
     open_fieldset( '', '', 'Anfangsguthaben einer Gruppe eintragen' );
       open_table('layout');
         open_td( 'kommentar', "colspan='2'" )
@@ -487,7 +487,7 @@ function action_buchung_gruppe_anfangsguthaben() {
 }
 
 function formular_buchung_lieferant_anfangsguthaben() {
-  open_form( 'small_form', '', '', 'action=buchung_lieferant_anfangsguthaben' );
+  open_form( 'small_form', '', 'action=buchung_lieferant_anfangsguthaben' );
     open_fieldset( '', '', 'Anfangsguthaben eines Lieferanten eintragen' );
       open_table('layout');
         open_td( 'kommentar', "colspan='2'" )
@@ -499,7 +499,7 @@ function formular_buchung_lieferant_anfangsguthaben() {
           <?
         form_row_lieferant();
         form_row_date( 'Valuta:', 'valuta' );
-        tr_title( 'positiv: offene Forderung des Lieferanten an die FC / negativ: Forderung der Fc an Lieferant' );
+        tr_title( 'positiv: offene Forderung des Lieferanten an die FC / negativ: Forderung der FC an Lieferant' );
         form_row_betrag( 'Haben Lieferant:' );
         form_row_text( 'Notiz:', 'notiz', 60, 'offene Rechnungen bei Umstellung auf die Foodsoft' );
         quad();
@@ -536,7 +536,7 @@ function action_buchung_lieferant_anfangsguthaben() {
 }
 
 function formular_buchung_bank_anfangsguthaben() {
-  open_form( 'small_form', '', '', 'action=buchung_bank_anfangsguthaben' );
+  open_form( 'small_form', '', 'action=buchung_bank_anfangsguthaben' );
     open_fieldset( '', '', 'Anfangskontostand eintragen' );
       open_table('layout');
         open_td( 'kommentar', "colspan='2'" )
@@ -583,7 +583,7 @@ function action_buchung_bank_anfangsguthaben() {
 }
 
 function formular_umbuchung_verlust( $typ = 0 ) {
-  open_form( 'small_form', '', '', "action=umbuchung_verlust,typ=$typ" );
+  open_form( 'small_form', '', "action=umbuchung_verlust" );
     open_fieldset( '', '', 'Umbuchung Verlustausgleich' );
       open_table('layout');
           open_td( 'label', '', 'von:' );
@@ -644,7 +644,7 @@ function action_umbuchung_verlust() {
   }
   if( ! $notiz ) {
     div_msg( 'warn', 'Bitte Notiz eingeben!' );
-    break;
+    return false;
   }
   sql_doppelte_transaktion(
     array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => $nach_typ )
@@ -656,7 +656,7 @@ function action_umbuchung_verlust() {
 }
 
 function formular_gruppen_umlage() {
-  open_form( 'small_form', '', '', 'action=buchung_umlage' );
+  open_form( 'small_form', '', 'action=gruppen_umlage' );
     open_fieldset( '', '', 'Verlustumlage auf Gruppenmitglieder' );
       open_table( 'layout' );
           open_td( '', "colspan='2'", "Von <span class='bold italic'>allen aktiven Bestellgruppen</span> eine Umlage" );
@@ -684,8 +684,10 @@ function action_gruppen_umlage() {
     div_msg( 'warn', 'Bitte Notiz eingeben!' );
     $problems = true;
   }
+  // echo "action_gruppen_umlage:";
   if( ! $problems ) {
     foreach( sql_aktive_bestellgruppen() as $gruppe ) {
+      // echo "<br>gruppe: " .$gruppe['name'] . " " .$gruppe['mitgliederzahl'] ;
       if( $gruppe['mitgliederzahl'] > 0 ) {
         sql_doppelte_transaktion(
           array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
@@ -710,17 +712,20 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $mod_id = false )
 
   open_fieldset( 'small_form', '', "Artikelnummer ($anummer) &auml;ndern", $toggle );
     open_table( 'layout' );
-        open_td( '', '', 'neue Artikel-Nr. setzen:' );
-          open_form( 'small_form', '', '', 'action=artikelnummer_setzen' );
+        open_td( '', '' );
+          open_form( 'small_form', '', 'action=artikelnummer_setzen' );
+            ?> neue Artikel-Nr. setzen: <?
             echo string_view( $anummer, 20, 'anummer' );
-            submission_button();
+            submission_button( 'Speichern', true );
           close_form();
       open_tr();
-        open_td( '', '', '...oder: Katalogsuche nach:' );
-          open_form('small_form','','', "produkt_id=$produkt_id,lieferanten_id=$lieferanten_id");
+        open_td();
+          open_form('small_form', "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id", 'action=search' );
+            ?>...oder: Katalogsuche nach: <?
             echo string_view( $produkt['name'], 40, 'name' );
-            echo fc_link( 'artikelsuche', 'text=Los!,form,class=button' );
-          close_form();
+            // echo fc_link( 'artikelsuche', 'text=Los!,form,class=button' );
+            submission_button( 'Los!' );
+          close_form( false );
     close_table();
   close_fieldset();
 }
@@ -793,10 +798,9 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
   //
   preisdatenSetzen( & $preiseintrag );
 
-  $form_id = open_form( 'small_form', '', '', 'action=neuer_preiseintrag' );
+  $form_id = open_form( 'small_form', '', 'action=neuer_preiseintrag' );
 
-    open_table();
-    // <table id='preisform'>
+    open_table('layout');
       form_row_text( 'Produkt:', false, 1, "{$produkt['name']} von {$produkt['lieferanten_name']}" );
 
       tr_title( 'Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant' );
@@ -882,10 +886,9 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
   
         </td>
       </tr>
-    </table>
  <? 
+     close_table();
    close_form();
-  close_fieldset();
   
   ?>
   <script type="text/javascript">
@@ -924,30 +927,30 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
     }
   
     function preiseintrag_auslesen() {
-      mwst = parseFloat( document.forms['preisform'].newfcmwst.value );
-      pfand = parseFloat( document.forms['preisform'].newfcpfand.value );
-      verteilmult = parseInt( document.forms['preisform'].newfcmult.value );
-      verteileinheit = document.forms['preisform'].newfceinheit.value;
-      preis = parseFloat( document.forms['preisform'].newfcpreis.value );
-      gebindegroesse = parseInt( document.forms['preisform'].newfcgebindegroesse.value );
-      liefermult = parseInt( document.forms['preisform'].newliefermult.value );
-      liefereinheit = document.forms['preisform'].newliefereinheit.value;
-      lieferpreis = parseFloat( document.forms['preisform'].newfclieferpreis.value );
+      mwst = parseFloat( document.forms[preisform].newfcmwst.value );
+      pfand = parseFloat( document.forms[preisform].newfcpfand.value );
+      verteilmult = parseInt( document.forms[preisform].newfcmult.value );
+      verteileinheit = document.forms[preisform].newfceinheit.value;
+      preis = parseFloat( document.forms[preisform].newfcpreis.value );
+      gebindegroesse = parseInt( document.forms[preisform].newfcgebindegroesse.value );
+      liefermult = parseInt( document.forms[preisform].newliefermult.value );
+      liefereinheit = document.forms[preisform].newliefereinheit.value;
+      lieferpreis = parseFloat( document.forms[preisform].newfclieferpreis.value );
       preiseinheit_setzen();
     }
   
     preiseintrag_auslesen();
   
     function preiseintrag_update() {
-      document.forms['preisform'].newfcmwst.value = mwst;
-      document.forms['preisform'].newfcmwst.pfand = pfand;
-      document.forms['preisform'].newfcmult.value = verteilmult;
-      document.forms['preisform'].newfceinheit.value = verteileinheit;
-      document.forms['preisform'].newfcpreis.value = preis;
-      document.forms['preisform'].newfcgebindegroesse.value = gebindegroesse;
-      document.forms['preisform'].newliefermult.value = liefermult;
-      document.forms['preisform'].newliefereinheit.value = liefereinheit;
-      document.forms['preisform'].newfclieferpreis.value = lieferpreis;
+      document.forms[preisform].newfcmwst.value = mwst;
+      document.forms[preisform].newfcmwst.pfand = pfand;
+      document.forms[preisform].newfcmult.value = verteilmult;
+      document.forms[preisform].newfceinheit.value = verteileinheit;
+      document.forms[preisform].newfcpreis.value = preis;
+      document.forms[preisform].newfcgebindegroesse.value = gebindegroesse;
+      document.forms[preisform].newliefermult.value = liefermult;
+      document.forms[preisform].newliefereinheit.value = liefereinheit;
+      document.forms[preisform].newfclieferpreis.value = lieferpreis;
       document.getElementById("newfcendpreiseinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
       document.getElementById("newfcgebindeeinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
       document.getElementById("newfcpreiseinheit").firstChild.nodeValue = preiseinheit;
@@ -956,7 +959,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
     function preisberechnung_vorwaerts() {
       vorwaerts = 1;
       preiseintrag_auslesen();
-      berechnen = document.forms['preisform'].dynamischberechnen.checked;
+      berechnen = document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         lieferpreis = 
           parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * mengenfaktor ) / 100.0;
@@ -967,7 +970,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
     function preisberechnung_rueckwaerts() {
       vorwaerts = 0;
       preiseintrag_auslesen();
-      berechnen = document.forms['preisform'].dynamischberechnen.checked;
+      berechnen = document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         preis = 
           parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / mengenfaktor + pfand ) ) / 10000.0;
@@ -983,30 +986,30 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
     }
     function preisberechnung_fcmult() {
       alt = verteilmult;
-      berechnen = document.forms['preisform'].dynamischberechnen.checked;
+      berechnen = document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        verteilmult = parseInt( document.forms['preisform'].newfcmult.value );
+        verteilmult = parseInt( document.forms[preisform].newfcmult.value );
         if( verteilmult < 1 )
           verteilmult = 1;
         if( (verteilmult > 0) && (alt > 0) ) {
           gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
           if( gebindegroesse < 1 )
             gebindegroesse = 1;
-          document.forms['preisform'].newfcgebindegroesse.value = gebindegroesse;
+          document.forms[preisform].newfcgebindegroesse.value = gebindegroesse;
         }
       }
       preisberechnung_default();
     }
     function preisberechnung_gebinde() {
       alt = gebindegroesse;
-      berechnen = document.forms['preisform'].dynamischberechnen.checked;
+      berechnen = document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        gebindegroesse = parseInt( document.forms['preisform'].newfcgebindegroesse.value );
+        gebindegroesse = parseInt( document.forms[preisform].newfcgebindegroesse.value );
         if( gebindegroesse < 1 )
           gebindegroesse = 1;
         // if( (gebindegroesse > 0) && (alt > 0) ) {
         //  verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
-        //  document.forms['preisform'].newfcmult.value = verteilmult;
+        //  document.forms[preisform].newfcmult.value = verteilmult;
         // }
       }
       preisberechnung_default();
