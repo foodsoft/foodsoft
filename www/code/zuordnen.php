@@ -3839,12 +3839,13 @@ function checkvalue( $val, $typ){
 // gegen mehrfache Absendung desselben Formulars per "Reload" Knopfs des Browsers)
 //
 function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
-  global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields;
-  global $postform_id, $http_input_sanitized;
+  global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields, $self_post_fields;
+  global $http_input_sanitized;
 
   if( ! $http_input_sanitized )
     sanitize_http_input();
 
+  // echo "get_http_var: $is_self_field";
   if( substr( $name, -2 ) == '[]' ) {
     $want_array = true;
     $name = substr( $name, 0, strlen($name)-2 );
@@ -3865,7 +3866,10 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
           // erlaube initialisierung z.B. aus MySQL-'$row':
           $GLOBALS[$name] = $default[$name];
           if( $is_self_field ) {
-            $self_fields[$name] = $default[$name];
+            if( $is_self_field === 'POST' )
+              $self_post_fields[$name] = $default[$name];
+            else
+              $self_fields[$name] = $default[$name];
           }
         } else {
           unset( $GLOBALS[$name] );
@@ -3874,7 +3878,10 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
       } else {
         $GLOBALS[$name] = $default;
         if( $is_self_field ) {
-          $self_fields[$name] = $default;
+          if( $is_self_field === 'POST' )
+            $self_post_fields[$name] = $default;
+          else
+            $self_fields[$name] = $default;
         }
       }
       return TRUE;
@@ -3915,7 +3922,10 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
       } else {
         $GLOBALS[$name] = $new;
         if( $is_self_field ) {
-          $self_fields[$name] = $new;
+          if( $is_self_field === 'POST' )
+            $self_post_fields[$name] = $new;
+          else
+            $self_fields[$name] = $new;
         }
       }
   }
@@ -4264,11 +4274,7 @@ function setWikiHelpTopic( $topic ) {
 // koennen daher nur noch den subtitle (im fenster) setzen:
 //
 function setWindowSubtitle( $subtitle ) {
-  echo "
-    <script type='text/javascript'>
-  " . replace_html( 'subtitle', "Foodsoft: $subtitle" ) . "
-    </script>
-  ";
+  open_javascript( replace_html( 'subtitle', "Foodsoft: $subtitle" ) );
 }
 
 global $postform_id;
@@ -4285,9 +4291,9 @@ function set_itan() {
   $postform_id = $id.'_'.$itan;
 }
 
-function postform_id() {
+function postform_id( $force_new = false ) {
   global $postform_id;
-  if( ! $postform_id )
+  if( $force_new or ! $postform_id )
     set_itan();
   return $postform_id;
 }

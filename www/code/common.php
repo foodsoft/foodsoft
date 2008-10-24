@@ -77,8 +77,9 @@ $specialgroups[] = $basar_id;
 $specialgroups[] = $muell_id;
 
 // $self_fields: variable, die in der url uebergeben werden, werden hier gesammelt:
-global $self_fields;
+global $self_fields, $self_post_fields;
 $self_fields = array();
+$self_post_fields = array();
 
 // Benutzerdaten:
 global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $coopie_name, $dienstkontrollblatt_id, $session_id;
