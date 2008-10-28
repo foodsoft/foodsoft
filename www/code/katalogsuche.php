@@ -44,7 +44,7 @@ function katalogabgleich(
   if( ! $katalogeintrag ) {
     ?> <div class='warn'>Katalogsuche: Artikelnummer nicht gefunden!</div> <?
     if( $detail and $editable )
-      formular_artikelnummer( $produkt_id, false, true );
+      formular_artikelnummer( $produkt_id, false );
     return 2;
   }
   
@@ -219,7 +219,7 @@ function katalogabgleich(
   }
   if( $detail and $editable ) {
     ?><div class='untertabelle'><?
-    formular_artikelnummer( $produkt_id, true, false );
+    formular_artikelnummer( $produkt_id, 'off' );
     ?></div><?
   }
 
