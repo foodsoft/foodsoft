@@ -4,9 +4,8 @@
 // functions and definitions for internal hyperlinks, in particular: window properties
 
 
-// global defaults for windows
-// (these are really constants, but php doesn not support array-valued constants)
-//
+// default options for windows (for javascript window.open()-call)
+// (these are really constants, but php doesn't not support array-valued constants)
 // this file may be include from inside a function (from doku-wiki!), so we need `global':
 //
 global $large_window_options, $small_window_options;
@@ -36,14 +35,13 @@ $small_window_options = array(
 // these parameters will never be transmitted via GET or POST; rather, they determine
 // how the link itself will look and behave:
 //
-$pseudo_parameters = array( 'img', 'title', 'text', 'class', 'confirm', 'form', 'anchor', 'url', 'context' );
+$pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 'anchor', 'url', 'context' );
 
 //
 // internal functions (not supposed to be called by consumers):
 //
 
-// fc_window_defaults:
-// define default values and default options for windows
+// fc_window_defaults: define default values and default options for windows
 //
 function fc_window_defaults( $name ) {
   global $readonly, $dienst, $large_window_options, $small_window_options;
@@ -61,6 +59,7 @@ function fc_window_defaults( $name ) {
     //
     // Anzeige im Hauptfenster (aus dem Hauptmenue) oder in "grossem" Fenster moeglich:
     //
+    case 'menu':
     case 'index':
       $parameters['window'] = 'menu';
       $parameters['window_id'] = 'main';
@@ -283,7 +282,7 @@ function fc_window_defaults( $name ) {
     //
     // "kleine" Fenster:
     //
-    case 'editBestellung':
+    case 'editbestellung':
     case 'edit_bestellung':
       $parameters['window'] = 'editBestellung';
       $parameters['window_id'] = 'edit_bestellung';
@@ -291,7 +290,7 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '480' ) );
       break;
-    case 'editBuchung':
+    case 'editbuchung':
     case 'edit_buchung':
       $parameters['window'] = 'editBuchung';
       $parameters['window_id'] = 'edit_buchung';
@@ -300,7 +299,7 @@ function fc_window_defaults( $name ) {
       $options = array_merge( $small_window_options, array( 'width' => '600', 'height' => '600' ) );
       break;
     // case 'edit_group':  //  im moment nicht benutzt
-    case 'editLieferant':
+    case 'editlieferant':
     case 'edit_lieferant':
       $parameters['window'] = 'editLieferant';
       $parameters['window_id'] = 'edit_lieferant';
@@ -308,7 +307,7 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
-    case 'editProdukt':
+    case 'editprodukt':
     case 'edit_produkt':
       $parameters['window'] = 'editProdukt';
       $parameters['window_id'] = 'edit_produkt';
@@ -316,7 +315,7 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '560', 'height' => 380 ) );
       break;
-    case 'editVerpackung':
+    case 'editverpackung':
     case 'edit_verpackung':
       $parameters['window'] = 'editVerpackung';
       $parameters['window_id'] = 'edit_verpackung';
@@ -324,16 +323,16 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '500' ) );
       break;
-    case 'insertBestellung':
+    case 'insertbestellung':
     case 'insert_bestellung':
-      $parameters['window'] = 'insertBestellung';
-      $parameters['window_id'] = 'insert_bestellung';
+      $parameters['window'] = 'editBestellung';
+      $parameters['window_id'] = 'edit_bestellung';
       $parameters['text'] = 'neue Bestellvorlage anlegen...';
       $parameters['title'] = 'neue Bestellvorlage anlegen...';
       $parameters['class'] = 'button';
       $options = array_merge( $small_window_options, array( 'width' => '460' ) );
       break;
-    case 'insertProduktgruppe':
+    case 'insertproduktgruppe':
     case 'produktgruppen':
       $parameters['window'] = 'insertProduktgruppe';
       $parameters['window_id'] = 'produktgruppen';
@@ -373,10 +372,20 @@ function self_url( $exclude = array() ) {
 
 
 // self_post:
-// in jedem Formular wird automatisch eine eindeutige TAN, postform_id, einfgefuegt
 //
 function self_post( $exclude = array() ) {
-  return "<input type='hidden' name='postform_id' value='".postform_id()."'>";
+  global $self_post_fields;
+  $output = "<input type='hidden' name='postform_id' value='".postform_id()."'>";
+  if( ! $exclude ) {
+    $exclude = array();
+  } elseif( is_string( $exclude ) ) {
+    $exclude = array( $exclude );
+  }
+  foreach( $self_post_fields as $key => $value ) {
+    if( ! in_array( $key, $exclude ) )
+      $output = $output . "<input type='hidden' name='$key' value='$value'>";
+  }
+  return $output;
 }
 
 // parameters_explode:
@@ -394,99 +403,38 @@ function parameters_explode( $s ) {
   return $r;
 }
 
-// fc_url: generates internal URLs; arguments:
-// - $parameters: GET-variables to pass in url: either array of key=>value pairs, or "k1=v1,k2=v2..." string
-// - $options: window-options to pass to javascript:open_window(); same format as $parameters
-// - $context: where this url is to be used; one of the following:
-//    'href': ordinary hyperlink <a href=...>: may return javascript:... or plain url
-//    'action': for <form action=...>. will never return javascript (as that won't work with POSTed variables)
-//    'handler': for "onClick=..."-like handlers: always returns javascript, but no 'javascript:'-prefix
-// some parameters have a special meaning (will not be used as GET variables):
-//  - 'window': window-name, see fc_window_defaults(): determines target window and defaults for parameters and options
-//     special case: 'self' means: 
-//        - same script in same window and
-//  - 'img', 'text', 'title', 'class': pseudo-parameters used in the higher-level functions below; will not be passed in url.
-//  - 'anchor': generate #-anchor in url
-//  - 'form': name of form to be submitted. allows submission of form into a different window. the action of the form
-//     will be replaced by the generated url. Only meaningful with $context 'href' or 'handler'.
-//  - 'button_id': only meaningful together with 'form': if a POST parameter 'button_id' is already present in the given
-//     form, its value will be updated before submssion. this allows to identify which button was pressed.
-//
-function fc_url( $parameters, $options, $context ) {
+// fc_url: create an url, passing $parameters in the query string.
+// pseudo-parameters will be skipped except for two special cases:
+//  - anchor: append an #anchor to the url
+//  - url: return the value of this parameter immediately (overriding all others)
+// 
+function fc_url( $parameters ) {
   global $pseudo_parameters, $form_id;
 
-  $window = $parameters['window'];
-  $window_id = $parameters['window_id'];
-
   $url = 'index.php?';
-  $form = '';
   $anchor = '';
-  $button_id = '';
-  $confirm = '';
   foreach( $parameters as $key => $value ) {
     switch( $key ) {
       case 'anchor':
         $anchor = "#$value";
         continue 2;
-      case 'confirm':
-        $confirm = "if( confirm( '$value' ) ) ";
-        continue 2;
-      case 'button_id':
-        $button_id = $value;
-        continue 2;
-      case 'form':
-        $form = ( $value ? $value : "form_$form_id" );
-        continue 2;
       case 'url':
-        $url = $value;
-        continue 2;
+        return $value;
+        break 2;
       default:
         if( in_array( $key, $pseudo_parameters ) )
           continue 2;
     }
-    if( $value === NULL )
-      continue;
-    $url .= "&$key=$value";
+    if( $value or ( $value === 0 ) )
+      $url .= "&$key=$value";
   }
   $url .= $anchor;
-
-  $option_string = '';
-  $komma = '';
-  foreach( $options as $key => $value ) {
-    $option_string .= "$komma$key=$value";
-    $komma = ',';
-  }
-
-  if( ( $window_id == 'main' ) or ( $window_id == 'top' ) )
-    $js_window_name = '_top';
-  else
-    $js_window_name = $window_id;
-
-  $prefix = '';
-  $reload = '';
-  switch( $context ) {
-    case 'action':
-      return $url;
-    case 'href':
-      $prefix = 'javascript:';
-    case 'handler':
-      if( $form ) {
-        if( $window_id != $GLOBALS['window_id'] )
-          $reload = "self.location.href='" .self_url(). "';"; // force reload to issue new iTAN
-        return "$prefix $confirm submit_form( '$form', '$url', '$js_window_name', '$option_string', '$button_id' ); $reload";
-      } else {
-        if( $window_id != $GLOBALS['window_id'] ) {
-          return "$prefix $confirm window.open( '$url', '$js_window_name', '$option_string' ).focus();";
-        } else {
-          return "$prefix $confirm self.location.href='$url';";
-        }
-      }
-    default:
-      error( "undefinierter context: $context" );
-  }
+  return $url;
 }
 
+
 // alink: compose from parts and return an <a href=...> hyperlink
+// $url may also contain javascript; if so, '-quotes but no "-quotes must be used
 //
 function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
   $alt = '';
@@ -494,7 +442,7 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
     $alt = "alt='$title'";
     $title = "title='$title'";
   }
-  $l = "<a class='$class' $title href=\"$url\">"; // NOTE: $url may contain '-quotes (but no "-quotes)!
+  $l = "<a class='$class' $title href=\"$url\">";
   if( $img ) {
     $l .= "<img src='$img' class='icon' $alt $title />";
     if( $text )
@@ -512,47 +460,111 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
 //
 
 // fc_link: create internal link:
-//   $window: the name of the view; determines the script, the target window, and defaults
-//   $parameters: GET parameters to be passed in url: either "k1=v1&k2=v2" string, or
-//                array of 'name' => 'value' pairs
-//   $options: window options to be passed in javascript:window_open()
-// pseudo-parameters title, text, img determine the look of the link and will not be passed
+//   $window: name of the view; determines script, target window, and defaults for parameters and options. default: 'self'
+//            if $window == 'self', global $self_fields will be merged with $parameters
+//   $parameters: GET parameters to be passed in url: either "k1=v1&k2=v2" string, or array of 'name' => 'value' pairs
+//                this will override defaults and (if applicable) $self_fields.
+//                use 'name' => NULL to explicitely _not_ pass a parameter even if it is in defaults or $self_fields.
+//   $options:    window options to be passed in javascript:window_open() (optional, to override defaults)
+// $parameters may also contain some pseudo-parameters:
+//   $text, $title, $class, $img: to specify the look of the link (see alink above)
+//   $window_id: name of browser target window (will also be passed in the query string)
+//   $confirm: if set, a javascript confirm() call will pop up with text $confirm when the link is clicked
+//   $context: where the link is to be used:
+//    'a' (default): return a complete <a href=...>...</a> link. the link will contain javascript if the target window
+//                   is differerent from the current window or if $confirm is specified.
+//    'js': always return javascript code that can be used in event handlers like onclick=...
+//    'action': always return the plain url. (pseudo parameters like $confirm or $window_id will take no effect)
+//    'form': return string of attributes suitable to insert into a <form>-tag. will always contain action='...'
+//            and may also contain target='...' and onsubmit='...' attributes if needed.
+// as a special case, $parameters === NULL can be used to just open a browser window with no document; this can
+// be used in <form onsubmit='...', in combination with target=..., to submit a form into a new window.
 //
 function fc_link( $window = '', $parameters = array(), $options = array() ) {
   global $self_fields;
 
-  if( ! $window )
-    $window = 'self';
+  // allow string or array form:
   if( is_string( $parameters ) )
     $parameters = parameters_explode( $parameters );
   if( is_string( $options ) )
     $options = parameters_explode( $options );
-  if( $window == 'self' )
-    $parameters = array_merge( $self_fields, $parameters );
+  if( ! $window )
+    $window = 'self';
 
   $window_defaults = fc_window_defaults( $window );
-  $parameters = array_merge( $window_defaults['parameters'], $parameters );
-  $options = array_merge( $window_defaults['options'], $options );
+  if( $parameters === NULL ) {  // open empty window
+    $parameters = $window_defaults['parameters'];
+    $url = '';
+    $context = 'js';  // window.open() _needs_ js (and opening empty windows is only useful in onsubmit() anyway)
+  } else {
+    if( $window == 'self' )
+      $parameters = array_merge( $self_fields, $parameters );
+    $parameters = array_merge( $window_defaults['parameters'], $parameters );
+    $window = $window_defaults['parameters']['window'];  // force canonical script name
+    $parameters['window'] = $window;
+    $url = fc_url( $parameters );
+    $context = adefault( $parameters, 'context', 'a' );
+  }
 
-  $context = adefault( $parameters, 'context', 'href' );
-  $url = fc_url( $parameters, $options, $context );
+  $options = array_merge( $window_defaults['options'], $options );
+  $option_string = '';
+  $komma = '';
+  foreach( $options as $key => $value ) {
+    $option_string .= "$komma$key=$value";
+    $komma = ',';
+  }
+
+  if( isset( $parameters['confirm'] ) ) {
+    $confirm = "if( confirm( '{$parameters['confirm']}' ) ) ";
+  } else {
+    $confirm = '';
+  }
+
+  $window_id = $parameters['window_id'];
+  if( ( $window_id == 'main' ) or ( $window_id == 'top' ) )
+    $js_window_name = '_top';
+  else
+    $js_window_name = $window_id;
 
   switch( $context ) {
-    case 'handler':
-    case 'action':
-      return $url;
-    case 'href':
+    case 'a':
+      if( $window_id != $GLOBALS['window_id'] ) {
+        $url = "javascript: $confirm window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+      } else if( $confirm ) {
+        $url = "javscript: $confirm self.location.href='$url';";
+      }
       $title = adefault( $parameters, 'title', '' );
       $text = adefault( $parameters, 'text', '' );
       $img = adefault( $parameters, 'img', '' );
       $class = adefault( $parameters, 'class', 'href' );
       return alink( $url, $class, $text, $title, $img );
+    case 'action':
+      return $url;
+    case 'js':
+      if( $window_id != $GLOBALS['window_id'] ) {
+        return "$confirm window.open( '$url', '$js_window_name', '$option_string' ).focus();";
+      } else {
+        return "$confirm self.location.href='$url';";
+      }
+    case 'form':
+      if( $window_id == $GLOBALS['window_id'] ) {
+        $target = '';
+        $onsubmit = '';
+      } else {
+        $target = "target='$js_window_name'";
+        // $onsubmit: make sure the target window exists (open empty window unless already open), then force reload
+        // of document in current window (to issue fresh iTAN for this form):
+        $onsubmit = 'onsubmit="'. fc_link( $window, NULL ) . ' document.forms.update_form.submit(); "';
+      }
+      return "action='$url' $target $onsubmit";
+    default:
+      error( 'undefinierter $context' );
   }
 }
 
-// fc_action: generates simple form and one submit button.
-// $get_parameters: determine the url as in fc_alink / fc_url. In particular, 'window'
-//                  allows to call an arbitrary script in a different window.
+// fc_action: generates simple form and one submit button (which actually is a <a>-element)
+// $get_parameters: determine the url as in fc_link. In particular, 'window' allows to submit this form to
+//                  an arbitrary script in a different window, and the style of the <a> can be specified.
 // $post_parameter: additional parameters to be POSTed in hidden input fields.
 //
 function fc_action( $get_parameters = array(), $post_parameters = array(), $options = array() ) {
@@ -566,17 +578,27 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   $form_id = new_html_id();
 
   $window = adefault( $get_parameters, 'window', 'self' );
+  unset( $get_parameters['window'] );
   $window_defaults = fc_window_defaults( $window );
   $get_parameters = array_merge( $window_defaults['parameters'], $get_parameters );
 
   $title = adefault( $get_parameters, 'title', '' );
   $text = adefault( $get_parameters, 'text', '' );
   $class = adefault( $get_parameters, 'class', 'button' );
-  $confirm = adefault( $get_parameters, 'confirm', '' );
   $img = adefault( $get_parameters, 'img', '' );
 
-  $form = "<form style='display:inline;' method='post' id='form_$form_id' name='form_$form_id' action=''>";
-  $form .= self_post();
+  if( $confirm = adefault( $get_parameters, 'confirm', '' ) )
+    $confirm = " if( confirm( '$confirm' ) ) ";
+
+  $get_parameters['context'] = 'form';
+  $action = fc_link( $window, $get_parameters );
+
+  $form = "<form style='display:inline;' method='post' id='form_$form_id' name='form_$form_id' $action>";
+  if( $window == 'self' ) {
+    $form .= self_post();
+  } else {
+    $form .= "<input type='hidden' name='postform_id' value='". postform_id() ."'>";
+  }
   foreach( $post_parameters as $name => $value ) {
     $form .= "<input type='hidden' name='$name' value='$value'>";
   }
@@ -584,20 +606,24 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   // we may be inside another form, but forms cannot be nested; so we append this form at the end:
   $print_on_exit[] = $form;
 
-  // $get_parameters['context'] = 'href';
-  $get_parameters['form'] = "form_$form_id";
-
-  return fc_link( $window, $get_parameters, $options );
+  return alink( "javascript:$confirm submit_form( $form_id );", $class, $text, $title, $img );
 }
 
+// fc_openwindow(): pop-up $window here and now:
+//
 function fc_openwindow( $window, $parameters = array(), $options = array() ) {
-  $parameters['window'] = $window;
-  open_javscript( fc_url( $parameters, $options, 'handler' ) );
+  if( is_string( $parameters ) )
+    $parameters = parameters_explode( $parameters );
+  $parameters['context'] = 'js';
+  open_javascript( fc_link( $window, $parameters, $options ) );
 }
 
+// reload_immediately(): exit the current script and open $url instead:
+//
 function reload_immediately( $url ) {
-  open_form( '', "name='reload_now_form'", array( 'url' => $url ) ); close_form();
-  open_javascript( "document.forms['reload_now_form'].submit();" );
+  // open_form( '', "name=reload_now_form", array( 'url' => $url ) ); close_form();
+  // open_javascript( "document.forms['reload_now_form'].submit();" );
+  open_javascript( "self.location.href = '$url';" );
   exit();
 }
 ?>
