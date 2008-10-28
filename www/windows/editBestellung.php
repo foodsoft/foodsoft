@@ -26,9 +26,9 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
   $bestellname = "";
   $status = STATUS_BESTELLEN;
   need_http_var( 'lieferanten_id', 'U', true );
-  get_http_var( 'bestelliste[]','U' );
-  if( ! isset($bestelliste) or count($bestelliste) < 1 ) {
-    $problems .= "Keine Produkte ausgewählt!";
+  get_http_var( 'bestellliste[]','U' );
+  if( ! isset($bestellliste) or count($bestellliste) < 1 ) {
+    $problems .= "<div class='warn'>Keine Produkte ausgewählt!</div>";
   }
 }
 $editable = ( ( $dienst == 4 ) and ( ! $readonly ) and ( $status < STATUS_ABGERECHNET ) );
@@ -70,7 +70,7 @@ if( $action == 'save' ) {
     } else {
       $bestell_id = sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id );
 
-      foreach( $bestelliste as $produkt_id ) {
+      foreach( $bestellliste as $produkt_id ) {
         // preis, gebinde, und bestellnummer auslesen:
         $preis_row = sql_aktueller_produktpreis( $produkt_id );
         // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
@@ -82,8 +82,11 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( 'small_form', '', '', 'action=save' );
-  open_fieldset( 'small_form', "style='width:360px;'", 'Bestellvorlage'. ( $editable ? 'edieren' : '(abgeschlossen)' ) );
+open_form( 'small_form', '', 'action=save' );
+  if( isset( $bestellliste ) and is_array( $bestellliste ) )
+    foreach( $bestellliste as $produkt_id )
+      hidden_input( 'bestellliste[]', $produkt_id );
+  open_fieldset( 'small_form', "style='width:360px;'", 'Bestellvorlage' );
     echo $msg; echo $problems;
     if( $done )
       div_msg( 'ok', 'Bestellvorlage wurde eingefügt:' );
@@ -95,7 +98,7 @@ open_form( 'small_form', '', '', 'action=save' );
       form_row_date( 'Lieferung:', 'lieferung', $lieferung );
       open_tr();
         open_td('right', "colspan='2'");
-          if( $editable )
+          if( $editable and ! $done )
             submission_button();
           else
             close_button();
