@@ -15,7 +15,7 @@ if( $meinkonto ) {
   if( ! $readonly ) {
 
     open_fieldset( 'small_form', '', 'Überweisung eintragen', 'off' );
-      open_form( 'small_form', '', '', "action=einzahlung" );
+      open_form( 'small_form', '', "action=einzahlung" );
         open_table('layout');
           form_row_betrag( 'Ich habe heute ' ); echo ' Euro '; submission_button( 'überwiesen' );
         close_table();
@@ -25,7 +25,7 @@ if( $meinkonto ) {
 
     open_div('alert', "style='padding:1ex 0ex 1ex 0ex;'" );
       open_fieldset( 'small_form', '', 'Spende an die Foodcoop', 'off' );
-        open_form( 'small_form', '', '', "action=spende" );
+        open_form( 'small_form', '', "action=spende" );
           open_table('layout');
             form_row_gruppe( 'Unsere Gruppe', false, $gruppen_id );
             form_row_betrag( 'spendet der Foodcoop' ); echo " Euro!";
@@ -234,7 +234,7 @@ open_table('list');
     } else {
       $k_id = $konto_row['konterbuchung_id'];
       open_td( 'bold' );
-        if( $konto_row['konterbuchung_id'] >= 0 ) {
+        if( $k_id >= 0 ) {
           $text = ( $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung' );
         } else {
           $text = 'Verrechnung';
@@ -244,7 +244,6 @@ open_table('list');
        open_td( '', '', $konto_row['date'] ."<div class='small'>{$konto_row['dienst_name']}</div>" );
       open_td();
         open_div( '', '', $konto_row['notiz'] );
-        $k_id = $konto_row['konterbuchung_id'];
         if( $k_id ) {
           buchung_kurzinfo( $k_id );
         } else {

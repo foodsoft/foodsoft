@@ -71,7 +71,7 @@ open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung $bestellung_
                                  . " / Lieferant: " .lieferant_view( $lieferant_id ) );
 
 if( $editable )
-  open_form( '', '', '', 'action=save' );
+  open_form( '', '', 'action=save' );
 
 open_table( 'list', "style='width:98%'" );
   open_th( '', '', 'Abrechnungsschritt' );
