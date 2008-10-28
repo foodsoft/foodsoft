@@ -170,8 +170,8 @@ function konto_view( $konto_id = 0, $fieldname = '' ) {
 function kontoauszug_view( $konto_id = 0, $auszug_jahr = '', $auszug_nr = '', $fieldname = '' ) {
   global $input_event_handlers, $window_id;
   if( $fieldname ) {
-    return "Jahr: ".string_view( $auszug_jahr, 4, $fieldname.'_jahr' )
-         . " / Nr.: " .string_view( $auszug_nr,   2, $fieldname.'_nr' );
+    return "Jahr: ".int_view( $auszug_jahr, $fieldname.'_jahr' )
+         . " / Nr.: " .int_view( $auszug_nr, $fieldname.'_nr' );
   } else {
     $text = "$auszug_jahr / $auszug_nr";
     if( $konto_id and ( $window_id != 'kontoauszug' ) )
@@ -393,7 +393,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   global $muell_id, $input_event_handlers;
 
   if( $editAmounts ) {
-    open_form( '', '', '', 'action=basarzuteilung' );
+    open_form( '', '', 'action=basarzuteilung' );
     $cols=11;
   } else {
     $cols=9;
@@ -682,7 +682,7 @@ function products_overview(
   }
 
   if( $editAmounts ) {
-    open_form();
+    open_form( '', '', 'action=update' );
     floating_submission_button();
   }
 
@@ -1334,9 +1334,9 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'oneline' );
         echo $pr1['id'];
         if( $editable and ( $references == 0 ) and $pr1['zeitende'] ) {
-          echo fc_action( array( 'class' => 'drop', 'text' => 'Preiseintrag löschen?'
+          echo fc_action( array( 'class' => 'drop', 'text' => ''
                                , 'title' => 'Dieser Preiseintrag wird nicht verwendet; löschen?' )
-                          , "action=delete_price,preis_id={pr1['id']}" );
+                          , "action=delete_price,preis_id={$pr1['id']}" );
         }
       open_td( '', '', $pr1['bestellnummer'] );
       open_td( 'center', '', $pr1['datum_start'] );
@@ -1431,7 +1431,7 @@ function dienst_selector($pre_select, $id=""){
  */
 function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
   if( $editable or $super_edit )
-    open_form( 'big_form' , '', '', array( 'action' => 'edit' ) );
+    open_form( 'big_form' , '', 'action=edit' );
 
   open_table('list');
   if( $head ) {
@@ -1453,7 +1453,7 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
       open_td( '', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
 
       if($super_edit){
-        open_td(); dienst_selector( $row['diensteinteilung'], $id );
+        open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
         open_td( '', '', fc_action( array( 'img' => 'img/b_drop.png'
                                          , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
                                   , array( 'action' => 'delete', 'person_id' => $id ) ) );
