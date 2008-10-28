@@ -104,7 +104,7 @@ if( $action == 'movedown' ) {
 //
 
 if( $bestell_id && $editable )
-  open_form( '', '', '', 'action=save' );
+  open_form( '', '', 'action=save' );
 
 open_table('list');
   open_th( '', '', 'Bezeichnung' );

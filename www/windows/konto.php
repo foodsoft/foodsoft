@@ -40,7 +40,7 @@ open_table('list');
 
 foreach( $konten as $row ) {
   if( $row['id'] != $konto_id ) {
-    open_tr( '', 'onclick="' .fc_link( 'self', "konto_id={$row['id']},context=handler" ).';"' );
+    open_tr( '', 'onclick="' .fc_link( 'self', "konto_id={$row['id']},context=js" ).';"' );
   } else {
     open_tr( 'active' );
   }
@@ -114,7 +114,7 @@ open_table('layout');
     open_td();
 
       open_fieldset('', '','Neuen Auszug anlegen', 'off' );
-        open_form( '', '', '', array( 'action' => 'neuer_auszug' ) );
+        open_form( '', '', 'action=neuer_auszug' );
           open_div('oneline');
             echo "<label>Jahr:</label> " . string_view( date('Y'), 4, 'neuer_auszug_jahr' );
             echo " / <label>Nr:</label>" . string_view( '', 2, 'neuer_auszug_nr' );
@@ -143,7 +143,7 @@ open_table('layout');
               open_td( 'number', '', price_view( $trans['summe'] ) );
               open_td();
                 if( $editable and $auszug_jahr and $auszug_nr ) {
-                  open_form( '', '', '', array( 'action' => 'confirm_payment', 'transaction_id' => $trans['id'] ) );
+                  open_form( '', '', array( 'action' => 'confirm_payment', 'transaction_id' => $trans['id'] ) );
                     echo "<label>Valuta:</label> ". date_view( '', 'valuta' );
                       open_span( 'quad', "title='Best&auml;tigen: diese Gutschrift ist auf Auszug $auszug_jahr / $auszug_nr verbucht'" );
                         submission_button( 'Best&auml;tigen' );

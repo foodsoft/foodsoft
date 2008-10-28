@@ -61,7 +61,7 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( 'small_form', '', '', array( 'action' => 'save' ) );
+open_form( 'small_form', '', 'action=save' );
   open_fieldset( 'small_form', "style='width:470px;'", ( $lieferanten_id ? 'Stammdaten Lieferant' : 'Neuer Lieferant' ) );
     echo $msg . $problems;
     open_table('small_form');

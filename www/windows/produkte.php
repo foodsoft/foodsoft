@@ -74,7 +74,7 @@ if( $action == 'delete' ) {
 $lieferant_name = sql_lieferant_name($lieferanten_id);
 
 if( $editable )
-  open_form( '', '', '', "lieferanten_id=$lieferanten_id" );
+  open_form( '', 'window=insert_bestellung', "lieferanten_id=$lieferanten_id" );
 
 open_table('list');
     open_th( '', "colspan='10'", "<h3>Produktübersicht von $lieferant_name </h3>" );
@@ -93,7 +93,7 @@ open_table('list');
     $references = references_produkt( $id );
 
     open_tr( 'groupofrows_top' );
-      open_td( 'top', '', $produkt['zeitstart'] ? "<input type='checkbox' name='bestelliste[]' value='$id'>" : '-' );
+      open_td( 'top', '', $produkt['zeitstart'] ? "<input type='checkbox' name='bestellliste[]' value='$id' $input_event_handlers>" : '-' );
       open_td( 'top bold', '', $produkt['name'] );
       open_td( 'top', '', $produkt['produktgruppen_name'] );
       if( $produkt['zeitstart'] ) {
@@ -127,7 +127,7 @@ open_table('list');
     open_tr();
       open_th( '', "colspan='10'" );
         check_all_button();
-        echo fc_link( 'insert_bestellung', "class=button,text=Neue Bestellung,form" );
+        submission_button( 'Neue Bestellung' );
   }
 
 close_table();

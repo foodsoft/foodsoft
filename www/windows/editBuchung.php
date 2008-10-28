@@ -125,7 +125,7 @@ switch( $action ) {
 
 
 if( $editable )
-  open_form('small_form', '', '', array( 'action' => 'update' ) );
+  open_form('small_form', '', 'action=update' );
 
 open_fieldset( 'small_form', '', 'Buchung:' );
   echo $msg; echo $problems;

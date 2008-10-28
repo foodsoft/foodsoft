@@ -83,7 +83,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
 medskip();
 
 if( $editable ) {
-  open_form('','','', 'action=update_distribution' );
+  open_form('','', 'action=update_distribution' );
   floating_submission_button();
 }
 

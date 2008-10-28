@@ -59,7 +59,7 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( 'small_form', '', '', array( 'action' => 'save' ) );
+open_form( 'small_form', '', 'action=save' );
   open_fieldset( 'small_form', "style='width:460px;'", ( $verpackung_id ? 'Stammdaten Verpackung' : 'Neue Verpackung' ) );
     echo $msg . $problems;
     open_table('small_form', "width='95%'" );

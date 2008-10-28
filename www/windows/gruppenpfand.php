@@ -80,7 +80,7 @@ if( $bestell_id and ( $action == 'save' ) ) {
 /////////////////////////////
 
 if( $bestell_id )
-  open_form( '', '', '', array( 'action' => 'save' ) );
+  open_form( '', '', 'action=save' );
 
 open_table('list');
   open_th( '', '', 'Gruppe' );
