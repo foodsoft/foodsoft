@@ -14,6 +14,10 @@ error_reporting(E_ALL);
 assert( $angemeldet ) or exit();
 
 get_http_var( 'bestell_id', 'u', 0, true );
+if( ! $bestell_id ) {
+  select_bestellung_view();
+  return;
+}
 
 get_http_var( 'action', 'w', '' );
 $readonly and $action = '';
@@ -53,13 +57,30 @@ switch( $action ) {
     unset( $self_fields['bestell_id'] );
     break;
 
+  case 'update':
+    nur_fuer_dienst(4);
+    need( $editable and ( getState( $bestell_id ) == STATUS_VERTEILT ) );
+    foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
+      $produkt_id = $produkt['produkt_id'];
+      if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
+        $mengenfaktor = $produkt['mengenfaktor'];
+        $liefermenge = $produkt['liefermenge'] / $mengenfaktor;
+        if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
+          $liefermenge = ${"liefermenge$produkt_id"};
+          changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
+        }
+      }
+    }
+    // Als nicht geliefert markierte Produkte löschen
+    if( get_http_var( 'nichtGeliefert[]','u') ) {
+      foreach( $nichtGeliefert as $p_id ) {
+        nichtGeliefert( $bestell_id, $p_id );
+      }
+    }
+    break;
+
   default:
     break;
-}
-
-if( ! $bestell_id ) {
-  select_bestellung_view();
-  return;
 }
 
 get_http_var( 'gruppen_id', 'u', 0, true );
@@ -69,6 +90,8 @@ if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
     nur_fuer_dienst(4);
   $gruppen_name = sql_gruppenname($gruppen_id);
 }
+
+$bestellung = sql_bestellung($bestell_id);
 $state = getState($bestell_id);
 
 $default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND;
@@ -117,32 +140,6 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
-  // liefermengen aktualisieren:
-//  Hier werden die vom Formular übergebenen Werte ausgewertet
-//  FIXME in obiges switch-statement integrieren
-  //
-  if( $editable and $state == STATUS_VERTEILT ) {
-    foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
-      $produkt_id = $produkt['produkt_id'];
-      if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
-        $mengenfaktor = $produkt['mengenfaktor'];
-        $liefermenge = $produkt['liefermenge'] / $mengenfaktor;
-        if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
-          $liefermenge = ${"liefermenge$produkt_id"};
-          changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
-        }
-      }
-    }
-    // Als nicht geliefert markierte Produkte löschen
-    if( get_http_var( 'nichtGeliefert[]','u') ) {
-      foreach( $nichtGeliefert as $p_id ) {
-        nichtGeliefert( $bestell_id, $p_id );
-      }
-    }
-  }
-
-  //infos zur gesamtbestellung auslesen 
-  $bestellung = sql_bestellung($bestell_id);
 
   echo "<h1>$title</h1>";
 
@@ -185,7 +182,7 @@ switch( $state ) {
   case STATUS_VERTEILT:
     if( ! $readonly and ! $gruppen_id and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
       open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
-        open_form( '', '', '', 'action=insert' );
+        open_form( '', '', 'action=insert' );
           open_div( 'kommentar' )
             ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
             open_ul();
