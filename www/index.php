@@ -2,9 +2,8 @@
 
 require_once('code/common.php');
 
-$window = 'menu';
+$window = 'menu';     // preliminary settings for login script
 $window_id = 'main';
-
 require_once( 'code/login.php' );
 if( ! $angemeldet ) {
   div_msg( 'warn', "Bitte erst <a href='/foodsoft/index.php'>Anmelden...</a>" );
@@ -28,13 +27,13 @@ switch( $window_id ) {
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
         break;
-    case "bestellen":
-    if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
-     //darf nur bestellen, wenn Dienste akzeptiert
-     ?> <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> <?
-     include('windows/dienstplan.php');
-     break;
-    }
+      case "bestellen":
+        if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
+         //darf nur bestellen, wenn Dienste akzeptiert
+         ?> <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> <?
+         include('windows/dienstplan.php');
+         break;
+        }
       default:
         if( is_readable( "windows/$window.php" ) ) {
           include( "windows/$window.php" );
@@ -44,8 +43,7 @@ switch( $window_id ) {
         }
     }
     open_table( 'footer', "width='100%'" );
-      open_td();
-        echo "aktueller Server: <kbd>$foodsoftserver</kbd>";
+      open_td( '', '', "aktueller Server: <kbd>$foodsoftserver</kbd>" );
       open_td( 'right' );
         echo $mysqljetzt;
         if( $readonly ) {
@@ -60,10 +58,15 @@ switch( $window_id ) {
     } else {
       div_msg( 'warn', "Ung&uuml;ltiger Bereich: $window" );
     }
+    // now self_url() will return the correct url; insert it:
+    // open_javascript( "document.getElementById('reload_button').href = '".self_url()."';" );
     break;
 }
 
-open_form( '', "name='update_form'", '', array( 'message' => '' ) );
-close_form();
+// force new iTAN (this form must be submittable in additon to any other):
+//
+postform_id( true );
+open_form( '', "name=update_form", "message=" );
+  echo self_post();
 
 ?>
