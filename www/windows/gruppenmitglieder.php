@@ -41,8 +41,7 @@ switch( $action ) {
     break;
   case 'edit':
     need( $edit_names, "keine Berechtigung!" );
-    $rows = sql_gruppen_members( $gruppen_id );
-    while( $row = mysql_fetch_array($rows) ) {
+    foreach( sql_gruppen_members( $gruppen_id ) as $row ) {
       $id = $row['id'];
       get_http_var( "vorname_$id", 'H', $row['vorname'] );
       get_http_var( "name_$id", 'H', $row['name'] );
@@ -62,7 +61,7 @@ switch( $action ) {
     need_http_var('person_id','u');
     sql_delete_group_member($person_id, $gruppen_id);
     break;
-  case 'add':
+  case 'insert':
     fail_if_readonly();
     nur_fuer_dienst(5);
     need_http_var('newVorname', 'H');
@@ -74,32 +73,38 @@ switch( $action ) {
     break;
 }
 
-
 if( $hat_dienst_V and ! $readonly ) {
-  echo switchable_form( 'newmember', "Neues Gruppenmitglied eintragen", false, "
-    <input type='hidden' name='action' value='add'>
-    <table>
-      <tr><td>Vorname:</td><td><input type='text' size='12' name='newVorname'/></td></tr>
-      <tr><td>Name:</td><td> <input type='text' size='12' name='newName'/></td></tr>
-      <tr><td>Mail:</td><td> <input type='text' size='12' name='newMail'/></td></tr>
-      <tr><td>Telefon:</td><td> <input type='text' size='12' name='newTelefon'/></td></tr>
-      <tr><td>Diensteinteilung:</td><td>".dienst_selector('')."</td></tr>
-      <tr><td></td><td style='text-align:right'><input type='submit' value='Anlegen'/></td></tr>
-    </table>
-  " );
+  open_fieldset( 'small_form', '', 'Neues Gruppenmitglied eintragen', 'off' );
+    open_form( '', '', 'action=insert' );
+      open_table('layout');
+        form_row_text( 'Vorname:', 'newVorname', 20 );
+        form_row_text( 'Name:', 'newName', 20 );
+        form_row_text( 'Email:', 'newMail', 20 );
+        form_row_text( 'Telefon:', 'newTelefon', 20 );
+        open_tr(); open_td( 'label', '', 'Diensteinteilung:'); open_td( 'kbd', '', dienst_selector('') ); 
+        open_tr(); open_td( 'right', "colspan='2'" ); submission_button();
+      close_table();
+    close_form();
+  close_fieldset();
 }
+medskip();
 
 if( $edit_pwd ) {
-  echo switchable_form( 'password', 'Passwort aendern', $pwmsg, "
-    <input type='hidden' name='action' value='new_pwd'>
-    $pwmsg
-    <table class='menu'>
-      <tr> <td>Passwort:</td><td><input type='password' size='24' name='newPass'></td></tr>
-      <tr> <td>nochmal das Passwort:</td><td><input type='password' size='24' name='newPass2'></td></tr>
-      <tr><td></td><td style='text-align:right;'><input type='submit' value='Passwort &auml;ndern'></td></tr>
-    </table>
-  " );
+  open_fieldset( 'small_form medskip', '', 'Passwort aendern', 'off' );
+    open_form( '', '', 'action=new_pwd' );
+      echo $pwmsg;
+      open_table('layout');
+        open_tr(); open_td( 'label', '', 'Passwort:');
+                   open_td( 'kbd', '', "<input type='password' size='24' name='newPass'>" );
+        open_tr(); open_td( 'label', '', 'nochmal das Passwort:');
+                   open_td( 'kbd', '', "<input type='password' size='24' name='newPass2'>" );
+        open_tr(); open_td( 'right', "colspan='2'" ); submission_button();
+      close_table();
+    close_form();
+  close_fieldset();
 }
+medskip();
 
 membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
 
+?>
