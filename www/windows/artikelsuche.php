@@ -17,25 +17,25 @@ get_http_var('action','w','');
 
 $filter = '';
 
-get_http_var( 'bnummer', 'w', '' ) or $bnummer = '';
+get_http_var( 'bnummer', 'w', '', 'POST' ) or $bnummer = '';
 $bnummer and $filter .= " AND bestellnummer='$bnummer'";
 
-get_http_var( 'anummer', 'w', '' ) or $anummer = '';
+get_http_var( 'anummer', 'w', '', 'POST' ) or $anummer = '';
 $anummer and $filter .= " AND artikelnummer='$anummer'";
 
-get_http_var( 'name', 'H', '' ) or $name = '';
+get_http_var( 'name', 'H', '', 'POST' ) or $name = '';
 $name and $filter .= " AND name like '%".mysql_real_escape_string($name)."%' ";
 
-get_http_var( 'minpreis', 'f', 0 ) or $minpreis = 0;
+get_http_var( 'minpreis', 'f', 0, 'POST' ) or $minpreis = 0;
 ( $minpreis > 0 ) and $filter .= " AND preis >= $minpreis";
 
-get_http_var( 'maxpreis', 'f', 0 ) or $maxpreis = 0;
+get_http_var( 'maxpreis', 'f', 0, 'POST' ) or $maxpreis = 0;
 ( $maxpreis > 0 ) and $filter .= " AND preis <= $maxpreis";
 
-get_http_var( 'katalogtyp', 'w', '' ) or $katalogtyp = '';
+get_http_var( 'katalogtyp', 'w', '', 'POST' ) or $katalogtyp = '';
 $katalogtyp and $filter .= " AND katalogtyp = '$katalogtyp'";
 
-get_http_var( 'limit', 'u', 99 ) or $limit = 99;
+get_http_var( 'limit', 'u', 99, 'POST' ) or $limit = 99;
 
 if( $action != 'search' )
   $filter = '';
@@ -68,7 +68,7 @@ if( $editable and ( ! $produkt_id ) ) {
     GROUP BY katalogdatum, katalogtyp
     ORDER BY katalogtyp, katalogdatum
   " );
-  open_form( 'small_form', "enctype='multipart/form-data'" );
+  open_form( 'small_form', "window=katalog_upload,attr=enctype='multipart/form-data',action=upload" );
     open_fieldset( 'small_form', '', 'Kataloge' );
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
@@ -90,7 +90,7 @@ if( $editable and ( ! $produkt_id ) ) {
       open_table('layout');
         open_td( '', '', "Datei (Format: .xls): <input type='file' name='terrakatalog'>" );
         open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='terrakw' size='8'>" );
-        open_td( '', '', fc_link( 'katalog_upload', 'form,class=button,text=Einlesen' ) );
+        submission_button( 'Einlesen' );
       close_table();
     close_fieldset();
   close_form();
@@ -98,7 +98,7 @@ if( $editable and ( ! $produkt_id ) ) {
 
 open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer fuer <i>$produktname</i>" : "Artikelsuche im Katalog" );
 
-  open_form( 'small_form', '', '', 'action=search' );
+  open_form( 'small_form', '', 'action=search' );
     open_table();
         open_td( '', '', '<label>Bestellnummer:</label>' );
         open_td();
@@ -136,7 +136,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
     " );
 
     if( $produkt_id ) {
-      open_form( '' , '', '', 'action=artikelnummer_setzen,button_id=' );
+      open_form( '' , '', 'action=artikelnummer_setzen,button_id=' );
       div_msg( 'bold', 'Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!' );
     }
 
@@ -162,7 +162,8 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( 'mult' );
             $anummer = $row['artikelnummer'];
             if ( $produkt_id > 0 ) {
-              echo fc_link( 'produktdetails', "class=button,text=$anummer,form,button_id=$anummer" );
+              echo fc_action( "window=produktpreise,class=button,text=$anummer,produkt_id=$produkt_id,title=Artikelnummer auswählen"
+                            , "action=artikelnummer_setzen,anummer=$anummer" );
             } else {
               echo $anummer;
             }
