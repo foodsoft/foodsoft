@@ -8,7 +8,7 @@ $msg="";
 get_http_var( 'optionen', 'u', 0, true );
 $show_member_details= $optionen & GRUPPEN_OPT_DETAIL;
 
-if( $dienst == 4 or $dienst == 5 ) {
+if( hat_dienst(4,5) ) {
   open_table('menu');
       open_th('', '', 'Optionen' );
     open_tr();
@@ -25,19 +25,20 @@ if( $dienst == 4 or $dienst == 5 ) {
     open_tr();
       open_td();
         option_radio( 'optionen', 0, GRUPPEN_OPT_SCHULDEN | GRUPPEN_OPT_GUTHABEN, 'alle' );
-        option_radio( 'optionen', GRUPPEN_OPT_SCHULDEN, GRUPPEN_OPT_GUTHABEN, 'Gruppen mit Schulden' );
-        option_radio( 'optionen', GRUPPEN_OPT_GUTHABEN, GRUPPEN_OPT_SCHULDEN, 'Gruppen mit Guthaben' );
+        quad(); option_radio( 'optionen', GRUPPEN_OPT_SCHULDEN, GRUPPEN_OPT_GUTHABEN, 'Gruppen mit Schulden' );
+        quad(); option_radio( 'optionen', GRUPPEN_OPT_GUTHABEN, GRUPPEN_OPT_SCHULDEN, 'Gruppen mit Guthaben' );
   close_table();
   bigskip();
 }
 
 if( ! $readonly and hat_dienst(5) ) {
   open_fieldset( 'small_form', '', 'Neue Gruppe anlegen', 'off' );
-    open_form( 'small_form', '', '', array( 'action' => 'insert' ) );
+    open_form( 'small_form', '', 'action=insert' );
       open_table();
         open_tr(); open_td( 'label', '', 'Nr:' ); open_td( 'kbd', '', string_view( '', 4, 'newNumber' ) );
-        open_tr(); open_td( 'kbd', '', string_view( '', 20, 'newName' ) );
-        open_tr(); open_td( 'right', "colspan='2'" ); submission_button();
+        open_tr(); open_td( 'label', '', 'Name:' ); open_td( 'kbd' );
+          echo string_view( '', 20, 'newName' );
+          submission_button();
       close_table();
     close_form();
   close_fieldset();
@@ -69,12 +70,16 @@ switch( $action ) {
     // vorläufiges Passwort für die Bestellgruppe erzeugen...
     $pwd = strval(rand(1010,9999));
 
-    if(sql_insert_group($newNumber, $newName, $pwd))
-      //ToDo Forward to corresponding gruppen_mitglieder
-      $msg = $msg . "
+    $gruppen_id = sql_insert_group( $newNumber, $newName, $pwd );
+    if( $gruppen_id ) {
+      echo fc_openwindow( 'gruppenmitglieder', "gruppen_id=$gruppen_id" );
+      $msg .= "
         <div class='ok'>Gruppe erfolgreich angelegt</div>
         <div class='ok'>Vorl&auml;ufiges Passwort: <b>$pwd</b> (bitte notieren!)</div>
       ";
+    } else {
+      $msg .= "<div class='warn'>Eintrag fehlgeschlagen!</div>";
+    }
     break;
   case 'cancel_payment':
     need_http_var( 'transaction_id', 'u' );
@@ -87,7 +92,7 @@ switch( $action ) {
     break;
 }
 
-echo $problems; echo $msg; 
+echo "$problems $msg";
 
 medskip();
 

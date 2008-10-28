@@ -123,7 +123,7 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
   if( $update_cols or is_array( $update_cols ) ) {
     $sql .= " ON DUPLICATE KEY UPDATE $update $update_komma id = LAST_INSERT_ID(id) ";
   }
-  if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: " ) )
+  if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: "  ))
     return mysql_insert_id();
   else
     return FALSE;
@@ -1227,33 +1227,36 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
  * Bitte zuvor $problems und $msg initialisieren
  *
  * Wenn etwas nicht stimmt, ist $problems gesetzt und
- * die Funktion gibt false zurück.
+ * die Funktion gibt false zurüc; bei Erfolg die neue $gruppen_id
  *
  * $msg könnte auch Hinweise enthalten
  */
-
-function sql_insert_group($newNumber, $newName, $pwd){
+function sql_insert_group($newNumber, $newName, $pwd) {
 	global $problems, $msg;
 
-	  $new_id = check_new_group_nr($newNumber) ;
+  $new_id = check_new_group_nr($newNumber) ;
 
-	  if( $new_id > 0 ) {
+  if( $new_id > 0 ) {
 
-	    if ($newName == "")
-	      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
+    if ($newName == "")
+      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
-	    if( ! $problems ) {
-        $id = sql_insert( 'bestellgruppen', array(
-          'id' => $new_id
-        , 'aktiv' => 1
-        , 'name' => $newName
-        ) );
+    if( ! $problems ) {
+      $id = sql_insert( 'bestellgruppen', array(
+        'id' => $new_id
+      , 'aktiv' => 1
+      , 'name' => $newName
+      ) );
+      if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysql_insert_id() == 0 bei Erfolg!
         set_password( $new_id, $pwd );
-        return $id;
-	   } else {
-		   return FALSE;
-	   }
-	  }
+        return $new_id;
+      } else {
+        return FALSE;
+      }
+    } else {
+      return FALSE;
+    }
+  }
 }
 
 // optionsflags fuer anzeige in gruppen.php
