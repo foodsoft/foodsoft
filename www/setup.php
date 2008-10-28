@@ -772,7 +772,7 @@ function check_5() {
 }
 
 function check_6() {
-  global $changes;
+  global $changes, $HTTP_POST_VARS;
   $problems = false;
 
   $result = mysql_query( "SELECT * FROM leitvariable WHERE name = 'muell_id'; " );
@@ -790,21 +790,31 @@ function check_6() {
     $basar_id = false;
   }
 
-  if( isset( $HTTP_POST_VARS['add_group_muell'] ) ) {
+  if( $muell_id and isset( $HTTP_POST_VARS['add_group_muell'] ) ) {
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
                   VALUES ( $muell_id, 'internes Verrechnungskonto', 0, '*' )";
   }
-  if( isset( $HTTP_POST_VARS['add_group_basar'] ) ) {
+  if( $basar_id and isset( $HTTP_POST_VARS['add_group_basar'] ) ) {
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
                   VALUES ( $basar_id, 'Basargruppe', 0, '*' )";
   }
   if( isset( $HTTP_POST_VARS['add_group_regular'] ) ) {
-    $id = $HTTP_POST_VARS['group_id'];
-    $name = $HTTP_POST_VARS['group_name'];
+    $group_id = $HTTP_POST_VARS['group_id'];
+    $group_name = $HTTP_POST_VARS['group_name'];
     $password = $HTTP_POST_VARS['group_password'];
-    // $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
-    //              VALUES ( {$basar_id, 'Basargruppe', 0, '*' )";
+    $urandom_handle = fopen( '/dev/urandom', 'r' );
+    $bytes = 4;
+    $salt = '';
+    while( $bytes > 0 ) {
+      $c = fgetc( $urandom_handle );
+      $salt .= sprintf( '%02x', ord($c) );
+      $bytes--;
+    }
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort, salt ) 
+                  VALUES ( $group_id, '$group_name', 1, '". crypt( $password, $salt) ."' , '$salt' )";
   }
+  if( $changes )
+    return false;
 
   ?>
     <table class='list'>
@@ -865,7 +875,7 @@ function check_6() {
   if( $num > 0 ) {
     ?>
       <td class='ok'><? echo $num; ?> Gruppen eingetragen</td>
-      <td>&nbsp;<td>
+      <td>&nbsp;</td>
     <?
   } else {
     $problems = true;
@@ -876,7 +886,7 @@ function check_6() {
           eingetragen werden!
         </div>
       </td>
-      <td>&nbsp;<td>
+      <td>&nbsp;</td>
       </tr>
     <?
   }
@@ -931,6 +941,8 @@ foreach( $checks as $f => $title ) {
       <?
         if( $result ) {
           ?> <div class='warn' style='padding:1ex;'> Fehler! <?
+        } elseif( $changes ) {
+          ?> <div class='alert' style='padding:1ex;'> Korrekturen werden ausgef&uuml;hrt... <?
         } else {
           ?> <div class='ok' style='padding:1ex;'> keine Fehler gefunden! <?
         }
@@ -951,6 +963,9 @@ foreach( $checks as $f => $title ) {
   }
   if( $result ) {
     $problems = true;
+    break;
+  }
+  if( count( $changes ) > 0 ) {
     break;
   }
 }
