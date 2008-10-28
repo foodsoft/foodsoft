@@ -235,30 +235,44 @@ function close_li() {
   }
 }
 
-function open_form( $class = '', $attr = '', $action = array(), $hide = array() ) {
-  global $form_id, $input_event_handlers, $hidden_input;
+function open_form( $class = '', $get_parameters = array(), $post_parameters = array() ) {
+  global $form_id, $input_event_handlers, $hidden_input, $self_fields;
+
+  if( is_string( $get_parameters ) )
+    $get_parameters = parameters_explode( $get_parameters );
+  if( is_string( $post_parameters ) )
+    $post_parameters = parameters_explode( $post_parameters );
+
   $form_id = new_html_id();
-  $hidden_input = '';
-  if( is_string( $action ) )
-    $action = parameters_explode( $action );
-  $action['context'] = 'action';
-  $action = fc_link('',$action);
-  if( is_string( $hide ) )
-    $hide = parameters_explode( $hide );
-  open_tag( 'form', $class, "method='post' action='$action' $attr name='form_$form_id'" );
-  echo self_post();
-  foreach( $hide as $key => $val ) {
-    $hidden_input .= "<input type='hidden' name='$key' value='$val'>";
+  if( isset( $get_parameters['name'] ) ) {
+    $name = $get_parameters['name'];
+    unset( $get_parameters['name'] );
+  } else {
+    $name = "form_$form_id";
   }
   $input_event_handlers = " onChange='on_change($form_id);' ";
+
+  $attr = adefault( $get_parameters, 'attr', '' );
+
+  $window = adefault( $get_parameters, 'window', 'self' );
+  $get_parameters['context'] = 'form';
+  $action = fc_link( $window, $get_parameters );
+
+  echo
+  open_tag( 'form', $class, "method='post' $action name='$name' id='form_$form_id' $attr" );
+  $hidden_input = "<input type='hidden' name='postform_id' value='".postform_id()."'>";
+  foreach( $post_parameters as $key => $val ) {
+    $hidden_input .= "<input type='hidden' name='$key' value='$val'>";
+  }
   return $form_id;
 }
 
 function close_form() {
   global $input_event_handlers;
   $input_event_handlers = '';
-  echo "<span class='nodisplay'><input type='submit'></span>";
+  echo "\n<span class='nodisplay'><input type='submit'></span>";
   close_tag( 'form' );
+  echo "\n";
 }
 
 function open_fieldset( $class = '', $attr = '', $legend = '', $toggle = false ) {
@@ -324,16 +338,18 @@ function floating_submission_button() {
   close_tag('span');
 }
 
-function submission_button( $text = 'Speichern', $active = false ) {
+function submission_button( $text = '', $active = true ) {
   global $form_id;
+  $text or $text = 'Speichern';
   $class = ( $active ? 'button' : 'button inactive' );
-  open_span( 'qquad', '', "<a class='$class' id='submit_button_$form_id' title='$text' onClick='document.forms.form_$form_id.submit();'>$text</a>" );
+  // open_span( 'qquad', '', "<a class='$class' id='submit_button_$form_id' title='$text' onClick=\"document.getElementById('form_$form_id').submit();\">$text</a>" );
+  open_span( 'qquad', '', "<a class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
 }
 
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
   global $form_id;
   open_span( 'qquad', '', "<a class='button inactive' id='reset_button_$form_id' title='Änderungen zurücknehmen'
-                              onClick='document.forms.form_$form_id.reset(); on_reset($form_id); '>$text</a>" );
+                              onClick=\"document.getElementById('form_$form_id').reset(); on_reset($form_id); \">$text</a>" );
 }
 
 function check_all_button( $text = 'Alle ausw&auml;hlen', $title = '' ) {
@@ -356,7 +372,7 @@ function open_select( $fieldname, $autoreload = false ) {
   global $input_event_handlers;
   if( $autoreload ) {
     $id = new_html_id();
-    $url = fc_link( 'self', array( 'XXX' => 'X', 'context' => 'action' ) );
+    $url = fc_link( 'self', 'XXX=X,context=action' );
     open_tag( 'select', '', "id='$id' onchange=\"
       i = document.getElementById('$id').selectedIndex;
       s = document.getElementById('$id').options[i].value;
@@ -374,7 +390,7 @@ function close_select() {
 function option_checkbox( $fieldname, $flag, $text, $title = false ) {
   global $$fieldname;
   echo '<input type="checkbox" class="checkbox" onclick="'
-         . fc_link('', array( 'context' => 'handler', $fieldname => ( $$fieldname ^ $flag ) ) ) .'" ';
+         . fc_link('', array( $fieldname => ( $$fieldname ^ $flag ), 'context' => 'js' ) ) .'" ';
   if( $title ) echo " title='$title' ";
   if( $$fieldname & $flag ) echo " checked ";
   echo ">$text";
@@ -385,7 +401,7 @@ function option_radio( $fieldname, $flags_on, $flags_off, $text, $title = false 
   $all_flags = $flags_on | $flags_off;
   $groupname = "{$fieldname}_{$all_flags}";
   echo "<input type='radio' class='radiooption' name='$groupname' onclick=\""
-        . fc_link('', array( 'context' => 'handler' , $fieldname => ( ( $$fieldname | $flags_on ) & ~ $flags_off ) ) ) .'"';
+        . fc_link('', array( 'context' => 'js' , $fieldname => ( ( $$fieldname | $flags_on ) & ~ $flags_off ) ) ) .'"';
   if( ( $$fieldname & $all_flags ) == $flags_on ) echo " checked ";
   echo ">$text";
 }
