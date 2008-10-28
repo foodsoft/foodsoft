@@ -11,6 +11,7 @@ function checkAll( form_id ) {
         o[i].checked = 1;
     }
   }	
+  on_change( form_id );
   // if( s = document.getElementById('checkall_'+form_id) )
   //   s.className = 'button inactive';
   // if( s = document.getElementById('uncheckall_'+form_id) )
@@ -25,6 +26,7 @@ function uncheckAll( form_id ) {
         o[i].checked = 0;
     }
   }	
+  on_change( form_id );
   // if( s = document.getElementById('uncheckall_'+form_id) )
   //   s.className = 'button inactive';
   // if( s = document.getElementById('checkall_'+form_id) )
@@ -55,25 +57,6 @@ function closeCurrentWindow() {
   window.close();
 }
 
-// submit_form: submit form (ie, POST input) to script in different window:
-//  - form: name of the <form> to be submitted
-//  - url: the action of the <form> (empty: use existing action)
-//  - window: the target of the form name of the window to POST into
-//  - button_id: optonal additional variable to be POSTed (to distinguish which button was clicked on)
-function submit_form( form, url, window_id, optionen, button_id ) {
-  window.open( '', window_id, optionen ).focus();
-  document.forms[form].target = window_id;
-  if( url )
-    document.forms[form].action = url;
-  if( button_id != '' )
-    if( document.forms[form].button_id )
-      document.forms[form].button_id.value = button_id;
-  if( document.forms[form] )
-    document.forms[form].submit();
-  else
-    alert( 'no such form: ' + form + ' button_id: ' + button_id );
-}
-
 function on_change( id ) {
   if( id ) {
     if( s = document.getElementById( 'submit_button_'+id ) )
@@ -94,6 +77,14 @@ function on_reset( id ) {
     if( s = document.getElementById( 'floating_submit_button_'+id ) )
       s.style.display = 'none';
   }
+}
+
+function submit_form( $form_id ) {
+  f = document.getElementById( 'form_'+$form_id );
+  // calling f.submit() explicitely will not trigger the onsubmit() handler, so we call it explicitely:
+  if( f.onsubmit )
+    f.onsubmit();
+  f.submit();
 }
 
 
