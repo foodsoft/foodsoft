@@ -255,7 +255,7 @@ foreach( sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr ) as $row ) {
   open_tr();
     open_td( 'number', '', $n );
     open_td( 'number', '', $row['valuta_trad'] );
-    open_td( 'number', '', $row['buchungsdatum_trad']."<div style='small'>{$row['dienst_name']}</div>" );
+    open_td( 'number', '', $row['buchungsdatum_trad']."<div class='small'>{$row['dienst_name']}</div>" );
     open_td();
       echo $kommentar;
 
