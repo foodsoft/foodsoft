@@ -1,15 +1,10 @@
 <?php
-
-// terraabgleich.php (name ist historisch: nuetzlich auch fuer andere lieferanten!)
 //
-// - sucht in produktliste und preishistorie nach inkonsistenzen,
-// - vergleicht mit Katalog (momentan nur Terra)
-// - macht ggf. verbesserungsvorschlaege und erlaubt neueintrag von preisen
+// produktpreise.php:
+//  - zeigt preishistorie
+//  - vergleich mit katalog (wenn vorhanden)
+//  - erlaubt neuen preiseintrag
 //
-// anzeige wird durch folgende variable bestimmt:
-// - produkt_id: fuer detailanzeige ein produkt (sonst ganze liste eines lieferanten)
-// - lieferanten_id: liste alle produkte des lieferanten (verpflichtend, wenn keine produkt_id)
-// - bestell_id: erlaubt auswahl preiseintrag fuer diese bestellung (nur mit produkt_id)
 
 assert( $angemeldet ) or exit();
 
@@ -49,10 +44,7 @@ switch( $action ) {
     sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "$zeitende" ), false );
     break;
   case 'artikelnummer_setzen':
-    if( get_http_var( 'button_id', 'H' ) )
-      $anummer = $button_id;  // button_id: identifies the button that was pressed in artikelsuche.php
-    else
-      need_http_var( 'anummer', 'H' );
+    need_http_var( 'anummer', 'H' );
     sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
     break;
   case 'neuer_preiseintrag':
@@ -85,14 +77,6 @@ $neednewarticlenumber = FALSE;
 // felder fuer neuen preiseintrag initialisieren:
 //
 $preiseintrag_neu = array();
-$preiseintrag_neu['verteileinheit'] = FALSE;
-$preiseintrag_neu['liefereinheit'] = FALSE;
-$preiseintrag_neu['gebindegroesse'] = FALSE;
-$preiseintrag_neu['preis'] = FALSE;
-$preiseintrag_neu['bestellnummer'] = FALSE;
-$preiseintrag_neu['mwst'] = FALSE;
-$preiseintrag_neu['pfand'] = FALSE;
-$preiseintrag_neu['notiz'] = FALSE;
 
 // neu laden (falls durch $action geaendert):
 //
@@ -104,10 +88,8 @@ if( $produkt['zeitstart'] )
 $lieferanten_id = $produkt['lieferanten_id'];
 $produkt_name = $produkt['name'];
 
-// $reload_form_id = open_form( '', '', '', "action=nop,price_id=0" );
-
 open_fieldset( 'big_form', ''
-  , "Produkt: $produkt_name von $lieferanten_name"
+  , "Produkt: $produkt_name von $lieferanten_name "
     . ( $produkt['artikelnummer'] ? "(Artikelnummer: {$produkt['artikelnummer']})" : '(keine Artikelnummer)' ) );
 
 ////////////////////////
@@ -135,7 +117,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
       open_th( '', "title='Endpreis je V-Einheit'", 'V-Preis' );
     open_tr();
       open_td();
-        open_table( 'inner', "style='width:100%'" );
+        open_table( 'layout', "style='width:100%'" );
             open_td( 'oneline left', '', $produkt['name'] );
             open_td( 'center', "rowspan='2' style='width:4em;'", fc_link( 'edit_produkt', "produkt_id=$produkt_id" ) );
           open_tr();
@@ -188,14 +170,14 @@ switch( $result ) {
     // Katalogsuche fehlgeschlagen: das ist normal bei allen ausser Terra:
     break;
 }
-
+medskip();
 
 if( $neednewprice ) {
   open_fieldset( 'small_form', '', 'Vorschlag neuer Preiseintrag' );
 } else {
   open_fieldset( 'small_form', '', 'Neuer Preiseintrag', 'off' );
 }
-  formular_produktpreis( $produkt, $preiseintrag_neu, $prgueltig );
+  formular_produktpreis( $produkt_id, $preiseintrag_neu );
 close_fieldset();
 
 ?>
