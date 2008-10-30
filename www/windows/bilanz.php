@@ -18,22 +18,16 @@ $gruppen_einzahlungen_ungebucht = sql_select_single_field( "
 $erster_posten = 1;
 function rubrik( $name ) {
   global $erster_posten;
-  echo "<tr class='rubrik'><th colspan='2'>$name</th></tr>";
+  open_tr( 'rubrik' );
+    open_th( '', "colspan='2'", "<div>$name</div>" );
   $erster_posten = 1;
 }
 function posten( $name, $wert ) {
   global $erster_posten, $seitensumme;
   $rounded = sprintf( "%.2lf", $wert );
-  $class = ( $rounded < 0 ? 'rednumber' : 'number' );
-  printf( "
-    <tr class='%s'>
-      <td>%s:</td>
-      <td class='$class'>%s</td>
-    </tr>
-    "
-  , $erster_posten ? 'ersterposten' : 'posten'
-  , $name, $rounded
-  );
+  open_tr( $erster_posten ? 'ersterposten' : 'posten' );
+    open_td( '', '', $name );
+    open_td( ( $rounded < 0 ? 'rednumber' : 'number' ), '', $rounded );
   $erster_posten = 0;
   $seitensumme += $wert;
 }
@@ -47,6 +41,7 @@ open_table( '', "width='100%'" );
     //  aktiva:
     //
     open_td();
+      smallskip();
       open_table( 'inner', "width='100%'" );
         $seitensumme = 0;
 
@@ -68,12 +63,15 @@ open_table( '', "width='100%'" );
           posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
 
         $aktiva = $seitensumme;
+
       close_table();
+      medskip();
 
     //////////////////
     //  passiva:
     //
     open_td();
+      smallskip();
       open_table( 'inner', "width='100%'" );
         $seitensumme = 0;
 
@@ -100,10 +98,11 @@ open_table( '', "width='100%'" );
           );
 
       close_table();
+      medskip();
 
-  open_tr( 'summe' );
-    open_td( 'number', '', sprintf( "%.2lf", $aktiva ) );
-    open_td( 'number', '', sprintf( "%.2lf", $passiva ) );
+  open_tr( 'summe posten' );
+    open_td( '', '', price_view( $aktiva ) );
+    open_td( '', '', price_view( $passiva ) );
 
 close_table();
 
