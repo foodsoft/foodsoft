@@ -3,10 +3,10 @@
 
 assert( $angemeldet ) or exit();
 
-$lieferanten_id = sql_select_single_field( "SELECT id FROM lieferanten WHERE name='Terra'", 'id' );
+$lieferanten_id = sql_select_single_field( "SELECT id FROM lieferanten WHERE name like 'Terra%'", 'id' );
 need_http_var( 'terrakw', 'w' );
 
-  echo '<br>files: ' . $_FILES;
+  // echo '<br>files: ' . var_export($_FILES);
   echo '<br>lieferant: ' . $lieferanten_id;
   echo '<br>tmpfile: ' . $_FILES['terrakatalog']['tmp_name'];
   echo '<br>terrakw: ' . $terrakw . '<br>';
