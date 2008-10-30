@@ -159,8 +159,14 @@ li {
 .right {
   text-align:right !important;
 }
+.floatright {
+  float:right;
+}
 .left {
   text-align:left !important;
+}
+.floatleft {
+  float:left;
 }
 .center {
   text-align:center !important;
@@ -365,18 +371,22 @@ tr.summe td, table.list tr.summe td {
 /* formatierung der bilanzaufstellung */
 
 table.inner tr.rubrik th {
-  background-color:#eeeeee;
-  border-top:1px solid black;
-  padding:0.8ex 0ex 0.8ex 0ex;
-  border:1px dotted #888888;
-  margin:6px;
+  padding:0.8ex;
 }
-table.inner tr.posten td {
-  padding:0ex 0em 1em 0em;
+table.inner tr.rubrik th div {
+  background-color:#dddddd;
+  border:1px dotted #888888;
+  border-top:1px solid #888888;
+  padding:0.6ex;
+}
+
+table tr.posten td {
+  padding:0.8ex 1em 0.8ex 0em;
   text-align:right;
+  vertical-align:middle !important;
 }
 table.inner tr.ersterposten td {
-  padding:1em 0em 1em 0em;
+  padding:0.8ex 1em 0.8ex 0em;
   text-align:right;
 }
 
