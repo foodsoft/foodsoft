@@ -157,7 +157,7 @@ open_option_menu_row();
     open_select( 'gruppen_id', 'autoreload' );
       echo optionen_gruppen(
         $gruppen_id
-      , ( hat_dienst(4) ? '' : "( id in ( $login_gruppen_id , sql_muell_id(), sql_basar_id() ) )" )
+      , ( hat_dienst(4) ? '' : "( bestellgruppen.id in ( $login_gruppen_id , ".sql_muell_id().", ".sql_basar_id()." ) )" )
       , "Alle (Gesamtbestellung)"
       , $bestell_id
       );
