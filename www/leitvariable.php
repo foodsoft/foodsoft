@@ -41,6 +41,14 @@ $leitvariable = array(
   , 'runtime_editable' => 0
   , 'cols' => '8'
   )
+, 'mwst_default' => array(
+    'meaning' => 'Default-MWSt-Satz'
+  , 'comment' => 'H&auml;ufigster Mehrwertsteuer-Satz in Prozent'
+  , 'default' => '7.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
 , 'muell_id' => array(
     'meaning' => 'Nummer der speziellen Müll-Gruppe (traditionell: 13)'
   , 'default' => '13'
