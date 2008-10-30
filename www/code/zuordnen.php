@@ -3739,13 +3739,14 @@ $foodsoft_get_vars = array(
 
 $http_input_sanitized = false;
 function sanitize_http_input() {
-  global $HTTP_GET_VARS, $HTTP_POST_VARS
+  global $HTTP_GET_VARS, $HTTP_POST_VARS, $from_dokuwiki
        , $foodsoft_get_vars, $http_input_sanitized, $session_id;
 
-  // echo "sanitize_input_called: ". var_export(debug_backtrace());
-  foreach( $HTTP_GET_VARS as $key => $val ) {
-    need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
-    need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert fuer Variable $key in URL" );
+  if( ! $from_dokuwiki ) {
+    foreach( $HTTP_GET_VARS as $key => $val ) {
+      need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
+      need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert fuer Variable $key in URL" );
+    }
   }
   if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
     need( isset( $HTTP_POST_VARS['postform_id'] ), 'fehlerhaftes Formular uebergeben' );
