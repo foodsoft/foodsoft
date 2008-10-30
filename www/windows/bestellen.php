@@ -25,8 +25,10 @@ if( $bestell_id ) {
 }
 
 $laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN );
-if( count( $laufende_bestellungen ) < 1)
+if( count( $laufende_bestellungen ) < 1) {
   div_msg( 'warn', "Zur Zeit laufen leider keine Bestellungen! <a href='index.php'>Zurück...</a>" );
+  return;
+}
 
 // tabelle fuer infos und auswahl bestellungen:
 //
