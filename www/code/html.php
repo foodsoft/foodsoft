@@ -342,7 +342,6 @@ function submission_button( $text = '', $active = true ) {
   global $form_id;
   $text or $text = 'Speichern';
   $class = ( $active ? 'button' : 'button inactive' );
-  // open_span( 'qquad', '', "<a class='$class' id='submit_button_$form_id' title='$text' onClick=\"document.getElementById('form_$form_id').submit();\">$text</a>" );
   open_span( 'qquad', '', "<a class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
 }
 
@@ -365,7 +364,6 @@ function uncheck_all_button( $text = 'Alle abw&auml;hlen', $title = '' ) {
 
 function close_button( $text = 'Schließen' ) {
   echo "<a class='button' onclick='if(opener) opener.focus(); closeCurrentWindow();'>$text</a>";
-  // echo "<input value='Schließen' type='button' onClick='if(opener) opener.focus(); closeCurrentWindow();'>";
 }
 
 function open_select( $fieldname, $autoreload = false ) {
@@ -432,7 +430,7 @@ function close_all_tags() {
   while( $n = count( $open_tags ) ) {
     if( $open_tags[$n] == 'body' ) {
       foreach( $print_on_exit as $p )
-        echo $p;
+        echo "\n" . $p;
     }
     close_tag( $open_tags[$n] );
   }
