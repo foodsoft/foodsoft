@@ -22,6 +22,7 @@ get_http_var( 'window_id', 'w', 'main', true );  // ID des browserfensters
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');
+    setWikiHelpTopic('');
     include('dienst_info.php');
     switch( $window ) {
       case "wiki":
