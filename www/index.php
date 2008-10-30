@@ -58,12 +58,10 @@ switch( $window_id ) {
     } else {
       div_msg( 'warn', "Ung&uuml;ltiger Bereich: $window" );
     }
-    // now self_url() will return the correct url; insert it:
-    // open_javascript( "document.getElementById('reload_button').href = '".self_url()."';" );
     break;
 }
 
-// force new iTAN (this form must be submittable in additon to any other):
+// force new iTAN (this form must still be submittable after any other):
 //
 postform_id( true );
 open_form( '', "name=update_form", "message=" );
