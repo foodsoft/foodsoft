@@ -453,8 +453,13 @@ fieldset.small_form {
   padding:0.5ex;
 }
 .small_form table tr th {
-  background-color:#d0d0f0;
-  padding:0.5ex;
+  background-color:#f0c060;
+  padding:0.3ex 0.6ex 0.2ex 0.6ex;
+  border-style:none;
+  border-bottom:solid 1px #404040;
+}
+.small_form table tr th + th {
+  border-left:solid 1px #404040;
 }
 .small_form table tr td label a {
   padding:0pt;
