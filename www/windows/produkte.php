@@ -40,7 +40,8 @@ open_table('layout',"style='width:100%;'");
                          , 'Sollen alle Einträge mit dem Lieferantenkatalog verglichen werden?' );
     close_table();
 
-  open_td('right');
+  open_td('floatright');
+    ?> <h4> Lieferanten der Foodcoop: </h4> <?
     auswahl_lieferant( $lieferanten_id );
 close_table();
 
@@ -49,7 +50,7 @@ close_table();
 if( ! $lieferanten_id )
   return;
 
-medskip();
+bigskip();
 
 /////////////////////////////
 //
