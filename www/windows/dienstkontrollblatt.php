@@ -9,7 +9,7 @@ get_http_var('action','w','');
 if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
   $row = false;
   if( $dienst > 0 and $dienstkontrollblatt_id > 0 )
-    $row = first( sql_dienstkontrollblatt( $dienstkontrollblatt_id ) );
+    $row = current( sql_dienstkontrollblatt( $dienstkontrollblatt_id ) );
   if( $row ) {
     open_form( 'small_form', '', 'login=logout' );
       open_fieldset( 'small_form', '', 'Abmeldung im Dienstkontrollblatt' );
