@@ -495,7 +495,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   }
   open_tr('summe');
     open_td( 'right', "colspan='8'", 'Summe:' );
-    open_td( 'number', price_view( $gesamtwert ) );
+    open_td( 'number', '', price_view( $gesamtwert ) );
     open_td();
 
   echo $js;
