@@ -17,7 +17,7 @@ if( $meinkonto ) {
     open_fieldset( 'small_form', '', 'Überweisung eintragen', 'off' );
       open_form( 'small_form', '', "action=einzahlung" );
         open_table('layout');
-          form_row_betrag( 'Ich habe heute ' ); echo ' Euro '; submission_button( 'überwiesen' );
+          form_row_betrag( 'Ich habe heute ' ); echo ' Euro fuer unsere Gruppe '. gruppe_view( $login_gruppen_id ); submission_button( 'überwiesen' );
         close_table();
       close_form();
     close_fieldset();
@@ -178,7 +178,7 @@ open_table('list');
     open_th( '', '', 'Buchung' );
     open_th( '', '', 'Kontostand' );
   open_tr( 'summe' );
-    open_td( 'right', "colspan='6'", 'Kontostand' );
+    open_td( 'right', "colspan='6'", 'Kontostand:' );
     open_td( 'number', '', price_view( $pfandkontostand ) );
     open_td();
     open_td();
@@ -215,12 +215,12 @@ open_table('list');
       ) ) );
       open_td( 'number' );
         if( abs( $pfand_voll_soll ) > 0.005 ) {
-          price_view( $pfand_voll_soll );
+          echo price_view( $pfand_voll_soll );
           $have_pfand = true;
         }
       open_td( 'number' );
         if( abs( $pfand_leer_soll ) > 0.005 ) {
-          printf( "%.2lf", $pfand_leer_soll );
+          echo price_view( $pfand_leer_soll );
           $have_pfand = true;
         }
       open_td( 'number', '', $have_pfand ? price_view( $pfandsumme ) : '' );
