@@ -9,16 +9,9 @@ $editable = ( ! $readonly and ( $dienst == 4 ) );
 setWindowSubtitle( 'Kontoverwaltung' );
 setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
 
-?> <h1>Kontoverwaltung</h1> <?
+?> <h1>Bankkonten</h1> <?
 
-//////////////////////
-// konto auswaehlen:
-//
 $konten = sql_konten();
-if( ! $konten ) {
-  div_msg( 'warn', 'Keine Konten definiert!', 'index' );
-  return;
-}
 
 if( count($konten) == 1 ) {
   $row = current( $konten );
@@ -28,136 +21,130 @@ if( count($konten) == 1 ) {
 }
 get_http_var( 'konto_id', 'u', $konto_id, true );
 
-?> <h4>Konten der Foodcoop:</h4> <?
-
-open_table('list');
-  open_th('','','Name');
-  open_th('','','BLZ');
-  open_th('','','Konto-Nr');
-  open_th('','','Saldo');
-  open_th('','','Online-Banking');
-  open_th('','','Kommentar');
-
-foreach( $konten as $row ) {
-  if( $row['id'] != $konto_id ) {
-    open_tr( '', 'onclick="' .fc_link( 'self', "konto_id={$row['id']},context=js" ).';"' );
-  } else {
-    open_tr( 'active' );
-  }
-    open_td( 'bold', '', $row['name'] );
-    open_td( '', '', $row['blz'] );
-    open_td( '', '', $row['kontonr'] );
-    open_td( 'number', '', price_view( sql_bankkonto_saldo( $row['id'] ) ) );
-    if( ( $url = $row['url'] ) ) {
-      open_td( '', '',"<a href=\"javascript:window.open('$url','onlinebanking').focus();\">$url</a></td>" );
-    } else {
-      open_td( '', '', '-' );
-    }
-    open_td( '', '', $row['kommentar'] );
+get_http_var( 'auszug', '/^\d+-\d+$/', 0, false );  // kompakt-format (aus <select> unten!)
+if( $auszug ) {
+  sscanf( $auszug, "%u-%u", & $auszug_jahr, & $auszug_nr );
+  $self_fields['auszug_jahr'] = $auszug_jahr;
+  $self_fields['auszug_nr'] = $auszug_nr;
+} else {
+  get_http_var( 'auszug_jahr', 'u', 0, true ) or $auszug_jahr = 0;
+  get_http_var( 'auszug_nr', 'u', 0, true ) or $auszug_nr = 0;
 }
-close_table();;
-open_div('medskip', '', '' );
+
+//////////////////////
+// hauptmenue und auswahl konto:
+//
+open_table('layout',"style='width:100%;'");
+  open_td('left');
+    open_table('menu');
+      if( $editable ) {
+        open_tr();
+          open_td( '', '', fc_link( 'edit_konto'
+                     , "class=bigbutton,title=Neues Bankkonto eintragen,text=Neues Konto" ) );
+      }
+      open_tr();
+        open_td( '', '', fc_link( 'self', "class=bigbutton,text=Seite aktualisieren" ) );
+      open_tr();
+        open_td( '', '', fc_link( 'index', "class=bigbutton" ) );
+    close_table();
+
+  open_td( 'floatright' );
+    ?> <h4>Konten der Foodcoop:</h4> <?
+    auswahl_konto( $konto_id );
+close_table();
 
 if( ! $konto_id )
   return;
 
+bigskip();
 
 //////////////////////
 // auszug auswaehlen:
 //
 
-get_http_var( 'auszug', '/^\d+-\d+$/', 0, true );
-if( $auszug ) {
-  sscanf( $auszug, "%u-%u", & $auszug_jahr, & $auszug_nr );
-  // $self_fields['auszug_jahr'] = $auszug_jahr;
-  // $self_fields['auszug_nr'] = $auszug_nr;
-} else {
-  get_http_var( 'auszug_jahr', 'u', 0 ) or $auszug_jahr = 0;
-  get_http_var( 'auszug_nr', 'u', 0 ) or $auszug_nr = 0;
-  $self_fields['auszug'] = "$auszug_jahr-$auszug_nr";
-}
+open_table('layout', "style='width:100%;'" );
 
-$ungebuchte_einzahlungen = sql_ungebuchte_einzahlungen();
+  open_td();
+    ?> <h3>Kontouszüge:</h3> <?
 
-open_table('layout');
-  open_td('', "colspan='2'", '<h3>Erfasste Auszüge:</h3' );
-  if( $editable and $ungebuchte_einzahlungen )
-    open_td('', "colspan='2'", '<h3>Ungebuchte Einzahlungen:</h3>' );
+    open_select( 'auszug', true );
+      $selected = false;
+      $options = '';
+      foreach( sql_kontoauszug( $konto_id ) as $auszug ) {
+        $jahr = $auszug['kontoauszug_jahr'];
+        $nr = $auszug['kontoauszug_nr'];
 
-  open_tr();
-    open_td();
-      open_select( 'auszug', true );
-        $selected = false;
-        $options = '';
-        foreach( sql_kontoauszug( $konto_id ) as $auszug ) {
-          $jahr = $auszug['kontoauszug_jahr'];
-          $nr = $auszug['kontoauszug_nr'];
+        $posten = count( sql_kontoauszug( $konto_id, $jahr, $nr ) );
+        $saldo = sql_bankkonto_saldo( $konto_id, $auszug['kontoauszug_jahr'], $auszug['kontoauszug_nr'] );
 
-          $posten = count( sql_kontoauszug( $konto_id, $jahr, $nr ) );
-          $saldo = sql_bankkonto_saldo( $konto_id, $auszug['kontoauszug_jahr'], $auszug['kontoauszug_nr'] );
-
-          // $detailurl = self_url( array( 'auszug_jahr', 'auszug_nr' ) ) . "&auszug_nr=$nr&auszug_jahr=$jahr";
-
-          $options .= "<option value='$jahr-$nr'";
-          if( $jahr == $auszug_jahr and $nr == $auszug_nr ) {
-            $options .= " selected";
-            $selected = true;
-          }
-          $options .= ">$jahr / $nr ($posten Posten, Saldo: $saldo)</option>";
+        $options .= "<option value='$jahr-$nr'";
+        if( $jahr == $auszug_jahr and $nr == $auszug_nr ) {
+          $options .= " selected";
+          $selected = true;
         }
-        if( ! $selected ) {
-          $options = "<option value='0' selected>(Bitte Auszug wählen)</option>" . $options;
-        }
-        echo $options;
-      close_select();
-
-    open_td();
-
-      open_fieldset('', '','Neuen Auszug anlegen', 'off' );
-        open_form( '', '', 'action=neuer_auszug' );
-          open_div('oneline');
-            echo "<label>Jahr:</label> " . string_view( date('Y'), 4, 'neuer_auszug_jahr' );
-            echo " / <label>Nr:</label>" . string_view( '', 2, 'neuer_auszug_nr' );
-            submission_button();
-          close_div();
-        close_form();
-      close_fieldset();
-
-    open_td();
-      if( $editable and $ungebuchte_einzahlungen ) {
-        open_table('list');
-          open_th('','','Datum');
-          open_th('','','Gruppe');
-          open_th('','','Betrag');
-          open_th('','','Aktionen');
-
-          foreach( $ungebuchte_einzahlungen as $trans ) {
-            open_tr();
-              open_td('','', $trans['eingabedatum_trad'] );
-              open_td();
-                echo gruppe_view( $trans['gruppen_id'] );
-                open_ul();
-                  foreach( sql_gruppen_members($trans['gruppen_id']) as $pers )
-                    open_li( '', '', $pers["vorname"]." ".$pers["name"] );
-                close_ul();
-              open_td( 'number', '', price_view( $trans['summe'] ) );
-              open_td();
-                if( $editable and $auszug_jahr and $auszug_nr ) {
-                  open_form( '', '', array( 'action' => 'confirm_payment', 'transaction_id' => $trans['id'] ) );
-                    echo "<label>Valuta:</label> ". date_view( '', 'valuta' );
-                      open_span( 'quad', "title='Best&auml;tigen: diese Gutschrift ist auf Auszug $auszug_jahr / $auszug_nr verbucht'" );
-                        submission_button( 'Best&auml;tigen' );
-                      close_span();
-                  close_form();
-                }
-                echo "<hr>";
-                if( $editable ) {
-                  echo fc_action( 'title=diese ungebuchte Gutschrift stornieren,class=drop'
-                                , "action=cancel_payment,transaction_id={$trans['id']}" );
-                }
-          }
-        close_table();
+        $options .= ">$jahr / $nr ($posten Posten, Saldo: $saldo)</option>";
       }
+      if( ! $selected ) {
+        $options = "<option value='0' selected>(Bitte Auszug wählen)</option>" . $options;
+      }
+      echo $options;
+    close_select();
+    smallskip();
+
+    open_fieldset( 'small_form', '','Neuen Auszug anlegen', 'off' );
+      open_form( '', 'auszug_jahr=,auszug_nr=' );
+        open_div('oneline');
+          echo "<label>Jahr:</label> " . string_view( date('Y'), 4, 'auszug_jahr' );
+          echo " / <label>Nr:</label>" . string_view( '', 2, 'auszug_nr' );
+          submission_button();
+        close_div();
+      close_form();
+    close_fieldset();
+
+  $ungebuchte_einzahlungen = sql_ungebuchte_einzahlungen();
+  if( $editable and $ungebuchte_einzahlungen and $auszug_jahr and $auszug_nr ) {
+    open_td( 'floatright' );
+      ?> <h4>ungebuchte Einzahlungen:</h4> <?
+
+      // open_div( 'kommentar left', '', 'Hier könnt ihr den Geldeingang von Einzahlungen, die von den Gruppen selbst eingetragen wurden,
+      //                      bestätigen, oder die Einzahlung stornieren:' );
+
+      smallskip();
+      open_table('list');
+        open_th('','','Datum');
+        open_th('','','Gruppe');
+        open_th('','','Betrag');
+        open_th('','','Aktionen');
+
+        foreach( $ungebuchte_einzahlungen as $trans ) {
+          open_tr();
+            open_td('','', $trans['eingabedatum_trad'] );
+            open_td();
+              echo gruppe_view( $trans['gruppen_id'] );
+              open_ul();
+                foreach( sql_gruppen_members($trans['gruppen_id']) as $pers )
+                  open_li( '', '', $pers["vorname"]." ".$pers["name"] );
+              close_ul();
+            open_td( 'number', '', price_view( $trans['summe'] ) );
+            open_td();
+              if( $editable ) {
+                open_form( '', '', array( 'action' => 'confirm_payment', 'transaction_id' => $trans['id'] ) );
+                  open_table( 'layout' );
+                    form_row_konto( 'Konto:' );
+                    form_row_kontoauszug();
+                    form_row_date( 'Valuta:', 'valuta' );
+                      submission_button( 'Best&auml;tigen' );
+                  close_table();
+                close_form();
+              }
+              echo "<hr>";
+              if( $editable ) {
+                open_div( 'right', '', fc_action( 'img=img/b_drop.png,title=diese ungebuchte Gutschrift stornieren,class=button,text=löschen'
+                                                 , "action=cancel_payment,transaction_id={$trans['id']}" ) );
+              }
+        }
+      close_table();
+  }
 
 close_table();
 
@@ -172,16 +159,16 @@ switch( $action ) { // aktionen die keinen auszug brauchen
     reload_immediately( fc_link( '', 'context=action' ) );
     break;
     need_http_var( 'transaction_id', 'u' );
-  case 'neuer_auszug':
-    need_http_var( 'neuer_auszug_nr', 'u' );
-    need_http_var( 'neuer_auszug_jahr', 'u' );
-    $auszug_nr = $neuer_auszug_nr;
-    $auszug_jahr = $neuer_auszug_jahr;
-    break;
 }
 
 if( ! $auszug_jahr or ! $auszug_nr )
   return;
+
+////////////////////////////////
+// anzeige eines kontoauszugs:
+//
+
+bigskip();
 
 $kontoname = sql_kontoname($konto_id);
 echo "<h3>$kontoname - Auszug $auszug_jahr / $auszug_nr</h3>";
@@ -196,8 +183,11 @@ switch( $action ) { // aktionen, die einen auszug brauchen
   case 'ueberweisung_konto_konto':
     action_buchung_bank_bank();
     break;
-  case 'ueberweisung_sonderausgabe':
-    buchung_bank_sonderausgabe();
+  case 'buchung_bank_sonderausgabe':
+    action_buchung_bank_sonderausgabe();
+    break;
+  case 'buchung_bank_anfangsguthaben':
+    action_buchung_bank_anfangsguthaben();
     break;
   case 'confirm_payment':
     need_http_var( 'transaction_id', 'u' );
@@ -311,6 +301,6 @@ foreach( sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr ) as $row ) {
     open_td( 'right', "colspan='4'", 'Saldo:');
     open_td( 'number', '', price_view( $saldo ) );
     open_td();
-open_table();
+close_table();
 
 ?>
