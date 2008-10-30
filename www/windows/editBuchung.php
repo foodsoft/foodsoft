@@ -129,7 +129,7 @@ if( $editable )
 
 open_fieldset( 'small_form', '', 'Buchung:' );
   echo $msg; echo $problems;
-  open_table( 'layout', "style='width:350px;'" );
+  open_table( 'layout', "style='width:100%'" );
     fieldset_edit_transaction( $buchung_id, 1, $editable );
     open_tr();
       open_td( 'smallskip', "colspan='2'" );

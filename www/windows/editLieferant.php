@@ -10,11 +10,8 @@ $msg = '';
 $problems = '';
 
 get_http_var( 'lieferanten_id', 'u', 0, true );
-if( $lieferanten_id ) {
-  $row = sql_getLieferant( $lieferanten_id );
-} else {
-  $row = false;
-}
+
+$row = $lieferanten_id ? sql_getLieferant( $lieferanten_id ) : false;
 get_http_var('name','H',$row);
 get_http_var('adresse','H',$row);
 get_http_var('ansprechpartner','H',$row);
@@ -76,15 +73,13 @@ open_form( 'small_form', '', 'action=save' );
       form_row_text( 'Webadresse:', ( $editable ? 'url' : false ), 50, $url );
       open_tr();
         open_td( 'right', "colspan='2'" );
-          if( $lieferanten_id > 0 ) {
+          if( $lieferanten_id > 0 )
             echo fc_link( 'lieferantenkonto', "lieferanten_id=$lieferanten_id,text=Lieferantenkonto..." );
-          }
-          open_span( 'qquad' );
+          qquad();
           if( $editable )
             submission_button();
           else
             close_button();
-          close_span();
     close_table();
   close_fieldset();
 close_form();
