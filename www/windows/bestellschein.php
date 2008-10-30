@@ -14,10 +14,6 @@ error_reporting(E_ALL);
 assert( $angemeldet ) or exit();
 
 get_http_var( 'bestell_id', 'u', 0, true );
-if( ! $bestell_id ) {
-  select_bestellung_view();
-  return;
-}
 
 get_http_var( 'action', 'w', '' );
 $readonly and $action = '';
@@ -83,6 +79,10 @@ switch( $action ) {
     break;
 }
 
+if( ! $bestell_id ) {
+  select_bestellung_view();
+  return;
+}
 get_http_var( 'gruppen_id', 'u', 0, true );
 
 if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
