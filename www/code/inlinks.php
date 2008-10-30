@@ -3,7 +3,6 @@
 // inlinks.php
 // functions and definitions for internal hyperlinks, in particular: window properties
 
-
 // default options for windows (for javascript window.open()-call)
 // (these are really constants, but php doesn't not support array-valued constants)
 // this file may be include from inside a function (from doku-wiki!), so we need `global':
@@ -205,6 +204,7 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'browse';
       $options = array_merge( $large_window_options, array( 'width' => 1100, 'height' => 820 ) );
       break;
+    case 'terrakatalog_upload':
     case 'katalog_upload':
       $parameters['window'] = 'terrakatalog_upload';
       $parameters['window_id'] = 'katalog_upload';
@@ -307,6 +307,14 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
+    case 'editkonto':
+    case 'edit_konto':
+      $parameters['window'] = 'editKonto';
+      $parameters['window_id'] = 'edit_konto';
+      $parameters['title'] = 'zu den Stammdaten des Bankkontos...';
+      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
+      break;
     case 'editprodukt':
     case 'edit_produkt':
       $parameters['window'] = 'editProdukt';
@@ -324,6 +332,7 @@ function fc_window_defaults( $name ) {
       $options = array_merge( $small_window_options, array( 'width' => '500' ) );
       break;
     case 'insertbestellung':
+    case 'editbestellung':
     case 'insert_bestellung':
       $parameters['window'] = 'editBestellung';
       $parameters['window_id'] = 'edit_bestellung';
@@ -333,8 +342,9 @@ function fc_window_defaults( $name ) {
       $options = array_merge( $small_window_options, array( 'width' => '460' ) );
       break;
     case 'insertproduktgruppe':
+    case 'editproduktgruppe':
     case 'produktgruppen':
-      $parameters['window'] = 'insertProduktgruppe';
+      $parameters['window'] = 'editProduktgruppe';
       $parameters['window_id'] = 'produktgruppen';
       $parameters['title'] = 'Produktgruppen verwalten...';
       $parameters['text'] = 'Produktgruppen';
@@ -344,16 +354,13 @@ function fc_window_defaults( $name ) {
     default:
       error( "undefiniertes Fenster: $name " );
   }
-  if( $parameters )
-    return array( 'parameters' => $parameters, 'options' => $options );
-  else
-    return NULL;
+  return array( 'parameters' => $parameters, 'options' => $options );
 }
 
 // self_url:
 // generate url to reload this page, with QUERY_STRING passing all
 // variables from $self_fields, skipping those in $exclude:
-// 
+//
 function self_url( $exclude = array() ) {
   global $self_fields;
 
@@ -364,8 +371,8 @@ function self_url( $exclude = array() ) {
     $exclude = array( $exclude );
   }
   foreach( $self_fields as $key => $value ) {
-    if( ! in_array( $key, $exclude ) )
-      $output = $output . "&$key=$value";
+    if( ! in_array( $key, $exclude ) and ( $value or ( $value === 0 ) ) )
+      $output .= "&$key=$value";
   }
   return $output;
 }
@@ -382,8 +389,8 @@ function self_post( $exclude = array() ) {
     $exclude = array( $exclude );
   }
   foreach( $self_post_fields as $key => $value ) {
-    if( ! in_array( $key, $exclude ) )
-      $output = $output . "<input type='hidden' name='$key' value='$value'>";
+    if( ! in_array( $key, $exclude ) and ( $value or ( $value === 0 ) ) )
+      $output .= "<input type='hidden' name='$key' value='$value'>";
   }
   return $output;
 }
@@ -464,7 +471,7 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
 //            if $window == 'self', global $self_fields will be merged with $parameters
 //   $parameters: GET parameters to be passed in url: either "k1=v1&k2=v2" string, or array of 'name' => 'value' pairs
 //                this will override defaults and (if applicable) $self_fields.
-//                use 'name' => NULL to explicitely _not_ pass a parameter even if it is in defaults or $self_fields.
+//                use 'name' => NULL to explicitely _not_ pass $name even if it is in defaults or $self_fields.
 //   $options:    window options to be passed in javascript:window_open() (optional, to override defaults)
 // $parameters may also contain some pseudo-parameters:
 //   $text, $title, $class, $img: to specify the look of the link (see alink above)
@@ -475,7 +482,7 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
 //                   is differerent from the current window or if $confirm is specified.
 //    'js': always return javascript code that can be used in event handlers like onclick=...
 //    'action': always return the plain url. (pseudo parameters like $confirm or $window_id will take no effect)
-//    'form': return string of attributes suitable to insert into a <form>-tag. will always contain action='...'
+//    'form': return string of attributes suitable to insert into a <form>-tag. the result always contains action='...'
 //            and may also contain target='...' and onsubmit='...' attributes if needed.
 // as a special case, $parameters === NULL can be used to just open a browser window with no document; this can
 // be used in <form onsubmit='...', in combination with target=..., to submit a form into a new window.
@@ -488,8 +495,7 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
     $parameters = parameters_explode( $parameters );
   if( is_string( $options ) )
     $options = parameters_explode( $options );
-  if( ! $window )
-    $window = 'self';
+  $window or $window = 'self';
 
   $window_defaults = fc_window_defaults( $window );
   if( $parameters === NULL ) {  // open empty window
@@ -514,17 +520,14 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
     $komma = ',';
   }
 
-  if( isset( $parameters['confirm'] ) ) {
+  $confirm = '';
+  if( isset( $parameters['confirm'] ) )
     $confirm = "if( confirm( '{$parameters['confirm']}' ) ) ";
-  } else {
-    $confirm = '';
-  }
 
   $window_id = $parameters['window_id'];
+  $js_window_name = $window_id;
   if( ( $window_id == 'main' ) or ( $window_id == 'top' ) )
     $js_window_name = '_top';
-  else
-    $js_window_name = $window_id;
 
   switch( $context ) {
     case 'a':
