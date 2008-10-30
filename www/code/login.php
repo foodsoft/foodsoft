@@ -86,14 +86,14 @@ get_http_var( 'login', 'w', '' );
 switch( $login ) {
   case 'login': 
     get_http_var( 'login_gruppen_id', 'u' )
-      or $problems = $problems . "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
+      or $problems .= "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
     get_http_var( 'passwort','R' )
-      or $problems = $problems . "<div class='warn'>FEHLER: kein Passwort angegeben</div>";
+      or $problems .= "<div class='warn'>FEHLER: kein Passwort angegeben</div>";
     get_http_var( 'dienst', 'u' )
-      or $problems = $problems . "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
+      or $problems .= "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
 
     if( ! in_array( $dienst, array( 0, 3, 4, 5 ) ) ) {
-      $problems = $problems . "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
+      $problems .= "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
     }
 
     if( $dienst != 0 ) {
@@ -109,7 +109,7 @@ switch( $login ) {
       if( $gruppe = check_password( $login_gruppen_id, $passwort ) ) {
         $login_gruppen_name = $gruppe['name'];
       } else {
-        $problems = $problems . "<div class='warn'>FEHLER: Passwort leider falsch</div>";
+        $problems .= "<div class='warn'>FEHLER: Passwort leider falsch</div>";
       }
     }
 

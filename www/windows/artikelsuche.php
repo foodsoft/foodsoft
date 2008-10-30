@@ -68,7 +68,7 @@ if( $editable and ( ! $produkt_id ) ) {
     GROUP BY katalogdatum, katalogtyp
     ORDER BY katalogtyp, katalogdatum
   " );
-  open_form( 'small_form', "window=katalog_upload,attr=enctype='multipart/form-data',action=upload" );
+  open_form( 'small_form', array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload' ) );
     open_fieldset( 'small_form', '', 'Kataloge' );
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
@@ -86,11 +86,12 @@ if( $editable and ( ! $produkt_id ) ) {
         }
       close_table();
 
+      medskip();
       ?> <h3> Neuen Katalog einlesen: </h3> <?
       open_table('layout');
         open_td( '', '', "Datei (Format: .xls): <input type='file' name='terrakatalog'>" );
         open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='terrakw' size='8'>" );
-        submission_button( 'Einlesen' );
+        open_td(); submission_button( 'Einlesen' );
       close_table();
     close_fieldset();
   close_form();

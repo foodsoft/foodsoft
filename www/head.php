@@ -51,12 +51,12 @@ open_div( $headclass, "id='header'" );
       }
   open_tr();
     open_td( '', "colspan='3' style='text-align:right;'" );
-      open_tag( 'ul', '', "id='menu' style='margin-bottom:0.5ex;'" );
+      open_ul( '', "id='menu' style='margin-bottom:0.5ex;'" );
         foreach(possible_areas() as $menu_area){
           areas_in_head($menu_area);
         }
-        ?><li><? wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki", true ); ?></li><?
-      close_tag( 'ul' );
+        open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki", true );
+      close_ul();
   close_table();
 close_div();
 
