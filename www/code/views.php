@@ -708,11 +708,11 @@ function products_overview(
     if( $cols > $cols_vor_summe ) { // mindestens eine summenspalte ist aktiv
       $summenzeile = "
         open_tr( 'summe', \"id='row_total'\" );
-          open_td( 'right', \"colspan='$cols_vor_summe'\" 'Summe:' );
+          open_td( 'right', \"colspan='$cols_vor_summe'\", 'Summe:' );
           if( $spalten & PR_COL_NETTOSUMME )
             open_td( 'number', '', price_view( \$netto_summe ) );
           if( $spalten & PR_COL_BRUTTOSUMME )
-            open_td( 'number', '', 'price_view( \$brutto_summe ) );
+            open_td( 'number', '', price_view( \$brutto_summe ) );
           if( $spalten & PR_COL_ENDSUMME )
             open_td( 'number', '', price_view( \$endpreis_summe ) );
       ";
