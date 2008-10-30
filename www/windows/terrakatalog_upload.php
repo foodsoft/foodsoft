@@ -36,6 +36,12 @@ need_http_var( 'terrakw', 'w' );
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
+      if( preg_match( '&^Preisliste:\s+Mopro&', $line ) ) {
+        $tag='Fr';
+        $splitat = '@+';
+        $fields = array( 'anummer', 'bnummer', 'name', '', 'herkunft', 'verband', 'gebinde', 'einheit', 'netto', 'mwst', '', '' );
+        $pattern = '/^[\d\s]+@@[\d\s]+@/';
+      }
 
       if( preg_match( '&^Art.Nr.@Bestell-Nr.@ZITRUS-FRÜCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
         $tag='OG';
