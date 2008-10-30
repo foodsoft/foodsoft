@@ -9,7 +9,7 @@ function katalogsuche( $produkt ) {
   if( is_numeric( $produkt ) ) {
     $produkt = sql_produkt_details( $produkt );
   }
-  
+
   $lieferanten_id = $produkt['lieferanten_id'];
   if( ! ( $artikelnummer = $produkt['artikelnummer'] ) )
     return false;
@@ -42,7 +42,7 @@ function katalogabgleich(
 
   $katalogeintrag = katalogsuche( $artikel );
   if( ! $katalogeintrag ) {
-    ?> <div class='warn'>Katalogsuche: Artikelnummer nicht gefunden!</div> <?
+    div_msg( 'warn', 'Katalogsuche: Artikelnummer nicht gefunden!' );
     if( $detail and $editable )
       formular_artikelnummer( $produkt_id, false );
     return 2;
@@ -81,38 +81,31 @@ function katalogabgleich(
   $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
 
   if( $detail ) {
-    ?>
-      <fieldset class='big_form'>
-      <legend>
-        Lieferantenkatalog: Artikel gefunden in Katalog <? echo "$katalog_typ / $katalog_datum"; ?>
-      </legend>
-      <table width='100%' class='numbers'>
-        <tr>
-          <th>A-Nr.</th>
-          <th>B-Nr.</th>
-          <th>Bezeichnung</th>
-          <th>Einheit</th>
-          <th>Gebinde</th>
-          <th>Land</th>
-          <th>Verband</th>
-          <th>Netto</th>
-          <th>MWSt</th>
-          <th>Brutto</th>
-        </tr>
-        <tr>
-          <td><? echo $katalog_artikelnummer; ?></td>
-          <td><? echo $katalog_bestellnummer; ?></td>
-          <td><? echo $katalog_name; ?></td>
-          <td><? echo $katalog_einheit; ?></td>
-          <td><? echo $katalog_gebindegroesse; ?></td>
-          <td><? echo $katalog_herkunft; ?></td>
-          <td><? echo $katalog_verband; ?></td>
-          <td><? echo $katalog_netto; ?></td>
-          <td><? echo $katalog_mwst; ?></td>
-          <td><? echo $katalog_brutto; ?></td>
-        </tr>
-      </table>
-    <?
+    open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_typ / $katalog_datum" );
+      open_table( '', "style='width:100%;'" );
+          open_th( '', "title='Artikelnummer'", 'A-Nr.' );
+          open_th( '', "title='Bestellnummer'", 'B-Nr.' );
+          open_th( '', '', 'Bezeichnung' );
+          open_th( '', '', 'Einheit' );
+          open_th( '', '', 'Gebinde' );
+          open_th( '', '', 'Land' );
+          open_th( '', '', 'Verband' );
+          open_th( '', '', 'Netto' );
+          open_th( '', '', 'MWSt' );
+          open_th( '', '', 'Brutto' );
+        open_tr();
+          open_td( '', '', $katalog_artikelnummer );
+          open_td( '', '', $katalog_bestellnummer );
+          open_td( '', '', $katalog_name );
+          open_td( '', '', $katalog_einheit );
+          open_td( '', '', $katalog_gebindegroesse );
+          open_td( '', '', $katalog_herkunft );
+          open_td( '', '', $katalog_verband );
+          open_td( '', '', $katalog_netto );
+          open_td( '', '', $katalog_mwst );
+          open_td( '', '', $katalog_brutto );
+      close_table();
+    close_fieldset();
   }
 
 
@@ -218,12 +211,10 @@ function katalogabgleich(
     $rv = 1;
   }
   if( $detail and $editable ) {
-    ?><div class='untertabelle'><?
-    formular_artikelnummer( $produkt_id, 'off' );
-    ?></div><?
+    open_div();
+      formular_artikelnummer( $produkt_id, 'off' );
+    close_div();
   }
-
-  ?></fieldset><?
 
   return $rv;
 }
