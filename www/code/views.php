@@ -652,11 +652,10 @@ function products_overview(
       if( array_key_exists( $n, $col ) ) {
         $c = $col[$n];
         if( $spalten & $n ) {
-          $opts_drop = "$opts_drop <option title='{$c['title']}' value='$n'>"
+          $opts_drop .= "<option title='{$c['title']}' value='$n'>"
           . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
         } else {
-          $opts_insert = "$opts_insert
-            <option title='{$c['title']}' value='$n'>"
+          $opts_insert .= "<option title='{$c['title']}' value='$n'>"
             . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
         }
       }
@@ -686,254 +685,235 @@ function products_overview(
     floating_submission_button();
   }
 
-  open_table('list', "style='width:100%;'" );
+  open_table( 'list', "style='width:100%;'" );
+
     open_tr('legende');
-
-  $cols = 0;
-  $cols_vor_summe = 0;
-  for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
-    if( $spalten & $n ) {
-      if( array_key_exists( $n, $col ) ) {
-        $c = $col[$n];
-        echo "<th colspan='{$c['cols']}' title='{$c['title']}'>{$c['header']}</th>";
-        $cols += $c['cols'];
-        if( $n < PR_COL_NETTOSUMME )
-          $cols_vor_summe += $c['cols'];
-      } else {
-        $spalten = ($spalten & ~$n);  // nicht definiert: bit loeschen!
-      }
-    }
-  }
-
-  if( $cols > $cols_vor_summe ) { // mindestens eine summenspalte ist aktiv
-    $summenzeile = "
-      echo \"<tr id='row_total' class='summe'>
-              <td colspan='$cols_vor_summe' style='text-align:right;'>Summe:</td>\";
-      if( \$spalten & PR_COL_NETTOSUMME )
-        printf( \"<td class='number'>%8.2lf</td>\", \$netto_summe );
-      if( \$spalten & PR_COL_BRUTTOSUMME )
-        printf( \"<td class='number'>%8.2lf</td>\", \$brutto_summe );
-      if( \$spalten & PR_COL_ENDSUMME )
-        printf( \"<td class='number'>%8.2lf</td>\", \$endpreis_summe );
-      echo '</tr>';
-    ";
-  } else {
-    $summenzeile = '';
-  }
-  switch( $state ) {
-    case STATUS_BESTELLEN:
-    case STATUS_LIEFERANT:
-      $nichtgeliefert_header = 'Nicht bestellte Produkte';
-    break;
-    case STATUS_VERTEILT:
-    default:
-      $nichtgeliefert_header = ( $gruppen_id ?
-        'Nicht gelieferte oder zugeteilte Produkte' : 'Nicht gelieferte Produkte' );
-    break;
-  }
-
-  $netto_summe = 0;
-  $brutto_summe = 0;
-  $endpreis_summe = 0;
-  $haben_nichtgeliefert = false;
-  $haben_nichtgefuellt = false;
-
-  foreach( $produkte as $produkte_row ) {
-    $produkt_id =$produkte_row['produkt_id'];
-
-    if( $produkte_row['menge_ist_null'] && ! $haben_nichtgeliefert ) {
-      $haben_nichtgeliefert = true;
-      eval( $summenzeile );
-      $summenzeile = '';
-      if( $spalten & PR_ROWS_NICHTGELIEFERT ) {
-        echo "<tr><th colspan='$cols'>$nichtgeliefert_header:</th></tr>";
-      } else {
-        break;
-      }
-    }
-
-    // preise je V-einheit:
-    $nettopreis = $produkte_row['nettopreis'];
-    $bruttopreis = $produkte_row['bruttopreis'];
-    $endpreis = $produkte_row['endpreis'];
-
-    // preise je preiseinheit:
-    $nettolieferpreis = $produkte_row['nettolieferpreis'];
-    $bruttolieferpreis = $produkte_row['bruttolieferpreis'];
-    $mengenfaktor = $produkte_row['mengenfaktor'];
-
-    $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
-    $basarbestellmenge = $produkte_row['basarbestellmenge'];
-    $toleranzbestellmenge = $produkte_row['toleranzbestellmenge'];
-
-    // festbestellmenge enthaelt auch die "festen" basarbestellungen!
-    $festbestellmenge = $gesamtbestellmenge - $toleranzbestellmenge - $basarbestellmenge;
-
-    $gebindegroesse = $produkte_row['gebindegroesse'];
-    $kan_verteilmult = $produkte_row['kan_verteilmult'];
-
-    switch($state) {
-      case STATUS_BESTELLEN:
-        if( $gruppen_id ) {
-          $liefermenge = $gesamtbestellmenge;  // obere abschaetzung...
-          $gebinde = "ERROR";  // nicht sinnvoll
-        } else {
-          // voraussichtliche liefermenge berechnen:
-          $gebinde = (int)($festbestellmenge / $gebindegroesse);
-          $festmengenrest = $festbestellmenge - $gebinde * $gebindegroesse;
-          if( $festmengenrest > 0 ) { // zu wenig: versuche aufzurunden...
-            if( $festmengenrest + $basarbestellmenge + $toleranzbestellmenge >= $gebindegroesse ) {
-              $gebinde += 1;
-            }
-          }
-          $liefermenge = $gebinde * $gebindegroesse;
-        }
-        break;
-      case STATUS_LIEFERANT:  // verteilmengen sollten jetzt zugewiesen sein:
-      default:  // rien ne va plus...
-        if( $gruppen_id ) {
-          if( $gruppen_id == $muell_id ) {
-            $liefermenge = $produkte_row['muellmenge'];
+      $cols = 0;
+      $cols_vor_summe = 0;
+      for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
+        if( $spalten & $n ) {
+          if( array_key_exists( $n, $col ) ) {
+            $c = $col[$n];
+            echo "<th colspan='{$c['cols']}' title='{$c['title']}'>{$c['header']}</th>";
+            $cols += $c['cols'];
+            if( $n < PR_COL_NETTOSUMME )
+              $cols_vor_summe += $c['cols'];
           } else {
-            $liefermenge = $produkte_row['verteilmenge'];
+            $spalten = ($spalten & ~$n);  // nicht definiert: bit loeschen!
           }
+        }
+      }
+    close_tr();
+
+    if( $cols > $cols_vor_summe ) { // mindestens eine summenspalte ist aktiv
+      $summenzeile = "
+        open_tr( 'summe', \"id='row_total'\" );
+          open_td( 'right', \"colspan='$cols_vor_summe'\" 'Summe:' );
+          if( $spalten & PR_COL_NETTOSUMME )
+            open_td( 'number', '', price_view( \$netto_summe ) );
+          if( $spalten & PR_COL_BRUTTOSUMME )
+            open_td( 'number', '', 'price_view( \$brutto_summe ) );
+          if( $spalten & PR_COL_ENDSUMME )
+            open_td( 'number', '', price_view( \$endpreis_summe ) );
+      ";
+    } else {
+      $summenzeile = '';
+    }
+    switch( $state ) {
+      case STATUS_BESTELLEN:
+      case STATUS_LIEFERANT:
+        $nichtgeliefert_header = 'Nicht bestellte Produkte';
+      break;
+      case STATUS_VERTEILT:
+      default:
+        $nichtgeliefert_header = ( $gruppen_id ?
+          'Nicht gelieferte oder zugeteilte Produkte' : 'Nicht gelieferte Produkte' );
+      break;
+    }
+
+    $netto_summe = 0;
+    $brutto_summe = 0;
+    $endpreis_summe = 0;
+    $haben_nichtgeliefert = false;
+    $haben_nichtgefuellt = false;
+
+    foreach( $produkte as $produkte_row ) {
+      $produkt_id = $produkte_row['produkt_id'];
+
+      if( $produkte_row['menge_ist_null'] && ! $haben_nichtgeliefert ) {
+        $haben_nichtgeliefert = true;
+        eval( $summenzeile );
+        $summenzeile = '';
+        if( $spalten & PR_ROWS_NICHTGELIEFERT ) {
+          echo "<tr><th colspan='$cols'>$nichtgeliefert_header:</th></tr>";
         } else {
-          $liefermenge = $produkte_row['liefermenge'];
-        }
-        $gebinde = $liefermenge / $gebindegroesse;  // nicht unbedingt integer!
-        break;
-    }
-    $liefermenge_scaled = $liefermenge / $mengenfaktor;
-
-    $nettogesamtpreis = sprintf( "%8.2lf", $nettopreis * $liefermenge );
-    $bruttogesamtpreis = sprintf( "%8.2lf", $bruttopreis * $liefermenge );
-    $endgesamtpreis = sprintf( "%8.2lf", $endpreis * $liefermenge );
-
-    $netto_summe += $nettogesamtpreis;
-    $brutto_summe += $bruttogesamtpreis;
-    $endpreis_summe += $endgesamtpreis;
-
-    if( $option_nichtgefuellt ) {
-      if( $gebinde < 1 ) {
-        $haben_nichtgefuellt = true;
-        if( ! ( $spalten & PR_ROWS_NICHTGEFUELLT ) ) {
-          continue;
+          break;
         }
       }
-    }
 
-    ?> <tr> <?
-    if( $spalten & PR_COL_NAME ) {
-      echo "<td>{$produkte_row['produkt_name']}</td>";
-    }
-    if( $spalten & PR_COL_ANUMMER ) {
-      echo "<td>{$produkte_row['artikelnummer']}</td>";
-    }
-    if( $spalten & PR_COL_BNUMMER ) {
-      echo "<td>{$produkte_row['bestellnummer']}</td>";
-    }
-    if( $spalten & PR_COL_LPREIS ) {
-      echo "<td class='mult'>";
-        echo fc_link( 'produktdetails', "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) );
-      echo "</td><td class='unit'>/ {$produkte_row['preiseinheit']}</a></td>";
-    }
-    if( $spalten & PR_COL_MWST ) {
-      echo "<td class='number'>{$produkte_row['mwst']}</td>";
-    }
-    if( $spalten & PR_COL_PFAND ) {
-      echo "<td class='number'>{$produkte_row['pfand']}</td>";
-    }
-    if( $spalten & PR_COL_VPREIS ) {
-      printf( "<td class='mult'>%8.2lf</td><td class='unit'>/ %s %s</td>"
-        , $produkte_row['preis'], $produkte_row['kan_verteilmult'], $produkte_row['kan_verteileinheit']
-      );
-    }
-    if( $spalten & PR_COL_BESTELLMENGE ) {
-      printf(
-        '<td class="mult">%1$.0lf / %2$.0lf' . ( $gruppen_id ? '' : ' / %3$.0lf' ) . '</td>
-         <td class="unit">%4$s</td>'
-      , $festbestellmenge * $kan_verteilmult
-      , ( ( $gruppen_id == $basar_id ) ? $basarbestellmenge : $toleranzbestellmenge ) * $kan_verteilmult
-      , $basarbestellmenge * $kan_verteilmult
-      , $produkte_row['kan_verteileinheit']
-      );
-    }
-    if( $spalten & PR_COL_BESTELLGEBINDE ) {
-      printf(
-        "<td class='mult'>"
-        . ( ($state == STATUS_BESTELLEN and ! $gruppen_id) ? '<b>%1$u</b> / ' : '' )
-        . '%2$.2lf / %3$.2lf</td><td class="unit"> * (%4$s %5$s)</td>'
-      , $gebinde
-      , $festbestellmenge / $gebindegroesse
-      , $gesamtbestellmenge / $gebindegroesse
-      , $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
-      , $produkte_row['kan_verteileinheit']
-      );
-    }
-    if( $spalten & PR_COL_LIEFERMENGE ) {
-      echo "<td class='mult'>";
-      if( $gruppen_id ) {    // Gruppenansicht: V-Einheit benutzen
-        printf( "%d", $liefermenge * $kan_verteilmult );
-        echo "
-          </td>
-          <td class='unit' style='border-right-style:none;'>{$produkte_row['kan_verteileinheit']}</td>
-        ";
-      } else {               // Gesamtansicht: Preis-Einheit benutzen:
-        if( $editAmounts ) {
-          printf( "
-            <input name='liefermenge$produkt_id' style='text-align:right;' type='text' size='6' value='%.3lf'
-              title='tats&auml;chliche Liefermenge eingeben' $input_event_handlers >"
-          , $liefermenge_scaled
-          );
-	
-        } else {
-          printf( "%.3lf", $liefermenge_scaled );
+      // preise je V-einheit:
+      $nettopreis = $produkte_row['nettopreis'];
+      $bruttopreis = $produkte_row['bruttopreis'];
+      $endpreis = $produkte_row['endpreis'];
+
+      // preise je preiseinheit:
+      $nettolieferpreis = $produkte_row['nettolieferpreis'];
+      $bruttolieferpreis = $produkte_row['bruttolieferpreis'];
+      $mengenfaktor = $produkte_row['mengenfaktor'];
+
+      $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
+      $basarbestellmenge = $produkte_row['basarbestellmenge'];
+      $toleranzbestellmenge = $produkte_row['toleranzbestellmenge'];
+
+      // festbestellmenge enthaelt auch die "festen" basarbestellungen!
+      $festbestellmenge = $gesamtbestellmenge - $toleranzbestellmenge - $basarbestellmenge;
+
+      $gebindegroesse = $produkte_row['gebindegroesse'];
+      $kan_verteilmult = $produkte_row['kan_verteilmult'];
+
+      switch($state) {
+        case STATUS_BESTELLEN:
+          if( $gruppen_id ) {
+            $liefermenge = $gesamtbestellmenge;  // obere abschaetzung...
+            $gebinde = "ERROR";  // nicht sinnvoll
+          } else {
+            // voraussichtliche liefermenge berechnen:
+            $gebinde = (int)($festbestellmenge / $gebindegroesse);
+            $festmengenrest = $festbestellmenge - $gebinde * $gebindegroesse;
+            if( $festmengenrest > 0 ) { // zu wenig: versuche aufzurunden...
+              if( $festmengenrest + $basarbestellmenge + $toleranzbestellmenge >= $gebindegroesse ) {
+                $gebinde += 1;
+              }
+            }
+            $liefermenge = $gebinde * $gebindegroesse;
+          }
+          break;
+        case STATUS_LIEFERANT:  // verteilmengen sollten jetzt zugewiesen sein:
+        default:  // rien ne va plus...
+          if( $gruppen_id ) {
+            if( $gruppen_id == $muell_id ) {
+              $liefermenge = $produkte_row['muellmenge'];
+            } else {
+              $liefermenge = $produkte_row['verteilmenge'];
+            }
+          } else {
+            $liefermenge = $produkte_row['liefermenge'];
+          }
+          $gebinde = $liefermenge / $gebindegroesse;  // nicht unbedingt integer!
+          break;
+      }
+      $liefermenge_scaled = $liefermenge / $mengenfaktor;
+
+      $nettogesamtpreis = price_view( $nettopreis * $liefermenge );
+      $bruttogesamtpreis = price_view( $bruttopreis * $liefermenge );
+      $endgesamtpreis = price_view( $endpreis * $liefermenge );
+
+      $netto_summe += $nettogesamtpreis;
+      $brutto_summe += $bruttogesamtpreis;
+      $endpreis_summe += $endgesamtpreis;
+
+      if( $option_nichtgefuellt ) {
+        if( $gebinde < 1 ) {
+          $haben_nichtgefuellt = true;
+          if( ! ( $spalten & PR_ROWS_NICHTGEFUELLT ) ) {
+            continue;
+          }
         }
-        echo "
-          </td>
-          <td class='unit' style='border-right-style:none;'>{$produkte_row['preiseinheit']}</td>
-        ";
-        if( $editAmounts ) {
-	  //Checkbox für fehlende Lieferung. Löscht auch gleich 
-		//die Einträge in der Verteiltabelle
-          ?> <td style='border-left-style:none;border-right-style:none;'>
-                <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
-                  $input_event_handlers>
-             </td>
-          <?
-	} else {
-		echo " <td></td>";
-	}
-
       }
-      if( ! $gruppen_id ) {
-        ?> <td style='border-left-style:none;'> <?
-        echo fc_link( 'produktverteilung', "class='question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" );
-        ?> </td> <?
-      }
-    }
-    if( $spalten & PR_COL_LIEFERGEBINDE ) {
-      printf(
-        "<td class='mult'>%.2lf</td><td class='unit'> * (%s %s)</td>"
-      , $gebinde
-      , $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
-      , $produkte_row['kan_verteileinheit']
-      );
-    }
-    if( $spalten & PR_COL_NETTOSUMME ) {
-      echo "<td class='number'>$nettogesamtpreis</td>";
-    }
-    if( $spalten & PR_COL_BRUTTOSUMME ) {
-      echo "<td class='number'>$bruttogesamtpreis</td>";
-    }
-    if( $spalten & PR_COL_ENDSUMME ) {
-      echo "<td class='number'>$endgesamtpreis</td>";
-    }
-    ?> </tr> <?
 
-  } //end while produkte array
+      open_tr();
+        if( $spalten & PR_COL_NAME )
+          open_td( 'left', '', $produkte_row['produkt_name'] );
 
-  eval( $summenzeile );
+        if( $spalten & PR_COL_ANUMMER )
+          open_td( 'right', '', $produkte_row['artikelnummer'] );
+
+        if( $spalten & PR_COL_BNUMMER )
+          open_td( 'right', '', $produkte_row['bestellnummer'] );
+
+        if( $spalten & PR_COL_LPREIS ) {
+          open_td( 'mult', '', fc_link( 'produktdetails',
+            "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) ) );
+          open_td( 'unit', '', "/ {$produkte_row['preiseinheit']}" );
+        }
+
+        if( $spalten & PR_COL_MWST )
+          open_td( 'number', '', $produkte_row['mwst'] );
+
+        if( $spalten & PR_COL_PFAND )
+          open_td( 'number', '', $produkte_row['pfand'] );
+
+        if( $spalten & PR_COL_VPREIS ) {
+          open_td( 'mult', '', price_view( $produkte_row['preis'] ) );
+          open_td( 'unit', '', "/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}" );
+        }
+
+        if( $spalten & PR_COL_BESTELLMENGE ) {
+          open_td( 'mult' );
+            printf( '%u / %u', $festbestellmenge * $kan_verteilmult
+                  , ( ( $gruppen_id == $basar_id ) ? $basarbestellmenge : $toleranzbestellmenge ) * $kan_verteilmult );
+            if( ! $gruppen_id )
+              printf( ' / %u', $basarbestellmenge * $kan_verteilmult );
+          open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
+        }
+
+        if( $spalten & PR_COL_BESTELLGEBINDE ) {
+          open_td( 'mult' );
+            if( $state == STATUS_BESTELLEN and ! $gruppen_id ) {
+              open_span( 'bold', '', $gebinde );
+              echo ' / ';
+            }
+            printf( '%.2lf / %.2lf', $festbestellmenge / $gebindegroesse , $gesamtbestellmenge / $gebindegroesse );
+          open_td( 'unit' );
+            printf( ' * (%s %s)', $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse'], $produkte_row['kan_verteileinheit'] );
+        }
+
+        if( $spalten & PR_COL_LIEFERMENGE ) {
+          if( $gruppen_id ) {    // Gruppenansicht: 2 spalten, V-Einheit benutzen:
+            open_td( 'mult', '', sprintf( '%d', $liefermenge * $kan_verteilmult ) );
+            open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
+
+          } else {               // Gesamtansicht: 4 spalten, Preis-Einheit benutzen:
+            open_td( 'mult' );
+              if( $editAmounts ) {
+                printf( "
+                  <input name='liefermenge$produkt_id' class='right' type='text' size='6' value='%.3lf'
+                    title='tats&auml;chliche Liefermenge eingeben' $input_event_handlers >"
+                , $liefermenge_scaled
+                );
+              } else {
+                printf( "%.3lf", $liefermenge_scaled );
+              }
+            open_td( 'unit', "style='border-right-style:none;'", $produkte_row['preiseinheit'] );
+            open_td( '', "style='border-left-style:none;border-right-style:none;'" );
+              if( $editAmounts ) {
+                //Checkbox für fehlende Lieferung. Löscht auch glei Einträge in der Verteiltabelle
+                ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
+                     <? echo $input_event_handlers; ?> > <?
+              }
+            open_td( '', "style='border-left-style:none;", fc_link( 'produktverteilung', "class='question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
+          }
+        }
+
+        if( $spalten & PR_COL_LIEFERGEBINDE ) {
+          open_td( 'mult', '', price_view( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
+          open_td( 'unit', '', sprintf( ' * (%s %s)'
+                                      , $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
+                                      , $produkte_row['kan_verteileinheit'] ) );
+        }
+
+        if( $spalten & PR_COL_NETTOSUMME )
+          open_td( 'number', '', price_view( $nettogesamtpreis ) );
+
+        if( $spalten & PR_COL_BRUTTOSUMME )
+          open_td( 'number', '', price_view( $bruttogesamtpreis ) );
+
+        if( $spalten & PR_COL_ENDSUMME )
+          open_td( 'number', '', price_view( $endgesamtpreis ) );
+
+    } //end while produkte array
+
+    eval( $summenzeile );
 
   close_table();
   if($editAmounts){
@@ -1368,19 +1348,13 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     if( $bestell_id ) {
       open_td( '', "style='padding:0.5ex;'" );
       if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
-        ?>
-          <a class='buttondown' style='width:5em;'
-             title='gilt momentan f&uuml;r Abrechnung der Bestellung <? echo $bestellung_name; ?>'>aktiv</a>
-        <?
+        echo fc_alink( '', array( 'class' => 'buttondown', 'text' => 'aktiv', 'url' => ''
+                                , 'title' => "gilt momentan f&uuml;r Bestellung $bestellung_name" ) );
       } else {
         if( $editable and ( $rechnungsstatus < STATUS_ABGERECHNET ) ) {
-          ?>
-            <a class='buttonup' style='width:5em;'
-               title='diesen Preiseintrag für Bestellung <? echo $bestellung_name; ?> auswählen'
-               onclick="<? echo fc_action( 'context=handler'
-                                         , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] ) ); ?>"
-            >setzen</a>
-          <?
+          echo fc_action( array( 'class' => 'buttonup', 'text' => 'setzen'
+                               , 'title' => "Preiseintrag für Bestellung $bestellung_name auswählen" )
+                        , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] ) );
         } else {
           echo " - ";
         }
@@ -1400,11 +1374,40 @@ function auswahl_lieferant( $selected = 0 ) {
       open_th( '', '', 'Lieferanten' );
       open_th( '', '', 'Produkte' );
       open_th( '', '', 'Pfandverpackungen' );
-  foreach( sql_lieferanten() as $row ) {
+    foreach( sql_lieferanten() as $row ) {
+      open_tr( ( $row['id'] == $selected ) ? 'active' : '' );
+        open_td( '', '', fc_link( '', array( 'title' => 'Lieferant auswählen', 'lieferanten_id' => $row['id'], 'text' => $row['name'] ) ) );
+        open_td( '', '', $row['anzahl_produkte'] );
+        open_td( '', '', $row['anzahl_pfandverpackungen'] );
+    }
+  close_table();
+}
+
+function auswahl_konto( $selected = 0 ) {
+  open_table('list');
+    open_th('','','Name');
+    open_th('','','BLZ');
+    open_th('','','Konto-Nr');
+    open_th('','','Saldo');
+    open_th('','','Online-Banking');
+    open_th('','','Kommentar');
+    if( hat_dienst(4) )
+      open_th('','','Aktionen');
+  foreach( sql_konten() as $row ) {
     open_tr( ( $row['id'] == $selected ) ? 'active' : '' );
-      open_td( '', '', fc_link( 'self', array( 'lieferanten_id' => $row['id'], 'text' => $row['name'] ) ) );
-      open_td( '', '', $row['anzahl_produkte'] );
-      open_td( '', '', $row['anzahl_pfandverpackungen'] );
+      open_td( 'bold', '', fc_link( '', array( 'title' => 'Konto auswählen', 'konto_id' => $row['id'], 'text' => $row['name']
+                                             , 'auszug_nr' => NULL, 'auszug_jahr' => NULL ) ) );
+      open_td( '', '', $row['blz'] );
+      open_td( '', '', $row['kontonr'] );
+      open_td( 'number', '', price_view( sql_bankkonto_saldo( $row['id'] ) ) );
+      if( ( $url = $row['url'] ) ) {
+        open_td( '', '',"<a href=\"javascript:window.open('$url','onlinebanking').focus();\">$url</a></td>" );
+      } else {
+        open_td( '', '', '-' );
+      }
+      open_td( '', '', $row['kommentar'] );
+      if( hat_dienst(4) )
+        open_td( '', '', fc_link( 'edit_konto', "class=edit,text=,konto_id={$row['id']}" ) );
   }
   close_table();
 }
