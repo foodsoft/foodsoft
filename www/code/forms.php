@@ -17,7 +17,7 @@ function form_row_konto( $label = 'Konto:', $fieldname = 'konto_id', $initial = 
     open_td( 'kbd' ); echo konto_view( $konto_id, $fieldname );
 }
 
-function form_row_kontoauszug( $label = 'Auszug:', $fieldname = 'auszug', $initial_jahr = 0, $initial_nr = 0 ) {
+function form_row_kontoauszug( $label = 'Auszug:', $fieldname = 'auszug', $initial_jahr = NULL, $initial_nr = 0 ) {
   open_tr();
     open_td( 'label', '', $label );
     $auszug_jahr = self_field( $fieldname.'_jahr' );
@@ -25,7 +25,7 @@ function form_row_kontoauszug( $label = 'Auszug:', $fieldname = 'auszug', $initi
     if( $auszug_jahr !== NULL and $auszug_nr !== NULL )
       $fieldname = false;
     if( $auszug_jahr === NULL )
-      $auszug_jahr = $initial_jahr;
+      $auszug_jahr = ( $initial_jahr !== NULL ) ? $initial_jahr : date('Y');
     if( $auszug_nr === NULL )
       $auszug_nr = $initial_nr;
     open_td( 'kbd oneline' ); echo kontoauszug_view( 0, $auszug_jahr, $auszug_nr, $fieldname );
@@ -144,8 +144,6 @@ function action_finish_transaction() {
 }
 
 
-
-
 function formular_buchung_gruppe_bank( $notiz_initial = 'Einzahlung' ) {
   open_form( 'small_form', '', 'action=buchung_gruppe_bank' );
     open_fieldset( 'small_form', '', 'Einzahlung / Auszahlung Gruppe' );
@@ -230,8 +228,8 @@ function action_buchung_lieferant_bank() {
   need_http_var( 'auszug_nr', 'U' );
   need_http_var( 'notiz', 'H' );
   sql_doppelte_transaktion(
-    array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-  , array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
+    array( 'konto_id' => -1, 'lieferanten_id' => $lieferanten_id )
+  , array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
   , $betrag
   , "$valuta_year-$valuta_month-$valuta_day"
   , "$notiz"
@@ -310,7 +308,7 @@ function buchung_gruppe_gruppe() {
 }
 
 function formular_buchung_bank_bank( $notiz_initial = 'Überweisung' ) {
-  open_form( 'small_form', '', 'action=buchung_gruppe_gruppe' );
+  open_form( 'small_form', '', 'action=buchung_bank_bank' );
     open_fieldset( '', '', 'Überweisung von Konto zu Konto' );
       open_table('layout');
         form_row_konto( 'von Konto:', 'konto_id' );
@@ -382,8 +380,8 @@ function action_buchung_bank_sonderausgabe() {
   need_http_var( 'auszug_nr', 'U' );
   if( ! $problems ) {
     sql_doppelte_transaktion(
-      array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
-    , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+      array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+    , array( 'konto_id' => $konto_id, 'auszug_nr' => "$auszug_nr", 'auszug_jahr' => "$auszug_jahr" )
     , $betrag
     , "$valuta_year-$valuta_month-$valuta_day"
     , "$notiz"
@@ -426,8 +424,8 @@ function action_buchung_gruppe_sonderausgabe() {
 
   if( ! $problems ) {
     sql_doppelte_transaktion(
-      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-    , array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+      array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_SONDERAUSGABEN )
+    , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , $betrag
     , "$valuta_year-$valuta_month-$valuta_day"
     , "$notiz"
@@ -557,7 +555,6 @@ function formular_buchung_bank_anfangsguthaben() {
     close_fieldset();
   close_form();
 }
-
 
 function action_buchung_bank_anfangsguthaben() {
   global $betrag, $notiz, $valuta_day, $valuta_month, $valuta_year, $auszug_jahr, $auszug_nr, $konto_id;
@@ -731,72 +728,55 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $mod_id = false )
 }
 
 
-function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
+// formular_produktpreis:
+//   $vorschlag: may contain new values to suggest for form fields
+//
+function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
+  global $mwst_default;
 
-  if( ! $preiseintrag['gebindegroesse'] ) {
-    if( $prgueltig and $produkt['gebindegroesse'] > 1 )
-      $preiseintrag['gebindegroesse'] = $produkt['gebindegroesse'];
-    else
-      $preiseintrag['gebindegroesse'] = 1;
-  }
+  $produkt = sql_produkt_details( $produkt_id );
+  $valid = false;
+  if( $produkt['zeitstart'] )  // aktuell gueltiger Preis ist vorhanden
+    $valid = true;
 
-  if( ! $preiseintrag['verteileinheit'] ) {
-    if( $prgueltig )
-      $preiseintrag['verteileinheit'] =
+  // besetze $vorschlag mit Werten fuer Formularfelder; benutze nacheinander
+  //  - existierende Werte in $vorschlag (typischerweise, automatisch aus Terrakatalog entnommen)
+  //  - existierende Werte aus $produkt
+  //  - vernuenftigen Default
+
+  if( ! isset( $vorschlag['gebindegroesse'] ) )
+    $vorschlag['gebindegroesse'] = $valid ? $produkt['gebindegroesse'] : 1;
+
+  if( ! isset( $vorschlag['verteileinheit'] ) )
+    if( $valid )
+      $vorschlag['verteileinheit'] =
         ( ( $produkt['kan_verteilmult'] > 0.0001 ) ? $produkt['kan_verteilmult'] : 1 )
         . ( $produkt['kan_verteileinheit'] ? " {$produkt['kan_verteileinheit']} " : ' ST' );
     else
-      $preiseintrag['verteileinheit'] = '1 ST';
-  }
+      $vorschlag['verteileinheit'] = '1 ST';
 
-  if( ! $preiseintrag['liefereinheit'] ) {
-    if( $prgueltig and $produkt['kan_liefereinheit'] and ( $produkt['kan_liefermult'] > 0.0001 ) )
-      $preiseintrag['liefereinheit'] = "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}";
-    else
-      $preiseintrag['liefereinheit'] = $preiseintrag['verteileinheit'];
-  }
+  if( ! isset( $vorschlag['liefereinheit'] ) )
+    $vorschlag['liefereinheit'] = $valid ? "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}"
+                                           : $vorschlag['verteileinheit'];
 
-  if( ! $preiseintrag['mwst'] ) {
-    if( $prgueltig and $produkt['mwst'] )
-      $preiseintrag['mwst'] = $produkt['mwst'];
-    else
-      $preiseintrag['mwst'] = '7.00';
-  }
+  if( ! isset( $vorschlag['mwst'] ) )
+    $vorschlag['mwst'] = $valid ? $produkt['mwst'] : $mwst_default;
 
-  if( ! $preiseintrag['pfand'] ) {
-    if( $prgueltig and $produkt['pfand'] )
-      $preiseintrag['pfand'] = $produkt['pfand'];
-    else
-      $preiseintrag['pfand'] = '0.00';
-  }
+  if( ! isset( $vorschlag['pfand'] ) )
+    $vorschlag['pfand'] = $valid ? $produkt['pfand'] : '0.00';
 
-  if( ! $preiseintrag['preis'] ) {
-    if( $prgueltig and $produkt['endpreis'] )
-      $preiseintrag['preis'] = $produkt['endpreis'];
-    else
-      $preiseintrag['preis'] = '0.00';
-  }
+  if( ! isset( $vorschlag['preis'] ) )
+    $vorschlag['preis'] = $valid ? $produkt['endpreis'] : '0.00';
 
-  if( ! $preiseintrag['bestellnummer'] ) {
-    if( $prgueltig and $produkt['bestellnummer'] )
-      $preiseintrag['bestellnummer'] = $produkt['bestellnummer'];
-    else
-      $preiseintrag['bestellnummer'] = '';
-  }
+  if( ! isset( $vorschlag['bestellnummer'] ) )
+    $vorschlag['bestellnummer'] = $valid ? $produkt['bestellnummer'] : '';
 
-  if( ! $preiseintrag['notiz'] ) {
-    if( $prgueltig and $produkt['notiz'] )
-      $preiseintrag['notiz'] = $produkt['notiz'];
-    else
-      $preiseintrag['notiz'] = '';
-  }
-
-  // echo "newverteileinheit: {$preiseintrag['verteileinheit']}";
-  // echo "newliefereinheit: {$preiseintrag['liefereinheit']}";
+  if( ! isset( $vorschlag['notiz'] ) )
+    $vorschlag['notiz'] = $valid ? $produkt['notiz'] : '';
 
   // restliche felder automatisch berechnen:
   //
-  preisdatenSetzen( & $preiseintrag );
+  preisdatenSetzen( & $vorschlag );
 
   $form_id = open_form( 'small_form', '', 'action=neuer_preiseintrag' );
 
@@ -804,104 +784,99 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
       form_row_text( 'Produkt:', false, 1, "{$produkt['name']} von {$produkt['lieferanten_name']}" );
 
       tr_title( 'Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant' );
-      form_row_text( 'Notiz:', 'notiz;', 42, $preiseintrag['notiz'] );
+      form_row_text( 'Notiz:', 'notiz', 42, $vorschlag['notiz'] );
 
-      form_row_text( 'Bestell-Nr:', 'bestellnummer', 8, $preiseintrag['bestellnummer'] );
-        ?>
-          <label>MWSt:</label>
-          <input type='text' size='4' name='mwst' id='newfcmwst'
-           value='<? echo $preiseintrag['mwst']; ?>'
-           title='MWSt-Satz in Prozent'
-           onchange='preisberechnung_rueckwaerts();'>
-  
-          <label>Pfand:</label>
-          <input type='text' size='4' name='pfand' id='newfcpfand'
-           value='<? echo $preiseintrag['pfand']; ?>'
-           title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
-           onchange='preisberechnung_rueckwaerts();'>
-        </td>
-      </tr>
-        <td><label>Verteil-Einheit:</label></td>
-        <td>
-          <input type='text' size='4' name='verteilmult' id='newfcmult'
-           value='<? echo $preiseintrag['kan_verteilmult']; ?>'
-           title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
-           onchange='preisberechnung_fcmult();'>
-          <select size='1' name='verteileinheit' id='newfceinheit'
-            onchange='preisberechnung_default();'>
-            <? echo optionen_einheiten( $preiseintrag['kan_verteileinheit'] ); ?>
-          </select>
-          <label>Endpreis:</label>
-          <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='preis'
-           value='<? echo $preiseintrag['preis']; ?>'
-           onchange='preisberechnung_vorwaerts();'>
-          / <span id='newfcendpreiseinheit'>
-              <? echo $preiseintrag['kan_verteilmult']; ?>
-              <? echo $preiseintrag['kan_verteileinheit']; ?>
-             </span>
-  
-          <label>Gebinde:</label>
-          <input type='text' size='4' name='gebindegroesse' id='newfcgebindegroesse'
-           value='<? echo $preiseintrag['gebindegroesse']; ?>'
-           title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
-           onchange='preisberechnung_gebinde();'>
-          * <span id='newfcgebindeeinheit']>
-              <? echo $preiseintrag['kan_verteilmult']; ?>
-              <? echo $preiseintrag['kan_verteileinheit']; ?>
-            </span>
-        </td>
-      </tr>
-      <tr>
-        <td><label>Liefer-Einheit:</label></td>
-        <td>
-          <input type='text' size='4' name='liefermult' id='newliefermult'
-           value='<? echo $preiseintrag['kan_liefermult']; ?>'
-           title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
-           onchange='preisberechnung_default();'>
-          <select size='1' name='liefereinheit' id='newliefereinheit'
-            onchange='preisberechnung_default();'>
-            <? echo optionen_einheiten( $preiseintrag['kan_liefereinheit'] ); ?>
-          </select>
-  
-          <label>Lieferpreis:</label>
-            <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='lieferpreis'
-             value='<? echo $preiseintrag['lieferpreis']; ?>'
+      form_row_text( 'Bestell-Nr:', 'bestellnummer', 8, $vorschlag['bestellnummer'] );
+      open_tr();
+        open_td( 'label', '', 'MWSt:' );
+        open_td();
+        ?> <input type='text' size='4' name='mwst' id='newfcmwst'
+            value='<? echo $vorschlag['mwst']; ?>' title='Mehrwertsteuer-Satz in Prozent'
+            onchange='preisberechnung_rueckwaerts();'>
+
+            <label>Pfand:</label>
+            <input type='text' size='4' name='pfand' id='newfcpfand'
+             value='<? echo $vorschlag['pfand']; ?>'
+             title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
              onchange='preisberechnung_rueckwaerts();'>
-            / <span id='newfcpreiseinheit'><? echo $preiseintrag['preiseinheit']; ?></span>
-        </td>
-      </tr>
-      <tr>
-        <td><label>ab:</label></td>
-        <td>
-          <? date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') ); ?>
-          <label>&nbsp;</label>
-          <input type='submit' name='submit' value='OK'
-           onclick=\"document.getElementById('row$outerrow').className='modified';\";
-           title='Neuen Preiseintrag vornehmen (und letzten ggf. abschliessen)'>
-  
-          <label>&nbsp;</label>
-          <label>Dynamische Neuberechnung:</label>
-          <input name='dynamischberechnen' type='checkbox' value='yes'
-           title='Dynamische Berechnung anderer Felder bei Änderung eines Eintrags' checked>
-  
-        </td>
-      </tr>
- <? 
-     close_table();
-   close_form();
-  
+        <?
+      open_tr();
+        open_td( 'label', '', 'Verteil-Einheit:' );
+        open_td();
+        ?> <input type='text' size='4' name='verteilmult' id='newfcmult'
+             value='<? echo $vorschlag['kan_verteilmult']; ?>'
+             title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+             onchange='preisberechnung_fcmult();'>
+
+           <select size='1' name='verteileinheit' id='newfceinheit'
+             onchange='preisberechnung_default();'>
+               <? echo optionen_einheiten( $vorschlag['kan_verteileinheit'] ); ?>
+           </select>
+
+           <label>Endpreis:</label>
+           <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='preis'
+             value='<? echo $vorschlag['preis']; ?>'
+             onchange='preisberechnung_vorwaerts();'>
+           / <span id='newfcendpreiseinheit'>
+               <? echo $vorschlag['kan_verteilmult']; ?>
+               <? echo $vorschlag['kan_verteileinheit']; ?>
+             </span>
+
+           <label>Gebinde:</label>
+           <input type='text' size='4' name='gebindegroesse' id='newfcgebindegroesse'
+             value='<? echo $vorschlag['gebindegroesse']; ?>'
+             title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
+             onchange='preisberechnung_gebinde();'>
+           * <span id='newfcgebindeeinheit']>
+               <? echo $vorschlag['kan_verteilmult']; ?>
+               <? echo $vorschlag['kan_verteileinheit']; ?>
+             </span>
+        <?
+      open_tr();
+        open_td( 'label', '', 'Liefer-Einheit:' );
+        open_td();
+        ?> <input type='text' size='4' name='liefermult' id='newliefermult'
+             value='<? echo $vorschlag['kan_liefermult']; ?>'
+             title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+             onchange='preisberechnung_default();'>
+
+           <select size='1' name='liefereinheit' id='newliefereinheit'
+             onchange='preisberechnung_default();'>
+               <? echo optionen_einheiten( $vorschlag['kan_liefereinheit'] ); ?>
+           </select>
+
+           <label>Lieferpreis:</label>
+           <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='lieferpreis'
+             value='<? echo $vorschlag['lieferpreis']; ?>'
+             onchange='preisberechnung_rueckwaerts();'>
+           / <span id='newfcpreiseinheit'><? echo $vorschlag['preiseinheit']; ?></span>
+        <?
+      open_tr();
+        open_td( 'label', '', 'ab:' );
+        open_td();
+          date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') );
+          qquad();
+          submission_button( 'OK' );
+          qquad();
+          ?> <label>Dynamische Neuberechnung:</label>
+             <input name='dynamischberechnen' type='checkbox' value='yes'
+               title='Dynamische Berechnung anderer Felder bei Änderung eines Eintrags' checked>
+          <?
+    close_table();
+  close_form();
+
   ?>
   <script type="text/javascript">
-  
+
     var mwst, pfand, verteilmult, verteileinheit, preis, gebindegroesse,
       liefermult, liefereinheit, lieferpreis, preiseinheit, mengenfaktor;
-  
+
     var preisform = '<? echo "form_$form_id"; ?>';
 
     // vorwaerts: lieferpreis berechnen
     //
     var vorwaerts = 0;
-  
+
     function preiseinheit_setzen() {
       if( liefereinheit != verteileinheit ) {
         mengenfaktor = gebindegroesse;
@@ -925,7 +900,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
         }
       }
     }
-  
+
     function preiseintrag_auslesen() {
       mwst = parseFloat( document.forms[preisform].newfcmwst.value );
       pfand = parseFloat( document.forms[preisform].newfcpfand.value );
@@ -938,9 +913,9 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
       lieferpreis = parseFloat( document.forms[preisform].newfclieferpreis.value );
       preiseinheit_setzen();
     }
-  
+
     preiseintrag_auslesen();
-  
+
     function preiseintrag_update() {
       document.forms[preisform].newfcmwst.value = mwst;
       document.forms[preisform].newfcmwst.pfand = pfand;
@@ -955,7 +930,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
       document.getElementById("newfcgebindeeinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
       document.getElementById("newfcpreiseinheit").firstChild.nodeValue = preiseinheit;
     }
-  
+
     function preisberechnung_vorwaerts() {
       vorwaerts = 1;
       preiseintrag_auslesen();
@@ -966,7 +941,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
       }
       preiseintrag_update();
     }
-  
+
     function preisberechnung_rueckwaerts() {
       vorwaerts = 0;
       preiseintrag_auslesen();
@@ -977,7 +952,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
       }
       preiseintrag_update();
     }
-  
+
     function preisberechnung_default() {
       if( vorwaerts )
         preisberechnung_vorwaerts();
@@ -1014,7 +989,7 @@ function formular_produktpreis( $produkt, $preiseintrag, $prgueltig ) {
       }
       preisberechnung_default();
     }
-  
+
   </script>
   <?
 }
@@ -1046,6 +1021,8 @@ function fieldset_edit_transaction( $id, $tag, $editable ) {
     form_row_text( 'Notiz:', $editable ? 'notiz' : false, 42, $t['kommentar'] );
   }
 
+  open_tr();
+    open_td( 'smallskip' );
   if( $id > 0 ) {  // bank-transaktion
     open_tr();
       open_th( 'smallskip', "colspan='2'", "Bank-Transaktion <span class='small'>$id</span>" );
