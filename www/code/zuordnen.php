@@ -779,19 +779,26 @@ function sql_rotationsplan($dienst){
  * they are performing
  */
 function possible_areas(){
-  global $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
-   $areas = array(
-           array("area" => "meinkonto", 
-	        "hint"  => "Hier können die einzelnen Gruppen ihre Kontoauszüge einsehen....", 
-		"title" => "Mein Konto"
-	   )
-   );
-$areas[] = array("area" => "bestellungen_overview",
-	"hint" => "Auflistung aller Bestellungen mit Status und Links",
-	"title" => "Alle Bestellungen");
+  global $dienst, $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
+
+$areas = array();
+
 $areas[] = array("area" => "bestellen",
-	"hint" => "Hier können die einzelnen Gruppen an den aktuellen Bestellung Teilnehmen....",
+	"hint" => "Hier können ihr euch an den laufenden Bestellung beteiligen",
 	"title" => "Bestellen");
+
+if( $dienst == 0 ) {
+ $areas[] = array("area" => "meinkonto", 
+	        "hint"  => "Hier könnt ihr euer Gruppenkonto einsehen", 
+		"title" => "Mein Konto" );
+}
+	$areas[] = array("area" => "gruppen",
+	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
+	"title" => "Gruppen");		
+
+$areas[] = array("area" => "bestellungen_overview",
+	"hint" => "Übersicht aller Bestellungen (laufende und abgeschlossene)",
+	"title" => "Alle Bestellungen");
 
 $areas[] = array("area" => "bilanz",
 	"hint" => "Finanzen der FC: Überblick und Verwaltung",
@@ -800,13 +807,16 @@ $areas[] = array("area" => "bilanz",
 if($hat_dienst_IV){
 	$areas[] = array("area" => "produkte",
 	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
+	$areas[] = array("area" => "konto",
+	"hint" => "Hier könnt ihr die Bankkonten verwalten...",
+	"title" => "Konten");		
 } else {
 	$areas[] = array("area" => "produkte",
 	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produktdatenbank");	 
+	$areas[] = array("area" => "konto",
+	"hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
+	"title" => "Konten");		
 }
-	$areas[] = array("area" => "gruppen",
-	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
-	"title" => "Gruppen");		
 if($hat_dienst_IV or $hat_dienst_III){
 	$areas[] = array("area" => "basar",
 	"hint" => "Produkte im Basar an Gruppen verteilen",
@@ -2231,7 +2241,10 @@ function sql_link_transaction( $soll_id, $haben_id ) {
 }
 
 /*
- * konto_id == -1 bedeutet gruppen_transaktion, sonst bankkonto
+ * sql_doppelte_transaktion: fuehrt eine doppelte buchung (also eine soll, eine haben buchung) aus.
+ * $soll, $haben: arrays, geben konten an. zwingend ist element 'konto_id':
+ *   konto_id == -1 bedeutet gruppen/lieferanten-transaktion, sonst bankkonto
+ * flag $spende: einzige transaktion, die von nicht-diensten ausgefuehrt werden kann
  */
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spende = false ) {
   global $dienstkontrollblatt_id, $login_gruppen_id;
@@ -2250,7 +2263,6 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spe
   }
   need( $notiz, 'Bitte Notiz angeben!' );
   need( isset( $soll['konto_id'] ) and isset( $haben['konto_id'] ) );
-
 
   if( $soll['konto_id'] == -1 ) {
     $soll_id = -1 * sql_gruppen_transaktion(
@@ -2279,12 +2291,6 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spe
   sql_link_transaction( $soll_id, $haben_id );
   return;
 }
-
-
-
-
-
-
 
 function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
   $filter = "";
@@ -3703,7 +3709,7 @@ $foodsoft_get_vars = array(
 , 'auszug_nr' => 'u'
 , 'auszus_jahr' => 'u'
 , 'bestell_id' => 'u'
-, 'buchung_id' => 'u'
+, 'buchung_id' => 'd' /* kann auch negativ sein */
 , 'confirmed' => 'w'
 , 'detail' => 'w'
 , 'dienst_rueckbestatigen' => 'w'
