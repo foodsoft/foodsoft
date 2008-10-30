@@ -40,7 +40,7 @@ if( $bestell_id ) {
     bestellung_overview( $gesamtbestellung, TRUE, $gruppen_id );
 }
 
-open_td( 'qquad smallskip' );
+open_td( 'qquad smallskip floatright' );
   ?> <h4> Zur Zeit laufende Bestellungen: </h4> <?
   open_table( 'list', "style='width:600px;'" );
       open_th( '', '', 'Name' );
@@ -132,7 +132,7 @@ if( ! $readonly ) {
     var zuteilung_fest_alt = new Array();
     var toleranz           = new Array();
     var toleranz_andere    = new Array();
-  
+
     function init_produkt( produkt, _gebindegroesse, _preis, _fest, _toleranz, _fest_andere, _toleranz_andere, zuteilung_fest, zuteilung_toleranz ) {
       gebindegroesse[produkt] = _gebindegroesse;
       preis[produkt] = _preis;
@@ -145,64 +145,64 @@ if( ! $readonly ) {
       kosten[produkt] = _preis * ( _fest + _toleranz );
       gesamtpreis += kosten[produkt];
     }
-  
+
     function zuteilung_berechnen( produkt ) {
       var festmenge, toleranzmenge, gebinde, bestellmenge, restmenge, zuteilung_fest, t_min;
       var menge, quote, zuteilung_toleranz, kosten_neu, reminder, konto_rest, kontostand_neu;
       var id;
-  
+
       // bestellmenge berechnen: wieviel kann insgesamt bestellt werden:
       //
       festmenge = fest_andere[produkt] + fest[produkt];
       toleranzmenge = toleranz_andere[produkt] + toleranz[produkt];
-  
+
       // volle fest bestellte gebinde:
       //
       gebinde = Math.floor( festmenge / gebindegroesse[produkt] );
-  
+
       // falls angebrochenes gebinde: wenn moeglich, mit toleranz auffuellen:
       //
       if( gebinde * gebindegroesse[produkt] < festmenge )
         if( (gebinde+1) * gebindegroesse[produkt] <= festmenge + toleranzmenge )
           gebinde++;
       bestellmenge = gebinde * gebindegroesse[produkt];
-  
+
       restmenge = bestellmenge;
       zuteilung_fest = 0;
       if( fest[produkt] >= fest_alt[produkt] ) {
-  
+
         // falls festmenge hoeher oder gleichgeblieben:
         // gruppe kriegt mindestens das, was schon vorher zugeteilt worden waere:
         //
         menge = Math.min( zuteilung_fest_alt[produkt], restmenge );
         zuteilung_fest += menge;
         restmenge -= menge;
-  
+
         // ...dann werden, soweit moeglich, die anderen festbestellungen erfuellt:
         //
         menge = Math.min( fest_andere[produkt], restmenge );
         restmenge -= menge;
-  
+
         // ...dann wird die zuteilung der gruppe, soweit moeglich, aufgestockt:
         //
         menge = Math.min( fest[produkt] - zuteilung_fest, restmenge );
         zuteilung_fest += menge; restmenge -= menge;
-  
+
       } else {
-  
+
         // festmenge wurde reduziert:
         // erstmal werden die anderen gruppen beruecksichtigt...
         //
         menge = Math.min( fest_andere[produkt], restmenge );
         restmenge -= menge;
-  
+
         // ...und erst dann die gruppe, die reduziert hat:
         //
         menge = Math.min( fest[produkt], restmenge );
         zuteilung_fest += menge; restmenge -= menge;
-  
+
       }
-  
+
       // falls noch toleranz beruechsichtigt wird: moeglichst gleichmaessig nach quote verteilen:
       //
       if( restmenge > 0 ) {
@@ -267,17 +267,17 @@ if( ! $readonly ) {
       kontostand_neu = ( kontostand - gesamtpreis ).toFixed(2);
       konto_rest = document.getElementById('konto_rest');
       konto_rest.firstChild.nodeValue = kontostand_neu;
-  
+
       reminder = document.getElementById('floating_submit_button_<? echo $bestellform_id; ?>');
       reminder.style.display = 'inline';
-  
+
       id = document.getElementById('hinzufuegen');
       while( id.firstChild ) {
         id.removeChild( id.firstChild );
       }
       id.appendChild( document.createTextNode( 'Vor dem Hinzufügen: bitte erst Änderungen speichern!' ) );
       id.style.backgroundColor = '#ffffa0';
-  
+
       if( gesamtpreis > kontostand ) {
         konto_rest.style.color = '#c00000';
         document.getElementById('submit').className = 'bigbutton warn';
@@ -288,10 +288,10 @@ if( ! $readonly ) {
         document.getElementById('submit').className = 'bigbutton';
         document.getElementById('submit').value = 'Bestellung Speichern';
       }
-  
+
       return true;
     }
-  
+
     function fest_plus( produkt ) {
       fest[produkt]++;
       zuteilung_berechnen( produkt );
@@ -344,7 +344,7 @@ if( ! $readonly ) {
       if( gesamtpreis > kontostand ) {
         alert( 'Kontostand nicht ausreichend!' );
       } else {
-        document.forms['form_<? $bestellform_id; ?>'].submit();
+        document.forms['form_<? echo $bestellform_id; ?>'].submit();
       }
     }
   </script>
