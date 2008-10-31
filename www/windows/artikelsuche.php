@@ -6,7 +6,7 @@
 // verwaltet und sucht im lieferantenkatalog (funktioniert bislang nur mit Terra)
 
 assert( $angemeldet ) or exit();
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+$editable = ( ! $readonly and hat_dienst(4) );
 
 setWindowSubtitle( "Artikelsuche im Lieferanten-Katalog" );
 setWikiHelpTopic( "foodsoft:katalogsuche" );

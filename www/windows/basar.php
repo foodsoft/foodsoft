@@ -6,7 +6,7 @@ assert( $angemeldet ) or exit();  // aufruf nur per index.php?window=basar...
 get_http_var( 'orderby', 'w' , 'artikelname', true );
 get_http_var( 'bestell_id', 'u' , 0, true );
 
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+$editable = ( hat_dienst(4) and ! $readonly );
 
 get_http_var( 'action','w','' );
 $editable or $action = '';

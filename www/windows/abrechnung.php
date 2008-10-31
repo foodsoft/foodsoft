@@ -4,8 +4,8 @@
 //
 
 assert( $angemeldet ) or exit();
-$editable = ( $hat_dienst_IV and ! $readonly );
-need_http_var( 'bestell_id', 'u', true );
+$editable = ( hat_dienst(4) and ! $readonly );
+need_http_var( 'bestell_id', 'U', true );
 
 setWikiHelpTopic( 'foodsoft:Abrechnung' );
 
@@ -97,8 +97,11 @@ open_table( 'list', "style='width:98%'" );
     open_td( 'right', '', 'Warenwert Gruppen:' );
     open_td();
     open_td( 'bold number', '', price_view( $warenwert_verteilt_brutto ) );
-    open_td( 'middle', "rowspan='2'",
-             fc_link( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,class=href" ) );
+    open_td( 'middle', "rowspan='2'" );
+      if( hat_dienst( 1,3,4,5 ) )
+        echo fc_link( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,class=href" );
+      else
+        echo fc_link( 'lieferschein', "bestell_id=$bestell_id,text=zum Lieferschein...,class=href" );
   open_tr();
     open_td( 'right', '', 'auf den Müll gewandert:' );
     open_td();
@@ -183,7 +186,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
         ?> Abrechnung durchgeführt: <?
          echo sql_dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ) .", "
               . $bestellung['abrechnung_datum'];
-        if( $hat_dienst_IV ) {
+        if( hat_dienst(4) ) {
           qquad();
           echo "Nochmal öffnen:
             <input type='checkbox' name='rechnung_abschluss' value='reopen' $input_event_handlers>";
@@ -191,7 +194,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
           submission_button();
         }
     } else {
-      if( $hat_dienst_IV ) {
+      if( hat_dienst(4) ) {
         if( abs( $warenwert_basar_brutto ) < 0.05 ) {
           open_td( 'medskip right', "colspan='4' style='border-right:none;'"
                    , "Rechnung abschliessen:
