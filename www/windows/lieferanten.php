@@ -3,6 +3,9 @@
 <?PHP
 
 assert( $angemeldet ) or exit();
+
+setWikiHelpTopic( 'foodsoft:lieferanten' );
+
 $editable = ( hat_dienst(4,5) and ! $readonly );
  
 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)

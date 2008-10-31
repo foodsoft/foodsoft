@@ -4,17 +4,19 @@
 
 assert( $angemeldet ) or exit();
 
+setWikiHelpTopic( 'foodsoft:produkte' );
+
 get_http_var( 'lieferanten_id', 'u', 0, true );
 define( 'OPTION_KATALOGABGLEICH', 1 );
 define( 'OPTION_PREISKONSISTENZTEST', 2 );
 get_http_var( 'options', 'u', OPTION_PREISKONSISTENZTEST, true );
 
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+$editable = ( hat_dienst(4) and ! $readonly );
 
 //
 // tabelle fuer hauptmenue und auswahl lieferanten:
 //
-open_table('layout',"style='width:100%;'");
+open_table('layout hfill' );
   open_td('left');
     open_table('menu');
       if( $lieferanten_id ) {

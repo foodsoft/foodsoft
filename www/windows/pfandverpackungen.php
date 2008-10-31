@@ -1,7 +1,11 @@
 <?PHP
 
 assert( $angemeldet ) or exit();
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+
+setWikiHelpTopic( 'foodsoft:pfandzettel' );
+setWindowSubtitle( 'Pfandzettel Lieferant' );
+
+$editable = ( hat_dienst(4) and ! $readonly );
 
 get_http_var( 'bestell_id', 'u', 0, true );
 if( $bestell_id ) {
@@ -20,7 +24,7 @@ get_http_var( 'optionen', 'u', 0, true );
 //  menu und auswahl lieferanten:
 //
 
-open_table( 'layout', "width='100%'" );
+open_table( 'layout hfill' );
   open_td();
     open_table( 'menu' );
         open_th('', '', 'Optionen');
@@ -30,7 +34,7 @@ open_table( 'layout', "width='100%'" );
                             "class=bigbutton,title=Neue Pfandverpackung erfassen,text=Neue Verpackung,lieferanten_id=$lieferanten_id" ) );
       }
     close_table();
-  open_td();
+  open_td('floatright');
     if( $bestell_id ) {
       ?> <h3>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3> <?
     } else {

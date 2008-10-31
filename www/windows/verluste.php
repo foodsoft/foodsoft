@@ -4,7 +4,11 @@
 //
 
 assert( $angemeldet ) or exit();
-$editable = ( $hat_dienst_IV and ! $readonly );
+
+setWikiHelpTopic( 'foodsoft:verluste' );
+setWindowSubtitle( 'Verluste' );
+
+$editable = ( hat_dienst(4) and ! $readonly );
 // get_http_var( 'optionen', 'u', 0, true );
 
 get_http_var( 'detail', 'w', 0, true );

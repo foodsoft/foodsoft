@@ -2,6 +2,9 @@
 <?PHP
   
 assert( $angemeldet ) or exit();
+
+setWikiHelpTopic( 'foodsoft:gruppen' );
+
 $problems="";
 $msg="";
 
@@ -82,7 +85,7 @@ switch( $action ) {
     }
     break;
   case 'cancel_payment':
-    need_http_var( 'transaction_id', 'u' );
+    need_http_var( 'transaction_id', 'U' );
     // echo "id: $gruppen_id, trans: $transaction_id <br>";
     $trans = sql_get_transaction( -$transaction_id );
     if( $trans['gruppen_id'] != $login_gruppen_id )
@@ -131,19 +134,19 @@ open_table('list');
       open_td( '', '', $nr );
       open_td( '', '', $row['name'] );
       open_td( 'number' );
-      if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) )
+      if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) )
         echo price_view( $kontostand );
       open_td( 'number', '', $row['mitgliederzahl'] );
       open_td();
 
       if( $row['aktiv'] > 0 ) {
         echo fc_link( 'gruppenmitglieder', "gruppen_id=$id,title=Mitglieder,text=" );
-        if( ( $dienst == 4 ) || ( $dienst == 5 ) ) {
+        if( hat_dienst(4,5) ) {
           echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,text=" );
         } elseif( $login_gruppen_id == $id ) {
           echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,meinkonto=1,text=" );
         }
-        if( ( $dienst == 4 ) || ( $dienst == 5 ) || ( $login_gruppen_id == $id ) ) {
+        if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) ) {
           if( $offene_einzahlungen ) {
             open_table('list');
                 open_th( '', "colspan='3'", 'ungebuchte Einzahlungen:' );
@@ -160,7 +163,7 @@ open_table('list');
         // loeschen nur wenn
         // - kontostand 0
         // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
-        if(    ( $dienst == 5 )
+        if(    hat_dienst(5)
             && ( abs($kontostand) < 0.005 )
             && ( $row['mitgliederzahl'] == 0 )
             && ( ! in_array( $id, $specialgroups ) )
@@ -181,7 +184,7 @@ open_table('list');
     }
   }
 
-  if( $dienst == 4 or $dienst == 5 ) {
+  if( hat_dienst(4,5) ) {
     open_tr('summe');
       open_td('right', "colspan='2'", 'Summe:' );
       open_td('number', '', price_view( $summe ) );

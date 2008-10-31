@@ -32,7 +32,7 @@ function posten( $name, $wert ) {
   $seitensumme += $wert;
 }
 
-open_table( '', "width='100%'" );
+open_table( 'layout hfill' );
   ?> <colgroup><col width='*'><col width='*'></colgroup> <?
   open_th( '', "style='padding:4px;'", 'Aktiva' ); open_th( '', "style='padding:4px;'", 'Passiva' );
   open_tr();
@@ -42,7 +42,7 @@ open_table( '', "width='100%'" );
     //
     open_td();
       smallskip();
-      open_table( 'inner', "width='100%'" );
+      open_table( 'inner hfill' );
         $seitensumme = 0;
 
         rubrik( "Bankguthaben" );
@@ -72,7 +72,7 @@ open_table( '', "width='100%'" );
     //
     open_td();
       smallskip();
-      open_table( 'inner', "width='100%'" );
+      open_table( 'inner hfill' );
         $seitensumme = 0;
 
         rubrik( "Einlagen der Gruppen" );
