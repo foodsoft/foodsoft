@@ -299,19 +299,19 @@ function fc_window_defaults( $name ) {
       $options = array_merge( $small_window_options, array( 'width' => '600', 'height' => '600' ) );
       break;
     // case 'edit_group':  //  im moment nicht benutzt
-    case 'editlieferant':
-    case 'edit_lieferant':
-      $parameters['window'] = 'editLieferant';
-      $parameters['window_id'] = 'edit_lieferant';
-      $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
-      $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
-      break;
     case 'editkonto':
     case 'edit_konto':
       $parameters['window'] = 'editKonto';
       $parameters['window_id'] = 'edit_konto';
       $parameters['title'] = 'zu den Stammdaten des Bankkontos...';
+      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
+      break;
+    case 'editlieferant':
+    case 'edit_lieferant':
+      $parameters['window'] = 'editLieferant';
+      $parameters['window_id'] = 'edit_lieferant';
+      $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
       $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
@@ -354,7 +354,10 @@ function fc_window_defaults( $name ) {
     default:
       error( "undefiniertes Fenster: $name " );
   }
-  return array( 'parameters' => $parameters, 'options' => $options );
+  if( $parameters )
+    return array( 'parameters' => $parameters, 'options' => $options );
+  else
+    return NULL;
 }
 
 // self_url:
@@ -498,6 +501,9 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
   $window or $window = 'self';
 
   $window_defaults = fc_window_defaults( $window );
+  if( ! $window_defaults )  // probably: no access to this item; don't generate a link, just return plain text, if any:
+    return adefault( $parameters, 'text', '' );
+
   if( $parameters === NULL ) {  // open empty window
     $parameters = $window_defaults['parameters'];
     $url = '';
@@ -524,7 +530,7 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
   if( isset( $parameters['confirm'] ) )
     $confirm = "if( confirm( '{$parameters['confirm']}' ) ) ";
 
-  $window_id = $parameters['window_id'];
+  $window_id = adefault( $parameters, 'window_id', '' );
   $js_window_name = $window_id;
   if( ( $window_id == 'main' ) or ( $window_id == 'top' ) )
     $js_window_name = '_top';
