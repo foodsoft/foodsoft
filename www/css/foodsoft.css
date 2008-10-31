@@ -365,7 +365,7 @@ tr.legende td {
   color:#666666;
 }
 
-tr.summe td, table.list tr.summe td {
+table tr.summe td, table tr.summe th, table.list tr.summe td {
   font-weight:bold;
   border-top:2px solid #666666;
   border-bottom:2px solid #666666;
@@ -383,7 +383,7 @@ table.inner tr.rubrik th div {
   padding:0.6ex;
 }
 
-table tr.posten td {
+table tr.posten td, table tr.posten th {
   padding:0.8ex 1em 0.8ex 0em;
   text-align:right;
   vertical-align:middle !important;

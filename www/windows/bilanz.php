@@ -101,8 +101,8 @@ open_table( 'layout hfill' );
       medskip();
 
   open_tr( 'summe posten' );
-    open_td( '', '', price_view( $aktiva ) );
-    open_td( '', '', price_view( $passiva ) );
+    open_th( '', '', price_view( $aktiva ) );
+    open_th( '', '', price_view( $passiva ) );
 
 close_table();
 
