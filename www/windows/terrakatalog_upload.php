@@ -3,6 +3,11 @@
 
 assert( $angemeldet ) or exit();
 
+setWikiHelpTopic( 'foodsoft:katalog_uploda' );
+setWindowSubtitle( 'Katalog einlesen' );
+
+nur_fuer_dienst(4);
+
 $lieferanten_id = sql_select_single_field( "SELECT id FROM lieferanten WHERE name like 'Terra%'", 'id' );
 need_http_var( 'terrakw', 'w' );
 
