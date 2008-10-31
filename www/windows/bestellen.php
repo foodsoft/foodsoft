@@ -32,7 +32,7 @@ if( count( $laufende_bestellungen ) < 1) {
 
 // tabelle fuer infos und auswahl bestellungen:
 //
-open_table( 'layout', "width='100%'" );
+open_table( 'layout hfill' );
 
 if( $bestell_id ) {
   $gesamtbestellung = sql_bestellung( $bestell_id );
@@ -376,7 +376,7 @@ if( ! $readonly ) {
 
 }
 
-open_table('list', "width='100%'" );  // bestelltabelle
+open_table( 'list hfill' );  // bestelltabelle
   open_th( '', '', 'Produktgruppe' );
   open_th( '', '', 'Bezeichnung' );
   open_th( '', "colspan='4' title='Anzahl voller Gebinde und Gebindegröße'", 'Gebinde' );
@@ -444,7 +444,7 @@ foreach( $produkte as $produkt ) {
     open_div('oneline', '', $produkt['produkt_name']);
     open_div('oneline small', '', $produkt['notiz']);
 
-  open_td( 'mult' . ( ( $zuteilungen[gebinde] > 0 )  ?  'highlight'
+  open_td( 'mult ' . ( ( $zuteilungen[gebinde] > 0 )  ?  'highlight'
                           : ( ( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) ? 'crit' : '' ) )
           , "style='width:2ex;border-right:none;' id='gv_$n'"
           , $zuteilungen[gebinde]
@@ -530,7 +530,7 @@ if( $js )
 
 open_tr('summe');
   open_td( '', "colspan='12'", 'Gesamtpreis:' );
-  open_td( 'number', "id='gesamtpreis2'", price_view( $gesamtpreis ) );
+  open_td( 'number', "id='gesamtpreis2'", sprintf( '%.2lf', $gesamtpreis ) );
 
   if( $dienst == 4 ) open_td();
 close_table();
