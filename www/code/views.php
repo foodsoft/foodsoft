@@ -318,9 +318,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 }
 
 function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
-     global $hat_dienst_V;
      //Editiermöglichkeit für Dienst V
-     if($hat_dienst_V){
+     if(hat_dienst(5)){
 ?>
 	   <form action="<? echo self_url(); ?>" method='post'>
 	       <? echo self_post(); ?>
@@ -496,7 +495,8 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   open_tr('summe');
     open_td( 'right', "colspan='8'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
-    open_td();
+    if( $editAmounts )
+      open_td();
 
   echo $js;
 
@@ -685,7 +685,7 @@ function products_overview(
     floating_submission_button();
   }
 
-  open_table( 'list', "style='width:100%;'" );
+  open_table( 'list hfill' );
 
     open_tr('legende');
       $cols = 0;
@@ -804,9 +804,9 @@ function products_overview(
       }
       $liefermenge_scaled = $liefermenge / $mengenfaktor;
 
-      $nettogesamtpreis = price_view( $nettopreis * $liefermenge );
-      $bruttogesamtpreis = price_view( $bruttopreis * $liefermenge );
-      $endgesamtpreis = price_view( $endpreis * $liefermenge );
+      $nettogesamtpreis = sprintf( '%.2lf', $nettopreis * $liefermenge );
+      $bruttogesamtpreis = sprintf( '%.2lf', $bruttopreis * $liefermenge );
+      $endgesamtpreis = sprintf( '%.2lf', $endpreis * $liefermenge );
 
       $netto_summe += $nettogesamtpreis;
       $brutto_summe += $bruttogesamtpreis;
@@ -891,7 +891,7 @@ function products_overview(
                 ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
                      <? echo $input_event_handlers; ?> > <?
               }
-            open_td( '', "style='border-left-style:none;", fc_link( 'produktverteilung', "class='question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
+            open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class='question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
           }
         }
 
@@ -946,7 +946,7 @@ function select_bestellung_view() {
 
   echo "<h1 class='bigskip'>Liste aller Bestellungen</h1>";
 
-  open_table('list', "width='100%'" );
+  open_table( 'list hfill' );
     open_th('','','Name');
     open_th('','','Status');
     open_th('','','Bestellzeitraum');
@@ -1111,7 +1111,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     open_th('', "colspan='3'", 'Liefermenge:' );
     open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
     open_td('unit','',$verteileinheit );
-    open_td('number','', $preis * $liefermenge / $verteilmult );
+    open_td('number','', price_view( $preis * $liefermenge / $verteilmult ) );
   close_tr();
 
   $basar_id = sql_basar_id();
@@ -1228,7 +1228,7 @@ function abrechnung_kurzinfo( $bestell_id ) {
   if( $status == STATUS_ABGERECHNET ) {
     $text = "abgerechnet
      <div class='quad smallskip'>
-     <table class='layout' style='color:#ed0000;width:100%;'>
+     <table class='layout hfill' style='color:#ed0000;'>
       <tr>
         <td class='small'>Rechnungsnummer:</td>
         <td class='small right'>". $row['rechnungsnummer'] ."</td>
@@ -1290,7 +1290,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   }
 
   open_fieldset( 'big_form', '', $legend, 'on' );
-    open_table( 'list', "style='width:100%;'" );
+    open_table( 'list hfill' );
       open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'id' );
       open_th( '', "title='Bestellnummer'", 'B-Nr' );
       open_th( '', "title='Preiseintrag gültig ab'", 'von' );
@@ -1346,13 +1346,13 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
 
     if( $bestell_id ) {
-      open_td( '', "style='padding:0.5ex;'" );
+      open_td( '', "style='padding:1ex 1em 1ex 1em;'" );
       if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
-        echo fc_alink( '', array( 'class' => 'buttondown', 'text' => 'aktiv', 'url' => ''
-                                , 'title' => "gilt momentan f&uuml;r Bestellung $bestellung_name" ) );
+        echo fc_link( '', array( 'class' => 'buttondown', 'text' => ' aktiv ', 'url' => ''
+                               , 'title' => "gilt momentan f&uuml;r Bestellung $bestellung_name" ) );
       } else {
         if( $editable and ( $rechnungsstatus < STATUS_ABGERECHNET ) ) {
-          echo fc_action( array( 'class' => 'buttonup', 'text' => 'setzen'
+          echo fc_action( array( 'class' => 'buttonup', 'text' => ' setzen '
                                , 'title' => "Preiseintrag für Bestellung $bestellung_name auswählen" )
                         , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] ) );
         } else {
