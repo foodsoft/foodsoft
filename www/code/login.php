@@ -29,7 +29,6 @@ function init_login() {
   $dienst = 0;
   $dienstkontrollblatt_id = FALSE;
   $coopie_name= FALSE;
-  set_privileges();
 }
 
 function logout() {
@@ -74,7 +73,6 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
   }
   if( ! $problems ) {  // login ok, weitermachen...
     $angemeldet = TRUE;
-    set_privileges();
   } else {  // irgendwas war falsch... zurueck auf los:
     logout();
   }
@@ -133,7 +131,6 @@ switch( $login ) {
       $keks = $session_id.'_'.$cookie;
       need( setcookie( 'foodsoftkeks', $keks, 0, '/' ), "setcookie() fehlgeschlagen" );
       $angemeldet = TRUE;
-      set_privileges();
       logger( 'successful login' );
     }
     break;
@@ -232,40 +229,16 @@ open_form( 'small_form', "url=$form_action", 'login=login' );
     open_div( 'newfield', '', "<input type='submit' name='submit' value='OK'>" );
   close_fieldset();
 close_form();
-?>
-<script type='text/javascript'>
-   function dienstform_on() {
-     document.getElementById('dienstform').style.display = 'block';
-   }
-   function dienstform_off() {
-     document.getElementById('dienstform').style.display = 'none';
-   }
-</script>
-<?
 
-function set_privileges() {
-  global $dienst, $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
-  $hat_dienst_I = FALSE;
-  $hat_dienst_III = FALSE;
-  $hat_dienst_IV = FALSE;
-  $hat_dienst_V = FALSE;
-  switch( $dienst ) {
-    case 1:
-      $hat_dienst_I = TRUE;
-      break;
-    case 3:
-      $hat_dienst_III = TRUE;
-      break;
-    case 4:
-      $hat_dienst_IV = TRUE;
-      break;
-    case 5:
-      $hat_dienst_V = TRUE;
-      break;
-    default:
-      break;
+open_javascript( "
+  function dienstform_on() {
+    document.getElementById('dienstform').style.display = 'block';
   }
-}
+  function dienstform_off() {
+    document.getElementById('dienstform').style.display = 'none';
+  }
+" );
+
 function nur_fuer_dienst() {
   global $dienst;
   for( $i = 0; $i < func_num_args(); $i++ ) {
@@ -282,19 +255,6 @@ function hat_dienst() {
       return true;
   }
   return false;
-}
-
-function nur_fuer_dienst_I() {
-  nur_fuer_dienst(1);
-}
-function nur_fuer_dienst_III() {
-  nur_fuer_dienst(3);
-}
-function nur_fuer_dienst_IV() {
-  nur_fuer_dienst(4);
-}
-function nur_fuer_dienst_V() {
-  nur_fuer_dienst(5);
 }
 
 exit();
