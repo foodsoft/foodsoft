@@ -8,7 +8,7 @@
 
 assert( $angemeldet ) or exit();
 
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+$editable = ( hat_dienst(4) and ! $readonly );
 
 need_http_var('produkt_id','u',true);
 get_http_var('bestell_id','u',0,true);  // optional: waehle preiseintrag fuer diese bestellung!
@@ -105,7 +105,7 @@ preishistorie_view( $produkt_id, $bestell_id, $editable );
 
 
 open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
-  open_table( 'list', "style='width:100%;'" );
+  open_table( 'list hfill' );
       open_th( '', '', 'Name' );
       open_th( '', "title='Bestellnummer'", 'B-Nr.' );
       open_th( '', "title='Liefer-Einheit: fuers Bestellen beim Lieferanten'", 'L-Einheit' );
@@ -117,7 +117,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
       open_th( '', "title='Endpreis je V-Einheit'", 'V-Preis' );
     open_tr();
       open_td();
-        open_table( 'layout', "style='width:100%'" );
+        open_table( 'layout hfill' );
             open_td( 'oneline left', '', $produkt['name'] );
             open_td( 'center', "rowspan='2' style='width:4em;'", fc_link( 'edit_produkt', "produkt_id=$produkt_id" ) );
           open_tr();
@@ -172,13 +172,15 @@ switch( $result ) {
 }
 medskip();
 
-if( $neednewprice ) {
-  open_fieldset( 'small_form', '', 'Vorschlag neuer Preiseintrag' );
-} else {
-  open_fieldset( 'small_form', '', 'Neuer Preiseintrag', 'off' );
+if( $editable ) {
+  if( $neednewprice ) {
+    open_fieldset( 'small_form', '', 'Vorschlag neuer Preiseintrag' );
+  } else {
+    open_fieldset( 'small_form', '', 'Neuer Preiseintrag', 'off' );
+  }
+    formular_produktpreis( $produkt_id, $preiseintrag_neu );
+  close_fieldset();
 }
-  formular_produktpreis( $produkt_id, $preiseintrag_neu );
-close_fieldset();
 
 ?>
 
