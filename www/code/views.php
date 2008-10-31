@@ -185,7 +185,7 @@ function kontoauszug_view( $konto_id = 0, $auszug_jahr = '', $auszug_nr = '', $f
 function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
   global $input_event_handlers, $window_id;
   if( $fieldname ) {
-    return "<select name='fieldname' $input_event_handlers>".optionen_lieferanten( $lieferant_id, $option_0 )."</select>";
+    return "<select name='$fieldname' $input_event_handlers>".optionen_lieferanten( $lieferant_id, $option_0 )."</select>";
   } else {
     $text = ( $lieferant_id ? sql_lieferant_name( $lieferant_id ) : $option_0 );
     if( $window_id != 'edit_lieferant' )
