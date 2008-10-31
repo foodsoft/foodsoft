@@ -8,7 +8,7 @@
      } 
      
 
-     if($hat_dienst_V){
+     if( hat_dienst(5) ) {
 
 ?>
  <div id=Zusatz>

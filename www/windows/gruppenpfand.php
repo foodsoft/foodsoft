@@ -1,7 +1,11 @@
 <?PHP
 
 assert( $angemeldet ) or exit();
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+
+setWikiHelpTopic( 'foodsoft:gruppenpfand' );
+setWindowSubtitle( 'Pfandabrechnung Bestellgruppen' );
+
+$editable = ( hat_dienst(3,4) and ! $readonly );
 
 get_http_var( 'bestell_id', 'u', 0, true );
 
@@ -28,7 +32,7 @@ if( $options & PFAND_OPT_ALLE_BESTELLUNGEN ) {
   $editable = false;
 }
 
-open_table( 'layout', "width='100%'" );
+open_table( 'layout hfill' );
   open_td();
     open_table( 'menu' );
         open_th('', '', 'Optionen');

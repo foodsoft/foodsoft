@@ -55,7 +55,7 @@ switch( $action ) {
 
   case 'update':
     nur_fuer_dienst(4);
-    need( $editable and ( getState( $bestell_id ) == STATUS_VERTEILT ) );
+    need( getState( $bestell_id ) == STATUS_VERTEILT );
     foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
       $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
@@ -126,7 +126,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
-      $editable = (!$readonly) && ( $hat_dienst_I or $hat_dienst_III or $hat_dienst_IV && ( $state == STATUS_VERTEILT ) );
+      $editable = (!$readonly) && ( hat_dienst(1,3,4) && ( $state == STATUS_VERTEILT ) );
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
              | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME | PR_ROWS_NICHTGEFUELLT );
@@ -177,23 +177,24 @@ products_overview(
   true         // Option: Anzeige nichtgelieferte zulassen
 );
 
+medskip();
 switch( $state ) {
   case STATUS_LIEFERANT:
   case STATUS_VERTEILT:
-    if( ! $readonly and ! $gruppen_id and ( $dienst == 1 || $dienst == 3 || $dienst == 4 ) ) {
+    if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
       open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
         open_form( '', '', 'action=insert' );
           open_div( 'kommentar' )
             ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
             open_ul();
-              open_li( '', '', 'das Produkt muss ggf. vorher in der Produkt-Datenbank erfasst sein' );
-              open_li( '', '', 'eine Eintragung hier erzeugt erstmal nur eine Basar-<em>Bestellung</em>
-                                die <em>Liefer</em>menge ist noch null und muss hinterher gesetzt werden!' );
+              open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
+              open_li( '', '', 'eine Eintragung hier erzeugt erstmal nur eine Basar-<em>Bestellung</em> -
+                                die <em>Liefer</em>menge ist danach noch 0 und muss hinterher gesetzt werden!' );
             close_ul();
           close_div();
           select_products_not_in_list($bestell_id);
           ?> <label>Menge:</label> <?
-          echo int_view( 0, 'menge' );
+          echo int_view( 1, 'menge' );
           submission_button();
         close_form();
       close_fieldset();

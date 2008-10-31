@@ -3,6 +3,9 @@
 assert( $angemeldet ) or exit();
 // $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
+setWikiHelpTopic( 'foodsoft:gruppenmitglieder' );
+setWindowSubtitle( 'Gruppenmitglieder' );
+
 need_http_var('gruppen_id','u', 1);
 
           //predefine all edit modes as false
@@ -13,7 +16,7 @@ if( ( $login_gruppen_id == $gruppen_id ) and ! $readonly ) {
   $edit_names = TRUE;
   $edit_pwd = TRUE;
 }
-if( $hat_dienst_V and ! $readonly ) {
+if( hat_dienst(5) and ! $readonly ) {
   $edit_names = TRUE;
   $edit_dienst_einteilung=TRUE;
   $edit_pwd = TRUE;
@@ -31,12 +34,12 @@ switch( $action ) {
     need_http_var('newPass', 'R');
     need_http_var('newPass2', 'R');
     if($newPass!=$newPass2){
-      $pwmsg =  "<div class='warn' style='padding:1em;'>Eingaben nicht identisch! (Gruppenpasswort wurde nicht geändert)</div>";
+      $pwmsg = "<div class='warn' style='padding:1em;'>Eingaben nicht identisch! (Gruppenpasswort wurde nicht geändert)</div>";
     } else if( strlen( $newPass ) < 4 ) {
-      $pwmsg =  "<div class='warn' style='padding:1em;'>Passwort zu kurz! (Gruppenpasswort wurde nicht geändert)</div>";
+      $pwmsg = "<div class='warn' style='padding:1em;'>Passwort zu kurz! (Gruppenpasswort wurde nicht geändert)</div>";
     } else {
       set_password( $gruppen_id, $newPass );
-      $pwmsg =  "<div class='ok' style='padding:1em;'>Das Gruppenpasswort wurde neu gesetzt</div>";
+      $pwmsg = "<div class='ok' style='padding:1em;'>Das Gruppenpasswort wurde neu gesetzt</div>";
     }
     break;
   case 'edit':
@@ -73,7 +76,7 @@ switch( $action ) {
     break;
 }
 
-if( $hat_dienst_V and ! $readonly ) {
+if( hat_dienst(5) and ! $readonly ) {
   open_fieldset( 'small_form', '', 'Neues Gruppenmitglied eintragen', 'off' );
     open_form( '', '', 'action=insert' );
       open_table('layout');
@@ -89,10 +92,10 @@ if( $hat_dienst_V and ! $readonly ) {
 }
 medskip();
 
+echo $pwmsg;
 if( $edit_pwd ) {
   open_fieldset( 'small_form medskip', '', 'Passwort aendern', 'off' );
     open_form( '', '', 'action=new_pwd' );
-      echo $pwmsg;
       open_table('layout');
         open_tr(); open_td( 'label', '', 'Passwort:');
                    open_td( 'kbd', '', "<input type='password' size='24' name='newPass'>" );
