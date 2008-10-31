@@ -270,7 +270,7 @@ function open_form( $class = '', $get_parameters = array(), $post_parameters = a
 function close_form() {
   global $input_event_handlers;
   $input_event_handlers = '';
-  echo "\n<span class='nodisplay'><input type='submit'></span>";
+  echo "\n<span class='nodisplay'><input type='submit'></span>";  // allow to submit form by pressing ENTER
   close_tag( 'form' );
   echo "\n";
 }
