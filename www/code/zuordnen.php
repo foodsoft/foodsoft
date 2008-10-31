@@ -779,7 +779,7 @@ function sql_rotationsplan($dienst){
  * they are performing
  */
 function possible_areas(){
-  global $dienst, $hat_dienst_I, $hat_dienst_III, $hat_dienst_IV, $hat_dienst_V;
+  global $dienst;
 
 $areas = array();
 
@@ -787,7 +787,7 @@ $areas[] = array("area" => "bestellen",
 	"hint" => "Hier können ihr euch an den laufenden Bestellung beteiligen",
 	"title" => "Bestellen");
 
-if( $dienst == 0 ) {
+if( hat_dienst(0) ) {
  $areas[] = array("area" => "meinkonto", 
 	        "hint"  => "Hier könnt ihr euer Gruppenkonto einsehen", 
 		"title" => "Mein Konto" );
@@ -804,7 +804,7 @@ $areas[] = array("area" => "bilanz",
 	"hint" => "Finanzen der FC: Überblick und Verwaltung",
 	"title" => "Bilanz");
 
-if($hat_dienst_IV){
+if( hat_dienst(4) ){
 	$areas[] = array("area" => "produkte",
 	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
 	$areas[] = array("area" => "konto",
@@ -817,12 +817,12 @@ if($hat_dienst_IV){
 	"hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
 	"title" => "Konten");		
 }
-if($hat_dienst_IV or $hat_dienst_III){
+if( hat_dienst(3,4) ) {
 	$areas[] = array("area" => "basar",
 	"hint" => "Produkte im Basar an Gruppen verteilen",
 	"title" => "Basar");
 }
-if($hat_dienst_IV){
+if( hat_dienst(4) ) {
 	$areas[] = array("area" => "lieferanten",
 	"hint" => "Hier kann man die LieferantInnen verwalten...",
 	"title" => "LieferantInnen");
@@ -830,7 +830,7 @@ if($hat_dienst_IV){
 	$areas[] = array("area" => "dienstkontrollblatt",
 	"hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
 	"title" => "Dienstkontrollblatt");		
-if($hat_dienst_IV or $hat_dienst_III or $hat_dienst_I){
+if( hat_dienst(1,3,4) ) {
 	$areas[] = array("area" => "updownload",
 	"hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
 	"title" => "Up/Download");
@@ -882,7 +882,7 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
 function set_password( $gruppen_id, $gruppen_pwd ) {
   global $login_gruppen_id;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
-    ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst_V();
+    ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst(5);
     $salt = random_hex_string( 4 );
     return sql_update( 'bestellgruppen', $gruppen_id, array(
       'salt' => $salt
@@ -1502,8 +1502,6 @@ function sql_insert_bestellvorschlag(
 , $preis_id = 0
 , $bestellmenge = 0, $liefermenge = 0
 ) {
-  global $hat_dienst_IV;
-
   fail_if_readonly();
   need( getState( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
 
@@ -1513,7 +1511,7 @@ function sql_insert_bestellvorschlag(
 
   // kludge alert: finde erstmal irgendeinen preis...
   if( ! $preis_id )
-    if( $hat_dienst_IV )
+    if( hat_dienst(4) )
       $preis_id = sql_aktueller_produktpreis_id( $produkt_id, false );
 
   if( ! $preis_id ) {
@@ -2185,7 +2183,7 @@ function sql_gruppen_transaktion(
   $notiz ="",
   $kontobewegungs_datum = 0, $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
-  global $dienstkontrollblatt_id, $hat_dienst_IV, $mysqlheute;
+  global $dienstkontrollblatt_id, $mysqlheute;
 
   need( $gruppen_id or $lieferanten_id );
   $kontobewegungs_datum or $kontobewegungs_datum = $mysqlheute;
@@ -4269,15 +4267,16 @@ function wikiLink( $topic, $text, $head = false ) {
 }
 
 function setWikiHelpTopic( $topic ) {
-  global $foodsoftdir;
-  ?>
+  global $foodsoftdir, $print_on_exit;
+  // head may not have been read (yet), so we postpone this:
+  $print_on_exit[] = "
     <script type='text/javascript'>
       document.getElementById('wikilink_head').href
-        = "javascript:neuesfenster('<? echo $foodsoftdir; ?>/../wiki/doku.php?id=<? echo $topic; ?>','wiki');";
+        = \"javascript:neuesfenster('$foodsoftdir/../wiki/doku.php?id=$topic','wiki');\";
       document.getElementById('wikilink_head').title
-        = "zur Wiki-Seite <? echo $topic; ?>";
+        = \"zur Wiki-Seite $topic\";
     </script>
-  <?
+  ";
 }
 
 // auf <title> (fensterrahmen) kann offenbar nicht mehr zugegriffen werden(?), wir
