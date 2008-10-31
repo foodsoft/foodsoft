@@ -3745,28 +3745,28 @@ function sanitize_http_input() {
       need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
       need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert fuer Variable $key in URL" );
     }
-  }
-  if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
-    need( isset( $HTTP_POST_VARS['postform_id'] ), 'fehlerhaftes Formular uebergeben' );
-    sscanf( $HTTP_POST_VARS['postform_id'], "%u_%s", &$t_id, &$itan );
-    need( $t_id, 'fehlerhaftes Formular uebergeben' );
-    $row = sql_select_single_row( "SELECT * FROM transactions WHERE id=$t_id", true );
-    need( $row, 'fehlerhaftes Formular uebergeben' );
-    if( $row['used'] ) {
-      // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
-      $HTTP_POST_VARS = array();
-      echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
+    if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
+      need( isset( $HTTP_POST_VARS['postform_id'] ), 'foodsoft: fehlerhaftes Formular uebergeben' );
+      sscanf( $HTTP_POST_VARS['postform_id'], "%u_%s", &$t_id, &$itan );
+      need( $t_id, 'fehlerhaftes Formular uebergeben' );
+      $row = sql_select_single_row( "SELECT * FROM transactions WHERE id=$t_id", true );
+      need( $row, 'fehlerhaftes Formular uebergeben' );
+      if( $row['used'] ) {
+        // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
+        $HTTP_POST_VARS = array();
+        echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
+      } else {
+        need( $row['itan'] == $itan, 'ungueltige iTAN uebergeben' );
+        // echo "session_id: $session_id, from db: {$row['session_id']} <br>";
+        need( $row['session_id'] == $session_id, 'ungueltige session_id' );
+        // id ist noch unverbraucht: jetzt entwerten:
+        sql_update( 'transactions', $t_id, array( 'used' => 1 ) );
+      }
     } else {
-      need( $row['itan'] == $itan, 'ungueltige iTAN uebergeben' );
-      // echo "session_id: $session_id, from db: {$row['session_id']} <br>";
-      need( $row['session_id'] == $session_id, 'ungueltige session_id' );
-      // id ist noch unverbraucht: jetzt entwerten:
-      sql_update( 'transactions', $t_id, array( 'used' => 1 ) );
+      $HTTP_POST_VARS = array();
     }
-  } else {
-    $HTTP_POST_VARS = array();
+    $http_input_sanitized = true;
   }
-  $http_input_sanitized = true;
 }
 
 
