@@ -195,6 +195,9 @@ li {
 .large {
   font-size:larger;
 }
+.hfill {
+  width:100%;
+}
 
 /* fuer farbige zellen im bestellformular: */
 
@@ -710,26 +713,28 @@ input.checkbox {
 
 .buttonup {
   color:#000000;
-  background-color:#cccccc;
+  background-color:#d0e0ff;
   border-style:outset;
   border-width:3px;
   border-color:#666666;
-  padding:0.1ex;
+  padding:0.1ex 1ex 0.2ex 1ex;
   text-align:center;
   font-weight:normal;
 }
 .buttonup:hover {
+  background-color:#e0ffff;
+  border-color:#888888;
   background-color:#dddddd;
-  font-weight:bold;
 }
 .buttondown, .buttondown:hover {
-  color:#000000;
-  background-color:#ffcccc;
+  color:#000000 !important;
+  background-color:#ffcccc !important;
   border-style:inset;
   border-width:3px;
-  padding:0.1ex;
+  padding:0.1ex 1ex 0.2ex 1ex;
   text-align:center;
   font-weight:bold;
+  text-decoration:none;
 }
 
 

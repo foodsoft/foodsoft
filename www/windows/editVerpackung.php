@@ -1,7 +1,7 @@
 <?PHP
 assert( $angemeldet ) or exit();
 
-$editable = ( ! $readonly and ( $dienst == 4 ) );
+$editable = ( hat_dienst(4) and ! $readonly );
 
 $msg = "";
 $problems = "";
@@ -41,28 +41,28 @@ if( $action == 'save' ) {
   if( ! $problems ) {
     if( $verpackung_id ) {
       if( sql_update( 'pfandverpackungen', $verpackung_id, $values ) ) {
-        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
+        $msg .= "<div class='ok'>&Auml;nderungen gespeichert</div>";
         $done = true;
       } else {
-        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
       }
     } else {
       if( ( $verpackung_id = sql_insert( 'pfandverpackungen', $values ) ) ) {
         $self_fields['verpackung_id'] = $verpackung_id;
         sql_update( 'pfandverpackungen', $verpackung_id, array( 'sort_id' => $verpackung_id ) );
-        $msg = $msg . "<div class='ok'>Verpackung erfolgreich eingetragen:</div>";
+        $msg .= "<div class='ok'>Verpackung erfolgreich eingetragen:</div>";
         $done = true;
       } else {
-        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .mysql_error(). "</div>";
       }
     }
   }
 }
 
 open_form( 'small_form', '', 'action=save' );
-  open_fieldset( 'small_form', "style='width:460px;'", ( $verpackung_id ? 'Stammdaten Verpackung' : 'Neue Verpackung' ) );
+  open_fieldset( 'small_form', '', ( $verpackung_id ? 'Stammdaten Verpackung' : 'Neue Verpackung' ) );
     echo $msg . $problems;
-    open_table('small_form', "width='95%'" );
+    open_table('small_form hfill');
       form_row_lieferant( 'Lieferant:', false, $lieferanten_id );
       form_row_text( 'Bezeichnung:', 'name', 30, $name );
       form_row_betrag( 'Wert:', 'wert', $wert );

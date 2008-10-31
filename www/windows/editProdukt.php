@@ -17,7 +17,7 @@ if( $produkt_id ) {
   setWikiHelpTopic( 'foodsoft:artikeldaten' );
   $lieferanten_id = $row['lieferanten_id'];
 } else {
-  need_http_var( 'lieferanten_id', 'u', true );
+  need_http_var( 'lieferanten_id', 'U', true );
   setWindowSubtitle( 'Neuen Artikel eintragen' );
   setWikiHelpTopic( 'foodsoft:artikeldaten' );
   $row = false;
@@ -48,27 +48,27 @@ if( $action == 'save' ) {
   if( ! $problems ) {
     if( $produkt_id ) {
       if( sql_update( 'produkte', $produkt_id, $values ) ) {
-        $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
+        $msg .= "<div class='ok'>&Auml;nderungen gespeichert</div>";
         $done = true;
       } else {
-        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
       }
     } else {
       if( ( $produkt_id = sql_insert( 'produkte', $values ) ) ) {
         $self_fields['produkt_id'] = $produkt_id;
-        $msg = $msg . "<div class='ok'>Produkt erfolgreich eingetragen:</div>";
+        $msg .= "<div class='ok'>Produkt erfolgreich eingetragen:</div>";
         $done = true;
       } else {
-        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
       }
     }
   }
 }
 
 open_form( 'small_form', '', 'action=save' );
-  open_fieldset( 'small_form', "style='width:400px;'", ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ) );
+  open_fieldset( 'small_form', '', ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ) );
     echo $msg . $problems;
-    open_table('small_form');
+    open_table('small_form hfill');
         open_td('label', '', 'Lieferant:' );
         open_td('kbd', '', $lieferant_name );
       open_tr();

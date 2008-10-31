@@ -47,7 +47,7 @@ function katalogabgleich(
       formular_artikelnummer( $produkt_id, false );
     return 2;
   }
-  
+
   $katalog_datum = $katalogeintrag["katalogdatum"];
   $katalog_typ = $katalogeintrag["katalogtyp"];
   $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
@@ -82,7 +82,7 @@ function katalogabgleich(
 
   if( $detail ) {
     open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_typ / $katalog_datum" );
-      open_table( '', "style='width:100%;'" );
+      open_table( 'list hfill' );
           open_th( '', "title='Artikelnummer'", 'A-Nr.' );
           open_th( '', "title='Bestellnummer'", 'B-Nr.' );
           open_th( '', '', 'Bezeichnung' );

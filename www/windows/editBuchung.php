@@ -5,19 +5,17 @@ assert( $angemeldet ) or exit();
 setWindowSubtitle( 'Buchung edieren' );
 setWikiHelpTopic( 'foodsoft:buchung_edieren' );
 
-// nur_fuer_dienst_IV();
-// fail_if_readonly();
-$editable = ( $dienst == 4 and ! $readonly );
+$editable = ( hat_dienst(4) and ! $readonly );
 
 $msg = '';
 $problems = '';
 
 $muell_id = sql_muell_id();
 
-if( get_http_var( 'transaktion_id', 'u', NULL, true ) )
+if( get_http_var( 'transaktion_id', 'U', NULL, true ) )
   $buchung_id = -$transaktion_id;
 else
-  need_http_var( 'buchung_id','u', true );
+  need_http_var( 'buchung_id','U', true );
 
 $buchung = sql_get_transaction( $buchung_id ); 
 $k_id = $buchung['konterbuchung_id'];
@@ -129,7 +127,7 @@ if( $editable )
 
 open_fieldset( 'small_form', '', 'Buchung:' );
   echo $msg; echo $problems;
-  open_table( 'layout', "style='width:100%'" );
+  open_table( 'layout hfill' );
     fieldset_edit_transaction( $buchung_id, 1, $editable );
     open_tr();
       open_td( 'smallskip', "colspan='2'" );

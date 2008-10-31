@@ -1,6 +1,9 @@
 <?PHP
 assert( $angemeldet ) or exit();
 
+setWikiHelpTopic( 'foodsoft:lieferant_edieren' );
+setWindowSubtitle( 'Stammdaten Lieferant' );
+
 $editable = hat_dienst(4,5);
 get_http_var( 'ro', 'u', 0, true );
 if( $ro or $readonly )
@@ -59,9 +62,9 @@ if( $action == 'save' ) {
 }
 
 open_form( 'small_form', '', 'action=save' );
-  open_fieldset( 'small_form', "style='width:470px;'", ( $lieferanten_id ? 'Stammdaten Lieferant' : 'Neuer Lieferant' ) );
+  open_fieldset( 'small_form', '', ( $lieferanten_id ? 'Stammdaten Lieferant' : 'Neuer Lieferant' ) );
     echo $msg . $problems;
-    open_table('small_form');
+    open_table('small_form hfill');
       form_row_text( 'Name:', ( $editable ? 'name' : false ), 50, $name );
       form_row_text( 'AnsprechpartnerIn:', ( $editable ? 'ansprechpartner' : false ), 50, $ansprechpartner );
       form_row_text( 'Telefonnummer:', ( $editable ? 'telefon' : false ), 50, $telefon );

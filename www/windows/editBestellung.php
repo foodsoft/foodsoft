@@ -31,7 +31,7 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
     $problems .= "<div class='warn'>Keine Produkte ausgewählt!</div>";
   }
 }
-$editable = ( ( $dienst == 4 ) and ( ! $readonly ) and ( $status < STATUS_ABGERECHNET ) );
+$editable = ( hat_dienst(4) and ( ! $readonly ) and ( $status < STATUS_ABGERECHNET ) );
 
 get_http_var('action','w','');
 $editable or $action = '';
@@ -86,19 +86,19 @@ open_form( 'small_form', '', 'action=save' );
   if( isset( $bestellliste ) and is_array( $bestellliste ) )
     foreach( $bestellliste as $produkt_id )
       hidden_input( 'bestellliste[]', $produkt_id );
-  open_fieldset( 'small_form', "style='width:360px;'", 'Bestellvorlage' );
+  open_fieldset( 'small_form', '', 'Bestellvorlage' );
     echo $msg; echo $problems;
     if( $done )
       div_msg( 'ok', 'Bestellvorlage wurde eingefügt:' );
-    open_table( 'small_form',"style='width:420px;'" );
+    open_table( 'layout hfill' );
       form_row_lieferant( 'Lieferant:', false, $lieferanten_id );
-      form_row_text( 'Name:', 'bestellname', 35, $bestellname );
+      form_row_text( 'Name:', ( $editable ? 'bestellname' : false ), 35, $bestellname );
       form_row_date_time( 'Startzeit:', ( $editable ? 'startzeit' : false ), $startzeit );
       form_row_date_time( 'Ende:', ( $editable ? 'endzeit' : false ), $endzeit );
-      form_row_date( 'Lieferung:', 'lieferung', $lieferung );
+      form_row_date( 'Lieferung:', ( $editable ? 'lieferung' : false ), $lieferung );
       open_tr();
         open_td('right', "colspan='2'");
-          if( $editable and ! $done )
+          if( $editable )
             submission_button();
           else
             close_button();

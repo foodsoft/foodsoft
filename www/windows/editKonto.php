@@ -1,6 +1,8 @@
 <?PHP
 assert( $angemeldet ) or exit();
 
+setWindowSubtitle( 'Konto edieren' );
+setWikiHelpTopic( 'foodsoft:konto_edieren' );
 $editable = hat_dienst(4);
 get_http_var( 'ro', 'u', 0, true );
 if( $ro or $readonly )
@@ -29,7 +31,7 @@ if( $action == 'save' ) {
   , 'kommentar' => $kommentar
   );
   if( ! $name ) {
-    $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
+    $problems .= "<div class='warn'>Kein Name eingegeben!</div>";
   } else {
     if( $konto_id ) {
       if( sql_update( 'bankkonten', $konto_id, $values ) ) {
@@ -49,9 +51,9 @@ if( $action == 'save' ) {
 }
 
 open_form( 'small_form', '', 'action=save' );
-  open_fieldset( 'small_form', "style='width:580px;'", ( $konto_id ? 'Stammdaten Bankkonto' : 'Neues Bankkonto' ) );
+  open_fieldset( 'small_form', '', ( $konto_id ? 'Stammdaten Bankkonto' : 'Neues Bankkonto' ) );
     echo $msg . $problems;
-    open_table('small_form');
+    open_table('small_form hfill');
       form_row_text( 'Name:', ( $editable ? 'name' : false ), 50, $name );
       form_row_text( 'BLZ:', ( $editable ? 'blz' : false ), 50, $blz );
       form_row_text( 'Kontonummer:', ( $editable ? 'kontonr' : false ), 50, $kontonr );
