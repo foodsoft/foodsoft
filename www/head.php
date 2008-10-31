@@ -55,7 +55,7 @@ open_div( $headclass, "id='header'" );
         foreach(possible_areas() as $menu_area){
           areas_in_head($menu_area);
         }
-        open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki", true );
+        open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki...", true );
       close_ul();
   close_table();
 close_div();

@@ -19,10 +19,10 @@ if( get_http_var( 'download','w' ) ) {  // Spezialfall: Datei-Download (.pdf, ..
 
 get_http_var( 'window', 'w', 'menu', true );     // eigentlich: name des skriptes
 get_http_var( 'window_id', 'w', 'main', true );  // ID des browserfensters
+setWikiHelpTopic( "foodsoft:$window" );
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');
-    setWikiHelpTopic('');
     include('dienst_info.php');
     switch( $window ) {
       case "wiki":
@@ -35,6 +35,8 @@ switch( $window_id ) {
          include('windows/dienstplan.php');
          break;
         }
+      case 'menu':
+        setWikiHelpTopic( "foodsoft" );
       default:
         if( is_readable( "windows/$window.php" ) ) {
           include( "windows/$window.php" );
