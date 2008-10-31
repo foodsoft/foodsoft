@@ -114,7 +114,7 @@ function form_finish_transaction( $transaction_id ) {
 }
 
 function action_finish_transaction() {
-  global $transaction_id, $konto_id, $auszug_jahr, $auszug_nr, $valuta_day, $valuta_month, $valuta_year;
+  global $transaction_id, $konto_id, $auszug_jahr, $auszug_nr, $valuta_day, $valuta_month, $valuta_year, $confirm;
   global $dienstkontrollblatt_id;
   need_http_var( 'transaction_id', 'U' );
   need_http_var( 'auszug_jahr', 'U' );
@@ -123,6 +123,10 @@ function action_finish_transaction() {
   need_http_var( 'valuta_day', 'U' );
   need_http_var( 'valuta_month', 'U' );
   need_http_var( 'valuta_year', 'U' );
+  get_http_var( 'confirm', 'w', 'no' );
+
+  if( $confirm != 'yes' )
+    return;
 
   fail_if_readonly();
   nur_fuer_dienst(4);
@@ -133,7 +137,7 @@ function action_finish_transaction() {
   $haben_id = sql_bank_transaktion(
     $konto_id, $auszug_jahr, $auszug_nr
   , $soll_transaction['soll'], "$valuta_year-$valuta_month-$valuta_day"
-  , $dienstkontrollblatt_id, $notiz, 0
+  , $dienstkontrollblatt_id, $soll_transaction['kommentar'], 0
   );
 
   sql_link_transaction( $soll_id, $haben_id );
@@ -142,7 +146,6 @@ function action_finish_transaction() {
     'dienstkontrollblatt_id' => $dienstkontrollblatt_id
   ) );
 }
-
 
 function formular_buchung_gruppe_bank( $notiz_initial = 'Einzahlung' ) {
   open_form( 'small_form', '', 'action=buchung_gruppe_bank' );
@@ -182,7 +185,7 @@ function action_buchung_gruppe_bank() {
   need_http_var( 'auszug_jahr', 'U' );
   need_http_var( 'auszug_nr', 'U' );
   need( ! in_array( $gruppen_id, $specialgroups ) );
-  need( sql_gruppenname( $gruppen_id ) );
+  need( $gruppen_name );
 
   if( ! $problems ) {
     sql_doppelte_transaktion(
@@ -194,7 +197,6 @@ function action_buchung_gruppe_bank() {
     );
   }
 }
-
 
 function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung Lieferant' ) {
   open_form( 'small_form', '', 'action=buchung_lieferant_bank' );
@@ -684,7 +686,6 @@ function action_gruppen_umlage() {
   // echo "action_gruppen_umlage:";
   if( ! $problems ) {
     foreach( sql_aktive_bestellgruppen() as $gruppe ) {
-      // echo "<br>gruppe: " .$gruppe['name'] . " " .$gruppe['mitgliederzahl'] ;
       if( $gruppe['mitgliederzahl'] > 0 ) {
         sql_doppelte_transaktion(
           array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )
@@ -713,16 +714,15 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $mod_id = false )
           open_form( 'small_form', '', 'action=artikelnummer_setzen' );
             ?> neue Artikel-Nr. setzen: <?
             echo string_view( $anummer, 20, 'anummer' );
-            submission_button( 'Speichern', true );
+            quad(); submission_button( 'Speichern', true );
           close_form();
       open_tr();
         open_td();
           open_form('small_form', "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id", 'action=search' );
             ?>...oder: Katalogsuche nach: <?
             echo string_view( $produkt['name'], 40, 'name' );
-            // echo fc_link( 'artikelsuche', 'text=Los!,form,class=button' );
-            submission_button( 'Los!' );
-          close_form( false );
+            quad(); submission_button( 'Los!' );
+          close_form();
     close_table();
   close_fieldset();
 }
@@ -772,7 +772,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     $vorschlag['bestellnummer'] = $valid ? $produkt['bestellnummer'] : '';
 
   if( ! isset( $vorschlag['notiz'] ) )
-    $vorschlag['notiz'] = $valid ? $produkt['notiz'] : '';
+    $vorschlag['notiz'] = $produkt['notiz'];  // braucht _keinen_ gueltigen preiseintrag!
 
   // restliche felder automatisch berechnen:
   //
