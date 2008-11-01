@@ -93,7 +93,7 @@ switch( $action ) { // aktionen die keinen auszug brauchen
 open_table('layout hfill' );
 
   open_td();
-    ?> <h3>Kontouszüge:</h3> <?
+    ?> <h3>Kontouszüge von Konto <? echo sql_kontoname($konto_id); ?>:</h3> <?
 
     open_select( 'auszug', true );
       $selected = false;
@@ -160,7 +160,8 @@ open_table('layout hfill' );
               if( $editable ) {
                 form_finish_transaction( $trans['id'] );
                 echo "<hr>";
-                open_div( 'right', '', fc_action( 'img=img/b_drop.png,title=diese ungebuchte Gutschrift stornieren,class=button,text=löschen'
+                open_div( 'right', '', fc_action( array( 'title' => 'diese ungebuchte Gutschrift stornieren', 'text' => 'löschen'
+                                                       , 'class' => 'button drop', 'confirm' => 'Gutschrift wirklich löschen?' )
                                                  , "action=cancel_payment,transaction_id={$trans['id']}" ) );
               }
         }

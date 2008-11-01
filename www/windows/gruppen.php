@@ -1,6 +1,6 @@
 <h1>Gruppenverwaltung...</h1>
 <?PHP
-  
+
 assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( 'foodsoft:gruppen' );
@@ -154,7 +154,7 @@ open_table('list');
                 open_tr();
                   open_td( 'left', '', $trans['eingabedatum_trad'] );
                   open_td( 'number', '', price_view( $trans['summe'] ) );
-                  open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'L&ouml;schen?' )
+                  open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'L&ouml;schen?', 'confirm' => 'Gutschrift wirklich löschen?' )
                                             , array( 'action' => 'cancel_payment', 'transaction_id' => $trans['id'] ) ) );
               }
             close_table();
