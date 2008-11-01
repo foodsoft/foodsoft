@@ -155,12 +155,12 @@ function gruppe_view( $gruppen_id = 0, $fieldname = '', $filter = 'aktiv', $opti
 }
 
 function konto_view( $konto_id = 0, $fieldname = '' ) {
-  global $input_event_handlers, $window_id;
+  global $input_event_handlers, $window;
   if( $fieldname ) {
      return "<select name='$fieldname' $input_event_handlers>".optionen_konten( $konto_id )."</select>";
   } else {
     $text = ( $konto_id ? sql_kontoname( $konto_id ) : '-' );
-    if( $window_id != 'kontoauszug' )
+    if( $window != 'konto' )
       return fc_link( 'konto', array( 'class' => 'href', 'konto_id' => $konto_id, 'text' => $text ) );
     else
       return $text;
@@ -168,13 +168,13 @@ function konto_view( $konto_id = 0, $fieldname = '' ) {
 }
 
 function kontoauszug_view( $konto_id = 0, $auszug_jahr = '', $auszug_nr = '', $fieldname = '' ) {
-  global $input_event_handlers, $window_id;
+  global $input_event_handlers, $window;
   if( $fieldname ) {
     return "Jahr: ".int_view( $auszug_jahr, $fieldname.'_jahr' )
          . " / Nr.: " .int_view( $auszug_nr, $fieldname.'_nr' );
   } else {
     $text = "$auszug_jahr / $auszug_nr";
-    if( $konto_id and ( $window_id != 'kontoauszug' ) )
+    if( $konto_id and ( $window != 'konto' ) )
       return fc_link( 'kontoauszug', array( 'class' => 'href', 'konto_id' => $konto_id, 'text' => $text
                                           , 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr ) );
     else
@@ -1250,6 +1250,7 @@ function abrechnung_kurzinfo( $bestell_id ) {
 }
 
 function buchung_kurzinfo( $id ) {
+  global $muell_id, $login_gruppen_id;
   $row = sql_get_transaction( $id );
   $dir = ( ( $row['haben'] > 0 ) ? 'durch' : 'an' );
   if( $id > 0 ) { // bankueberweisung oder lastschrift
@@ -1260,9 +1261,18 @@ function buchung_kurzinfo( $id ) {
                 'konto_id' => $konto_id, 'auszug_jahr' => $auszug_jahr, 'auszug_nr' => $auszug_nr
               , 'text' => "$auszug_jahr / $auszug_nr ({$row['kontoname']})", 'class' => 'href' ) );
   } elseif( ( $gruppen_id = $row['gruppen_id'] ) > 0 ) {  // zahlung gruppe
-     $gruppen_name = sql_gruppenname($gruppen_id);
-     echo "Zahlung $dir Gruppe: " . fc_link( 'gruppenkonto', array(
-              'gruppen_id' => $gruppen_id, 'class' => 'href', 'text' => sql_gruppenname( $gruppen_id ) ) );
+    if( $gruppen_id == $muell_id ) {
+      $typ = $row['transaktionstyp'];
+      echo "interne Verrechnung: ";
+      echo fc_link( 'verluste', array( 'class' => 'href', 'detail' => $typ, 'text' => transaktion_typ_string( $typ ) ) );
+    } else {
+       $gruppen_name = sql_gruppenname($gruppen_id);
+       if( ($gruppen_id == $login_gruppen_id) or hat_dienst(4,5) )
+         echo "Zahlung $dir Gruppe " . fc_link( 'gruppenkonto', array(
+                'gruppen_id' => $gruppen_id, 'class' => 'href', 'text' => sql_gruppenname( $gruppen_id ) ) );
+       else
+         echo "Zahlung $dir Gruppe $gruppen_name";
+    }
   } else { // zahlung lieferant:
      $lieferanten_id = $row['lieferanten_id'];
      echo "Zahlung $dir Lieferant: " . fc_link( 'lieferantenkonto', array(
