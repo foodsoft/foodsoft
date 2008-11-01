@@ -543,19 +543,19 @@ if( ! $readonly ) {
       open_form( '', '', 'action=produkt_hinzufuegen' );
         select_products_not_in_list($bestell_id);
         submission_button( 'Produkt hinzuf&uuml;gen' );
+        $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );
+        if( $anzahl_eintraege > 0 ) {
+          div_msg( 'kommentar', "
+            Ist Dein gewünschter Artikel nicht in der Auswahlliste? 
+            Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
+            findest Du $anzahl_eintraege Artikel; bitte wende Dich an die Leute vom Dienst 4, wenn
+            Du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
+          " );
+        }
       close_form();
     close_fieldset();
   close_div();
 
-  $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );
-  if( $anzahl_eintraege > 0 ) {
-    div_msg( 'kommentar', "
-      Ist Dein gewünschter Artikel nicht in der Auswahlliste? 
-      Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
-      findest Du $anzahl_eintraege Artikel; bitte wende Dich an die Leute vom Dienst 4, wenn
-      Du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
-    " );
-  }
 }
 
 ?>
