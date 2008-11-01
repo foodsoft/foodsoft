@@ -1036,7 +1036,7 @@ function select_aktive_bestellgruppen() {
 }
 
 function sql_bestellgruppen( $filter = '' ) {
-  return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY gruppennummer" ) );
+  return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY NOT(aktiv), gruppennummer" ) );
 }
 
 function sql_aktive_bestellgruppen() {
@@ -1113,6 +1113,10 @@ function optionen_gruppen(
       $output = $output . " selected";
       $selected = -1;
     }
+    if( $id == sql_muell_id() )
+      $gruppe['name'] = "== Müll ==";
+    if( $id == sql_basar_id() )
+      $gruppe['name'] = "== Basar ==";
     $output = $output . ">{$gruppe['name']} ({$gruppe['gruppennummer']})</option>";
   }
   if( $selected >=0 ) {
