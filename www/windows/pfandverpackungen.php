@@ -75,8 +75,9 @@ if( $action == 'moveup' ) {
       if( ! $prev )
         break;
       $h = $prev['sort_id'];
-      sql_update( 'pfandverpackungen', $prev['verpackung_id'], array( 'sort_id' => $row['sort_id'] ) );
+      sql_update( 'pfandverpackungen', $prev['verpackung_id'], array( 'sort_id' => -1 ) );
       sql_update( 'pfandverpackungen', $row['verpackung_id'], array( 'sort_id' => $h ) );
+      sql_update( 'pfandverpackungen', $prev['verpackung_id'], array( 'sort_id' => $row['sort_id'] ) );
       break;
     }
     $prev = $row;
@@ -85,12 +86,13 @@ if( $action == 'moveup' ) {
 if( $action == 'movedown' ) {
   need_http_var( 'verpackung_id', 'u' );
   $verpackungen = sql_lieferantenpfand( $lieferanten_id );
-  foreach( $verpackungen as $row ) {
+  for( $row = current( $verpackungen ); $row; $row = next( $verpackungen ) ) {
     if( $row['verpackung_id'] == $verpackung_id ) {
       $next = next( $verpackungen );
       if( ! $next )
         break;
       $h = $row['sort_id'];
+      sql_update( 'pfandverpackungen', $next['verpackung_id'], array( 'sort_id' => -1 ) );
       sql_update( 'pfandverpackungen', $row['verpackung_id'], array( 'sort_id' => $next['sort_id'] ) );
       sql_update( 'pfandverpackungen', $next['verpackung_id'], array( 'sort_id' => $h ) );
       break;
@@ -140,11 +142,11 @@ foreach( sql_lieferantenpfand( $lieferanten_id, $bestell_id ) as $row ) {
     open_td( 'number', '', price_view( $row['wert'] ) );
     open_td( 'number', '', price_view( $row['mwst'] ) );
 
-    open_td( 'number', '', int_view( $row['pfand_voll_anzahl'], ( $editable ? "anzahl_voll_$verpackung_id" : false ) ) );
+    open_td( 'number', '', int_view( $row['pfand_voll_anzahl'], ( ($editable and $bestell_id) ? "anzahl_voll_$verpackung_id" : false ) ) );
     open_td( 'number', '', price_view( $row['pfand_voll_netto_soll'] ) );
     open_td( 'number', '', price_view( $row['pfand_voll_brutto_soll'] ) );
 
-    open_td( 'number', '', int_view( $row['pfand_leer_anzahl'], ( $editable ? "anzahl_leer_$verpackung_id" : false ) ) );
+    open_td( 'number', '', int_view( $row['pfand_leer_anzahl'], ( ($editable and $bestell_id) ? "anzahl_leer_$verpackung_id" : false ) ) );
     open_td( 'number', '', price_view( $row['pfand_leer_netto_soll'] ) );
     open_td( 'number', '', price_view( $row['pfand_leer_brutto_soll'] ) );
 
