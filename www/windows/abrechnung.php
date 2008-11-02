@@ -70,7 +70,7 @@ open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung $bestellung_
                                  . fc_link( 'edit_bestellung', "bestell_id=$bestell_id" )
                                  . " / Lieferant: " .lieferant_view( $lieferant_id ) );
 
-if( $editable )
+if( hat_dienst(4) and ! $readonly )
   open_form( '', '', 'action=save' );
 
 open_table( 'list', "style='width:98%'" );
@@ -210,7 +210,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
 
 close_table();
 
-if( $editable )
+if( hat_dienst(4) and ! $readonly )
   close_form();
 
 close_fieldset();
