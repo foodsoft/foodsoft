@@ -1076,11 +1076,11 @@ function fieldset_edit_transaction( $id, $tag, $editable ) {
             echo transaktion_typ_string( $typ );
           }
 
-          if( $haben > 0 ) { // <-- SIC: "bookkeeper view" vs. "shareholder view"!
-            tr_title( 'Soll FC: positiv, falls wir Verlust gemacht haben' );
+          if( $soll > 0 ) {
+            tr_title( 'Soll FC: positiv, falls wir GEWINN gemacht haben (SIC! siehe Hilfe im Wiki!)' );
             form_row_betrag( 'Soll FC:', ( $editable and $tag == 1 ) ? 'soll' : false, $soll );
           } else {
-            tr_title( 'Haben FC: positiv, falls wir Gewinn gemacht haben' );
+            tr_title( 'Haben FC: positiv, falls wir VERLUST gemacht haben (SIC! siehe Hilfe im Wiki!)' );
             form_row_betrag( 'Haben FC:', ( $editable and $tag == 1 ) ? 'haben' : false, $haben );
           }
 
@@ -1088,8 +1088,8 @@ function fieldset_edit_transaction( $id, $tag, $editable ) {
       open_tr();
         open_th( 'smallskip', "colspan='2'", "Gruppen-Transaktion <span class='small'>$id</span>" );
       form_row_gruppe( 'Gruppe:', false, $t['gruppen_id'] );  // TODO: make this editable?
-      tr_title( 'Haben Gruppe: positiv, wenn die Gruppe jetzt mehr Geld auf dem Gruppenkonto hat' );
-      form_row_betrag( 'Haben Gruppe:', ( $editable and $tag == 1 ) ? 'soll' : false, $soll );
+      tr_title( 'Soll FC: positiv, wenn wir der Gruppe jetzt mehr Geld schulden' );
+      form_row_betrag( 'Soll FC:', ( $editable and $tag == 1 ) ? 'soll' : false, $soll );
     }
   }
 }
