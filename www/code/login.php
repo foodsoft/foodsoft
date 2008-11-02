@@ -166,7 +166,7 @@ if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
 
 open_div( 'kommentar', '', $motd );
 open_form( 'small_form', "url=$form_action", 'login=login' );
-  open_fieldset( 'small_form', "style='padding:2em;'", 'Anmelden' );
+  open_fieldset( 'small_form', "style='padding:2em;width:800px;'", 'Anmelden' );
     if( "$problems" )
       echo "$problems";
     open_div( 'kommentar', "style='padding:1em;'", 'Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:' );
@@ -206,10 +206,13 @@ open_form( 'small_form', "url=$form_action", 'login=login' );
               <? if ($dienst==5) echo ' checked'; ?> >
               <label title='Mitgliederverwaltung'>Dienst V</label> <?
     close_table();
+    open_div( 'kommentar', "id='nodienstform' style='display:" . ( $dienst ? 'none' : 'block' ) .";'" );
+      ?> Wenn du nur bestellen oder dein Gruppenkonto einsehen möchtest, brauchst Du hier keinen Dienst auszuwählen. <?
+    close_div();
     open_div( '', "id='dienstform' style='display:" . ( $dienst ? 'block' : 'none' ) .";'" );
       open_div( 'kommentar', '', "
-        Wenn Du Dich fuer einen Dienst anmeldest, kannst Du zusaetzliche
-        Funktionen der Foodsoft nutzen; ausserdem wirst Du 
+        Wenn Du Dich für einen Dienst anmeldest, kannst Du zusätzliche
+        Funktionen der Foodsoft nutzen; außerdem wirst Du 
         automatisch ins Dienstkontrollblatt eingetragen:
       " );
       open_fieldset( 'small_form', '', 'Dienstkontrollblatt' );
@@ -226,16 +229,20 @@ open_form( 'small_form', "url=$form_action", 'login=login' );
         close_div();
       close_fieldset();
     close_div();
-    open_div( 'newfield', '', "<input type='submit' name='submit' value='OK'>" );
+    open_div( 'newfield right' );
+      submission_button('OK');
+    close_div();
   close_fieldset();
 close_form();
 
 open_javascript( "
   function dienstform_on() {
     document.getElementById('dienstform').style.display = 'block';
+    document.getElementById('nodienstform').style.display = 'none';
   }
   function dienstform_off() {
     document.getElementById('dienstform').style.display = 'none';
+    document.getElementById('nodienstform').style.display = 'block';
   }
 " );
 
