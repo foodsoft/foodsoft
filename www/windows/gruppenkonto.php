@@ -75,8 +75,8 @@ if( $meinkonto ) {
       case 'finish_transaction':
         action_finish_transaction();
         break;
-      case 'sonderausgabe_gruppe':
-        buchung_gruppe_sonderausgabe();
+      case 'buchung_gruppe_sonderausgabe':
+        action_buchung_gruppe_sonderausgabe();
         break;
       case 'buchung_gruppe_bank':
         action_buchung_gruppe_bank();
