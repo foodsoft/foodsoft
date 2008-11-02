@@ -1422,6 +1422,39 @@ function auswahl_konto( $selected = 0 ) {
   close_table();
 }
 
+function auswahl_bestellung( $bestell_id = 0 ) {
+  global $mysqljetzt;
+  $laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN );
+  if( !  $laufende_bestellungen ) {
+    div_msg( 'kommentar', 'Zur Zeit laufen leider keine Bestellungen!' );
+    return;
+  }
+  open_table( 'list', "style='width:600px;'" );
+      open_th( '', '', 'Name' );
+      open_th( '', '', 'Lieferant' );
+      open_th( '', '', 'Bestellschluss' );
+      open_th( '', '', 'Lieferung' );
+      open_th( '', '', 'Produkte' );
+
+    foreach( $laufende_bestellungen as $row ) {
+      $id = $row['id'];
+      //jetzt die anzahl der produkte bestimmen ...
+      $num = sql_select_single_field(
+        "SELECT COUNT(*) as num FROM bestellvorschlaege WHERE gesamtbestellung_id=$id", 'num'
+      );
+      open_tr( $id == $bestell_id ? 'active' : '' );
+      if( $id != $bestell_id )
+        open_td( '', '', fc_link( 'bestellen', array( 'bestell_id' => $id, 'text' => $row['name'] ) ) );
+      else
+        open_td( 'bold', '', $row['name'] );
+      open_td( '', '', lieferant_view($row['lieferanten_id']) );
+      open_td( ( $row['bestellende'] < $mysqljetzt ? 'bold' : '' ), '', $row['bestellende'] );
+      open_td( '', '', fc_link( 'bestellschein', array( 'title' => 'zum Bestellschein'
+                       , 'class' => 'href', 'bestell_id' => $id, 'text' => $row['lieferung'] ) ) );
+      open_td( '', '', $num );
+    }
+  close_table();
+}
 
 /**
  * Produziert ein neues select-Feld mit den möglichen
