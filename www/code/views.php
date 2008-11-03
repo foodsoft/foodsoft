@@ -799,6 +799,8 @@ function products_overview(
           if( $gruppen_id ) {
             if( $gruppen_id == $muell_id ) {
               $liefermenge = $produkte_row['muellmenge'];
+            } else if ( $gruppen_id == $basar_id ) {
+              $liefermenge = sql_basarmenge( $bestell_id, $produkt_id );
             } else {
               $liefermenge = $produkte_row['verteilmenge'];
             }
@@ -897,7 +899,7 @@ function products_overview(
                 ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
                      <? echo $input_event_handlers; ?> > <?
               }
-            open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class='question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
+            open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
           }
         }
 

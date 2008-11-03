@@ -1656,12 +1656,8 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
                                          * IF( gruppenbestellungen.bestellguppen_id=$muell_id, 0, 1) ), 0.0 )
     ";
   } else {
-    // basar ist anders: keine eigentlichen zuordnungen, sondern differenz...
-    $verteilmenge_expr = "
-      ifnull( liefermenge - sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)) , 0.0 )
-    ";
-    // ...und zwar zu _allen_ anderen gruppen, deshalb:
-    $gruppen_id = 0;
+    // funktioniert nicht fuer basar:
+    $verteilmenge_expr = 999999;  // nur als Warnung: Wert nicht benutzen!
   }
   $muellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
