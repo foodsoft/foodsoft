@@ -143,13 +143,15 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 
   echo "<h1>$title</h1>";
 
-open_table( 'layout' );
+open_table( 'layout hfill' );
     open_td( 'left' );
       bestellung_overview($bestellung,$gruppen_id,$gruppen_id);
-    open_td( 'right qquad', "id='option_menu'", '' );
+    open_td( 'right qquad floatright' );
+      open_table( 'menu', "id='option_menu_table'" );
+        open_th( '', "colspan='2'", 'Anzeigeoptionen' );
+      close_table();
 close_table();
-
-open_option_menu_row( "<th colspan='2'>Anzeigeoptionen</th>" );
+medskip();
 
 open_option_menu_row();
   open_td( '', '', 'Gruppenansicht:' );
