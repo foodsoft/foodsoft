@@ -604,9 +604,15 @@ function products_overview(
      'header' => "bestellt Gebinde<br>fest/maximal</th>", 'cols' => 2
     );
     if( $state != STATUS_BESTELLEN ) {
-      $col[PR_COL_LIEFERMENGE] = array(
-        'title' => "der Gruppe zugeteilte Menge", 'header' => "Zuteilung", 'cols' => 2
-      );
+      if( $gruppen_id == $basar_id ) {
+        $col[PR_COL_LIEFERMENGE] = array(
+          'title' => "der Gruppe zugeteilte Menge", 'header' => "Basarbestand", 'cols' => 2
+        );
+      } else {
+        $col[PR_COL_LIEFERMENGE] = array(
+          'title' => "der Gruppe zugeteilte Menge", 'header' => "Zuteilung", 'cols' => 2
+        );
+      }
     }
     $option_nichtgefuellt = false;
   } else {
