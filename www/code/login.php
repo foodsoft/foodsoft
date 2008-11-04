@@ -135,6 +135,8 @@ switch( $login ) {
     }
     break;
   case 'logout':
+    $problems .= "<div class='ok'>Abgemeldet!</div>";
+  case 'silentlogout':
     // ggf. noch  dienstkontrollblatt-Eintrag aktualisieren:
     if( $dienst > 0 and $dienstkontrollblatt_id > 0 ) {
       get_http_var('coopie_name','H','');
@@ -145,7 +147,6 @@ switch( $login ) {
       );
     }
     logout();
-    $problems .= "<div class='ok'>Abgemeldet!</div>";
     break;
 }
 
