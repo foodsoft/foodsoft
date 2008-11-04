@@ -41,27 +41,18 @@ foreach( $path as $d ) {
 // echo "<pre>mysql: $mysql</pre>";
 // echo "<pre>gzip: $gzip</pre>";
 
-echo "<div class='warn'>Das Hochladen im Keller funktioniert zur Zeit leider nicht (wir arbeiten dran...): bitte druckt Euch die Verteillisten aus!</div>";
+echo "<div class='warn'>Up/download auf dem demo-server nicht möglich!</div>";
 exit();
 
 need( $mysqldump, "FEHLER: Programm mysqldump nicht gefunden!" );
 need( $mysql, "FEHLER: Programm mysql nicht gefunden!" );
 need( $gzip, "FEHLER: Programm gzip nicht gefunden!" );
 
-need( $result = mysql_query( 'show tables' ), "FEHLER: 'show tables' fehlgeschlagen!";
-
-$tables = '';
-while( $row = mysql_fetch_array( $result ) ) {
-  switch( $row[0] ) {
-    // spezielle tabellen nicht uebertragen und sperren:
-    case 'leitvariable':
-    case 'log':
-    case 'transactions':
-      break;
-    default:
-      $tables = "$tables {$row[0]}";
-      break;
-  }
+require_once( 'structure.php' );
+$tablenames = '';
+foreach( $tables as $key => $props ) {
+  if( $props['updownload'] )
+    $tablenames .= " $key ";
 }
 
 $downloadname = "foodsoft.$foodsoftserver." . date('Ymd.Hi') . ".sql" ;
@@ -100,94 +91,73 @@ if( $action == 'lock' ) {
 }
 
 if( $action == 'upload' ) {
+  need( isset( $_FILES['userfile'] ), "keine Datei hochgeladen!" );
   if($_FILES['userfile']['error']!=0){
+    error( "Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)" );
+  }
+  $input = file_get_contents( $_FILES['userfile']['tmp_name'] );
+  $parts = preg_split( '/^-- :/m', $input );
+  need( isset( $parts[5] ) and ( $parts[5] == "end\n" ) , "Hochladen fehlgeschlagen (test 1)" );
+  $size = 0;
+  sscanf( $parts[2], "size: %u", & $size );
+  need( $size > 1, "Hochladen fehlgeschlagen (test 2)" );
+  $md5 = false;
+  sscanf( $parts[3], "md5: %s", & $md5 );
+  need( $md5, "Hochladen fehlgeschlagen (test 3)" );
+  $sql = $parts[4];
+  $s = strlen( $sql );
+  need( $s == $size, "Hochladen fehlgeschlagen: falsche Dateigroesse: $s statt $size" );
+  $m = hash( 'md5', $sql );
+  need( $m == $md5, "Hochladen fehlgeschlagen: falsche Pruefsumme: $m statt $md5" );
 
-    echo "<div class='warn'>Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)</div>";
-    //var_dump($_FILES);
-    exit();
-  }
-  $tmpfile = $_FILES['userfile']['tmp_name'];
-  if(!$tmpfile) {
-    echo "<div class='warn'>Keine Datei uebergeben!</div>";
-    //var_dump($_FILES);
-    exit();
-  }
-//    exitcode 2 ist bei gzip auch erfolgreich!
-//     $command = "
-//       $gzip -dc $tmpfile | $mysql -h $db_server -u $db_user -p$db_pwd $db_name ;
-//     " . 'a="${PIPESTATUS[*]}"; [ "$a" == "0 0" -o "$a" == "2 0" ]';
-  $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name -T 2>&1 < $tmpfile";
-  system( $command, &$return );
-  if( $return != 0 ) {
-    echo "<div class='warn'>Hochladen fehlgeschlagen: $return $mysql $gzip</div>";
-  } else {
-    echo "<div class='ok'>Datenbank erfolgreich hochgeladen! <a href='index.php'>Weiter...</a></div>";
-    datenbank_freigeben();
-  }
-  exit();
+  $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 < ". $_FILES['userfile']['tmp_name'];
+  system( $command, $result );
+  logger( "upload: size: $size, md5: $md5" );
+
+  div_msg( 'ok', "Datenbank hochgeladen! <a href='index.php?login=silentlogout'>Bitte neu anmelden...</a></div>" );
+  datenbank_freigeben();
+
+  return;
+
 }
 
 if( $action == 'download' ) {
+  global $leitvariable, $mysqljetzt, $foodsoftserver, $cookie;
+
   datenbank_sperren() or exit();
 
-  $result = mysql_query( "SELECT * FROM leitvariable WHERE local=0" );
-  if( ! $result ) {
-    echo "<div class='warn'>Runterladen fehlgeschlagen!</div>";
-    exit();
-  }
-  $leit_sql="
+  $sql = "
      CREATE TABLE IF NOT EXISTS leitvariable (
        name varchar(20) NOT NULL,
        value text,
-       local tinyint(1) NOT NULL default 0,
        comment text NOT NULL,
        PRIMARY KEY  (name)
-     ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
   ";
-  $leit = mysql_query( "SELECT * FROM leitvariable WHERE local=0" );
-  while( $leit && ( $row = mysql_fetch_array($leit) ) ) {
-    $leit_sql = $leit_sql . "
+  foreach( $leitvariable as $name => $props ) {
+    if( $props['local'] )
+      continue;
+    $value = mysql_real_escape_string($$name);
+    $comment = mysql_real_escape_string($props['comment']);
+    $sql .= "
       INSERT INTO leitvariable
-         ( `name`, `value`, `local`, `comment` )
+         ( `name`, `value`, `comment` )
         VALUES
-         ( \"{$row['name']}\", \"{$row['value']}\", 0, \"{$row['comment']}\" )
-        ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
+         ( \"$name\", \"$value\", \"$comment\" )
+        ON DUPLICATE KEY UPDATE value=\"$value\", comment=\"$comment\";
     ";
   }
-  $leit_sql = $leit_sql . "
-    INSERT INTO leitvariable
-       ( `name`, `value`, `local`, `comment` )
-      VALUES
-       ( \"upload_stand\", \"$mysqljetzt\", 1, \"Zeit der Erzeugung des zuletzt hochgeladenen Dumps\" )
-      ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
-  ";
-  $leit_sql = $leit_sql . "
-    INSERT INTO leitvariable
-       ( `name`, `value`, `local`, `comment` )
-      VALUES
-       ( \"upload_ursprung\", \"$foodsoftserver\", 1, \"Server auf dem das zuletzt hochgeladene Dump erzeugt wurde\" )
-      ON DUPLICATE KEY UPDATE name=VALUES(name), value=VALUES(value), local=VALUES(local), comment=VALUES(comment);
-  ";
 
-
-     // FIXME: only for testing:
-//     $tables = 'lieferanten pfandverpackungen';
-//     $command = "
-//       tar c $foodsoftdir \
-//       && echo -n "---- cut me" && echo " here ----" \
-//       && $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
-//     ";
-  $command = "
-    $mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name $tables 2>&1 && echo ' $leit_sql'
-  ";
+  $command = "$mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 $tablenames 2>&1";
   // echo "command: <pre>$command</pre>";
+  $sql .= shell_exec( $command ) . "\n";
+; need( preg_match( "/$cookie/", $sql ), "mysql_dump fehlgeschlagen" ); // quick'n'dirty paranoia check...
+  $size = strlen( $sql );
+  $md5 = hash( 'md5', $sql );
+  logger( "download: $downloadname, size: $size, md5: $md5" );
   header("Content-Type: application/data");
   header("Content-Disposition: filename=$downloadname");
-  system( $command, &$return );
-  if( $return != 0 ) {
-    echo "<div class='warn'>Abspeichern fehlgeschlagen!</div>";
-    // FIXME: ^ ^ ^ ist jetzt vermutlich sinnlos; wie koennen wir das besser machen?
-  }
+  echo "-- :foodsoft dump created at $mysqljetzt on $foodsoftserver\n-- :size: $size\n-- :md5: $md5\n-- :$sql-- :end\n";
 
   exit();
 }
@@ -201,22 +171,28 @@ open_table( 'layout' );
         ?> Datenbank hochladen und anschliessend freigeben: <?
           qquad(); wikiLink("foodsoft:daten_auf_den_server_hochladen", "Wiki...");
       open_td();
-        open_form( '', "enctype='multipart/form-data'", 'action=upload' );
+        open_form( '', "enctype=multipart/form-data", 'action=upload' );
           ?> <input name='userfile' type='file'> <?
           qquad(); submission_button( 'Hochladen' );
         close_form();
     open_tr();
+      open_td('medskip');
+    open_tr();
       open_td( 'label', '', 'Datenbank <em>ohne</em> Upload wieder freigeben:' );
-      open_td( '', '', fc_action( 'text=Freigeben', 'action=release' ) );
+      open_td( '', '', fc_action( 'text=Freigeben,confirm=Datenbank wirklich freigeben?', 'action=release' ) );
 
   } else {
       open_td();
-          ?> Datenbank sperren und anschliessend speichern als <kbd><? echo $downloadname; ?>:<?
+          ?> Datenbank sperren und runterladen: <?
           wikiLink("foodsoft:daten_vom_server_runterladen", "Wiki...");
-      open_td( '', '', fc_action( 'window=updownload', 'download=updownload,action=download' ) );
+      open_td();
+        echo fc_action( "window=updownload,text=Runterladen,title=Download jetzt starten", 'download=updownload,action=download' );
+        echo " (wird gespeichert als <b>$downloadname</b>)";
+    open_tr();
+      open_td('medskip');
     open_tr();
       open_td( 'label', '', 'Datenbank <em>ohne</em> Speichern sperren:' );
-      open_td( '', '', 'fc_action( 'text=Sperren', 'action=lock' );
+      open_td( '', '', fc_action( 'text=Datenbank Sperren,confirm=Datenbank wirklich sperren?', 'action=lock' ) );
   }
 close_table();
 
