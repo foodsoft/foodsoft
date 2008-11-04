@@ -2,7 +2,8 @@
 
 $tables = array(
   'Dienste' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'ID' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -46,7 +47,8 @@ $tables = array(
     )
   )
 , 'bankkonten' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -101,7 +103,8 @@ $tables = array(
     )
   )
 , 'bankkonto' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -169,7 +172,8 @@ $tables = array(
     )
   )
 , 'bestellgruppen' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -206,7 +210,8 @@ $tables = array(
     )
   )
 , 'bestellvorschlaege' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'produkt_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -243,7 +248,8 @@ $tables = array(
     )
   )
 , 'bestellzuordnung' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -288,7 +294,8 @@ $tables = array(
     )
   )
 , 'dienstkontrollblatt' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -344,7 +351,8 @@ $tables = array(
     )
   )
 , 'gesamtbestellungen' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -448,7 +456,8 @@ $tables = array(
     )
   )
 , 'gruppen_transaktion' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -517,7 +526,8 @@ $tables = array(
     )
   )
 , 'gruppenbestellungen' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -543,7 +553,8 @@ $tables = array(
     )
   )
 , 'gruppenmitglieder' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -604,7 +615,8 @@ $tables = array(
     )
   )
 , 'gruppenpfand' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -641,26 +653,9 @@ $tables = array(
       , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, gruppen_id' )
     )
   )
-, 'kategoriezuordnung' => array(
-    'cols' => array(
-      'produkt_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'kategorien_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-    )
-  )
 , 'leitvariable' => array(
-    'cols' => array(
+    'updownload' => false  // leitvariable werden gesondert behandelt!
+  , 'cols' => array(
       'name' => array(
         'type' =>  "varchar(20)"
       , 'null' => 'NO'
@@ -685,7 +680,8 @@ $tables = array(
     )
   )
 , 'lieferanten' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -764,7 +760,8 @@ $tables = array(
     )
   )
 , 'lieferantenkatalog' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -856,7 +853,8 @@ $tables = array(
     )
   )
 , 'lieferantenpfand' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -894,7 +892,8 @@ $tables = array(
     )
   )
 , 'pfandverpackungen' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -938,7 +937,8 @@ $tables = array(
     )
   )
 , 'produkte' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -987,26 +987,8 @@ $tables = array(
     )
   )
 , 'produktgruppen' => array(
-    'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'name' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'produktkategorien' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -1025,7 +1007,8 @@ $tables = array(
     )
   )
 , 'produktpreise' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -1099,7 +1082,8 @@ $tables = array(
     )
   )
 , 'transactions' => array(
-    'cols' => array(
+    'updownload' => false
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -1130,7 +1114,8 @@ $tables = array(
     )
   )
 , 'sessions' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -1167,7 +1152,8 @@ $tables = array(
     )
   )
 , 'logbook' => array(
-    'cols' => array(
+    'updownload' => true
+  , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
