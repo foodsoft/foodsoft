@@ -13,7 +13,7 @@ if( ! $angemeldet ) {
 if( get_http_var( 'download','w' ) ) {  // Spezialfall: Datei-Download (.pdf, ...): ohne HTTP-header!
   $window = $download;
   $self_fields['download'] = $window;
-  include( "$download.php" );
+  include( "windows/$download.php" );
   exit();
 }
 
