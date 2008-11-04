@@ -65,7 +65,15 @@ function sql_select_single_field( $sql, $field, $allownull = false ) {
 }
 
 function sql_update( $table, $where, $values, $escape_and_quote = true ) {
-  $table == 'leitvariable' or $table == 'transactions' or $table == 'log' or fail_if_readonly();
+  switch( $table ) {
+    case 'leitvariable':
+    case 'transactions':
+    case 'logbook':
+    case 'sessions':
+      break;
+    default:
+      fail_if_readonly();
+  }
   $sql = "UPDATE $table SET";
   $komma='';
   foreach( $values as $key => $val ) {
