@@ -34,7 +34,7 @@ $small_window_options = array(
 // these parameters will never be transmitted via GET or POST; rather, they determine
 // how the link itself will look and behave:
 //
-$pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 'anchor', 'url', 'context' );
+$pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 'anchor', 'url', 'context', 'enctype' );
 
 //
 // internal functions (not supposed to be called by consumers):
@@ -140,7 +140,7 @@ function fc_window_defaults( $name ) {
       break;
     case 'updownload':
       $parameters['window'] = 'updownload';
-      $parameters['window_id'] = 'updownload';
+      $parameters['window_id'] = 'main';
       $parameters['text'] = 'Up/Download';
       $parameters['title'] = 'zum Upload / Download der Datenbank...';
       $options = $large_window_options;
@@ -556,6 +556,9 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
         return "$confirm self.location.href='$url';";
       }
     case 'form':
+      $enctype = adefault( $parameters, 'enctype', '' );
+      if( $enctype )
+        $enctype = "enctype='$enctype'";
       if( $window_id == $GLOBALS['window_id'] ) {
         $target = '';
         $onsubmit = '';
@@ -565,7 +568,7 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
         // of document in current window (to issue fresh iTAN for this form):
         $onsubmit = 'onsubmit="'. fc_link( $window, NULL ) . ' document.forms.update_form.submit(); "';
       }
-      return "action='$url' $target $onsubmit";
+      return "action='$url' $target $onsubmit $enctype";
     default:
       error( 'undefinierter $context' );
   }
@@ -630,8 +633,6 @@ function fc_openwindow( $window, $parameters = array(), $options = array() ) {
 // reload_immediately(): exit the current script and open $url instead:
 //
 function reload_immediately( $url ) {
-  // open_form( '', "name=reload_now_form", array( 'url' => $url ) ); close_form();
-  // open_javascript( "document.forms['reload_now_form'].submit();" );
   open_javascript( "self.location.href = '$url';" );
   exit();
 }
