@@ -92,7 +92,15 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
 }
 
 function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = true ) {
-  $table == 'leitvariable' or $table == 'transactions' or $table == 'log' or fail_if_readonly();
+  switch( $table ) {
+    case 'leitvariable':
+    case 'transactions':
+    case 'logbook':
+    case 'sessions':
+      break;
+    default:
+      fail_if_readonly();
+  }
   $komma='';
   $update_komma='';
   $cols = '';
