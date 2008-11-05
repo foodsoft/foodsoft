@@ -90,7 +90,7 @@ switch( $login ) {
     get_http_var( 'dienst', 'u' )
       or $problems .= "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
 
-    if( ! in_array( $dienst, array( 0, 3, 4, 5 ) ) ) {
+    if( ! in_array( $dienst, array( 0, 1, 3, 4, 5 ) ) ) {
       $problems .= "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
     }
 
