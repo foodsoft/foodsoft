@@ -778,7 +778,7 @@ table.footer tr, table.footer td {
 }
 
 .wall_for_board {
-  margin:2em;
+  margin:1em;
 }
 
 .board, .board:hover, .board textarea {
@@ -792,8 +792,8 @@ table.footer tr, table.footer td {
   border-color:#204020;
   border-style:outset;
   padding:1.2ex;
-  height:11em;
-  width:24em;
+  height:12em;
+  width:26em;
 }
 .board textarea {
   border-style:none;

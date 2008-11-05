@@ -10,10 +10,10 @@ switch( $action ) {
     break;
   case 'save':
     need_http_var( 'bulletinboard', 'H' );
-    $b = preg_split( '/\n/m', $bulletinboard . "\n\n\n\n\n\n" );
+    $b = preg_split( '/\n/m', $bulletinboard . "\n\n\n\n\n\n\n" );
     $bulletinboard = '';
     $nl = '';
-    for( $i = 0; $i <= 6; ++$i ) {
+    for( $i = 0; $i <= 7; ++$i ) {
       $bulletinboard .= ( $nl . preg_replace( '/\r/', '', $b[$i] ) );
       $nl = "\n";
     }
@@ -37,7 +37,7 @@ open_table( 'layout hfill' );
       if( $action == 'edit' ) {
         open_form('','','action=save');
           open_div( 'board' );
-            ?><textarea id='news' wrap='hard' name='bulletinboard' cols='34' rows='7'><? echo $bulletinboard; ?></textarea><?
+            ?><textarea id='news' wrap='hard' name='bulletinboard' cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
             open_div( 'right' );
               submission_button();
             close_div();
@@ -47,7 +47,7 @@ open_table( 'layout hfill' );
       } else {
         $form_id = open_form('','','action=edit');
           open_div( 'board' );
-            ?><textarea name='news' readonly cols='34' rows='7'><? echo $bulletinboard; ?></textarea><?
+            ?><textarea name='news' readonly cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
             open_div( 'right' );
               ?><a href='#' onclick="document.forms.form_<? echo $form_id; ?>.submit();"
                   title='Tafel beschreiben...'><img src='img/chalk_trans.gif'></a><?
