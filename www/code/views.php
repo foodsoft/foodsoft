@@ -318,24 +318,24 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 }
 
 function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
+     global $hat_dienst_V;
      //Editiermöglichkeit für Dienst V
      if(hat_dienst(5)){
 ?>
-	   <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
+	   <form action="<? echo self_url(); ?>" method='post' name="personAendern_<?echo $row['ID']?>">
+	       <?  echo self_post(); ?>
 	       <input type="hidden" name="area" value=<?echo $area?>>
-	       <input type="hidden" name="aktion" value="dienstPersonAendern_<?echo $row["Lieferdatum"]."_".$row['gruppenmitglieder_id']?>">
-	       <input type="submit" value="">  
+	       <input type="hidden" name="aktion" value="dienstPersonAendern_<?echo $row['ID']?>">
 
 <?
-          echo "                   <select name=\"selector\" onchange=\"document.edit_dienste.submit()\">\n";
+          echo "                   <select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
 	  foreach(sql_aktive_bestellgruppen() as $gruppe){
 		  foreach(sql_gruppen_members($gruppe['id']) as $member){
 		          $selected="";
 			  if($row['gruppenmitglieder_id']==$member['id']){
 				  $selected=" selected ";
 			  }
-			  echo "                    <option value=".$member['id'].$selected.">Gruppe ".$member['gruppen_id']%1000 .": ".$member['vorname']." ".$member['name']."</option>\n";
+			  echo "                    <option value=".$member['id'].$selected.">G ".$member['gruppen_id']%1000 .": ".$member['vorname'][0].". ".$member['name']."</option>\n";
 		  }
 	  }
 

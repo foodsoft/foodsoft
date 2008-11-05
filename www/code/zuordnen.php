@@ -316,6 +316,23 @@ function sql_dienst_abtauschen($dienst, $bevorzugt){
 	  AND Dienst = '".$row["Dienst"]."' LIMIT 1";
   doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
 }
+
+/**
+ * Person, die den Dienst ausführt verändern
+ */
+function sql_dienst_person_aendern($neuPerson, $dienst){
+  global $login_gruppen_id, $hat_dienst_V;
+  $row = sql_get_dienst_by_id($dienst);
+  //Rechte?
+  if($hat_dienst_V || $row["gruppen_id"]==$login_gruppen_id  ){
+	  //OK, dürfen die Person verändern
+      $sql = "UPDATE Dienste SET gruppenmitglieder_id = ".mysql_escape_string($neuPerson)." WHERE ID = ".mysql_escape_string($dienst);
+      doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
+  } else {
+       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder nicht als Dienst V angemeldet" );
+
+  }
+}
 /**
  *  Offenen oder nicht angenommnen Dienst übernehmen
  */

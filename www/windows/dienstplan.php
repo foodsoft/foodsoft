@@ -189,6 +189,8 @@
 		   sql_dienst_akzeptieren($command[1]);
 		   break;
 		case "dienstPersonAendern":
+		    get_http_var("person_neu","R");
+		    sql_dienst_person_aendern($person_neu, $command[1]);
 			//ToDo hier auf geänderte Person reagieren
 			//Achtung: rechte überprüfen
 		   break;
