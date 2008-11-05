@@ -344,7 +344,7 @@ if( ! $readonly ) {
       open_tr();
         open_td('alert smallskip');
       open_tr();
-        open_td();
+        open_td('alert');
         open_td('center alert', '', "<a class='bigbutton' href='javascript:bestellung_submit();'>Speichern</a>" );
         open_td('center alert', '', fc_link( 'self', 'bestell_id=0,class=bigbutton,text=Abbrechen' ) );
     close_table();
