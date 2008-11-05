@@ -41,8 +41,8 @@ foreach( $path as $d ) {
 // echo "<pre>mysql: $mysql</pre>";
 // echo "<pre>gzip: $gzip</pre>";
 
-echo "<div class='warn'>Up/download auf dem demo-server nicht möglich!</div>";
-exit();
+// echo "<div class='warn'>Up/download auf dem demo-server nicht möglich!</div>";
+// exit();
 
 need( $mysqldump, "FEHLER: Programm mysqldump nicht gefunden!" );
 need( $mysql, "FEHLER: Programm mysql nicht gefunden!" );
