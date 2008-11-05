@@ -9,12 +9,20 @@ $leitvariable = array(
   , 'cols' => '40'
   )
 , 'motd' => array(
-    'meaning' => '"message of the day": wird auf der Startseite angezeigt'
+    'meaning' => '"message of the day": wird auf der Login-Seite (vor dem login, also oeffentilich!) angezeigt'
   , 'default' => 'Willkommen bei der Nahrungskette!'
   , 'local' => false
   , 'comment' => 'Hier kann beliebiger text, einschliessliche einfacher HTML-Formatierung, eingegeben werden'
   , 'runtime_editable' => 1
   , 'cols' => '60', 'rows' => 5
+  )
+, 'bulletinboard' => array(
+    'meaning' => '"Schwarzes Brett": wird auf der Startseite angezeigt (neben Hauptmenue, nach dem Login!)'
+  , 'default' => 'Aktuelle Neuigkeiten'
+  , 'local' => false
+  , 'comment' => 'Hier kann beliebiger text (kein html) eingegeben werden'
+  , 'runtime_editable' => 1
+  , 'cols' => '30', 'rows' => 5
   )
 , 'readonly' => array(
     'meaning' => 'Datenbank schreibgeschuetzt setzen (einige sehr eingeschränkte Schreibzugriffe sind dennoch moeglich)'

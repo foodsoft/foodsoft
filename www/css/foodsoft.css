@@ -777,3 +777,30 @@ table.footer tr, table.footer td {
   padding-bottom:1em;
 }
 
+.wall_for_board {
+  margin:2em;
+}
+
+.board, .board:hover, .board textarea {
+  background-color:#224422;
+  color:#cccccc;
+  font-family:fantasy;
+  font-size:14pt;
+}
+.board, .board:hover {
+  border-width:1ex;
+  border-color:#204020;
+  border-style:outset;
+  padding:1.2ex;
+  height:11em;
+  width:24em;
+}
+.board textarea {
+  border-style:none;
+}
+.chalk {
+  background-image:url(../img/chalk_trans.gif);
+  background-repeat:no-repeat;
+  background-position:bottom right;
+}
+
