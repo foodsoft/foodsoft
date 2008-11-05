@@ -286,7 +286,7 @@ function open_fieldset( $class = '', $attr = '', $legend = '', $toggle = false )
     }
     $id = new_html_id();
     open_span( '', "$attr id='button_$id' style='display:$buttondisplay;'" );
-      echo "<a class='button' href='#' onclick=\"document.getElementById('fieldset_$id').style.display='block';
+      echo "<a class='button' href='javascript:return true;' onclick=\"document.getElementById('fieldset_$id').style.display='block';
                             document.getElementById('button_$id').style.display='none';\"
             >$legend...</a>";
     close_span();
@@ -327,7 +327,7 @@ function floating_submission_button() {
   open_span( 'alert floatingbuttons', "id='floating_submit_button_$form_id'" );
     open_table('layout');
       open_td('alert left');
-        ?> <a class='close' title='Schließen' href='#'
+        ?> <a class='close' title='Schließen' href='javascript:return true;'
           onclick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
       open_td('alert center quad', '', "&Auml;nderungen sind noch nicht gespeichert!" );
     open_tr();
@@ -342,12 +342,12 @@ function submission_button( $text = '', $active = true ) {
   global $form_id;
   $text or $text = 'Speichern';
   $class = ( $active ? 'button' : 'button inactive' );
-  open_span( 'qquad', '', "<a href='#' class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
+  open_span( 'qquad', '', "<a href='javascript:return true;' class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
 }
 
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
   global $form_id;
-  open_span( 'qquad', '', "<a class='button inactive' href='#' id='reset_button_$form_id' title='Änderungen zurücknehmen'
+  open_span( 'qquad', '', "<a class='button inactive' href='javascript:return true;' id='reset_button_$form_id' title='Änderungen zurücknehmen'
                               onClick=\"document.getElementById('form_$form_id').reset(); on_reset($form_id); \">$text</a>" );
 }
 
