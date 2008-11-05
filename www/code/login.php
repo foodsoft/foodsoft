@@ -60,7 +60,7 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
     $dienstkontrollblatt_id = $row['dienstkontrollblatt_id'];
     $login_gruppen_name = sql_gruppenname( $login_gruppen_id );
   }
-  if( ! in_array( $dienst, array( 0, 3, 4, 5 ) ) )
+  if( ! in_array( $dienst, array( 0, 1, 3, 4, 5 ) ) )
     $problems = $problems .  "<div class='warn'>interner fehler: ungueltiger dienst</div>";
   if( $dienst > 0 ) {
     if( $dienstkontrollblatt_id > 0 ) {
