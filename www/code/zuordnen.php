@@ -321,10 +321,10 @@ function sql_dienst_abtauschen($dienst, $bevorzugt){
  * Person, die den Dienst ausführt verändern
  */
 function sql_dienst_person_aendern($neuPerson, $dienst){
-  global $login_gruppen_id, $hat_dienst_V;
+  global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
   //Rechte?
-  if($hat_dienst_V || $row["gruppen_id"]==$login_gruppen_id  ){
+  if( hat_dienst(5) || $row["gruppen_id"]==$login_gruppen_id  ){
 	  //OK, dürfen die Person verändern
       $sql = "UPDATE Dienste SET gruppenmitglieder_id = ".mysql_escape_string($neuPerson)." WHERE ID = ".mysql_escape_string($dienst);
       doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
