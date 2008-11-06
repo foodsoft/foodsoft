@@ -789,8 +789,8 @@ table.footer tr, table.footer td {
 }
 .board, .board:hover {
   border-width:1ex;
-  border-color:#204020;
-  border-style:outset;
+  border-color:#a0b0a0;
+  border-style:solid;
   padding:1.2ex;
   height:12em;
   width:26em;
