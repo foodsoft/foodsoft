@@ -43,7 +43,6 @@ open_table('layout hfill' );
     close_table();
 
   open_td('floatright');
-    ?> <h4> Lieferanten der Foodcoop: </h4> <?
     auswahl_lieferant( $lieferanten_id );
 close_table();
 

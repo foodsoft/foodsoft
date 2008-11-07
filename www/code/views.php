@@ -1388,11 +1388,20 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
 
 
 function auswahl_lieferant( $selected = 0 ) {
+  $lieferanten = sql_lieferanten();
+  if( ! $lieferanten ) {
+    div_msg( 'warn left', "noch keine " . fc_link( 'lieferanten', 'text=Lieferanten,window_id=main,class=href' ). ' eingetragen!' );
+    return;
+  } else if( ! $selected ) {
+    ?> <h4> Bitte Lieferant auswählen: </h4> <?
+  } else {
+    ?> <h4> Lieferanten der Foodcoop: </h4> <?
+  }
   open_table('list',"width:600px;");
       open_th( '', '', 'Lieferanten' );
       open_th( '', '', 'Produkte' );
       open_th( '', '', 'Pfandverpackungen' );
-    foreach( sql_lieferanten() as $row ) {
+    foreach( $lieferanten as $row ) {
       open_tr( ( $row['id'] == $selected ) ? 'active' : '' );
         open_td( '', '', fc_link( '', array( 'title' => 'Lieferant auswählen', 'lieferanten_id' => $row['id'], 'text' => $row['name'] ) ) );
         open_td( '', '', $row['anzahl_produkte'] );
@@ -1402,6 +1411,15 @@ function auswahl_lieferant( $selected = 0 ) {
 }
 
 function auswahl_konto( $selected = 0 ) {
+  $konten = sql_konten();
+  if( ! $konten ) {
+    div_msg( 'warn left', 'noch keine Konten eingetragen!' );
+    return;
+  } else if( ! $selected ) {
+    ?> <h4> Bitte Bankkonto auswählen: </h4> <?
+  } else {
+    ?> <h4> Bankkonten der Foodcoop: </h4> <?
+  }
   open_table('list');
     open_th('','','Name');
     open_th('','','BLZ');

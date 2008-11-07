@@ -48,7 +48,6 @@ open_table( 'layout hfill' );
     close_table();
 
   open_td( 'floatright' );
-    ?> <h4>Konten der Foodcoop:</h4> <?
     auswahl_konto( $konto_id );
 close_table();
 
