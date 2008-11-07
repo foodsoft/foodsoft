@@ -833,27 +833,32 @@ $areas[] = array("area" => "bestellungen_overview",
 	"hint" => "Übersicht aller Bestellungen (laufende und abgeschlossene)",
 	"title" => "Alle Bestellungen");
 
+if( hat_dienst(3,4) ) {
+	$areas[] = array("area" => "basar",
+	"hint" => "Produkte im Basar an Gruppen verteilen",
+	"title" => "Basar");
+} else {
+	$areas[] = array("area" => "basar",
+	"hint" => "Waren im Basar auflisten",
+	"title" => "Basar");
+}
+
 $areas[] = array("area" => "bilanz",
 	"hint" => "Finanzen der FC: Überblick und Verwaltung",
 	"title" => "Bilanz");
 
 if( hat_dienst(4) ){
 	$areas[] = array("area" => "produkte",
-	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktdatenbank");	 
+	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktde");	 
 	$areas[] = array("area" => "konto",
 	"hint" => "Hier könnt ihr die Bankkonten verwalten...",
 	"title" => "Konten");		
 } else {
 	$areas[] = array("area" => "produkte",
-	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produktdatenbank");	 
+	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produkte");	 
 	$areas[] = array("area" => "konto",
 	"hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
 	"title" => "Konten");		
-}
-if( hat_dienst(3,4) ) {
-	$areas[] = array("area" => "basar",
-	"hint" => "Produkte im Basar an Gruppen verteilen",
-	"title" => "Basar");
 }
 if( hat_dienst(4) ) {
 	$areas[] = array("area" => "lieferanten",
