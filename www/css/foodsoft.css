@@ -676,6 +676,12 @@ a + a , .link + .link {
   background-position:0px 0px;
   padding:0px 15px 0px 0px;
 }
+.print {
+  background-image:url(../img/print_black.gif);
+  background-repeat:no-repeat;
+  background-position:0px 0px;
+  padding:0px 15px 0px 0px;
+}
   
 
 
