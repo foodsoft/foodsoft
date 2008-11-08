@@ -2274,6 +2274,7 @@ function sql_bank_transaktion(
 }
 
 function sql_link_transaction( $soll_id, $haben_id ) {
+  logger( "sql_link_transaction: $soll_id, $haben_id" );
   if( $soll_id > 0 )
     sql_update( 'bankkonto', $soll_id, array( 'konterbuchung_id' => $haben_id ) );
   else
@@ -2332,6 +2333,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spe
     , $betrag, $valuta, $dienstkontrollblatt_id, $notiz, 0
     );
   }
+  logger( "sql_doppelte_transaktion: $soll_id, $haben_id" );
 
   sql_link_transaction( $soll_id, $haben_id );
   return;

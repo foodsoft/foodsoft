@@ -108,6 +108,7 @@ switch( $action ) {
         }
       }
     }
+    logger( "editBuchung: update: $id_1 und $id_2" );
     if( $id_1 > 0 ) {
       sql_update( 'bankkonto', $id_1, $mod_1 );
     } else {

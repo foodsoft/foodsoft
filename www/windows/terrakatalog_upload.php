@@ -3,7 +3,7 @@
 
 assert( $angemeldet ) or exit();
 
-setWikiHelpTopic( 'foodsoft:katalog_uploda' );
+setWikiHelpTopic( 'foodsoft:katalog_upload' );
 setWindowSubtitle( 'Katalog einlesen' );
 
 nur_fuer_dienst(4);

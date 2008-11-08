@@ -78,6 +78,7 @@ switch( $action ) {
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'] );
     }
+    logger( "Bestellung speichern: $bestell_id" );
     open_javascript( "alert( 'Bestellung wurde eingetragen!' );" );
     break;
   case 'delete':
