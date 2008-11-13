@@ -59,6 +59,19 @@ $downloadname = "foodsoft.$foodsoftserver." . date('Ymd.Hi') . ".sql" ;
 
 get_http_var( 'action', 'w', '' );
 
+function mount_usb() {
+  global $usb_device;
+  need( $usb_device );
+  $cmd = "/bin/mount /usb";
+  system( $cmd );
+}
+function umount_usb() {
+  global $usb_device;
+  need( $usb_device );
+  system( "/bin/umount /usb" );
+}
+
+  
 function datenbank_sperren() {
   if( mysql_query( 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
     return true;
@@ -91,11 +104,20 @@ if( $action == 'lock' ) {
 }
 
 if( $action == 'upload' ) {
-  need( isset( $_FILES['userfile'] ), "keine Datei hochgeladen!" );
-  if($_FILES['userfile']['error']!=0){
-    error( "Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)" );
+  global $usb_device;
+
+  if( $usb_device ) {
+    need_http_var( 'filename', 'R' );
+    mount_usb();
+    $input = file_get_contents( "/usb/$filename" );
+    umount_usb();
+  } else {
+    need( isset( $_FILES['userfile'] ), "keine Datei hochgeladen!" );
+    if($_FILES['userfile']['error']!=0){
+      error( "Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)" );
+    }
+    $input = file_get_contents( $_FILES['userfile']['tmp_name'] );
   }
-  $input = file_get_contents( $_FILES['userfile']['tmp_name'] );
   $parts = preg_split( '/^-- :/m', $input );
   need( isset( $parts[5] ) and ( $parts[5] == "end\n" ) , "Hochladen fehlgeschlagen (test 1)" );
   $size = 0;
@@ -110,7 +132,8 @@ if( $action == 'upload' ) {
   $m = hash( 'md5', $sql );
   need( $m == $md5, "Hochladen fehlgeschlagen: falsche Pruefsumme: $m statt $md5" );
 
-  $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 < ". $_FILES['userfile']['tmp_name'];
+  file_put_contents( "/tmp/upload.sql", $input );
+  $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 < /tmp/upload.sql";
   system( $command, $result );
   logger( "upload: size: $size, md5: $md5" );
 
@@ -123,6 +146,7 @@ if( $action == 'upload' ) {
 
 if( $action == 'download' ) {
   global $leitvariable, $mysqljetzt, $foodsoftserver, $cookie;
+  global $usb_device;
 
   datenbank_sperren() or exit();
 
@@ -151,30 +175,66 @@ if( $action == 'download' ) {
   $command = "$mysqldump --opt -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 $tablenames 2>&1";
   // echo "command: <pre>$command</pre>";
   $sql .= shell_exec( $command ) . "\n";
-; need( preg_match( "/$cookie/", $sql ), "mysql_dump fehlgeschlagen" ); // quick'n'dirty paranoia check...
+  need( preg_match( "/$cookie/", $sql ), "mysql_dump fehlgeschlagen" ); // quick'n'dirty paranoia check...
   $size = strlen( $sql );
   $md5 = hash( 'md5', $sql );
+  $data = "-- :foodsoft dump created at $mysqljetzt on $foodsoftserver\n-- :size: $size\n-- :md5: $md5\n-- :$sql-- :end\n";
   logger( "download: $downloadname, size: $size, md5: $md5" );
-  header("Content-Type: application/data");
-  header("Content-Disposition: filename=$downloadname");
-  echo "-- :foodsoft dump created at $mysqljetzt on $foodsoftserver\n-- :size: $size\n-- :md5: $md5\n-- :$sql-- :end\n";
-
-  exit();
+  if( $usb_device ) {
+    mount_usb();
+    file_put_contents( "/usb/$downloadname", $data );
+    umount_usb();
+    mount_usb();
+    $paranoia_read = file_get_contents( "/usb/$downloadname" );
+    umount_usb();
+    if( $paranoia_read === $data )
+      div_msg( 'ok', "Datenbank gespeichert!" );
+    else
+      div_msg( 'warn', "Speichern fehlgeschlagen!" );
+    return;
+  } else {
+    header("Content-Type: application/data");
+    header("Content-Disposition: filename=$downloadname");
+    echo $data;
+    exit();
+  }
 }
 
 
 ?> <h1>Up/Download der Datenbank...</h1> <?
 
 open_table( 'layout' );
+  global $usb_device;
   if( $readonly ) {
       open_td();
         ?> Datenbank hochladen und anschliessend freigeben: <?
           qquad(); wikiLink("foodsoft:daten_auf_den_server_hochladen", "Wiki...");
       open_td();
-        open_form( '', "enctype=multipart/form-data", 'action=upload' );
-          ?> <input name='userfile' type='file'> <?
-          qquad(); submission_button( 'Hochladen' );
-        close_form();
+        if( $usb_device ) {
+          mount_usb();
+          $files = glob( "/usb/foodsoft.*" );
+          // echo "files: " . var_export( $files );
+          // return;
+          umount_usb();
+          if( $files ) {
+            open_table( 'list' );
+              open_th( '', '', 'Dateien:' );
+              foreach( $files as $file ) {
+                $name = basename( $file );
+                open_tr();
+                  open_td( '', '', fc_action( array( 'class' => 'hfref', 'text' => $name, 'confirm' => "Datei $name wirklich hochladen?" )
+                                            , array( 'action' => 'upload', 'filename' => $name ) ) );
+              }
+            close_table();
+          } else {
+            div_msg( 'warn', 'keine Dateien gefunden (USB-Stick eingesteckt?)' );
+          }
+        } else {
+          open_form( '', "enctype=multipart/form-data", 'action=upload' );
+            ?> <input name='userfile' type='file'> <?
+            qquad(); submission_button( 'Hochladen' );
+          close_form();
+        }
     open_tr();
       open_td('medskip');
     open_tr();
@@ -186,7 +246,11 @@ open_table( 'layout' );
           ?> Datenbank sperren und runterladen: <?
           wikiLink("foodsoft:daten_vom_server_runterladen", "Wiki...");
       open_td();
-        echo fc_action( "window=updownload,text=Runterladen,title=Download jetzt starten", 'download=updownload,action=download' );
+        if( $usb_device )
+          $download = '';
+        else
+          $download = ',download=updownload';
+        echo fc_action( "window=updownload,text=Runterladen,title=Download jetzt starten", "action=download".$download );
         echo " (wird gespeichert als <b>$downloadname</b>)";
     open_tr();
       open_td('medskip');
