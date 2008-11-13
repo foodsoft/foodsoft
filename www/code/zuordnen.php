@@ -388,12 +388,18 @@ function sql_dienste_nicht_bestaetigt($datum){
  *  Zurückgegeben wird ein mysql-set
  */
 
-function sql_get_dienste($datum = FALSE){
+function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE){
    $sql = "SELECT * FROM Dienste 
               INNER JOIN gruppenmitglieder
 	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
-   if($datum !==FALSE){
-   $sql .= " WHERE Lieferdatum = '".$datum."'";
+
+   if($gruppen_id !==FALSE){
+	   $sql .= " WHERE gruppen_id = ".$gruppen_id;
+	   if($datum !==FALSE){
+		   $sql .= " AND Lieferdatum >= '".$datum."'";
+           }
+   } else if($datum !==FALSE){
+       $sql .= " WHERE Lieferdatum = '".$datum."'";
    }
    $sql .= " ORDER BY Lieferdatum DESC, Dienst ASC";
    $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
@@ -452,6 +458,7 @@ function create_dienste($start, $end, $spacing) {
    foreach($dates as $current){
        if(compare_date2(get_latest_dienst(), $current )){
 	       foreach(array_keys($dienste) as $dienst){
+                  sql_check_rotationsplan($dienst);
 	          for($i=1; $i<=$dienste[$dienst]["anzahl"]; $i++){
 		   $plan_position = sql_rotationsplan_next($dienst, $dienste[$dienst]["position"]);
 		   sql_create_dienst($current, $dienst, $plan_position);
@@ -493,6 +500,14 @@ function sql_date_list($start, $end, $spacing) {
  * True, wenn das erste Datum früher ist
  */ 
 function compare_date2($first, $second){
+	/*
+   echo "Debuginfo compare_date2 (first, second, time(first), time(second))";
+   var_dump($first);
+   var_dump($second);
+   var_dump(strtotime($first));
+   var_dump(strtotime($second));
+        */
+
    return strtotime($first) < strtotime($second);
 }
 /**
@@ -500,7 +515,7 @@ function compare_date2($first, $second){
  */
 function in_two_weeks(){
      //Now
-     $date = date_sql2intern(strftime("%Y-%m-%d %H:%M:%s"));
+     $date = date_sql2intern(strftime("%Y-%m-%d %H:%M:%S"));
      //Correct format
     $toreturn = sql_add_days_to_date($date, 19);
     return $toreturn;
@@ -512,6 +527,8 @@ function date_parse($date_in){
 	$temp = explode(" ", $date_in);
 	
    $date = explode("-", $temp[0]);
+   //echo("\n\ndebug date_parse (date)");
+   //var_dump($date);
    if( count($date) == 3 ) {
      $toReturn = array( "year" => $date[0],
 				   "month" => $date[1],
@@ -542,7 +559,18 @@ function date_parse($date_in){
  *   $date["day"].".".$date["month"].".".$date["year"]
  */
 function date_sql2intern($date_in){
+     #echo "debug info date_sql2intern (date_in, date)";
+     #var_dump($date_in);
      $date = date_parse($date_in);
+     if($date["warning_count"]>0){
+	     echo "<!-- Warings in date_sql2intern:";
+	     var_dump($date["warnings"]);
+     }
+     if($date["error_count"]>0){
+	     echo "<!-- Errors in date_sql2intern:";
+	     var_dump($date["errors"]);
+     }
+     #var_dump($date);
      return $date["day"].".".$date["month"].".".$date["year"];
 }
 

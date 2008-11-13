@@ -319,8 +319,18 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 
 function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
      global $hat_dienst_V;
-     //Editiermöglichkeit für Dienst V
-     if(hat_dienst(5)){
+     global $login_gruppen_id;
+     $gruppen_members = sql_gruppen_members($login_gruppen_id);
+     $gruppen_edit = $row['gruppen_id']%1000==$login_gruppen_id && count($gruppen_members) > 1;
+     //Editiermöglichkeit für Dienst V und die Gruppen jeweils für 
+     //sich selbst
+     if(hat_dienst(5) || $gruppen_edit){
+
+	   if($gruppen_edit){
+		   $gruppen_auswahl = array("id" => $login_gruppen_id) ;
+	   }else {
+                 $gruppen_auswahl = sql_aktive_bestellgruppen();
+	   }
 ?>
 	   <form action="<? echo self_url(); ?>" method='post' name="personAendern_<?echo $row['ID']?>">
 	       <?  echo self_post(); ?>
@@ -328,8 +338,8 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 	       <input type="hidden" name="aktion" value="dienstPersonAendern_<?echo $row['ID']?>">
 
 <?
-          echo "                   <select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
-	  foreach(sql_aktive_bestellgruppen() as $gruppe){
+          echo "                  <font color=".$color_use."><select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
+	  foreach($gruppen_auswahl as $gruppe){
 		  foreach(sql_gruppen_members($gruppe['id']) as $member){
 		          $selected="";
 			  if($row['gruppenmitglieder_id']==$member['id']){
@@ -339,7 +349,7 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 		  }
 	  }
 
-	  echo "             </select>";
+	  echo "             </select></font>";
 	  echo "          </form>";
      } else {
           echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
