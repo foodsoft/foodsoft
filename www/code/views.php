@@ -365,7 +365,7 @@ function areas_in_menu($area){
     open_td('', '', fc_link( $area['area'], array(
       'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] , 'class' => 'bigbutton'
     ) ) );
-    open_td( 'small middle', '', $area['hint'] );
+    // open_td( 'small middle', '', $area['hint'] );
 }
 
 function areas_in_head($area){
