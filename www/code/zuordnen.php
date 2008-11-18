@@ -877,7 +877,7 @@ $areas[] = array("area" => "bilanz",
 
 if( hat_dienst(4) ){
 	$areas[] = array("area" => "produkte",
-	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produktde");	 
+	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produkte");	 
 	$areas[] = array("area" => "konto",
 	"hint" => "Hier könnt ihr die Bankkonten verwalten...",
 	"title" => "Konten");		
