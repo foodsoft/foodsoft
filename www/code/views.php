@@ -339,6 +339,7 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 
 <?
           echo "                  <font color=".$color_use."><select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
+          echo "                  	<option value=error>Keine aktive Person (".$row['name'].")</option>\n";
 	  foreach($gruppen_auswahl as $gruppe){
 		  foreach(sql_gruppen_members($gruppe['id']) as $member){
 		          $selected="";

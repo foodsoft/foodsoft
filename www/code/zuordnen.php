@@ -281,7 +281,7 @@ function sql_dienst_akzeptieren($dienst){
 function sql_dienst_wird_offen($dienst){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
-  if($row["gruppen_id"]!=$login_gruppen_id || 
+  if(!($row["gruppen_id"]==$login_gruppen_id || hat_dienst(5) )|| 
          ($row["Status"]!="Vorgeschlagen" && $row["Status"]!="Bestaetigt" && $row["Status"]!="Akzeptiert")){
        error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
@@ -388,12 +388,17 @@ function sql_dienste_nicht_bestaetigt($datum){
  *  Zurückgegeben wird ein mysql-set
  */
 
-function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE){
-   $sql = "SELECT * FROM Dienste 
+function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder_id=FALSE){
+   $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status  FROM Dienste 
               INNER JOIN gruppenmitglieder
 	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
 
-   if($gruppen_id !==FALSE){
+   if($gruppenmitglieder_id !==FALSE){
+	   $sql .= " WHERE gruppenmitglieder_id = ".$gruppenmitglieder_id;
+	   if($datum !==FALSE){
+		   $sql .= " AND Lieferdatum >= '".$datum."'";
+           }
+   } else if($gruppen_id !==FALSE){
 	   $sql .= " WHERE gruppen_id = ".$gruppen_id;
 	   if($datum !==FALSE){
 		   $sql .= " AND Lieferdatum >= '".$datum."'";
@@ -1241,8 +1246,15 @@ function check_new_group_nr($newNummer){
  * Argument: personen_id
  */
 function sql_delete_group_member($person_id, $gruppen_id){
-	global $problems, $msg, $sockelbetrag, $mysqlheute;
+  global $problems, $msg, $sockelbetrag, $mysqlheute;
+  need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
   need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
+  $bevorstehende_dienste= sql_get_dienste(date_sql2intern(strftime("%Y-%m-%d %H:%M:%S")), FALSE, $person_id);
+   while($row = mysql_fetch_array($bevorstehende_dienste)){
+	   var_dump($row);
+	   sql_dienst_wird_offen($row['dienst_id']);
+   }
+  
   $muell_id = sql_muell_id();
   sql_update( 'gruppenmitglieder', $person_id, array(
     'status' => 'geloescht'
