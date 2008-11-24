@@ -327,7 +327,7 @@ function floating_submission_button() {
   open_span( 'alert floatingbuttons', "id='floating_submit_button_$form_id'" );
     open_table('layout');
       open_td('alert left');
-        ?> <a class='close' title='Schließen' href='javascript:return true;'
+        ?> <a class='close' title='Schließen' href='javascript:true;'
           onclick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
       open_td('alert center quad', '', "&Auml;nderungen sind noch nicht gespeichert!" );
     open_tr();
@@ -342,7 +342,8 @@ function submission_button( $text = '', $active = true ) {
   global $form_id;
   $text or $text = 'Speichern';
   $class = ( $active ? 'button' : 'button inactive' );
-  open_span( 'qquad', '', "<a href='javascript:return true;' class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
+  // open_span( 'qquad', '', "<a href='javascript:return true;' class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
+  open_span( 'qquad', '', "<a href='javascript:submit_form( $form_id );' class='$class' id='submit_button_$form_id' title='$text' >$text</a>" );
 }
 
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
