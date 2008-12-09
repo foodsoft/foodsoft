@@ -388,7 +388,7 @@ function sql_dienste_nicht_bestaetigt($datum){
  *  Zurückgegeben wird ein mysql-set
  */
 
-function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder_id=FALSE){
+function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder_id=FALSE, $before=FALSE){
    $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status  FROM Dienste 
               INNER JOIN gruppenmitglieder
 	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
@@ -401,7 +401,11 @@ function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder
    } else if($gruppen_id !==FALSE){
 	   $sql .= " WHERE gruppen_id = ".$gruppen_id;
 	   if($datum !==FALSE){
-		   $sql .= " AND Lieferdatum >= '".$datum."'";
+		   if($before){
+			   $sql .= " AND Lieferdatum < '".$datum."'";
+		   }else {
+			   $sql .= " AND Lieferdatum >= '".$datum."'";
+		   }
            }
    } else if($datum !==FALSE){
        $sql .= " WHERE Lieferdatum = '".$datum."'";
@@ -1015,11 +1019,14 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
   }
 }
 
-function sql_dienstkontrollblatt( $from_id = 0, $to_id = 0 ) {
+function sql_dienstkontrollblatt( $from_id = 0, $to_id = 0, $gruppe = 0, $dienst=0 ) {
   $to_id or $to_id = $from_id;
   $where = '';
   if( $from_id ) {
     $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
+  }
+  if( $gruppe ) {
+    $where = "WHERE gruppen_id = $gruppe and Dienst = '$dienst' ";
   }
   return mysql2array( doSql( "
     SELECT

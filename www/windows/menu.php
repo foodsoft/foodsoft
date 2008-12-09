@@ -68,5 +68,27 @@ open_table( 'layout hfill' );
       auswahl_bestellung();
     close_div();
 
+    open_div( 'bigskip' );
+      ?> <h4> Eure nächsten <a href=index.php?window=dienstplan>Dienste</a>: </h4> <?
+      $date = strftime("%Y-%m-%d");
+      $dienste =  sql_get_dienste($date, $login_gruppen_id);
+      while($row = mysql_fetch_array($dienste)){
+	       dienst_view2($row);
+      }
+    close_div();
+      /*
+    open_div( 'bigskip' );
+      ?> <h4> Letzte Dienste: </h4> <?
+      $dienste =  sql_get_dienste($date, $login_gruppen_id, FALSE, TRUE);
+       while($row = mysql_fetch_array($dienste)){
+	       if($row['dienstkontrollblatt_id']!="NULL"){
+	          dienst_view3($row);
+	       }
+
+
+       }
+    close_div();
+       */
+
 close_table();
 ?>

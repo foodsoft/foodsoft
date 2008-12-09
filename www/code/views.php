@@ -195,6 +195,38 @@ function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
   }
 }
 
+/**
+ *  Zeigt einen Dienst um in mit einem Dienstkontrollblatt-Eintrag zu 
+ *  verknüpfen (Als Abschluss sozusagen). 
+ */
+function dienst_view3($row){
+	echo("<p>".$row['Lieferdatum'].", Dienst ".$row['Dienst'].": ".$row['vorname']."Geleistet (ja/nein); Auswahl Logbucheintrag; ggf. neuer Logbucheintrag </p>");
+	$kontrollblatt = sql_dienstkontrollblatt(0,0,$row['gruppen_id'], $row['Dienst']);
+?>
+	       <form action="<? echo self_url(); ?>" method='post'>
+	       <? echo self_post(); ?>
+	       <input type="hidden" name="aktion" value="akzeptieren_<?echo $row["ID"]?>">
+	       <select name="kontrollblatt" >
+			<option value=new>Keine passender Eintrag</option>
+<?
+	foreach($kontrollblatt as $eintrag){
+		echo("<option value=".$eintrag['id'].">".$eintrag['datum']." ".$eintrag['notiz']."</option>
+");
+	}	
+?>
+               </select>
+	       <br> Notiz: <input type="text"  size="30" name="notiz">  
+	       <input type="submit" value="Dienst abschliessen">  
+	       </form>
+<?
+}
+
+/**
+ *  Zeigt einen Dienst mit Name, Dienst und Datum
+ */
+function dienst_view2($row){
+	echo("<p>".$row['Lieferdatum'].", Dienst ".$row['Dienst'].": ".$row['vorname']." (Status:".$row['dienst_status'].") </p>");
+}
 
 
 /**
@@ -214,7 +246,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	  $color_not_accepted="#000000";    //black
 	  $soon=FALSE;
        }
-       switch($row["Status"]){
+       switch($row["dienst_status"]){
        case "Vorgeschlagen":
 	    if($gruppe == $row["gruppen_id"]){
 	    ?>
@@ -299,7 +331,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	       </form>
 	    <?
 	       }
-	    } else if($row["Status"]=="Akzeptiert" & $soon){
+	    } else if($row["dienst_status"]=="Akzeptiert" & $soon){
 
 	       ?>
 	       <?if($show_buttons){?>
