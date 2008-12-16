@@ -121,13 +121,14 @@
                    $row = sql_get_dienst_by_id($command[1]);
 		   if($row["Status"]=="Offen" || isset($_REQUEST["confirmed"])){
 		   //Offenen Dienst gleich übernehmen
-		  fail_if_readonly();
+		       fail_if_readonly();
                        sql_dienst_uebernehmen($command[1]);
                    } else {
 		   //Nicht bestätigten Dienst: Confirmation
 		       ?>
-                       <form action="<? self_url(); ?>">
+                       <form action="<? echo self_url(); ?>">
                        <? echo self_post(); ?>
+		       <input type="hidden" name="window" value=dienstplan>
 		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $command[1]?>">
 		       <input type="hidden" name="confirmed" value="confirmed">
 		       <div class='warn'>

@@ -3822,6 +3822,7 @@ $foodsoft_get_vars = array(
 , 'orderby' => 'w'
 , 'prev_id' => 'u'
 , 'produkt_id' => 'u'
+, 'postform_id' => 'u'
 , 'ro' => 'u'
 , 'spalten' => 'u'
 , 'state' => 'u'
