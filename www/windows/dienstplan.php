@@ -57,13 +57,17 @@
        echo self_post();
 	     get_http_var("plan_dienst",'/^[0-9\/]+$/');
 	     if (!isset($plan_dienst)) $plan_dienst = "1/2";
-             foreach (array_keys($_REQUEST) as $submitted){
-	 	if(strstr($submitted, "up_")!==FALSE){
+             foreach( array_keys($_REQUEST) as $submitted){
+	        $command = explode("_", $submitted);
+                if( count( $command ) != 2 )
+                  continue;
+                $command[1] = sprintf( "%u", $command[1] );
+		if($command[0] == "up"){
 		  fail_if_readonly();
-		    sql_change_rotationsplan(substr($submitted, 3), $plan_dienst, FALSE);
-		} elseif(strstr($submitted, "down_")!==FALSE){
+		    sql_change_rotationsplan($command[1], $plan_dienst, FALSE);
+		} elseif($command[0] == "down"){
 		  fail_if_readonly();
-		    sql_change_rotationsplan(substr($submitted, 5), $plan_dienst, TRUE);
+		    sql_change_rotationsplan($command[1], $plan_dienst, TRUE);
 		}
 	      }
 	 	
@@ -116,6 +120,9 @@
 
              foreach ($_REQUEST as $submitted){
 	        $command = explode("_", $submitted);
+                if( count( $command ) != 2 )
+                  continue;
+                $command[1] = sprintf( "%u", $command[1] );
 		switch($command[0]){
 		case "uebernehmen":
                    $row = sql_get_dienst_by_id($command[1]);
@@ -126,9 +133,8 @@
                    } else {
 		   //Nicht bestätigten Dienst: Confirmation
 		       ?>
-                       <form action="<? echo self_url(); ?>">
+                       <form action="<? self_url(); ?>" method='post'>
                        <? echo self_post(); ?>
-		       <input type="hidden" name="window" value=dienstplan>
 		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $command[1]?>">
 		       <input type="hidden" name="confirmed" value="confirmed">
 		       <div class='warn'>
