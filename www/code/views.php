@@ -1397,7 +1397,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'mult', '', $pr1['kan_liefermult'] );
       open_td( 'unit', '', $pr1['kan_liefereinheit'] );
       open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
-      open_td( 'unit', '', $pr1['preiseinheit'] );
+      open_td( 'unit', '', "/ {$pr1['preiseinheit']}" );
       open_td( 'mult', '', $pr1['kan_verteilmult'] );
       open_td( 'unit', '', $pr1['kan_verteileinheit'] );
       open_td( 'number', '', $pr1['gebindegroesse'] );
@@ -1499,8 +1499,7 @@ function auswahl_bestellung( $bestell_id = 0 ) {
     return;
   }
   open_table( 'list', "style='width:600px;'" );
-      open_th( '', '', 'Name' );
-      open_th( '', '', 'Lieferant' );
+      open_th( '', '', 'Name (Lieferant)' );
       open_th( '', '', 'Bestellschluss' );
       open_th( '', '', 'Lieferung' );
       open_th( '', '', 'Produkte' );
@@ -1512,11 +1511,11 @@ function auswahl_bestellung( $bestell_id = 0 ) {
         "SELECT COUNT(*) as num FROM bestellvorschlaege WHERE gesamtbestellung_id=$id", 'num'
       );
       open_tr( $id == $bestell_id ? 'active' : '' );
+      $text = $row['name']." (".sql_lieferant_name($row['lieferanten_id']).")";
       if( $id != $bestell_id )
-        open_td( '', '', fc_link( 'bestellen', array( 'bestell_id' => $id, 'text' => $row['name'] ) ) );
+        open_td( '', '', fc_link( 'bestellen', array( 'bestell_id' => $id, 'text' => $text ) ) );
       else
-        open_td( 'bold', '', $row['name'] );
-      open_td( '', '', lieferant_view($row['lieferanten_id']) );
+        open_td( 'bold', '', $text );
       open_td( ( $row['bestellende'] < $mysqljetzt ? 'bold' : '' ), '', $row['bestellende'] );
       open_td( '', '', fc_link( 'bestellschein', array( 'title' => 'zum Bestellschein'
                        , 'class' => 'href', 'bestell_id' => $id, 'text' => $row['lieferung'] ) ) );
