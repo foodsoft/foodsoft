@@ -10,6 +10,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => 'auto_increment'
       )
+    , 'dienstkontrollblatt_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     , 'Dienst' => array(
         'type' =>  "enum('1/2','3','4','5','freigestellt')"
       , 'null' => 'NO'
