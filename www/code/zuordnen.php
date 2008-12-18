@@ -4061,10 +4061,12 @@ function self_field( $name, $default = NULL ) {
 function update_database($version){
   switch($version){
     case 8:
+     logger( 'starting update_database: from version 8' );
       doSql( "ALTER TABLE Dienste ADD `dienstkontrollblatt_id` INT NULL DEFAULT NULL "
       , "update datenbank von version 8 auf 9 fehlgeschlagen"
       );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 9 ) );
+     logger( 'update_database: update to version 9 successful' );
 
 /*
 	case n:
