@@ -1,11 +1,15 @@
 <?
 
+////////////////////////////////////////
+//
 // functions to output one row of a form
 //
-// if a $fieldname is alread part of $self_fields (ie, part of the current view), the value
-// will just be printed and cannot be modified (only applies to types that can be in $self_fields).
-// the line will not be closed; so e.g. a submission_button() can be appended to the last row
+// - the line will usually contain two columns: one for the label, one for the input field
+// - if a $fieldname is alread part of $self_fields (ie, defining part of the current view), the value
+//   will just be printed and cannot be modified (only applies to types that can be in $self_fields)
+// - the last (second) column will not be closed; so e.g. a submission_button() can be appended
 //
+////////////////////////////////////////
 
 function form_row_konto( $label = 'Konto:', $fieldname = 'konto_id', $initial = 0 ) {
   open_tr();
@@ -96,10 +100,16 @@ function form_row_text( $label = 'Notiz:', $fieldname = 'notiz', $size = 60, $in
 }
 
 
+//////////////////////////////////////////////////////////////////
+//
+// functions to output complete forms, usually followed
+// by a handler function to deal with the POSTed data
+//
+//////////////////////////////////////////////////////////////////
 
 function form_finish_transaction( $transaction_id ) {
   global $input_event_handlers;
-  open_form('', '', "action=finish_transaction,transaction_id=$transaction_id" );
+  open_form( '', "action=finish_transaction,transaction_id=$transaction_id" );
     open_table('layout');
       form_row_konto();
       form_row_kontoauszug();
@@ -148,7 +158,7 @@ function action_finish_transaction() {
 }
 
 function formular_buchung_gruppe_bank( $notiz_initial = 'Einzahlung' ) {
-  open_form( 'small_form', '', 'action=buchung_gruppe_bank' );
+  open_form( '', 'action=buchung_gruppe_bank' );
     open_fieldset( 'small_form', '', 'Einzahlung / Auszahlung Gruppe' );
       open_table('layout');
         form_row_gruppe();
@@ -199,7 +209,7 @@ function action_buchung_gruppe_bank() {
 }
 
 function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung Lieferant' ) {
-  open_form( 'small_form', '', 'action=buchung_lieferant_bank' );
+  open_form( '', 'action=buchung_lieferant_bank' );
     open_fieldset( '', '', 'Überweisung / Lastschrift Lieferant' );
       open_table('layout');
         form_row_lieferant();
@@ -239,7 +249,7 @@ function action_buchung_lieferant_bank() {
 }
 
 function formular_buchung_gruppe_lieferant( $notiz_initial = 'Zahlung an Lieferant' ) {
-  open_form( 'small_form', '', 'action=buchung_gruppe_lieferant' );
+  open_form( '', 'action=buchung_gruppe_lieferant' );
     open_fieldset( 'small_form', '', 'Zahlung von Gruppe an Lieferant' );
       open_table('layout');
         form_row_gruppe();
@@ -274,7 +284,7 @@ function action_buchung_gruppe_lieferant() {
 }
 
 function formular_buchung_gruppe_gruppe( $notiz_initial = 'Umbuchung' ) {
-  open_form( 'small_form', '', 'action=buchung_gruppe_gruppe' );
+  open_form( '', 'action=buchung_gruppe_gruppe' );
     open_fieldset( '', '', 'Umbuchung von Gruppe an Gruppe' );
       open_table('layout');
         form_row_gruppe( 'von Gruppe:', 'gruppen_id' );
@@ -310,7 +320,7 @@ function buchung_gruppe_gruppe() {
 }
 
 function formular_buchung_bank_bank( $notiz_initial = 'Überweisung' ) {
-  open_form( 'small_form', '', 'action=buchung_bank_bank' );
+  open_form( '', 'action=buchung_bank_bank' );
     open_fieldset( '', '', 'Überweisung von Konto zu Konto' );
       open_table('layout');
         form_row_konto( 'von Konto:', 'konto_id' );
@@ -352,7 +362,7 @@ function action_buchung_bank_bank() {
 }
 
 function formular_buchung_bank_sonderausgabe() {
-  open_form( 'small_form', '', 'action=buchung_bank_sonderausgabe' );
+  open_form( '', 'action=buchung_bank_sonderausgabe' );
     open_fieldset( '', '', 'Überweisung Sonderausgabe' );
       open_table('layout');
         form_row_konto( 'von Konto:', 'konto_id' );
@@ -392,7 +402,7 @@ function action_buchung_bank_sonderausgabe() {
 }
 
 function formular_buchung_gruppe_sonderausgabe() {
-  open_form( 'small_form', '', 'action=buchung_gruppe_sonderausgabe' );
+  open_form( '', 'action=buchung_gruppe_sonderausgabe' );
     open_fieldset( '', '', 'Sonderausgabe durch eine Gruppe' );
       open_table('layout');
         form_row_gruppe();
@@ -436,7 +446,7 @@ function action_buchung_gruppe_sonderausgabe() {
 }
 
 function formular_buchung_gruppe_anfangsguthaben() {
-  open_form( 'small_form', '', 'action=buchung_gruppe_anfangsguthaben' );
+  open_form( '', 'action=buchung_gruppe_anfangsguthaben' );
     open_fieldset( '', '', 'Anfangsguthaben einer Gruppe eintragen' );
       open_table('layout');
         open_td( 'kommentar', "colspan='2'" )
@@ -487,7 +497,7 @@ function action_buchung_gruppe_anfangsguthaben() {
 }
 
 function formular_buchung_lieferant_anfangsguthaben() {
-  open_form( 'small_form', '', 'action=buchung_lieferant_anfangsguthaben' );
+  open_form( '', 'action=buchung_lieferant_anfangsguthaben' );
     open_fieldset( '', '', 'Anfangsguthaben eines Lieferanten eintragen' );
       open_table('layout');
         open_td( 'kommentar', "colspan='2'" )
@@ -536,7 +546,7 @@ function action_buchung_lieferant_anfangsguthaben() {
 }
 
 function formular_buchung_bank_anfangsguthaben() {
-  open_form( 'small_form', '', 'action=buchung_bank_anfangsguthaben' );
+  open_form( '', 'action=buchung_bank_anfangsguthaben' );
     open_fieldset( '', '', 'Anfangskontostand eintragen' );
       open_table('layout');
         open_td( 'kommentar', "colspan='2'" )
@@ -582,7 +592,7 @@ function action_buchung_bank_anfangsguthaben() {
 }
 
 function formular_umbuchung_verlust( $typ = 0 ) {
-  open_form( 'small_form', '', "action=umbuchung_verlust" );
+  open_form( '', "action=umbuchung_verlust" );
     open_fieldset( '', '', 'Umbuchung Verlustausgleich' );
       open_table('layout');
           open_td( 'label', '', 'von:' );
@@ -655,7 +665,7 @@ function action_umbuchung_verlust() {
 }
 
 function formular_gruppen_umlage() {
-  open_form( 'small_form', '', 'action=gruppen_umlage' );
+  open_form( '', 'action=gruppen_umlage' );
     open_fieldset( '', '', 'Verlustumlage auf Gruppenmitglieder' );
       open_table( 'layout' );
           open_td( '', "colspan='2'", "Von <span class='bold italic'>allen aktiven Bestellgruppen</span> eine Umlage" );
@@ -711,14 +721,14 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $mod_id = false )
   open_fieldset( 'small_form', '', "Artikelnummer ($anummer) &auml;ndern", $toggle );
     open_table( 'layout' );
         open_td( '', '' );
-          open_form( 'small_form', '', 'action=artikelnummer_setzen' );
+          open_form( '', 'action=artikelnummer_setzen' );
             ?> neue Artikel-Nr. setzen: <?
             echo string_view( $anummer, 20, 'anummer' );
             quad(); submission_button( 'Speichern', true );
           close_form();
       open_tr();
         open_td();
-          open_form('small_form', "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id", 'action=search' );
+          open_form( "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id", 'action=search' );
             ?>...oder: Katalogsuche nach: <?
             echo string_view( $produkt['name'], 40, 'name' );
             quad(); submission_button( 'Los!' );
@@ -778,7 +788,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   //
   preisdatenSetzen( & $vorschlag );
 
-  $form_id = open_form( 'small_form', '', 'action=neuer_preiseintrag' );
+  $form_id = open_form( '', 'action=neuer_preiseintrag' );
 
     open_table('layout');
       form_row_text( 'Produkt:', false, 1, "{$produkt['name']} von {$produkt['lieferanten_name']}" );
@@ -796,7 +806,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
             <label>Pfand:</label>
             <input type='text' size='4' name='pfand' id='newfcpfand'
-             value='<? echo $vorschlag['pfand']; ?>'
+             value='<? printf( "%.2lf", $vorschlag['pfand'] ); ?>'
              title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
              onchange='preisberechnung_rueckwaerts();'>
         <?
@@ -904,7 +914,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     function preiseintrag_auslesen() {
       mwst = parseFloat( document.forms[preisform].newfcmwst.value );
       pfand = parseFloat( document.forms[preisform].newfcpfand.value );
-      verteilmult = parseInt( document.forms[preisform].newfcmult.value );
+      verteilmult = parseFloat( document.forms[preisform].newfcmult.value );
       verteileinheit = document.forms[preisform].newfceinheit.value;
       preis = parseFloat( document.forms[preisform].newfcpreis.value );
       gebindegroesse = parseInt( document.forms[preisform].newfcgebindegroesse.value );
@@ -960,40 +970,81 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         preisberechnung_rueckwaerts();
     }
     function preisberechnung_fcmult() {
-      alt = verteilmult;
       berechnen = document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        verteilmult = parseInt( document.forms[preisform].newfcmult.value );
-        if( verteilmult < 1 )
-          verteilmult = 1;
-        if( (verteilmult > 0) && (alt > 0) ) {
-          gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
-          if( gebindegroesse < 1 )
-            gebindegroesse = 1;
-          document.forms[preisform].newfcgebindegroesse.value = gebindegroesse;
-        }
-      }
-      preisberechnung_default();
-    }
-    function preisberechnung_gebinde() {
-      alt = gebindegroesse;
-      berechnen = document.forms[preisform].dynamischberechnen.checked;
-      if( berechnen ) {
-        gebindegroesse = parseInt( document.forms[preisform].newfcgebindegroesse.value );
-        if( gebindegroesse < 1 )
-          gebindegroesse = 1;
-        // if( (gebindegroesse > 0) && (alt > 0) ) {
-        //  verteilmult = parseInt( 0.499 + verteilmult * alt / gebindegroesse );
-        //  document.forms[preisform].newfcmult.value = verteilmult;
+        alt = verteilmult;
+        preiseintrag_auslesen();
+        // if( verteilmult < 1 )
+        //   verteilmult = 1;
+        // if( verteileinheit == liefereinheit ) {
+        //  gebindegroesse = 
+        //} else {
+          if( (verteilmult > 0) && (alt > 0) ) {
+            gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
+            if( gebindegroesse < 1 )
+              gebindegroesse = 1;
+            document.forms[preisform].newfcgebindegroesse.value = gebindegroesse;
+          }
         // }
       }
-      preisberechnung_default();
+      // preisberechnung_default();
+    }
+    function preisberechnung_gebinde() {
+      berechnen = document.forms[preisform].dynamischberechnen.checked;
+      if( berechnen ) {
+        alt = gebindegroesse;
+        preiseintrag_auslesen();
+        if( gebindegroesse < 1 )
+          gebindegroesse = 1;
+        if( (gebindegroesse > 0) && (alt > 0) ) {
+          verteilmult = parseInt( 0.499 + 1000 * verteilmult * alt / gebindegroesse ) / 1000;
+          document.forms[preisform].newfcmult.value = verteilmult;
+        }
+      }
+      // preisberechnung_default();
     }
 
   </script>
   <?
 }
 
+function action_form_produktpreis() {
+  global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
+       , $gebindegroesse, $mwst, $pfand, $preis, $bestellnummer
+       , $day, $month, $year, $notiz, $produkt_id;
+
+  need_http_var('produkt_id','u');
+
+  get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
+  need_http_var('verteilmult','f');                // _hier_ sind auch bruchteile zulaessig...
+  $verteilmult = verteilmult_view( $verteilmult ); // ...aber maximal 3 nachkommastellen, und nur wenn noetig!
+  need_http_var('verteileinheit','w');
+  need_http_var('liefermult','u');
+  need_http_var('liefereinheit','w');
+  need_http_var('gebindegroesse','u');
+  need_http_var('mwst','f');
+  need_http_var('pfand','f');
+  need_http_var('preis','f');
+  get_http_var('bestellnummer','H','');
+  need_http_var('day','u');
+  need_http_var('month','u');
+  need_http_var('year','u');
+  get_http_var('notiz','H','');
+
+  $produkt = sql_produkt_details( $produkt_id );
+
+  if( "$name" and ( "$name" != $produkt['name'] ) ) {
+    sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
+  }
+  if( "$notiz" != $produkt['notiz'] ) {
+    sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
+  }
+
+  sql_insert_produktpreis(
+    $produkt_id, $preis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
+  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit"
+  );
+}
 
 // fieldset_edit_transaction: ediert eine transaktion der beiden transaktionen einer buchung.
 // $tag: 1 oder 2:

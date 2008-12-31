@@ -166,7 +166,7 @@ if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
 }
 
 open_div( 'kommentar', '', $motd );
-open_form( 'small_form', "url=$form_action", 'login=login' );
+open_form( "url=$form_action", 'login=login' );
   open_fieldset( 'small_form', "style='padding:2em;width:800px;'", 'Anmelden' );
     if( "$problems" )
       echo "$problems";
