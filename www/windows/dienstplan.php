@@ -10,17 +10,15 @@
 
      if( hat_dienst(5) ) {
 
-?>
+  ?>
  <div id=Zusatz>
        <h1>Dienste erstellen</h1>
 
    <!-- Zeige bisherige Dienste-->
+  <?
 
-   
-   <form name="erstellen" action="<? echo self_url(); ?>" method="post">
-	   <? 
-	     echo self_post();
-	     get_http_var("dienstfrequenz",'u'); //ToDo check for integer
+   open_form( 'name=erstellen' );
+	     get_http_var("dienstfrequenz",'u');
 	     if (!isset($dienstfrequenz)){
 	     	$dienstfrequenz = "7";
 	     } else {
@@ -42,22 +40,17 @@
 	   <input type="text" size=10 name="enddatum" value=<?echo $enddatum?> />
 	   <br>
 	   <input type="submit" action="create"  value="Dienste Erstellen" />
-
-	   <p>
-	   </p>
-
-   </form>
+     <?
+   close_form();
+   smallskip();
 
 
-       <h1>Rotationsplan</h1>
- 
+   ?> <h1>Rotationsplan</h1> <?
 
-   <form name="rotationsplan" action="<? self_url(); ?>" method="post">
-	   <? 
-       echo self_post();
+   open_form( 'name=rotationsplan' );
 	     get_http_var("plan_dienst",'/^[0-9\/]+$/');
 	     if (!isset($plan_dienst)) $plan_dienst = "1/2";
-             foreach( array_keys($_REQUEST) as $submitted){
+             foreach (array_keys($_REQUEST) as $submitted){
 	        $command = explode("_", $submitted);
                 if( count( $command ) != 2 )
                   continue;
@@ -90,16 +83,13 @@
 	   }
 	   ?>
 	   </table>
+     <?
 
+   close_form();
 
-
-   </form>
-
-   </div>
-   <?
-   }
-?>
-       <h1>Dienstliste</h1>
+   ?> </div> <?
+  }
+  ?> <h1>Dienstliste</h1>
 
 	<p>
         Zum Abtauschen von Diensten: Beide Gruppen klicken auf "kann doch nicht" und übernehmen anschliessend den von der andern Gruppe entstandenen offen Dienst. 
@@ -132,18 +122,13 @@
                        sql_dienst_uebernehmen($command[1]);
                    } else {
 		   //Nicht bestätigten Dienst: Confirmation
+           open_div( 'warn' );
 		       ?>
-                       <form action="<? self_url(); ?>" method='post'>
-                       <? echo self_post(); ?>
-		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $command[1]?>">
-		       <input type="hidden" name="confirmed" value="confirmed">
-		       <div class='warn'>
-		       Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren Versuchen (Telefon und Email) nicht erreichbar 
-		       <input  type="submit" value="Klar">  
-                       </div>
-		       </form>
-		       <br>
-		       <?
+		         Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren Versuchen (Telefon und Email) nicht erreichbar 
+           <?
+           fc_action( sprintf( 'text=Klar,aktion=uebernehmen_%u,confirmed=confirmed', $command[1] ) );
+		       close_div();
+           smallskip();
 		   }
 		   break;
 		case "wirdoffen":
@@ -163,25 +148,16 @@
 		  fail_if_readonly();
 		           sql_dienst_wird_offen($command[1]);
 		       } else {
-		           ?> 
-			   <div class='warn'>Bitte Ausweichdatum auswählen:
-			   <form name=tauschdatum" action="<? self_url(); ?>" method="post">
-                <? echo self_post(); ?>
-		            <input type="hidden" name="aktion" value="abtauschen_<?echo $command[1]?>">
-			   <select name="abtauschdatum">
-			   <?
+		           open_div( 'warn', 'Bitte Ausweichdatum auswählen:' );
+                           open_form( 'name=tauschdatum', sprintf( 'aktion=abtauschen_%u', $command[1] ) );
+                           ?> <select name="abtauschdatum"> <?
 		           while($date = mysql_fetch_array($dates)){
-			       ?>
-			       <option value=<?echo $date["datum"]?> ><?echo $date["datum"]?> </option>
-			       <?
-
+			     ?> <option value=<?echo $date["datum"]?> ><?echo $date["datum"]?> </option> <?
 		           }
-			   ?>
-			   </select>
-			   <input type="submit" value="Dieses Datum geht">  
-			   </form> </div>
-			   <p>
-			   <?
+			   ?> </select> <?
+                           submission_button( 'Dieses Datum geht' );
+	                   close_form();
+			   close_div();
 		       }
 
 		   } else {
