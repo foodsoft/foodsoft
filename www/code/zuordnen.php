@@ -236,16 +236,16 @@ function rechnung_status_string( $state ) {
 ////////////////////////////////////
 
  $_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
- $_SESSION['ALLOWED_ORDER_STATES'] = array(
-	     'lieferschein' => array(STATUS_VERTEILT, STATUS_LIEFERANT),
-	     'bestellschein' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
-	     'bestellt_faxansicht' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
-	     'verteilung' => array(STATUS_LIEFERANT,STATUS_VERTEILT),
-	     'bestellungen_overview' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
-	     'konsument' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
-	     'check_balanced' => array(STATUS_VERTEILT),
-	     'archiv' => array(STATUS_ARCHIVIERT)
-	 );
+//  $_SESSION['ALLOWED_ORDER_STATES'] = array(
+// 	     'lieferschein' => array(STATUS_VERTEILT, STATUS_LIEFERANT),
+// 	     'bestellschein' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
+// 	     'bestellt_faxansicht' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
+// 	     'verteilung' => array(STATUS_LIEFERANT,STATUS_VERTEILT),
+// 	     'bestellungen_overview' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
+// 	     'konsument' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
+// 	     'check_balanced' => array(STATUS_VERTEILT),
+// 	     'archiv' => array(STATUS_ARCHIVIERT)
+// 	 );
 
 
 /**
@@ -1764,7 +1764,16 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
       break;
     default:
       if( $gruppen_id )
-        $firstorder_expr = " ( $verteilmenge_expr + $muellmenge_expr ) ";
+        switch( $gruppen_id ) {
+          case $basar_id:
+            $firstorder_expr = "liefermenge";
+            break;
+          case $muell_id:
+            $firstorder_expr = $muellmenge_expr;
+            break;
+          default:
+            $firstorder_expr = $verteilmenge_expr;
+        }
       else
         $firstorder_expr = "liefermenge";
       break;
@@ -3225,6 +3234,54 @@ function sql_verluste_summe( $type ) {
 //
 /////////////////////////////////////////////
 
+
+// wichtige felder in tabelle produktpreise:
+//
+// einheiten: bestehen aus masszahl (optional, default ist 1, bis 3 nachkommastellen werden unterstuetzt) und
+// der eigentlichen einheit. wir unterscheiden 3 einheiten:
+//   - verteileinheit
+//       die (teils aus historischen gruenden) mit abstand wichtigste einheit:
+//       - gruppen bestellen vielfache davon: jeweils eine pro klick im Bestellformular
+//       - mengen werden immer als vielfache davon abgespeichert
+//   die anderen einheiten dienen praktischen zwecken; sie erleichtern das bestellen und den rechnungsabgleich:
+//   - liefereinheit
+//       zweckmaessige einheit, die das bestellen beim lieferanten erleichtert:
+//       * bei Terra: entspricht einem gebinde
+//       * beim Bauern: in der regel 1kg (wir bestellen immer kiloweise, auch wenn das gebinde groesser ist)
+//   - preiseinheit
+//       zweckmaessige einheit, die den abgleich von rechnungen und katalogen der lieferanten erleichtert;
+//       der "einzelpreis" des lieferanten sollte immer fuer eine preiseinheit gelten
+//
+//   kanonische einheit:
+//   - immer dasselbe wie die einheit, ausser: kg in g und l in ml umgerechnet
+//
+//   die kanonischen einheiten der 3 einheiten duerfen sich nur in der masszahl unterscheiden, ausser:
+//   - GB, KI oder PA als liefereinheit: bedeutet ein gebinde (gebindegroesse * verteileinheit)
+//   - die preiseinheit darf dann auch ein vielfaches davon sein
+//
+//  beispiele:
+//   lieferant/produkt        verteileinheit      liefereinheit    preiseinheit
+//  ----------------------------------------------------------------------------
+//     Terra/kaese              100 g                  2 kg              1 kg
+//     Terra/Milch             1000 ml                 6 L               1 L
+//     Terra/Roggen            2500 g                  5 kg              1 kg
+//     Terra/Knoblauchzopf      0.1 ST                 1 ST              1 ST 
+//     Terra/Blumenkohl           1 ST                 1 KI              1 KI
+//     B&L/Partybroetchen         1 ST                 1 GB             30 ST
+//     B&L/Torte                  1 ST                 1 GB             30 ST
+//     Bauer/Kartoffeln         500 g                  1 kg              1 kg
+//
+// preis:
+//   immer der endpreis (inklusive pfand und mehrwertsteuer) je verteileinheit
+// gebindegroesse:
+//   gebindegroesse in verteileinheiten
+// pfand:
+//   pfand (netto), das den gruppen je verteileinheit in rechnung gestellt wird
+// mwst:
+//   mehrwertsteuersatz in prozent
+//
+
+
 function references_produktpreise( $preis_id ) {
   return sql_select_single_field(
     "SELECT count(*) as count FROM bestellvorschlaege WHERE produktpreise_id=$preis_id"
@@ -3327,7 +3384,7 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
  */
 function sql_insert_produktpreis (
   $produkt_id, $preis, $start, $bestellnummer, $gebindegroesse
-, $mwst, $pfand, $liefereinheit, $verteileinheit
+, $mwst, $pfand, $liefereinheit, $verteileinheit, $preiseinheit
 ) {
   $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
   if( $aktueller_preis ) {
@@ -3349,50 +3406,13 @@ function sql_insert_produktpreis (
   , 'pfand' => $pfand
   , 'liefereinheit' => $liefereinheit
   , 'verteileinheit' => $verteileinheit
+  , 'preiseinheit' => $preiseinheit
   ) );
 }
 
 
-function action_form_produktpreis() {
-  global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
-       , $gebindegroesse, $mwst, $pfand, $preis, $bestellnummer
-       , $day, $month, $year, $notiz, $produkt_id;
-
-  need_http_var('produkt_id','u');
-
-  get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
-  need_http_var('verteilmult','f');
-  need_http_var('verteileinheit','w');
-  need_http_var('liefermult','u');
-  need_http_var('liefereinheit','w');
-  need_http_var('gebindegroesse','u');
-  need_http_var('mwst','f');
-  need_http_var('pfand','f');
-  need_http_var('preis','f');
-  get_http_var('bestellnummer','H','');
-  need_http_var('day','u');
-  need_http_var('month','u');
-  need_http_var('year','u');
-  get_http_var('notiz','H','');
-
-  $produkt = sql_produkt_details( $produkt_id );
-
-  if( "$name" and ( "$name" != $produkt['name'] ) ) {
-    sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
-  }
-  if( "$notiz" != $produkt['notiz'] ) {
-    sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
-  }
-
-  sql_insert_produktpreis(
-    $produkt_id, $preis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
-  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit"
-  );
-}
-
-
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -3433,22 +3453,9 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
     case 'ml':
       $kan_einheit = 'ml';
       break;
-    //
-    // PAckung und KIste: wenn liefer-einheit:
-    // - die verteileinheit darf dann STueck sein; dann bedeutet die
-    //    gebindegroesse STueck pro KIste oder PAckung
-    //    (annahme: wir koennen einzelne KI oder PA bestellen)
-    // - andernfalls muss die verteileinheit ebenfalls KI oder PA sein
-    //
-    case 'pa':
-      $kan_einheit = 'PA';
-      break;
-    case 'ki':
-      $kan_einheit = 'KI';
-      break;
     default:
       //
-      // der rest sind zaehleinheiten (STueck und aequivalent):
+      // der rest sind zaehleinheiten (STueck und aequivalent)
       //
       foreach( $masseinheiten as $e ) {
         if( strtolower( $e ) == $einheit ) {
@@ -3456,17 +3463,12 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult ) {
           break 2;
         }
       }
-      $kan_einheit = $einheit;
-      //  echo "<div class='warn'>Einheit unbekannt: '$kan_einheit'</div>";
-      $kan_einheit = false;
+      error( "Einheit unbekannt: $einheit" );
       return false;
   }
   return true;
 }
 
-/**
- *
- */
 function optionen_einheiten( $selected ) {
   global $masseinheiten;
   $output = '';
@@ -3479,12 +3481,42 @@ function optionen_einheiten( $selected ) {
   return $output;
 }
 
+function mult2string( $mult ) {
+  return preg_replace( '/\.0*$/', '', sprintf( '%.3lf', $mult ) );
+}
+
 /*  preisdaten setzen:
  *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
  */
 function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
   kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
+  if( ! isset( $pr['preiseinheit'] ) )   /* ToDo: remove this again */
+    $pr['preiseinheit'] = $pr['liefereinheit'];
+  kanonische_einheit( $pr['preiseinheit'], &$pr['kan_preiseinheit'], &$pr['kan_preismult'] );
+
+
+  if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
+    $pr['liefermengenfaktor'] = ( 1.0 * $pr['kan_liefermult'] ) / $pr['kan_verteilmult'];
+  } else {
+    $pr['liefermengenfaktor'] = $pr['gebindegroesse'];
+  }
+  if( $pr['kan_preiseinheit'] == $pr['kan_verteileinheit'] ) {
+    $pr['preismengenfaktor'] = ( 1.0 * $pr['kan_preismult'] ) / $pr['kan_verteilmult'];
+  } elseif( $pr['kan_preiseinheit'] == $pr['kan_liefereinheit'] ) {
+    $pr['preismengenfaktor'] = ( $pr['liefermengenfaktor'] * $pr['kan_preismult'] ) / $pr['kan_verteilmult'];
+  } else {
+    error( 'inkompatible preiseinheit' );
+  }
+
+  $pr['verteileinheit'] = $pr['kan_verteileinheit'];
+  // if( $
+
+  // switch( $pr['kan_liefereinheit'] ) {
+  //  case 'g':
+  //    $pr['kan_liefereinheit'] = 'KG';
+  //    $pr['kan_liefermult'] 
+
 
   if( $pr['kan_liefereinheit'] and $pr['kan_verteileinheit'] ) {
     if( $pr['kan_liefereinheit'] != $pr['kan_verteileinheit'] ) {
@@ -3501,7 +3533,7 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
           break;
         case 'ml':
           $pr['preiseinheit'] = 'L';
-          $pr['mengenfaktor'] = 1000 / $pr['kan_verteilmult'];
+          $pr['mengenfaktor'] = 1000.0 / $pr['kan_verteilmult'];
           break;
         default:
           $pr['preiseinheit'] = $pr['kan_liefereinheit'];
@@ -3806,7 +3838,6 @@ $foodsoft_get_vars = array(
 , 'buchung_id' => 'd' /* kann auch negativ sein */
 , 'confirmed' => 'w'
 , 'detail' => 'w'
-, 'dienst_rueckbestatigen' => 'w'
 , 'download' => 'w'
 , 'gruppen_id' => 'u'
 , 'id' => 'u'
@@ -3842,8 +3873,8 @@ function sanitize_http_input() {
       need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert fuer Variable $key in URL" );
     }
     if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
-      need( isset( $HTTP_POST_VARS['postform_id'] ), 'foodsoft: fehlerhaftes Formular uebergeben' );
-      sscanf( $HTTP_POST_VARS['postform_id'], "%u_%s", &$t_id, &$itan );
+      need( isset( $HTTP_POST_VARS['itan'] ), 'foodsoft: fehlerhaftes Formular uebergeben' );
+      sscanf( $HTTP_POST_VARS['itan'], "%u_%s", &$t_id, &$itan );
       need( $t_id, 'fehlerhaftes Formular uebergeben' );
       $row = sql_select_single_row( "SELECT * FROM transactions WHERE id=$t_id", true );
       need( $row, 'fehlerhaftes Formular uebergeben' );
@@ -3939,7 +3970,7 @@ function checkvalue( $val, $typ){
 //   - wird kein array erwartet, aber default is ein array, so wird $default[$name] versucht
 //
 // per POST uebergebene variable werden nur beruecksichtigt, wenn zugleich eine
-// unverbrauchte transaktionsnummer 'postform_id' uebergeben wird (als Sicherung
+// unverbrauchte transaktionsnummer 'itan' uebergeben wird (als Sicherung
 // gegen mehrfache Absendung desselben Formulars per "Reload" Knopfs des Browsers)
 //
 function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
@@ -4061,12 +4092,29 @@ function self_field( $name, $default = NULL ) {
 function update_database($version){
   switch($version){
     case 8:
-     logger( 'starting update_database: from version 8' );
-      doSql( "ALTER TABLE Dienste ADD `dienstkontrollblatt_id` INT NULL DEFAULT NULL "
-      , "update datenbank von version 8 auf 9 fehlgeschlagen"
+      logger( 'starting update_database: from version 8' );
+       doSql( "ALTER TABLE Dienste ADD `dienstkontrollblatt_id` INT NULL DEFAULT NULL "
+       , "update datenbank von version 8 auf 9 fehlgeschlagen"
+       );
+       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 9 ) );
+      logger( 'update_database: update to version 9 successful' );
+    case 9:
+      logger( 'starting update_database: from version 9' );
+
+      doSql( "ALTER TABLE `produktpreise` ADD column `preiseinheit` varchar(10) default '1 ST'"
+      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: add column preiseinheit"
       );
-      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 9 ) );
-     logger( 'update_database: update to version 9 successful' );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `liefereinheit` varchar(10) default '1 ST'"
+      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column liefereinheit"
+      );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `verteileinheit` varchar(10) default '1 ST'"
+      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column verteileinheit"
+      );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` int(11) default 1"
+      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column gebindegroesse"
+      );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10 ) );
+      logger( 'update_database: update to version 10 successful' );
 
 /*
 	case n:
@@ -4080,7 +4128,7 @@ function update_database($version){
 		doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
 	       
  */
-  }
+	}
 }
 
 function wikiLink( $topic, $text, $head = false ) {
@@ -4113,25 +4161,25 @@ function setWindowSubtitle( $subtitle ) {
   open_javascript( replace_html( 'subtitle', "Foodsoft: $subtitle" ) );
 }
 
-global $postform_id;
-$postform_id = false;
+global $itan;
+$itan = false;
 
 function set_itan() {
-  global $postform_id, $session_id;
-  $itan = random_hex_string(5);
+  global $itan, $session_id;
+  $tan = random_hex_string(5);
   $id = sql_insert( 'transactions' , array(
     'used' => 0
   , 'session_id' => $session_id
-  , 'itan' => $itan
+  , 'itan' => $tan
   ) );
-  $postform_id = $id.'_'.$itan;
+  $itan = $id.'_'.$tan;
 }
 
-function postform_id( $force_new = false ) {
-  global $postform_id;
-  if( $force_new or ! $postform_id )
+function get_itan( $force_new = false ) {
+  global $itan;
+  if( $force_new or ! $itan )
     set_itan();
-  return $postform_id;
+  return $itan;
 }
 
 function optionen( $values, $selected ) {
@@ -4146,12 +4194,12 @@ function optionen( $values, $selected ) {
       $text = $v;
       $title = '';
     }
-    $output = $output . "<option value='$value'";
+    $output .= "<option value='$value'";
     if( $value == $selected )
-      $output = $output . " selected";
+      $output .= " selected";
     if( $title )
-      $output = $output . " title='$title'";
-    $output = $output . ">$text</option>";
+      $output .= " title='$title'";
+    $output .= ">$text</option>";
   }
   return $output;
 }

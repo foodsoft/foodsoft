@@ -76,7 +76,7 @@ $leitvariable = array(
   )
 , 'database_version' => array(
     'meaning' => 'Version der Datenbank'
-  , 'default' => '9'
+  , 'default' => '10'
   , 'comment' => 'Bitte den vorgeschlagenen Wert übernehmen und nicht manuell ändern: diese Variable wird bei Upgrades automatisch hochgesetzt!'
   , 'local' => false
   , 'runtime_editable' => 0
