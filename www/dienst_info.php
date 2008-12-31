@@ -30,13 +30,7 @@
 	}
 
      }
-     ?>
-	       <form action="index.php">
-	       <input type="hidden" name="window" value=<?echo $window?>>
-	       <input type="hidden" name="dienst_rueckbestatigen" value="1">
-	       <input  type="submit" value="OK">  
-	       </form>
-     <?
+     fc_action( 'text=OK', 'dienst_rueckbestatigen=1' );
 
      exit();
      }
