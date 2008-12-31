@@ -1,17 +1,22 @@
 <?
 
-global $open_tags, $print_on_exit, $html_id;
+global $open_tags      /* keep track of open tags */
+     , $print_on_exit  /* print this just before </body> */
+     , $html_id        /* draw-a-number-box to generate unique ids */
+     , $form_id        /* id of the currently open form (if any) */
+     , $input_event_handlers  /* insert into <input> and similar inside a form */
+;
 $open_tags = array();
 $print_on_exit = array();
 $html_id = 0;
-global $input_event_handlers, $form_id;
 $input_event_handlers = '';
+$form_id = '';
 
-global $td_title, $tr_title;
+global $td_title, $tr_title;  /* can be used to set title for next <td> or <tr> */
 $td_title = '';
 $tr_title = '';
 
-// new_html_id(): liefert bei jedem Aufruf eine neue Nummer, zur Generierung eindeutiger id-Attribute:
+// new_html_id(): increment and return next unique id:
 //
 function new_html_id() {
   global $html_id;
@@ -19,6 +24,7 @@ function new_html_id() {
   return $html_id;
 }
 
+// open_tag(), close_tag(): open and close html tag
 function open_tag( $tag, $class = '', $attr = '' ) {
   global $open_tags;
   if( $class )
@@ -69,6 +75,10 @@ function close_span() {
   close_tag( 'span' );
 }
 
+// open/close_table(), open/close_td/th/tr():
+//   these functions will take care of correct nesting, so explicit call of close_td
+//   will rarely be needed
+//
 function open_table( $class = '', $attr = '' ) {
   open_tag( 'table', $class, $attr );
 }
@@ -235,7 +245,13 @@ function close_li() {
   }
 }
 
-function open_form( $class = '', $get_parameters = array(), $post_parameters = array() ) {
+// open_form: open a <form method='post'>
+// - $get_parameters determine the form action
+// - $post_parameters will be posted via <input type='hidden'>
+// hidden input fields will be collected and printed just before </form>
+// (so function hidden_input() (see below) can be called at any point)
+//
+function open_form( $get_parameters = array(), $post_parameters = array() ) {
   global $form_id, $input_event_handlers, $hidden_input, $self_fields;
 
   if( is_string( $get_parameters ) )
@@ -259,17 +275,28 @@ function open_form( $class = '', $get_parameters = array(), $post_parameters = a
   $action = fc_link( $window, $get_parameters );
 
   echo
-  open_tag( 'form', $class, "method='post' $action name='$name' id='form_$form_id' $attr" );
-  $hidden_input = "<input type='hidden' name='postform_id' value='".postform_id()."'>";
-  foreach( $post_parameters as $key => $val ) {
-    $hidden_input .= "<input type='hidden' name='$key' value='$val'>";
-  }
+  open_tag( 'form', '', "method='post' $action name='$name' id='form_$form_id' $attr" );
+  $hidden_input = '';
+  $post_parameters['itan'] = get_itan();
+  foreach( $post_parameters as $key => $val )
+    hidden_input( $key, $val );
   return $form_id;
 }
 
+function hidden_input( $name, $val = false ) {
+  global $hidden_input;
+  if( $val === false ) {
+    global $$name;
+    $val = $$name;
+  }
+  if( $val !== NULL )
+    $hidden_input .= "<input type='hidden' name='$name' value='$val'>\n";
+}
+
 function close_form() {
-  global $input_event_handlers;
+  global $input_event_handlers, $form_id;
   $input_event_handlers = '';
+  $form_id = '';
   echo "\n<span class='nodisplay'><input type='submit'></span>";  // allow to submit form by pressing ENTER
   close_tag( 'form' );
   echo "\n";
@@ -367,6 +394,9 @@ function close_button( $text = 'Schließen' ) {
   echo "<a class='button' onclick='if(opener) opener.focus(); closeCurrentWindow();'>$text</a>";
 }
 
+// open_select(): create <select> element
+// $autoreload: on change, reload current window with new value of $fieldname in the URL
+//
 function open_select( $fieldname, $autoreload = false ) {
   global $input_event_handlers;
   if( $autoreload ) {
@@ -386,6 +416,9 @@ function close_select() {
   close_tag( 'select' );
 }
 
+// option_checkbox(): create <input type='checkbox'> element
+// when clicked, the current window will be reloaded, with $flag toggled in variable $fieldname in the URL
+//
 function option_checkbox( $fieldname, $flag, $text, $title = false ) {
   global $$fieldname;
   echo '<input type="checkbox" class="checkbox" onclick="'
@@ -395,6 +428,10 @@ function option_checkbox( $fieldname, $flag, $text, $title = false ) {
   echo ">$text";
 }
 
+// option_radio(): similar to option_checkbox, but generate a radio button:
+// on click, reload current window with all $flags_on set and all $flags_off unset
+// in variable $fieldname in the URL
+//
 function option_radio( $fieldname, $flags_on, $flags_off, $text, $title = false ) {
   global $$fieldname;
   $all_flags = $flags_on | $flags_off;
@@ -405,6 +442,12 @@ function option_radio( $fieldname, $flags_on, $flags_off, $text, $title = false 
   echo ">$text";
 }
 
+// alternatives_radio(): create list of radio buttons to toggle on and of html elements
+// (typically: fieldsets, each containing a small form)
+// $items is an array:
+//  - every key is the id of the element (fieldset
+//  - every value is either a button label, or a pair of label and title for the button
+//
 function alternatives_radio( $items ) {
   $id = new_html_id();
   open_ul('plain');
@@ -443,15 +486,8 @@ function div_msg( $class, $msg, $backlink = false ) {
   echo "<div class='$class'>$msg " . ( $backlink ? fc_link( $backlink, 'text=zur&uuml;ck...' ) : '' ) ."</div>";
 }
 
-function hidden_input( $name, $val = false ) {
-  global $hidden_input;
-  if( $val === false ) {
-    global $$name;
-    $val = $$name;
-  }
-  $hidden_input .= "<input type='hidden' name='$name' value='$val'>\n";
-}
-
+// the following are kludges to replace the missing <spacer> (equivalent of \kern) element:
+//
 function smallskip() {
   open_div('smallskip', '', '' );
 }
@@ -469,10 +505,11 @@ function qquad() {
 }
 
 
-// option_menu_row:
-// fuegt eine zeile in die <table id="option_menu_table"> ein.
-// die tabelle wird beim ersten aufruf erzeugt, und nach ausgabe des dokuments
-// in ein beliebiges elternelement mit id="option_menu" verschoben:
+// option_menu_row():
+// create row in a small dummy table;
+// at the end of the document, javascript code will be inserted to move this row into
+// a table with id='option_menu_table'
+// $payload must contain one or more complete columns (ie <td>...</td> elements)
 //
 function open_option_menu_row( $payload = false ) {
   global $option_menu_counter, $print_on_exit;
@@ -486,9 +523,11 @@ function open_option_menu_row( $payload = false ) {
 }
 
 function close_option_menu_row() {
-  global $option_menu_counter;
+  global $option_menu_counter, $print_on_exit;
   close_table();
-  open_javascript( move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' ) );
+  $print_on_exit[] = "\n<script type='text/javascript'>\n"
+                     . move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' )
+                     . "\n</script>";
 }
 
 ?>
