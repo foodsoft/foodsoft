@@ -1,10 +1,6 @@
 <?php
 //This file defines views for foodsoft data
 
-//////////////////
-//
-// views for "primitive" types:
-//
 
 function number_selector($name, $min, $max, $selected, $format, $to_stdout = true ){
   global $input_event_handlers;
@@ -78,6 +74,12 @@ function time_selector($stunde_feld, $stunde, $minute_feld, $minute, $to_stdout 
   return $s;
 }
 
+//////////////////
+//
+// views for "primitive" types:
+// they will return a suitable string, not print to stdout directly!
+//
+
 function int_view( $num, $fieldname = false ) {
   global $input_event_handlers;
   $num = sprintf( "%d", $num );
@@ -95,6 +97,18 @@ function price_view( $price, $fieldname = false ) {
   else
     return "<span class='price number'>$price</span>";
 }
+
+// verteilmult_view: erlaube bis zu 3 nachkommastellen; aber nur anzeigen, wenn noetig:
+//
+function verteilmult_view( $mult, $fieldname = false ) {
+  global $input_event_handlers;
+  $mult = mult2string( $mult );
+  if( $fieldname )
+    return "<input type='text' class='number' size='8' name='$fieldname' value='$mult' $input_event_handlers>";
+  else
+    return "<span class='number'>$mult</span>";
+}
+
 
 function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
   global $input_event_handlers;
@@ -202,23 +216,20 @@ function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
 function dienst_view3($row){
 	echo("<p>".$row['Lieferdatum'].", Dienst ".$row['Dienst'].": ".$row['vorname']."Geleistet (ja/nein); Auswahl Logbucheintrag; ggf. neuer Logbucheintrag </p>");
 	$kontrollblatt = sql_dienstkontrollblatt(0,0,$row['gruppen_id'], $row['Dienst']);
-?>
-	       <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
-	       <input type="hidden" name="aktion" value="akzeptieren_<?echo $row["ID"]?>">
-	       <select name="kontrollblatt" >
-			<option value=new>Keine passender Eintrag</option>
-<?
+  open_form( sprintf( 'aktion=akzeptieren_%u', $row["ID"] ) );
+  ?>
+       <select name="kontrollblatt" >
+     <option value='new'>Kein passender Eintrag</option>
+  <?
 	foreach($kontrollblatt as $eintrag){
-		echo("<option value=".$eintrag['id'].">".$eintrag['datum']." ".$eintrag['notiz']."</option>
-");
+		printf( "<option value='%u'>%s %s</option>", $eintrag['id'], $eintrag['datum'], $eintrag['notiz'] );
 	}	
-?>
+  ?>
                </select>
 	       <br> Notiz: <input type="text"  size="30" name="notiz">  
-	       <input type="submit" value="Dienst abschliessen">  
-	       </form>
-<?
+  <?
+  submission_button( 'Dienst abschliessen' );
+  close_form();
 }
 
 /**
@@ -248,67 +259,34 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        }
        switch($row["dienst_status"]){
        case "Vorgeschlagen":
-	    if($gruppe == $row["gruppen_id"]){
-	    ?>
-              <div class=alert>
-	       <b>
-                <?    show_dienst_gruppe($row, $color_not_accepted); ?>
-                Dieser Dienst ist euch zugeteilt</b> <br>
-	       <?if($show_buttons){?>
-	       <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
-	       <input type="hidden" name="aktion" value="akzeptieren_<?echo $row["ID"]?>">
-	       <input type="submit" value="akzeptieren">  
-	       </form>
-	       <?}?>
-	       <?if($show_buttons){?>
-	       <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
-	       <input type="hidden" name="aktion" value="abtauschen_<?echo $row["ID"]?>">
-	       <input type="submit" value="geht nicht">  
-	       </form>
-           </div>
-	       <?}?>
-	       </font>
-	    <?
-	    } else {
-		    ?>
-		    Noch nicht akzeptiert (
-		    
-		    <?
-	            show_dienst_gruppe($row, $color_not_accepted);
-		    echo ")";
+        if($gruppe == $row["gruppen_id"]){
+          open_div('alert bold');
+            show_dienst_gruppe($row, $color_not_accepted);
+            ?> Dieser Dienst ist euch zugeteilt <br> <?
+            if($show_buttons){
+              fc_action( 'text=akzeptieren', sprintf( 'aktion=akzeptieren_%u', $row['ID'] ) );
+              fc_action( 'text=geht nicht', sprintf( 'aktion=abtauschen_%u', $row['ID'] ) );
+            }
+          close_div();
+        } else {
+		      ?> Noch nicht akzeptiert ( <? show_dienst_gruppe($row, $color_not_accepted);
+		      echo ")";
 	            if( $soon){
+	              if($show_buttons){
+                  fc_action( 'text=übernehmen,window=dienstplan', sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+		            }
+	            }
 
-		       ?>
-	               <?if($show_buttons){?>
-  	       <form action="<? echo self_url(); ?>" method='post'>
-  	       <? echo self_post(); ?>
-		       <input type="hidden" name="area" value=<?echo $area?>>
-		       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
-		       <input  type="submit" value="übernehmen">  
-		       </form>
-		       <?
-		       }
-	           }
-
-	    }
+	      }
        	    break;
        case "Nicht geleistet":
        	    break;
        case "Offen":
-	    ?>
-	       <font color=<?echo $color_not_accepted?>>Offener Dienst </font>
-	       <?if($show_buttons){?>
-	       <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
-	       <input type="hidden" name="area" value=<?echo $area?>>
-	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
-	       <input  type="submit" value="übernehmen">  
-	       </form>
-	    <?
-	       }
-       	    break;
+	        open_div( '', "style='color:$color_not_accepted;'", 'Offener Dienst' );
+	        if($show_buttons){
+            fc_action( "window=$area,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+	        }
+       	  break;
        case "Geleistet":
 	       show_dienst_gruppe($row, $color_norm);
        	    break;
@@ -321,27 +299,12 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	    }
 	    show_dienst_gruppe($row, $color_use);
        	    if($gruppe == $row["gruppen_id"]){
-	    ?>
-	       <?if($show_buttons){?>
-	       <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
-	       <input type="hidden" name="area" value=<?echo $area?>>
-	       <input type="hidden" name="aktion" value="wirdoffen_<?echo $row["ID"]?>">
-	       <input type="submit" value="kann doch nicht">  
-	       </form>
-	    <?
+	       if($show_buttons){
+           fc_action( "window=$area,text=kann doch nicht", sprintf( 'aktion=wirdoffen_%u', $row['ID'] ) );
 	       }
 	    } else if($row["dienst_status"]=="Akzeptiert" & $soon){
-
-	       ?>
-	       <?if($show_buttons){?>
-	       <form action="<? echo self_url(); ?>" method='post'>
-	       <? echo self_post(); ?>
-	       <input type="hidden" name="area" value=<?echo $area?>>
-	       <input type="hidden" name="aktion" value="uebernehmen_<?echo $row["ID"]?>">
-	       <input  type="submit" value="übernehmen">  
-	       </form>
-	       <?
+	       if($show_buttons){
+            fc_action( "window=$area,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
 	       }
 	    }
 	    
@@ -363,13 +326,8 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 	   }else {
                  $gruppen_auswahl = sql_aktive_bestellgruppen();
 	   }
-?>
-	   <form action="<? echo self_url(); ?>" method='post' name="personAendern_<?echo $row['ID']?>">
-	       <?  echo self_post(); ?>
-	       <input type="hidden" name="area" value=<?echo $area?>>
-	       <input type="hidden" name="aktion" value="dienstPersonAendern_<?echo $row['ID']?>">
-
-<?
+     open_form( sprintf( 'window=%s,name=personAendern_%u', $area, $row['ID'] )
+              , sprintf( 'aktion=dienstPersonAendern_%u', $row['ID'] ) );
           echo "                  <font color=".$color_use."><select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
           echo "                  	<option value=error>Keine aktive Person (".$row['name'].")</option>\n";
 	  foreach($gruppen_auswahl as $gruppe){
@@ -383,7 +341,7 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 	  }
 
 	  echo "             </select></font>";
-	  echo "          </form>";
+	  close_form();
      } else {
           echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
      }
@@ -435,7 +393,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   global $muell_id, $input_event_handlers;
 
   if( $editAmounts ) {
-    open_form( '', '', 'action=basarzuteilung' );
+    open_form( '', 'action=basarzuteilung' );
     $cols=11;
   } else {
     $cols=9;
@@ -713,7 +671,7 @@ function products_overview(
       open_option_menu_row();
         open_td( '', '', 'Spalten einblenden:' );
         open_td( '', '', "<select id='select_insert_cols'
-            onchange=\"insert_col('" . self_url('spalten') . "',$spalten);\"
+            onchange=\"insert_col('" . fc_link( '', array( 'context' => 'action', 'spalten' => NULL ) ) . "',$spalten);\"
             ><option selected>(bitte wählen)</option>$opts_insert</select></td>
         " );
       close_option_menu_row();
@@ -722,7 +680,7 @@ function products_overview(
       open_option_menu_row();
         open_td( '', '', 'Spalten ausblenden:' );
         open_td( '', '', "<select id='select_drop_cols'
-          onchange=\"drop_col('" . self_url('spalten') . "',$spalten);\"
+          onchange=\"drop_col('" . fc_link( '', array( 'context' => 'action', 'spalten' => NULL ) ) . "',$spalten);\"
            ><option selected>(bitte wählen)</option>$opts_drop</select></td>
         " );
       close_option_menu_row();
@@ -730,7 +688,7 @@ function products_overview(
   }
 
   if( $editAmounts ) {
-    open_form( '', '', 'action=update' );
+    open_form( '', 'action=update' );
     floating_submission_button();
   }
 
@@ -844,6 +802,8 @@ function products_overview(
               $liefermenge = $produkte_row['muellmenge'];
             } else if ( $gruppen_id == $basar_id ) {
               $liefermenge = sql_basarmenge( $bestell_id, $produkt_id );
+              if( $liefermenge < 0.5 )
+                continue 2;
             } else {
               $liefermenge = $produkte_row['verteilmenge'];
             }
@@ -1195,22 +1155,22 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     }
     open_tr();
       open_td( '', '', "{$gruppe['gruppennummer']} {$gruppe['name']}" );
-      open_td( 'mult', '', int_view($festmenge) . " (".int_view($toleranzmenge) .")" );
+      open_td( 'mult', '', verteilmult_view($festmenge) . " (".verteilmult_view($toleranzmenge) .")" );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'mult', '', int_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
+      open_td( 'mult', '', verteilmult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
       open_td( 'number', '', price_view( $preis * $verteilmenge / $verteilmult ) );
   }
   open_tr('summe');
     open_td('', "colspan='3'", "M&uuml;ll:" );
-    open_td( 'mult', '', int_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
+    open_td( 'mult', '', verteilmult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $preis * $muellmenge / $verteilmult ) );
   open_tr('summe');
     open_td('', '', "Basar:" );
-    open_td( 'mult', '', int_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
+    open_td( 'mult', '', verteilmult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'mult', '', int_view( $basar_verteilmenge ) );
+    open_td( 'mult', '', verteilmult_view( $basar_verteilmenge ) );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $preis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
@@ -1398,7 +1358,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'unit', '', $pr1['kan_liefereinheit'] );
       open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['preiseinheit']}" );
-      open_td( 'mult', '', $pr1['kan_verteilmult'] );
+      open_td( 'mult', '', verteilmult_view( $pr1['kan_verteilmult'] ) );
       open_td( 'unit', '', $pr1['kan_verteileinheit'] );
       open_td( 'number', '', $pr1['gebindegroesse'] );
       open_td( 'number', '', $pr1['mwst'] );
@@ -1499,7 +1459,8 @@ function auswahl_bestellung( $bestell_id = 0 ) {
     return;
   }
   open_table( 'list', "style='width:600px;'" );
-      open_th( '', '', 'Name (Lieferant)' );
+      open_th( '', '', 'Name' );
+      open_th( '', '', 'Lieferant' );
       open_th( '', '', 'Bestellschluss' );
       open_th( '', '', 'Lieferung' );
       open_th( '', '', 'Produkte' );
@@ -1511,11 +1472,11 @@ function auswahl_bestellung( $bestell_id = 0 ) {
         "SELECT COUNT(*) as num FROM bestellvorschlaege WHERE gesamtbestellung_id=$id", 'num'
       );
       open_tr( $id == $bestell_id ? 'active' : '' );
-      $text = $row['name']." (".sql_lieferant_name($row['lieferanten_id']).")";
       if( $id != $bestell_id )
-        open_td( '', '', fc_link( 'bestellen', array( 'bestell_id' => $id, 'text' => $text ) ) );
+        open_td( '', '', fc_link( 'bestellen', array( 'bestell_id' => $id, 'text' => $row['name'] ) ) );
       else
-        open_td( 'bold', '', $text );
+        open_td( 'bold', '', $row['name'] );
+      open_td( '', '', lieferant_view($row['lieferanten_id']) );
       open_td( ( $row['bestellende'] < $mysqljetzt ? 'bold' : '' ), '', $row['bestellende'] );
       open_td( '', '', fc_link( 'bestellschein', array( 'title' => 'zum Bestellschein'
                        , 'class' => 'href', 'bestell_id' => $id, 'text' => $row['lieferung'] ) ) );
@@ -1545,7 +1506,7 @@ function dienst_selector($pre_select, $id=""){
  */
 function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
   if( $editable or $super_edit )
-    open_form( 'big_form' , '', 'action=edit' );
+    open_form( '', 'action=edit' );
 
   open_table('list');
   if( $head ) {
