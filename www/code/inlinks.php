@@ -49,7 +49,7 @@ function fc_window_defaults( $name ) {
   // echo "fc_window_defaults: $name<br>";
   switch( strtolower( $name ) ) {
     //
-    // self: Anzeige im selben Fenster, per self_url():
+    // self: display in same window and pass $self_parameters:
     //
     case 'self':
       $parameters['window'] = $GLOBALS['window'];
@@ -360,46 +360,9 @@ function fc_window_defaults( $name ) {
     return NULL;
 }
 
-// self_url:
-// generate url to reload this page, with QUERY_STRING passing all
-// variables from $self_fields, skipping those in $exclude:
-//
-function self_url( $exclude = array() ) {
-  global $self_fields;
 
-  $output = 'index.php?';
-  if( ! $exclude ) {
-    $exclude = array();
-  } elseif( is_string( $exclude ) ) {
-    $exclude = array( $exclude );
-  }
-  foreach( $self_fields as $key => $value ) {
-    if( ! in_array( $key, $exclude ) and ( $value or ( $value === 0 ) ) )
-      $output .= "&$key=$value";
-  }
-  return $output;
-}
-
-
-// self_post:
-//
-function self_post( $exclude = array() ) {
-  global $self_post_fields;
-  $output = "<input type='hidden' name='postform_id' value='".postform_id()."'>";
-  if( ! $exclude ) {
-    $exclude = array();
-  } elseif( is_string( $exclude ) ) {
-    $exclude = array( $exclude );
-  }
-  foreach( $self_post_fields as $key => $value ) {
-    if( ! in_array( $key, $exclude ) and ( $value or ( $value === 0 ) ) )
-      $output .= "<input type='hidden' name='$key' value='$value'>";
-  }
-  return $output;
-}
-
-// parameters_explode:
-// wandelt string "k1=v1,k2=k2,..." nach array( k1 => v1, k2 => v2, ...)
+// parameters_explode():
+// convert string "k1=v1,k2=k2,..." into array( k1 => v1, k2 => v2, ...)
 //
 function parameters_explode( $s ) {
   $r = array();
@@ -413,8 +376,9 @@ function parameters_explode( $s ) {
   return $r;
 }
 
-// fc_url: create an url, passing $parameters in the query string.
-// pseudo-parameters will be skipped except for two special cases:
+// fc_url(): create an internal URL, passing $parameters in the query string.
+// parameters with value NULL will be skipped
+// pseudo-parameters will always be skipped except for two special cases:
 //  - anchor: append an #anchor to the url
 //  - url: return the value of this parameter immediately (overriding all others)
 // 
@@ -430,12 +394,11 @@ function fc_url( $parameters ) {
         continue 2;
       case 'url':
         return $value;
-        break 2;
       default:
         if( in_array( $key, $pseudo_parameters ) )
           continue 2;
     }
-    if( $value or ( $value === 0 ) )
+    if( $value !== NULL )
       $url .= "&$key=$value";
   }
   $url .= $anchor;
@@ -477,18 +440,18 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
 //                use 'name' => NULL to explicitely _not_ pass $name even if it is in defaults or $self_fields.
 //   $options:    window options to be passed in javascript:window_open() (optional, to override defaults)
 // $parameters may also contain some pseudo-parameters:
-//   $text, $title, $class, $img: to specify the look of the link (see alink above)
-//   $window_id: name of browser target window (will also be passed in the query string)
-//   $confirm: if set, a javascript confirm() call will pop up with text $confirm when the link is clicked
-//   $context: where the link is to be used:
+//   text, title, class, img: to specify the look of the link (see alink above)
+//   window_id: name of browser target window (will also be passed in the query string)
+//   confirm: if set, a javascript confirm() call will pop up with text $confirm when the link is clicked
+//   context: where the link is to be used:
 //    'a' (default): return a complete <a href=...>...</a> link. the link will contain javascript if the target window
 //                   is differerent from the current window or if $confirm is specified.
 //    'js': always return javascript code that can be used in event handlers like onclick=...
-//    'action': always return the plain url. (pseudo parameters like $confirm or $window_id will take no effect)
+//    'action': always return the plain url, never javascript (most pseudo parameters will have no effect)
 //    'form': return string of attributes suitable to insert into a <form>-tag. the result always contains action='...'
 //            and may also contain target='...' and onsubmit='...' attributes if needed.
-// as a special case, $parameters === NULL can be used to just open a browser window with no document; this can
-// be used in <form onsubmit='...', in combination with target=..., to submit a form into a new window.
+// as a special case, $parameters === NULL can be used to just open a browser window with no document
+//  - this can be used in <form onsubmit='...', in combination with target=..., to submit a form into a new window.
 //
 function fc_link( $window = '', $parameters = array(), $options = array() ) {
   global $self_fields;
@@ -564,8 +527,9 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
         $onsubmit = '';
       } else {
         $target = "target='$js_window_name'";
-        // $onsubmit: make sure the target window exists (open empty window unless already open), then force reload
-        // of document in current window (to issue fresh iTAN for this form):
+        // $onsubmit: 
+        //  - make sure the target window exists (open empty window unless already open), then
+        //  - force reload of document in current window (to issue fresh iTAN for this form):
         $onsubmit = 'onsubmit="'. fc_link( $window, NULL ) . ' document.forms.update_form.submit(); "';
       }
       return "action='$url' $target $onsubmit $enctype";
@@ -574,13 +538,15 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
   }
 }
 
-// fc_action: generates simple form and one submit button (which actually is a <a>-element)
+// fc_action(): generates simple form and one submit button (which actually is a <a>-element)
 // $get_parameters: determine the url as in fc_link. In particular, 'window' allows to submit this form to
 //                  an arbitrary script in a different window, and the style of the <a> can be specified.
 // $post_parameter: additional parameters to be POSTed in hidden input fields.
+// the form itself will be inserted at end of document; this allows fc_action() to be called
+// inside other forms.
 //
 function fc_action( $get_parameters = array(), $post_parameters = array(), $options = array() ) {
-  global $print_on_exit, $pseudo_parameters;
+  global $print_on_exit, $self_post_fields, $pseudo_parameters;
 
   if( is_string( $get_parameters ) )
     $get_parameters = parameters_explode( $get_parameters );
@@ -606,13 +572,12 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   $action = fc_link( $window, $get_parameters );
 
   $form = "<form style='display:inline;' method='post' id='form_$form_id' name='form_$form_id' $action>";
-  if( $window == 'self' ) {
-    $form .= self_post();
-  } else {
-    $form .= "<input type='hidden' name='postform_id' value='". postform_id() ."'>";
-  }
+  $form .= "<input type='hidden' name='itan' value='". get_itan() ."'>";
+  if( $window == 'self' )
+    $post_parameters = array_merge( $self_post_fields, $post_parameters );
   foreach( $post_parameters as $name => $value ) {
-    $form .= "<input type='hidden' name='$name' value='$value'>";
+    if( $value or ( $value === 0 ) or ( $value === '' ) )
+      $form .= "<input type='hidden' name='$name' value='$value'>";
   }
   $form .= "</form>";
   // we may be inside another form, but forms cannot be nested; so we append this form at the end:
