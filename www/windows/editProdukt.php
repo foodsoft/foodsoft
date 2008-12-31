@@ -65,7 +65,7 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( 'small_form', '', 'action=save' );
+open_form( '', 'action=save' );
   open_fieldset( 'small_form', '', ( $produkt_id ? 'Stammdaten Produkt' : 'Neues Produkt' ) );
     echo $msg . $problems;
     open_table('small_form hfill');

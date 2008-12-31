@@ -15,7 +15,7 @@ if( $meinkonto ) {
   if( ! $readonly ) {
 
     open_fieldset( 'small_form', '', 'Überweisung eintragen', 'off' );
-      open_form( 'small_form', '', "action=einzahlung" );
+      open_form( '', "action=einzahlung" );
         open_table('layout');
           form_row_betrag( 'Ich habe heute ' ); echo ' Euro fuer unsere Gruppe '. gruppe_view( $login_gruppen_id ); submission_button( 'überwiesen' );
         close_table();
@@ -25,7 +25,7 @@ if( $meinkonto ) {
 
     open_div('alert', "style='padding:1ex 0ex 1ex 0ex;'" );
       open_fieldset( 'small_form', '', 'Spende an die Foodcoop', 'off' );
-        open_form( 'small_form', '', "action=spende" );
+        open_form( '', "action=spende" );
           open_table('layout');
             form_row_gruppe( 'Unsere Gruppe', false, $gruppen_id );
             form_row_betrag( 'spendet der Foodcoop' ); echo " Euro!";

@@ -230,7 +230,7 @@ open_table( 'layout' );
             div_msg( 'warn', 'keine Dateien gefunden (USB-Stick eingesteckt?)' );
           }
         } else {
-          open_form( '', "enctype=multipart/form-data", 'action=upload' );
+          open_form( "enctype=multipart/form-data", 'action=upload' );
             ?> <input name='userfile' type='file'> <?
             qquad(); submission_button( 'Hochladen' );
           close_form();

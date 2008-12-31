@@ -82,7 +82,7 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( 'small_form', '', 'action=save' );
+open_form( '', 'action=save' );
   if( isset( $bestellliste ) and is_array( $bestellliste ) )
     foreach( $bestellliste as $produkt_id )
       hidden_input( 'bestellliste[]', $produkt_id );

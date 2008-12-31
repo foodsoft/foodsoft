@@ -36,7 +36,7 @@ if( hat_dienst(4,5) ) {
 
 if( ! $readonly and hat_dienst(5) ) {
   open_fieldset( 'small_form', '', 'Neue Gruppe anlegen', 'off' );
-    open_form( 'small_form', '', 'action=insert' );
+    open_form( '', 'action=insert' );
       open_table();
         open_tr(); open_td( 'label', '', 'Nr:' ); open_td( 'kbd', '', string_view( '', 4, 'newNumber' ) );
         open_tr(); open_td( 'label', '', 'Name:' ); open_td( 'kbd' );

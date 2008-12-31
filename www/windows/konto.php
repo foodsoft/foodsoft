@@ -120,7 +120,7 @@ open_table('layout hfill' );
 
     if( $editable ) {
       open_fieldset( 'small_form', '','Neuen Auszug anlegen', 'off' );
-        open_form( '', 'auszug_jahr=,auszug_nr=' );
+        open_form( array( 'auszug_jahr' => NULL, 'auszug_nr' => NULL ) /* don't pass these automatically */ );
           open_div('oneline');
             echo "<label>Jahr:</label> " . string_view( date('Y'), 4, 'auszug_jahr' );
             echo " / <label>Nr:</label>" . string_view( '', 2, 'auszug_nr' );

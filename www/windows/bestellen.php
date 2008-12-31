@@ -93,7 +93,7 @@ $anzahl_produkte = count( $produkte );
 $gesamtpreis = 0.0;
 
 if( ! $readonly ) {
-  $bestellform_id = open_form( '',  '', 'action=bestellen' );
+  $bestellform_id = open_form( '', 'action=bestellen' );
 
   ?>
   <script type="text/javascript">
@@ -517,7 +517,7 @@ if( ! $readonly ) {
 
   open_div( 'middle', "id='hinzufuegen'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
-      open_form( '', '', 'action=produkt_hinzufuegen' );
+      open_form( '', 'action=produkt_hinzufuegen' );
         select_products_not_in_list($bestell_id);
         submission_button( 'Produkt hinzuf&uuml;gen' );
         $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );

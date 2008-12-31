@@ -68,7 +68,7 @@ if( $editable and ( ! $produkt_id ) ) {
     GROUP BY katalogdatum, katalogtyp
     ORDER BY katalogtyp, katalogdatum
   " );
-  open_form( 'small_form', array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload' ) );
+  open_form( array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload' ) );
     open_fieldset( 'small_form', '', 'Kataloge' );
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
@@ -99,7 +99,7 @@ if( $editable and ( ! $produkt_id ) ) {
 
 open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer fuer <i>$produktname</i>" : "Artikelsuche im Katalog" );
 
-  open_form( 'small_form', '', 'action=search' );
+  open_form( '', 'action=search' );
     open_table();
         open_td( '', '', '<label>Bestellnummer:</label>' );
         open_td();
@@ -137,7 +137,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
     " );
 
     if( $produkt_id ) {
-      open_form( '' , '', 'action=artikelnummer_setzen,button_id=' );
+      open_form( '', 'action=artikelnummer_setzen,button_id=' );
       div_msg( 'bold', 'Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!' );
     }
 

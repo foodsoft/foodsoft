@@ -185,7 +185,7 @@ switch( $state ) {
   case STATUS_VERTEILT:
     if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
       open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
-        open_form( '', '', 'action=insert' );
+        open_form( '', 'action=insert' );
           open_div( 'kommentar' )
             ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
             open_ul();

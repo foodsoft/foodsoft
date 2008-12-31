@@ -78,7 +78,7 @@ switch( $action ) {
 
 if( hat_dienst(5) and ! $readonly ) {
   open_fieldset( 'small_form', '', 'Neues Gruppenmitglied eintragen', 'off' );
-    open_form( '', '', 'action=insert' );
+    open_form( '', 'action=insert' );
       open_table('layout');
         form_row_text( 'Vorname:', 'newVorname', 20 );
         form_row_text( 'Name:', 'newName', 20 );
@@ -95,7 +95,7 @@ medskip();
 echo $pwmsg;
 if( $edit_pwd ) {
   open_fieldset( 'small_form medskip', '', 'Passwort aendern', 'off' );
-    open_form( '', '', 'action=new_pwd' );
+    open_form( '', 'action=new_pwd' );
       open_table('layout');
         open_tr(); open_td( 'label', '', 'Passwort:');
                    open_td( 'kbd', '', "<input type='password' size='24' name='newPass'>" );

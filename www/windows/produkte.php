@@ -76,7 +76,7 @@ if( $action == 'delete' ) {
 $lieferant_name = sql_lieferant_name($lieferanten_id);
 
 if( $editable )
-  open_form( '', 'window=insert_bestellung', "lieferanten_id=$lieferanten_id" );
+  open_form( 'window=insert_bestellung', "lieferanten_id=$lieferanten_id" );
 
 open_table('list');
     open_th( '', "colspan='10'", "<h3>Produktübersicht von $lieferant_name </h3>" );

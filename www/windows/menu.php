@@ -35,7 +35,7 @@ open_table( 'layout hfill' );
   open_td( 'qquad bottom' );   // schwarzes Brett, Schnellauswahl laufende Bestellungen
     open_div( 'wall_for_board' );
       if( $action == 'edit' ) {
-        open_form('','','action=save');
+        open_form( '', 'action=save' );
           open_div( 'board' );
             ?><textarea id='news' wrap='hard' name='bulletinboard' cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
             open_div( 'right' );
@@ -45,7 +45,7 @@ open_table( 'layout hfill' );
           open_javascript( "document.getElementById('news').focus();" );
         close_form();
       } else {
-        $form_id = open_form('','','action=edit');
+        $form_id = open_form( '', 'action=edit' );
           open_div( 'board' );
             ?><textarea name='news' readonly cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
             open_div( 'right' );
@@ -67,28 +67,6 @@ open_table( 'layout hfill' );
       ?> <h4> Laufende Bestellungen: </h4> <?
       auswahl_bestellung();
     close_div();
-
-    open_div( 'bigskip' );
-      ?> <h4> Eure nächsten <a href=index.php?window=dienstplan>Dienste</a>: </h4> <?
-      $date = strftime("%Y-%m-%d");
-      $dienste =  sql_get_dienste($date, $login_gruppen_id);
-      while($row = mysql_fetch_array($dienste)){
-	       dienst_view2($row);
-      }
-    close_div();
-      /*
-    open_div( 'bigskip' );
-      ?> <h4> Letzte Dienste: </h4> <?
-      $dienste =  sql_get_dienste($date, $login_gruppen_id, FALSE, TRUE);
-       while($row = mysql_fetch_array($dienste)){
-	       if($row['dienstkontrollblatt_id']!="NULL"){
-	          dienst_view3($row);
-	       }
-
-
-       }
-    close_div();
-       */
 
 close_table();
 ?>

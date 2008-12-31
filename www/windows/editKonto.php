@@ -50,7 +50,7 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( 'small_form', '', 'action=save' );
+open_form( '', 'action=save' );
   open_fieldset( 'small_form', '', ( $konto_id ? 'Stammdaten Bankkonto' : 'Neues Bankkonto' ) );
     echo $msg . $problems;
     open_table('small_form hfill');

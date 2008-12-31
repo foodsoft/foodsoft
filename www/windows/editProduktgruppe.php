@@ -20,7 +20,7 @@ switch( $action ) {
 }
 
 open_fieldset( 'small_form', '', 'Neue Produktgruppe', 'off' );
-  open_form( '', '', 'action=insert' );
+  open_form( '', 'action=insert' );
     open_table('layout');
       form_row_text( 'Name:', 'neue_produktgruppe', 20 );
       qquad(); submission_button( 'Speichern', true );

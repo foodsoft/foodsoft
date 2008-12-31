@@ -11,7 +11,7 @@ if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
   if( $dienst > 0 and $dienstkontrollblatt_id > 0 )
     $row = current( sql_dienstkontrollblatt( $dienstkontrollblatt_id ) );
   if( $row ) {
-    open_form( 'small_form', '', 'login=logout' );
+    open_form( '', 'login=logout' );
       open_fieldset( 'small_form', '', 'Abmeldung im Dienstkontrollblatt' );
         open_table('layout');
             open_td('label','','Dein Name:');
