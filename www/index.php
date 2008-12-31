@@ -66,8 +66,7 @@ switch( $window_id ) {
 
 // force new iTAN (this form must still be submittable after any other):
 //
-postform_id( true );
-open_form( '', "name=update_form", "message=" );
-  echo self_post();
+get_itan( true );
+open_form( 'name=update_form', 'message=' );
 
 ?>
