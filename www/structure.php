@@ -1052,15 +1052,15 @@ $tables = array(
       , 'extra' => ''
       )
     , 'liefereinheit' => array(
-        'type' =>  "text"
+        'type' =>  "varchar(10)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '1 ST'
       , 'extra' => ''
       )
     , 'gebindegroesse' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => '0'
+      , 'default' => '1'
       , 'extra' => ''
       )
     , 'pfand' => array(
@@ -1076,9 +1076,15 @@ $tables = array(
       , 'extra' => ''
       )
     , 'verteileinheit' => array(
-        'type' =>  "text"
+        'type' =>  "varchar(10)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '1 ST'
+      , 'extra' => ''
+      )
+    , 'preiseinheit' => array(
+        'type' =>  "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => '1 ST'
       , 'extra' => ''
       )
     )
