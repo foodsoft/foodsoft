@@ -1789,6 +1789,7 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
     , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
+    , produktpreise.preiseinheit as preiseinheit
     , produktpreise.gebindegroesse as gebindegroesse
     , produktpreise.preis as preis
     , produktpreise.id as preis_id
@@ -2247,8 +2248,6 @@ function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
    ";
   return doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
 }
-
-
 
 /**
  *  zusaetzlicheBestellung:
@@ -3238,38 +3237,38 @@ function sql_verluste_summe( $type ) {
 // wichtige felder in tabelle produktpreise:
 //
 // einheiten: bestehen aus masszahl (optional, default ist 1, bis 3 nachkommastellen werden unterstuetzt) und
-// der eigentlichen einheit. wir unterscheiden 3 einheiten:
+// der eigentlichen einheit. wir unterscheiden 2 einheiten:
 //   - verteileinheit
 //       die (teils aus historischen gruenden) mit abstand wichtigste einheit:
 //       - gruppen bestellen vielfache davon: jeweils eine pro klick im Bestellformular
-//       - mengen werden immer als vielfache davon abgespeichert
-//   die anderen einheiten dienen praktischen zwecken; sie erleichtern das bestellen und den rechnungsabgleich:
+//       - produktmengen werden immer als vielfache davon gespeichert
+//       - produktpreise werden immer pro verteileinheit gespeichert
 //   - liefereinheit
-//       zweckmaessige einheit, die das bestellen beim lieferanten erleichtert:
-//       * bei Terra: entspricht einem gebinde
-//       * beim Bauern: in der regel 1kg (wir bestellen immer kiloweise, auch wenn das gebinde groesser ist)
-//   - preiseinheit
-//       zweckmaessige einheit, die den abgleich von rechnungen und katalogen der lieferanten erleichtert;
-//       der "einzelpreis" des lieferanten sollte immer fuer eine preiseinheit gelten
+//       zweckmaessige einheit, die das bestellen beim lieferanten und den rechnungsabgleich erleichtern soll:
+//       * _immer_ die einheit, auf die sich der "einzelpreis" des lieferanten bezieht
+//       * oft (etwa beim bauern) auch die einheit, in der der wir bestellen, etwa "1 kg"
+//   wenn verteileinheit und liefereinheit nicht automatisch umgerechnet werden koennen, muss der umrechnungsfaktor
+//     lv_faktor
+//   angegeben werden.
 //
 //   kanonische einheit:
 //   - immer dasselbe wie die einheit, ausser: kg in g und l in ml umgerechnet
 //
 //   die kanonischen einheiten der 3 einheiten duerfen sich nur in der masszahl unterscheiden, ausser:
 //   - GB, KI oder PA als liefereinheit: bedeutet ein gebinde (gebindegroesse * verteileinheit)
-//   - die preiseinheit darf dann auch ein vielfaches davon sein
 //
 //  beispiele:
-//   lieferant/produkt        verteileinheit      liefereinheit    preiseinheit
+//   lieferant/produkt        verteileinheit      liefereinheit   lv_faktor
 //  ----------------------------------------------------------------------------
-//     Terra/kaese              100 g                  2 kg              1 kg
-//     Terra/Milch             1000 ml                 6 L               1 L
-//     Terra/Roggen            2500 g                  5 kg              1 kg
-//     Terra/Knoblauchzopf      0.1 ST                 1 ST              1 ST 
-//     Terra/Blumenkohl           1 ST                 1 KI              1 KI
-//     B&L/Partybroetchen         1 ST                 1 GB             30 ST
-//     B&L/Torte                  1 ST                 1 GB             30 ST
-//     Bauer/Kartoffeln         500 g                  1 kg              1 kg
+//     Terra/kaese              100 g                  1 kg         (10 (automatisch berechnet))
+//     Terra/Milch             1000 ml                 1 L          (1 (automatisch berechnet))
+//     Terra/Roggen            2500 g                  1 kg         (0.4 (automatisch berechnet))
+//     Terra/Olivenoel         3000 ml                 3 L          (1 (automatisch berechnet))
+//     Terra/Knoblauchzopf      0.1 ST                 1 ST         (10 (automatisch berechnet))
+//     Terra/Blumenkohl           1 ST                 1 KI           8 (manuell erfasst)
+//     B&L/Partybroetchen         1 ST                 1 GB          30 (manuell erfasst)
+//     B&L/Torte                  1 ST                 1 GB           6 (manuell erfasst)
+//     Bauer/Kartoffeln         500 g                  1 kg         (2 (automatisch berechnet))
 //
 // preis:
 //   immer der endpreis (inklusive pfand und mehrwertsteuer) je verteileinheit
@@ -3384,7 +3383,7 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
  */
 function sql_insert_produktpreis (
   $produkt_id, $preis, $start, $bestellnummer, $gebindegroesse
-, $mwst, $pfand, $liefereinheit, $verteileinheit, $preiseinheit
+, $mwst, $pfand, $liefereinheit, $verteileinheit, $lv_faktor
 ) {
   $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
   if( $aktueller_preis ) {
@@ -3406,7 +3405,7 @@ function sql_insert_produktpreis (
   , 'pfand' => $pfand
   , 'liefereinheit' => $liefereinheit
   , 'verteileinheit' => $verteileinheit
-  , 'preiseinheit' => $preiseinheit
+  , 'lv_faktor' => $lv_faktor
   ) );
 }
 
@@ -3491,74 +3490,44 @@ function mult2string( $mult ) {
 function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
   kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
-  if( ! isset( $pr['preiseinheit'] ) )   /* ToDo: remove this again */
-    $pr['preiseinheit'] = $pr['liefereinheit'];
-  kanonische_einheit( $pr['preiseinheit'], &$pr['kan_preiseinheit'], &$pr['kan_preismult'] );
-
-
-  if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
-    $pr['liefermengenfaktor'] = ( 1.0 * $pr['kan_liefermult'] ) / $pr['kan_verteilmult'];
-  } else {
-    $pr['liefermengenfaktor'] = $pr['gebindegroesse'];
-  }
-  if( $pr['kan_preiseinheit'] == $pr['kan_verteileinheit'] ) {
-    $pr['preismengenfaktor'] = ( 1.0 * $pr['kan_preismult'] ) / $pr['kan_verteilmult'];
-  } elseif( $pr['kan_preiseinheit'] == $pr['kan_liefereinheit'] ) {
-    $pr['preismengenfaktor'] = ( $pr['liefermengenfaktor'] * $pr['kan_preismult'] ) / $pr['kan_verteilmult'];
-  } else {
-    error( 'inkompatible preiseinheit' );
-  }
 
   $pr['verteileinheit'] = $pr['kan_verteileinheit'];
-  // if( $
+  if( $pr['kan_verteilmult'] != 1 )
+    $pr['verteileinheit'] = "{$pr['kan_verteilmult']} {$pr['kan_verteileinheit']}";
 
-  // switch( $pr['kan_liefereinheit'] ) {
-  //  case 'g':
-  //    $pr['kan_liefereinheit'] = 'KG';
-  //    $pr['kan_liefermult'] 
+   switch( $pr['kan_liefereinheit'] ) {
+     // liefereinheit: groessere einheiten waehlen als bei verteilung:
+     case 'g':
+       $pr['kan_liefereinheit'] = 'kg';
+       $pr['kan_liefermult'] /= 1000.0;
+       break;
+     case 'ml':
+       $pr['kan_liefereinheit'] = 'l';
+       $pr['kan_liefermult'] /= 1000.0;
+       break;
+     default:
+   }
+   $pr['liefereinheit'] = $pr['kan_liefereinheit'];
+   if( ( $m = mult2string( $pr['kan_liefermult'] ) ) != '1' )
+     $pr['liefereinheit'] = "$m {$pr['liefereinheit']}";
 
-
-  if( $pr['kan_liefereinheit'] and $pr['kan_verteileinheit'] ) {
-    if( $pr['kan_liefereinheit'] != $pr['kan_verteileinheit'] ) {
-      $pr['preiseinheit'] = "{$pr['kan_liefereinheit']} (". $pr['gebindegroesse'] * $pr['kan_verteilmult'] . " {$pr['kan_verteileinheit']})";
-      if( $pr['kan_liefermult'] != 1 ) {
-        $pr['preiseinheit'] = $pr['kan_liefermult'] . " " . $pr['preiseinheit'];
-      }
-      $pr['mengenfaktor'] = $pr['gebindegroesse'];
-    } else {
-      switch( $pr['kan_liefereinheit'] ) {
-        case 'g':
-          $pr['preiseinheit'] = 'kg';
-          $pr['mengenfaktor'] = 1000.0 / $pr['kan_verteilmult'];
-          break;
-        case 'ml':
-          $pr['preiseinheit'] = 'L';
-          $pr['mengenfaktor'] = 1000.0 / $pr['kan_verteilmult'];
-          break;
-        default:
-          $pr['preiseinheit'] = $pr['kan_liefereinheit'];
-          $pr['mengenfaktor'] = 1.0 / $pr['kan_verteilmult'];
-          break;
-      }
-    }
-  } else {
-    $pr['preiseinheit'] = false;
-    $pr['mengenfaktor'] = 1.0;
+   if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
+     $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
+   } else {
+    need( $pr['lv_faktor'] > 0, "kann nicht zwischen Preiseinheit und Liefereinheit umrechnen" );
   }
+   $pr['preiseinheit'] = $pr['kan_preiseinheit'];
+   if( ( $m = mult2string( $pr['kan_preismult'] ) ) != '1' )
+     $pr['preiseinheit'] = "$m {$pr['preiseinheit']}";
 
   // Preise je V-Einheit:
   $pr['endpreis'] = $pr['preis'];
   $pr['bruttopreis'] = $pr['preis'] - $pr['pfand'];
   $pr['nettopreis'] = $pr['bruttopreis'] / ( 1.0 + $pr['mwst'] / 100.0 );
 
-  // brutto/nettopreis je preiseinheit:
-  // $pr['endlieferpreis'] = $pr['endpreis'] * $pr['mengenfaktor'];
-  $pr['nettolieferpreis'] = $pr['nettopreis'] * $pr['mengenfaktor'];
-  $pr['bruttolieferpreis'] = $pr['bruttopreis'] * $pr['mengenfaktor'];
-
-  // deprecated:
-  $pr['lieferpreis'] = $pr['nettolieferpreis'];
-  $pr['preis_rund'] = sprintf( "%8.2lf", $pr['preis'] );
+  // brutto/nettopreis je liefereinheit:
+  $pr['nettolieferpreis'] = $pr['nettopreis'] * $pr['lv_faktor'];
+  $pr['bruttolieferpreis'] = $pr['bruttopreis'] * $pr['lv_faktor'];
 }
 
 /**
@@ -3645,10 +3614,13 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     // V-Mult V-einheit: Vielfache davon bestellen die Gruppen:
     $produkt_row['kan_verteileinheit'] = $preis_row['kan_verteileinheit'];
     $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
+    $produkt_row['verteileinheit'] = $preis_row['verteileinheit'];
     //
     // L-Mult L-einheit: Vielfache davon nennen wir in der Bestellung beim Lieferanten:
     $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
     $produkt_row['kan_liefermult'] = $preis_row['kan_liefermult'];
+    $produkt_row['liefereinheit'] = $preis_row['liefereinheit'];
+    $produkt_row['lv_faktor'] = $preis_row['lv_faktor'];
     //
     // Gebindegroesse: wieviele V-Einheiten muessen jeweils bestellt werden:
     $produkt_row['gebindegroesse'] = $preis_row['gebindegroesse'];
@@ -3658,13 +3630,9 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     $produkt_row['bruttopreis'] = $preis_row['bruttopreis'];  // mit MWSt.
     $produkt_row['endpreis'] = $preis_row['endpreis'];        // mit MWSt. und Pfand
     //
-    // Preiseinheit: Menge fuer die der Katalogpreis des Lieferanten angegeben ist:
-    //               (enthaelt masszahl und einheit, nur zur Ausgabe gedacht!)
-    // mengenfaktor: faktor zwischen V-Mult V-Einheit und Preis-Einheit
-    //               (zur Umrechnung (Konsumenten-)Nettopreis -> (Lieferanten-)Katalogpreis)
-    $produkt_row['preiseinheit'] = $preis_row['preiseinheit'];
-    $produkt_row['mengenfaktor'] = $preis_row['mengenfaktor'];
-    $produkt_row['nettolieferpreis'] = $preis_row['nettopreis'] * $preis_row['mengenfaktor'];
+    // Preise pro L-Mult * L-Einheit:
+    $produkt_row['nettolieferpreis'] = $preis_row['nettolieferpreis'];
+    $produkt_row['bruttolieferpreis'] = $preis_row['bruttolieferpreis'];
     //
     $produkt_row['pfand'] = $preis_row['pfand'];  // in Euro
     $produkt_row['mwst'] = $preis_row['mwst'];    // in Prozent
@@ -3692,17 +3660,6 @@ function sql_delete_produktpreis( $preis_id ) {
   doSql( "DELETE FROM produktpreise WHERE id=$preis_id" );
 }
 
-/**
- *  Produktinformationen updaten
- */
-function sql_update_produkt ($id, $name, $produktgruppen_id, $einheit, $notiz){
-  return sql_update( 'produkte', $id, array(
-    'name' => "$name"
-  , 'produktgruppen_id' => $produktgruppen_id
-  , 'einheit' => "$einheit"
-  , 'notiz' => "$notiz"
-  ) );
-}
 
 /**
  * Alle Produkte von einem Lieferanten, auch mit ungültigem Preis
@@ -3905,9 +3862,6 @@ function checkvalue( $val, $typ){
           $val = stripslashes( $val );
 	      $val = htmlspecialchars( $val );
 	      break;
-	    case 'M':
-	      need( 0, 'interner Fehler in checkvalue: typ M nicht mehr verwenden!' );
-	      break;
       case 'R':
         break;
 	    case 'U':
@@ -3955,16 +3909,13 @@ function checkvalue( $val, $typ){
 // - name: wenn name auf [] endet, wird ein array erwartet (aus <input name='bla[]'>)
 // - typ: definierte $typ argumente:
 //   d : ganze Zahl
-//   u (default wenn name auf _id endet): nicht-negative ganze Zahl
+//   u nicht-negative ganze Zahl
 //   U positive ganze Zahl (also echt groesser als NULL)
 //   H : wendet htmlspecialchars an (erlaubt sichere und korrekte ausgabe in HTML)
 //   R : raw: keine Einschraenkung, keine Umwandlung
 //   f : Festkommazahl
 //   w : bezeichner: alphanumerisch und _
 //   /.../: regex pattern. Wert wird ausserdem ge-trim()-t
-// deprecated (obwohl vor langem mal default...) sind:
-//   M (sonst default): Wert beliebig, wird aber durch mysql_real_escape_string fuer MySQL verdaulich gemacht
-//   A : automatisch (default; momentan: trick um ..._id-Variablen zu testen)
 // - default:
 //   - wenn array erwartet wird, kann der default ein array sein.
 //   - wird kein array erwartet, aber default is ein array, so wird $default[$name] versucht
@@ -4025,13 +3976,6 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
       return FALSE;
     }
   }
-  if( $typ == 'A' ) {
-    if( substr( $name, -3 ) == '_id' ) {
-      $typ = 'u';
-    } else {
-      $typ = 'H';
-    }
-  }
 
   if(is_array($arry)){
     if( ! $want_array ) {
@@ -4070,7 +4014,7 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
 /**
  *
  */
-function need_http_var( $name, $typ = 'A', $is_self_field = false ) {
+function need_http_var( $name, $typ, $is_self_field = false ) {
   need( get_http_var( $name, $typ, NULL, $is_self_field ), "variable $name nicht uebergeben" );
   return TRUE;
 }
@@ -4086,9 +4030,6 @@ function self_field( $name, $default = NULL ) {
 /**
  *
  */
-/**
- *
- */
 function update_database($version){
   switch($version){
     case 8:
@@ -4101,8 +4042,11 @@ function update_database($version){
     case 9:
       logger( 'starting update_database: from version 9' );
 
-      doSql( "ALTER TABLE `produktpreise` ADD column `preiseinheit` varchar(10) default '1 ST'"
+      doSql( "ALTER TABLE `produktpreise` ADD column `lv_faktor` int(11) default '0'"
       , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: add column preiseinheit"
+      );
+      doSql( "UPDATE `produktpreise` SET lv_faktor = gebindegroesse WHERE liefereinheit = '1 KI'"
+      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: set lv_faktor"
       );
       doSql( "ALTER TABLE `produktpreise` MODIFY column `liefereinheit` varchar(10) default '1 ST'"
       , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column liefereinheit"
