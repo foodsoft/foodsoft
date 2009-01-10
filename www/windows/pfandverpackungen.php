@@ -185,8 +185,8 @@ if( $bestell_id ) {
       open_td( 'number', '', price_view( $row['pfand_leer_brutto_soll'] ) );
 
       open_td( 'number', '', int_view( $row['pfand_voll_anzahl'] - $row['pfand_leer_anzahl'] ) );
-      open_td( 'number', '', price_view( $row['pfand_voll_netto_soll'] - $row['pfand_leer_netto_soll'] ) );
-      open_td( 'number', '', price_view( $row['pfand_voll_brutto_soll'] - $row['pfand_leer_brutto_soll'] ) );
+      open_td( 'number', '', price_view( $row['pfand_voll_netto_soll'] + $row['pfand_leer_netto_soll'] ) );
+      open_td( 'number', '', price_view( $row['pfand_voll_brutto_soll'] + $row['pfand_leer_brutto_soll'] ) );
 
       if( $editable) open_td();
   }
