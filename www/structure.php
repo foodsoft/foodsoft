@@ -1051,18 +1051,6 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'liefereinheit' => array(
-        'type' =>  "varchar(10)"
-      , 'null' => 'NO'
-      , 'default' => '1 ST'
-      , 'extra' => ''
-      )
-    , 'gebindegroesse' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '1'
-      , 'extra' => ''
-      )
     , 'pfand' => array(
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
@@ -1081,10 +1069,22 @@ $tables = array(
       , 'default' => '1 ST'
       , 'extra' => ''
       )
-    , 'preiseinheit' => array(
+    , 'gebindegroesse' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '1'
+      , 'extra' => ''
+      )
+    , 'liefereinheit' => array(
         'type' =>  "varchar(10)"
       , 'null' => 'NO'
       , 'default' => '1 ST'
+      , 'extra' => ''
+      )
+    , 'lv_faktor' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
       , 'extra' => ''
       )
     )
