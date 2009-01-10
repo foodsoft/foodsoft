@@ -24,7 +24,8 @@ function new_html_id() {
   return $html_id;
 }
 
-// open_tag(), close_tag(): open and close html tag
+// open_tag(), close_tag(): open and close html tag. wrong nesting will cause an error
+//
 function open_tag( $tag, $class = '', $attr = '' ) {
   global $open_tags;
   if( $class )
