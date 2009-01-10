@@ -456,13 +456,13 @@ foreach( $produkte as $produkt ) {
     " );
     if( ! $readonly ) {
       open_div('oneline');
-        if( $gebindegroesse > 1 )
-          echo "<input type='button' value='<<' onclick='fest_minusminus($n);' >";
+        // if( $gebindegroesse > 1 )
+        //  echo "<input type='button' value='<<' onclick='fest_minusminus($n);' >";
         ?> <input type='button' value='<' onclick='fest_minus(<? echo $n; ?>);' >
             <span style='width:4em;'>&nbsp;</span>
             <input type='button' value='>' onclick='fest_plus(<? echo $n; ?>);' > <?
-        if( $gebindegroesse > 1 )
-          echo "<input type='button' value='>>' onclick='fest_plusplus($n);' >";
+        // if( $gebindegroesse > 1 )
+        //  echo "<input type='button' value='>>' onclick='fest_plusplus($n);' >";
       close_div();
     }
 
