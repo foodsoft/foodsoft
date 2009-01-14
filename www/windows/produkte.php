@@ -102,7 +102,7 @@ open_table('list');
         open_td( 'top', '', $produkt['notiz'] );
         open_td( 'number', '', sprintf( "%d * (%s %s)", $produkt['gebindegroesse'], $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ) );
         open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
-        open_td( 'unit', '', "/ {$produkt['preiseinheit']}" );
+        open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
         open_td( 'mult', '', price_view( $produkt['endpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['kan_verteilmult']} {$produkt['kan_verteileinheit']}" );
       } else {
