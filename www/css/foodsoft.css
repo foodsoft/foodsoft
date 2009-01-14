@@ -526,6 +526,9 @@ span.floatingbuttons {
   color:#000000;
   font-weight:bold;
 }
+div.warn {
+  display:block !important;
+}
 
 /* .alert, .alert th, .alert td, .alert div, .alert span  { */
 .alert {
