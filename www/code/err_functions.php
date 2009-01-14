@@ -25,7 +25,7 @@ function error( $string ) {
 function need( $exp, $comment = "Fataler Fehler" ) {
   global $in_error;
   if( ! $exp ) {
-    open_div( 'warn', htmlspecialchars( "$comment: $exp" ) . fc_link( 'img=,text=weiter...' ) );
+    open_div( 'warn', '', htmlspecialchars( "$comment: $exp" ) . fc_link( 'self', 'img=,text=weiter...' ) );
     if( ! $in_error ) {
       $in_error = true;
       logger( "assertion failed: $exp" );
@@ -38,7 +38,7 @@ function need( $exp, $comment = "Fataler Fehler" ) {
 function fail_if_readonly() {
   global $readonly;
   if( $readonly ) {
-    open_div( 'warn', 'Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!' );
+    open_div( 'warn', '', 'Datenbank ist schreibgesch&uuml;tzt - Operation nicht m&ouml;glich!' );
     die();
   }
   return true;
