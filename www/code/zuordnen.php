@@ -1789,7 +1789,7 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
     , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
-    , produktpreise.preiseinheit as preiseinheit
+    , produktpreise.lv_faktor as lv_faktor
     , produktpreise.gebindegroesse as gebindegroesse
     , produktpreise.preis as preis
     , produktpreise.id as preis_id
@@ -3239,7 +3239,7 @@ function sql_verluste_summe( $type ) {
 // einheiten: bestehen aus masszahl (optional, default ist 1, bis 3 nachkommastellen werden unterstuetzt) und
 // der eigentlichen einheit. wir unterscheiden 2 einheiten:
 //   - verteileinheit
-//       die (teils aus historischen gruenden) mit abstand wichtigste einheit:
+//       die (teils aus historischen gruenden) weitaus wichtigste einheit:
 //       - gruppen bestellen vielfache davon: jeweils eine pro klick im Bestellformular
 //       - produktmengen werden immer als vielfache davon gespeichert
 //       - produktpreise werden immer pro verteileinheit gespeichert
@@ -3252,10 +3252,12 @@ function sql_verluste_summe( $type ) {
 //   angegeben werden.
 //
 //   kanonische einheit:
-//   - immer dasselbe wie die einheit, ausser: kg in g und l in ml umgerechnet
+//   - gleich wie einheit, ausser: kg in g und l in ml umgerechnet, gross/kleinschreibung vereinheitlicht,
+//     masszahl immer abgetrennt
 //
-//   die kanonischen einheiten der 3 einheiten duerfen sich nur in der masszahl unterscheiden, ausser:
-//   - GB, KI oder PA als liefereinheit: bedeutet ein gebinde (gebindegroesse * verteileinheit)
+//   verteileinheit und liefereinheit muessen gleiche kanonische einheit haben, ausser:
+//   - GB, KI oder PA als liefereinheit: bedeutet ein gebinde (gebindegroesse * verteileinheit), die
+//     verteileinheit ist dann beliebig.
 //
 //  beispiele:
 //   lieferant/produkt        verteileinheit      liefereinheit   lv_faktor
@@ -3411,7 +3413,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'EA' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -3481,7 +3483,8 @@ function optionen_einheiten( $selected ) {
 }
 
 function mult2string( $mult ) {
-  return preg_replace( '/\.0*$/', '', sprintf( '%.3lf', $mult ) );
+  $mult = preg_replace( '/0*$/', '', sprintf( '%.3lf', $mult ) );
+  return preg_replace( '/\.$/', '', $mult );
 }
 
 /*  preisdaten setzen:
@@ -3491,34 +3494,34 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
   kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
 
-  $pr['verteileinheit'] = $pr['kan_verteileinheit'];
-  if( $pr['kan_verteilmult'] != 1 )
-    $pr['verteileinheit'] = "{$pr['kan_verteilmult']} {$pr['kan_verteileinheit']}";
+  // $pr['verteileinheit'] = $pr['kan_verteileinheit'];
+  // if( $pr['kan_verteilmult'] != 1 )
+  $pr['verteileinheit'] = "{$pr['kan_verteilmult']} {$pr['kan_verteileinheit']}";
 
-   switch( $pr['kan_liefereinheit'] ) {
-     // liefereinheit: groessere einheiten waehlen als bei verteilung:
-     case 'g':
-       $pr['kan_liefereinheit'] = 'kg';
-       $pr['kan_liefermult'] /= 1000.0;
-       break;
-     case 'ml':
-       $pr['kan_liefereinheit'] = 'l';
-       $pr['kan_liefermult'] /= 1000.0;
-       break;
-     default:
-   }
-   $pr['liefereinheit'] = $pr['kan_liefereinheit'];
-   if( ( $m = mult2string( $pr['kan_liefermult'] ) ) != '1' )
-     $pr['liefereinheit'] = "$m {$pr['liefereinheit']}";
-
-   if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
-     $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
-   } else {
-    need( $pr['lv_faktor'] > 0, "kann nicht zwischen Preiseinheit und Liefereinheit umrechnen" );
+  $m = $pr['kan_liefermult'];
+  $e = $pr['kan_liefereinheit'];
+  switch( $e ) {
+    // liefereinheit: fuer anzeige groessere einheiten waehlen als bei verteilung:
+    case 'g':
+      $e = 'kg';
+      $m /= 1000.0;
+      break;
+    case 'ml':
+      $e = 'l';
+      $m /= 1000.0;
+      break;
+    default:
   }
-   $pr['preiseinheit'] = $pr['kan_preiseinheit'];
-   if( ( $m = mult2string( $pr['kan_preismult'] ) ) != '1' )
-     $pr['preiseinheit'] = "$m {$pr['preiseinheit']}";
+  // if( ( $m = mult2string( $m ) ) == '1' )
+  //  $pr['liefereinheit'] = $e;
+  // else
+    $pr['liefereinheit'] = "$m $e";
+
+  if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
+    $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
+  } else {
+    need( $pr['lv_faktor'] > 0, "kann nicht zwischen verteileinheit und Liefereinheit umrechnen" );
+  }
 
   // Preise je V-Einheit:
   $pr['endpreis'] = $pr['preis'];
@@ -3616,7 +3619,7 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
     $produkt_row['verteileinheit'] = $preis_row['verteileinheit'];
     //
-    // L-Mult L-einheit: Vielfache davon nennen wir in der Bestellung beim Lieferanten:
+    // L-Mult L-einheit: fuer abgleich mit Katalog/Rechnung oder zum Bestellen beim Lieferanten:
     $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
     $produkt_row['kan_liefermult'] = $preis_row['kan_liefermult'];
     $produkt_row['liefereinheit'] = $preis_row['liefereinheit'];
@@ -4043,10 +4046,7 @@ function update_database($version){
       logger( 'starting update_database: from version 9' );
 
       doSql( "ALTER TABLE `produktpreise` ADD column `lv_faktor` int(11) default '0'"
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: add column preiseinheit"
-      );
-      doSql( "UPDATE `produktpreise` SET lv_faktor = gebindegroesse WHERE liefereinheit = '1 KI'"
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: set lv_faktor"
+      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: add column lv_faktor"
       );
       doSql( "ALTER TABLE `produktpreise` MODIFY column `liefereinheit` varchar(10) default '1 ST'"
       , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column liefereinheit"
@@ -4057,6 +4057,32 @@ function update_database($version){
       doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` int(11) default 1"
       , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column gebindegroesse"
       );
+      $preise = mysql2array( doSql( "SELECT * FROM produktpreise" ) );
+      foreach( $preise as $p ) {
+        $id = $p['id'];
+        $liefereinheit = $p['liefereinheit'];
+        $gebindegroesse = $p['gebindegroesse'];
+        switch( $liefereinheit ) {
+          case '1 KI':
+          case '1 PA':
+            $lv_faktor = $gebindegroesse;
+            break;
+          case '':
+            $lv_faktor = $gebindegroesse;
+            break;
+          default:
+            kanonische_einheit( $liefereinheit, &$e, &$m );
+            $lv_faktor = ( 1.0 * $gebindegroesse ) / $m;
+            if( $e == 'g' )
+              $e = 'KG';
+            if( $e == 'ml' )
+              $e = 'L';
+            $liefereinheit = "1 $e";
+            break;
+        }
+        sql_update( 'produktpreise', $id, array( 'lv_faktor' => $lv_faktor, 'liefereinheit' => $liefereinheit ) );
+      }
+
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10 ) );
       logger( 'update_database: update to version 10 successful' );
 
