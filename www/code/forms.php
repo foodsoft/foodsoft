@@ -750,7 +750,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     $valid = true;
 
   // besetze $vorschlag mit Werten fuer Formularfelder; benutze nacheinander
-  //  - existierende Werte in $vorschlag (typischerweise, automatisch aus Terrakatalog entnommen)
+  //  - existierende Werte in $vorschlag (typischerweise: automatisch aus lieferantenkatalog entnommen)
   //  - existierende Werte aus $produkt
   //  - vernuenftigen Default
 
@@ -768,6 +768,8 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   if( ! isset( $vorschlag['liefereinheit'] ) )
     $vorschlag['liefereinheit'] = $valid ? "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}"
                                            : $vorschlag['verteileinheit'];
+  if( ! isset( $vorschlag['lv_faktor'] ) )
+    $vorschlag['lv_faktor'] = 1;
 
   if( ! isset( $vorschlag['mwst'] ) )
     $vorschlag['mwst'] = $valid ? $produkt['mwst'] : $mwst_default;
@@ -797,89 +799,107 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       form_row_text( 'Notiz:', 'notiz', 42, $vorschlag['notiz'] );
 
       form_row_text( 'Bestell-Nr:', 'bestellnummer', 8, $vorschlag['bestellnummer'] );
-      open_tr();
-        open_td( 'label', '', 'MWSt:' );
-        open_td();
-        ?> <input type='text' size='4' name='mwst' id='newfcmwst'
+        ?>
+        <label class='qquad'>MWSt:</label>
+           <input type='text' size='4' class='number' name='mwst' id='newmwst'
             value='<? echo $vorschlag['mwst']; ?>' title='Mehrwertsteuer-Satz in Prozent'
-            onchange='preisberechnung_rueckwaerts();'>
+            onchange='preisberechnung_vorwaerts();'>
 
-            <label>Pfand:</label>
-            <input type='text' size='4' name='pfand' id='newfcpfand'
-             value='<? printf( "%.2lf", $vorschlag['pfand'] ); ?>'
-             title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
-             onchange='preisberechnung_rueckwaerts();'>
+        <label class='qquad'>Pfand:</label>
+           <input type='text' class='number' size='4' name='pfand' id='newpfand'
+            value='<? printf( "%.2lf", $vorschlag['pfand'] ); ?>'
+            title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
+            onchange='preisberechnung_vorwaerts();'>
         <?
-      open_tr();
-        open_td( 'label', '', 'Verteil-Einheit:' );
+
+      open_tr();  // lieferpreis und liefereinheit
+
+        open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'Einzelpreis Netto:' );
         open_td();
-        ?> <input type='text' size='4' name='verteilmult' id='newfcmult'
-             value='<? echo $vorschlag['kan_verteilmult']; ?>'
-             title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
-             onchange='preisberechnung_fcmult();'>
-
-           <select size='1' name='verteileinheit' id='newfceinheit'
-             onchange='preisberechnung_default();'>
-               <? echo optionen_einheiten( $vorschlag['kan_verteileinheit'] ); ?>
-           </select>
-
-           <label>Endpreis:</label>
-           <input title='Preis incl. MWSt und Pfand' type='text' size='8' id='newfcpreis' name='preis'
-             value='<? echo $vorschlag['preis']; ?>'
+        ?>
+           <input title='Nettopreis' class='number' type='text' size='8' id='newlieferpreis' name='lieferpreis'
+             value='<? printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
-           / <span id='newfcendpreiseinheit'>
-               <? echo $vorschlag['kan_verteilmult']; ?>
-               <? echo $vorschlag['kan_verteileinheit']; ?>
-             </span>
-
-           <label>Gebinde:</label>
-           <input type='text' size='4' name='gebindegroesse' id='newfcgebindegroesse'
-             value='<? echo $vorschlag['gebindegroesse']; ?>'
-             title='Gebindegroesse in ganzen Vielfachen der V-Einheit'
-             onchange='preisberechnung_gebinde();'>
-           * <span id='newfcgebindeeinheit']>
-               <? echo $vorschlag['kan_verteilmult']; ?>
-               <? echo $vorschlag['kan_verteileinheit']; ?>
-             </span>
-        <?
-      open_tr();
-        open_td( 'label', '', 'Liefer-Einheit:' );
-        open_td();
-        ?> <input type='text' size='4' name='liefermult' id='newliefermult'
+        <span style='padding:1ex;'>/</span> Liefereinheit:
+           <input type='text' size='4' class='mult' name='liefermult' id='newliefermult'
              value='<? echo $vorschlag['kan_liefermult']; ?>'
              title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
-             onchange='preisberechnung_default();'>
-
+             onchange='preisberechnung_vorwaerts();'>
            <select size='1' name='liefereinheit' id='newliefereinheit'
-             onchange='preisberechnung_default();'>
+             onchange='preisberechnung_vorwaerts();'>
                <? echo optionen_einheiten( $vorschlag['kan_liefereinheit'] ); ?>
            </select>
+         <?
 
-           <label>Lieferpreis:</label>
-           <input title='Nettopreis' type='text' size='8' id='newfclieferpreis' name='lieferpreis'
-             value='<? echo $vorschlag['lieferpreis']; ?>'
+
+      open_tr();  // endpreis und verteileinheit
+
+        open_td( 'label', 'Endverbraucher-Preis (Brutto, mit Pfand)', 'Endpreis:' );
+        open_td();
+        ?>
+           <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newpreis' name='preis'
+             value='<? echo $vorschlag['preis']; ?>'
              onchange='preisberechnung_rueckwaerts();'>
-           / <span id='newfcpreiseinheit'><? echo $vorschlag['preiseinheit']; ?></span>
+        <span style='padding:1ex;'>/</span> Verteil-Einheit:
+           <input type='text' size='4' class='number' name='verteilmult' id='newverteilmult'
+             value='<? echo $vorschlag['kan_verteilmult']; ?>'
+             title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
+             onchange='preisberechnung_vorwaerts();'>
+           <select size='1' name='verteileinheit' id='newverteileinheit'
+             onchange='preisberechnung_vorwaerts();'>
+               <? echo optionen_einheiten( $vorschlag['kan_verteileinheit'] ); ?>
+           </select>
         <?
+
+      open_tr(); // gebinde
+           open_td( 'label', '', 'Gebindegr&ouml;&szlig;e:' );
+           open_td();
+           ?>
+           <input type='text' size='4' class='number' name='gebindegroesse' id='newgebindegroesse'
+             value='<? echo mult2string( $vorschlag['gebindegroesse'] / $vorschlag['lv_faktor'] ) ; ?>'
+             onchange='preisberechnung_vorwaerts();'>
+           * <span id='gebindegroesse_liefereinheit']>
+               <? echo $vorschlag['kan_liefermult']; ?>
+               <? echo $vorschlag['kan_liefereinheit']; ?>
+             </span>
+         <?
+
+        if( $vorschlag['kan_verteileinheit'] != $vorschlag['kan_liefereinheit'] )
+          $display = 'inline';
+        else
+          $display = 'none';
+        open_span( '', "style='padding-left:3em;display:$display;' id='umrechnung_einheiten'" );
+          ?>
+          Umrechnung der Einheiten:
+            <span id='umrechnung_liefereinheit'><? echo "{$vorschlag['kan_liefermult']} {$vorschlag['kan_liefereinheit']}"; ?></span>
+            =
+            <input type='text' size='6' class='number' name='lv_faktor' id='newlv_faktor' value='<? echo mult2string( $vorschlag['lv_faktor'] ); ?>'
+             onchange='preisberechnung_vorwaerts();'>
+            *  <span id='umrechnung_verteileinheit'><? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></span>
+          <?
+        close_span();
+
       open_tr();
         open_td( 'label', '', 'ab:' );
         open_td();
           date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') );
           qquad();
           submission_button( 'OK' );
-          qquad();
-          ?> <label>Dynamische Neuberechnung:</label>
-             <input name='dynamischberechnen' type='checkbox' value='yes'
-               title='Dynamische Berechnung anderer Felder bei Änderung eines Eintrags' checked>
-          <?
+      if( false ){
+            qquad();
+            ?> <label>Dynamische Neuberechnung:</label>
+               <input name='dynamischberechnen' type='checkbox' value='yes'
+                 title='Dynamische Berechnung anderer Felder bei Änderung eines Eintrags' checked>
+            <?
+       }
     close_table();
   close_form();
 
   ?>
   <script type="text/javascript">
 
-    var mwst, pfand, verteilmult, verteileinheit, preis, gebindegroesse,
-      liefermult, liefereinheit, lieferpreis, preiseinheit, mengenfaktor;
+    var mwst, pfand, verteilmult, verteileinheit, preis, gebindegroesse_in_liefereinheiten,
+      liefermult, liefereinheit, lieferpreis, lv_faktor;
 
     var preisform = '<? echo "form_$form_id"; ?>';
 
@@ -887,78 +907,67 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     //
     var vorwaerts = 0;
 
-    function preiseinheit_setzen() {
-      if( liefereinheit != verteileinheit ) {
-        mengenfaktor = gebindegroesse;
-        preiseinheit = liefereinheit + ' (' + gebindegroesse * verteilmult + ' ' + verteileinheit + ')';
-        if( liefermult != '1' )
-          preiseinheit = liefermult + ' ' + preiseinheit;
-      } else {
-        switch( liefereinheit ) {
-          case 'g':
-            preiseinheit = 'kg';
-            mengenfaktor = 1000 / verteilmult;
-            break;
-          case 'ml':
-            preiseinheit = 'L';
-            mengenfaktor = 1000 / verteilmult;
-            break;
-          default:
-            preiseinheit = liefereinheit;
-            mengenfaktor = 1.0 / verteilmult;
-            break;
-        }
-      }
-    }
-
     function preiseintrag_auslesen() {
-      mwst = parseFloat( document.forms[preisform].newfcmwst.value );
-      pfand = parseFloat( document.forms[preisform].newfcpfand.value );
-      verteilmult = parseFloat( document.forms[preisform].newfcmult.value );
-      verteileinheit = document.forms[preisform].newfceinheit.value;
-      preis = parseFloat( document.forms[preisform].newfcpreis.value );
-      gebindegroesse = parseInt( document.forms[preisform].newfcgebindegroesse.value );
-      liefermult = parseInt( document.forms[preisform].newliefermult.value );
+      mwst = parseFloat( document.forms[preisform].newmwst.value );
+      pfand = parseFloat( document.forms[preisform].newpfand.value );
+      verteilmult = parseFloat( document.forms[preisform].newverteilmult.value );
+      verteileinheit = document.forms[preisform].newverteileinheit.value;
+      liefermult = parseFloat( document.forms[preisform].newliefermult.value );
       liefereinheit = document.forms[preisform].newliefereinheit.value;
-      lieferpreis = parseFloat( document.forms[preisform].newfclieferpreis.value );
-      preiseinheit_setzen();
+      preis = parseFloat( document.forms[preisform].newpreis.value );
+      lieferpreis = parseFloat( document.forms[preisform].newlieferpreis.value );
+      gebindegroesse_in_liefereinheiten = parseFloat( document.forms[preisform].newgebindegroesse.value );
+      lv_faktor = parseFloat( document.forms[preisform].newlv_faktor.value );
+      if( liefermult < 0.01 )
+        liefermult = 0.01;
+      if( verteilmult < 0.01 )
+        verteilmult = 0.01;
+      if( liefereinheit == verteileinheit )
+        lv_faktor = liefermult / verteilmult;
+      if( lv_faktor < 1 )
+        lv_faktor = 1;
     }
 
     preiseintrag_auslesen();
 
     function preiseintrag_update() {
-      document.forms[preisform].newfcmwst.value = mwst;
-      document.forms[preisform].newfcmwst.pfand = pfand;
-      document.forms[preisform].newfcmult.value = verteilmult;
-      document.forms[preisform].newfceinheit.value = verteileinheit;
-      document.forms[preisform].newfcpreis.value = preis;
-      document.forms[preisform].newfcgebindegroesse.value = gebindegroesse;
+      document.forms[preisform].newmwst.value = mwst;
+      document.forms[preisform].newmwst.pfand = pfand;
+      document.forms[preisform].newverteilmult.value = verteilmult;
+      document.forms[preisform].newverteileinheit.value = verteileinheit;
+      document.forms[preisform].newpreis.value = preis;
+      document.forms[preisform].newgebindegroesse.value = gebindegroesse_in_liefereinheiten;
       document.forms[preisform].newliefermult.value = liefermult;
       document.forms[preisform].newliefereinheit.value = liefereinheit;
-      document.forms[preisform].newfclieferpreis.value = lieferpreis;
-      document.getElementById("newfcendpreiseinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
-      document.getElementById("newfcgebindeeinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
-      document.getElementById("newfcpreiseinheit").firstChild.nodeValue = preiseinheit;
-    }
-
-    function preisberechnung_vorwaerts() {
-      vorwaerts = 1;
-      preiseintrag_auslesen();
-      berechnen = document.forms[preisform].dynamischberechnen.checked;
-      if( berechnen ) {
-        lieferpreis = 
-          parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * mengenfaktor ) / 100.0;
-      }
-      preiseintrag_update();
+      document.forms[preisform].newlieferpreis.value = lieferpreis;
+      document.forms[preisform].newlv_faktor.value = lv_faktor;
+      document.getElementById("gebindegroesse_liefereinheit").firstChild.nodeValue = liefermult + ' ' + liefereinheit;
+      document.getElementById("umrechnung_liefereinheit").firstChild.nodeValue = liefermult + ' ' + liefereinheit;
+      document.getElementById("umrechnung_verteileinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
+      if( liefereinheit == verteileinheit )
+        document.getElementById("umrechnung_einheiten").style.display = 'none';
+      else
+        document.getElementById("umrechnung_einheiten").style.display = 'inline';
     }
 
     function preisberechnung_rueckwaerts() {
       vorwaerts = 0;
       preiseintrag_auslesen();
-      berechnen = document.forms[preisform].dynamischberechnen.checked;
+      berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
+      if( berechnen ) {
+        lieferpreis = 
+          parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
+      }
+      preiseintrag_update();
+    }
+
+    function preisberechnung_vorwaerts() {
+      vorwaerts = 1;
+      preiseintrag_auslesen();
+      berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         preis = 
-          parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / mengenfaktor + pfand ) ) / 10000.0;
+          parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / lv_faktor + pfand ) ) / 10000.0;
       }
       preiseintrag_update();
     }
@@ -969,40 +978,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       else
         preisberechnung_rueckwaerts();
     }
-    function preisberechnung_fcmult() {
-      berechnen = document.forms[preisform].dynamischberechnen.checked;
-      if( berechnen ) {
-        alt = verteilmult;
-        preiseintrag_auslesen();
-        // if( verteilmult < 1 )
-        //   verteilmult = 1;
-        // if( verteileinheit == liefereinheit ) {
-        //  gebindegroesse = 
-        //} else {
-          if( (verteilmult > 0) && (alt > 0) ) {
-            gebindegroesse = parseInt( 0.499  + gebindegroesse * alt / verteilmult);
-            if( gebindegroesse < 1 )
-              gebindegroesse = 1;
-            document.forms[preisform].newfcgebindegroesse.value = gebindegroesse;
-          }
-        // }
-      }
-      // preisberechnung_default();
-    }
-    function preisberechnung_gebinde() {
-      berechnen = document.forms[preisform].dynamischberechnen.checked;
-      if( berechnen ) {
-        alt = gebindegroesse;
-        preiseintrag_auslesen();
-        if( gebindegroesse < 1 )
-          gebindegroesse = 1;
-        if( (gebindegroesse > 0) && (alt > 0) ) {
-          verteilmult = parseInt( 0.499 + 1000 * verteilmult * alt / gebindegroesse ) / 1000;
-          document.forms[preisform].newfcmult.value = verteilmult;
-        }
-      }
-      // preisberechnung_default();
-    }
+
 
   </script>
   <?
@@ -1010,26 +986,30 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
 function action_form_produktpreis() {
   global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
-       , $gebindegroesse, $mwst, $pfand, $preis, $bestellnummer
+       , $gebindegroesse, $mwst, $pfand, $preis, $bestellnummer, $lv_faktor
        , $day, $month, $year, $notiz, $produkt_id;
 
   need_http_var('produkt_id','u');
 
   get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
-  need_http_var('verteilmult','f');                // _hier_ sind auch bruchteile zulaessig...
-  $verteilmult = verteilmult_view( $verteilmult ); // ...aber maximal 3 nachkommastellen, und nur wenn noetig!
+  need_http_var('verteilmult','f');
+  $verteilmult = mult2string( $verteilmult ); // ...maximal 3 nachkommastellen, und nur wenn noetig!
   need_http_var('verteileinheit','w');
-  need_http_var('liefermult','u');
+  need_http_var('liefermult','f');
+  $liefermult = mult2string( $liefermult );
   need_http_var('liefereinheit','w');
-  need_http_var('gebindegroesse','u');
+  need_http_var('gebindegroesse','f'); // in liefereinheiten!
   need_http_var('mwst','f');
   need_http_var('pfand','f');
   need_http_var('preis','f');
+  need_http_var('lv_faktor','f');
   get_http_var('bestellnummer','H','');
   need_http_var('day','u');
   need_http_var('month','u');
   need_http_var('year','u');
   get_http_var('notiz','H','');
+
+  $gebindegroesse *= $lv_faktor;
 
   $produkt = sql_produkt_details( $produkt_id );
 
@@ -1042,7 +1022,7 @@ function action_form_produktpreis() {
 
   sql_insert_produktpreis(
     $produkt_id, $preis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
-  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit"
+  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit", $lv_faktor
   );
 }
 
