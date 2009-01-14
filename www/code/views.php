@@ -98,9 +98,9 @@ function price_view( $price, $fieldname = false ) {
     return "<span class='price number'>$price</span>";
 }
 
-// verteilmult_view: erlaube bis zu 3 nachkommastellen; aber nur anzeigen, wenn noetig:
+// mult_view: erlaube bis zu 3 nachkommastellen; aber nur anzeigen, wenn noetig:
 //
-function verteilmult_view( $mult, $fieldname = false ) {
+function mult_view( $mult, $fieldname = false ) {
   global $input_event_handlers;
   $mult = mult2string( $mult );
   if( $fieldname )
@@ -763,10 +763,10 @@ function products_overview(
       $bruttopreis = $produkte_row['bruttopreis'];
       $endpreis = $produkte_row['endpreis'];
 
-      // preise je preiseinheit:
-      $nettolieferpreis = $produkte_row['nettolieferpreis'];
-      $bruttolieferpreis = $produkte_row['bruttolieferpreis'];
-      $mengenfaktor = $produkte_row['mengenfaktor'];
+      // einzelpreise
+      $nettoeinzelpreis = $produkte_row['nettolieferpreis'];
+      $bruttoeinzelpreis = $produkte_row['bruttolieferpreis'];
+      $lv_faktor = $produkte_row['lv_faktor'];
 
       $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
       $basarbestellmenge = $produkte_row['basarbestellmenge'];
@@ -813,7 +813,7 @@ function products_overview(
           $gebinde = $liefermenge / $gebindegroesse;  // nicht unbedingt integer!
           break;
       }
-      $liefermenge_scaled = $liefermenge / $mengenfaktor;
+      $liefermenge_scaled = $liefermenge / $lv_faktor;
 
       $nettogesamtpreis = sprintf( '%.2lf', $nettopreis * $liefermenge );
       $bruttogesamtpreis = sprintf( '%.2lf', $bruttopreis * $liefermenge );
@@ -844,8 +844,14 @@ function products_overview(
 
         if( $spalten & PR_COL_LPREIS ) {
           open_td( 'mult', '', fc_link( 'produktdetails',
-            "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) ) );
-          open_td( 'unit', '', "/ {$produkte_row['preiseinheit']}" );
+            "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettoeinzelpreis ) ) );
+          open_td( 'unit' );
+            echo "/ {$produkte_row['liefereinheit']}";
+            if( $produkte_row['kan_liefereinheit'] != $produkte_row['kan_verteileinheit'] ) {
+              $m = $produkte_row['lv_faktor'] * $produkte_row['kan_verteilmult'];
+              echo " (".mult2string($m)." ".$produkte_row['kan_verteileinheit'].")";
+            }
+          close_td();
         }
 
         if( $spalten & PR_COL_MWST )
@@ -887,18 +893,19 @@ function products_overview(
           } else {               // Gesamtansicht: 4 spalten, Preis-Einheit benutzen:
             open_td( 'mult' );
               if( $editAmounts ) {
+                $m = mult2string( $liefermenge_scaled );
                 printf( "
-                  <input name='liefermenge$produkt_id' class='right' type='text' size='6' value='%.3lf'
+                  <input name='liefermenge$produkt_id' class='right' type='text' size='6' value='%s'
                     title='tats&auml;chliche Liefermenge eingeben' $input_event_handlers >"
-                , $liefermenge_scaled
+                , $m
                 );
               } else {
-                printf( "%.3lf", $liefermenge_scaled );
+                echo $m;
               }
-            open_td( 'unit', "style='border-right-style:none;'", $produkte_row['preiseinheit'] );
+            open_td( 'unit', "style='border-right-style:none;'", $produkte_row['liefereinheit'] );
             open_td( '', "style='border-left-style:none;border-right-style:none;'" );
               if( $editAmounts ) {
-                //Checkbox für fehlende Lieferung. Löscht auch glei Einträge in der Verteiltabelle
+                //Checkbox für fehlende Lieferung. Löscht auch gleich Einträge in der Verteiltabelle
                 ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
                      <? echo $input_event_handlers; ?> > <?
               }
@@ -907,7 +914,7 @@ function products_overview(
         }
 
         if( $spalten & PR_COL_LIEFERGEBINDE ) {
-          open_td( 'mult', '', price_view( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
+          open_td( 'mult', '', mult2string( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
           open_td( 'unit', '', sprintf( ' * (%s %s)'
                                       , $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
                                       , $produkte_row['kan_verteileinheit'] ) );
@@ -1155,22 +1162,22 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     }
     open_tr();
       open_td( '', '', "{$gruppe['gruppennummer']} {$gruppe['name']}" );
-      open_td( 'mult', '', verteilmult_view($festmenge) . " (".verteilmult_view($toleranzmenge) .")" );
+      open_td( 'mult', '', mult_view($festmenge) . " (".mult_view($toleranzmenge) .")" );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'mult', '', verteilmult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
+      open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
       open_td( 'number', '', price_view( $preis * $verteilmenge / $verteilmult ) );
   }
   open_tr('summe');
     open_td('', "colspan='3'", "M&uuml;ll:" );
-    open_td( 'mult', '', verteilmult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
+    open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $preis * $muellmenge / $verteilmult ) );
   open_tr('summe');
     open_td('', '', "Basar:" );
-    open_td( 'mult', '', verteilmult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
+    open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'mult', '', verteilmult_view( $basar_verteilmenge ) );
+    open_td( 'mult', '', mult_view( $basar_verteilmenge ) );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $preis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
@@ -1357,8 +1364,8 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'mult', '', $pr1['kan_liefermult'] );
       open_td( 'unit', '', $pr1['kan_liefereinheit'] );
       open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
-      open_td( 'unit', '', "/ {$pr1['preiseinheit']}" );
-      open_td( 'mult', '', verteilmult_view( $pr1['kan_verteilmult'] ) );
+      open_td( 'unit', '', "/ {$pr1['liefereinheit']}" );
+      open_td( 'mult', '', mult_view( $pr1['kan_verteilmult'] ) );
       open_td( 'unit', '', $pr1['kan_verteileinheit'] );
       open_td( 'number', '', $pr1['gebindegroesse'] );
       open_td( 'number', '', $pr1['mwst'] );
