@@ -314,7 +314,7 @@ function open_fieldset( $class = '', $attr = '', $legend = '', $toggle = false )
     }
     $id = new_html_id();
     open_span( '', "$attr id='button_$id' style='display:$buttondisplay;'" );
-      echo "<a class='button' href='javascript:return true;' onclick=\"document.getElementById('fieldset_$id').style.display='block';
+      echo "<a class='button' href='javascript:;' onclick=\"document.getElementById('fieldset_$id').style.display='block';
                             document.getElementById('button_$id').style.display='none';\"
             >$legend...</a>";
     close_span();
