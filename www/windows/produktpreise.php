@@ -108,13 +108,13 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
   open_table( 'list hfill' );
       open_th( '', '', 'Name' );
       open_th( '', "title='Bestellnummer'", 'B-Nr.' );
-      open_th( '', "title='Liefer-Einheit: fuers Bestellen beim Lieferanten'", 'L-Einheit' );
-      open_th( '', "title='Nettopreis beim Lieferanten'", 'L-Preis' );
-      open_th( '', "title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns'", 'V-Einheit' );
-      open_th( '', "title='V-Einheiten pro Gebinde'", 'Gebinde' );
+      open_th( 'mult', "title='Nettopreis beim Lieferanten'", 'L-Preis' );
+      open_th( 'unit', "title='Liefer-Einheit: fuer Abgleich mit Rechnungen und Katalog'", '/ L-Einheit' );
       open_th( '', "title='MWSt in Prozent'", 'MWSt' );
       open_th( '', "title='Pfand je V-Einheit'", 'Pfand' );
-      open_th( '', "title='Endpreis je V-Einheit'", 'V-Preis' );
+      open_th( '', "title='Wieviel wir beim Lieferanten auf einmal bestellen muessen'", 'Gebindegroesse' );
+      open_th( 'mult', "title='Endpreis (mit Pfand und Mehrwertsteuer'", 'V-Preis' );
+      open_th( 'unit', "title='Verteil-Einheit: fuers Bestellen und Verteilen bei uns'", '/ V-Einheit' );
     open_tr();
       open_td();
         open_table( 'layout hfill' );
@@ -125,16 +125,19 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
         close_table();
   if( $prgueltig ) {
     open_td( '', '', $produkt['bestellnummer'] );
-    open_td( '', '',  "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}" );
-    open_td( 'number', '', sprintf( "%.2lf / %s", $produkt['nettolieferpreis'], $produkt['preiseinheit'] ) );
-    open_td( '', '', "{$produkt['kan_verteilmult']} {$produkt['kan_verteileinheit']}" );
-    open_td( 'number', '', $produkt['gebindegroesse'] );
+    open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
+    open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
     open_td( 'number', '', price_view( $produkt['mwst'] ) );
     open_td( 'number', '', price_view( $produkt['pfand'] ) );
-    open_td( 'number' );
-      printf( "%8.2lf / %s %s", $produkt['endpreis'], $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] );
+    open_td();
+      open_div( 'center', '', "{$produkt['gebindegroesse']} * {$produkt['verteileinheit']}" );
+      open_div( 'small center', '',
+        mult_view( $produkt['gebindegroesse'] / $produkt['lv_faktor'] ) . " * {$produkt['liefereinheit']}"
+    );
+    open_td( 'mult', '', price_view( $produkt['endpreis'] ) );
+    open_td( 'unit', '', "/ ${produkt['verteileinheit']}" );
   } else {
-    open_td( 'warn center', "colspan='9'", '- - -' );
+    open_td( 'warn center', "colspan='8'", '- - -' );
   }
   close_table();
 
