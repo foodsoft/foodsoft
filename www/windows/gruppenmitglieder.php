@@ -22,8 +22,6 @@ if( hat_dienst(5) and ! $readonly ) {
   $edit_pwd = TRUE;
 }
 
-?> <h1>Gruppenmitglieder f&uuml;r Gruppe <? echo sql_gruppenname($gruppen_id)." (".sql_gruppennummer($gruppen_id).")"; ?></h1><?
-
 $pwmsg = '';
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
@@ -76,6 +74,8 @@ switch( $action ) {
     break;
 }
 
+open_fieldset( 'small_form', '', 'Gruppe '.sql_gruppenname($gruppen_id).' ('.sql_gruppennummer($gruppen_id).')' );
+
 if( hat_dienst(5) and ! $readonly ) {
   open_fieldset( 'small_form', '', 'Neues Gruppenmitglied eintragen', 'off' );
     open_form( '', 'action=insert' );
@@ -109,5 +109,9 @@ if( $edit_pwd ) {
 medskip();
 
 membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
+
+if( hat_dienst(4,5) or ( $gruppen_id == $login_gruppen_id ) )
+  open_div( 'smallskip right', '', fc_link( 'gruppenkonto', "gruppen_id=$gruppen_id,text=Gruppenkonto..." ) );
+close_fieldset();
 
 ?>
