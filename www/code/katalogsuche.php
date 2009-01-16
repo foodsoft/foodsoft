@@ -12,6 +12,10 @@ function katalogsuche( $produkt ) {
 
   $lieferanten_id = $produkt['lieferanten_id'];
   $where = "WHERE lieferanten_id='$lieferanten_id' ";
+
+  $c = sql_select_single_field( "SELECT count(*) AS c FROM lieferantenkatalog $where", 'c' );
+  if( ! $c )
+    return 0;
   if( ( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) )
     $where .= " AND artikelnummer='$artikelnummer' ";
   elseif( ( $bestellnummer = adefault( $produkt, 'bestellnummer', 0 ) ) )
@@ -43,7 +47,10 @@ function katalogabgleich(
 
   $katalogeintrag = katalogsuche( $artikel );
   if( ! $katalogeintrag ) {
-    div_msg( 'warn', 'Katalogsuche: Artikelnummer nicht gefunden!' );
+    if( $katalogeintrag === 0 )
+      div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
+    else
+      div_msg( 'warn', 'Katalogsuche: Artikelnummer nicht gefunden!' );
     if( $detail and $editable )
       formular_artikelnummer( $produkt_id, false );
     return 2;
