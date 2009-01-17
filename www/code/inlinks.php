@@ -206,7 +206,7 @@ function fc_window_defaults( $name ) {
       break;
     case 'terrakatalog_upload':
     case 'katalog_upload':
-      $parameters['window'] = 'terrakatalog_upload';
+      $parameters['window'] = 'katalog_upload';
       $parameters['window_id'] = 'katalog_upload';
       $parameters['text'] = 'Katalog einlesen';
       $parameters['title'] = 'zum Einlesen eines neuen Katalogs in die Foodsoft-Datenbank...';
