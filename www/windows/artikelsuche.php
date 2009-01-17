@@ -3,7 +3,7 @@
 //
 // Timo, 2007, 2008
 //
-// verwaltet und sucht im lieferantenkatalog (funktioniert bislang nur mit Terra)
+// verwaltet und sucht im lieferantenkatalog (funktioniert bislang nur mit Terra und Bode)
 
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and hat_dienst(4) );
@@ -12,6 +12,10 @@ setWindowSubtitle( "Artikelsuche im Lieferanten-Katalog" );
 setWikiHelpTopic( "foodsoft:katalogsuche" );
 
 need_http_var( 'lieferanten_id', 'U', true );
+$lieferant_name = sql_lieferant_name( $lieferanten_id );
+
+need( preg_match( '&^Terra&', $lieferant_name ) or preg_match( '&^Bode&', $lieferant_name ) 
+    , "Lieferanten-Katalog: bislang nur fuer Terra und Bode!" );
 
 get_http_var('action','w','');
 
@@ -48,7 +52,7 @@ if( $produkt_id ) {
 }
 
 ?>
-<h1>Lieferantenkatalog - bisher nur fuer Terra! </h1>
+<h1>Lieferantenkatalog - bislang nur fuer Terra und Bode! </h1>
 
 <h3>Lieferant: <? echo sql_lieferant_name( $lieferanten_id ); ?> --- Katalogeintraege: <? echo sql_anzahl_katalogeintraege( $lieferanten_id ); ?></h3>
 <?
@@ -68,7 +72,7 @@ if( $editable and ( ! $produkt_id ) ) {
     GROUP BY katalogdatum, katalogtyp
     ORDER BY katalogtyp, katalogdatum
   " );
-  open_form( array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload' ) );
+  open_form( array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload', 'lieferanten_id' => $lieferanten_id ) );
     open_fieldset( 'small_form', '', 'Kataloge' );
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
@@ -89,8 +93,8 @@ if( $editable and ( ! $produkt_id ) ) {
       medskip();
       ?> <h3> Neuen Katalog einlesen: </h3> <?
       open_table('layout');
-        open_td( '', '', "Datei (Format: .xls): <input type='file' name='terrakatalog'>" );
-        open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='terrakw' size='8'>" );
+        open_td( '', '', "Datei (Format: .xls): <input type='file' name='katalog'>" );
+        open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='katalogkw' size='8'>" );
         open_td(); submission_button( 'Einlesen' );
       close_table();
     close_fieldset();
