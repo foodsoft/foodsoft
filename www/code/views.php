@@ -109,6 +109,13 @@ function mult_view( $mult, $fieldname = false ) {
     return "<span class='number'>$mult</span>";
 }
 
+function gebindegroesse_view( $pr /* result of sql_produkt_details */ ) {
+   $s = "{$pr['gebindegroesse']} * {$pr['verteileinheit']}";
+   if( $pr['verteileinheit'] != $pr['liefereinheit_anzeige'] ) {
+     $s .= "<span class='quad small'>(" . mult_view( $pr['gebindegroesse'] / $pr['lv_faktor'] ) . " * {$pr['liefereinheit_anzeige']})</span>";
+   }
+   return $s;
+}
 
 function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
   global $input_event_handlers;
@@ -642,7 +649,7 @@ function products_overview(
         $option_nichtgefuellt = true;
       } else {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => 4
+          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 )
         );
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "vom Lieferanten gelieferte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
@@ -890,10 +897,10 @@ function products_overview(
             open_td( 'mult', '', sprintf( '%d', $liefermenge * $kan_verteilmult ) );
             open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
 
-          } else {               // Gesamtansicht: 4 spalten, Preis-Einheit benutzen:
+          } else {               // Gesamtansicht: 4 spalten, Liefer-Einheit benutzen:
             open_td( 'mult' );
+              $m = mult2string( $liefermenge_scaled );
               if( $editAmounts ) {
-                $m = mult2string( $liefermenge_scaled );
                 printf( "
                   <input name='liefermenge$produkt_id' class='right' type='text' size='6' value='%s'
                     title='tats&auml;chliche Liefermenge eingeben' $input_event_handlers >"
@@ -902,13 +909,14 @@ function products_overview(
               } else {
                 echo $m;
               }
-            open_td( 'unit', "style='border-right-style:none;'", $produkte_row['liefereinheit'] );
-            open_td( '', "style='border-left-style:none;border-right-style:none;'" );
-              if( $editAmounts ) {
+              echo " *";
+            open_td( 'unit', "style='border-right-style:none;'", $produkte_row['liefereinheit_anzeige'] );
+            if( $editAmounts ) {
+              open_td( '', "style='border-left-style:none;border-right-style:none;'" );
                 //Checkbox für fehlende Lieferung. Löscht auch gleich Einträge in der Verteiltabelle
                 ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
                      <? echo $input_event_handlers; ?> > <?
-              }
+            }
             open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
           }
         }
@@ -1323,13 +1331,13 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_th( '', "title='Bestellnummer'", 'B-Nr' );
       open_th( '', "title='Preiseintrag gültig ab'", 'von' );
       open_th( '', "title='Preiseintrag gültig bis'", 'bis' );
-      open_th( '', "title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'", 'L-Einheit' );
-      open_th( '', "title='Nettopreis beim Lieferanten' colspan='2'", 'L-Preis' );
-      open_th( '', "title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'", 'V-Einheit' );
-      open_th( '', "title='Gebindegröße in V-Einheiten'", 'Gebinde' );
+      // open_th( '', "title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'", 'L-Einheit' );
+      open_th( '', "title='Nettopreis beim Lieferanten pro Liefer-Einheit' colspan='2'", 'L-Preis / L-Einheit' );
+      // open_th( '', "title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'", 'V-Einheit' );
       open_th( '', '', 'MWSt' );
       open_th( '', "title='Pfand je V-Einheit'", 'Pfand' );
-      open_th( '', "title='Endpreis je V-Einheit' colspan='2'", 'V-Preis' );
+      open_th( '', "title='Gebindegröße'", 'Gebindegröße' );
+      open_th( '', "title='Endpreis je V-Einheit' colspan='2'", 'V-Preis / V-Einheit' );
 
   if( $bestell_id )
     open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
@@ -1361,15 +1369,15 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
             echo " - ";
           }
         }
-      open_td( 'mult', '', $pr1['kan_liefermult'] );
-      open_td( 'unit', '', $pr1['kan_liefereinheit'] );
+      // open_td( 'mult', '', $pr1['kan_liefermult'] );
+      // open_td( 'unit', '', $pr1['kan_liefereinheit'] );
       open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
-      open_td( 'unit', '', "/ {$pr1['liefereinheit']}" );
-      open_td( 'mult', '', mult_view( $pr1['kan_verteilmult'] ) );
-      open_td( 'unit', '', $pr1['kan_verteileinheit'] );
-      open_td( 'number', '', $pr1['gebindegroesse'] );
+      open_td( 'unit', '', "/ {$pr1['liefereinheit_anzeige']}" );
+      // open_td( 'mult', '', mult_view( $pr1['kan_verteilmult'] ) );
+      // open_td( 'unit', '', $pr1['kan_verteileinheit'] );
       open_td( 'number', '', $pr1['mwst'] );
       open_td( 'number', '', $pr1['pfand'] );
+      open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
       open_td( 'mult', '', price_view( $pr1['preis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
 
@@ -1530,13 +1538,13 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
     open_tr();
       $id = $row['id'];
       open_td( '', '', string_view( $row['vorname'], 16, $editable ? "vorname_$id" : false ) );
-      open_td( '', '', string_view( $row['name'], 20, $editable ? "name_$id" : false ) );
+      open_td( '', '', string_view( $row['name'], 16, $editable ? "name_$id" : false ) );
       open_td( '', '', string_view( $row['email'], 16, $editable ? "email_$id" : false ) );
       open_td( '', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
 
       if($super_edit){
         open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
-        open_td( '', '', fc_action( array( 'img' => 'img/b_drop.png'
+        open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Gruppenmitglied löschen'
                                          , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
                                   , array( 'action' => 'delete', 'person_id' => $id ) ) );
       } else {
