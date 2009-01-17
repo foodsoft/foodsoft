@@ -817,10 +817,16 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'Einzelpreis Netto:' );
         open_td();
         ?>
+           <span onmouseover="help('Netto-Preis: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
+                 onmouseout="help(' ');" >
            <input title='Nettopreis' class='number' type='text' size='8' id='newlieferpreis' name='lieferpreis'
              value='<? printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
-        <span style='padding:1ex;'>/</span> Liefereinheit:
+           </span>
+        <span style='padding:1ex;'>/</span>
+        Liefereinheit:
+           <span onmouseover="help('Liefer-Einheit: die Menge, für die der Einzelpreis aus dem Katalog gilt');"
+                 onmouseout="help(' ');" >
            <input type='text' size='4' class='mult' name='liefermult' id='newliefermult'
              value='<? echo $vorschlag['kan_liefermult']; ?>'
              title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
@@ -829,6 +835,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
              onchange='preisberechnung_vorwaerts();'>
                <? echo optionen_einheiten( $vorschlag['kan_liefereinheit'] ); ?>
            </select>
+           </span>
          <?
 
 
@@ -837,10 +844,16 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         open_td( 'label', 'Endverbraucher-Preis (Brutto, mit Pfand)', 'Endpreis:' );
         open_td();
         ?>
+           <span onmouseover="help('Endverbraucher-Preis: Endpreis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
+                 onmouseout="help(' ');" >
            <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newpreis' name='preis'
              value='<? echo $vorschlag['preis']; ?>'
              onchange='preisberechnung_rueckwaerts();'>
-        <span style='padding:1ex;'>/</span> Verteil-Einheit:
+           </span>
+        <span style='padding:1ex;'>/</span>
+           Verteil-Einheit:
+           <span onmouseover="help('Verteileinheit: Vielfache davon können die Gruppen bestellen - wählt hier eine sinnvolle Größe, etwa 1 ST bei abgepackten Sachen, 500g bei Gemüse, 100g bei Käse');"
+                 onmouseout="help(' ');" >
            <input type='text' size='4' class='number' name='verteilmult' id='newverteilmult'
              value='<? echo $vorschlag['kan_verteilmult']; ?>'
              title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
@@ -849,12 +862,15 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
              onchange='preisberechnung_vorwaerts();'>
                <? echo optionen_einheiten( $vorschlag['kan_verteileinheit'] ); ?>
            </select>
+           </span>
         <?
 
       open_tr(); // gebinde
            open_td( 'label', '', 'Gebindegr&ouml;&szlig;e:' );
            open_td();
            ?>
+           <span onmouseover="help('Gebindegroesse: wieviel von diesem Produkt muessen wir auf einmal bestellen');"
+                 onmouseout="help(' ');" >
            <input type='text' size='4' class='number' name='gebindegroesse' id='newgebindegroesse'
              value='<? echo mult2string( $vorschlag['gebindegroesse'] / $vorschlag['lv_faktor'] ) ; ?>'
              onchange='preisberechnung_vorwaerts();'>
@@ -862,6 +878,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
                <? echo $vorschlag['kan_liefermult']; ?>
                <? echo $vorschlag['kan_liefereinheit']; ?>
              </span>
+           </span>
          <?
 
         if( $vorschlag['kan_verteileinheit'] != $vorschlag['kan_liefereinheit'] )
@@ -870,17 +887,20 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
           $display = 'none';
         open_span( '', "style='padding-left:3em;display:$display;' id='umrechnung_einheiten'" );
           ?>
+           <span onmouseover="help('Umrechnung: hier müsst ihr der Software helfen, die Liefereinheit in die Verteileinheit umzurechnen!');"
+                 onmouseout="help(' ');" >
           Umrechnung der Einheiten:
             <span id='umrechnung_liefereinheit'><? echo "{$vorschlag['kan_liefermult']} {$vorschlag['kan_liefereinheit']}"; ?></span>
             =
             <input type='text' size='6' class='number' name='lv_faktor' id='newlv_faktor' value='<? echo mult2string( $vorschlag['lv_faktor'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
             *  <span id='umrechnung_verteileinheit'><? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></span>
+           </span>
           <?
         close_span();
 
       open_tr();
-        open_td( 'label', '', 'ab:' );
+        open_td( 'label', '', 'gültig ab:' );
         open_td();
           date_selector( 'day', date('d'), 'month', date('m'), 'year', date('Y') );
           qquad();
@@ -893,6 +913,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
             <?
        }
     close_table();
+    open_div( 'kommentar bottom', "id='preisform_hinweise' style='height:1em;padding:1em;'", ' ' );
   close_form();
 
   ?>
@@ -979,6 +1000,9 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         preisberechnung_rueckwaerts();
     }
 
+    function help(s) {
+      document.getElementById('preisform_hinweise').firstChild.nodeValue = s;
+    }
 
   </script>
   <?
