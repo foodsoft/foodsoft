@@ -793,19 +793,19 @@ $tables = array(
       , 'extra' => ''
       )
     , 'bestellnummer' => array(
-        'type' =>  "text"
+        'type' =>  "bigint(20)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
       )
     , 'liefereinheit' => array(
-        'type' =>  "text"
+        'type' =>  "varchar(20)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
       )
     , 'gebinde' => array(
-        'type' =>  "text"
+        'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
