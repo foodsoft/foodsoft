@@ -2,7 +2,7 @@
 
 
 // katalogsuche: sucht im lieferantenkatalog nach $produkt.
-// bisher nur fuer Terra.
+// bisher nur fuer Terra und Bode.
 // $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
 //
 function katalogsuche( $produkt ) {
@@ -69,46 +69,62 @@ function katalogabgleich(
   $katalog_mwst = $katalogeintrag["mwst"];
 
   kanonische_einheit( $katalog_einheit, &$kan_liefereinheit, &$kan_liefermult );
-  // setze:
-  //   $liefereinheit: auf diese bezieht sich der preis $katalog_netto
-  //   $gebindegroesse in vielfachen der $liefereinheit
-  switch( $kan_liefereinheit ) {
-    case 'g':
-      $liefereinheit = '1 kg';
-      $gebindegroesse = $katalog_gebindegroesse * $kan_liefermult / 1000.0;
-      $kan_liefermult = 1000.0;
-      break;
-    case 'ml':
-      $liefereinheit = '1 l';
-      $gebindegroesse = $katalog_gebindegroesse * $kan_liefermult / 1000.0;
-      $kan_liefermult = 1000.0;
-      break;
-    default:
-      $liefereinheit = "1 $kan_liefereinheit";
-      $gebindegroesse = $katalog_gebindegroesse * $kan_liefermult;
-      $kan_liefermult = 1;
-      break;
-  }
 
-  switch( $kan_liefereinheit ) {
-    case 'KI':
-    case 'PA':
-    case 'GB':
-      $verteileinheit_default = '1 ST';
-      $lv_faktor_default = 1;
-      break;
-    case 'g':
-      $verteileinheit_default = '500 g';
-      $lv_faktor_default = 2;
-      break;
-    case 'ml':
-      $verteileinheit_default = '1000 ml';
-      $lv_faktor_default = 1;
-      break;
-    default:
-      $verteileinheit_default = $liefereinheit;
-      $lv_faktor_default = 1;
-      break;
+  $lieferant_name = sql_lieferant_name( $artikel['lieferanten_id'] );
+  if( preg_match( '&^Terra&', $lieferant_name ) ) {
+
+    // setze:
+    //   $liefereinheit: auf diese bezieht sich der preis $katalog_netto
+    //   $gebindegroesse in vielfachen der $liefereinheit
+    switch( $kan_liefereinheit ) {
+      case 'g':
+        $liefereinheit = '1000 g';
+        $gebindegroesse = $katalog_gebindegroesse * $kan_liefermult / 1000.0;
+        $kan_liefermult = 1000.0;
+        break;
+      case 'ml':
+        $liefereinheit = '1000 ml';
+        $gebindegroesse = $katalog_gebindegroesse * $kan_liefermult / 1000.0;
+        $kan_liefermult = 1000.0;
+        break;
+      default:
+        $liefereinheit = "1 $kan_liefereinheit";
+        $gebindegroesse = $katalog_gebindegroesse * $kan_liefermult;
+        $kan_liefermult = 1;
+        break;
+    }
+    
+
+    switch( $kan_liefereinheit ) {
+      case 'KI':
+      case 'PA':
+      case 'GB':
+        $verteileinheit_default = '1 ST';
+        $lv_faktor_default = 1;
+        break;
+      case 'g':
+        $verteileinheit_default = '500 g';
+        $lv_faktor_default = 2;
+        break;
+      case 'ml':
+        $verteileinheit_default = '1000 ml';
+        $lv_faktor_default = 1;
+        break;
+      default:
+        $verteileinheit_default = $liefereinheit;
+        $lv_faktor_default = 1;
+        break;
+    }
+
+  } else if( preg_match( '&^Bode&', $lieferant_name ) ) {
+
+    $gebindegroesse = $katalog_gebindegroesse;
+    $liefereinheit = $katalog_einheit;
+    $verteileinheit_default = $liefereinheit;
+    $lv_faktor_default = 1;
+
+  } else {
+    error( "katalogabgleich fuer $lieferant_name nicht moeglich" );
   }
 
   $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
