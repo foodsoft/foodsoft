@@ -129,11 +129,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
     open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
     open_td( 'number', '', price_view( $produkt['mwst'] ) );
     open_td( 'number', '', price_view( $produkt['pfand'] ) );
-    open_td();
-      open_div( 'center', '', "{$produkt['gebindegroesse']} * {$produkt['verteileinheit']}" );
-      open_div( 'small center', '',
-        mult_view( $produkt['gebindegroesse'] / $produkt['lv_faktor'] ) . " * {$produkt['liefereinheit']}"
-    );
+    open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
     open_td( 'mult', '', price_view( $produkt['endpreis'] ) );
     open_td( 'unit', '', "/ ${produkt['verteileinheit']}" );
   } else {

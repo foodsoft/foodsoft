@@ -99,8 +99,8 @@ open_table('list');
       open_td( 'top bold', '', $produkt['name'] );
       open_td( 'top', '', $produkt['produktgruppen_name'] );
       if( $produkt['zeitstart'] ) {
-        open_td( 'top', '', $produkt['notiz'] );
-        open_td( 'number', '', sprintf( "%d * (%s %s)", $produkt['gebindegroesse'], $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ) );
+        open_td( 'top small', '', $produkt['notiz'] );
+        open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
         open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
         open_td( 'mult', '', price_view( $produkt['endpreis'] ) );
