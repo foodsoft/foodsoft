@@ -389,7 +389,9 @@ function sql_dienste_nicht_bestaetigt($datum){
  */
 
 function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder_id=FALSE, $before=FALSE){
-   $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status  FROM Dienste 
+   $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status
+                , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
+              FROM Dienste 
               INNER JOIN gruppenmitglieder
 	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
 
@@ -3492,18 +3494,15 @@ function mult2string( $mult ) {
  *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
  */
 function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
+
+  // kanonische masseinheiten setzen (gross/kleinschreibung, 1 space zwischenraum, kg -> g, ...)
+  //
   kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
-  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
-
-  // $pr['verteileinheit'] = $pr['kan_verteileinheit'];
-  // if( $pr['kan_verteilmult'] != 1 )
-  $pr['verteileinheit'] = "{$pr['kan_verteilmult']} {$pr['kan_verteileinheit']}";
-
-  $m = $pr['kan_liefermult'];
-  $e = $pr['kan_liefereinheit'];
-  $pr['liefereinheit'] = "$m $e";
+  $m = $pr['kan_verteilmult'];
+  $e = $pr['kan_verteileinheit'];
+  $pr['verteileinheit'] = "$m $e";
+  // fuer anzeige ggf groessere einheiten waehlen:
   switch( $e ) {
-    // liefereinheit: fuer anzeige groessere einheiten waehlen als bei verteilung:
     case 'g':
       if( $m >= 1000 and ( $m % 100 == 0 ) ) {
         $e = 'kg';
@@ -3518,7 +3517,28 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
       break;
     default:
   }
-  $pr['liefereinheit_anzeige'] = "$m $e";
+  $pr['verteileinheit_anzeige'] = mult2string( $m ) . " $e";
+
+  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
+  $m = $pr['kan_liefermult'];
+  $e = $pr['kan_liefereinheit'];
+  $pr['liefereinheit'] = "$m $e";
+  switch( $e ) {
+    case 'g':
+      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
+        $e = 'kg';
+        $m /= 1000.0;
+      }
+      break;
+    case 'ml':
+      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
+        $e = 'l';
+        $m /= 1000.0;
+      }
+      break;
+    default:
+  }
+  $pr['liefereinheit_anzeige'] = mult2string( $m ) ." $e";
 
   if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
     $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
@@ -3592,6 +3612,9 @@ function references_produkt( $produkt_id ) {
   );
 }
 
+// sql_produkt_details:
+//   interface zur abfrage aktueller produktdaten inklusive preis, gebinde, einheiten...
+//
 function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
   $produkt_row = sql_select_single_row( "
     SELECT produkte.id
@@ -3621,6 +3644,7 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     $produkt_row['kan_verteileinheit'] = $preis_row['kan_verteileinheit'];
     $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
     $produkt_row['verteileinheit'] = $preis_row['verteileinheit'];
+    $produkt_row['verteileinheit_anzeige'] = $preis_row['verteileinheit_anzeige'];
     //
     // L-Mult L-einheit: fuer abgleich mit Katalog/Rechnung oder zum Bestellen beim Lieferanten:
     $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
