@@ -110,8 +110,8 @@ function mult_view( $mult, $fieldname = false ) {
 }
 
 function gebindegroesse_view( $pr /* result of sql_produkt_details */ ) {
-   $s = "{$pr['gebindegroesse']} * {$pr['verteileinheit']}";
-   if( $pr['verteileinheit'] != $pr['liefereinheit_anzeige'] ) {
+   $s = "{$pr['gebindegroesse']} * {$pr['verteileinheit_anzeige']}";
+   if( $pr['verteileinheit_anzeige'] != $pr['liefereinheit_anzeige'] ) {
      $s .= "<span class='quad small'>(" . mult_view( $pr['gebindegroesse'] / $pr['lv_faktor'] ) . " * {$pr['liefereinheit_anzeige']})</span>";
    }
    return $s;
@@ -254,14 +254,14 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        $critical_date = in_two_weeks();
        if(compare_date2($row["Lieferdatum"], $critical_date)){
 	  //soon
-	  $color_norm="#00FF00";   //grün
-	  $color_not_confirmed="#FFC800";   //yellow
-	  $color_not_accepted="#FF0000";    //red
+	  $color_norm="green";
+	  $color_not_confirmed="yellow";
+	  $color_not_accepted="red";
 	  $soon=TRUE;
        } else {
-	  $color_norm="#00FF00";   //grün
-	  $color_not_confirmed="#00FF00";   //grün
-	  $color_not_accepted="#000000";    //black
+	  $color_norm="green";
+	  $color_not_confirmed="green";
+	  $color_not_accepted="black";
 	  $soon=FALSE;
        }
        switch($row["dienst_status"]){
@@ -289,7 +289,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        case "Nicht geleistet":
        	    break;
        case "Offen":
-	        open_div( '', "style='color:$color_not_accepted;'", 'Offener Dienst' );
+	        open_div( "$color_not_accepted", '', 'Offener Dienst' );
 	        if($show_buttons){
             fc_action( "window=$area,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
 	        }
@@ -333,9 +333,10 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 	   }else {
                  $gruppen_auswahl = sql_aktive_bestellgruppen();
 	   }
-     open_form( sprintf( 'window=%s,name=personAendern_%u', $area, $row['ID'] )
+          open_form( sprintf( 'window=%s,name=personAendern_%u', $area, $row['ID'] )
               , sprintf( 'aktion=dienstPersonAendern_%u', $row['ID'] ) );
-          echo "                  <font color=".$color_use."><select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
+          open_span( $color_use );
+          echo "                  <select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
           echo "                  	<option value=error>Keine aktive Person (".$row['name'].")</option>\n";
 	  foreach($gruppen_auswahl as $gruppe){
 		  foreach(sql_gruppen_members($gruppe['id']) as $member){
@@ -347,10 +348,13 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 		  }
 	  }
 
-	  echo "             </select></font>";
+	  echo "             </select>";
+	  close_span();
 	  close_form();
      } else {
-          echo "<font color=".$color_use.">Gruppe ".($row['gruppen_id']%1000).": ".$row["name"]." ".$row["telefon"]."</font>";
+       echo fc_link( 'gruppenmitglieder'
+                   , array( 'gruppen_id' => $row['gruppen_id'], 'class' => $color_use
+                          , 'text' => "{$row['vorname']} ({$row['gruppen_nummer']}): {$row['telefon']}" ) );
      }
 
 }
@@ -524,7 +528,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   }
 }
 
-// products_overview:
+// bestellschein_view:
 // uebersicht ueber bestellte und gelieferte mengen einer Bestellung anzeigen
 // moegliche Tabellenspalten:
 define( 'PR_COL_NAME' , 0x1 );           // produktname
@@ -552,7 +556,7 @@ define( 'PR_ROWS_NICHTGEFUELLT', 0x8000 ); // nicht gefuellte gebinde auch anzei
 // $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
 // $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
 //
-function products_overview(
+function bestellschein_view(
     $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
     $select_columns = false, $select_nichtgeliefert = false
   ) {
@@ -853,7 +857,7 @@ function products_overview(
           open_td( 'mult', '', fc_link( 'produktdetails',
             "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettoeinzelpreis ) ) );
           open_td( 'unit' );
-            echo "/ {$produkte_row['liefereinheit']}";
+            echo "/ {$produkte_row['liefereinheit_anzeige']}";
             if( $produkte_row['kan_liefereinheit'] != $produkte_row['kan_verteileinheit'] ) {
               $m = $produkte_row['lv_faktor'] * $produkte_row['kan_verteilmult'];
               echo " (".mult2string($m)." ".$produkte_row['kan_verteileinheit'].")";
@@ -869,7 +873,7 @@ function products_overview(
 
         if( $spalten & PR_COL_VPREIS ) {
           open_td( 'mult', '', price_view( $produkte_row['preis'] ) );
-          open_td( 'unit', '', "/ {$produkte_row['kan_verteilmult']} {$produkte_row['kan_verteileinheit']}" );
+          open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
         if( $spalten & PR_COL_BESTELLMENGE ) {

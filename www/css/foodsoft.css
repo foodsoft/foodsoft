@@ -213,6 +213,21 @@ li {
   background-color:#fff0c0 !important;
 }
 
+/* fuer farbigen text: */
+.black {
+  color:#000000;
+}
+.green {
+  color:#00ff00;
+}
+.yellow {
+  color:#ffc800;
+}
+.red {
+  color:#ff0000;
+}
+
+
 .nodisplay {
   display:none;
 }
