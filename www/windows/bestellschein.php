@@ -168,7 +168,7 @@ close_option_menu_row();
 
 medskip();
 
-products_overview(
+bestellschein_view(
   $bestell_id,
   $editable,   // Liefermengen edieren zulassen?
   $editable,   // Preise edieren zulassen?
