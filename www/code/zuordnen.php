@@ -4100,24 +4100,35 @@ function update_database($version){
         $liefereinheit = $p['liefereinheit'];
         $verteileinheit = $p['verteileinheit'];
         $gebindegroesse = $p['gebindegroesse'];
+        if( ! $gebindegroesse )
+          $gebindegroesse = 1;
         switch( $liefereinheit ) {
           case '1 KI':
           case '1 PA':
             $lv_faktor = $gebindegroesse;
             break;
-          case '':
-            $liefereinheit = '1 EA';
           default:
-            kanonische_einheit( $liefereinheit, &$le, &$lm );
-            if( ! $verteileinheit )
-              $verteileinheit = $liefereinheit;
-            kanonische_einheit( $verteileinheit, &$ve, &$vm );
+            if( ! kanonische_einheit( $liefereinheit, &$le, &$lm, false ) ) {
+              $le = 'EA';
+              $lm = 1;
+              $liefereinheit = "$lm $le";
+            }
+            if( ! kanonische_einheit( $verteileinheit, &$ve, &$vm, false ) ) {;
+              $ve = $le;
+              $vm = $lm;
+              $verteileinheit = "$vm $ve";
+            }
+            if( $ve != $le ) {
+              $ve = $le;
+              $vm = $lm;
+              $verteileinheit = "$vm $ve";
+            }
             $lv_faktor = ( 1.0 * $gebindegroesse ) * $vm / $lm;
-            if( $e == 'g' )
-              $e = 'KG';
-            if( $e == 'ml' )
-              $e = 'L';
-            $liefereinheit = "1 $e";
+            if( $le == 'g' )
+              $le = 'KG';
+            if( $le == 'ml' )
+              $le = 'L';
+            $liefereinheit = "1 $le";
             break;
         }
         sql_update( 'produktpreise', $id, array( 'lv_faktor' => $lv_faktor
