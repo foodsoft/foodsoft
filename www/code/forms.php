@@ -824,7 +824,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
              onchange='preisberechnung_vorwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
-        Liefereinheit:
+        Liefer-Einheit:
            <span onmouseover="help('Liefer-Einheit: die Menge, für die der Einzelpreis aus dem Katalog gilt');"
                  onmouseout="help(' ');" >
            <input type='text' size='4' class='mult' name='liefermult' id='newliefermult'
