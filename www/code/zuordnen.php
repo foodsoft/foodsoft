@@ -338,7 +338,7 @@ function sql_dienst_person_aendern($neuPerson, $dienst){
  */
 function sql_dienst_uebernehmen($dienst){
   global $login_gruppen_id;
-  echo "uebernehmen $dienst";
+  // echo "uebernehmen $dienst";
   $row = sql_get_dienst_by_id($dienst);
   if( ($row["Status"]!="Offen" && $row["Status"]!="Akzeptiert"&& $row["Status"]!="Vorgeschlagen")){
        error( "Falscher Status ".$row["Status"]);
@@ -2352,6 +2352,7 @@ function sql_link_transaction( $soll_id, $haben_id ) {
 function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spende = false ) {
   global $dienstkontrollblatt_id, $login_gruppen_id;
 
+  // open_div( 'ok', '', "doppelte_transaktion: $soll, $haben" );
   if( $spende ) {
     need( $betrag > 0, "Bitte nur positive Spenden!" );
     $soll['konto_id'] = -1;
