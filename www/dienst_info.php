@@ -30,7 +30,7 @@
 	}
 
      }
-     fc_action( 'text=OK', 'dienst_rueckbestatigen=1' );
+     echo fc_action( 'text=OK', 'dienst_rueckbestatigen=1' );
 
      exit();
      }

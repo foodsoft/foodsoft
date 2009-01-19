@@ -126,7 +126,7 @@
 		       ?>
 		         Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren Versuchen (Telefon und Email) nicht erreichbar 
            <?
-           fc_action( sprintf( 'text=Klar,aktion=uebernehmen_%u,confirmed=confirmed', $command[1] ) );
+           echo fc_action( sprintf( 'text=Klar,aktion=uebernehmen_%u,confirmed=confirmed', $command[1] ) );
 		       close_div();
            smallskip();
 		   }
