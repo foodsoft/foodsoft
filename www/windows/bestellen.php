@@ -377,6 +377,7 @@ foreach( $produkte as $produkt ) {
 
   $gebindegroesse = $produkt['gebindegroesse'];
   $preis = $produkt['preis'];
+  $lv_faktor = $produkt['lv_faktor'];
 
   $festmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, 0 );
   $toleranzmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, 1 );
@@ -437,8 +438,14 @@ foreach( $produkte as $produkt ) {
     open_td( 'mult' );
   }
     echo fc_link( 'produktdetails', array( 'produkt_id' => $n, 'bestell_id' => $bestell_id
-                                      , 'text' => price_view( $preis ), 'class' => 'href' ) );
-  open_td( 'unit', sprintf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ) );
+                                      , 'text' => sprintf( '%.2lf', $preis ), 'class' => 'href' ) );
+    if( $lv_faktor != 1 )
+      open_div( 'small right', '', price_view( $preis * $produkt['lv_faktor'] ) );
+
+  open_td( 'unit' );
+    printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] );
+    if( $lv_faktor != 1 )
+      open_div( 'small left', '', "/ {$produkt['liefereinheit']}" );
 
   $tag = '';
   if( $festmenge + $toleranzmenge > 0 )
