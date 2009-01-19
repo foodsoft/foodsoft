@@ -23,7 +23,8 @@ setWikiHelpTopic( "foodsoft:$window" );
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');
-    include('dienst_info.php');
+    if( hat_dienst(0) )  // dienst 5 kommt hier sonst nicht vorbei!
+      include('dienst_info.php');
     switch( $window ) {
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
