@@ -59,11 +59,11 @@ switch( $action ) {
     foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
       $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
-        $mengenfaktor = $produkt['mengenfaktor'];
-        $liefermenge = $produkt['liefermenge'] / $mengenfaktor;
+        $lv_faktor = $produkt['lv_faktor'];
+        $liefermenge = $produkt['liefermenge'] / $lv_faktor;
         if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
           $liefermenge = ${"liefermenge$produkt_id"};
-          changeLiefermengen_sql( $liefermenge * $mengenfaktor, $produkt_id, $bestell_id );
+          changeLiefermengen_sql( $liefermenge * $lv_faktor, $produkt_id, $bestell_id );
         }
       }
     }
