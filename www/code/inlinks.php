@@ -147,7 +147,7 @@ function fc_window_defaults( $name ) {
       break;
     case 'dienstplan':
       $parameters['window'] = 'dienstplan';
-      $parameters['window_id'] = 'dienstplan';
+      $parameters['window_id'] = 'main';
       $parameters['text'] = 'Dienstplan';
       $parameters['title'] = 'zum Dienstplan...';
       $parameters['class'] = 'browse';
