@@ -271,31 +271,36 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
             show_dienst_gruppe($row, $color_not_accepted);
             ?> Dieser Dienst ist euch zugeteilt <br> <?
             if($show_buttons){
-              fc_action( 'text=akzeptieren', sprintf( 'aktion=akzeptieren_%u', $row['ID'] ) );
-              fc_action( 'text=geht nicht', sprintf( 'aktion=abtauschen_%u', $row['ID'] ) );
+              echo fc_action( 'class=button smalll,text=akzeptieren', sprintf( 'aktion=akzeptieren_%u', $row['ID'] ) );
+              echo fc_action( 'class=button smalll,text=geht nicht', sprintf( 'aktion=abtauschen_%u', $row['ID'] ) );
             }
           close_div();
         } else {
-		      ?> Noch nicht akzeptiert ( <? show_dienst_gruppe($row, $color_not_accepted);
-		      echo ")";
+          open_div( "oneline $color_not_accepted" );
+		      ?> Noch nicht akzeptiert: <? show_dienst_gruppe($row, $color_not_accepted);
 	            if( $soon){
 	              if($show_buttons){
-                  fc_action( 'text=übernehmen,window=dienstplan', sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+                  echo fc_action( 'text=übernehmen,window=dienstplan,class=button smalll', sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
 		            }
 	            }
+          close_div();
 
 	      }
        	    break;
        case "Nicht geleistet":
        	    break;
        case "Offen":
-	        open_div( "$color_not_accepted", '', 'Offener Dienst' );
+	        open_div( "$color_not_accepted oneline" );
+            echo 'Offener Dienst';
 	        if($show_buttons){
-            fc_action( "window=$area,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+            echo fc_action( "class=button smalll,window=dienstplan,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
 	        }
+          close_div();
        	  break;
        case "Geleistet":
+         open_div();
 	       show_dienst_gruppe($row, $color_norm);
+         close_div();
        	    break;
        case "Akzeptiert":
             $color_use = $color_not_confirmed;
@@ -304,16 +309,18 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
             if(!isset($color_use)){
 	    	$color_use = $color_norm;
 	    }
+      open_div( 'oneline' );
 	    show_dienst_gruppe($row, $color_use);
        	    if($gruppe == $row["gruppen_id"]){
 	       if($show_buttons){
-           fc_action( "window=$area,text=kann doch nicht", sprintf( 'aktion=wirdoffen_%u', $row['ID'] ) );
+           echo fc_action( "window=dienstplan,class=button smalll,text=kann doch nicht", sprintf( 'aktion=wirdoffen_%u', $row['ID'] ) );
 	       }
 	    } else if($row["dienst_status"]=="Akzeptiert" & $soon){
 	       if($show_buttons){
-            fc_action( "window=$area,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+            echo fc_action( "window=dienstplan,class=button smalll,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
 	       }
 	    }
+      close_div();
 	    
 	    break;
        }
@@ -333,18 +340,18 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 	   }else {
                  $gruppen_auswahl = sql_aktive_bestellgruppen();
 	   }
-          open_form( sprintf( 'window=%s,name=personAendern_%u', $area, $row['ID'] )
+          open_form( sprintf( 'name=personAendern_%u', $row['ID'] )
               , sprintf( 'aktion=dienstPersonAendern_%u', $row['ID'] ) );
           open_span( $color_use );
           echo "                  <select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
-          echo "                  	<option value=error>Keine aktive Person (".$row['name'].")</option>\n";
+          echo "                  	<option value='0'>Keine aktive Person</option>\n";
 	  foreach($gruppen_auswahl as $gruppe){
 		  foreach(sql_gruppen_members($gruppe['id']) as $member){
 		          $selected="";
 			  if($row['gruppenmitglieder_id']==$member['id']){
 				  $selected=" selected ";
 			  }
-			  echo "                    <option value=".$member['id'].$selected.">G ".$member['gruppen_id']%1000 .": ".$member['vorname'][0].". ".$member['name']."</option>\n";
+			  echo "<option value='{$member['id']}' $selected>G ".$member['gruppen_id']%1000 .": ".$member['vorname'][0].". ".$member['name']."</option>\n";
 		  }
 	  }
 
@@ -354,7 +361,7 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
      } else {
        echo fc_link( 'gruppenmitglieder'
                    , array( 'gruppen_id' => $row['gruppen_id'], 'class' => $color_use
-                          , 'text' => "{$row['vorname']} ({$row['gruppen_nummer']}): {$row['telefon']}" ) );
+                          , 'text' => "{$row['vorname']} ({$row['gruppen_nummer']})" ) );
      }
 
 }
