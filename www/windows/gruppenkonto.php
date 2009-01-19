@@ -81,7 +81,7 @@ if( $meinkonto ) {
       case 'buchung_gruppe_bank':
         action_buchung_gruppe_bank();
         break;
-      case 'zahlung_gruppe_lieferant':
+      case 'buchung_gruppe_lieferant':
         action_buchung_gruppe_lieferant();
         break;
       case 'umbuchung_gruppe_gruppe':
