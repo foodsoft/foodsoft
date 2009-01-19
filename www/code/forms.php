@@ -827,7 +827,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         Liefer-Einheit:
            <span onmouseover="help('Liefer-Einheit: die Menge, für die der Einzelpreis aus dem Katalog gilt');"
                  onmouseout="help(' ');" >
-           <input type='text' size='4' class='mult' name='liefermult' id='newliefermult'
+           <input type='text' size='4' class='number' name='liefermult' id='newliefermult'
              value='<? echo $vorschlag['kan_liefermult']; ?>'
              title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
              onchange='preisberechnung_vorwaerts();'>
