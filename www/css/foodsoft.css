@@ -192,6 +192,9 @@ li {
 .small {
   font-size:smaller;
 }
+.smalll {
+  font-size:smaller !important;
+}
 .large {
   font-size:larger;
 }
@@ -602,8 +605,8 @@ a + a , .link + .link {
   text-decoration:none;
   text-align:center;
   vertical-align:middle;
-  margin:0pt 1em 0pt 1em;
-  padding:1px 0.6ex 1px 0.6ex;
+  margin:0pt 0.8em 0pt 0.8em;
+  padding:1px 0.5ex 1px 0.5ex;
   color:#000000;
   background-color:#d0e0ff;
   border-style:solid;
