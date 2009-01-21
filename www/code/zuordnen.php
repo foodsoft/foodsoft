@@ -1785,6 +1785,7 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
   return "SELECT
       produkte.name as produkt_name
     , produktgruppen.name as produktgruppen_name
+    , produktgruppen.id as produktgruppen_id
     , produkte.id as produkt_id
     , produkte.notiz as notiz
     , bestellvorschlaege.liefermenge as liefermenge
