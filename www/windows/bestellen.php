@@ -327,7 +327,7 @@ if( ! $readonly ) {
   </script>
   <?
 
-  open_span( 'alert floatingbuttons', "id='floating_submit_button_$bestellform_id'" );
+  open_div( 'alert floatingbuttons', "id='floating_submit_button_$bestellform_id'" );
     open_table('layout');
         open_td('alert left');
           fc_link( 'self', array( 'class' => 'close'
@@ -349,7 +349,7 @@ if( ! $readonly ) {
         open_td('center alert', '', "<a class='bigbutton' href='javascript:bestellung_submit();'>Speichern</a>" );
         open_td('center alert', '', fc_link( 'self', 'bestell_id=0,class=bigbutton,text=Abbrechen' ) );
     close_table();
-  close_span();
+  close_div();
 
 }
 
@@ -365,10 +365,13 @@ open_table( 'list hfill' );  // bestelltabelle
   if( $dienst == 4 )
     open_th( '', '', 'Aktionen' );
 
-$produktgruppe_alt = '';
-$rowspan = 1;
-$pg_id = 0;
-$js = '';
+$produktgruppen_zahl = array();
+foreach( $produkte as $produkt ) {
+  $id = $produkt['produktgruppen_id'];
+  $produktgruppen_zahl[$id] = adefault( $produktgruppen_zahl, $id, 0 ) + 1;
+}
+$produktgruppe_alt = -1;
+
 foreach( $produkte as $produkt ) {
   open_tr();
 
@@ -403,20 +406,24 @@ foreach( $produkte as $produkt ) {
   , $festmenge_andere, $toleranzmenge_andere
   , $zuteilung_fest, $zuteilung_toleranz
   );
-  $produktgruppe = $produkt['produktgruppen_name'];
+  $produktgruppe = $produkt['produktgruppen_id'];
   if( $produktgruppe != $produktgruppe_alt ) {
-    if( $pg_id )
-      $js .= "document.getElementById('pg_$pg_id').rowSpan = $rowspan ;";
-    ++$pg_id;
-    open_td( '', "id='pg_$pg_id' rowspan='1'", $produktgruppe );
-    $rowspan = 1;
+    if( $activate_mozilla_kludges ) {
+      // mozilla can't handle rowspan in complex tables on first pass...
+      open_td( '', "rowspan='1' id='pg_$produktgruppe'", $produkt['produktgruppen_name'] );
+      // ... so we set rowspan=1 first and modify later :-/
+      $js .= "document.getElementById('pg_$produktgruppe').rowSpan = {$produktgruppen_zahl[$produktgruppe]}; ";
+    } else {
+      open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
+    }
     $produktgruppe_alt = $produktgruppe;
+    // $js .= "document.getElementById('pg_$produktgruppe').rowSpan = 1; ";
   } else {
-    ++$rowspan;
+    // open_td( '', '', ' ' );
   }
 
   echo "<input type='hidden' name='fest_$n' id='fest_$n' value='$festmenge'>
-        <input type='hidden' name='toleranz_$n' id='toleranz_$n' value='$toleranzmenge'>";
+       <input type='hidden' name='toleranz_$n' id='toleranz_$n' value='$toleranzmenge'>";
 
   open_td();
     open_div('oneline', '', $produkt['produkt_name']);
@@ -495,6 +502,7 @@ foreach( $produkte as $produkt ) {
       ?> - <?
     }
 
+
   open_td( "mult $tag", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
 
   if( $dienst == 4 ) {
@@ -506,11 +514,6 @@ foreach( $produkte as $produkt ) {
   }
 }
 
-if( $rowspan > 1 )
-  $js .= "document.getElementById(\"pg_$pg_id\").rowSpan = $rowspan; ";
-
-if( $js )
-  open_javascript( $js );
 
 open_tr('summe');
   open_td( '', "colspan='12'", 'Gesamtpreis:' );
@@ -518,6 +521,9 @@ open_tr('summe');
 
   if( $dienst == 4 ) open_td();
 close_table();
+
+if( $js )
+  open_javascript( $js );
 
 if( ! $readonly ) {
   close_form();
