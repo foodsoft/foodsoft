@@ -399,7 +399,7 @@ function fc_url( $parameters ) {
           continue 2;
     }
     if( $value !== NULL )
-      $url .= "&$key=$value";
+      $url .= "&amp;$key=$value";
   }
   $url .= $anchor;
   return $url;
@@ -410,6 +410,7 @@ function fc_url( $parameters ) {
 // $url may also contain javascript; if so, '-quotes but no "-quotes must be used
 //
 function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
+  global $activate_safari_kludges;
   $alt = '';
   if( $title ) {
     $alt = "alt='$title'";
@@ -421,8 +422,12 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
     if( $text )
       $l .= ' ';
   }
-  if( $text )
+  if( $text ) {
     $l .= "$text";
+  } else if( ! $img ) {
+    if( $activate_safari_kludges )
+      $l .= "&#8203;";   // safari can't handle completely empty links
+  }
   return $l . '</a>';
 }
 
