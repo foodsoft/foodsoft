@@ -446,10 +446,9 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   vprintf( "<tr class='legende'>$rowformat</tr>", $legend );
 
   $last_key = '';
-  $row_index=0;
-  $js = '';
   $fieldcount = 0;
   $gesamtwert = 0;
+  $output = '';
   foreach( sql_basar( $bestell_id, $order ) as $basar_row ) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
      $menge=$basar_row['basar'];
@@ -495,29 +494,24 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      //
      if( $last_key == $row[$keyfield] ) {
        $rowspan++;
-       $js = "
-         <script type='text/javascript'>
-         document.getElementById('row$row_index').rowSpan=$rowspan;
-         </script>
-       ";
-       $row[$keyfield] = "";
+       $row[$keyfield] = '<tr>';
      } else {
-       echo $js;
-       $js = '';
+       if( $output )
+         echo "<tr><td rowspan='$rowspan ' " . $output;
+       $output = '';
        $last_key = $row[$keyfield];
-       $row_index++;
-       $rowspan=1;
-       $row[$keyfield] = preg_replace( "/^<td/", "<td id='row$row_index'", $row[$keyfield], 1 );
+       $rowspan = 1;
+       $row[$keyfield] = preg_replace( "/^<td/", ' ', $row[$keyfield], 1 );
      }
-     vprintf( "<tr>$rowformat</tr>\n", $row );
+     $output .= vsprintf( "$rowformat</tr>\n", $row );
   }
+  if( $output )
+    echo "<tr><td rowspan='$rowspan' " . $output;
   open_tr('summe');
     open_td( 'right', "colspan='8'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
     if( $editAmounts )
       open_td();
-
-  echo $js;
 
   if( $editAmounts ) {
     open_tr();
@@ -533,6 +527,9 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   } else {
     close_table();
   }
+  // if( $js_out )
+  //   open_javascript( $js_out );
+
 }
 
 // bestellschein_view:
