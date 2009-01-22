@@ -409,11 +409,12 @@ foreach( $produkte as $produkt ) {
   $produktgruppe = $produkt['produktgruppen_id'];
   if( $produktgruppe != $produktgruppe_alt ) {
     if( $activate_mozilla_kludges ) {
-      // mozilla can't handle rowspan in complex tables on first pass...
+      // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
+      // so we set rowspan=1 first and modify later :-/
       open_td( '', "rowspan='1' id='pg_$produktgruppe'", $produkt['produktgruppen_name'] );
-      // ... so we set rowspan=1 first and modify later :-/
       $js .= "document.getElementById('pg_$produktgruppe').rowSpan = {$produktgruppen_zahl[$produktgruppe]}; ";
     } else {
+      // other browsers get it right the first time, as it should be:
       open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
     }
     $produktgruppe_alt = $produktgruppe;
@@ -422,8 +423,8 @@ foreach( $produkte as $produkt ) {
     // open_td( '', '', ' ' );
   }
 
-  echo "<input type='hidden' name='fest_$n' id='fest_$n' value='$festmenge'>
-       <input type='hidden' name='toleranz_$n' id='toleranz_$n' value='$toleranzmenge'>";
+  hidden_input( "fest_$n", "$festmenge", "id='fest_$n'" );
+  hidden_input( "toleranz_$n", "$toleranzmenge", "id='toleranz_$n'" );
 
   open_td();
     open_div('oneline', '', $produkt['produkt_name']);
