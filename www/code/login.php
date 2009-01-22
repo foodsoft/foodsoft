@@ -131,7 +131,7 @@ switch( $login ) {
       $keks = $session_id.'_'.$cookie;
       need( setcookie( 'foodsoftkeks', $keks, 0, '/' ), "setcookie() fehlgeschlagen" );
       $angemeldet = TRUE;
-      logger( 'successful login' );
+      logger( "successful login. client: {$_SERVER['HTTP_USER_AGENT']} {$activate_mozilla_kludges} {$activate_safari_kludges} {$activate_exploder_kludges}" );
     }
     break;
   case 'logout':
