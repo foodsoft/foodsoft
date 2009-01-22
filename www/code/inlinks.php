@@ -132,7 +132,7 @@ function fc_window_defaults( $name ) {
       break;
     case 'dienstkontrollblatt':
       $parameters['window'] = 'dienstkontrollblatt';
-      $parameters['window_id'] = 'dienstkontrollblatt';
+      $parameters['window_id'] = 'main';
       $parameters['text'] = 'Dienstkontrollblatt';
       $parameters['title'] = 'zur Anzeige des Dienstkontrollblatts...';
       $parameters['class'] = 'browse';
