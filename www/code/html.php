@@ -18,9 +18,16 @@ $tr_title = '';
 
 
 global $activate_mozilla_kludges, $activate_safari_kludges, $activate_exploder_kludges;
-$activate_mozilla_kludges = preg_match ( '/^mozilla/i', $_SERVER['HTTP_USER_AGENT'] );
-$activate_safari_kludges = preg_match ( '/^safari/i', $_SERVER['HTTP_USER_AGENT'] );
-$activate_exploder_kludges = preg_match ( '/^msie/i', $_SERVER['HTTP_USER_AGENT'] );
+$activate_safari_kludges = 0;
+$activate_mozilla_kludges = 0;
+$activate_exploder_kludges = 0;
+if( preg_match ( '/safari/i', $_SERVER['HTTP_USER_AGENT'] ) ) {  //  safari sends "Mozilla...safari"!
+  $activate_safari_kludges = 1;
+} else if( preg_match ( '/^mozilla/i', $_SERVER['HTTP_USER_AGENT'] ) ) {
+  $activate_mozilla_kludges = 1;
+} else if( preg_match ( '/^msie/i', $_SERVER['HTTP_USER_AGENT'] ) ) {
+  $activate_exploder_kludges = 1;
+}
 
 // new_html_id(): increment and return next unique id:
 //
