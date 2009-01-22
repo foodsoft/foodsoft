@@ -42,9 +42,11 @@ open_div( $headclass, "id='header'" );
       if( $angemeldet ) {
         if( $dienst > 0 ) {
           // fuer dienste: noch dienstkontrollblatteintrag aktualisieren:
-          echo "<a class='button' href='index.php?window=dienstkontrollblatt&action=abmelden'>Abmelden</a>";
+          echo fc_action( 'window=dienstkontrollblatt,class=button,text=Abmelden,img=', 'action=abmelden' );
+          // "<a class='button' href='index.php?window=dienstkontrollblatt&action=abmelden'>Abmelden</a>";
         } else {
-          echo "<a class='button' href='index.php?login=logout'>Abmelden</a>";
+          echo fc_action( 'class=button,text=Abmelden,img=', 'login=logout' );
+          // echo "<a class='button' href='index.php?login=logout'>Abmelden</a>";
         }
       } else {
         echo "(nicht angemeldet)";
