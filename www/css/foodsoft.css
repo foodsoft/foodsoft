@@ -117,7 +117,7 @@ table.layout tr td, table table.layout tr td, table table table.layout tr td {
 */
 
 table.list tr td, table table.list tr td, table table table.list tr td, table.list tr th, table table.list tr th, table table table.list tr th {
-  border:dotted 1pt #404040;
+  border:dotted 1px #404040;
   padding: 0.4ex 1ex 0.4ex 1ex;
 }
 table.list tr th, table table.list tr th, table table table.list tr th {
@@ -528,7 +528,7 @@ label {
   font-size:11pt;
 }
 
-span.floatingbuttons {
+span.floatingbuttons, div.floatingbuttons {
   display:none;
   z-index:999;
   position:fixed;
@@ -804,30 +804,25 @@ table.footer tr, table.footer td {
   padding-bottom:1em;
 }
 
-.wall_for_board {
-  margin:1em;
-}
-
-.board, .board:hover, .board textarea {
+.board, .board textarea {
   background-color:#224422;
   color:#cccccc;
-  font-family:fantasy;
   font-size:14pt;
+  font-family:fantasy;
 }
-.board, .board:hover {
+.board {
   border-width:1ex;
   border-color:#a0b0a0;
   border-style:solid;
   padding:1.2ex;
-  height:12em;
-  width:26em;
+  margin:1em;
+  float:left;
 }
 .board textarea {
   border-style:none;
 }
 .chalk {
-  background-image:url(../img/chalk_trans.gif);
-  background-repeat:no-repeat;
-  background-position:bottom right;
+  text-align:right;
+  height:1em;
+  vertical-align:middle;
 }
-
