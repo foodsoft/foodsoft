@@ -597,7 +597,7 @@ function fc_openwindow( $window, $parameters = array(), $options = array() ) {
   if( is_string( $parameters ) )
     $parameters = parameters_explode( $parameters );
   $parameters['context'] = 'js';
-  open_javascript( fc_link( $window, $parameters, $options ) );
+  open_javascript( preg_replace( '/&amp;/', '&', fc_link( $window, $parameters, $options ) ) );
 }
 
 // reload_immediately(): exit the current script and open $url instead:
