@@ -508,7 +508,7 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
       if( $window_id != $GLOBALS['window_id'] ) {
         $url = "javascript: $confirm window.open( '$url', '$js_window_name', '$option_string' ).focus();";
       } else if( $confirm ) {
-        $url = "javscript: $confirm self.location.href='$url';";
+        $url = "javascript: $confirm self.location.href='$url';";
       }
       $title = adefault( $parameters, 'title', '' );
       $text = adefault( $parameters, 'text', '' );
@@ -603,6 +603,7 @@ function fc_openwindow( $window, $parameters = array(), $options = array() ) {
 // reload_immediately(): exit the current script and open $url instead:
 //
 function reload_immediately( $url ) {
+  $url = preg_replace( '/&amp;/', '&', $url );  // doesn't get fed through html engine here
   open_javascript( "self.location.href = '$url';" );
   exit();
 }
