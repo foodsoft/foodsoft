@@ -290,14 +290,14 @@ function open_form( $get_parameters = array(), $post_parameters = array() ) {
   return $form_id;
 }
 
-function hidden_input( $name, $val = false ) {
+function hidden_input( $name, $val = false, $attr = '' ) {
   global $hidden_input;
   if( $val === false ) {
     global $$name;
     $val = $$name;
   }
   if( $val !== NULL )
-    $hidden_input .= "<input type='hidden' name='$name' value='$val'>\n";
+    $hidden_input .= "<input type='hidden' name='$name' value='$val' $attr>\n";
 }
 
 function close_form() {
@@ -326,7 +326,7 @@ function open_fieldset( $class = '', $attr = '', $legend = '', $toggle = false )
     close_span();
 
     open_fieldset( $class, "$attr style='display:$fieldsetdisplay;' id='fieldset_$id'" );
-    echo "<legend><img src='img/close_black_trans.gif'
+    echo "<legend><img src='img/close_black_trans.gif' alt='Schließen'
             onclick=\"document.getElementById('button_$id').style.display='inline';
                      document.getElementById('fieldset_$id').style.display='none';\">
           $legend</legend>";
