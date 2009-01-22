@@ -25,7 +25,7 @@ switch( $action ) {
 }
 
 open_table( 'layout hfill' );
-  open_td();
+  open_td( '', "rowspan='2'" );
     bigskip();
     open_table( 'menu' );
       foreach(possible_areas() as $menu_area){
@@ -36,7 +36,7 @@ open_table( 'layout hfill' );
     if( $action == 'edit' ) {
       open_form( '', 'action=save' );
         open_div( 'board' );
-          ?><textarea id='news' wrap='hard' name='bulletinboard' cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
+          ?><textarea id='news' wrap='hard' name='bulletinboard' class='board' cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
           open_div( 'chalk' );
             submission_button();
           close_div();
@@ -46,17 +46,16 @@ open_table( 'layout hfill' );
     } else {
       $form_id = open_form( '', 'action=edit' );
         open_div( 'board' );
-          // open_div();
-            ?><textarea name='news' readonly cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
-            open_div( 'chalk' );
-              ?><a href='#' onclick="document.forms.form_<? echo $form_id; ?>.submit();"
-                  title='Tafel beschreiben...'><img src='img/chalk_trans.gif'></a><?
-            close_div();
-          // close_div();
+          ?><textarea class='board' name='news' readonly cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
+          open_div( 'chalk' );
+            ?><a href='#' onclick="document.forms.form_<? echo $form_id; ?>.submit();"
+                title='Tafel beschreiben...'><img src='img/chalk_trans.gif' alt='Kreide'></a><?
+          close_div();
         close_div();
       close_form();
     }
-  open_div( '', "style='clear:left;'", ' ' ); // erzwingt neue Zeile
+  open_tr();
+  open_td();
 
     if( hat_dienst(0) ) {
       open_div( 'bigskip bold', '', 'Euer Gruppenkontostand: ' . fc_link( 'meinkonto', array(
@@ -70,7 +69,7 @@ open_table( 'layout hfill' );
     close_div();
 
     open_div( 'bigskip' );
-      ?> <h4> Eure nächsten <a href=index.php?window=dienstplan>Dienste</a>: </h4> <?
+      ?> <h4> Eure nächsten <? echo fc_link( 'dienstplan', 'text=Dienste,class=href' ); ?>: </h4> <?
       $date = strftime("%Y-%m-%d");
       $dienste =  sql_get_dienste($date, $login_gruppen_id);
       while($row = mysql_fetch_array($dienste)){
