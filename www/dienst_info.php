@@ -26,7 +26,6 @@
 	       echo "<h4> Dienst $current_dienst</h4>";
 	    }
 	    dienst_view($row, $login_gruppen_id, FALSE);
-	    echo "<br>";
 	}
 
      }

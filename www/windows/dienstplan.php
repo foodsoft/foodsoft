@@ -11,13 +11,13 @@
      if( hat_dienst(5) ) {
 
   ?>
- <div id=Zusatz>
+ <div id='Zusatz'>
        <h1>Dienste erstellen</h1>
 
    <!-- Zeige bisherige Dienste-->
   <?
 
-   open_form( 'name=erstellen' );
+   open_form( "name='erstellen'" );
 	     get_http_var("dienstfrequenz",'u');
 	     if (!isset($dienstfrequenz)){
 	     	$dienstfrequenz = "7";
@@ -33,11 +33,11 @@
 
 	   ?>
 	   Verteile Dienste mit 
-	   <input type="text" size=3 name="dienstfrequenz" value=<?echo $dienstfrequenz?> />
+	   <input type="text" size='3' name="dienstfrequenz" value='<?echo $dienstfrequenz?>' />
 	   tägigem Abstand <br> ab dem
-	   <input type="text" size=10 name="startdatum" value=<?echo $startdatum?> />
+	   <input type="text" size='10' name="startdatum" value=<?echo $startdatum?> />
 	   bis
-	   <input type="text" size=10 name="enddatum" value=<?echo $enddatum?> />
+	   <input type="text" size='10' name="enddatum" value=<?echo $enddatum?> />
 	   <br>
 	   <input type="submit" action="create"  value="Dienste Erstellen" />
      <?
@@ -172,7 +172,7 @@
 		   sql_dienst_akzeptieren($command[1]);
 		   break;
 		case "dienstPersonAendern":
-		    get_http_var("person_neu","R");
+		    need_http_var("person_neu","u");
 		    sql_dienst_person_aendern($person_neu, $command[1]);
 			//ToDo hier auf geänderte Person reagieren
 			//Achtung: rechte überprüfen
@@ -182,14 +182,11 @@
 	     }
 
 	  //Formular vorbereiten und anzeigen
-?>
-     <table class='list'><tr>
-      <th> Datum </th>
-      <th> Dienst 1/2 </th>
-      <th> Dienst 3 </th>
-      <th> Dienst 4 </th>
-      </tr><tr>
-<?
+    open_table( 'list' );
+      open_th( '', '', 'Datum' );
+      open_th( '', '', 'Dienst 1/2' );
+      open_th( '', '', 'Dienst 3' );
+      open_th( '', '', 'Dienst 4' );
 
 	    $dienste =  sql_get_dienste();
 	    $currentDienst = "initial";
@@ -198,23 +195,18 @@
 		//neue Zeile für Dienst 1/2
 	        if($row["Lieferdatum"]!=$currentDate){ //Problem, wenn Dienst abgef. immer 1/2
 		    $currentDate = $row["Lieferdatum"];
-		    ?>
-		     </tr><tr><td><?echo $currentDate?></td>
-		    <?
+                    $currentDienst = null;
+                    open_tr();
+                    open_td( '', '', $currentDate );
 		}
 		if($currentDienst != $row["Dienst"]){
-			echo "</td><td>";
-			$currentDienst = $row["Dienst"];
+		    open_td();
+		    $currentDienst = $row["Dienst"];
 		}
 		if($row["Status"]!="Nicht geleistet"){
 			dienst_view($row, $login_gruppen_id); 
-			echo "<br>";
 		}
 	    }
-	   ?>
-     </tr>
-     </table>
+    close_table();
 
-	   <p>
-	   </p>
 
