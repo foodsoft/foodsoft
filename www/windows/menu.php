@@ -17,9 +17,6 @@ switch( $action ) {
       $bulletinboard .= ( $nl . rtrim( preg_replace( '/\r/', '', $b[$i] ) ) );
       $nl = "\n";
     }
-    // $bulletinboard = $b[0].$b[1].$b[2].$b[3].$b[4].$b[5].$b[6];
-    // var_export( $b );
-    // var_export( $bulletinboard );
     sql_update( 'leitvariable', array( 'name'=> 'bulletinboard' ), array( 'value' => $bulletinboard ) );
     break;
 }
@@ -41,8 +38,8 @@ open_table( 'layout hfill' );
             submission_button();
           close_div();
         close_div();
-        open_javascript( "document.getElementById('news').focus();" );
       close_form();
+      open_javascript( "document.getElementById('news').focus();" );
     } else {
       $form_id = open_form( '', 'action=edit' );
         open_div( 'board' );
