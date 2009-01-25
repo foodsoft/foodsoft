@@ -72,7 +72,7 @@ switch( $action ) {
       get_http_var( "toleranz_$n", 'u', 0 );
       $toleranz = ${"toleranz_$n"};
       $bestellungen[$n] = array( 'fest' => $fest, 'toleranz' => $toleranz );
-      $gesamtpreis += $produkt['preis'] * ( $fest + $toleranz );
+      $gesamtpreis += $produkt['endpreis'] * ( $fest + $toleranz );
     }
     need( $gesamtpreis <= $kontostand, "Konto &uuml;berzogen!" );
     foreach( $bestellungen as $produkt_id => $m ) {
@@ -379,7 +379,7 @@ foreach( $produkte as $produkt ) {
   $n = $produkt_id;
 
   $gebindegroesse = $produkt['gebindegroesse'];
-  $preis = $produkt['preis'];
+  $preis = $produkt['endpreis'];
   $lv_faktor = $produkt['lv_faktor'];
 
   $festmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, 0 );
