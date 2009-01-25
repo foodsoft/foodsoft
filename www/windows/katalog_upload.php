@@ -218,7 +218,7 @@ function upload_bode() {
     $name = "";
     $einheit = "";
     $gebinde = "";
-    $mwst = "7.00";
+    $mwst = "-1";
     $pfand = "0.00";
     $verband = "";
     $herkunft = "";
