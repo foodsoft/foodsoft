@@ -834,7 +834,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'preis' => array(
+    , 'lieferpreis' => array(
         'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
       , 'default' => ''
@@ -1082,9 +1082,9 @@ $tables = array(
       , 'extra' => ''
       )
     , 'lv_faktor' => array(
-        'type' =>  "int(11)"
+        'type' =>  "decimal(9,3)"
       , 'null' => 'NO'
-      , 'default' => '0'
+      , 'default' => '1.0'
       , 'extra' => ''
       )
     )
