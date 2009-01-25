@@ -527,9 +527,6 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   } else {
     close_table();
   }
-  // if( $js_out )
-  //   open_javascript( $js_out );
-
 }
 
 // bestellschein_view:
@@ -876,7 +873,7 @@ function bestellschein_view(
           open_td( 'number', '', $produkte_row['pfand'] );
 
         if( $spalten & PR_COL_VPREIS ) {
-          open_td( 'mult', '', price_view( $produkte_row['preis'] ) );
+          open_td( 'mult', '', price_view( $produkte_row['endpreis'] ) );
           open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
@@ -1125,7 +1122,7 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
       close_div();
       open_div('small');
         printf( "Preis: %.2lf / %s, Produktgruppe: %s"
-          , $produkt['preis']
+          , $produkt['endpreis']
           , $produkt['verteileinheit']
           , $produkt['produktgruppen_name']
         );
@@ -1138,7 +1135,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   preisdatenSetzen( & $vorschlag );
   $verteilmult = $vorschlag['kan_verteilmult'];
   $verteileinheit = $vorschlag['kan_verteileinheit'];
-  $preis = $vorschlag['preis'];
+  $preis = $vorschlag['endpreis'];
   $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
 
   open_tr('summe');
@@ -1386,7 +1383,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'number', '', $pr1['mwst'] );
       open_td( 'number', '', $pr1['pfand'] );
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
-      open_td( 'mult', '', price_view( $pr1['preis'] ) );
+      open_td( 'mult', '', price_view( $pr1['endpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
 
     if( $bestell_id ) {
