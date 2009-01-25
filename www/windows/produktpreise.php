@@ -172,6 +172,7 @@ switch( $result ) {
 medskip();
 
 if( $editable ) {
+  formular_artikelnummer( $produkt_id, $neednewarticlenumber );
   if( $neednewprice ) {
     open_fieldset( 'small_form', '', 'Vorschlag neuer Preiseintrag' );
   } else {
