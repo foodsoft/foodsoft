@@ -64,6 +64,13 @@ function sql_select_single_field( $sql, $field, $allownull = false ) {
   return $row[$field];
 }
 
+function sql_count( $table, $where ) {
+  return sql_select_single_field(
+    "SELECT count(*) as count FROM $table WHERE $where"
+  , 'count'
+  );
+}
+
 function sql_update( $table, $where, $values, $escape_and_quote = true ) {
   switch( $table ) {
     case 'leitvariable':
@@ -1426,10 +1433,7 @@ function optionen_lieferanten( $selected = false, $option_0 = false ) {
 }
 
 function sql_references_lieferant( $lieferanten_id ) {
-  return sql_select_single_field(
-    "SELECT count(*) as count FROM gesamtbestellungen WHERE lieferanten_id=$lieferanten_id"
-  , 'count'
-  );
+  return sql_count( 'gesamtbestellungen', "lieferanten_id=$lieferanten_id" );
 }
 
 function sql_delete_lieferant( $lieferanten_id ) {
@@ -1794,14 +1798,15 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.lv_faktor as lv_faktor
     , produktpreise.gebindegroesse as gebindegroesse
-    , produktpreise.preis as preis
+    , produktpreise.lieferpreis as lieferpreis
     , produktpreise.id as preis_id
     , produktpreise.pfand as pfand
     , produktpreise.mwst as mwst
     , produkte.artikelnummer as artikelnummer
     , produktpreise.bestellnummer as bestellnummer
-    , ( produktpreise.preis - produktpreise.pfand ) as bruttopreis
-    , ( produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) as nettopreis
+    , produktpreise.lieferpreis / produktpreise.lv_faktor as nettopreis
+    , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) as bruttopreis
+    , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) + produktpreise.pfand as endpreis
     , $gesamtbestellmenge_expr as gesamtbestellmenge
     , $basarbestellmenge_expr  as basarbestellmenge
     , $toleranzbestellmenge_expr as toleranzbestellmenge
@@ -2024,9 +2029,11 @@ function select_basar( $bestell_id = 0 ) {
          , gesamtbestellungen.name as bestellung_name
          , gesamtbestellungen.lieferung as lieferung
          , gesamtbestellungen.id as gesamtbestellung_id
-         , produktpreise.preis as endpreis
-         , produktpreise.preis - produktpreise.pfand as bruttopreis
-         , ( produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) as nettopreis
+         , produktpreise.lieferpreis
+         , produktpreise.lv_faktor
+         , produktpreise.lieferpreis / produktpreise.lv_faktor as nettopreis
+         , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) as bruttopreis
+         , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) + produktpreise.pfand as endpreis
          , produktpreise.verteileinheit
          , bestellvorschlaege.produkt_id
          , bestellvorschlaege.produktpreise_id
@@ -2700,7 +2707,7 @@ define( 'OPTION_PFAND_VOLL_ANZAHL', 6 );
 define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 7 );   /* schuld aus rueckgabe leerer pfandverpackungen */
 define( 'OPTION_PFAND_LEER_NETTO_SOLL', 8 ); 
 define( 'OPTION_PFAND_LEER_ANZAHL', 9 );
-define( 'OPTION_EXTRA_BRUTTO_SOLL', 10 );   /* sonstiges: Rabatte, Versandkosten, ... */
+define( 'OPTION_EXTRA_BRUTTO_SOLL', 10 );   /* sonstiges: Rabatte, Versandkosten, ... (nur lieferantenseitig sinnvoll) */
 
 
 /* select_bestellungen_soll_gruppen:
@@ -2713,15 +2720,15 @@ define( 'OPTION_EXTRA_BRUTTO_SOLL', 10 );   /* sonstiges: Rabatte, Versandkosten
 function select_bestellungen_soll_gruppen( $art, $using = array() ) {
   switch( $art ) {
     case OPTION_ENDPREIS_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * produktpreise.preis)";
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_BRUTTO_SOLL:
-      $expr = "( bestellzuordnung.menge * ( produktpreise.pfand - produktpreise.preis ) )";
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_NETTO_SOLL:
-      $expr = "( bestellzuordnung.menge * ( produktpreise.pfand - produktpreise.preis ) / ( 1.0 + produktpreise.mwst / 100.0 ) )";
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) )";
       $query = 'waren';
       break;
     case OPTION_PFAND_VOLL_BRUTTO_SOLL:
@@ -2777,16 +2784,16 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
 /* select_bestellungen_soll_lieferanten:
  *   liefert als skalarer subquery forderung von lieferanten aus bestellungen
  *   $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
- *   auswirkung haben: 'gesamtbestellungen', 'lieferanten'
+ *   auswirkung haben: 'gesamtbestellungen', 'lieferanten', 'pfandverpackungen'
 */
 function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
   switch( $art ) {
     case OPTION_WAREN_BRUTTO_SOLL:
-      $expr = "( bestellvorschlaege.liefermenge * ( produktpreise.preis - produktpreise.pfand ) )";
+      $expr = "( bestellvorschlaege.liefermenge / produktpreise.lv_faktor * produktpreise.lieferpreis * ( 1.0 + produktpreise.mwst / 100.0 ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_NETTO_SOLL:
-      $expr = "( bestellvorschlaege.liefermenge * ( (produktpreise.preis - produktpreise.pfand ) / ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
+      $expr = "( bestellvorschlaege.liefermenge / produktpreise.lv_faktor * produktpreise.lieferpreis )";
       $query = 'waren';
       break;
     case OPTION_PFAND_VOLL_NETTO_SOLL:
@@ -3242,49 +3249,45 @@ function sql_verluste_summe( $type ) {
 //
 // einheiten: bestehen aus masszahl (optional, default ist 1, bis 3 nachkommastellen werden unterstuetzt) und
 // der eigentlichen einheit. wir unterscheiden 2 einheiten:
-//   - verteileinheit
-//       die (teils aus historischen gruenden) weitaus wichtigste einheit:
-//       - gruppen bestellen vielfache davon: jeweils eine pro klick im Bestellformular
-//       - produktmengen werden immer als vielfache davon gespeichert
-//       - produktpreise werden immer pro verteileinheit gespeichert
-//   - liefereinheit
-//       zweckmaessige einheit, die das bestellen beim lieferanten und den rechnungsabgleich erleichtern soll:
+// - verteileinheit (V-Einheit) (unsere historisch erste und ehemals wichtigste einheit):
+//     - gruppen bestellen vielfache davon: jeweils eine pro klick im Bestellformular
+//     - produktmengen werden immer als vielfache davon gespeichert
+// - liefereinheit (L-Einheit)
+//     - preise werden pro liefereinheit gespeichert (spalte 'lieferpreis')
+//     - zweckmaessige einheit, die das bestellen beim lieferanten und den rechnungsabgleich erleichtern soll:
 //       * _immer_ die einheit, auf die sich der "einzelpreis" des lieferanten bezieht
 //       * oft (etwa beim bauern) auch die einheit, in der der wir bestellen, etwa "1 kg"
-//   wenn verteileinheit und liefereinheit nicht automatisch umgerechnet werden koennen, muss der umrechnungsfaktor
-//     lv_faktor
-//   angegeben werden.
-//
-//   kanonische einheit:
-//   - gleich wie einheit, ausser: kg in g und l in ml umgerechnet, gross/kleinschreibung vereinheitlicht,
-//     masszahl immer abgetrennt
-//
+//   zu beiden Einheiten berechnet kanonische_einheit() eine kanonische darstellung:
+//     * gleich wie einheit, ausser: kg in g und l in ml umgerechnet, gross/kleinschreibung vereinheitlicht, und
+//     * masszahl immer abgetrennt
 //   verteileinheit und liefereinheit muessen gleiche kanonische einheit haben, ausser:
-//   - GB, KI oder PA als liefereinheit: bedeutet ein gebinde (gebindegroesse * verteileinheit), die
-//     verteileinheit ist dann beliebig.
+//     * GB, KI oder PA als liefereinheit: verteileinheit ist dann beliebig
+//  - lv_faktor:
+//     umrechnungsfaktor L-Einheit / V-Einheit
+//     wenn verteileinheit und liefereinheit verschiedene kanonische enheiten haben (nur bei GB, KI, PA als
+//     L-Einheit erlaubt) muss dieser faktor manuell erfasst werden.
+// - gebindegroesse:
+//     gebindegroesse, vielfache der V-Einheit. Muss immer eine ganze Zahl sein!
+// - lieferpreis:
+//   der nettopreis (ohne pfand, ohne mehrwertsteuer) je liefereinheit
+// - pfand:
+//   pfand (brutto), das den gruppen je V-Einheit in rechnung gestellt wird
+//   (hat im Moment nichts mit dem vom Lieferanten berechneten Pfand zu tun!)
+// - mwst:
+//   mehrwertsteuersatz in prozent (meist 7.00 oder 19.00).
 //
 //  beispiele:
-//   lieferant/produkt        verteileinheit      liefereinheit   lv_faktor
-//  ----------------------------------------------------------------------------
-//     Terra/kaese              100 g                  1 kg         (10 (automatisch berechnet))
-//     Terra/Milch             1000 ml                 1 L          (1 (automatisch berechnet))
-//     Terra/Roggen            2500 g                  1 kg         (0.4 (automatisch berechnet))
-//     Terra/Olivenoel         3000 ml                 3 L          (1 (automatisch berechnet))
-//     Terra/Knoblauchzopf      0.1 ST                 1 ST         (10 (automatisch berechnet))
-//     Terra/Blumenkohl           1 ST                 1 KI           8 (manuell erfasst)
-//     B&L/Partybroetchen         1 ST                 1 GB          30 (manuell erfasst)
-//     B&L/Torte                  1 ST                 1 GB           6 (manuell erfasst)
-//     Bauer/Kartoffeln         500 g                  1 kg         (2 (automatisch berechnet))
-//
-// preis:
-//   immer der endpreis (inklusive pfand und mehrwertsteuer) je verteileinheit
-// gebindegroesse:
-//   gebindegroesse in verteileinheiten
-// pfand:
-//   pfand (netto), das den gruppen je verteileinheit in rechnung gestellt wird
-// mwst:
-//   mehrwertsteuersatz in prozent
-//
+//   lieferant/produkt   V-Einheit  L-Einheit  lv-faktor           gebindegroesse
+//  -----------------------------------------------------------------------------------------
+//   Terra/kaese           100 g      1 kg    (10 (automatisch))    20 (= 2kg)
+//   Terra/Milch             1 FL     1 FL     (1 (automatisch))     6 (= 6FL)
+//   Terra/Roggen         2500 g      1 kg     (0.4 (automatisch))   3 (= 3*2.5kg)
+//   Terra/Olivenoel      3000 ml     1 L      (1 (automatisch))     1 (= 3L)
+//   Terra/Knoblauchzopf   0.1 ST     1 ST    (10 (automatisch))    10 (= 1ST)
+//   Terra/Blumenkohl        1 ST     1 KI      8 (manuell)          8 (= 8ST = 1KI)
+//   B&L/Partybroetchen      1 ST    30 ST     30 (manuell)         30 (= 30ST ("Wagenrad"))
+//   B&L/Torte               1 ST    12 ST      6 (manuell)          6 (= 6ST ("halbe Torte"))
+//   Bauer/Kartoffeln      500 g      1 kg     (2 (automatisch)     25 (= 12.5kg ("1/4 Zentner"))
 
 
 function references_produktpreise( $preis_id ) {
@@ -3388,9 +3391,31 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
  *  Erzeugt einen Produktpreiseintrag
  */
 function sql_insert_produktpreis (
-  $produkt_id, $preis, $start, $bestellnummer, $gebindegroesse
+  $produkt_id, $lieferpreis, $start, $bestellnummer, $gebindegroesse
 , $mwst, $pfand, $liefereinheit, $verteileinheit, $lv_faktor
 ) {
+  need( $lieferpreis > 0, "kein gueltiger Lieferpreis" );
+  need( $gebindegroesse >= 1, "keine gueltige Gebindegroesse" );
+  need( $mwst > 0, "kein gueltiger Mehrwertsteuersatz" );
+  need( $pfand >= 0, "kein gueltiges Pfand" );
+  need( kanonische_einheit( $liefereinheit, & $le, & $lm, false ), "keine gueltige L-Einheit" );
+  need( kanonische_einheit( $verteileinheit, & $ve, & $vm, false ), "keine gueltige V-Einheit" );
+  need( $lm >= 0.001, "keine gueltige Masszahl bei L-Einheit" );
+  need( $vm >= 0.001, "keine gueltige Masszahl bei V-Einheit" );
+  if( $le == $ve ) {
+    $lv_faktor = $lm / $vm;
+  } else {
+    switch( $le ) {
+      case 'GB':
+      case 'PA':
+      case 'KI':
+        break;
+      default:
+        error( "L-Einheit und V-Einheit nicht kompatibel" );
+    }
+  }
+  need( $lv_faktor >= 0.001, "kein gueltiger Umrechnungsfaktor L-Einheit / V-Einheit" );
+
   $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
   if( $aktueller_preis ) {
     sql_update( 'produktpreise'
@@ -3403,7 +3428,7 @@ function sql_insert_produktpreis (
 
   return sql_insert( 'produktpreise', array(
     'produkt_id' => $produkt_id
-  , 'preis' => $preis
+  , 'lieferpreis' => $lieferpreis
   , 'zeitstart' => $start
   , 'bestellnummer' => $bestellnummer
   , 'gebindegroesse' => $gebindegroesse
@@ -3494,6 +3519,14 @@ function mult2string( $mult ) {
 
 /*  preisdaten setzen:
  *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
+ *   - kan_verteileinheit, kan_verteilmult, kan_liefereinheit, kan_liefermult:
+ *     kanonische darstellung der einheiten (masszahl abgespalten, einheit wie in global $masseinheiten)
+ *   - liefereinheit_anzeige, verteileinheit_anzeige:
+ *     alternative darstellung fuer bildschirmanzeige (kg und L statt g und ml bei grossen masszahlen)
+ *   - nettolieferpreis, bruttolieferpreis: preise pro L-Einheit
+ *   - nettopreis, bruttopreis: preise pro V-Einheit
+ *   - endpreis:  bruttopreis plus pfand
+ *   - lv_faktor (wird berechnet wenn moeglich, sonst aus datenbank entnommen)
  */
 function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 
@@ -3548,14 +3581,13 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
     need( $pr['lv_faktor'] > 0, "kann nicht zwischen verteileinheit und Liefereinheit umrechnen" );
   }
 
-  // Preise je V-Einheit:
-  $pr['endpreis'] = $pr['preis'];
-  $pr['bruttopreis'] = $pr['preis'] - $pr['pfand'];
-  $pr['nettopreis'] = $pr['bruttopreis'] / ( 1.0 + $pr['mwst'] / 100.0 );
+  $pr['nettolieferpreis'] = $pr['lieferpreis'];
+  $pr['bruttolieferpreis'] = $pr['lieferpreis'] * ( 1.0 + $pr['mwst'] / 100.0 );
 
-  // brutto/nettopreis je liefereinheit:
-  $pr['nettolieferpreis'] = $pr['nettopreis'] * $pr['lv_faktor'];
-  $pr['bruttolieferpreis'] = $pr['bruttopreis'] * $pr['lv_faktor'];
+  // Preise je V-Einheit:
+  $pr['nettopreis'] = $pr['nettolieferpreis'] / $pr['lv_faktor'];
+  $pr['bruttopreis'] = $pr['bruttolieferpreis'] / $pr['lv_faktor'];
+  $pr['endpreis'] = $pr['bruttopreis'] + $pr['pfand'];
 }
 
 /**
@@ -3567,10 +3599,7 @@ function sql_produktgruppen(){
 }
 
 function references_produktgruppe( $produktgruppen_id ) {
-  return sql_select_single_field(
-    "SELECT count(*) as count FROM produkte WHERE produktgruppen_id = $produktgruppen_id"
-  , 'count'
-  );
+  return sql_count( 'produkte', "produktgruppen_id = $produktgruppen_id" );
 }
 
 
@@ -3606,12 +3635,8 @@ function getProdukt($produkt_id){
 }
 
 function references_produkt( $produkt_id ) {
-  return sql_select_single_field( " SELECT (
-     ( SELECT count(*) FROM bestellvorschlaege WHERE produkt_id=$produkt_id )
-   + ( SELECT count(*) FROM bestellzuordnung WHERE produkt_id=$produkt_id )
-  ) as count
-  ", 'count'
-  );
+  return sql_count( 'bestellvorschlaege', "produkt_id=$produkt_id" )
+       + sql_count( 'bestellzuordnung', "produkt_id=$produkt_id" );
 }
 
 // sql_produkt_details:
@@ -3658,12 +3683,12 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     // Gebindegroesse: wieviele V-Einheiten muessen jeweils bestellt werden:
     $produkt_row['gebindegroesse'] = $preis_row['gebindegroesse'];
     //
-    // Preise pro V-Mult * V-Einheit:
+    // Preise pro V-Einheit:
     $produkt_row['nettopreis'] = $preis_row['nettopreis'];
     $produkt_row['bruttopreis'] = $preis_row['bruttopreis'];  // mit MWSt.
     $produkt_row['endpreis'] = $preis_row['endpreis'];        // mit MWSt. und Pfand
     //
-    // Preise pro L-Mult * L-Einheit:
+    // Preise pro L-Einheit:
     $produkt_row['nettolieferpreis'] = $preis_row['nettolieferpreis'];
     $produkt_row['bruttolieferpreis'] = $preis_row['bruttolieferpreis'];
     //
@@ -3716,7 +3741,7 @@ function sql_lieferant_produkt_ids( $lieferanten_id ) {
  *   die Produkte zurückgegeben, die noch nicht in der
  *   Bestellung drin sind.
  */
-function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
+function getProdukteVonLieferant($lieferant_id, $bestell_id = Null ) {
   if($bestell_id === Null){
     $sql = "
       SELECT *
@@ -3801,9 +3826,8 @@ function getProdukteVonLieferant($lieferant_id,   $bestell_id = Null){
 //
 ////////////////////////////////////
 
-
 function sql_anzahl_katalogeintraege( $lieferanten_id ) {
-  return sql_select_single_field( "SELECT count(*) as anzahl FROM lieferantenkatalog WHERE lieferanten_id = $lieferanten_id", 'anzahl' );
+  return sql_count( 'lieferantenkatalog', "lieferanten_id = $lieferanten_id" );
 }
 
 
@@ -3942,8 +3966,8 @@ function checkvalue( $val, $typ){
 // - name: wenn name auf [] endet, wird ein array erwartet (aus <input name='bla[]'>)
 // - typ: definierte $typ argumente:
 //   d : ganze Zahl
-//   u nicht-negative ganze Zahl
-//   U positive ganze Zahl (also echt groesser als NULL)
+//   u : nicht-negative ganze Zahl
+//   U : positive ganze Zahl (echt groesser als 0)
 //   H : wendet htmlspecialchars an (erlaubt sichere und korrekte ausgabe in HTML)
 //   R : raw: keine Einschraenkung, keine Umwandlung
 //   f : Festkommazahl
@@ -4139,6 +4163,35 @@ function update_database($version){
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10 ) );
       logger( 'update_database: update to version 10 successful' );
+
+  case 10:
+      logger( 'starting update_database: from version 10' );
+
+      // preise ab jetzt pro L-einheit speichern:
+      doSql( "ALTER TABLE `produktpreise` ADD column `lieferpreis` decimal(8,2) default '0.0'"
+      , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: add column lieferpreis"
+      );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `lv_faktor` decimal(9,3) default '1.0'"
+      , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: modify column lv_faktor"
+      );
+      // gebindegroesse bleibt erstmal pro v-einheit!
+      // doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` decimal(9,3) default '1.0'"
+      // , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: modify column gebindegroesse"
+      // );
+      $preise = mysql2array( doSql( "SELECT * FROM produktpreise" ) );
+      foreach( $preise as $p ) {
+        $id = $p['id'];
+        preisdatenSetzen( & $p );
+        /// $gebindegroesse = mult2string( $p['gebindegroesse'] / $p['lv_faktor'] );
+        sql_update( 'produktpreise', $id, array( 'lieferpreis' => $p['nettolieferpreis']
+                                               , 'lv_faktor' => $p['lv_faktor']
+                                               , /* 'gebindegroesse' => $gebindegroesse */ ) );
+      }
+      doSql( "ALTER TABLE `produktpreise` DROP column `preis` "
+      , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: drop column preis"
+      );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 11 ) );
+      logger( 'update_database: update to version 11 successful' );
 
 /*
 	case n:
