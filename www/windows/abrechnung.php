@@ -97,7 +97,7 @@ open_table( 'list', "style='width:98%'" );
     open_td( 'right', '', 'Warenwert Gruppen:' );
     open_td();
     open_td( 'bold number', '', price_view( $warenwert_verteilt_brutto ) );
-    open_td( 'middle', "rowspan='2'" );
+    open_td( 'vcenter', "rowspan='2'" );
       if( hat_dienst( 1,3,4,5 ) )
         echo fc_link( 'verteilliste', "bestell_id=$bestell_id,text=zur Verteilliste...,class=href" );
       else
@@ -118,7 +118,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_td( 'right', '', 'berechnet (Kauf):' );
     open_td();
     open_td( 'bold number', '', price_view( -$gruppenpfand['pfand_voll_brutto_soll'] ) );
-    open_td( 'middle', "rowspan='2'",
+    open_td( 'vcenter', "rowspan='2'",
              fc_link( 'gruppenpfand', "bestell_id=$bestell_id,class=href,text=zur Pfandabrechnung..." ) );
   open_tr();
     open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
@@ -150,7 +150,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_td( 'right', '', 'berechnet (Kauf):' );
     open_td( 'bold number', '', price_view( $lieferanten_soll['pfand_voll_netto_soll'] ) );
     open_td( 'bold number', '', price_view( $lieferanten_soll['pfand_voll_brutto_soll'] ) );
-    open_td( 'middle', "rowspan='2'"
+    open_td( 'vcenter', "rowspan='2'"
       , fc_link( 'pfandzettel', "bestell_id=$bestell_id,lieferanten_id=$lieferant_id,class=href,text=zum Pfandzettel..." ) );
 
   open_tr();
