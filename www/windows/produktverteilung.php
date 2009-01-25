@@ -42,7 +42,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
     $produkt_id = $produkt['produkt_id'];
     $verteilmult = $produkt['kan_verteilmult'];
     $verteileinheit = $produkt['kan_verteileinheit'];
-    $preis = $produkt['preis'];
+    $preis = $produkt['endpreis'];
     $liefermenge = $produkt['liefermenge'] * $verteilmult;
 
     $feldname = "liefermenge_{$bestell_id}_{$produkt_id}";
