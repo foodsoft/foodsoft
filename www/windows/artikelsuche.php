@@ -160,7 +160,8 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       while( $row = mysql_fetch_array( $result ) ) {
         $netto = $row['preis'];
         $mwst = $row['mwst'];
-        $brutto = $netto * (1 + $mwst / 100.0 );
+        if( $mwst >= 0 )
+          $brutto = $netto * (1 + $mwst / 100.0 );
         open_tr();
           open_td( 'mult' );
             $anummer = $row['artikelnummer'];
@@ -177,8 +178,8 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( '', '', $row['herkunft'] );
           open_td( '', '', $row['verband'] );
           open_td( '', '', price_view( $netto ) );
-          open_td( 'mult', '', price_view( $mwst ) );
-          open_td( 'mult', '', price_view( $brutto ) );
+          open_td( 'mult', '', ( $mwst < 0 ? '(n/a) ' : price_view( $mwst ) ) );
+          open_td( 'mult', '', ( $mwst < 0 ? '(n/a) ' : price_view( $brutto ) ) );
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
       }
     close_table();
