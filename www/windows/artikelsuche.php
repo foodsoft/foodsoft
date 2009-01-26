@@ -39,7 +39,7 @@ get_http_var( 'maxpreis', 'f', 0, 'POST' ) or $maxpreis = 0;
 get_http_var( 'katalogtyp', 'w', '', 'POST' ) or $katalogtyp = '';
 $katalogtyp and $filter .= " AND katalogtyp = '$katalogtyp'";
 
-get_http_var( 'limit', 'u', 99, 'POST' ) or $limit = 99;
+get_http_var( 'limit', 'u', 999, 'POST' ) or $limit = 99;
 
 if( $action != 'search' )
   $filter = '';
@@ -105,7 +105,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
     open_table();
         open_td( '', '', '<label>Bestellnummer:</label>' );
         open_td();
-          string_view( $bnummer, 10, 'bnummer' );
+          echo string_view( $bnummer, 10, 'bnummer' );
           open_span( 'qquad', '', "<label>Artikelnummer:</label>". string_view( $anummer, 10, 'anummer' ) );
           open_span( 'qquad' );
             ?> <label>Katalog:</label> <?

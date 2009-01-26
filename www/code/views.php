@@ -646,7 +646,7 @@ function bestellschein_view(
       );
       if( $state == STATUS_LIEFERANT ) {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "beim Lieferanten bestellte Menge", 'header' => "L-Menge", 'cols' => 4
+          'title' => "beim Lieferanten bestellte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 )
         );
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "beim Lieferanten bestellte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
