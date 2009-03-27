@@ -899,17 +899,20 @@ if( hat_dienst(4) ){
 	$areas[] = array("area" => "konto",
 	"hint" => "Hier könnt ihr die Bankkonten verwalten...",
 	"title" => "Konten");		
+	$areas[] = array("area" => "lieferanten",
+	"hint" => "Hier kann man die LieferantInnen verwalten...",
+	"title" => "LieferantInnen");
 } else {
 	$areas[] = array("area" => "produkte",
 	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produkte");	 
 	$areas[] = array("area" => "konto",
 	"hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
 	"title" => "Konten");		
+	$areas[] = array("area" => "lieferanten",
+	"hint" => "Hier könnt ihr die LieferantInnen einsehen...",
+	"title" => "LieferantInnen");
 }
 if( hat_dienst(4) ) {
-	$areas[] = array("area" => "lieferanten",
-	"hint" => "Hier kann man die LieferantInnen verwalten...",
-	"title" => "LieferantInnen");
 } 
 	$areas[] = array("area" => "dienstkontrollblatt",
 	"hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
@@ -1566,6 +1569,12 @@ function select_gesamtbestellungen_schuldverhaeltnis() {
   return "
     SELECT * FROM gesamtbestellungen
     WHERE rechnungsstatus >= " . STATUS_LIEFERANT;
+}
+
+function select_gesamtbestellungen_unverbindlich() {
+  return "
+    SELECT * FROM gesamtbestellungen
+    WHERE rechnungsstatus < " . STATUS_LIEFERANT;
 }
 
 /**
@@ -3134,6 +3143,18 @@ function kontostand( $gruppen_id ) {
     WHERE bestellgruppen.id = $gruppen_id
   " );
   return $row['soll'];
+}
+
+function gruppenkontostand_festgelegt( $gruppen_id ) {
+  return sql_select_single_field( "
+    SELECT
+      ( SELECT (".select_bestellungen_soll_gruppen( OPTION_WAREN_ENDPREIS_SOLL, array('gesamtbestellungen','bestellgruppen') ). ")
+        FROM (".select_gesamtbestellungen_unverbindlich().") AS gesamtbestellungen
+      ) AS soll
+    FROM bestellgruppen
+    WHERE bestellgruppen.id = $gruppen_id
+  ", 'soll'
+  );
 }
 
 function pfandkontostand( $gruppen_id = 0 ) {
