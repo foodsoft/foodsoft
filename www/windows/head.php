@@ -38,9 +38,9 @@ open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt
     open_tr();
       open_td( 'oneline', 'style="width:80px;"'
                    , "<a class='close' title='Schließen' href='javascript:if(opener)opener.focus();window.close();'>
-                      <a class='print' title='Ausdrucken' href='javascript:window.print();'>
-                      <a class='reload' id='reload_button' title='Neu Laden' href='javascript:document.forms.update_form.submit();'>
-                      " );
+                      </a><a class='print' title='Ausdrucken' href='javascript:window.print();'>
+                      </a><a class='reload' id='reload_button' title='Neu Laden' href='javascript:document.forms.update_form.submit();'>
+                      </a>" );
       open_td( 'quad', "id='subtitle' ", $subtitle );
       open_td( '', "style='text-align:right;'" );
         wikiLink( ( $area ? "foodsoft:$area" : 'start' ) , "Hilfe-Wiki...", true );
