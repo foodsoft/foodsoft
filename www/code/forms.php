@@ -803,17 +803,29 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       form_row_text( 'Notiz:', 'notiz', 42, $vorschlag['notiz'] );
 
       form_row_text( 'Bestell-Nr:', 'bestellnummer', 8, $vorschlag['bestellnummer'] );
-        $class = ( $vorschlag['mwst'] ? 'number' : 'alert' );
+        if( $vorschlag['mwst'] ) {
+          $class = 'number;
+          $value = sprintf( '%.2lf', $vorschlag['mwst'] );
+        } else {
+          $class = 'alert;
+          $value = '';
+        }
         ?> <label class='qquad'>MWSt:</label>
            <input type='text' size='4' class='<? echo $class; ?>' name='mwst' id='newmwst'
-            value='<? echo $vorschlag['mwst']; ?>' title='Mehrwertsteuer-Satz in Prozent'
+            value='<? echo $value; ?>' title='Mehrwertsteuer-Satz in Prozent'
             onchange="document.getElementById('newmwst').className='number';preisberechnung_vorwaerts();">
         <?
 
-        $class = ( $vorschlag['pfand'] ? 'number' : 'alert' );
+        if( $vorschlag['pfand'] ) {
+          $class = 'number;
+          $value = sprintf( '%.2lf', $vorschlag['pfand'] );
+        } else {
+          $class = 'alert;
+          $value = '';
+        }
         ?> <label class='qquad'>Pfand:</label>
            <input type='text' class='<? echo $class; ?>' size='4' name='pfand' id='newpfand'
-            value='<? printf( "%.2lf", $vorschlag['pfand'] ); ?>'
+            value='<? echo $value; ?>'
             title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
             onchange="document.getElementById('newpfand').className='number';preisberechnung_vorwaerts();">
         <?
@@ -822,19 +834,18 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
         open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'Einzelpreis Netto:' );
         open_td();
-        if( $vorschlag['lieferpreis'] ) {
-          $class = 'number';
-          $value = sprintf( '%.2lf', $vorschlag['lieferpreis'] );
-        } else {
-          $class = 'alert';
-          $value = '';
-        }
-        $class = ( $vorschlag['lieferpreis'] ? 'number' : 'alert' );
-        ?>
+          if( $vorschlag['lieferpreis'] ) {
+            $class = 'number';
+            $value = sprintf( '%.2lf', $vorschlag['lieferpreis'] );
+          } else {
+            $class = 'alert';
+            $value = '';
+          }
+          ?>
            <span onmouseover="help('Netto-Preis: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
                  onmouseout="help(' ');" >
            <input title='Nettopreis' class='<? echo $class; ?>' type='text' size='8' id='newlieferpreis' name='lieferpreis'
-             value='<? printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
+             value='<? echo $value; ?>'
              onchange="document.getElementById('newlieferpreis').className='number';preisberechnung_vorwaerts();">
            </span>
         <span style='padding:1ex;'>/</span>
