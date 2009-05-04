@@ -288,12 +288,18 @@ function sql_dienst_akzeptieren($dienst){
 function sql_dienst_wird_offen($dienst){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
-  if(!($row["gruppen_id"]==$login_gruppen_id || hat_dienst(5) )|| 
+  switch( $row['Status'] ) {
+    case 'Offen':
+      return;
+    case 'Nicht geleistet':   /* TODO: auch auf 'Offen' aendern oder so lassen? */
+      return;
+  }
+  if( ! ( ($row["gruppen_id"] == $login_gruppen_id) || hat_dienst(5) ) || 
          ($row["Status"]!="Vorgeschlagen" && $row["Status"]!="Bestaetigt" && $row["Status"]!="Akzeptiert")){
        error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
   }
   //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE Dienste SET Status = 'Offen' WHERE ID = ".$dienst;
+  $sql = "UPDATE Dienste SET Status = 'Offen', gruppenmitglieder_id=0  WHERE ID = ".$dienst;
   doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
 
 }
@@ -399,7 +405,7 @@ function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder
    $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status
                 , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
               FROM Dienste 
-              INNER JOIN gruppenmitglieder
+              LEFT JOIN gruppenmitglieder
 	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
 
    if($gruppenmitglieder_id !==FALSE){
