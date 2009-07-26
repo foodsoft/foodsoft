@@ -7,7 +7,7 @@
 
 global $angemeldet, $login_gruppen_name, $coopie_name
      , $dienst, $title, $subtitle, $wikitopic, $readonly
-     , $foodsoftpath, $area;
+     , $area;
 
 if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
 if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
