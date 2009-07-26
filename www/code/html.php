@@ -2,12 +2,16 @@
 
 global $open_tags      /* keep track of open tags */
      , $print_on_exit  /* print this just before </body> */
+     , $js_on_exit     /* javascript code to insert just before </body> */
      , $html_id        /* draw-a-number-box to generate unique ids */
      , $form_id        /* id of the currently open form (if any) */
      , $input_event_handlers  /* insert into <input> and similar inside a form */
+     , $html_hints     /* online hints to display for fields */
 ;
 $open_tags = array();
 $print_on_exit = array();
+$js_on_exit = array();
+$html_hints = array();
 $html_id = 0;
 $input_event_handlers = '';
 $form_id = '';
@@ -16,19 +20,21 @@ global $td_title, $tr_title;  /* can be used to set title for next <td> or <tr> 
 $td_title = '';
 $tr_title = '';
 
-
+// set flags to activate workarounds for known browser bugs:
+//
+$browser = $_SERVER['HTTP_USER_AGENT'];
 global $activate_mozilla_kludges, $activate_safari_kludges, $activate_exploder_kludges, $activate_konqueror_kludges;
 $activate_safari_kludges = 0;
 $activate_mozilla_kludges = 0;
 $activate_exploder_kludges = 0;
 $activate_konqueror_kludges = 0;
-if( preg_match ( '/safari/i', $_SERVER['HTTP_USER_AGENT'] ) ) {  //  safari sends "Mozilla...safari"!
+if( preg_match ( '/safari/i', $browser ) ) {  // safari sends "Mozilla...safari"!
   $activate_safari_kludges = 1;
-} else if( preg_match ( '/konqueror/i', $_SERVER['HTTP_USER_AGENT'] ) ) {  //  dito: konqueror
+} else if( preg_match ( '/konqueror/i', $browser ) ) {  // dito: konqueror
   $activate_konqueror_kludges = 1;
-} else if( preg_match ( '/^mozilla/i', $_SERVER['HTTP_USER_AGENT'] ) ) {
+} else if( preg_match ( '/^mozilla/i', $browser ) ) {  // plain mozilla(?)
   $activate_mozilla_kludges = 1;
-} else if( preg_match ( '/^msie/i', $_SERVER['HTTP_USER_AGENT'] ) ) {
+} else if( preg_match ( '/^msie/i', $browser ) ) {
   $activate_exploder_kludges = 1;
 }
 
@@ -36,8 +42,7 @@ if( preg_match ( '/safari/i', $_SERVER['HTTP_USER_AGENT'] ) ) {  //  safari send
 //
 function new_html_id() {
   global $html_id;
-  ++$html_id;
-  return $html_id;
+  return ++$html_id;
 }
 
 // open_tag(), close_tag(): open and close html tag. wrong nesting will cause an error
@@ -172,7 +177,7 @@ function open_tdh( $tag, $class= '', $attr = '', $payload = false ) {
   $td_title = '';
   if( $payload !== false ) {
     echo $payload;
-    close_td();
+    close_td();  // will output either </td> or </th>, whichever is needed!
   }
 }
 
@@ -262,11 +267,13 @@ function close_li() {
   }
 }
 
-// open_form: open a <form method='post'>
-// - $get_parameters determine the form action
-// - $post_parameters will be posted via <input type='hidden'>
-// hidden input fields will be collected and printed just before </form>
-// (so function hidden_input() (see below) can be called at any point)
+// open_form(): open a <form method='post'>
+//   $get_parameters: determine the form action: target script and query string
+//   (target script is window=$window; default is 'self')
+//   $post_parameters: will be posted via <input type='hidden'>
+// - hidden input fields will be collected and printed just before </form>
+//   (so function hidden_input() (see below) can be called at any point)
+// - $get/post_parameters can be arrays or strings (see parameters_explode() in inlinks.php!)
 //
 function open_form( $get_parameters = array(), $post_parameters = array() ) {
   global $form_id, $input_event_handlers, $hidden_input, $self_fields;
@@ -283,6 +290,7 @@ function open_form( $get_parameters = array(), $post_parameters = array() ) {
   } else {
     $name = "form_$form_id";
   }
+  // set handler to display SUBMIT and RESET buttons after changes:
   $input_event_handlers = " onChange='on_change($form_id);' ";
 
   $attr = adefault( $get_parameters, 'attr', '' );
@@ -300,6 +308,13 @@ function open_form( $get_parameters = array(), $post_parameters = array() ) {
   return $form_id;
 }
 
+// hidden_input(): 
+// - register parameter $name, value $val to be inserted as a hidden input field
+//   just before </form> 
+// - thus, this function can be called anywhere in the html structure, not just
+//   where <input> is allowed)
+// - $attr can be used to set e.g. an id='foo' to modify the value from javascript
+//
 function hidden_input( $name, $val = false, $attr = '' ) {
   global $hidden_input;
   if( $val === false ) {
@@ -314,11 +329,15 @@ function close_form() {
   global $input_event_handlers, $form_id;
   $input_event_handlers = '';
   $form_id = '';
-  echo "\n<span class='nodisplay'><input type='submit'></span>";  // allow to submit form by pressing ENTER
+  // insert an invisible submit button: this allows to submit this form by pressing ENTER:
+  open_span( 'nodisplay', '', "<input type='submit'>" );
   close_tag( 'form' );
   echo "\n";
 }
 
+// open_fieldset():
+//   $toggle: allow user to display / hide the fieldset; $toggle == 'on' or 'off' determines initial state
+//
 function open_fieldset( $class = '', $attr = '', $legend = '', $toggle = false ) {
   if( $toggle ) {
     if( $toggle == 'on' ) {
@@ -462,7 +481,7 @@ function option_radio( $fieldname, $flags_on, $flags_off, $text, $title = false 
 // alternatives_radio(): create list of radio buttons to toggle on and of html elements
 // (typically: fieldsets, each containing a small form)
 // $items is an array:
-//  - every key is the id of the element (fieldset
+//  - every key is the id of the element to toggle
 //  - every value is either a button label, or a pair of label and title for the button
 //
 function alternatives_radio( $items ) {
@@ -487,21 +506,52 @@ function alternatives_radio( $items ) {
 }
 
 function close_all_tags() {
-  global $open_tags, $print_on_exit;
+  global $open_tags, $print_on_exit, $js_on_exit, $html_hints;
   while( $n = count( $open_tags ) ) {
     if( $open_tags[$n] == 'body' ) {
       foreach( $print_on_exit as $p )
         echo "\n" . $p;
+      if( $js_on_exit ) {
+        open_javascript();
+        foreach( $js_on_exit as $js )
+          echo "\n" . $js;
+        echo "\n";
+        close_javascript();
+      }
     }
     close_tag( $open_tags[$n] );
   }
 }
 
+// close all open html tags even in case of early error exit:
+//
 register_shutdown_function( 'close_all_tags' );
 
 function div_msg( $class, $msg, $backlink = false ) {
   echo "<div class='$class'>$msg " . ( $backlink ? fc_link( $backlink, 'text=zur&uuml;ck...' ) : '' ) ."</div>";
 }
+
+function open_hints() {
+  global $html_hints;
+  $n = count( $html_hints );
+  $html_hints[++$n] = new_html_id();
+}
+function close_hints( $class = 'kommentar', $initial = '' ) {
+  global  $html_hints;
+  $n = count( $html_hints );
+  $id = $html_hints[$n];
+  open_div( $class, "id='hints_$id'", $initial );
+  unset( $html_hints[$n--] );
+}
+
+function html_hint( $hint ) {
+  global $html_hints;
+  $n = count( $html_hints );
+  $id = $html_hints[$n];
+  return " onmouseover=\" document.getElementById('hints_$id').firstChild.nodeValue = '$hint'; \" "
+        . " onmouseout=\" document.getElementById('hints_$id').firstChild.nodeValue = ' '; \" ";
+}
+
 
 // the following are kludges to replace the missing <spacer> (equivalent of \kern) element:
 //
@@ -529,7 +579,7 @@ function qquad() {
 // $payload must contain one or more complete columns (ie <td>...</td> elements)
 //
 function open_option_menu_row( $payload = false ) {
-  global $option_menu_counter, $print_on_exit;
+  global $option_menu_counter;
   $option_menu_counter = new_html_id();
   open_table();
   open_tr( '', "id='option_entry_$option_menu_counter'" );
@@ -540,11 +590,9 @@ function open_option_menu_row( $payload = false ) {
 }
 
 function close_option_menu_row() {
-  global $option_menu_counter, $print_on_exit;
+  global $option_menu_counter, $js_on_exit;
   close_table();
-  $print_on_exit[] = "\n<script type='text/javascript'>\n"
-                     . move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' )
-                     . "\n</script>";
+  $js_on_exit[] = move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' );
 }
 
 ?>
