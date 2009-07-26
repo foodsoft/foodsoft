@@ -1,9 +1,9 @@
 <?php
 
-global $foodsoftpath, $foodsoftdir;   // noetig wenn aufruf aus wiki
-if( ! isset( $foodsoftpath ) ) {
-  $foodsoftpath = realpath( dirname( __FILE__ ) . '/../' );
-}
+// if( ! isset( $foodsoftpath ) ) {
+//   $foodsoftpath = realpath( dirname( __FILE__ ) . '/../' );
+// }
+global $foodsoftdir;   // noetig wenn aufruf aus wiki
 if( ! isset( $foodsoftdir ) ) {
   $foodsoftdir = ereg_replace( '/[^/]+$', '', $_SERVER['SCRIPT_NAME'] );
   // ausnahme: aufruf aus dem wiki heraus:
@@ -11,7 +11,7 @@ if( ! isset( $foodsoftdir ) ) {
 }
 
 require_once('code/config.php');
-if( 0 or $allow_setup ) { // TODO: warnen, wenn setup.php zugreifbar ist?
+if( $allow_setup_from ) {
   ?><html><body> Fehler: bitte <code>setup.php</code> deaktivieren in <code>code/config.php</code>!</body></html><?
   exit(1);
 }
