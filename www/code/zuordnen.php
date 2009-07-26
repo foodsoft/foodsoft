@@ -301,8 +301,8 @@ function sql_dienst_wird_offen($dienst){
   //OK, wir dürfen den Dienst ändern
   $sql = "UPDATE Dienste SET Status = 'Offen', gruppenmitglieder_id=0  WHERE ID = ".$dienst;
   doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
-
 }
+
 /**
  *  Dienst ablehnen und alternative suchen
  */
@@ -405,7 +405,7 @@ function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder
    $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status
                 , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
               FROM Dienste 
-              LEFT JOIN gruppenmitglieder
+              LEFT JOIN gruppenmitglieder  /* fuer 'Offen': auch gruppenmitglieder_id==0 zulassen! */
 	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
 
    if($gruppenmitglieder_id !==FALSE){
