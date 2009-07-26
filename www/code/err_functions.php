@@ -26,7 +26,8 @@ function need( $exp, $comment = "Fataler Fehler" ) {
       die();
     $in_need = true;
     open_div( 'warn', '', htmlspecialchars( "$comment: $exp" ) . fc_link( 'self', 'img=,text=weiter...' ) );
-      logger( "assertion failed: $exp" );
+    $stack = debug_backtrace();
+    logger( "assertion failed: $stack" );
     die();
   }
   return true;
