@@ -1,5 +1,7 @@
 <?
 
+// db version 11
+
 $tables = array(
   'Dienste' => array(
     'updownload' => true
