@@ -90,7 +90,7 @@ table, table * td, table * th {
 
 table.layout tr td, table table.layout tr td, table table table.layout tr td {
   /* <rant author='timo' mood='desperate' date='20081013.074606'>
-   *    Yes I now that some people frown upon using <table> for layout.
+   *    Yes I now that some people frown on using <table> for layout.
    *
    *    The problem is, even <table> is a very inferior tool for someone used to
    *    enjoy the power of \halign, and all substitutes suggested to me so far
@@ -424,10 +424,10 @@ td.number input {
 
 /* groupofrows: gruppieren von zeilen */
 
-table.list tr.groupofrows_top td, table.list tr.groupofrows_top th {
+table.list tr.groupofrows_top td {
   border-bottom-style:none;
 }
-table.list tr.groupofrows_middle td, table.list tr.groupofrows_middle th {
+table.list tr.groupofrows_middle td {
   /* folgezeilen koennen auf groesse 0 kollabieren: */
   padding:0pt;
   margin:0pt;
@@ -435,7 +435,7 @@ table.list tr.groupofrows_middle td, table.list tr.groupofrows_middle th {
   border-top-style:none;
   border-bottom-style:none;
 }
-table.list tr.groupofrows_bottom td, table.list tr.groupofrows_bottom th {
+table.list tr.groupofrows_bottom td {
   padding:0pt;
   margin:0pt;
   height:0pt;
