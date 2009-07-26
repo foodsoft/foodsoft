@@ -37,12 +37,11 @@ class auth_foodsoft extends auth_basic {
      */
     function auth_foodsoft() {
       global $ACT;
-      global $foodsoftdir, $foodsoftpath, $from_dokuwiki;
+      global $from_dokuwiki;
 
       if( $_REQUEST['do'] == 'login' ) {
         $dir = getcwd();
         chdir( FOODSOFT_PATH );
-        $foodsoftpath = FOODSOFT_PATH;
         $from_dokuwiki = true;
         require_once( FOODSOFT_PATH . '/code/common.php' );
         require_once( FOODSOFT_PATH . '/code/login.php' );
@@ -80,12 +79,11 @@ class auth_foodsoft extends auth_basic {
 
     function trustExternal($user,$pass,$sticky=false){
       global $USERINFO, $angemeldet, $login_gruppen_name;
-      global $foodsoftdir, $foodsoftpath, $from_dokuwiki;
+      global $from_dokuwiki;
       
       if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
         $dir = getcwd();
         chdir( FOODSOFT_PATH );
-        $foodsoftpath = FOODSOFT_PATH;
         $from_dokuwiki = true;
         require_once( FOODSOFT_PATH . '/code/common.php' );
         require_once( FOODSOFT_PATH . '/code/login.php' );
