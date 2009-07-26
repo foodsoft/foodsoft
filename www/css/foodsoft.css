@@ -21,8 +21,7 @@ div#payload {
   padding:1ex;
 }
 
-div#payload.payloadro {
-  /* bei "readonly" Hintergrundfarbe aendern */
+.ro {
   background:#ffeedd;
 }
 
@@ -90,7 +89,7 @@ table, table * td, table * th {
 
 table.layout tr td, table table.layout tr td, table table table.layout tr td {
   /* <rant author='timo' mood='desperate' date='20081013.074606'>
-   *    Yes I now that some people frown on using <table> for layout.
+   *    Yes I now that some people frown upon using <table> for layout.
    *
    *    The problem is, even <table> is a very inferior tool for someone used to
    *    enjoy the power of \halign, and all substitutes suggested to me so far
@@ -136,6 +135,14 @@ th, .th {
 
 table.debug tr th, table.debug tr td {
   border:1px dotted black;
+}
+
+table.tight {
+  width:100% !important;
+}
+table.tight tr th, table.tight tr td, td.tight, th.tight {
+  padding:0pt !important;
+  margin:0pt !important;
 }
 
 ul {
@@ -424,10 +431,10 @@ td.number input {
 
 /* groupofrows: gruppieren von zeilen */
 
-table.list tr.groupofrows_top td {
+table.list tr.groupofrows_top td, table.list tr.groupofrows_top th {
   border-bottom-style:none;
 }
-table.list tr.groupofrows_middle td {
+table.list tr.groupofrows_middle td, table.list tr.groupofrows_middle th {
   /* folgezeilen koennen auf groesse 0 kollabieren: */
   padding:0pt;
   margin:0pt;
@@ -435,7 +442,7 @@ table.list tr.groupofrows_middle td {
   border-top-style:none;
   border-bottom-style:none;
 }
-table.list tr.groupofrows_bottom td {
+table.list tr.groupofrows_bottom td, table.list tr.groupofrows_bottom th {
   padding:0pt;
   margin:0pt;
   height:0pt;
