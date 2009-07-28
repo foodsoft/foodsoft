@@ -18,7 +18,6 @@ function katalogsuche( $produkt ) {
     return 0;
   if( ( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) )
     $where .= " AND artikelnummer='$artikelnummer' ";
-  // suche nach bestellnummer: fuehrt zu verwirrung, da sich die bei terra oft aendern; besser nicht!
   // elseif( ( $bestellnummer = adefault( $produkt, 'bestellnummer', 0 ) ) )
   //  $where .= " AND bestellnummer='$bestellnummer' ";
   else
@@ -36,13 +35,10 @@ function katalogsuche( $produkt ) {
 //  2: Katalogsuche ohne Treffer
 //  3: Katalogsuche fehlgeschlagen
 //
-// im erfolgsfall werden in $preiseintrag_neu aus dem katalog ableitbare felder gesetzt,
-// zur verwendung als vorlage im formular_produktpreis()
-//
 function katalogabgleich(
   $produkt_id
-, $editable = false // deprecated, nicht mehr benutzt
-, $detail = false   // flag: katalogdaten auch anzeigen?
+, $editable = false
+, $detail = false
 , & $preiseintrag_neu = array()
 ) {
   $artikel = sql_produkt_details( $produkt_id );
@@ -55,6 +51,8 @@ function katalogabgleich(
       div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
     else
       div_msg( 'warn', 'Katalogsuche: Artikelnummer nicht gefunden!' );
+    // if( $detail and $editable )
+    //  formular_artikelnummer( $produkt_id, false );
     return 2;
   }
 
@@ -77,9 +75,8 @@ function katalogabgleich(
 
   $lieferant_name = sql_lieferant_name( $artikel['lieferanten_id'] );
   if( preg_match( '&^Terra&', $lieferant_name ) ) {
-    // terra gibt als einheit die vpe, etwa 2.5kg roggen oder  2kg kaese,
-    // der preis gilt aber trotzdem immer fuer 1kg
-    // wir rechnen daher um und setzen
+
+    // setze:
     //   $liefereinheit: auf diese bezieht sich der preis $katalog_netto
     //   $gebindegroesse in vielfachen der $liefereinheit
     switch( $kan_liefereinheit ) {
@@ -122,8 +119,6 @@ function katalogabgleich(
     }
 
   } else if( preg_match( '&^Bode&', $lieferant_name ) ) {
-    // bode gibt als einheit die vpe, meist in g (400g Muesli, 680ml Passata) an,
-    // und den preis immer pro vpe; hier ist also nix umzurechnen:
 
     $gebindegroesse = $katalog_gebindegroesse;
     $liefereinheit = $katalog_einheit;
@@ -134,11 +129,7 @@ function katalogabgleich(
     error( "katalogabgleich fuer $lieferant_name nicht moeglich" );
   }
 
-  if( $katalog_mwst >= 0 ) {
-    $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
-  } else {
-    $katalog_brutto = -1;
-  }
+  $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
 
   if( $detail ) {
     open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_typ / $katalog_datum" );
@@ -162,8 +153,8 @@ function katalogabgleich(
           open_td( '', '', $katalog_herkunft );
           open_td( '', '', $katalog_verband );
           open_td( '', '', $katalog_netto );
-          open_td( '', '', ( $katalog_mwst >= 0 ? $katalog_mwst : 'n/a' ) ); // bode-katalog listet keine mwst!
-          open_td( '', '', ( $katalog_brutto >= 0 ? $katalog_brutto : ' n/a' ) );
+          open_td( '', '', $katalog_mwst );
+          open_td( '', '', $katalog_brutto );
         open_tr();
           open_td( 'left small top', "colspan='3'", 'Interpretation der Foodsoft:' );
           open_td( 'center small top', "colspan='2'", "1 Gebinde = $gebindegroesse * ($liefereinheit)" );
@@ -190,15 +181,13 @@ function katalogabgleich(
         <div class='small'>die L-Einheit sollte dem Einzelpreis im Katalog zugrundeliegen</div>
       " );
     }
-    if( $katalog_mwst >= 0 ) {  // Bode zum beispiel hat keine mwst im katalog!
-      $preiseintrag_neu['mwst'] = $katalog_mwst;
-      if( abs( $preiseintrag_neu['mwst'] - $artikel['mwst'] ) > 0.005 ) {
-        $neednewprice = TRUE;
-        open_div( 'warn', '', "Problem: MWSt-Satz stimmt nicht:
-          <p class='li'>Katalog: <kbd>{$preiseintrag_neu['mwst']}</kbd></p>
-          <p class='li'>Foodsoft: <kbd>{$artikel['mwst']}</kbd></p>
-        " );
-      }
+    $preiseintrag_neu['mwst'] = $katalog_mwst;
+    if( abs( $preiseintrag_neu['mwst'] - $artikel['mwst'] ) > 0.005 ) {
+      $neednewprice = TRUE;
+      open_div( 'warn', '', "Problem: MWSt-Satz stimmt nicht:
+        <p class='li'>Katalog: <kbd>{$preiseintrag_neu['mwst']}</kbd></p>
+        <p class='li'>Foodsoft: <kbd>{$artikel['mwst']}</kbd></p>
+      " );
     }
 
     $preiseintrag_neu['verteileinheit'] =
@@ -265,13 +254,15 @@ function katalogabgleich(
       }
     }
 
-    $preiseintrag_neu['lieferpreis'] = $katalog_netto;
-//      = $katalog_brutto / $preiseintrag_neu['lv_faktor'] + $artikel['pfand'];
-    if( abs( $preiseintrag_neu['lieferpreis'] - $artikel['nettolieferpreis'] ) > 0.005 ) {
+    $preiseintrag_neu['preis']
+      = $katalog_brutto / $preiseintrag_neu['lv_faktor'] + $artikel['pfand'];
+    if( abs( $preiseintrag_neu['preis'] - $artikel['endpreis'] ) > 0.005 ) {
       $neednewprice = TRUE;
-      open_div( 'warn', '', "Problem: Einzelpreise stimmen nicht (beide Netto ohne Pfand):
-        <p class='li'>Katalog: <kbd>$katalog_netto</kbd></p>
-        <p class='li'>Foodsoft: <kbd>" .sprintf( '%.2lf', $artikel['nettolieferpreis'] ). "</kbd></p>
+      open_div( 'warn', '', "Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
+        <p class='li'>Katalog: <kbd>$katalog_brutto / $liefereinheit</kbd></p>
+        <p class='li'>Foodsoft: <kbd>{$artikel['bruttopreis']} / {$artikel['verteileinheit']}
+               = " . $artikel['bruttopreis'] * $preiseintrag_neu['lv_faktor'] . " / $liefereinheit
+          </kbd></p>
       " );
     }
 
@@ -292,10 +283,9 @@ function katalogabgleich(
     $preiseintrag_neu['verteileinheit'] = $verteileinheit_default;
     $preiseintrag_neu['lv_faktor'] = $lv_faktor_default;
     $preiseintrag_neu['gebindegroesse'] = $gebindegroesse * $lv_faktor_default;
-    if( $katalog_mwst > 0 )
-      $preiseintrag_neu['mwst'] = $katalog_mwst;
+    $preiseintrag_neu['mwst'] = $katalog_mwst;
     $preiseintrag_neu['bestellnummer'] = $katalog_bestellnummer;
-    $preiseintrag_neu['lieferpreis'] = $katalog_netto;
+    $preiseintrag_neu['preis'] = $katalog_brutto / $lv_faktor_default;
 
     $rv = 1;
   }
