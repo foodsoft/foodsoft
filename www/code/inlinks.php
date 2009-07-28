@@ -1,11 +1,12 @@
 <?php
 
-// inlinks.php
+// inlinks.php (Timo Felbinger, 2008, 2009)
+//
 // functions and definitions for internal hyperlinks, in particular: window properties
 
 // default options for windows (for javascript window.open()-call)
-// (these are really constants, but php doesn't not support array-valued constants)
-// this file may be include from inside a function (from doku-wiki!), so we need `global':
+// - (these are really constants, but php doesn't not support array-valued constants)
+// - this file may be included from inside a function (from doku-wiki!), so we need `global':
 //
 global $large_window_options, $small_window_options;
 $large_window_options = array(
@@ -40,7 +41,10 @@ $pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 
 // internal functions (not supposed to be called by consumers):
 //
 
-// fc_window_defaults: define default values and default options for windows
+// fc_window_defaults: define default parameters and default options for views:
+//  - window (historical name...): name of the script
+//  - window_id: window name for target='...' or window.open()
+//  - text, title, class: default look and tooltip-help of the link
 //
 function fc_window_defaults( $name ) {
   global $readonly, $dienst, $large_window_options, $small_window_options;
@@ -49,7 +53,7 @@ function fc_window_defaults( $name ) {
   // echo "fc_window_defaults: $name<br>";
   switch( strtolower( $name ) ) {
     //
-    // self: display in same window and pass $self_parameters:
+    // self: display in same window:
     //
     case 'self':
       $parameters['window'] = $GLOBALS['window'];
@@ -377,11 +381,11 @@ function parameters_explode( $s ) {
 }
 
 // fc_url(): create an internal URL, passing $parameters in the query string.
-// parameters with value NULL will be skipped
-// pseudo-parameters will always be skipped except for two special cases:
-//  - anchor: append an #anchor to the url
-//  - url: return the value of this parameter immediately (overriding all others)
-// 
+// - parameters with value NULL will be skipped
+// - pseudo-parameters (see open) will always be skipped except for two special cases:
+//   - anchor: append an #anchor to the url
+//   - url: return the value of this parameter immediately (overriding all others)
+//
 function fc_url( $parameters ) {
   global $pseudo_parameters, $form_id;
 
@@ -407,7 +411,7 @@ function fc_url( $parameters ) {
 
 
 // alink: compose from parts and return an <a href=...> hyperlink
-// $url may also contain javascript; if so, '-quotes but no "-quotes must be used
+// $url may also contain javascript; if so, '-quotes but no "-quotes must be used in the js code
 //
 function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
   global $activate_safari_kludges, $activate_konqueror_kludges;
@@ -458,7 +462,7 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
 //    'form': return string of attributes suitable to insert into a <form>-tag. the result always contains action='...'
 //            and may also contain target='...' and onsubmit='...' attributes if needed.
 // as a special case, $parameters === NULL can be used to just open a browser window with no document
-//  - this can be used in <form onsubmit='...', in combination with target=..., to submit a form into a new window.
+// (this can be used in <form onsubmit='...', in combination with target=..., to submit a form into a new window)
 //
 function fc_link( $window = '', $parameters = array(), $options = array() ) {
   global $self_fields;
@@ -545,12 +549,14 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
   }
 }
 
-// fc_action(): generates simple form and one submit button (which actually is a <a>-element)
+// fc_action(): generates simple form and one submit button
 // $get_parameters: determine the url as in fc_link. In particular, 'window' allows to submit this form to
-//                  an arbitrary script in a different window, and the style of the <a> can be specified.
+//                  an arbitrary script in a different window (default: submit to same script), and the
+/                   style of the <a> can be specified.
 // $post_parameter: additional parameters to be POSTed in hidden input fields.
-// the form itself will be inserted at end of document; this allows fc_action() to be called
-// inside other forms.
+// forms can't be nested; thus, to allow fc_action() to be called inside other forms, we
+//   - use an <a>-element for the submit button and
+//   - insert the actual form at the end of the document
 //
 function fc_action( $get_parameters = array(), $post_parameters = array(), $options = array() ) {
   global $print_on_exit, $self_post_fields, $pseudo_parameters;
