@@ -1,16 +1,12 @@
 <?php
   global $angemeldet, $login_gruppen_name, $coopie_name, $dienst
-       , $readonly, $kopf_schon_ausgegeben, $print_on_exit, $foodsoftdir;
+       , $readonly, $foodsoftdir;
 
-if( isset( $kopf_schon_ausgegeben ) && $kopf_schon_ausgegeben )
-  return;
-
+$headclass='head';
+$payloadclass='';
 if( $readonly ) {
   $headclass='headro';
-  $payloadclass='payloadro';
-} else {
-  $headclass='head';
-  $payloadclass='payload';
+  $payloadclass='ro';
 }
 
 echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
@@ -54,7 +50,7 @@ open_div( $headclass, "id='header'" );
   open_tr();
     open_td( '', "colspan='3' style='text-align:right;'" );
       open_ul( '', "id='menu' style='margin-bottom:0.5ex;'" );
-        foreach(possible_areas() as $menu_area){
+        foreach( possible_areas() as $menu_area ) {
           areas_in_head($menu_area);
         }
         open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki...", true );
