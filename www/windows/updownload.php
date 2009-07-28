@@ -103,52 +103,52 @@ if( $action == 'lock' ) {
  exit();
 }
 
-if( $action == 'upload' ) {
-  global $usb_device;
-
-  if( $usb_device ) {
-    need_http_var( 'filename', 'R' );
-    mount_usb();
-    $input = file_get_contents( "/usb/$filename" );
-    umount_usb();
-  } else {
-    need( isset( $_FILES['userfile'] ), "keine Datei hochgeladen!" );
-    if($_FILES['userfile']['error']!=0){
-      error( "Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)" );
-    }
-    $input = file_get_contents( $_FILES['userfile']['tmp_name'] );
-  }
-  $parts = preg_split( '/^-- :/m', $input );
-  need( isset( $parts[5] ) and ( $parts[5] == "end\n" ) , "Hochladen fehlgeschlagen (test 1)" );
-  $size = 0;
-  sscanf( $parts[2], "size: %u", & $size );
-  need( $size > 1, "Hochladen fehlgeschlagen (test 2)" );
-  $md5 = false;
-  sscanf( $parts[3], "md5: %s", & $md5 );
-  need( $md5, "Hochladen fehlgeschlagen (test 3)" );
-  $sql = $parts[4];
-  $s = strlen( $sql );
-  need( $s == $size, "Hochladen fehlgeschlagen: falsche Dateigroesse: $s statt $size" );
-  $m = hash( 'md5', $sql );
-  need( $m == $md5, "Hochladen fehlgeschlagen: falsche Pruefsumme: $m statt $md5" );
-
-  file_put_contents( "/tmp/upload.sql", $input );
-  $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 < /tmp/upload.sql";
-  system( $command, $result );
-  logger( "upload: size: $size, md5: $md5" );
-
-  div_msg( 'ok', "Datenbank hochgeladen! <a href='index.php?login=silentlogout'>Bitte neu anmelden...</a></div>" );
-  datenbank_freigeben();
-
-  return;
-
-}
+// if( $action == 'upload' ) {
+//   global $usb_device;
+// 
+//   if( $usb_device ) {
+//     need_http_var( 'filename', 'R' );
+//     mount_usb();
+//     $input = file_get_contents( "/usb/$filename" );
+//     umount_usb();
+//   } else {
+//     need( isset( $_FILES['userfile'] ), "keine Datei hochgeladen!" );
+//     if($_FILES['userfile']['error']!=0){
+//       error( "Fehler mit Code: ".$_FILES['userfile']['error']." (<a href=http://de.php.net/manual/en/features.file-upload.errors.php>Fehlercodes</a>)" );
+//     }
+//     $input = file_get_contents( $_FILES['userfile']['tmp_name'] );
+//   }
+//   $parts = preg_split( '/^-- :/m', $input );
+//   need( isset( $parts[5] ) and ( $parts[5] == "end\n" ) , "Hochladen fehlgeschlagen (test 1)" );
+//   $size = 0;
+//   sscanf( $parts[2], "size: %u", & $size );
+//   need( $size > 1, "Hochladen fehlgeschlagen (test 2)" );
+//   $md5 = false;
+//   sscanf( $parts[3], "md5: %s", & $md5 );
+//   need( $md5, "Hochladen fehlgeschlagen (test 3)" );
+//   $sql = $parts[4];
+//   $s = strlen( $sql );
+//   need( $s == $size, "Hochladen fehlgeschlagen: falsche Dateigroesse: $s statt $size" );
+//   $m = hash( 'md5', $sql );
+//   need( $m == $md5, "Hochladen fehlgeschlagen: falsche Pruefsumme: $m statt $md5" );
+// 
+//   file_put_contents( "/tmp/upload.sql", $input );
+//   $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 < /tmp/upload.sql";
+//   system( $command, $result );
+//   logger( "upload: size: $size, md5: $md5" );
+// 
+//   div_msg( 'ok', "Datenbank hochgeladen! <a href='index.php?login=silentlogout'>Bitte neu anmelden...</a></div>" );
+//   datenbank_freigeben();
+// 
+//   return;
+// 
+// }
 
 if( $action == 'download' ) {
   global $leitvariable, $mysqljetzt, $foodsoftserver, $cookie;
   global $usb_device;
 
-  datenbank_sperren() or exit();
+  // datenbank_sperren() or exit();
 
   $sql = "
      CREATE TABLE IF NOT EXISTS leitvariable (
@@ -205,7 +205,8 @@ if( $action == 'download' ) {
 
 open_table( 'layout' );
   global $usb_device;
-  if( $readonly ) {
+  // if( $readonly ) {
+  if( false ) { /* momentan ausser betrieb! */
       open_td();
         ?> Datenbank hochladen und anschliessend freigeben: <?
           qquad(); wikiLink("foodsoft:daten_auf_den_server_hochladen", "Wiki...");
@@ -243,7 +244,7 @@ open_table( 'layout' );
 
   } else {
       open_td();
-          ?> Datenbank sperren und runterladen: <?
+          ?> Datenbank <!-- sperren und --> runterladen: <?
           wikiLink("foodsoft:daten_vom_server_runterladen", "Wiki...");
       open_td();
         if( $usb_device )
@@ -253,10 +254,12 @@ open_table( 'layout' );
         echo fc_action( "window=updownload,text=Runterladen,title=Download jetzt starten", "action=download".$download );
         echo " (wird gespeichert als <b>$downloadname</b>)";
     open_tr();
-      open_td('medskip');
+      open_td( 'kommentar', "colspan='2'", '(dient zur Zeit nur zur Datensicherung --- der Rechner im Keller funktioniert <b>nicht</b>, dort kein upload versuchen!)' );
     open_tr();
-      open_td( 'label', '', 'Datenbank <em>ohne</em> Speichern sperren:' );
-      open_td( '', '', fc_action( 'text=Datenbank Sperren,confirm=Datenbank wirklich sperren?', 'action=lock' ) );
+      open_td('medskip');
+//     open_tr();
+//       open_td( 'label', '', 'Datenbank <em>ohne</em> Speichern sperren:' );
+//       open_td( '', '', fc_action( 'text=Datenbank Sperren,confirm=Datenbank wirklich sperren?', 'action=lock' ) );
   }
 close_table();
 
