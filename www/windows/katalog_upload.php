@@ -115,6 +115,12 @@ function upload_terra() {
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
+      if( preg_match( '&^Art.Nr.@Bestell-Nr.@Zitrus-Früchte *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
+        $tag='OG';
+        $splitat = '@';
+        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
+        $pattern = '/^[\d\s]+@[\d\s]+@/';
+      }
 
       if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
         $tag='drog';
