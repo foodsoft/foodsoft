@@ -552,7 +552,7 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
 // fc_action(): generates simple form and one submit button
 // $get_parameters: determine the url as in fc_link. In particular, 'window' allows to submit this form to
 //                  an arbitrary script in a different window (default: submit to same script), and the
-/                   style of the <a> can be specified.
+//                  style of the <a> can be specified.
 // $post_parameter: additional parameters to be POSTed in hidden input fields.
 // forms can't be nested; thus, to allow fc_action() to be called inside other forms, we
 //   - use an <a>-element for the submit button and
