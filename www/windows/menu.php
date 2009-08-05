@@ -67,24 +67,20 @@ open_table( 'layout hfill' );
 
     open_div( 'bigskip' );
       ?> <h4> Eure nächsten <? echo fc_link( 'dienstplan', 'text=Dienste,class=href' ); ?>: </h4> <?
-      $date = strftime("%Y-%m-%d");
-      $dienste =  sql_get_dienste($date, $login_gruppen_id);
-      while($row = mysql_fetch_array($dienste)){
-	       dienst_view2($row);
+      foreach( sql_get_dienste( " ( gruppen_id = $login_gruppen_id ) and ( Lieferdatum >= $mysqlheute ) " ) as $row ) {
+        dienst_view2($row);
       }
     close_div();
-      /*
-    open_div( 'bigskip' );
-      ?> <h4> Letzte Dienste: </h4> <?
-      $dienste =  sql_get_dienste($date, $login_gruppen_id, FALSE, TRUE);
-       while($row = mysql_fetch_array($dienste)){
-	       if($row['dienstkontrollblatt_id']!="NULL"){
-	          dienst_view3($row);
-	       }
 
-
-       }
-    close_div();
-       */
+    if( false ) {
+      open_div( 'bigskip' );
+        ?> <h4> Letzte Dienste: </h4> <?
+        foreach( sql_get_dienste( " ( gruppen_id = $login_gruppen_id ) and ( Lieferdatum < $mysqlheute ) " ) as $row ) {
+          if($row['dienstkontrollblatt_id']!="NULL"){
+            dienst_view3($row);
+          }
+        }
+      close_div();
+    }
 close_table();
 ?>
