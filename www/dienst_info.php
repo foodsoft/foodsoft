@@ -10,26 +10,25 @@
        }
   }
   if($baldigerdienst){
-     if(isset($_REQUEST["dienst_rueckbestatigen"])){
+    get_http_var( 'dienst_rueckbestaetigen', 'u', 0 );
+    if( $dienst_rueckbestaetigen ) {
         foreach($show_dienste as $datum){
           sql_dienst_bestaetigen($datum);
-	}
-     } else {
+    }
+  } else {
      ?> <h2> Du hast bald Dienste: </h2> <?
      foreach($show_dienste as $datum){
-        echo "<h3>".$datum.":</h3>";
-        $result = sql_get_dienste($datum);
-	$current_dienst = "Initial";
-        while($row = mysql_fetch_array($result)){
-	    if($current_dienst != $row["Dienst"]){
-	       $current_dienst = $row["Dienst"];
-	       echo "<h4> Dienst $current_dienst</h4>";
-	    }
-	    dienst_view($row, $login_gruppen_id, FALSE);
-	}
-
+        echo "<h3>.$datum.":</h3>";
+        $current_dienst = "Initial";
+        foreach( sql_get_dienste( "Lieferdatum = $datum" ) as $row ) {
+          if($current_dienst != $row["Dienst"]){
+            $current_dienst = $row["Dienst"];
+            echo "<h4> Dienst $current_dienst</h4>";
+          }
+          dienst_view($row, $login_gruppen_id, FALSE);
+        }
      }
-     echo fc_action( 'text=OK', 'dienst_rueckbestatigen=1' );
+     echo fc_action( 'text=OK', 'dienst_rueckbestaetigen=1' );
 
      exit();
      }

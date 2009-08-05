@@ -188,10 +188,9 @@
       open_th( '', '', 'Dienst 3' );
       open_th( '', '', 'Dienst 4' );
 
-	    $dienste =  sql_get_dienste();
 	    $currentDienst = "initial";
 	    $currentDate = "initial";
-	    while($row = mysql_fetch_array($dienste)){
+      foreach( sql_get_dienste() as $row ) {
 		//neue Zeile für Dienst 1/2
 	        if($row["Lieferdatum"]!=$currentDate){ //Problem, wenn Dienst abgef. immer 1/2
 		    $currentDate = $row["Lieferdatum"];
