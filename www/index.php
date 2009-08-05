@@ -23,8 +23,12 @@ setWikiHelpTopic( "foodsoft:$window" );
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');
-    if( hat_dienst(0) )  // dienst 5 kommt hier sonst nicht vorbei!
-      include('dienst_info.php');
+    if( hat_dienst(0) ) { // dienst 5 kommt hier sonst nicht vorbei!
+      get_http_var( 'dienst_rueckbestaetigen', 'u', 0 );
+      if( ! sql_dienst_info( $dienst_rueckbestaetigen ) ) {
+        break;
+      }
+    }
     switch( $window ) {
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
