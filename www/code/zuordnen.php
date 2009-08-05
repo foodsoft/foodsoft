@@ -401,33 +401,17 @@ function sql_dienste_nicht_bestaetigt($datum){
  *  Zurückgegeben wird ein mysql-set
  */
 
-function sql_get_dienste($datum = FALSE, $gruppen_id = FALSE, $gruppenmitglieder_id=FALSE, $before=FALSE){
-   $sql = "SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status
-                , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
-              FROM Dienste 
-              LEFT JOIN gruppenmitglieder  /* fuer 'Offen': auch gruppenmitglieder_id==0 zulassen! */
-	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)";
-
-   if($gruppenmitglieder_id !==FALSE){
-	   $sql .= " WHERE gruppenmitglieder_id = ".$gruppenmitglieder_id;
-	   if($datum !==FALSE){
-		   $sql .= " AND Lieferdatum >= '".$datum."'";
-           }
-   } else if($gruppen_id !==FALSE){
-	   $sql .= " WHERE gruppen_id = ".$gruppen_id;
-	   if($datum !==FALSE){
-		   if($before){
-			   $sql .= " AND Lieferdatum < '".$datum."'";
-		   }else {
-			   $sql .= " AND Lieferdatum >= '".$datum."'";
-		   }
-           }
-   } else if($datum !==FALSE){
-       $sql .= " WHERE Lieferdatum = '".$datum."'";
-   }
-   $sql .= " ORDER BY Lieferdatum DESC, Dienst ASC";
-   $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-   return $result;
+function sql_get_dienste( $where = 'TRUE' ) {
+  return mysql2array( doSql( "
+    SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status
+         , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
+    FROM Dienste 
+    LEFT JOIN gruppenmitglieder  /* fuer 'Offen': auch gruppenmitglieder_id==0 zulassen! */
+    ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)
+    WHERE ( $where )
+    ORDER BY Lieferdatum DESC, Dienst ASC
+  ", LEVEL_ALL, "Error while reading Dienste"
+  ) );
 }
 
 /**
@@ -1274,11 +1258,11 @@ function sql_delete_group_member($person_id, $gruppen_id){
   global $problems, $msg, $sockelbetrag, $mysqlheute;
   need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
   need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
-  $bevorstehende_dienste= sql_get_dienste(date_sql2intern(strftime("%Y-%m-%d %H:%M:%S")), FALSE, $person_id);
-   while($row = mysql_fetch_array($bevorstehende_dienste)){
-	   var_dump($row);
-	   sql_dienst_wird_offen($row['dienst_id']);
-   }
+  $bevorstehende_dienste= sql_get_dienste( "( Lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $person_id )" );
+  foreach( $bevorstehende_dienste as $row ) {
+    var_dump($row);
+    sql_dienst_wird_offen($row['dienst_id']);
+  }
   
   $muell_id = sql_muell_id();
   sql_update( 'gruppenmitglieder', $person_id, array(
