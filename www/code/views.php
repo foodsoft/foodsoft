@@ -221,9 +221,9 @@ function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
  *  verknüpfen (Als Abschluss sozusagen). 
  */
 function dienst_view3($row){
-	echo("<p>".$row['Lieferdatum'].", Dienst ".$row['Dienst'].": ".$row['vorname']."Geleistet (ja/nein); Auswahl Logbucheintrag; ggf. neuer Logbucheintrag </p>");
-	$kontrollblatt = sql_dienstkontrollblatt(0,0,$row['gruppen_id'], $row['Dienst']);
-  open_form( sprintf( 'aktion=akzeptieren_%u', $row["ID"] ) );
+	echo("<p>".$row['lieferdatum'].", Dienst ".$row['dienst'].": ".$row['vorname']."Geleistet (ja/nein); Auswahl Logbucheintrag; ggf. neuer Logbucheintrag </p>");
+	$kontrollblatt = sql_dienstkontrollblatt(0,0,$row['gruppen_id'], $row['dienst']);
+  open_form( sprintf( 'aktion=akzeptieren_%u', $row["id"] ) );
   ?>
        <select name="kontrollblatt" >
      <option value='new'>Kein passender Eintrag</option>
@@ -243,7 +243,7 @@ function dienst_view3($row){
  *  Zeigt einen Dienst mit Name, Dienst und Datum
  */
 function dienst_view2($row){
-	echo("<p>".$row['Lieferdatum'].", Dienst ".$row['Dienst'].": ".$row['vorname']." (Status:".$row['dienst_status'].") </p>");
+	echo("<p>".$row['lieferdatum'].", Dienst ".$row['dienst'].": ".$row['vorname']." (Status:".$row['dienst_status'].") </p>");
 }
 
 
@@ -252,7 +252,7 @@ function dienst_view2($row){
  */
 function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
        $critical_date = in_two_weeks();
-       if(compare_date2($row["Lieferdatum"], $critical_date)){
+       if(compare_date2($row["lieferdatum"], $critical_date)){
 	  //soon
 	  $color_norm="green";
 	  $color_not_confirmed="yellow";
@@ -271,8 +271,8 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
             show_dienst_gruppe($row, $color_not_accepted);
             ?> Dieser Dienst ist euch zugeteilt <br> <?
             if($show_buttons){
-              echo fc_action( 'class=button smalll,text=akzeptieren', sprintf( 'aktion=akzeptieren_%u', $row['ID'] ) );
-              echo fc_action( 'class=button smalll,text=geht nicht', sprintf( 'aktion=abtauschen_%u', $row['ID'] ) );
+              echo fc_action( 'class=button smalll,text=akzeptieren', sprintf( 'aktion=akzeptieren_%u', $row['id'] ) );
+              echo fc_action( 'class=button smalll,text=geht nicht', sprintf( 'aktion=abtauschen_%u', $row['id'] ) );
             }
           close_div();
         } else {
@@ -280,7 +280,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 		      ?> Noch nicht akzeptiert: <? show_dienst_gruppe($row, $color_not_accepted);
 	            if( $soon){
 	              if($show_buttons){
-                  echo fc_action( 'text=übernehmen,window=dienstplan,class=button smalll', sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+                  echo fc_action( 'text=übernehmen,window=dienstplan,class=button smalll', sprintf( 'aktion=uebernehmen_%u', $row['id'] ) );
 		            }
 	            }
           close_div();
@@ -293,7 +293,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	        open_div( "$color_not_accepted oneline" );
             echo 'Offener Dienst';
 	        if($show_buttons){
-            echo fc_action( "class=button smalll,window=dienstplan,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+            echo fc_action( "class=button smalll,window=dienstplan,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['id'] ) );
 	        }
           close_div();
        	  break;
@@ -313,11 +313,11 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 	    show_dienst_gruppe($row, $color_use);
        	    if($gruppe == $row["gruppen_id"]){
 	       if($show_buttons){
-           echo fc_action( "window=dienstplan,class=button smalll,text=kann doch nicht", sprintf( 'aktion=wirdoffen_%u', $row['ID'] ) );
+           echo fc_action( "window=dienstplan,class=button smalll,text=kann doch nicht", sprintf( 'aktion=wirdoffen_%u', $row['id'] ) );
 	       }
 	    } else if($row["dienst_status"]=="Akzeptiert" & $soon){
 	       if($show_buttons){
-            echo fc_action( "window=dienstplan,class=button smalll,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['ID'] ) );
+            echo fc_action( "window=dienstplan,class=button smalll,text=übernehmen", sprintf( 'aktion=uebernehmen_%u', $row['id'] ) );
 	       }
 	    }
       close_div();
@@ -340,10 +340,10 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
 	   }else {
                  $gruppen_auswahl = sql_aktive_bestellgruppen();
 	   }
-          open_form( sprintf( 'name=personAendern_%u', $row['ID'] )
-              , sprintf( 'aktion=dienstPersonAendern_%u', $row['ID'] ) );
+          open_form( sprintf( 'name=personAendern_%u', $row['id'] )
+              , sprintf( 'aktion=dienstPersonAendern_%u', $row['id'] ) );
           open_span( $color_use );
-          echo "                  <select name=\"person_neu\" onchange=\"document.personAendern_".$row['ID'].".submit()\">\n";
+          echo "                  <select name=\"person_neu\" onchange=\"document.personAendern_".$row['id'].".submit()\">\n";
           echo "                  	<option value='0'>Keine aktive Person</option>\n";
 	  foreach($gruppen_auswahl as $gruppe){
 		  foreach(sql_gruppen_members($gruppe['id']) as $member){

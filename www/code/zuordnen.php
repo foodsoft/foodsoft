@@ -260,8 +260,8 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
   $critical_date = in_two_weeks();
   $show_dienste = array();
   while($row = mysql_fetch_array($result)){
-    if(compare_date2($row["Lieferdatum"], $critical_date)) {
-      $show_dienste[] = $row["Lieferdatum"];
+    if(compare_date2($row["lieferdatum"], $critical_date)) {
+      $show_dienste[] = $row["lieferdatum"];
     }
   }
   if( $show_dienste ) {
@@ -275,9 +275,9 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
       foreach($show_dienste as $datum){
         echo "<h3>$datum:</h3>";
         $current_dienst = "Initial";
-        foreach( sql_get_dienste( "Lieferdatum = $datum" ) as $row ) {
-          if($current_dienst != $row["Dienst"]){
-            $current_dienst = $row["Dienst"];
+        foreach( sql_get_dienste( "lieferdatum = $datum" ) as $row ) {
+          if($current_dienst != $row["dienst"]){
+            $current_dienst = $row["dienst"];
             echo "<h4> Dienst $current_dienst</h4>";
           }
           dienst_view($row, $login_gruppen_id, FALSE);
@@ -296,9 +296,9 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
  */ 
 function sql_dienst_bestaetigen($datum){
   global $login_gruppen_id;
-  $sql = "UPDATE Dienste inner join gruppenmitglieder on (gruppenmitglieder_id = gruppenmitglieder.id) SET Dienste.Status = 'Bestaetigt'
+  $sql = "UPDATE dienste inner join gruppenmitglieder on (gruppenmitglieder_id = gruppenmitglieder.id) SET dienste.status = 'Bestaetigt'
           WHERE gruppen_id = ".$login_gruppen_id."
-	  AND Lieferdatum = '".$datum."'";
+	  AND lieferdatum = '".$datum."'";
   doSql($sql, LEVEL_IMPORTANT, "Error while confirming Dienstplan");
 
 }
@@ -309,11 +309,11 @@ function sql_dienst_bestaetigen($datum){
 function sql_dienst_akzeptieren($dienst){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
-  if($row["gruppen_id"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
-       error( "Falsche gruppen_id (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
+  if($row["gruppen_id"]!=$login_gruppen_id || $row["status"]!="Vorgeschlagen" ){
+       error( "Falsche gruppen_id (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["status"]);
   }
   //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE Dienste SET Status = 'Akzeptiert' WHERE ID = ".$dienst;
+  $sql = "UPDATE dienste SET status = 'Akzeptiert' WHERE id = ".$dienst;
   doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
 
 }
@@ -324,18 +324,18 @@ function sql_dienst_akzeptieren($dienst){
 function sql_dienst_wird_offen($dienst){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
-  switch( $row['Status'] ) {
+  switch( $row['status'] ) {
     case 'Offen':
       return;
     case 'Nicht geleistet':   /* TODO: auch auf 'Offen' aendern oder so lassen? */
       return;
   }
   if( ! ( ($row["gruppen_id"] == $login_gruppen_id) || hat_dienst(5) ) || 
-         ($row["Status"]!="Vorgeschlagen" && $row["Status"]!="Bestaetigt" && $row["Status"]!="Akzeptiert")){
-       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
+         ($row["status"]!="Vorgeschlagen" && $row["status"]!="Bestaetigt" && $row["status"]!="Akzeptiert")){
+       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["status"]);
   }
   //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE Dienste SET Status = 'Offen', gruppenmitglieder_id=0  WHERE ID = ".$dienst;
+  $sql = "UPDATE dienste SET status = 'Offen', gruppenmitglieder_id=0  WHERE id = ".$dienst;
   doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
 }
 
@@ -345,24 +345,24 @@ function sql_dienst_wird_offen($dienst){
 function sql_dienst_abtauschen($dienst, $bevorzugt){
   global $login_gruppen_id;
   $row = sql_get_dienst_by_id($dienst);
-  if($row["gruppen_id"]!=$login_gruppen_id || $row["Status"]!="Vorgeschlagen" ){
-       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["Status"]);
+  if($row["gruppen_id"]!=$login_gruppen_id || $row["status"]!="Vorgeschlagen" ){
+       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["status"]);
   }
-  $sql = "SELECT * from Dienste 
-          WHERE Lieferdatum = '".$bevorzugt.
-	  "' AND Status = 'Vorgeschlagen'
-	  AND Dienst = '".$row["Dienst"]."'";
+  $sql = "SELECT * from dienste 
+          WHERE lieferdatum = '".$bevorzugt.
+	  "' AND status = 'Vorgeschlagen'
+	  AND dienst = '".$row["dienst"]."'";
   $result = doSql($sql, LEVEL_ALL, "Error while reading Dienste");
   if(mysql_num_rows($result)==0){
-       error( "Kein ausweichsdienst an diesem Datum ".$bevorzugt." für Dienst ".$row["Dienst"]);
+       error( "Kein ausweichsdienst an diesem Datum ".$bevorzugt." für Dienst ".$row["dienst"]);
   }
   
   //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE Dienste SET Lieferdatum = '".$bevorzugt."', Status = 'Akzeptiert' WHERE ID = ".$dienst;
+  $sql = "UPDATE dienste SET lieferdatum = '".$bevorzugt."', status = 'Akzeptiert' WHERE id = ".$dienst;
   doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
-  $sql = "UPDATE Dienste SET Lieferdatum = '".$row["Lieferdatum"]."' WHERE Lieferdatum = '".$bevorzugt.
-	  "' AND Status = 'Vorgeschlagen'
-	  AND Dienst = '".$row["Dienst"]."' LIMIT 1";
+  $sql = "UPDATE dienste SET lieferdatum = '".$row["lieferdatum"]."' WHERE lieferdatum = '".$bevorzugt.
+	  "' AND status = 'Vorgeschlagen'
+	  AND dienst = '".$row["dienst"]."' LIMIT 1";
   doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
 }
 
@@ -375,7 +375,7 @@ function sql_dienst_person_aendern($neuPerson, $dienst){
   //Rechte?
   if( hat_dienst(5) || $row["gruppen_id"]==$login_gruppen_id  ){
 	  //OK, dürfen die Person verändern
-      $sql = "UPDATE Dienste SET gruppenmitglieder_id = ".mysql_escape_string($neuPerson)." WHERE ID = ".mysql_escape_string($dienst);
+      $sql = "UPDATE dienste SET gruppenmitglieder_id = ".mysql_escape_string($neuPerson)." WHERE id = ".mysql_escape_string($dienst);
       doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
   } else {
        error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder nicht als Dienst V angemeldet" );
@@ -389,21 +389,21 @@ function sql_dienst_uebernehmen($dienst){
   global $login_gruppen_id;
   // echo "uebernehmen $dienst";
   $row = sql_get_dienst_by_id($dienst);
-  if( ($row["Status"]!="Offen" && $row["Status"]!="Akzeptiert"&& $row["Status"]!="Vorgeschlagen")){
-       error( "Falscher Status ".$row["Status"]);
+  if( ($row["status"]!="Offen" && $row["status"]!="Akzeptiert"&& $row["status"]!="Vorgeschlagen")){
+       error( "Falscher Status ".$row["status"]);
   }
   //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE Dienste SET Status = 'Nicht geleistet' WHERE ID = ".$dienst;
+  $sql = "UPDATE dienste SET status = 'Nicht geleistet' WHERE id = ".$dienst;
   doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
 
-  if(compare_date2($row["Lieferdatum"], in_two_weeks())){
+  if(compare_date2($row["lieferdatum"], in_two_weeks())){
        $status = "Bestaetigt";
   } else {
        $status = "Akzeptiert";
   }
 
   $person = current( sql_gruppen_members($login_gruppen_id) );
-  sql_create_dienst2($person["id"],$row["Dienst"], "'".$row["Lieferdatum"]."'", $status);
+  sql_create_dienst2($person["id"],$row["dienst"], "'".$row["lieferdatum"]."'", $status);
 
 }
 
@@ -412,8 +412,8 @@ function sql_dienst_uebernehmen($dienst){
  *  auf der ID ab
  */
 function sql_get_dienst_by_id($dienst){
-  $sql = "SELECT * FROM Dienste INNER JOIN gruppenmitglieder
-	         ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id) WHERE Dienste.ID = ".$dienst;
+  $sql = "SELECT * FROM dienste INNER JOIN gruppenmitglieder
+	         ON (dienste.gruppenmitglieder_id = gruppenmitglieder.id) WHERE dienste.id = ".$dienst;
   $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
   return mysql_fetch_array($result);
 }
@@ -424,10 +424,10 @@ function sql_get_dienst_by_id($dienst){
  */
 
 function sql_dienste_nicht_bestaetigt($datum){
-   $sql = "SELECT * FROM Dienste 
-           WHERE Lieferdatum = '".$datum."' 
-	   AND (Status != 'Bestaetigt' OR
-	        Status != 'Nicht geleistet')";
+   $sql = "SELECT * FROM dienste 
+           WHERE lieferdatum = '".$datum."' 
+	   AND (status != 'Bestaetigt' OR
+	        status != 'Nicht geleistet')";
    $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
    return mysql_num_rows($result) > 0;
 }
@@ -439,13 +439,13 @@ function sql_dienste_nicht_bestaetigt($datum){
 
 function sql_get_dienste( $where = 'TRUE' ) {
   return mysql2array( doSql( "
-    SELECT *, Dienste.ID as dienst_id, Dienste.Status as dienst_status
+    SELECT *, dienste.id as dienst_id, dienste.status as dienst_status
          , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
-    FROM Dienste 
+    FROM dienste 
     LEFT JOIN gruppenmitglieder  /* fuer 'Offen': auch gruppenmitglieder_id==0 zulassen! */
-    ON (Dienste.gruppenmitglieder_id = gruppenmitglieder.id)
+    ON (dienste.gruppenmitglieder_id = gruppenmitglieder.id)
     WHERE ( $where )
-    ORDER BY Lieferdatum DESC, Dienst ASC
+    ORDER BY lieferdatum DESC, dienst ASC
   ", LEVEL_ALL, "Error while reading Dienste"
   ) );
 }
@@ -473,7 +473,7 @@ function sql_rotationsplan_next($dienst, $current){
  */
 
 function sql_create_dienst2($mitglied, $dienst, $sql_datum, $status){
-    $sql = "INSERT INTO Dienste (gruppenmitglieder_id, Dienst, Lieferdatum, Status)
+    $sql = "INSERT INTO dienste (gruppenmitglieder_id, dienst, lieferdatum, status)
             VALUES (".$mitglied.", '".$dienst."', ".$sql_datum.", '".$status."')";
     doSql($sql, LEVEL_IMPORTANT, "Error while adding Dienst");
 }
@@ -646,8 +646,8 @@ function sql_add_days_to_date($date, $add_days=0){
  *  Heute (ohne aufschlag), wenn kein Eintrag.
  */
 function get_latest_dienst($add_days=0){
-     $sql = "SELECT ADDDATE(max(Lieferdatum), INTERVAL ".$add_days." DAY) as datum
-		    FROM Dienste  ";
+     $sql = "SELECT ADDDATE(max(lieferdatum), INTERVAL ".$add_days." DAY) as datum
+		    FROM dienste  ";
      $result = doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
      $row = mysql_fetch_array($result);
      $date = date_parse($row["datum"]);
@@ -665,11 +665,11 @@ function get_latest_dienst($add_days=0){
  */
 function sql_get_dienst_group($group, $status){
     $sql = "SELECT *
-	    FROM Dienste 
+	    FROM dienste 
 	        inner join gruppenmitglieder on (gruppenmitglieder_id = gruppenmitglieder.id)
-	    WHERE Dienste.Status = '".$status.
+	    WHERE dienste.status = '".$status.
 	    "' AND gruppen_id = ".$group."
-	    ORDER BY Lieferdatum ASC";
+	    ORDER BY lieferdatum ASC";
     return doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
 }
 /**
@@ -677,10 +677,10 @@ function sql_get_dienst_group($group, $status){
  *  verwendet für Dienstabtausch
  */
 function sql_get_dienst_date($dienst, $status){
-    $sql = "SELECT DISTINCT Lieferdatum as datum 
-            FROM Dienste
-	    WHERE Dienst = '".$dienst.
-	    "' AND Status = '".$status."'";
+    $sql = "SELECT DISTINCT lieferdatum as datum 
+            FROM dienste
+	    WHERE dienst = '".$dienst.
+	    "' AND status = '".$status."'";
     return doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
 }
 /**
@@ -1064,7 +1064,7 @@ function sql_dienstkontrollblatt( $from_id = 0, $to_id = 0, $gruppe = 0, $dienst
     $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
   }
   if( $gruppe ) {
-    $where = "WHERE gruppen_id = $gruppe and Dienst = '$dienst' ";
+    $where = "WHERE gruppen_id = $gruppe and dienst = '$dienst' ";
   }
   return mysql2array( doSql( "
     SELECT
@@ -1184,7 +1184,7 @@ function sql_gruppe_aktiv($gruppen_id) {
 function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE, $filter = FALSE ){
   $query = select_bestellgruppen( '', 'gruppenbestellungen.id as gruppenbestellungen_id' )
   . " INNER JOIN gruppenbestellungen
-      ON ( gruppenbestellungen.bestellguppen_id = bestellgruppen.id )";
+      ON ( gruppenbestellungen.bestellgruppen_id = bestellgruppen.id )";
   if( $produkt_id ) {
     $query .= "
       INNER JOIN bestellzuordnung
@@ -1294,7 +1294,7 @@ function sql_delete_group_member($person_id, $gruppen_id){
   global $problems, $msg, $sockelbetrag, $mysqlheute;
   need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
   need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
-  $bevorstehende_dienste= sql_get_dienste( "( Lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $person_id )" );
+  $bevorstehende_dienste= sql_get_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $person_id )" );
   foreach( $bevorstehende_dienste as $row ) {
     var_dump($row);
     sql_dienst_wird_offen($row['dienst_id']);
@@ -1714,7 +1714,7 @@ function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
       , "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
   need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
-  , array( 'bestellguppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
+  , array( 'bestellgruppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurueckgeben */  )
   );
 }
@@ -1750,7 +1750,7 @@ function sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen
        ON ( bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
     WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id 
       AND bestellzuordnung.produkt_id = $produkt_id
-      AND gruppenbestellungen.bestellguppen_id = $gruppen_id
+      AND gruppenbestellungen.bestellgruppen_id = $gruppen_id
       AND bestellzuordnung.art = $art
   ", 'summe'
   );
@@ -1769,17 +1769,17 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
   // basarbestellmenge: _eigentliche_ basarbestellungen sind art=1,
   // basar mit art=0 zaehlt wie gewoehnliche festmenge!
   $basarbestellmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,1,0)
+    ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,1,0)
                                * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
   ";
   $toleranzbestellmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellguppen_id=$basar_id,0,1)
+    ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,0,1)
                                * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
   ";
   if( $gruppen_id != $basar_id ) {
     $verteilmenge_expr = "
       ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
-                                         * IF( gruppenbestellungen.bestellguppen_id=$muell_id, 0, 1) ), 0.0 )
+                                         * IF( gruppenbestellungen.bestellgruppen_id=$muell_id, 0, 1) ), 0.0 )
     ";
   } else {
     // funktioniert nicht fuer basar:
@@ -1787,7 +1787,7 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
   }
   $muellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
-                                       * IF( gruppenbestellungen.bestellguppen_id=$muell_id, 1 , 0) ), 0.0 )
+                                       * IF( gruppenbestellungen.bestellgruppen_id=$muell_id, 1 , 0) ), 0.0 )
   ";
 
   if( $orderby == '' )
@@ -1862,7 +1862,7 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
         AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
   WHERE bestellvorschlaege.gesamtbestellung_id=$bestell_id
   "
-   . ( $gruppen_id ? " and gruppenbestellungen.bestellguppen_id=$gruppen_id " : "" )
+   . ( $gruppen_id ? " and gruppenbestellungen.bestellgruppen_id=$gruppen_id " : "" )
    . ( $produkt_id ? " and produkte.id=$produkt_id " : "" )
   . "
   GROUP BY bestellvorschlaege.produkt_id
@@ -1909,7 +1909,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte *
   foreach( $festbestellungen as $row ) {
     if( $restmenge <= 0 )
       break; // nix mehr da...
-    $gruppe = $row['bestellguppen_id'];
+    $gruppe = $row['bestellgruppen_id'];
     $menge = $row['menge'];
     if( isset( $offen[$gruppe] ) ) {
       $offen[$gruppe] += $menge;
@@ -1940,7 +1940,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte *
   foreach( $festbestellungen as $row ) {
     if( $restmenge <= 0 )
       break;
-    $gruppe = $row['bestellguppen_id'];
+    $gruppe = $row['bestellgruppen_id'];
     $menge = min( $row['menge'], $offen[$gruppe], $restmenge );
     $festzuteilungen[$gruppe] += $menge;
     $restmenge -= $menge;
@@ -1957,7 +1957,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte *
     foreach( $toleranzbestellungen as $row ) {
       if( $restmenge <= 0 )
         break;
-      $gruppe = $row['bestellguppen_id'];
+      $gruppe = $row['bestellgruppen_id'];
       $menge = (int) ceil( $quote * $row['menge'] );
       if( $menge > $restmenge )
         $menge = $restmenge;
@@ -1993,9 +1993,9 @@ function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
   $muell_id = sql_muell_id();
   $basar_id = sql_basar_id();
   if( $gruppen_id ) {
-    $more_where = " AND (gruppenbestellungen.bestellguppen_id = $gruppen_id )";
+    $more_where = " AND (gruppenbestellungen.bestellgruppen_id = $gruppen_id )";
   } else {
-    $more_where = " AND (gruppenbestellungen.bestellguppen_id != $muell_id) AND (gruppenbestellungen.bestellguppen_id != $basar_id)";
+    $more_where = " AND (gruppenbestellungen.bestellgruppen_id != $muell_id) AND (gruppenbestellungen.bestellgruppen_id != $basar_id)";
   }
   $muell_id = sql_muell_id();
   $basar_id = sql_basar_id();
@@ -2136,7 +2136,7 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
       ON (gruppenbestellungen.id = gruppenbestellung_id)
     WHERE art = 2 AND gesamtbestellung_id = $bestell_id ";
     if($nur_basar) {
-      $sql .= " AND bestellguppen_id = ".sql_basar_id();
+      $sql .= " AND bestellgruppen_id = ".sql_basar_id();
   }
   doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen..");
 
@@ -2798,7 +2798,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
                                    ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
         ) ) . "
         WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
-          'bestellgruppen' => 'gruppenbestellungen.bestellguppen_id = bestellgruppen.id'
+          'bestellgruppen' => 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id'
         , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
         ) );
     case 'pfand':
@@ -3086,8 +3086,8 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
     INNER JOIN gruppenbestellungen
       ON ( gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id )
     INNER JOIN bestellgruppen
-      ON bestellgruppen.id = gruppenbestellungen.bestellguppen_id
-    WHERE ( gruppenbestellungen.bestellguppen_id = $gruppen_id ) $more_where
+      ON bestellgruppen.id = gruppenbestellungen.bestellgruppen_id
+    WHERE ( gruppenbestellungen.bestellgruppen_id = $gruppen_id ) $more_where
     ORDER BY valuta_kan DESC;
   ";
   return mysql2array( doSql($query, LEVEL_ALL, "sql_bestellungen_soll_gruppe() fehlgeschlagen: ") );
@@ -4239,6 +4239,26 @@ function update_database($version){
       );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 11 ) );
       logger( 'update_database: update to version 11 successful' );
+
+  case 11:
+      logger( 'starting update_database: from version 11' );
+
+      doSql( "ALTER TABLE `gruppenbestellungen` CHANGE column `bestellguppen_id` `bestellgruppen_id` int(11)"
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table gruppenbestellungen "
+      );
+
+      doSql( "ALTER TABLE `Dienste` CHANGE column `ID` `id` int(11)
+                                  , CHANGE column `Dienst` `dienst` enum('1/2','3','4','5','freigestellt')
+                                  , CHANGE column `Lieferdatum` `lieferdatum` date
+                                  , CHANGE column `Status` `status` enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')
+                                  , CHANGE column `Bemerkung` `bemerkung` text
+                                  , RENAME to `dienste` "
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table Dienste "
+      );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
+      logger( 'update_database: update to version 12 successful' );
+
 
 /*
 	case n:

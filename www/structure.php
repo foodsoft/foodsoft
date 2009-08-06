@@ -1,12 +1,12 @@
 <?
 
-// db version 11
+// db version 12
 
 $tables = array(
-  'Dienste' => array(
+  'dienste' => array(
     'updownload' => true
   , 'cols' => array(
-      'ID' => array(
+      'id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => ''
@@ -18,25 +18,25 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'Dienst' => array(
+    , 'dienst' => array(
         'type' =>  "enum('1/2','3','4','5','freigestellt')"
       , 'null' => 'NO'
       , 'default' => '1/2'
       , 'extra' => ''
       )
-    , 'Lieferdatum' => array(
+    , 'lieferdatum' => array(
         'type' =>  "date"
       , 'null' => 'NO'
       , 'default' => '0000-00-00'
       , 'extra' => ''
       )
-    , 'Status' => array(
+    , 'status' => array(
         'type' =>  "enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')"
       , 'null' => 'NO'
       , 'default' => 'Vorgeschlagen'
       , 'extra' => ''
       )
-    , 'Bemerkung' => array(
+    , 'bemerkung' => array(
         'type' =>  "text"
       , 'null' => 'YES'
       , 'default' => ''
@@ -50,8 +50,8 @@ $tables = array(
       )
     )
     , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'ID' )
-      , 'GruppenID' => array( 'unique' => 0, 'collist' => 'Dienst' )
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'secondary' => array( 'unique' => 0, 'collist' => 'dienst' )
     )
   )
 , 'bankkonten' => array(
@@ -542,7 +542,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => 'auto_increment'
       )
-    , 'bestellguppen_id' => array(
+    , 'bestellgruppen_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
@@ -557,7 +557,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'gesamtbestellung_id, bestellguppen_id' )
+      , 'secondary' => array( 'unique' => 1, 'collist' => 'gesamtbestellung_id, bestellgruppen_id' )
     )
   )
 , 'gruppenmitglieder' => array(

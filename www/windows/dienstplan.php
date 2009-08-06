@@ -116,7 +116,7 @@
 		switch($command[0]){
 		case "uebernehmen":
                    $row = sql_get_dienst_by_id($command[1]);
-		   if($row["Status"]=="Offen" || isset($_REQUEST["confirmed"])){
+		   if($row["status"]=="Offen" || isset($_REQUEST["confirmed"])){
 		   //Offenen Dienst gleich übernehmen
 		       fail_if_readonly();
                        sql_dienst_uebernehmen($command[1]);
@@ -140,7 +140,7 @@
 		   //Datumsvorschlag unterbreiten
 		   get_http_var("abtauschdatum","R");
 		   if(!isset($abtauschdatum)){
-		       $dates = sql_get_dienst_date($row["Dienst"], "Vorgeschlagen");
+		       $dates = sql_get_dienst_date($row["dienst"], "Vorgeschlagen");
 		       if(mysql_num_rows($dates)<=1){
 		           //Keine Möglichkeit zum Tauschen
 			   //Das eigene Datum ist auch in der Liste
@@ -192,17 +192,17 @@
 	    $currentDate = "initial";
       foreach( sql_get_dienste() as $row ) {
 		//neue Zeile für Dienst 1/2
-	        if($row["Lieferdatum"]!=$currentDate){ //Problem, wenn Dienst abgef. immer 1/2
-		    $currentDate = $row["Lieferdatum"];
+	        if($row["lieferdatum"]!=$currentDate){ //Problem, wenn Dienst abgef. immer 1/2
+		    $currentDate = $row["lieferdatum"];
                     $currentDienst = null;
                     open_tr();
                     open_td( '', '', $currentDate );
 		}
-		if($currentDienst != $row["Dienst"]){
+		if($currentDienst != $row["dienst"]){
 		    open_td();
-		    $currentDienst = $row["Dienst"];
+		    $currentDienst = $row["dienst"];
 		}
-		if($row["Status"]!="Nicht geleistet"){
+		if($row["status"]!="Nicht geleistet"){
 			dienst_view($row, $login_gruppen_id); 
 		}
 	    }
