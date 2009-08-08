@@ -56,10 +56,8 @@ function sql_select_single_row( $sql, $allownull = false ) {
 
 function sql_select_single_field( $sql, $field, $allownull = false ) {
   $row = sql_select_single_row( $sql, $allownull );
-  if( ! $row ) {
-    if( ! is_array( $allownull ) )
-      return NULL;
-  }
+  if( ! $row )
+    return NULL;
   need( isset( $row[$field] ), "Feld $field nicht gesetzt" );
   return $row[$field];
 }
@@ -1057,14 +1055,21 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
   }
 }
 
-function sql_dienstkontrollblatt( $from_id = 0, $to_id = 0, $gruppe = 0, $dienst=0 ) {
+function sql_dienstkontrollblatt( $from_id = 0, $to_id = 0, $gruppen_id = 0, $dienst = 0 ) {
   $to_id or $to_id = $from_id;
   $where = '';
+  $and = 'WHERE';
   if( $from_id ) {
-    $where = "WHERE (dienstkontrollblatt.id >= $from_id) and (dienstkontrollblatt.id <= $to_id)";
+    $where .= "$and (dienstkontrollblatt.id >= $from_id) AND (dienstkontrollblatt.id <= $to_id)";
+    $and = 'AND';
   }
-  if( $gruppe ) {
-    $where = "WHERE gruppen_id = $gruppe and dienst = '$dienst' ";
+  if( $gruppen_id ) {
+    $where .= "$and ( gruppen_id = $gruppen_id) ";
+    $and = 'AND';
+  }
+  if( $dienst ) {
+    $where = "$and ( dienst = '$dienst') ";
+    $and = 'AND';
   }
   return mysql2array( doSql( "
     SELECT
@@ -1109,13 +1114,13 @@ function sql_muell_id(){
 }
 
 function sql_gruppen_members( $gruppen_id, $member_id = FALSE){ 
-  $sql = "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' and gruppen_id = ".mysql_escape_string($gruppen_id);
+  $sql = "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' AND gruppen_id = $gruppen_id";
   if($member_id!==FALSE){
 	  $sql.=" AND id = ".mysql_escape_string($member_id);
   }
   $result = mysql2array( doSql($sql, LEVEL_ALL) );
   if($member_id!==FALSE){
-	  $result = current($result);
+    $result = current($result);
   }
   return $result;
 }
@@ -1130,7 +1135,7 @@ function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dien
   ) );
 }
 
-function select_bestellgruppen( $filter = '', $more_select = '' ) {
+function select_bestellgruppen( $filter = 'true', $more_select = '' ) {
   return "
     SELECT
       bestellgruppen.name as name
@@ -1142,21 +1147,21 @@ function select_bestellgruppen( $filter = '', $more_select = '' ) {
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
     , bestellgruppen.id % 1000 as gruppennummer
-  " . ( $more_select ? ", $more_select" : '' ) . "
-    FROM bestellgruppen
-  " . ( $filter ? "WHERE ($filter) " : '' );
+  " . $more_select ? ", $more_select" : '' ) . "
+    FROM bestellgruppen WHERE $filter
+  " );
 }
 
 function select_aktive_bestellgruppen() {
   return select_bestellgruppen( 'bestellgruppen.aktiv' );
 }
 
-function sql_bestellgruppen( $filter = '' ) {
-  return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY NOT(aktiv), gruppennummer" ) );
+function sql_bestellgruppen( $filter = '', $order = 'NOT(aktiv), gruppennummer' ) {
+  return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY $order" ) );
 }
 
-function sql_aktive_bestellgruppen() {
-  return mysql2array( doSql( select_aktive_bestellgruppen() . " ORDER BY gruppennummer" ) );
+function sql_aktive_bestellgruppen( $order = 'gruppennummer' ) {
+  return sql_bestellgrupen( 'bestellgruppen.aktiv', $order );
 }
 
 function sql_gruppendaten( $gruppen_id ) {
