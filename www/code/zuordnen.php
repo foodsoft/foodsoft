@@ -1306,42 +1306,65 @@ function check_new_group_nr( $newNummer, & $problems ){
     } else {
 	    return $id;
     }
-
 }
+
 /**
  * Entfernt Gruppenmitglied und verringert den
  * Sockelbetrag entsprechend
- * Argument: personen_id
  */
-function sql_delete_group_member($person_id, $gruppen_id){
-  global $problems, $msg, $sockelbetrag, $mysqlheute;
+function sql_delete_group_member( $gruppenmitglieder_id ) {
+  global $problems, $msg, $mysqlheute;
+
   need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
-  need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
-  $bevorstehende_dienste= sql_get_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $person_id )" );
+
+  $daten = sql_gruppenmitglied( $gruppenmitglieder_id );
+  need( $daten['status'] == 'aktiv', "Mitglied nicht aktiv" );
+
+  $bevorstehende_dienste= sql_get_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $gruppenmitglieder_id )" );
   foreach( $bevorstehende_dienste as $row ) {
-    var_dump($row);
+    // var_dump($row);
     sql_dienst_wird_offen($row['dienst_id']);
   }
-  
-  $muell_id = sql_muell_id();
-  sql_update( 'gruppenmitglieder', $person_id, array(
+
+  sql_update( 'gruppenmitglieder', $gruppenmitglieder_id, array(
     'status' => 'geloescht'
   , 'diensteinteilung' => 'freigestellt'
   , 'rotationsplanposition' => 0
   ) );
+  logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppen_id']} geloescht" );
 
-          //Den Sockelbetrag ändern
-  if( sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
-  , $sockelbetrag
-  , $mysqlheute
-  , "Korrektur Sockelbetrag für ausgetretenes Mitglied"
-  ) ) {
-    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockelbetrag Euro wurden verbucht.</div>";
-  } else {
-    $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                               . mysql_error() . "</div>";
+  // sockelbetrag fuer mitglied rueckerstatten:
+  $muell_id = sql_muell_id();
+  if( $daten['sockelbetrag'] > 0 ) {
+    if( sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $daten['gruppen_id'] )
+    , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
+    , $daten['sockelbetrag']
+    , $mysqlheute
+    , "Erstattung Sockelbetrag fuer ausgetretenes Mitglied " . $daten['vorname']
+    ) ) {
+      $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag ausgetretenes Mitglied: $sockelbetrag Euro wurden verbucht.</div>";
+    } else {
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
+                                 . mysql_error() . "</div>";
+    }
+  }
+
+  // falls letztes mitglied der gruppe ausgetreten: sockelbetrag der Gruppe rueckerstatten:
+  $gruppendaten = sql_gruppendaten( $daten['gruppen_id'] );
+  if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockelbetrag'] > 0 ) ) {
+    if( sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $daten['gruppen_id'] )
+    , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
+    , $gruppendaten['sockelbetrag']
+    , $mysqlheute
+    , "Erstattung Sockelbetrag Gruppe " . $gruppendaten['gruppenname']
+    ) ) {
+      $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag Euro wurden verbucht.</div>";
+    } else {
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
+                                 . mysql_error() . "</div>";
+    }
   }
 }
 
