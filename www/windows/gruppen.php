@@ -63,6 +63,7 @@ switch( $action ) {
       div_msg( 'warn', "Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
       div_msg( 'warn', "(bitte erst Mitglieder l&ouml;schen, um Sockelbetrag zu verbuchen)" );
     } else {
+      logger( "Gruppe $gruppen_id wird inaktiv" );
       sql_update( 'bestellgruppen', $gruppen_id, array( 'aktiv' => 0 ) );
     }
     break;

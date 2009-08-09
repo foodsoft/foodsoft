@@ -1125,6 +1125,27 @@ function sql_gruppen_members( $gruppen_id, $member_id = FALSE){
   return $result;
 }
 
+function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
+  return sql_select_single_row( "
+    SELECT gruppen.name as gruppenname
+         , gruppen.id as gruppen_id
+         , gruppen.id % 1000 as gruppennummer
+         , gruppenmitglieder.id as gruppenmitglieder_id
+         , gruppenmitglieder.vorname as vorname
+         , gruppenmitglieder.name as name
+         , gruppenmitglieder.telefon as telefon
+         , gruppenmitglieder.email as email
+         , gruppenmitglieder.diensteinteilung as diensteinteilung
+         , gruppenmitglieder.rotationsplanposition as rotationsplanposition
+         , gruppenmitglieder.status as status
+         , gruppenmitglieder.sockelbetrag as sockelbetrag
+    FROM gruppenmitglieder
+    JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
+    WHERE gruppenmitglieder.id = $gruppenmitglieder_id
+  ", $allow_null
+  );
+}
+
 function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dienst){
   return sql_update( 'gruppenmitglieder', $id, array(
     'name' => $name
@@ -1143,6 +1164,7 @@ function select_bestellgruppen( $filter = 'true', $more_select = '' ) {
     , bestellgruppen.aktiv as aktiv
     , bestellgruppen.passwort as passwort
     , bestellgruppen.salt as salt
+    , bestellgruppen.sockelbetrag as sockelbetrag
     , ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
@@ -1164,8 +1186,8 @@ function sql_aktive_bestellgruppen( $order = 'gruppennummer' ) {
   return sql_bestellgrupen( 'bestellgruppen.aktiv', $order );
 }
 
-function sql_gruppendaten( $gruppen_id ) {
-  return sql_select_single_row( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ) ); 
+function sql_gruppendaten( $gruppen_id, $allow_null = false ) {
+  return sql_select_single_row( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ), $allow_null ); 
 }
 
 function sql_gruppenname($gruppen_id){

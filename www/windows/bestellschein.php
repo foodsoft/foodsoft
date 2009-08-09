@@ -38,9 +38,9 @@ switch( $action ) {
     nur_fuer_dienst(1,3,4);
     need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     need_http_var( 'produkt_id', 'u' );
-    need_http_var( 'menge', 'f' );
-    if( $bestell_id && ( $menge > 0 ) ) {
-      zusaetzlicheBestellung( $produkt_id, $bestell_id, $menge );
+    // need_http_var( 'menge', 'f' );
+    if( $bestell_id ) {
+      zusaetzlicheBestellung( $produkt_id, $bestell_id );
     }
     break;
 
@@ -190,13 +190,14 @@ switch( $state ) {
             ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
             open_ul();
               open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
-              open_li( '', '', 'eine Eintragung hier erzeugt erstmal nur eine Basar-<em>Bestellung</em> -
-                                die <em>Liefer</em>menge ist danach noch 0 und muss hinterher gesetzt werden!' );
+              open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hingerher gesetzt werden!' );
             close_ul();
           close_div();
           select_products_not_in_list($bestell_id);
-          ?> <label>Menge:</label> <?
-          echo int_view( 1, 'menge' );
+          // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
+          // (die haengt von der auswahl in obiger Produktliste ab!)
+          // ?> <label>Menge:</label> <?
+          // echo int_view( 1, 'menge' );
           submission_button();
         close_form();
       close_fieldset();
