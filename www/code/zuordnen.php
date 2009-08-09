@@ -1439,30 +1439,29 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
  * $msg könnte auch Hinweise enthalten
  */
 function sql_insert_group($newNumber, $newName, $pwd) {
-	global $problems, $msg;
+  global $problems, $msg;
 
-  $new_id = check_new_group_nr($newNumber) ;
+  $new_id = check_new_group_nr( $newNumber, & $problems ) ;
 
-  if( $new_id > 0 ) {
+  if ($newName == "")
+    $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
 
-    if ($newName == "")
-      $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
-
-    if( ! $problems ) {
-      $id = sql_insert( 'bestellgruppen', array(
-        'id' => $new_id
-      , 'aktiv' => 1
-      , 'name' => $newName
-      ) );
-      if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysql_insert_id() == 0 bei Erfolg!
-        set_password( $new_id, $pwd );
-        return $new_id;
-      } else {
-        return FALSE;
-      }
+  if( $new_id > 0 and ! $problems ) {
+    logger( "neue Gruppe $new_id ($newName) angelegt" );
+    $id = sql_insert( 'bestellgruppen', array(
+      'id' => $new_id
+    , 'aktiv' => 1
+    , 'sockelbetrag' => 0.0  // wird bei Eintrag erstes Mitglied verbucht
+    , 'name' => $newName
+    ) );
+    if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysql_insert_id() == 0 bei Erfolg!
+      set_password( $new_id, $pwd );
+      return $new_id;
     } else {
       return FALSE;
     }
+  } else {
+    return FALSE;
   }
 }
 
