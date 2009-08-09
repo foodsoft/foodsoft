@@ -2371,17 +2371,17 @@ function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
  *    - eine entsprechende Basarbestellung wird erzeugt
  *    - liefermenge wird noch _nicht_ gesetzt
  */
-function zusaetzlicheBestellung($produkt_id, $bestell_id, $bestellmenge ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
-   sql_insert_bestellvorschlag( $produkt_id, $bestell_id, 0, $bestellmenge, 0 );
-   $gruppenbestellung_id = sql_insert_gruppenbestellung( sql_basar_id(), $bestell_id );
-   return sql_insert( 'bestellzuordnung', array(
-     'produkt_id' => $produkt_id
-   , 'gruppenbestellung_id' => $gruppenbestellung_id
-   , 'menge' => $bestellmenge
-   , 'art' => 1
-   ) );
-}
+// function zusaetzlicheBestellung( $produkt_id, $bestell_id ) {
+//  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
+//   sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
+   // $gruppenbestellung_id = sql_insert_gruppenbestellung( sql_basar_id(), $bestell_id );
+   // return sql_insert( 'bestellzuordnung', array(
+   //  'produkt_id' => $produkt_id
+   // , 'gruppenbestellung_id' => $gruppenbestellung_id
+   // , 'menge' => 0 // TODO: brauchen wir die?
+   // , 'art' => 1
+   // ) );
+// }
 
 
 

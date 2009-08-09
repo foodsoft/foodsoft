@@ -40,7 +40,7 @@ switch( $action ) {
     need_http_var( 'produkt_id', 'u' );
     // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
-      zusaetzlicheBestellung( $produkt_id, $bestell_id );
+      insert_bestellvorschlag( $produkt_id, $bestell_id );
     }
     break;
 
