@@ -792,7 +792,7 @@ function check_6() {
 
   if( $muell_id and isset( $HTTP_POST_VARS['add_group_muell'] ) ) {
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
-                  VALUES ( $muell_id, 'internes Verrechnungskonto', 0, '*' )";
+                  VALUES ( $muell_id, 'Bad Bank', 0, '*' )";
   }
   if( $basar_id and isset( $HTTP_POST_VARS['add_group_basar'] ) ) {
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
@@ -824,7 +824,7 @@ function check_6() {
         <th>Aktion</th>
       </tr>
       <tr>
-        <td>'M&uuml;ll'-Gruppe (Nr. <? echo $muell_id; ?>)</td>
+        <td>Bad-Bank (Nr. <? echo $muell_id; ?>)</td>
   <?
 
   $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$muell_id; " );

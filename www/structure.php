@@ -193,19 +193,25 @@ $tables = array(
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
+    )
     , 'passwort' => array(
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-   , 'salt' => array(
+    )
+    , 'salt' => array(
         'type' =>  "char(8)"
       , 'null' => 'NO'
       , 'default' => '35464'
       , 'extra' => ''
-      )
+    )
+    , 'sockeleinlage' => array(
+        'type' => "decimal(8,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.00'
+      , 'extra' => ''
+    )
     , 'aktiv' => array(
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
@@ -609,6 +615,12 @@ $tables = array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'sockeleinlage' => array(
+        'type' => "decimal(8,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.00'
       , 'extra' => ''
       )
     , 'status' => array(

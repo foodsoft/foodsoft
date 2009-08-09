@@ -1479,6 +1479,7 @@ function sql_delete_lieferant( $lieferanten_id ) {
     "DELETE FROM lieferanten WHERE id=$lieferanten_id"
   , LEVEL_IMPORTANT, "Loeschen des Lieferanten fehlgeschlagen"
   );
+  logger( "Lieferant $lieferanten_id geloescht" );
 }
 
 ////////////////////////////////////
@@ -1555,6 +1556,7 @@ function changeState($bestell_id, $state){
       error( "Ungültiger Statuswechsel" );
       return false;
   }
+  logger( "statuswechsel Bestellung $bestell_id: $current, $state" );
   $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
   $result = doSql($sql, LEVEL_KEY, "Konnte status der Bestellung nicht ändern..");
   if( $result ) {
@@ -3201,9 +3203,9 @@ function pfandkontostand( $gruppen_id = 0 ) {
 }
 
 function sockel_gruppen_summe() {
-  global $sockelbetrag;
+  global $sockelbetrag_mitglied;
   $row = sql_select_single_row( "
-    SELECT sum( $sockelbetrag * bestellgruppen.mitgliederzahl ) as soll
+    SELECT sum( $sockelbetrag_mitglied * bestellgruppen.mitgliederzahl ) as soll
     FROM (".select_aktive_bestellgruppen().") AS bestellgruppen 
   " );
   return $row['soll'];
@@ -4260,6 +4262,19 @@ function update_database($version){
                                   , RENAME to `dienste` "
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table Dienste "
       );
+
+      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockelbetrag` decimal(8,2) default '0.00'"
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockelbetrag to table bestellgruppen"
+      );
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockelbetrag` decimal(8,2) default '0.00'"
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockelbetrag to table gruppenmitglieder"
+      );
+      doSql( "UPDATE `gruppenmitglieder` SET sockelbetrag = $sockelbetrag WHERE status = 'aktiv' "
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: set sockelbetrag = $sockelbetrag in gruppenmitglieder"
+      );
+      sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
+      sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
+      doSql( "DELETE * FROM leitvariable WHERE name = 'sockelbetrag' );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
       logger( 'update_database: update to version 12 successful' );
