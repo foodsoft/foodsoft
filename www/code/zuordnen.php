@@ -1376,30 +1376,54 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
  * Vorname, Name, Mail, Telefon und Diensteinteilung des Neumitgliedes
  */
 function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDiensteinteilung){
-	global $problems, $msg, $sockelbetrag, $muell_id, $mysqlheute;
-  need( isset( $sockelbetrag ), "leitvariable sockelbetrag nicht gesetzt!" );
+  global $problems, $msg, $sockelbetrag_mitglied, $sockelbetrag_gruppe, $muell_id, $mysqlheute;
+  need( isset( $sockelbetrag_mitglied ), "leitvariable sockelbetrag_mitglied nicht gesetzt!" );
+  need( isset( $sockelbetrag_gruppe ), "leitvariable sockelbetrag_gruppe nicht gesetzt!" );
+
   $muell_id = sql_muell_id();
-  sql_insert( 'gruppenmitglieder', array(
+  $id = sql_insert( 'gruppenmitglieder', array(
     'vorname' => $newVorname
   , 'name' => $newName
   , 'gruppen_id' => $gruppen_id
   , 'email' => $newMail
   , 'telefon' => $newTelefon
   , 'diensteinteilung' => $newDiensteinteilung
+  , 'sockelbetrag' => $sockelbetrag_mitglied
   ) );
+  logger( "neues Gruppenmitglied $id ($newVorname) in Gruppe $gruppen_id angelegt" );
 
-  //Den Sockelbetrag ändern
-  if( sql_doppelte_transaktion(
-    array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
-  , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
-  , $sockelbetrag
-  , $mysqlheute
-  , "Korrektur Sockelbetrag für zusätzliches Mitglied"
-  ) ) {
-    $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag: $sockelbetrag Euro wurden verbucht.</div>";
-  } else {
-    $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                                       . mysql_error() . "</div>";
+  // sockelbetrag fuer mitglied verbuchen:
+  if( $sockelbetrag_mitglied > 0 ) {
+    if( sql_doppelte_transaktion(
+      array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
+    , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+    , $sockelbetrag_mitglied
+    , $mysqlheute
+    , "Sockelbetrag fuer zusaetzliches Mitglied $newVorname"
+    ) ) {
+      $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag neues Mitglied: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
+    } else {
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
+                                         . mysql_error() . "</div>";
+    }
+  }
+  // falls erstes mitglied der gruppe: sockelbetrag fuer ganze gruppe verbuchen:
+  if( $sockelbetrag_gruppe > 0 ) {
+    $gruppendaten = sql_gruppendaten( $gruppen_id );
+    if( $gruppendaten['mitgliederzahl'] == 1 ) {
+      if( sql_doppelte_transaktion(
+        array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
+      , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
+      , $sockelbetrag_gruppe
+      , $mysqlheute
+      , "Sockelbetrag fuer Gruppe " . $gruppendaten['gruppenname']
+      ) ) {
+        $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
+      } else {
+        $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
+                                           . mysql_error() . "</div>";
+      }
+    }
   }
 }
 
