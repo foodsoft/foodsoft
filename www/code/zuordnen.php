@@ -2394,7 +2394,7 @@ function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
 ////////////////////////////////////
 
 
-// TODO: transaktionsart: zur Klassifikation der Gruppe-13-Transaktionen benutzen!
+// transaktionsart: hat nur bedeutung zur klassifikation der BadBank-Buchungen (s.u. TRANSAKTION_TYP_*)
 //
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
@@ -2751,8 +2751,10 @@ define( 'TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE', 7 ); // Umlage Bestellverlu
 define( 'TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN', 8 ); // Umlage Sonderausgaben
 define( 'TRANSAKTION_TYP_UMBUCHUNG_SPENDE', 9 );   // umbuchung von spenden nach TRANSAKTION_TYP_AUSGLEICH_*
 define( 'TRANSAKTION_TYP_UMBUCHUNG_UMLAGE', 10 );  // umbuchung von umlagen nach TRANSAKTION_TYP_AUSGLEICH_*
+
+// die folgenden sind historisch und sollten nicht erzeugt werden (aber teils noch in der db vorhanden):
 define( 'TRANSAKTION_TYP_STORNO', 98 );          // Buchungen, die sich gegenseitig neutralisieren
-// define( 'TRANSAKTION_TYP_SONSTIGES', 99 ); // nicht benutzt
+// define( 'TRANSAKTION_TYP_SONSTIGES', 99 ); // ... nicht mehr vorhanden! :-)
 
 
 $selectable_types = array(
@@ -2762,14 +2764,14 @@ $selectable_types = array(
 , TRANSAKTION_TYP_SPENDE
 , TRANSAKTION_TYP_SONDERAUSGABEN
 , TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
-/// , TRANSAKTION_TYP_VERLUST
+/// , TRANSAKTION_TYP_VERLUST   // bestellverluste gehen extra!
 , TRANSAKTION_TYP_UMLAGE
 );
 
 function transaktion_typ_string( $typ ) {
   switch( $typ ) {
     case TRANSAKTION_TYP_UNDEFINIERT:
-      return 'unklassifiziert';
+      return 'unklassifiziert (sollte nicht mehr vorkommen!)';
     case TRANSAKTION_TYP_ANFANGSGUTHABEN:
       return 'Anfangsguthaben';
     case TRANSAKTION_TYP_SPENDE:
@@ -2793,7 +2795,7 @@ function transaktion_typ_string( $typ ) {
     case TRANSAKTION_TYP_STORNO:
       return 'Storno';
     case TRANSAKTION_TYP_SONSTIGES:
-      return 'Sonstiges';
+      return 'Sonstiges (sollte nicht mehr vorkommen!)';
   }
   return "FEHLER: undefinierter Typ: $typ";
 }
