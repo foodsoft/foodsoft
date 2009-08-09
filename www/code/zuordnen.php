@@ -1280,8 +1280,9 @@ function optionen_gruppen(
  * Wenn etwas nicht klappt, enthält Problems eine entsprechende
  * html-Warnung
  */
-function check_new_group_nr($newNummer){
-    global $problems, $specialgroups;
+function check_new_group_nr( $newNummer, & $problems ){
+    global $specialgroups;
+
     if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
       $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
       return FALSE;
@@ -1291,19 +1292,14 @@ function check_new_group_nr($newNummer){
       return FALSE;
     }
     $id = $newNummer;
-    while( true ) {
-	    $sql="SELECT * FROM bestellgruppen WHERE id='$id'" ;
-	    $result=doSql($sql, LEVEL_ALL, "Suche in Bestellgruppen fehlgeschlagen");
-      if( ! $result ) {
-        $problems = $problems . "<div class='warn'>Suche in bestellgruppen fehlgeschlagen: </div>";
+    $result = sql_bestellgruppen( "gruppennummer = $newNummer" );
+    foreach( $result as $row ) {
+      if( $row['aktiv'] ) {
+        $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
         break;
       }
-      $row = mysql_fetch_array( $result );
-      if( ! $row )
-        break;
-      if( $row['aktiv'] > 0 )
-        $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
-      $id = $id + 1000;
+      if( $row['id'] >= $id )
+        $id += 1000;
     }
     if($problems!=""){
 	    return FALSE;
