@@ -1697,12 +1697,7 @@ function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell
 /**
  *  Bestellvorschlag einfuegen
  */
-function sql_insert_bestellvorschlag(
-  $produkt_id
-, $gesamtbestellung_id
-, $preis_id = 0
-, $bestellmenge = 0, $liefermenge = 0
-) {
+function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis_id = 0 ) {
   fail_if_readonly();
   need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
 
@@ -1719,15 +1714,13 @@ function sql_insert_bestellvorschlag(
     error( "Eintrag Bestellvorschlag fehlgeschlagen: kein Preiseintrag gefunden!" );
     return false;
   }
-  $sql = "
+  return doSql( "
     INSERT INTO bestellvorschlaege
       (produkt_id, gesamtbestellung_id, produktpreise_id, bestellmenge, liefermenge )
-    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, $bestellmenge, $liefermenge )
+    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, 0, 0 )
     ON DUPLICATE KEY UPDATE produktpreise_id = $preis_id
-                          , bestellmenge = bestellmenge + $bestellmenge
-                          , liefermenge = liefermenge + $liefermenge
-  ";
-  return doSql($sql, LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen.");
+  ", LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen."
+  );
 }
 
 function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
