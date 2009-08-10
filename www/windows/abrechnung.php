@@ -9,7 +9,7 @@ need_http_var( 'bestell_id', 'U', true );
 
 setWikiHelpTopic( 'foodsoft:Abrechnung' );
 
-$status = getState( $bestell_id );
+$status = sql_bestellung_status( $bestell_id );
 
 need( $status >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
 need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
@@ -32,7 +32,7 @@ if( $action == 'save' ) {
   if( $status == STATUS_ABGERECHNET ) {
     get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'reopen' ) {
-      changeState( $bestell_id, STATUS_VERTEILT );
+      sql_change_bestellung_status( $bestell_id, STATUS_VERTEILT );
     }
   } else {
     get_http_var( 'rechnungsnummer', 'H', '' ) or $rechnungsnummer = '';
@@ -46,13 +46,13 @@ if( $action == 'save' ) {
     get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'yes' ) {
       need( abs( basar_wert_brutto( $bestell_id ) ) < 0.01 , "Abschluss noch nicht möglich: da sind noch Reste im Basar!" );
-      changeState( $bestell_id, STATUS_ABGERECHNET );
+      sql_change_bestellung_status( $bestell_id, STATUS_ABGERECHNET );
     }
   }
 }
 
 $bestellung = sql_bestellung( $bestell_id );
-$status = getState( $bestell_id );
+$status = sql_bestellung_status( $bestell_id );
 if( $status >= STATUS_ABGERECHNET ) {
   $editable = false;
 }

@@ -22,7 +22,7 @@ switch( $action ) {
     nur_fuer_dienst(1,3,4);
     need_http_var( 'change_id', 'u' );
     need_http_var( 'change_to', 'w' );
-    if( changeState( $change_id, $change_to ) ) {
+    if( sql_change_bestellung_status( $change_id, $change_to ) ) {
       if( ! $bestell_id ) {  // falls nicht bereits in detailanzeige:
         switch( $change_to ) {
           case STATUS_LIEFERANT:   // bestellschein oder ...
@@ -36,11 +36,11 @@ switch( $action ) {
 
   case 'insert':
     nur_fuer_dienst(1,3,4);
-    need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
+    need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     need_http_var( 'produkt_id', 'u' );
     // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
-      insert_bestellvorschlag( $produkt_id, $bestell_id );
+      zusaetzlicheBestellung( $produkt_id, $bestell_id );
     }
     break;
 
@@ -55,7 +55,7 @@ switch( $action ) {
 
   case 'update':
     nur_fuer_dienst(4);
-    need( getState( $bestell_id ) == STATUS_VERTEILT );
+    need( sql_bestellung_status( $bestell_id ) == STATUS_VERTEILT );
     foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
       $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
@@ -92,7 +92,7 @@ if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
 }
 
 $bestellung = sql_bestellung($bestell_id);
-$state = getState($bestell_id);
+$state = sql_bestellung_status($bestell_id);
 
 $default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND;
 switch($state){    // anzeigedetails abhaengig vom Status auswaehlen

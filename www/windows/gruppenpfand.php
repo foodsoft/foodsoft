@@ -16,10 +16,10 @@ get_http_var( 'bestell_id', 'u', 0, true );
 get_http_var( 'options', 'u', 0, true );
 
 if( $bestell_id ) {
-  $bestellung_name = bestellung_name( $bestell_id );
+  $bestellung_name = sql_bestellung_name( $bestell_id );
   $lieferanten_id = sql_bestellung_lieferant_id( $bestell_id );
   $lieferant_name = sql_lieferant_name( $lieferanten_id );
-  $editable = ( getState( $bestell_id ) < STATUS_ABGERECHNET );
+  $editable = ( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET );
 } else {
   $options |= PFAND_OPT_ALLE_BESTELLUNGEN;
   $bestellung_name = '';

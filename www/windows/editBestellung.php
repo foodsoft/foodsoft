@@ -70,11 +70,9 @@ if( $action == 'save' ) {
     } else {
       $bestell_id = sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id );
 
+      // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
       foreach( $bestellliste as $produkt_id ) {
-        // preis, gebinde, und bestellnummer auslesen:
-        $preis_row = sql_aktueller_produktpreis( $produkt_id );
-        // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
-        sql_insert_bestellvorschlag( $produkt_id, $bestell_id, $preis_row['id'] );
+        sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
       }
       $done = true;
       $self_fields['bestell_id'] = $bestell_id;

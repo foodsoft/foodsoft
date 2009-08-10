@@ -20,7 +20,7 @@ if( hat_dienst(4) ) {
 
 get_http_var('bestell_id','u',false,true );
 if( $bestell_id ) {
-  if( getState( $bestell_id ) != STATUS_BESTELLEN )
+  if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
     $bestell_id = 0;
 }
 

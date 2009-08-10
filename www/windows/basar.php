@@ -23,7 +23,7 @@ if( $action == 'basarzuteilung' ) {
       continue;
     need_http_var( "bestellung$i", 'u' );
     $id = ${"bestellung$i"};
-    if( getState( $id ) >= STATUS_ABGERECHNET )
+    if( sql_bestellung_status( $id ) >= STATUS_ABGERECHNET )
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
         $pr = sql_bestellvorschlag( $id, ${"produkt$i"} );

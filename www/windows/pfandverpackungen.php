@@ -9,7 +9,7 @@ $editable = ( hat_dienst(4) and ! $readonly );
 
 get_http_var( 'bestell_id', 'u', 0, true );
 if( $bestell_id ) {
-  $bestellung_name = bestellung_name( $bestell_id );
+  $bestellung_name = sql_bestellung_name( $bestell_id );
   $lieferanten_id = sql_bestellung_lieferant_id( $bestell_id );
   $lieferant_name = sql_lieferant_name( $lieferanten_id );
 } else {

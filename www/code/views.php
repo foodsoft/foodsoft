@@ -456,7 +456,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      $menge *= $kan_verteilmult;
      $wert = $basar_row['basar'] * $basar_row['endpreis'];
      $gesamtwert += $wert;
-     $rechnungsstatus = getState( $basar_row['gesamtbestellung_id'] );
+     $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
 
      $row = array( 
        "<td>{$basar_row['produkt_name']}</td>"
@@ -570,7 +570,7 @@ function bestellschein_view(
   $muell_id = sql_muell_id();
 
   $produkte = sql_bestellung_produkte( $bestell_id, $gruppen_id, 0 );
-  $state = getState($bestell_id);
+  $state = sql_bestellung_status($bestell_id);
 
   $warnung_vorlaeufig = "";
   if( $gruppen_id and ( $state == STATUS_BESTELLEN ) ) {
@@ -992,7 +992,7 @@ function select_bestellung_view() {
 
   foreach( sql_bestellungen() as $row ) {
     $bestell_id = $row['id'];
-    $rechnungsstatus = getState( $bestell_id );
+    $rechnungsstatus = sql_bestellung_status( $bestell_id );
     $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
     $views = array();
     $actions = array();
@@ -1210,7 +1210,7 @@ function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
           'class' => 'href', 'text' => $row['name'], 'bestell_id' => $row['id']
           , 'title' => 'zum Bestellschein/Lieferschein...'
         ) );
-        if( hat_dienst(4) and getState( $bestell_id ) < STATUS_ABGERECHNET )
+        if( hat_dienst(4) and sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET )
           echo fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=" );
         if(sql_dienste_nicht_bestaetigt($row['lieferung']))
           div_msg( 'bold warn', "Vorsicht:". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
@@ -1326,8 +1326,8 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   if( $bestell_id ) {
     $bestellvorschlag = sql_bestellvorschlag( $bestell_id, $produkt_id );
     $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
-    $rechnungsstatus = getState( $bestell_id );
-    $bestellung_name = bestellung_name( $bestell_id );
+    $rechnungsstatus = sql_bestellung_status( $bestell_id );
+    $bestellung_name = sql_bestellung_name( $bestell_id );
     $legend = "Preiseintrag wählen für Bestellung $bestellung_name";
   } else {
     $legend = "Preis-Historie";
