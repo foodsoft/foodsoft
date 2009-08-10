@@ -1319,6 +1319,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
 
   $daten = sql_gruppenmitglied( $gruppenmitglieder_id );
   need( $daten['status'] == 'aktiv', "Mitglied nicht aktiv" );
+  $gruppen_id = $daten['gruppen_id'];
 
   $bevorstehende_dienste= sql_get_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $gruppenmitglieder_id )" );
   foreach( $bevorstehende_dienste as $row ) {
@@ -1330,6 +1331,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     'status' => 'geloescht'
   , 'diensteinteilung' => 'freigestellt'
   , 'rotationsplanposition' => 0
+  , 'sockelbetrag' => 0.0
   ) );
   logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppen_id']} geloescht" );
 
@@ -1337,7 +1339,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   $muell_id = sql_muell_id();
   if( $daten['sockelbetrag'] > 0 ) {
     if( sql_doppelte_transaktion(
-      array( 'konto_id' => -1, 'gruppen_id' => $daten['gruppen_id'] )
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
     , $daten['sockelbetrag']
     , $mysqlheute
@@ -1351,16 +1353,17 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   }
 
   // falls letztes mitglied der gruppe ausgetreten: sockelbetrag der Gruppe rueckerstatten:
-  $gruppendaten = sql_gruppendaten( $daten['gruppen_id'] );
+  $gruppendaten = sql_gruppendaten( $gruppen_id );
   if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockelbetrag'] > 0 ) ) {
     if( sql_doppelte_transaktion(
-      array( 'konto_id' => -1, 'gruppen_id' => $daten['gruppen_id'] )
+      array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
     , $gruppendaten['sockelbetrag']
     , $mysqlheute
     , "Erstattung Sockelbetrag Gruppe " . $gruppendaten['gruppenname']
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag Euro wurden verbucht.</div>";
+      sql_update( 'bestellgruppen', $gruppen_id, array( 'sockelbetrag' => 0.0 ) );
     } else {
       $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
                                  . mysql_error() . "</div>";
@@ -1368,10 +1371,8 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   }
 }
 
-
 /**
- * Legt neues Gruppenmitglied an und erhöht den
- * Sockelbetrag entsprechend
+ * Legt neues Gruppenmitglied an und erhöht den Sockelbetrag entsprechend
  * Argumente:
  * Vorname, Name, Mail, Telefon und Diensteinteilung des Neumitgliedes
  */
@@ -1403,8 +1404,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag neues Mitglied: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
     } else {
-      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                                         . mysql_error() . "</div>";
+      $problems .= . "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
     }
   }
   // falls erstes mitglied der gruppe: sockelbetrag fuer ganze gruppe verbuchen:
@@ -1419,9 +1419,9 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
       , "Sockelbetrag fuer Gruppe " . $gruppendaten['gruppenname']
       ) ) {
         $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
+        sql_update( 'bestellgruppen', $gruppen_id, array( 'sockelbetrag' => $sockelbetrag_gruppe
       } else {
-        $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                                           . mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
       }
     }
   }
@@ -1451,7 +1451,7 @@ function sql_insert_group($newNumber, $newName, $pwd) {
     $id = sql_insert( 'bestellgruppen', array(
       'id' => $new_id
     , 'aktiv' => 1
-    , 'sockelbetrag' => 0.0  // wird bei Eintrag erstes Mitglied verbucht
+    , 'sockelbetrag' => 0.0  // wird erst bei Eintrag erstes Mitglied verbucht
     , 'name' => $newName
     ) );
     if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysql_insert_id() == 0 bei Erfolg!
@@ -1556,11 +1556,11 @@ function sql_bestellung( $bestell_id ) {
   return sql_select_single_row( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" );
 }
 
-function getState($bestell_id){
+function sql_bestellung_status($bestell_id){
   return sql_select_single_field( "SELECT rechnungsstatus FROM gesamtbestellungen WHERE id=$bestell_id", 'rechnungsstatus' );
 }
 
-function bestellung_name($bestell_id){
+function sql_bestellung_name($bestell_id){
   return sql_select_single_field( "SELECT name FROM gesamtbestellungen WHERE id=$bestell_id", 'name' );
 }
 
@@ -1569,11 +1569,11 @@ function sql_bestellung_lieferant_id($bestell_id){
 }
 
 /**
- *  changeState: 
+ *  sql_change_bestellung_status: 
  *   - fuehrt erlaubte Statusaenderungen einer Bestellung aus
  *   - ggf. werden Nebenwirkungen, wie verteilmengenZuweisen, ausgeloest
  */
-function changeState($bestell_id, $state){
+function sql_change_bestellung_status($bestell_id, $state){
   global $mysqljetzt, $dienstkontrollblatt_id;
 
   $bestellung = sql_bestellung( $bestell_id );
@@ -1688,14 +1688,14 @@ function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $liefera
 
 function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
   nur_fuer_dienst(4);
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
   ) );
 }
 
 /**
- *  Bestellvorschläge einfügen
+ *  Bestellvorschlag einfuegen
  */
 function sql_insert_bestellvorschlag(
   $produkt_id
@@ -1704,7 +1704,7 @@ function sql_insert_bestellvorschlag(
 , $bestellmenge = 0, $liefermenge = 0
 ) {
   fail_if_readonly();
-  need( getState( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
 
   // finde NOW() aktuellen preis:
   if( ! $preis_id )
@@ -1731,7 +1731,7 @@ function sql_insert_bestellvorschlag(
 }
 
 function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
-  need( getState( $bestell_id ) == STATUS_BESTELLEN, "Loeschen von Bestellvorschlaegen nur in der Bestellzeit!" );
+  need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Loeschen von Bestellvorschlaegen nur in der Bestellzeit!" );
   doSql( "
     DELETE bestellzuordnung.*
     FROM bestellzuordnung
@@ -1783,7 +1783,7 @@ function sql_bestellpreis( $bestell_id, $produkt_id ) {
 function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
   need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()) or ($gruppe == sql_basar_id())
       , "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
-  need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellgruppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurueckgeben */  )
@@ -1830,7 +1830,7 @@ function sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen
 function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id = 0, $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
-  $state = getState( $bestell_id );
+  $state = sql_bestellung_status( $bestell_id );
 
   // echo "select_bestellung_produkte: $gruppen_id, $produkt_id, $empty <br>";
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
@@ -2188,7 +2188,7 @@ function verteilung_wert_brutto( $bestell_id = 0 ) {
  *    da basar nie Verteilmengen erhalten sollte
  */
 function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
-  $state = getState( $bestell_id );
+  $state = sql_bestellung_status( $bestell_id );
   switch( $state ) {
     case STATUS_BESTELLEN:
     case STATUS_LIEFERANT:
@@ -2228,7 +2228,7 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
 function verteilmengenZuweisen($bestell_id){
   $basar_id = sql_basar_id();
 
-  need( getState($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
+  need( sql_bestellung_status($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
   foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
@@ -2266,7 +2266,7 @@ function verteilmengenZuweisen($bestell_id){
 
 function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
   nur_fuer_dienst(1,3,4);
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'bestellvorschlaege'
   , array( 'produkt_id' => $produkt_id, 'gesamtbestellung_id' => $bestell_id )
   , array( 'liefermenge' => $menge )
@@ -2274,7 +2274,7 @@ function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
 }
 
 function nichtGeliefert( $bestell_id, $produkt_id ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   doSql( "UPDATE bestellzuordnung
     INNER JOIN gruppenbestellungen
        ON gruppenbestellung_id = gruppenbestellungen.id
@@ -2293,7 +2293,7 @@ function nichtGeliefert( $bestell_id, $produkt_id ) {
 }
 
 function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge = -1, $toleranzmenge = -1 ) {
-  need( getState( $bestell_id ) == STATUS_BESTELLEN, "Bestellen bei dieser Bestellung nicht mehr moeglich" );
+  need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Bestellen bei dieser Bestellung nicht mehr moeglich" );
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   if( $festmenge >= 0 ) {
     $festmenge_alt = sql_select_single_field(
@@ -2344,7 +2344,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
 
 function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id ) {
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   doSql( " DELETE FROM bestellzuordnung
            WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
   return sql_insert( 'bestellzuordnung', array(
@@ -2356,7 +2356,7 @@ function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id 
 }
 
 function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
-  need( getState( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppe, $bestell_id );
   $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
      VALUES ('$produkt','$gruppenbestellung_id','$menge', 2)
@@ -2701,7 +2701,7 @@ define( 'PFAND_OPT_ALLE_BESTELLUNGEN', 2 );
 // _ersetzt_ fruehere zuordnungen (nicht additiv!)
 //
 function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll, $anzahl_leer ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   if( $anzahl_voll > 0 or $anzahl_leer > 0 ) {
     sql_insert( 'lieferantenpfand' , array(
         'verpackung_id' => $verpackung_id
@@ -2717,7 +2717,7 @@ function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll
 }
 
 function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
-  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Pfandzuordnung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   if( $anzahl_leer > 0 ) {
     // pfandrueckgabe ist jetzt an eine gesamtbestellung gebunden, und wir brauchen eine gruppenbestellung:
     sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
@@ -3142,7 +3142,7 @@ function verbindlichkeiten_gruppen_summe() {
 function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
   $more_where = '';
   if( $bestell_id ) {
-    need( getState( $bestell_id ) >= STATUS_LIEFERANT );
+    need( sql_bestellung_status( $bestell_id ) >= STATUS_LIEFERANT );
     $more_where = "AND ( gesamtbestellungen.id = $bestell_id )";
   }
   $query = "
@@ -3171,7 +3171,7 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
   $where = '';
   $having = 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 )';
   if( $bestell_id ) {
-    need( getState( $bestell_id ) >= STATUS_LIEFERANT );
+    need( sql_bestellung_status( $bestell_id ) >= STATUS_LIEFERANT );
     $where = "WHERE gesamtbestellungen.id = $bestell_id";
     $having = '';
   }
@@ -3878,7 +3878,7 @@ function getProdukteVonLieferant($lieferant_id, $bestell_id = Null ) {
             AND zeitstart <= NOW() AND ( ISNULL(zeitende) OR zeitende >= NOW() )
     ";
   } else {
-    $state = getState( $bestell_id );
+    $state = sql_bestellung_status( $bestell_id );
     switch( $state ) {
       case STATUS_BESTELLEN:
         // produkte in bestellvorlage aufnehmen:
