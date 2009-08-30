@@ -1169,9 +1169,9 @@ function select_bestellgruppen( $filter = 'true', $more_select = '' ) {
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
     , bestellgruppen.id % 1000 as gruppennummer
-  " . $more_select ? ", $more_select" : '' ) . "
+  " . ( $more_select ? ", $more_select" : '' ) . "
     FROM bestellgruppen WHERE $filter
-  " );
+  ";
 }
 
 function select_aktive_bestellgruppen() {
@@ -1404,7 +1404,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag neues Mitglied: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
     } else {
-      $problems .= . "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
+      $problems .= "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
     }
   }
   // falls erstes mitglied der gruppe: sockelbetrag fuer ganze gruppe verbuchen:
@@ -1419,7 +1419,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
       , "Sockelbetrag fuer Gruppe " . $gruppendaten['gruppenname']
       ) ) {
         $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
-        sql_update( 'bestellgruppen', $gruppen_id, array( 'sockelbetrag' => $sockelbetrag_gruppe
+        sql_update( 'bestellgruppen', $gruppen_id, array( 'sockelbetrag' => $sockelbetrag_gruppe ) );
       } else {
         $problems .= "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
       }
@@ -2194,14 +2194,13 @@ function verteilmengenLoeschen( $bestell_id ) {
         "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
   nur_fuer_dienst(1,3,4);
 
-  $sql = "
-    DELETE bestellzuordnung.*
-    FROM bestellzuordnung
-    INNER JOIN gruppenbestellungen
-      ON (gruppenbestellungen.id = gruppenbestellung_id)
-    WHERE art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG." AND gesamtbestellung_id = $bestell_id ";
-  }
-  doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen..");
+  doSql ( "DELETE bestellzuordnung.*
+           FROM bestellzuordnung
+           INNER JOIN gruppenbestellungen
+             ON (gruppenbestellungen.id = gruppenbestellung_id)
+           WHERE art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG." AND gesamtbestellung_id = $bestell_id "
+  , LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen."
+  );
 
   sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id )
              , array( 'bestellmenge' => 0, 'liefermenge' => 0 ) );
@@ -4326,7 +4325,7 @@ function update_database($version){
       );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
-      doSql( "DELETE * FROM leitvariable WHERE name = 'sockelbetrag' );
+      doSql( "DELETE * FROM leitvariable WHERE name = 'sockelbetrag'" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
       logger( 'update_database: update to version 12 successful' );
