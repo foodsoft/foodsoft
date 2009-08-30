@@ -1444,7 +1444,7 @@ function sql_insert_group($newNumber, $newName, $pwd) {
   $new_id = check_new_group_nr( $newNumber, & $problems ) ;
 
   if ($newName == "")
-    $problems = $problems . "<div class='warn'>Die neue Bestellgruppe mu&szlig; einen Name haben!</div>";
+    $problems = $problems . "<div class='warn'>Die neue Bestellgruppe muss einen Name haben!</div>";
 
   if( $new_id > 0 and ! $problems ) {
     logger( "neue Gruppe $new_id ($newName) angelegt" );
@@ -1790,6 +1790,14 @@ function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
 //
 ////////////////////////////////////
 
+// werte fuer feld `art' in bestellzuordnung:
+// < 2 sind bestellungen, >=2 verbindliche zuteilungen
+define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 0 );
+define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 1 );
+define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 2 );
+// todo: basarzuteilungen unterscheiden:
+// define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 3 );
+
 function sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, $art, $orderby = 'bestellzuordnung.zeitpunkt' ) {
   $query = "
     SELECT  *, bestellzuordnung.id as bestellzuordnung_id
@@ -1828,21 +1836,21 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
   // echo "select_bestellung_produkte: $gruppen_id, $produkt_id, $empty <br>";
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<2,1,0) ), 0.0 )
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0) ), 0.0 )
   ";
   // basarbestellmenge: _eigentliche_ basarbestellungen sind art=1,
   // basar mit art=0 zaehlt wie gewoehnliche festmenge!
   $basarbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,1,0)
-                               * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
+                               * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZ.",1,0) ), 0.0 )
   ";
   $toleranzbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,0,1)
-                               * IF(bestellzuordnung.art=1,1,0) ), 0.0 )
+                               * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZ.",1,0) ), 0.0 )
   ";
   if( $gruppen_id != $basar_id ) {
     $verteilmenge_expr = "
-      ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
+      ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0)
                                          * IF( gruppenbestellungen.bestellgruppen_id=$muell_id, 0, 1) ), 0.0 )
     ";
   } else {
@@ -1850,7 +1858,7 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
     $verteilmenge_expr = 999999;  // nur als Warnung: Wert nicht benutzen!
   }
   $muellmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=2,1,0)
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0)
                                        * IF( gruppenbestellungen.bestellgruppen_id=$muell_id, 1 , 0) ), 0.0 )
   ";
 
@@ -2067,17 +2075,22 @@ function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
     FROM bestellzuordnung
     JOIN gruppenbestellungen
       ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-    WHERE ( bestellzuordnung.art = 2 ) AND ( bestellzuordnung.produkt_id = $produkt_id )
+    WHERE ( bestellzuordnung.art = ".BESTERLLZUORDNUNG_ART_ZUTEILUNG." )
+          AND ( bestellzuordnung.produkt_id = $produkt_id )
           AND ( gruppenbestellungen.gesamtbestellung_id = $bestell_id )
          $more_where
   ) ";
+}
+
+function select_muellmenge( $bestell_id, $produkt_id ) {
+  return select_verteilmenge( $bestell_id, $produkt_id, sql_muell_id() );
 }
 
 function select_basarmenge( $bestell_id, $produkt_id ) {
   return "( SELECT ("
            . select_liefermenge( $bestell_id, $produkt_id ).
       " - " .select_verteilmenge( $bestell_id, $produkt_id ).
-      " - " .select_verteilmenge( $bestell_id, $produkt_id, sql_muell_id() ).
+      " - " .select_muellmenge( $bestell_id, $produkt_id ).
     ") AS basarmenge )";
 }
 
@@ -2091,7 +2104,7 @@ function sql_basarmenge( $bestell_id, $produkt_id ) {
 }
 
 function sql_muellmenge( $bestell_id, $produkt_id ) {
-  return sql_verteilmenge( $bestell_id, $produkt_id, sql_muell_id() );
+  return sql_select_single_field( "SELECT ".select_muellmenge( $bestell_id, $produkt_id )." AS muellmenge", 'muellmenge' );
 }
 
 
@@ -2174,23 +2187,11 @@ function verteilung_wert_brutto( $bestell_id = 0 ) {
 
 
 /**
- * verteilmengenLoeschen:
- *  - Verteilmengen nochmal löschen bei statuswechsel LIEFERANT -> BESTELLEN
- *    ( $nur_basar == false ), oder
- *  - nur die Verteilmengen fuer basar loeschen (nach verteilmengenZuweisen),
- *    da basar nie Verteilmengen erhalten sollte
+ * verteilmengenLoeschen: bei statuswechsel LIEFERANT -> BESTELLEN:
  */
-function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
-  $state = sql_bestellung_status( $bestell_id );
-  switch( $state ) {
-    case STATUS_BESTELLEN:
-    case STATUS_LIEFERANT:
-      break;
-    default:
-      error( "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
-      return false;
-  }
-  fail_if_readonly();
+function verteilmengenLoeschen( $bestell_id ) {
+  need( sql_bestellung_status( $bestell_id ) < STATUS_GELIEFERT,
+        "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
   nur_fuer_dienst(1,3,4);
 
   $sql = "
@@ -2198,20 +2199,12 @@ function verteilmengenLoeschen($bestell_id, $nur_basar=FALSE){
     FROM bestellzuordnung
     INNER JOIN gruppenbestellungen
       ON (gruppenbestellungen.id = gruppenbestellung_id)
-    WHERE art = 2 AND gesamtbestellung_id = $bestell_id ";
-    if($nur_basar) {
-      $sql .= " AND bestellgruppen_id = ".sql_basar_id();
+    WHERE art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG." AND gesamtbestellung_id = $bestell_id ";
   }
   doSql($sql, LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen..");
 
-	if(! $nur_basar){
-		$sql = "UPDATE bestellvorschlaege
-            set bestellmenge = NULL, liefermenge = NULL
-            where gesamtbestellung_id = ".$bestell_id;
-		doSql($sql, LEVEL_ALL, "Konnte Bestellmengen nicht aus bestellvorschlaege löschen..");
-	}
-
-	return true;
+  sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id )
+             , array( 'bestellmenge' => 0, 'liefermenge' => 0 ) );
 }
 
 
