@@ -1138,7 +1138,7 @@ function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
          , gruppenmitglieder.diensteinteilung as diensteinteilung
          , gruppenmitglieder.rotationsplanposition as rotationsplanposition
          , gruppenmitglieder.status as status
-         , gruppenmitglieder.sockelbetrag as sockelbetrag
+         , gruppenmitglieder.sockeleinlage as sockeleinlage_mitglied
     FROM gruppenmitglieder
     JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
     WHERE gruppenmitglieder.id = $gruppenmitglieder_id
@@ -1164,7 +1164,7 @@ function select_bestellgruppen( $filter = 'true', $more_select = '' ) {
     , bestellgruppen.aktiv as aktiv
     , bestellgruppen.passwort as passwort
     , bestellgruppen.salt as salt
-    , bestellgruppen.sockelbetrag as sockelbetrag
+    , bestellgruppen.sockeleinlage  as sockeleinlage_gruppe
     , ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
