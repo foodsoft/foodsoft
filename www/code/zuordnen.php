@@ -438,7 +438,7 @@ function sql_dienste_nicht_bestaetigt($datum){
 function sql_get_dienste( $where = 'TRUE' ) {
   return mysql2array( doSql( "
     SELECT *, dienste.id as dienst_id, dienste.status as dienst_status
-         , gruppenmitglieder.gruppen_id % 1000 as gruppen_nummer
+         , gruppenmitglieder.gruppen_id % 1000 as gruppennummer
     FROM dienste 
     LEFT JOIN gruppenmitglieder  /* fuer 'Offen': auch gruppenmitglieder_id==0 zulassen! */
     ON (dienste.gruppenmitglieder_id = gruppenmitglieder.id)
@@ -1138,7 +1138,7 @@ function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
          , gruppenmitglieder.diensteinteilung as diensteinteilung
          , gruppenmitglieder.rotationsplanposition as rotationsplanposition
          , gruppenmitglieder.status as status
-         , gruppenmitglieder.sockeleinlage as sockeleinlage_mitglied
+         , gruppenmitglieder.sockeleinlage as sockeleinlage
     FROM gruppenmitglieder
     JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
     WHERE gruppenmitglieder.id = $gruppenmitglieder_id
@@ -1331,42 +1331,40 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     'status' => 'geloescht'
   , 'diensteinteilung' => 'freigestellt'
   , 'rotationsplanposition' => 0
-  , 'sockelbetrag' => 0.0
+  , 'sockeleinlage' => 0.0
   ) );
-  logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppen_id']} geloescht" );
+  logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppennummer']} geloescht" );
 
   // sockelbetrag fuer mitglied rueckerstatten:
   $muell_id = sql_muell_id();
-  if( $daten['sockelbetrag'] > 0 ) {
+  if( $daten['sockeleinlage'] > 0 ) {
     if( sql_doppelte_transaktion(
       array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
-    , $daten['sockelbetrag']
+    , $daten['sockeleinlage']
     , $mysqlheute
-    , "Erstattung Sockelbetrag fuer ausgetretenes Mitglied " . $daten['vorname']
+    , "Erstattung Sockeleinlage fuer ausgetretenes Mitglied " . $daten['vorname']
     ) ) {
-      $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag ausgetretenes Mitglied: $sockelbetrag Euro wurden verbucht.</div>";
+      $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage ausgetretenes Mitglied: {$daten['sockeleinlage']} Euro wurden erstattet.</div>";
     } else {
-      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                                 . mysql_error() . "</div>";
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
     }
   }
 
   // falls letztes mitglied der gruppe ausgetreten: sockelbetrag der Gruppe rueckerstatten:
   $gruppendaten = sql_gruppendaten( $gruppen_id );
-  if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockelbetrag'] > 0 ) ) {
+  if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockeleinlage'] > 0 ) ) {
     if( sql_doppelte_transaktion(
       array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
-    , $gruppendaten['sockelbetrag']
+    , $gruppendaten['sockeleinlage']
     , $mysqlheute
-    , "Erstattung Sockelbetrag Gruppe " . $gruppendaten['gruppenname']
+    , "Erstattung Sockeleinlage Gruppe " . $gruppendaten['gruppenname']
     ) ) {
-      $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag Euro wurden verbucht.</div>";
-      sql_update( 'bestellgruppen', $gruppen_id, array( 'sockelbetrag' => 0.0 ) );
+      $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: ${gruppendaten['sockeleinlage']} Euro wurden erstattet.</div>";
+      sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => 0.0 ) );
     } else {
-      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockelbetrag fehlgeschlagen: "
-                                 . mysql_error() . "</div>";
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
     }
   }
 }
@@ -1389,7 +1387,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
   , 'email' => $newMail
   , 'telefon' => $newTelefon
   , 'diensteinteilung' => $newDiensteinteilung
-  , 'sockelbetrag' => $sockelbetrag_mitglied
+  , 'sockeleinlage' => $sockelbetrag_mitglied
   ) );
   logger( "neues Gruppenmitglied $id ($newVorname) in Gruppe $gruppen_id angelegt" );
 
@@ -1400,7 +1398,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
     , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , $sockelbetrag_mitglied
     , $mysqlheute
-    , "Sockelbetrag fuer zusaetzliches Mitglied $newVorname"
+    , "Sockeleinlage fuer zusaetzliches Mitglied $newVorname"
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag neues Mitglied: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
     } else {
@@ -1416,12 +1414,12 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
       , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
       , $sockelbetrag_gruppe
       , $mysqlheute
-      , "Sockelbetrag fuer Gruppe " . $gruppendaten['gruppenname']
+      , "Sockeleinlage fuer Gruppe " . $gruppendaten['gruppenname']
       ) ) {
-        $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag Gruppe: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
-        sql_update( 'bestellgruppen', $gruppen_id, array( 'sockelbetrag' => $sockelbetrag_gruppe ) );
+        $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: $sockelbetrag_gruppe Euro wurden verbucht.</div>";
+        sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => $sockelbetrag_gruppe ) );
       } else {
-        $problems .= "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Verbuchen Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
       }
     }
   }
@@ -1451,7 +1449,7 @@ function sql_insert_group($newNumber, $newName, $pwd) {
     $id = sql_insert( 'bestellgruppen', array(
       'id' => $new_id
     , 'aktiv' => 1
-    , 'sockelbetrag' => 0.0  // wird erst bei Eintrag erstes Mitglied verbucht
+    , 'sockeleinlage' => 0.0  // wird erst bei Eintrag erstes Mitglied verbucht
     , 'name' => $newName
     ) );
     if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysql_insert_id() == 0 bei Erfolg!
@@ -1833,7 +1831,6 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
   $muell_id = sql_muell_id();
   $state = sql_bestellung_status( $bestell_id );
 
-  // echo "select_bestellung_produkte: $gruppen_id, $produkt_id, $empty <br>";
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0) ), 0.0 )
@@ -1892,7 +1889,6 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
       break;
   }
 
-  // echo "<br>select_bestellung_produkte: $having</br>";
   return "SELECT
       produkte.name as produkt_name
     , produktgruppen.name as produktgruppen_name
@@ -2264,7 +2260,7 @@ function nichtGeliefert( $bestell_id, $produkt_id ) {
     INNER JOIN gruppenbestellungen
        ON gruppenbestellung_id = gruppenbestellungen.id
     SET menge =0
-    WHERE art=2
+    WHERE art=".ZUORDNUNG_ART_ZUTEILUNG."
       AND produkt_id = $produkt_id
       AND gesamtbestellung_id = $bestell_id
   ", LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern..."
@@ -2283,24 +2279,26 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   if( $festmenge >= 0 ) {
     $festmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS festmenge FROM bestellzuordnung
-       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id AND art=0"
+       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id
+         AND art=" . ZUORDNUNG_ART_FESTBESTELLUNG
     , 'festmenge'
     );
     if( $festmenge > $festmenge_alt ) {
       // Erhoehung der festmenge: zusaetzliche Bestellung am Ende der Schlange:
       sql_insert( 'bestellzuordnung', array(
         'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-      , 'menge' => $festmenge - $festmenge_alt, 'art' => 0
+      , 'menge' => $festmenge - $festmenge_alt, 'art' => ZUORDNUNG_ART_FESTBESTELLUNG
       ) );
     } elseif( $festmenge < $festmenge_alt ) {
       // bei Ruecktritt von vorheriger Bestellung: neue Bestellung stellt sich _hinten_ in die Reihe
       // (um Nachteile fuer andere Besteller zu minimieren):
       doSql( " DELETE FROM bestellzuordnung
-               WHERE art=0 AND produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
+               WHERE art = ".ZUORDNUNG_ART_FESTBESTELLUNG."
+                 AND produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
       if( $festmenge > 0 ) {
         sql_insert( 'bestellzuordnung', array(
           'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-        , 'menge' => $festmenge, 'art' => 0
+        , 'menge' => $festmenge, 'art' => ZUORDNUNG_ART_FESTBESTELLUNG
         ) );
       }
     } // else: ( $ festmenge == $festmenge_alt ): nix zu tun...
@@ -2309,18 +2307,20 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   if( $toleranzmenge >= 0 ) {
     $toleranzmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS toleranzmenge FROM bestellzuordnung
-       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id AND art=1"
+       WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id
+          AND art = ".ZUORDNUNG_ART_TOLERANZBESTELLUNG
     , 'toleranzmenge'
     );
     if( $toleranzmenge_alt != $toleranzmenge ) {
       // toleranzmenge: zeitliche Reihenfolge ist hier (fast) egal, wir schreiben einfach neu:
       //
       doSql( " DELETE FROM bestellzuordnung
-               WHERE art=1 AND produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
+               WHERE art = ".ZUORDNUNG_ART_TOLERANZBESTELLUNG."
+                 AND produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
       if( $toleranzmenge > 0 ) {
         sql_insert( 'bestellzuordnung', array(
           'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-        , 'menge' => $toleranzmenge, 'art' => 1
+        , 'menge' => $toleranzmenge, 'art' => ZUORDNUNG_ART_TOLERANZBESTELLUNG
         ) );
       }
     }
@@ -2328,15 +2328,16 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
 }
 
 function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id ) {
-  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
+  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   doSql( " DELETE FROM bestellzuordnung
-           WHERE art=2 AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
+           WHERE art = ".ZUORDNUNG_ART_ZUTEILUNG."
+             AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
   return sql_insert( 'bestellzuordnung', array(
     'produkt_id' => $produkt_id
   , 'menge' => $menge
   , 'gruppenbestellung_id' => $gruppenbestellung_id
-  , 'art' => 2
+  , 'art' => ZUORDNUNG_ART_ZUTEILUNG
   ) );
 }
 
@@ -2855,7 +2856,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
           'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
                                    ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
         ) ) . "
-        WHERE (bestellzuordnung.art=2) " . use_filters( $using, array(
+        WHERE (bestellzuordnung.art=".ZUORDNUNG_ART_ZUTEILUNG.") " . use_filters( $using, array(
           'bestellgruppen' => 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id'
         , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
         ) );
@@ -3043,7 +3044,7 @@ function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'be
       bestellgruppen.id as gruppen_id
     , bestellgruppen.aktiv as aktiv
     , bestellgruppen.name as gruppen_name
-    , bestellgruppen.id % 1000 as gruppen_nummer
+    , bestellgruppen.id % 1000 as gruppennummer
     , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_ANZAHL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_leer_anzahl
     , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_leer_brutto_soll
     , sum( (".select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ).") ) AS pfand_voll_brutto_soll
@@ -3229,17 +3230,19 @@ function kontostand( $gruppen_id ) {
   return $row['soll'];
 }
 
-function gruppenkontostand_festgelegt( $gruppen_id ) {
-  return sql_select_single_field( "
-    SELECT
-      ( SELECT (".select_bestellungen_soll_gruppen( OPTION_WAREN_ENDPREIS_SOLL, array('gesamtbestellungen','bestellgruppen') ). ")
-        FROM (".select_gesamtbestellungen_unverbindlich().") AS gesamtbestellungen
-      ) AS soll
-    FROM bestellgruppen
-    WHERE bestellgruppen.id = $gruppen_id
-  ", 'soll'
-  );
-}
+// funktioniert noch nicht!
+//
+// function gruppenkontostand_festgelegt( $gruppen_id ) {
+//   return sql_select_single_field( "
+//     SELECT
+//       ( SELECT (".select_bestellungen_soll_gruppen( OPTION_WAREN_ENDPREIS_SOLL, array('gesamtbestellungen','bestellgruppen') ). ")
+//         FROM (".select_gesamtbestellungen_unverbindlich().") AS gesamtbestellungen
+//       ) AS soll
+//     FROM bestellgruppen
+//     WHERE bestellgruppen.id = $gruppen_id
+//   ", 'soll'
+//   );
+// }
 
 function pfandkontostand( $gruppen_id = 0 ) {
   $where = '';
@@ -3253,13 +3256,23 @@ function pfandkontostand( $gruppen_id = 0 ) {
   );
 }
 
-function sockel_gruppen_summe() {
-  global $sockelbetrag_mitglied;
-  $row = sql_select_single_row( "
-    SELECT sum( $sockelbetrag_mitglied * bestellgruppen.mitgliederzahl ) as soll
+function sockeleinlagen( $gruppen_id = 0 ) {
+  $where = '';
+  if( $gruppen_id )
+    $where = "WHERE bestellgruppen.id = $gruppen_id";
+  return sql_select_single_field( "
+    SELECT
+      sum( bestellgruppen.sockeleinlage
+          + ( SELECT sum( gruppenmitglieder.sockeleinlage )
+              FROM gruppenmitglieder
+              WHERE gruppenmitglieder.status = 'aktiv'
+                AND gruppenmitglieder.gruppen_id = bestellgruppen.id
+            )
+      ) as soll
     FROM (".select_aktive_bestellgruppen().") AS bestellgruppen 
-  " );
-  return $row['soll'];
+    $where
+  ", 'soll' 
+  );
 }
 
 function lieferantenkontostand( $lieferanten_id ) {
@@ -4314,14 +4327,14 @@ function update_database($version){
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table Dienste "
       );
 
-      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockelbetrag` decimal(8,2) default '0.00'"
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockelbetrag to table bestellgruppen"
+      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockeleinlage` decimal(8,2) default '0.00'"
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table bestellgruppen"
       );
-      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockelbetrag` decimal(8,2) default '0.00'"
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockelbetrag to table gruppenmitglieder"
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockeleinlage` decimal(8,2) default '0.00'"
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table gruppenmitglieder"
       );
-      doSql( "UPDATE `gruppenmitglieder` SET sockelbetrag = $sockelbetrag WHERE status = 'aktiv' "
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: set sockelbetrag = $sockelbetrag in gruppenmitglieder"
+      doSql( "UPDATE `gruppenmitglieder` SET sockeleinlage = $sockeleinlage WHERE status = 'aktiv' "
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: set sockeleinlage = $sockelbetrag in gruppenmitglieder"
       );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
