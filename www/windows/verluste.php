@@ -280,7 +280,7 @@ open_tr();
         , 'class' => 'href', 'text' => price_view( -verlust_transaktionen( TRANSAKTION_TYP_STORNO ) ) ) ) );
 
 open_tr();
-  open_td( '', "colspan='3'", 'geparkte" Sockeleinlagen:' );
+  open_td( '', "colspan='3'", '"geparkte" Sockeleinlagen:' );
   open_td( 'number', '', fc_link( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL
         , 'class' => 'href', 'text' => price_view( -verlust_transaktionen( TRANSAKTION_TYP_SOCKEL ) ) ) ) );
 
