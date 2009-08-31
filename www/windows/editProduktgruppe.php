@@ -15,6 +15,7 @@ switch( $action ) {
     break;
   case 'delete':
     need_http_var( 'produktgruppen_id', 'U' );
+   need( references_produktgruppe( $produktgruppen_id ) == 0, "Loeschen nicht moeglich: Produktgruppe wird benutzt!" )
     doSql( 'DELETE * FROM produktgruppen WHERE id=$produktgruppen_id' );
     break;
 }
