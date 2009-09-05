@@ -254,6 +254,7 @@ function rechnung_status_string( $state ) {
 
 
 function sql_dienst_info( $dienst_rueckbestaetigen ) {
+  global $login_gruppen_id;
   $result = sql_get_dienst_group($login_gruppen_id ,"Akzeptiert");
   $critical_date = in_two_weeks();
   $show_dienste = array();
@@ -2260,7 +2261,7 @@ function nichtGeliefert( $bestell_id, $produkt_id ) {
     INNER JOIN gruppenbestellungen
        ON gruppenbestellung_id = gruppenbestellungen.id
     SET menge =0
-    WHERE art=".ZUORDNUNG_ART_ZUTEILUNG."
+    WHERE art=".BESTELLZUORDNUNG_ART_ZUTEILUNG."
       AND produkt_id = $produkt_id
       AND gesamtbestellung_id = $bestell_id
   ", LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern..."
@@ -2280,25 +2281,25 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
     $festmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS festmenge FROM bestellzuordnung
        WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id
-         AND art=" . ZUORDNUNG_ART_FESTBESTELLUNG
+         AND art=" . BESTELLZUORDNUNG_ART_FESTBESTELLUNG
     , 'festmenge'
     );
     if( $festmenge > $festmenge_alt ) {
       // Erhoehung der festmenge: zusaetzliche Bestellung am Ende der Schlange:
       sql_insert( 'bestellzuordnung', array(
         'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-      , 'menge' => $festmenge - $festmenge_alt, 'art' => ZUORDNUNG_ART_FESTBESTELLUNG
+      , 'menge' => $festmenge - $festmenge_alt, 'art' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG
       ) );
     } elseif( $festmenge < $festmenge_alt ) {
       // bei Ruecktritt von vorheriger Bestellung: neue Bestellung stellt sich _hinten_ in die Reihe
       // (um Nachteile fuer andere Besteller zu minimieren):
       doSql( " DELETE FROM bestellzuordnung
-               WHERE art = ".ZUORDNUNG_ART_FESTBESTELLUNG."
+               WHERE art = ".BESTELLZUORDNUNG_ART_FESTBESTELLUNG."
                  AND produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
       if( $festmenge > 0 ) {
         sql_insert( 'bestellzuordnung', array(
           'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-        , 'menge' => $festmenge, 'art' => ZUORDNUNG_ART_FESTBESTELLUNG
+        , 'menge' => $festmenge, 'art' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG
         ) );
       }
     } // else: ( $ festmenge == $festmenge_alt ): nix zu tun...
@@ -2308,19 +2309,19 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
     $toleranzmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS toleranzmenge FROM bestellzuordnung
        WHERE produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id
-          AND art = ".ZUORDNUNG_ART_TOLERANZBESTELLUNG
+          AND art = ".BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG
     , 'toleranzmenge'
     );
     if( $toleranzmenge_alt != $toleranzmenge ) {
       // toleranzmenge: zeitliche Reihenfolge ist hier (fast) egal, wir schreiben einfach neu:
       //
       doSql( " DELETE FROM bestellzuordnung
-               WHERE art = ".ZUORDNUNG_ART_TOLERANZBESTELLUNG."
+               WHERE art = ".BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG."
                  AND produkt_id = $produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
       if( $toleranzmenge > 0 ) {
         sql_insert( 'bestellzuordnung', array(
           'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-        , 'menge' => $toleranzmenge, 'art' => ZUORDNUNG_ART_TOLERANZBESTELLUNG
+        , 'menge' => $toleranzmenge, 'art' => BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG
         ) );
       }
     }
@@ -2331,13 +2332,13 @@ function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id 
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   doSql( " DELETE FROM bestellzuordnung
-           WHERE art = ".ZUORDNUNG_ART_ZUTEILUNG."
+           WHERE art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG."
              AND produkt_id=$produkt_id AND gruppenbestellung_id = $gruppenbestellung_id" );
   return sql_insert( 'bestellzuordnung', array(
     'produkt_id' => $produkt_id
   , 'menge' => $menge
   , 'gruppenbestellung_id' => $gruppenbestellung_id
-  , 'art' => ZUORDNUNG_ART_ZUTEILUNG
+  , 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG
   ) );
 }
 
@@ -2863,7 +2864,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
           'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
                                    ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
         ) ) . "
-        WHERE (bestellzuordnung.art=".ZUORDNUNG_ART_ZUTEILUNG.") " . use_filters( $using, array(
+        WHERE (bestellzuordnung.art=".BESTELLZUORDNUNG_ART_ZUTEILUNG.") " . use_filters( $using, array(
           'bestellgruppen' => 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id'
         , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
         ) );
@@ -3035,7 +3036,7 @@ function select_soll_lieferanten( $using = array() ) {
 function select_soll_gruppen( $using = array() ) {
   return " SELECT (
       (" .select_waren_soll_gruppen( $using ). ")
-    + (" .select_aufschlag_soll_gruppen( $using ). ")
+    + (" .select_waren_aufschlag_gruppen( $using ). ")
     + (" .select_pfand_soll_gruppen( $using ). ")
     + (" .select_transaktionen_soll_gruppen( $using ). ")
   ) ";
