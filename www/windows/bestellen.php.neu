@@ -6,14 +6,15 @@ assert( $angemeldet ) or exit();
 setWikiHelpTopic( "foodsoft:bestellen" );
 
 if( hat_dienst(4) ) {
+  // auch dienst IV bestellt nur im STATUS_BESTELLEN (kann man ja zuruecksetzen!):
+  // $status[] = STATUS_LIEFERANT;
   $gruppen_id = $basar_id;
   $kontostand = 100.0;
-  $festgelegt = 0.0;
   echo "<h1>Bestellen f&uuml;r den Basar</h1>";
 } else {
+  // Neu: alle duerfen weiter bestellen, solange STATUS_BESTELLEN besteht:
   $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
   $kontostand = kontostand( $gruppen_id );
-  $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
   echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
 }
 
@@ -53,7 +54,7 @@ if( ! $bestell_id )
 // ab hier: eigentliches bestellformular:
 //
 
-$lieferanten_id = $gesamtbestellung['lieferanten_id'];
+$lieferanten_id = sql_bestellung_lieferant_id( $bestell_id );
 
 get_http_var( 'action', 'w', '' );
 switch( $action ) {
@@ -71,7 +72,7 @@ switch( $action ) {
       get_http_var( "toleranz_$n", 'u', 0 );
       $toleranz = ${"toleranz_$n"};
       $bestellungen[$n] = array( 'fest' => $fest, 'toleranz' => $toleranz );
-      $gesamtpreis += $produkt['endpreis'] * ( $fest + $toleranz );
+      $gesamtpreis += $produkt['preis'] * ( $fest + $toleranz );
     }
     need( $gesamtpreis <= $kontostand, "Konto &uuml;berzogen!" );
     foreach( $bestellungen as $produkt_id => $m ) {
@@ -87,16 +88,16 @@ switch( $action ) {
 }
 
 $produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
+$anzahl_produkte = count( $produkte );
+// ^ brauchen wir gleich im java-script!
 $gesamtpreis = 0.0;
-
-$festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
 
 if( ! $readonly ) {
   $bestellform_id = open_form( '', 'action=bestellen' );
 
   ?>
   <script type="text/javascript">
-    var anzahl_produkte = <? echo count( $produkte ); ?>;
+    var anzahl_produkte = <? echo $anzahl_produkte; ?>;
     var kontostand = <? printf( "%.2lf", $kontostand ); ?>;
     var gesamtpreis = 0.00;
     var gebindegroesse     = new Array();
@@ -108,9 +109,8 @@ if( ! $readonly ) {
     var zuteilung_fest_alt = new Array();
     var toleranz           = new Array();
     var toleranz_andere    = new Array();
-    var verteilmult        = new Array();
 
-    function init_produkt( produkt, _gebindegroesse, _preis, _fest, _toleranz, _fest_andere, _toleranz_andere, zuteilung_fest, zuteilung_toleranz, _verteilmult ) {
+    function init_produkt( produkt, _gebindegroesse, _preis, _fest, _toleranz, _fest_andere, _toleranz_andere, zuteilung_fest, zuteilung_toleranz ) {
       gebindegroesse[produkt] = _gebindegroesse;
       preis[produkt] = _preis;
       fest_alt[produkt] = _fest;
@@ -120,7 +120,6 @@ if( ! $readonly ) {
       toleranz[produkt] = _toleranz;
       toleranz_andere[produkt] = _toleranz_andere;
       kosten[produkt] = _preis * ( _fest + _toleranz );
-      verteilmult[produkt] = _verteilmult;
       gesamtpreis += kosten[produkt];
     }
 
@@ -355,25 +354,16 @@ if( ! $readonly ) {
 }
 
 open_table( 'list hfill' );  // bestelltabelle
-  open_tr( 'groupofrows_top' );
-    open_th( '', '', 'Produktgruppe' );
-    open_th( '', '', 'Bezeichnung' );
-    open_th( '', "colspan='1' title='Einzelpreis (mit Pfand und MWSt)'", 'Preis' );
-    open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Bestellmenge gesamt' );
-    open_th( '', "colspan='4' title='Bestellmenge eurer Gruppe'", 'eure Bestellmenge' );
-    open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r eure Gruppe (mit Pfand und MWSt)'", 'Kosten' );
-    if( $dienst == 4 )
-      open_th( '', '', 'Aktionen' );
-  open_tr( 'groupofrows_bottom' );
-    open_th( '', '', '' );
-    open_th( 'small', '', '' );
-    open_th( '', "colspan='1'", '' );
-    open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'Gebinde' );
-    open_th( '', "colspan='2' title='Fest-Bestellmenge: wieviel Ihr wirklich haben wollt'", 'fest' );
-    open_th( '', "colspan='2' title='Toleranz-Menge: wieviel Ihr auch mehr nehmen würdet'", 'Toleranz' );
-    open_th( '', '', '' );
-    if( $dienst == 4 )
-      open_th( '', '', '' );
+  open_th( '', '', 'Produktgruppe' );
+  open_th( '', '', 'Bezeichnung' );
+  open_th( '', "colspan='4' title='Anzahl voller Gebinde und Gebindegröße'", 'Gebinde' );
+  open_th( '', "colspan='2' title='Einzelpreis (mit Pfand und MWSt)'", 'Preis' );
+  open_th( '', "colspan='2' title='von Eurer Gruppe maximal bestellte Menge'", 'Menge' );
+  open_th( '', "title='Fest-Bestellmenge: wieviel Ihr wirklich haben wollt'", 'fest' );
+  open_th( '', "title='Toleranz-Menge: wieviel Ihr auch mehr nehmen würdet'", 'Toleranz' );
+  open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r eure Gruppe (mit Pfand und MWSt)'", 'Kosten' );
+  if( $dienst == 4 )
+    open_th( '', '', 'Aktionen' );
 
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
@@ -389,7 +379,7 @@ foreach( $produkte as $produkt ) {
   $n = $produkt_id;
 
   $gebindegroesse = $produkt['gebindegroesse'];
-  $preis = $produkt['endpreis'];
+  $preis = $produkt['preis'];
   $lv_faktor = $produkt['lv_faktor'];
 
   $festmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, 0 );
@@ -405,17 +395,16 @@ foreach( $produkte as $produkt ) {
   $zuteilung_fest = adefault( $zuteilungen['festzuteilungen'], $gruppen_id, 0 );
   $zuteilung_toleranz = adefault( $zuteilungen['toleranzzuteilungen'], $gruppen_id, 0 );
 
-  $verteilmult = $produkt['kan_verteilmult'];
-
   $kosten = $preis * ( $festmenge + $toleranzmenge );
   $gesamtpreis += $kosten;
 
-  $js .= sprintf( "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n"
+  $aktueller_preis_id = sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] );
+
+  $js .= sprintf( "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u );\n"
   , $n, $gebindegroesse , $preis
   , $festmenge, $toleranzmenge
   , $festmenge_andere, $toleranzmenge_andere
   , $zuteilung_fest, $zuteilung_toleranz
-  , $verteilmult
   );
   $produktgruppe = $produkt['produktgruppen_id'];
   if( $produktgruppe != $produktgruppe_alt ) {
@@ -429,6 +418,9 @@ foreach( $produkte as $produkt ) {
       open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
     }
     $produktgruppe_alt = $produktgruppe;
+    // $js .= "document.getElementById('pg_$produktgruppe').rowSpan = 1; ";
+  } else {
+    // open_td( '', '', ' ' );
   }
 
   hidden_input( "fest_$n", "$festmenge", "id='fest_$n'" );
@@ -438,60 +430,47 @@ foreach( $produkte as $produkt ) {
     open_div('oneline', '', $produkt['produkt_name']);
     open_div('oneline small', '', $produkt['notiz']);
 
-  // preis:
-  open_td('top center');
-    open_table('layout');
-      open_tr();
-        if( ( $dienst == 4 )
-            && ( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) {
-          open_td( 'mult outdated', "title='Preis nicht aktuell!'" );
-        } else {
-          open_td( 'mult' );
-        }
-        echo fc_link( 'produktdetails', array( 'produkt_id' => $n, 'bestell_id' => $bestell_id
-                                          , 'text' => sprintf( '%.2lf', $preis ), 'class' => 'href' ) );
-        open_td( 'unit', '', "/ {$produkt['verteileinheit']}" );
-
-      if( $lv_faktor != 1 ) {
-        open_tr();
-          open_td( 'mult small', '', price_view( $preis * $produkt['lv_faktor'] ) );
-          open_td( 'unit small', '', "/ {$produkt['liefereinheit']}" );
-      }
-    close_table('layout');
-
-  // bestellungen aller gruppen:
-  open_td( 'top center ' . ( ( $zuteilungen[gebinde] > 0 )  ?  'highlight'
+  open_td( 'mult ' . ( ( $zuteilungen[gebinde] > 0 )  ?  'highlight'
                           : ( ( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) ? 'crit' : '' ) )
-          , "id='g_$n' " );
-    open_table( 'layout' );
-        // v-menge:
-        open_td( 'mult', "id='gv_$n'", mult2string( $verteilmult * ( $festmenge_gesamt + $toleranzmenge_gesamt ) ) );
-        open_td( 'unit', '', $produkt['verteileinheit_anzeige'] );
-      open_tr();
-       // gebinde:
-        open_td( 'mult', "id='gg_$n'", fprintf( '%u', $zuteilungen[gebinde] );
-        open_td( 'unit', '', "* ({$produkt['gebindegroesse']} * {$produkt['verteileinheit_anzeige']})" );
-    close_table();
+          , "style='width:2ex;border-right:none;' id='gv_$n'"
+          , $zuteilungen[gebinde]
+  );
 
-  // festmenge:
+  open_td( '', "style='width:1ex;border-right:none;border-left:none;padding-left:0pt;padding-right:0pt;'", '*' );
+  open_td( 'mult', "style='border-left:none;width:5ex;'", $gebindegroesse );
+  open_td( 'unit', '', "{$produkt['kan_verteilmult']} {$produkt['kan_verteileinheit']}" );
+
+  if( ( $dienst == 4 ) and ( $aktueller_preis_id != $produkt['preis_id'] ) ) {
+    open_td( 'mult outdated', "title='Preis nicht aktuell!'" );
+  } else {
+    open_td( 'mult' );
+  }
+    echo fc_link( 'produktdetails', array( 'produkt_id' => $n, 'bestell_id' => $bestell_id
+                                      , 'text' => sprintf( '%.2lf', $preis ), 'class' => 'href' ) );
+    if( $lv_faktor != 1 )
+      open_div( 'small right', '', price_view( $preis * $produkt['lv_faktor'] ) );
+
+  open_td( 'unit' );
+    printf( "/ %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] );
+    if( $lv_faktor != 1 )
+      open_div( 'small left', '', "/ {$produkt['liefereinheit']}" );
+
   $tag = '';
   if( $festmenge + $toleranzmenge > 0 )
     $tag = ( ( $zuteilungen[gebinde] > 0 ) ? 'highlight' : 'crit' );
   open_td( "mult $tag", "id='m_$n'", sprintf( "%u", $festmenge + $toleranzmenge ) );
   open_td( 'unit', '', sprintf( "* %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ) );
 
-  // festmenge
-  open_td( 'center', "colspan='2'" );
-    open_div( 'oneline mult' );
-      open_span( '', "id='f_$n'" );
-        echo mult2string( $festmenge * produkt['kam_verteilmult'] ) );
-        if( $toleranzmenge > 0 )
-          echo " ...";
-      close_span();
-    close_div();
-
+  open_td('center');  // festmengenwahl
+    open_div('oneline', '', "
+      <span style='color:#00e000;font-weight:bold;' id='fz_$n'>$zuteilung_fest</span>
+      +
+      <span style='color:#e80000;font-weight:bold;' id='fr_$n'>".($festmenge - $zuteilung_fest)."</span>
+      /
+      <span style='color:#000000;' id='fg_$n'>$festmenge_gesamt</span>
+    " );
     if( ! $readonly ) {
-      open_div('oneline center');
+      open_div('oneline');
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='<<' onclick='fest_minusminus($n);' >";
         ?> <input type='button' value='<' onclick='fest_minus(<? echo $n; ?>);' >
@@ -502,18 +481,17 @@ foreach( $produkte as $produkt ) {
       close_div();
     }
 
-  // toleranzmenge
   open_td('center'); // toleranzwahl
-    open_div( 'oneline unit' );
-      open_span( '', "id='t_$n'" );
-        if( $toleranzmenge > 0 )
-          echo mult2string( ( $festmenge + $toleranzmenge ) * produkt['kan_verteilmult'] );
-      close_span();
-      echo " {$produkt['kan_verteileinheit']}";
-    close_div();
     if( $gebindegroesse > 1 ) {
+      open_div( 'oneline', '', "
+        <span style='color:#00e000;font-weight:bold;' id='tz_$n'>$zuteilung_toleranz</span>
+        +
+        <span style='color:#e80000;font-weight:bold;' id='tr_$n'>".($toleranzmenge - $zuteilung_toleranz)."</span>
+        /
+        <span style='color:#000000;' id='tg_$n'>$toleranzmenge_gesamt</span>
+      " );
       if( ! $readonly ) {
-        open_div('oneline center');
+        open_div('oneline');
           ?> <input type='button' value='<' onclick='toleranz_minus(<? echo $n; ?>);' >
              <span style='width:2em;'>&nbsp;</span>
              <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
@@ -532,7 +510,7 @@ foreach( $produkte as $produkt ) {
     open_td();
       echo fc_link( 'edit_produkt', "produkt_id=$produkt_id" );
       echo fc_action( array( 'class' => 'drop', 'text' => '', 'title' => 'Bestellvorschlag löschen'
-                           , 'confirm' => 'Bestellvorschlag wirklich löschen?' )
+                           , 'confirm' => 'Bestellvorschlag wirklich löschen?')
                     , array( 'action' => 'delete', 'produkt_id' => $produkt_id ) );
   }
 }
@@ -554,6 +532,16 @@ if( ! $readonly ) {
   open_div( 'middle', "id='hinzufuegen'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen' );
+        div_msg( 'warn medskip', "
+          Achtung: diese Funktion fügt ein weiteres Produkt in die Liste oben ein, damit du oder
+          andere es diese Woche bestellen <em><span style='text-decoration:underline;'>können</span></em>.
+        " );
+        div_msg( 'warn smallskip', "
+          Eine <span style='text-decoration:underline;'><em>Bestellung</em></span> ist damit nicht
+          verbunden, das geht <em><span style='text-decoration:underline;'>nur<span></em>
+          mit den Knöpfen <span class='button'>&lt;</span> und <span class='button'>&gt;</span> oben im Formular!
+        " );
+        medskip();
         select_products_not_in_list($bestell_id);
         submission_button( 'Produkt hinzuf&uuml;gen' );
         $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );
