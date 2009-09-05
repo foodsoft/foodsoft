@@ -4346,12 +4346,15 @@ function update_database($version){
       doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockeleinlage` decimal(8,2) default '0.00'"
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table gruppenmitglieder"
       );
-      doSql( "UPDATE `gruppenmitglieder` SET sockeleinlage = $sockeleinlage WHERE status = 'aktiv' "
+
+      $sockelbetrag = sql_select_single_field( "SELECT value FROM leitvariable WHERE name = 'sockelbetrag'", 'value' );
+      echo "sockelbetrag: $sockelbetrag";
+      doSql( "UPDATE `gruppenmitglieder` SET sockeleinlage = $sockelbetrag WHERE status = 'aktiv' "
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: set sockeleinlage = $sockelbetrag in gruppenmitglieder"
       );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
-      doSql( "DELETE * FROM leitvariable WHERE name = 'sockelbetrag'" );
+      doSql( "DELETE FROM leitvariable WHERE name = 'sockelbetrag'" );
 
       doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) default '0.00'"
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column aufschlag to table gesamtbestellungen"
