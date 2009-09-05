@@ -2794,14 +2794,16 @@ function transaktion_typ_string( $typ ) {
 //
 define( 'OPTION_WAREN_NETTO_SOLL', 1 );         /* waren ohne pfand */
 define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );
-define( 'OPTION_ENDPREIS_SOLL', 3 );            /* waren brutto inclusive pfand (nur gruppenseitig sinnvoll) */
-define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 4 );   /* schuld aus kauf voller pfandverpackungen */
-define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 5 );
-define( 'OPTION_PFAND_VOLL_ANZAHL', 6 );
-define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 7 );   /* schuld aus rueckgabe leerer pfandverpackungen */
-define( 'OPTION_PFAND_LEER_NETTO_SOLL', 8 ); 
-define( 'OPTION_PFAND_LEER_ANZAHL', 9 );
-define( 'OPTION_EXTRA_BRUTTO_SOLL', 10 );   /* sonstiges: Rabatte, Versandkosten, ... (nur lieferantenseitig sinnvoll) */
+define( 'OPTION_WAREN_AUFSCHLAG_SOLL', 3 );   /* Aufschlag zur Kostendeckung der FC */
+define( 'OPTION_ENDPREIS_SOLL', 4 );          /* waren brutto inclusive pfand und aufschlag (nur gruppenseitig sinnvoll) */
+define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 );   /* schuld aus kauf voller pfandverpackungen */
+define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 15 );
+define( 'OPTION_PFAND_VOLL_ANZAHL', 16 );
+define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 17 );   /* schuld aus rueckgabe leerer pfandverpackungen */
+define( 'OPTION_PFAND_LEER_NETTO_SOLL', 18 ); 
+define( 'OPTION_PFAND_LEER_ANZAHL', 19 );
+define( 'OPTION_EXTRA_BRUTTO_SOLL', 20 );   /* sonstiges: Rabatte, Versandkosten, ... (nur lieferantenseitig sinnvoll) */
+
 
 
 /* select_bestellungen_soll_gruppen:
@@ -2814,7 +2816,12 @@ define( 'OPTION_EXTRA_BRUTTO_SOLL', 10 );   /* sonstiges: Rabatte, Versandkosten
 function select_bestellungen_soll_gruppen( $art, $using = array() ) {
   switch( $art ) {
     case OPTION_ENDPREIS_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
+                                                                         * ( 1.0 + ( gesamtbestellungen.aufschlag + produktpreise.mwst ) / 100.0 ) ) )";
+      $query = 'waren';
+      break;
+    case OPTION_WAREN_AUFSCHLAG_SOLL:
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + gesamtbestellungen.aufschlag / 100.0 ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_BRUTTO_SOLL:
@@ -2990,6 +2997,10 @@ function select_waren_soll_gruppen( $using = array() ) {
   return select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, $using );
 }
 
+function select_waren_aufschlag_gruppen( $using = array() ) {
+  return select_bestellungen_soll_gruppen( OPTION_WAREN_AUFSCHLAG_SOLL, $using );
+}
+
 function select_waren_soll_lieferanten( $using = array() ) {
   return select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, $using );
 }
@@ -3024,6 +3035,7 @@ function select_soll_lieferanten( $using = array() ) {
 function select_soll_gruppen( $using = array() ) {
   return " SELECT (
       (" .select_waren_soll_gruppen( $using ). ")
+    + (" .select_aufschlag_soll_gruppen( $using ). ")
     + (" .select_pfand_soll_gruppen( $using ). ")
     + (" .select_transaktionen_soll_gruppen( $using ). ")
   ) ";
@@ -3137,6 +3149,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
+         , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_AUFSCHLAG_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_aufschlag_soll
          , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_NETTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_netto_soll
          , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_brutto_soll
          , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_voll_brutto_soll
@@ -4339,6 +4352,11 @@ function update_database($version){
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
       doSql( "DELETE * FROM leitvariable WHERE name = 'sockelbetrag'" );
+
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) default '0.00'"
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column aufschlag to table gesamtbestellungen"
+      );
+      sql_insert( 'leitvariable', array( 'name' => 'aufschlag_default', 'value' => 0.0 ) );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
       logger( 'update_database: update to version 12 successful' );

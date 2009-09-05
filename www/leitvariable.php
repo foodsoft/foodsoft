@@ -46,7 +46,7 @@ $leitvariable = array(
   , 'comment' => '"Gesch&auml;ftsanteil", mit dem sich jede Gruppe am Eigenkapital der FoodCoop beteiligt'
   , 'default' => '0.0'
   , 'local' => false
-  , 'runtime_editable' => 0
+  , 'runtime_editable' => 1
   , 'cols' => '8'
   )
 , 'sockelbetrag_mitglied' => array(
@@ -54,7 +54,15 @@ $leitvariable = array(
   , 'comment' => '"Gesch&auml;ftsanteil", mit dem sich jedes Mitglied am Eigenkapital der FoodCoop beteiligt'
   , 'default' => '6.00'
   , 'local' => false
-  , 'runtime_editable' => 0
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
+, 'aufschlag_default' => array(
+    'meaning' => 'Preisaufschlag zur Kostendeckung'
+  , 'comment' => 'Prozentualer Aufschlag auf alle Preise zur Deckung der Selbstkosten der Foodcoop'
+  , 'default' => '0.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
   , 'cols' => '8'
   )
 , 'mwst_default' => array(

@@ -457,6 +457,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
+    , 'aufschlag' => array(
+        'type' =>  "decimal(4,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.0'
+      , 'extra' => ''
+      )
     , 'abrechnung_datum' => array(
         'type' =>  "date"
       , 'null' => 'NO'
