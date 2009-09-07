@@ -4308,18 +4308,22 @@ function update_database($version){
       doSql( "ALTER TABLE `produktpreise` MODIFY column `lv_faktor` decimal(9,3) default '1.0'"
       , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: modify column lv_faktor"
       );
-      // gebindegroesse bleibt erstmal pro v-einheit!
+      // gebindegroesse bleibt erstmal pro v-einheit (wie auch das pfand!)
       // doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` decimal(9,3) default '1.0'"
       // , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: modify column gebindegroesse"
       // );
       $preise = mysql2array( doSql( "SELECT * FROM produktpreise" ) );
       foreach( $preise as $p ) {
         $id = $p['id'];
+        $preis = $p['preis'];
         preisdatenSetzen( & $p );
+        $lv_faktor = $p['lv_faktor'];
+        $lieferpreis = ( $preis - $p['pfand'] ) * $lv_faktor / ( 1.0 + $p['mwst'] / 100.0 );
         /// $gebindegroesse = mult2string( $p['gebindegroesse'] / $p['lv_faktor'] );
-        sql_update( 'produktpreise', $id, array( 'lieferpreis' => $p['nettolieferpreis']
-                                               , 'lv_faktor' => $p['lv_faktor']
-                                               , /* 'gebindegroesse' => $gebindegroesse */ ) );
+        sql_update( 'produktpreise', $id, array( 'lieferpreis' => $lieferpreis
+                                               , 'lv_faktor' => $lv_faktor
+                                            /* , 'gebindegroesse' => $gebindegroesse */
+                                               ) );
       }
       doSql( "ALTER TABLE `produktpreise` DROP column `preis` "
       , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: drop column preis"
