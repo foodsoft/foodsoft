@@ -17,6 +17,7 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
   $endzeit = $bestellung['bestellende'];
   $lieferung = $bestellung['lieferung'];
   $bestellname = $bestellung['name'];
+  $aufschlag = $bestellung['aufschlag'];
   $status = $bestellung['state'];
   $lieferanten_id = $bestellung['lieferanten_id'];
 } else {  // neue bestellvorlage erstellen:
@@ -24,6 +25,7 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
   $endzeit   = date("Y-m-d 20:00:00");
   $lieferung = date("Y-m-d H:i:s");
   $bestellname = "";
+  $aufschlag = $aufschlag_default;
   $status = STATUS_BESTELLEN;
   need_http_var( 'lieferanten_id', 'U', true );
   get_http_var( 'bestellliste[]','U' );
@@ -51,6 +53,7 @@ if( $action == 'save' ) {
   need_http_var("lieferung_month",'u');
   need_http_var("lieferung_year",'u');
   need_http_var("bestellname",'H');
+  need_http_var("aufschlag",'f');
 
   $startzeit = "$startzeit_year-$startzeit_month-$startzeit_day $startzeit_hour:$startzeit_minute:00";
   $endzeit = "$endzeit_year-$endzeit_month-$endzeit_day $endzeit_hour:$endzeit_minute:00";
@@ -61,14 +64,14 @@ if( $action == 'save' ) {
 
   if( $problems == '' ) {
     if( $bestell_id ) {
-      if( sql_update_bestellung( $bestellname, $startzeit, $endzeit, $lieferung, $bestell_id ) ) {
+      if( sql_update_bestellung( $bestellname, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag ) ) {
         $done = true;
         $msg .= "<div class='ok'>Änderungen gespeichert!</div>";
       } else {
         $problems .= "<div class='warn'>Änderung fehlgeschlagen!</div>";
       }
     } else {
-      $bestell_id = sql_insert_bestellung($bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id );
+      $bestell_id = sql_insert_bestellung( $bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag );
 
       // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
       foreach( $bestellliste as $produkt_id ) {
@@ -94,9 +97,10 @@ open_form( '', 'action=save' );
       form_row_date_time( 'Startzeit:', ( $editable ? 'startzeit' : false ), $startzeit );
       form_row_date_time( 'Ende:', ( $editable ? 'endzeit' : false ), $endzeit );
       form_row_date( 'Lieferung:', ( $editable ? 'lieferung' : false ), $lieferung );
+      form_row_betrag( 'Aufschlag:', ( $editable ? 'aufschlag' : false ), $aufschlag ); echo '%';
       open_tr();
         open_td('right', "colspan='2'");
-          if( $editable )
+          if( $editable and ! $done )
             submission_button();
           else
             close_button();

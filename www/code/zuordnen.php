@@ -1676,20 +1676,22 @@ function select_gesamtbestellungen_unverbindlich() {
 /**
  *  Gesamtbestellung einfügen
  */
-function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $lieferanten_id ){
+function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag ){
   nur_fuer_dienst(4);
   return sql_insert( 'gesamtbestellungen', array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
   , 'lieferung' => $lieferung, 'lieferanten_id' => $lieferanten_id
+  , 'aufschlag' => $aufschlag
   , 'rechnungsstatus' => STATUS_BESTELLEN
   ) );
 }
 
-function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id ){
+function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag ){
   nur_fuer_dienst(4);
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
+  , 'aufschlag' => $aufschlag
   ) );
 }
 
