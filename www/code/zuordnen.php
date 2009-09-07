@@ -2819,12 +2819,13 @@ define( 'OPTION_EXTRA_BRUTTO_SOLL', 20 );   /* sonstiges: Rabatte, Versandkosten
 function select_bestellungen_soll_gruppen( $art, $using = array() ) {
   switch( $art ) {
     case OPTION_ENDPREIS_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
-                                                                         * ( 1.0 + ( gesamtbestellungen.aufschlag + produktpreise.mwst ) / 100.0 ) ) )";
+      $expr = "( -1.0 * bestellzuordnung.menge *
+                   ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
+                                           * ( 1.0 + ( gesamtbestellungen.aufschlag + produktpreise.mwst ) / 100.0 ) ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_AUFSCHLAG_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + gesamtbestellungen.aufschlag / 100.0 ) )";
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( gesamtbestellungen.aufschlag / 100.0 ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_BRUTTO_SOLL:
