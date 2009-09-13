@@ -2168,7 +2168,7 @@ function basar_wert_brutto( $bestell_id = 0 ) {
   );
 }
 
-function muell_wert_brutto( $bestell_id = 0 ) {
+function muell_wert_brutto( $bestell_id ) {
   return sql_select_single_field(
     " SELECT IFNULL( sum( bestellprodukte.bruttopreis * bestellprodukte.muellmenge ), 0.0 ) as muell
       FROM ( " .select_bestellung_produkte( $bestell_id ). " ) AS bestellprodukte "
@@ -2176,13 +2176,14 @@ function muell_wert_brutto( $bestell_id = 0 ) {
   );
 }
 
-function verteilung_wert_brutto( $bestell_id = 0 ) {
+function verteilung_wert_brutto( $bestell_id ) {
   return sql_select_single_field(
     " SELECT IFNULL( sum( bestellprodukte.bruttopreis * bestellprodukte.verteilmenge ), 0.0 ) as wert
       FROM ( " .select_bestellung_produkte( $bestell_id ). " ) AS bestellprodukte "
   , 'wert'
   );
 }
+
 
 
 /**
@@ -3046,6 +3047,19 @@ function select_soll_gruppen( $using = array() ) {
 }
 
 
+function sql_aufschlag_soll( $bestell_id = 0, $gruppen_id = 0 ) {
+  $cond_bestellungen = ( $bestell_id ? "( gesamtbestellungen.id = $bestell_id )" : "TRUE" );
+  $cond_gruppen = ( $gruppen_id ? "( bestellgruppen.id = $gruppen_id )" : "TRUE" );
+  return sql_select_single_field(
+    " SELECT sum(
+        (" .select_waren_aufschlag_gruppen( array( 'gesamtbestellungen', 'bestellgruppen' ) ). ")
+      ) as aufschlag
+      FROM gesamtbestellungen
+      INNER JOIN bestellgruppen
+      WHERE $cond_bestellungen AND $cond_gruppen
+    ", 'aufschlag'
+  );
+}
 
 function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'bestellgruppen.id' ) {
   $on = '';
