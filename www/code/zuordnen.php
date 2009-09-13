@@ -1842,11 +1842,11 @@ function select_bestellung_produkte( $bestell_id, $gruppen_id = 0, $produkt_id =
   // basar mit art=0 zaehlt wie gewoehnliche festmenge!
   $basarbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,1,0)
-                               * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZ.",1,0) ), 0.0 )
+                               * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG.",1,0) ), 0.0 )
   ";
   $toleranzbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,0,1)
-                               * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZ.",1,0) ), 0.0 )
+                               * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG.",1,0) ), 0.0 )
   ";
   if( $gruppen_id != $basar_id ) {
     $verteilmenge_expr = "
@@ -2074,7 +2074,7 @@ function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
     FROM bestellzuordnung
     JOIN gruppenbestellungen
       ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-    WHERE ( bestellzuordnung.art = ".BESTERLLZUORDNUNG_ART_ZUTEILUNG." )
+    WHERE ( bestellzuordnung.art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG." )
           AND ( bestellzuordnung.produkt_id = $produkt_id )
           AND ( gruppenbestellungen.gesamtbestellung_id = $bestell_id )
          $more_where
