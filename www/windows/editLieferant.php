@@ -14,7 +14,7 @@ $problems = '';
 
 get_http_var( 'lieferanten_id', 'u', 0, true );
 
-$row = $lieferanten_id ? sql_getLieferant( $lieferanten_id ) : false;
+$row = $lieferanten_id ? sql_lieferant( $lieferanten_id ) : false;
 get_http_var('name','H',$row);
 get_http_var('adresse','H',$row);
 get_http_var('ansprechpartner','H',$row);

@@ -17,7 +17,7 @@ need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
 $bestellung = sql_bestellung( $bestell_id );
 $bestellung_name = $bestellung['name'];
 $lieferant_id = $bestellung['lieferanten_id'];
-$lieferant = sql_getLieferant( $lieferant_id );
+$lieferant = sql_lieferant( $lieferant_id );
 $lieferant_name = $lieferant['name'];
 
 //

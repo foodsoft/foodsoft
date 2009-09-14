@@ -1487,7 +1487,7 @@ function sql_lieferanten( $id = false ) {
   return mysql2array( doSql( select_lieferanten( $id ) ) );
 }
 
-function sql_getLieferant( $id ) {
+function sql_lieferant( $id ) {
   return sql_select_single_row( select_lieferanten( $id ) );
 }
 
