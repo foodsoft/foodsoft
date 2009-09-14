@@ -34,10 +34,11 @@ if( $action == 'save' ) {
     if( $rechnung_abschluss == 'reopen' ) {
       sql_change_bestellung_status( $bestell_id, STATUS_VERTEILT );
     }
-  } else {
+  } else if( $status < STATUS_ABGERECHNET ) {
     get_http_var( 'rechnungsnummer', 'H', '' ) or $rechnungsnummer = '';
     get_http_var( 'extra_text', 'H', '' ) or $extra_text = '';
-    need_http_var( 'extra_soll', 'f', 0.0 );
+    need_http_var( 'extra_soll', 'f' );
+    get_http_var( 'aufschlag', 'f', $bestellung['aufschlag'] );
     sql_update( 'gesamtbestellungen', $bestell_id, array(
       'rechnungsnummer' => $rechnungsnummer
     , 'extra_text' => $extra_text
@@ -64,6 +65,8 @@ $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 $warenwert_verteilt_brutto = verteilung_wert_brutto( $bestell_id ); 
 $warenwert_muell_brutto = muell_wert_brutto( $bestell_id ); 
 $warenwert_basar_brutto = basar_wert_brutto( $bestell_id ); 
+
+$aufschlag_soll = sql_aufschlag_soll( $bestell_id );
 
 
 open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung $bestellung_name"
@@ -126,6 +129,17 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_td( 'bold number', '', price_view( -$gruppenpfand['pfand_leer_brutto_soll'] ) );
 }
 
+if( $bestellung['aufschlag'] > 0 ) {
+  // open_tr();
+  //  open_th( '', "colspan='5'" );
+  open_tr();
+    open_td( '', "colspan='2'"
+      , "Aufschlag " . price_view( $bestellung['aufschlag'], ( $editable ? 'aufschlag' : false ) ) . "% fuer Bestellgruppen:"
+    );
+    open_td( 'bold number', '', price_view( -$aufschlag_soll ) );
+    open_td( '', "colspan='2'" );
+}
+
   //
   // lieferantenteil:
   //
@@ -186,7 +200,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
         ?> Abrechnung durchgeführt: <?
          echo sql_dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ) .", "
               . $bestellung['abrechnung_datum'];
-        if( hat_dienst(4) ) {
+        if( hat_dienst(4) && ( $status == STATUS_ABGERECHNET ) ) {
           qquad();
           echo "Nochmal öffnen:
             <input type='checkbox' name='rechnung_abschluss' value='reopen' $input_event_handlers>";
