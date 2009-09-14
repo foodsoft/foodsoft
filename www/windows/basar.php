@@ -27,7 +27,7 @@ if( $action == 'basarzuteilung' ) {
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
         $pr = sql_bestellvorschlag( $id, ${"produkt$i"} );
-        preisdatenSetzen( & $pr );
+        // preisdatenSetzen( & $pr );
         $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
         if( $gruppen_menge > 0 or ( $gruppen_id == $muell_id ) )
           sql_basar2group( $gruppen_id, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );

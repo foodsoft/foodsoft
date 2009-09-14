@@ -1708,7 +1708,7 @@ function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
 }
 
 function sql_bestellvorschlag( $bestell_id, $produkt_id ) {
-  return sql_select_single_row( "
+  $row = sql_select_single_row( "
       SELECT *
                , produktpreise.id as preis_id
                , produkte.name as produkt_name
@@ -1726,6 +1726,8 @@ function sql_bestellvorschlag( $bestell_id, $produkt_id ) {
       WHERE     gesamtbestellungen.id='$bestell_id'
             AND bestellvorschlaege.produkt_id='$produkt_id'
   " );
+  preisdatenSetzen( & $row );
+  return $row;
 }
 
 function sql_references_gesamtbestellung( $bestell_id ) {
@@ -1737,10 +1739,6 @@ function sql_references_gesamtbestellung( $bestell_id ) {
   );
 }
 
-function sql_bestellpreis( $bestell_id, $produkt_id ) {
-	$row = sql_bestellvorschlag($bestell_id, $produkt_id);
-	return $row['preis_id'];
-}
 
 function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
   need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()) or ($gruppe == sql_basar_id())

@@ -1135,7 +1135,7 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $vorschlag = sql_bestellvorschlag($bestell_id,$produkt_id);
-  preisdatenSetzen( & $vorschlag );
+  // preisdatenSetzen( & $vorschlag );
   $verteilmult = $vorschlag['kan_verteilmult'];
   $verteileinheit = $vorschlag['kan_verteileinheit'];
   $preis = $vorschlag['preis'];
