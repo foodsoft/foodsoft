@@ -329,7 +329,7 @@ function dienst_view($row, $gruppe, $show_buttons = TRUE, $area="dienstplan"){
 function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
      global $hat_dienst_V;
      global $login_gruppen_id;
-     $gruppen_members = sql_gruppen_members($login_gruppen_id);
+     $gruppen_members = sql_gruppe_mitglieder( $login_gruppen_id );
      $gruppen_edit = $row['gruppen_id']%1000==$login_gruppen_id && count($gruppen_members) > 1;
      //Editiermöglichkeit für Dienst V und die Gruppen jeweils für 
      //sich selbst
@@ -346,7 +346,7 @@ function show_dienst_gruppe($row, $color_use, $area="dienstplan"){
           echo "                  <select name=\"person_neu\" onchange=\"document.personAendern_".$row['id'].".submit()\">\n";
           echo "                  	<option value='0'>Keine aktive Person</option>\n";
 	  foreach($gruppen_auswahl as $gruppe){
-		  foreach(sql_gruppen_members($gruppe['id']) as $member){
+		  foreach( sql_gruppe_mitglieder( $gruppe['id'] ) as $member){
 		          $selected="";
 			  if($row['gruppenmitglieder_id']==$member['id']){
 				  $selected=" selected ";
@@ -1542,7 +1542,7 @@ function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $hea
       open_th( '', '', 'Aktionen' );
   }
 
-  foreach( sql_gruppen_members( $gruppen_id ) as $row ) {
+  foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
     open_tr();
       $id = $row['id'];
       open_td( '', '', string_view( $row['vorname'], 16, $editable ? "vorname_$id" : false ) );

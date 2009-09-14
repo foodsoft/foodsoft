@@ -151,7 +151,7 @@ open_table('layout hfill' );
             open_td();
               echo gruppe_view( $trans['gruppen_id'] );
               open_ul();
-                foreach( sql_gruppen_members($trans['gruppen_id']) as $pers )
+                foreach( sql_gruppe_mitglieder( $trans['gruppen_id'] ) as $pers )
                   open_li( '', '', $pers["vorname"]." ".$pers["name"] );
               close_ul();
             open_td( 'number', '', price_view( $trans['summe'] ) );

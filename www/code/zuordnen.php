@@ -401,7 +401,7 @@ function sql_dienst_uebernehmen($dienst){
        $status = "Akzeptiert";
   }
 
-  $person = current( sql_gruppen_members($login_gruppen_id) );
+  $person = current( sql_gruppe_mitglieder( $login_gruppen_id ) );
   sql_create_dienst2($person["id"],$row["dienst"], "'".$row["lieferdatum"]."'", $status);
 
 }
@@ -1114,16 +1114,8 @@ function sql_muell_id(){
   return $muell_id;
 }
 
-function sql_gruppen_members( $gruppen_id, $member_id = FALSE){ 
-  $sql = "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' AND gruppen_id = $gruppen_id";
-  if($member_id!==FALSE){
-	  $sql.=" AND id = ".mysql_escape_string($member_id);
-  }
-  $result = mysql2array( doSql($sql, LEVEL_ALL) );
-  if($member_id!==FALSE){
-    $result = current($result);
-  }
-  return $result;
+function sql_gruppe_mitglieder( $gruppen_id ) { 
+  return mysql2array( doSql( "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' AND gruppen_id = $gruppen_id" ) );
 }
 
 function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {

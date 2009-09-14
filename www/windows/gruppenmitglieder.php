@@ -42,7 +42,7 @@ switch( $action ) {
     break;
   case 'edit':
     need( $edit_names, "keine Berechtigung!" );
-    foreach( sql_gruppen_members( $gruppen_id ) as $row ) {
+    foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
       $id = $row['id'];
       get_http_var( "vorname_$id", 'H', $row['vorname'] );
       get_http_var( "name_$id", 'H', $row['name'] );
