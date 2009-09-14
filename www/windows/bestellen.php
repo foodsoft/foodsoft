@@ -23,7 +23,7 @@ if( $bestell_id ) {
     $bestell_id = 0;
 }
 
-$laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN );
+$laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
 if( count( $laufende_bestellungen ) < 1) {
   div_msg( 'warn', "Zur Zeit laufen leider keine Bestellungen! <a href='index.php'>Zurück...</a>" );
   return;

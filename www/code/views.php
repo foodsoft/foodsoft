@@ -1476,7 +1476,7 @@ function auswahl_konto( $selected = 0 ) {
 
 function auswahl_bestellung( $bestell_id = 0 ) {
   global $mysqljetzt;
-  $laufende_bestellungen = sql_bestellungen( STATUS_BESTELLEN );
+  $laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
   if( !  $laufende_bestellungen ) {
     div_msg( 'kommentar', 'Zur Zeit laufen leider keine Bestellungen!' );
     return;

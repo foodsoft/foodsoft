@@ -1621,32 +1621,8 @@ function sql_change_bestellung_status($bestell_id, $state){
   return $result;
 }
 
-function sql_bestellungen($state = FALSE, $use_Date = FALSE, $id = FALSE){
-  $where = '';
-  $add_and = 'WHERE';
-  if($use_Date!==FALSE){
-    $where .= " $add_and (NOW() BETWEEN bestellstart AND bestellende)";
-    $add_and = 'AND';
-  }
-  if( $state ) {
-    $add_or = '';
-    $where .= " $add_and ( ";
-    if(!is_array($state)){
-      $where .= "rechnungsstatus = $state";
-    } else {
-      foreach($state as $st){
-        $where .= " $add_or (rechnungsstatus = $st)";
-        $add_or = 'OR';
-      }
-    }
-    $where .= ')';
-    $add_and = 'AND';
-  }
-  if($id!==FALSE){
-    $where.= " $add_and (id =$id)";
-    $add_and = 'AND';
-  }
-  return mysql2array( doSql( "SELECT * FROM gesamtbestellungen $where ORDER BY bestellende DESC,name" ) );
+function sql_bestellungen( $filter = 'true', $orderby = 'bestellende DESC, name' ) {
+  return mysql2array( doSql( "SELECT * FROM gesamtbestellungen WHERE $filter ORDER BY $orderby" ) );
 }
 
 /* function select_gesamtbestellungen_schuldverhaeltnis():
