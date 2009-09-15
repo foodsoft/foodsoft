@@ -1523,48 +1523,64 @@ function dienst_selector($pre_select, $id=""){
   $s .= "</select>";
   return $s;
 }
-/**
+
+/*
  * Zeigt die Gruppenmitglieder einer Gruppe als Tabellenansicht an.
  * Argument: sql_members($group_id)
  */
-function membertable_view( $gruppen_id, $editable=FALSE, $super_edit=FALSE, $head=TRUE){
+function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, $head = TRUE ) {
+  $gruppendaten = sql_gruppendaten( $gruppen_id );
   if( $editable or $super_edit )
     open_form( '', 'action=edit' );
 
-  open_table('list');
-  if( $head ) {
-    open_th( '', '', 'Vorname' );
-    open_th( '', '', 'Name' );
-    open_th( '', '', 'Mail' );
-    open_th( '', '', 'Telefon' );
-    open_th( '', '', 'Diensteinteilung' );
-    if($super_edit)
-      open_th( '', '', 'Aktionen' );
-  }
+  open_fieldset( 'small_form', '', $super_edit ? 'Gruppendaten:' : 'Mitglieder:' );
+    if( $super_edit ) {
+      open_div( 'medskip bold' );
+        open_span( 'left', '', "Gruppenname: " . string_view( sql_gruppenname( $gruppen_id ), 24, 'gruppenname' ) );
+        open_span( 'qquad', '', "Sockeleinlage für Gruppe: " . price_view( $gruppendaten['sockeleinlage_gruppe'] ) );
+      close_div();
+      medskip();
+    }
+    open_table('list');
+    if( $head ) {
+      open_th( '', '', 'Vorname' );
+      open_th( '', '', 'Name' );
+      open_th( '', '', 'Mail' );
+      open_th( '', '', 'Telefon' );
+      open_th( '', '', 'Diensteinteilung' );
+      if($super_edit)
+        open_th( '', '', 'Sockeleinlage' );
+        open_th( '', '', 'Aktionen' );
+    }
+  
+    foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
+      open_tr();
+        $id = $row['id'];
+        open_td( '', '', string_view( $row['vorname'], 10, $editable ? "vorname_$id" : false ) );
+        open_td( '', '', string_view( $row['name'], 16, $editable ? "name_$id" : false ) );
+        open_td( '', '', string_view( $row['email'], 20, $editable ? "email_$id" : false ) );
+        open_td( '', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
+  
+        if($super_edit){
+          open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
+          open_td( '', '', price_view( $row['sockeleinlage'], 12 ) );
+          open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Gruppenmitglied löschen'
+                                           , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
+                                    , array( 'action' => 'delete', 'person_id' => $id ) ) );
+        } else {
+          open_td( '', '',  $row['diensteinteilung'] );
+        }
+    }
+    close_table();
 
-  foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
-    open_tr();
-      $id = $row['id'];
-      open_td( '', '', string_view( $row['vorname'], 16, $editable ? "vorname_$id" : false ) );
-      open_td( '', '', string_view( $row['name'], 16, $editable ? "name_$id" : false ) );
-      open_td( '', '', string_view( $row['email'], 16, $editable ? "email_$id" : false ) );
-      open_td( '', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
-
-      if($super_edit){
-        open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
-        open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Gruppenmitglied löschen'
-                                         , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
-                                  , array( 'action' => 'delete', 'person_id' => $id ) ) );
-      } else {
-        open_td( '', '',  $row['diensteinteilung'] );
-      }
-  }
-  if($super_edit or $editable) {
-    open_tr();
-      open_td( '', "colspan='6'" );
+    if($super_edit or $editable) {
+      open_div( 'right medskip' );
         submission_button();
-  }
-  close_table();
+      close_div();
+    }
+
+  close_fieldset();
+
   if( $editable or $super_edit )
     close_form();
 }

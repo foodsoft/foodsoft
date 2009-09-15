@@ -20,6 +20,7 @@ if( hat_dienst(5) and ! $readonly ) {
   $edit_names = TRUE;
   $edit_dienst_einteilung=TRUE;
   $edit_pwd = TRUE;
+  $edit_gruppenname = TRUE;
 }
 
 $pwmsg = '';
@@ -55,6 +56,10 @@ switch( $action ) {
       }
       sql_update_gruppen_member( $id, ${"name_$id"}, ${"vorname_$id"}, ${"email_$id"}, ${"telefon_$id"}, ${"dienst_$id"} );
     }
+    if( hat_dienst(5) ) {
+      get_http_var( 'gruppenname', 'H', sql_gruppenname( $gruppen_id ) );
+      sql_update( 'bestellgruppen', $gruppen_id, array( 'name' => $gruppenname ) );
+    }
     break;
   case 'delete':
     fail_if_readonly();
@@ -74,15 +79,22 @@ switch( $action ) {
     break;
 }
 
-open_fieldset( 'small_form', '', 'Gruppe '.sql_gruppenname($gruppen_id).' ('.sql_gruppennummer($gruppen_id).')' );
+$gruppenname = sql_gruppenname( $gruppen_id );
 
+open_fieldset( 'small_form', '', 'Gruppe '.$gruppenname.' ('.sql_gruppennummer($gruppen_id).')' );
+
+medskip();
+
+membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
+
+medskip();
 if( hat_dienst(5) and ! $readonly ) {
   open_fieldset( 'small_form', '', 'Neues Gruppenmitglied eintragen', 'off' );
     open_form( '', 'action=insert' );
       open_table('layout');
-        form_row_text( 'Vorname:', 'newVorname', 20 );
+        form_row_text( 'Vorname:', 'newVorname', 16 );
         form_row_text( 'Name:', 'newName', 20 );
-        form_row_text( 'Email:', 'newMail', 20 );
+        form_row_text( 'Email:', 'newMail', 24 );
         form_row_text( 'Telefon:', 'newTelefon', 20 );
         open_tr(); open_td( 'label', '', 'Diensteinteilung:'); open_td( 'kbd', '', dienst_selector('') ); 
         open_tr(); open_td( 'right', "colspan='2'" ); submission_button();
@@ -107,8 +119,6 @@ if( $edit_pwd ) {
   close_fieldset();
 }
 medskip();
-
-membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
 
 if( hat_dienst(4,5) or ( $gruppen_id == $login_gruppen_id ) )
   open_div( 'smallskip right', '', fc_link( 'gruppenkonto', "gruppen_id=$gruppen_id,text=Gruppenkonto..." ) );
