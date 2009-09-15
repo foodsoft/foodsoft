@@ -1176,7 +1176,7 @@ function sql_bestellgruppen( $filter = '', $order = 'NOT(aktiv), gruppennummer' 
 }
 
 function sql_aktive_bestellgruppen( $order = 'gruppennummer' ) {
-  return sql_bestellgrupen( 'bestellgruppen.aktiv', $order );
+  return sql_bestellgruppen( 'bestellgruppen.aktiv', $order );
 }
 
 function sql_gruppendaten( $gruppen_id, $allow_null = false ) {
@@ -3006,8 +3006,8 @@ function select_soll_lieferanten( $using = array() ) {
 function select_soll_gruppen( $using = array() ) {
   return " SELECT (
       (" .select_waren_soll_gruppen( $using ). ")
-    + (" .select_waren_aufschlag_gruppen( $using ). ")
     + (" .select_pfand_soll_gruppen( $using ). ")
+    + (" .select_waren_aufschlag_gruppen( $using ). ")
     + (" .select_transaktionen_soll_gruppen( $using ). ")
   ) ";
 }
