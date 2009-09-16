@@ -1111,7 +1111,7 @@ function distribution_tabellenkopf() {
     open_th(''       ,''           ,'Gruppe');
     open_th('oneline','colspan="2"','bestellt (toleranz)');
     open_th(''       ,'colspan="2"','geliefert');
-    open_th(''       ,''           ,'Gesamtpreis');
+    open_th(''       ,"title='Endpreis: mit Pfand und MWSt, ohne FC-Aufschlag'",'Gesamtpreis');
   close_tr();
 }
 
@@ -1124,8 +1124,8 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
          'text' => $produkt['produkt_name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
       close_div();
       open_div('small');
-        printf( "Preis: %.2lf / %s, Produktgruppe: %s"
-          , $produkt['preis']
+        printf( "Nettopreis: %.2lf / %s, Produktgruppe: %s"
+          , $produkt['nettopreis']
           , $produkt['verteileinheit']
           , $produkt['produktgruppen_name']
         );
@@ -1135,17 +1135,16 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $vorschlag = sql_bestellvorschlag($bestell_id,$produkt_id);
-  // preisdatenSetzen( & $vorschlag );
   $verteilmult = $vorschlag['kan_verteilmult'];
   $verteileinheit = $vorschlag['kan_verteileinheit'];
-  $preis = $vorschlag['preis'];
+  $endpreis = $vorschlag['endpreis'];
   $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
 
   open_tr('summe');
     open_th('', "colspan='3'", 'Liefermenge:' );
     open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
     open_td('unit','',$verteileinheit );
-    open_td('number','', price_view( $preis * $liefermenge / $verteilmult ) );
+    open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult ) );
   close_tr();
 
   $basar_id = sql_basar_id();
@@ -1182,20 +1181,20 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
       open_td( 'unit', '', $verteileinheit );
       open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $preis * $verteilmenge / $verteilmult ) );
+      open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult ) );
   }
   open_tr('summe');
     open_td('', "colspan='3'", "M&uuml;ll:" );
     open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $preis * $muellmenge / $verteilmult ) );
+    open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult ) );
   open_tr('summe');
     open_td('', '', "Basar:" );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'mult', '', mult_view( $basar_verteilmenge ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $preis * $basar_verteilmenge / $verteilmult ) );
+    open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
 }
 
@@ -1548,9 +1547,10 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
       open_th( '', '', 'Mail' );
       open_th( '', '', 'Telefon' );
       open_th( '', '', 'Diensteinteilung' );
-      if($super_edit)
+      if($super_edit) {
         open_th( '', '', 'Sockeleinlage' );
         open_th( '', '', 'Aktionen' );
+      }
     }
   
     foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
