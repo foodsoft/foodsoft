@@ -3,58 +3,7 @@
 // db version 12
 
 $tables = array(
-  'dienste' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'dienstkontrollblatt_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'YES'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'dienst' => array(
-        'type' =>  "enum('1/2','3','4','5','freigestellt')"
-      , 'null' => 'NO'
-      , 'default' => '1/2'
-      , 'extra' => ''
-      )
-    , 'lieferdatum' => array(
-        'type' =>  "date"
-      , 'null' => 'NO'
-      , 'default' => '0000-00-00'
-      , 'extra' => ''
-      )
-    , 'status' => array(
-        'type' =>  "enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')"
-      , 'null' => 'NO'
-      , 'default' => 'Vorgeschlagen'
-      , 'extra' => ''
-      )
-    , 'bemerkung' => array(
-        'type' =>  "text"
-      , 'null' => 'YES'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'gruppenmitglieder_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'dienst' )
-    )
-  )
-, 'bankkonten' => array(
+  'bankkonten' => array(
     'updownload' => true
   , 'cols' => array(
       'id' => array(
@@ -305,6 +254,58 @@ $tables = array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'secondary' => array( 'unique' => 0, 'collist' => 'art, produkt_id, gruppenbestellung_id' )
       , 'nochnindex' => array( 'unique' => 0, 'collist' => 'produkt_id, gruppenbestellung_id' )
+      , 'undnocheiner' => array( 'unique' => 0, 'collist' => 'art, gruppenbestellung_id' )
+    )
+  )
+, 'dienste' => array(
+    'updownload' => true
+  , 'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'dienstkontrollblatt_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'dienst' => array(
+        'type' =>  "enum('1/2','3','4','5','freigestellt')"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'lieferdatum' => array(
+        'type' =>  "date"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'status' => array(
+        'type' =>  "enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'bemerkung' => array(
+        'type' =>  "text"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'gruppenmitglieder_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'mitglied' => array( 'unique' => 0, 'collist' => 'gruppenmitglieder_id' )
     )
   )
 , 'dienstkontrollblatt' => array(
@@ -409,12 +410,6 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'state' => array(
-        'type' =>  "enum('bestellen','beimLieferanten','Verteilt','archiviert')"
-      , 'null' => 'NO'
-      , 'default' => 'bestellen'
-      , 'extra' => ''
-      )
     , 'rechnungssumme' => array(
         'type' =>  "decimal(10,2)"
       , 'null' => 'NO'
@@ -472,7 +467,144 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'state' => array( 'unique' => 0, 'collist' => 'state' )
+      , 'rechnungsstatus' => array( 'unique' => 0, 'collist' => 'rechnungsstatus' )
+    )
+  )
+, 'gruppenbestellungen' => array(
+    'updownload' => true
+  , 'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'bestellgruppen_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'YES'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'gesamtbestellung_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'secondary' => array( 'unique' => 1, 'collist' => 'gesamtbestellung_id, bestellgruppen_id' )
+      , 'gruppe' => array( 'unique' => 0, 'collist' => 'bestellgruppen_id' )
+    )
+  )
+, 'gruppenmitglieder' => array(
+    'updownload' => true
+  , 'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'gruppen_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'name' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'vorname' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'telefon' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'email' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'diensteinteilung' => array(
+        'type' =>  "enum('1/2','3','4','5','freigestellt')"
+      , 'null' => 'NO'
+      , 'default' => 'freigestellt'
+      , 'extra' => ''
+      )
+    , 'rotationsplanposition' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'sockeleinlage' => array(
+        'type' => "decimal(8,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.00'
+      , 'extra' => ''
+      )
+    , 'status' => array(
+        'type' =>  "enum('aktiv','geloescht')"
+      , 'null' => 'NO'
+      , 'default' => 'aktiv'
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'gruppe' => array( 'unique' => 0, 'collist' => 'gruppen_id' )
+    )
+  )
+, 'gruppenpfand' => array(
+    'updownload' => true
+  , 'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'bestell_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'gruppen_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'pfand_wert' => array(
+        'type' =>  "decimal(6,2)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'anzahl_leer' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, gruppen_id' )
+      , 'gruppe' => array( 'unique' => 0, 'collist' => 'gruppen_id' )
     )
   )
 , 'gruppen_transaktion' => array(
@@ -545,145 +677,11 @@ $tables = array(
       , 'tertiary' => array( 'unique' => 0, 'collist' => 'lieferanten_id, kontobewegungs_datum' )
     )
   )
-, 'gruppenbestellungen' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'bestellgruppen_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'gesamtbestellung_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'gesamtbestellung_id, bestellgruppen_id' )
-    )
-  )
-, 'gruppenmitglieder' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'gruppen_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'name' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'vorname' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'telefon' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'email' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'diensteinteilung' => array(
-        'type' =>  "enum('1/2','3','4','5','freigestellt')"
-      , 'null' => 'NO'
-      , 'default' => 'freigestellt'
-      , 'extra' => ''
-      )
-    , 'rotationsplanposition' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'sockeleinlage' => array(
-        'type' => "decimal(8,2)"
-      , 'null' => 'NO'
-      , 'default' => '0.00'
-      , 'extra' => ''
-      )
-    , 'status' => array(
-        'type' =>  "enum('aktiv','geloescht')"
-      , 'null' => 'NO'
-      , 'default' => 'aktiv'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'gruppenpfand' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'bestell_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'gruppen_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'pfand_wert' => array(
-        'type' =>  "decimal(6,2)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'anzahl_leer' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, gruppen_id' )
-    )
-  )
 , 'leitvariable' => array(
     'updownload' => false  // leitvariable werden gesondert behandelt!
   , 'cols' => array(
       'name' => array(
-        'type' =>  "varchar(20)"
+        'type' =>  "varchar(30)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
@@ -814,19 +812,19 @@ $tables = array(
       )
     , 'bestellnummer' => array(
         'type' =>  "bigint(20)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => ''
       , 'extra' => ''
       )
     , 'liefereinheit' => array(
         'type' =>  "varchar(20)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => ''
       , 'extra' => ''
       )
     , 'gebinde' => array(
         'type' =>  "int(11)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => ''
       , 'extra' => ''
       )
@@ -854,7 +852,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'lieferpreis' => array(
+    , 'preis' => array(
         'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
       , 'default' => ''
@@ -917,6 +915,38 @@ $tables = array(
       , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' )
     )
   )
+, 'logbook' => array(
+    'updownload' => true
+  , 'cols' => array(
+      'id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'session_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'time_stamp' => array(
+        'type' =>  "timestamp"
+      , 'null' => 'NO'
+      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'extra' => ''
+      )
+    , 'notiz' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    )
+    , 'indices' => array(
+        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+    )
+  )
 , 'pfandverpackungen' => array(
     'updownload' => true
   , 'cols' => array(
@@ -959,7 +989,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'sort_id' => array( 'unique' => 1, 'collist' => 'sort_id' )
+      , 'sort_id' => array( 'unique' => 0, 'collist' => 'lieferanten_id, sort_id' )
     )
   )
 , 'produkte' => array(
@@ -1047,10 +1077,10 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
-    , 'preis' => array(
-        'type' =>  "decimal(10,4)"
-      , 'null' => 'NO'
-      , 'default' => '0.0000'
+    , 'lieferpreis' => array(
+        'type' =>  "decimal(8,2)"
+      , 'null' => 'YES'
+      , 'default' => '0.00'
       , 'extra' => ''
       )
     , 'zeitstart' => array(
@@ -1085,25 +1115,25 @@ $tables = array(
       )
     , 'verteileinheit' => array(
         'type' =>  "varchar(10)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => '1 ST'
       , 'extra' => ''
       )
     , 'gebindegroesse' => array(
         'type' =>  "int(11)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => '1'
       , 'extra' => ''
       )
     , 'liefereinheit' => array(
         'type' =>  "varchar(10)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => '1 ST'
       , 'extra' => ''
       )
     , 'lv_faktor' => array(
         'type' =>  "decimal(9,3)"
-      , 'null' => 'NO'
+      , 'null' => 'YES'
       , 'default' => '1.0'
       , 'extra' => ''
       )
@@ -1111,38 +1141,6 @@ $tables = array(
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'secondary' => array( 'unique' => 0, 'collist' => 'produkt_id, zeitende' )
-    )
-  )
-, 'transactions' => array(
-    'updownload' => false
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'used' => array(
-        'type' =>  "tinyint(1)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'itan' => array(
-        'type' =>  "varchar(10)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'session_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     )
   )
 , 'sessions' => array(
@@ -1183,8 +1181,8 @@ $tables = array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     )
   )
-, 'logbook' => array(
-    'updownload' => true
+, 'transactions' => array(
+    'updownload' => false
   , 'cols' => array(
       'id' => array(
         'type' =>  "int(11)"
@@ -1192,20 +1190,20 @@ $tables = array(
       , 'default' => ''
       , 'extra' => 'auto_increment'
       )
-    , 'session_id' => array(
-        'type' =>  "int(11)"
+    , 'used' => array(
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    , 'itan' => array(
+        'type' =>  "varchar(10)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'time_stamp' => array(
-        'type' =>  "timestamp"
-      , 'null' => 'NO'
-      , 'default' => 'CURRENT_TIMESTAMP'
-      , 'extra' => ''
-      )
-    , 'notiz' => array(
-        'type' =>  "text"
+    , 'session_id' => array(
+        'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''

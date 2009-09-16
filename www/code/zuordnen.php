@@ -1149,7 +1149,8 @@ function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dien
   ) );
 }
 
-function select_bestellgruppen( $filter = 'true', $more_select = '' ) {
+function select_bestellgruppen( $filter = false ) {
+  $where = ( $filter ? "WHERE ($filter)" : '' );
   return "
     SELECT
       bestellgruppen.name as name
@@ -1162,8 +1163,8 @@ function select_bestellgruppen( $filter = 'true', $more_select = '' ) {
         WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
               AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
     , bestellgruppen.id % 1000 as gruppennummer
-  " . ( $more_select ? ", $more_select" : '' ) . "
-    FROM bestellgruppen WHERE $filter
+    FROM bestellgruppen
+    $where
   ";
 }
 
@@ -1171,7 +1172,7 @@ function select_aktive_bestellgruppen() {
   return select_bestellgruppen( 'bestellgruppen.aktiv' );
 }
 
-function sql_bestellgruppen( $filter = '', $order = 'NOT(aktiv), gruppennummer' ) {
+function sql_bestellgruppen( $filter = 'true', $order = 'NOT(aktiv), gruppennummer' ) {
   return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY $order" ) );
 }
 
@@ -1184,7 +1185,7 @@ function sql_gruppendaten( $gruppen_id, $allow_null = false ) {
 }
 
 function sql_gruppenname($gruppen_id){
-  return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ) , 'name' );
+  return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ), 'name' );
 }
 
 function sql_gruppennummer($gruppen_id){
@@ -1192,7 +1193,7 @@ function sql_gruppennummer($gruppen_id){
 }
 
 function sql_gruppe_aktiv($gruppen_id) {
-  return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ) , 'aktiv' );
+  return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ), 'aktiv' );
 }
 
 /*
@@ -1202,9 +1203,9 @@ function sql_gruppe_aktiv($gruppen_id) {
  * auch pfandrueckgabe zaehlt als teilnahme an einer bestellung
  */
 function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE, $filter = FALSE ){
-  $query = select_bestellgruppen( '', 'gruppenbestellungen.id as gruppenbestellungen_id' )
-  . " INNER JOIN gruppenbestellungen
-      ON ( gruppenbestellungen.bestellgruppen_id = bestellgruppen.id )";
+  $query = select_bestellgruppen()
+           . " INNER JOIN gruppenbestellungen
+               ON ( gruppenbestellungen.bestellgruppen_id = bestellgruppen.id )";
   if( $produkt_id ) {
     $query .= "
       INNER JOIN bestellzuordnung
@@ -2788,7 +2789,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
     case OPTION_ENDPREIS_SOLL:
       $expr = "( -1.0 * bestellzuordnung.menge *
                    ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
-                                           * ( 1.0 + ( gesamtbestellungen.aufschlag + produktpreise.mwst ) / 100.0 ) ) )";
+                                           * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_AUFSCHLAG_SOLL:
@@ -4319,7 +4320,7 @@ function update_database($version){
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table gruppenbestellungen "
       );
 
-      doSql( "ALTER TABLE `Dienste` CHANGE column `ID` `id` int(11)
+      doSql( "ALTER TABLE `Dienste` CHANGE column `ID` `id` int(11) NOT NULL auto_increment
                                   , CHANGE column `Dienst` `dienst` enum('1/2','3','4','5','freigestellt')
                                   , CHANGE column `Lieferdatum` `lieferdatum` date
                                   , CHANGE column `Status` `status` enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')
@@ -4328,10 +4329,10 @@ function update_database($version){
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table Dienste "
       );
 
-      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockeleinlage` decimal(8,2) default '0.00'"
+      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockeleinlage` decimal(8,2) NOT NULL default '0.00'"
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table bestellgruppen"
       );
-      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockeleinlage` decimal(8,2) default '0.00'"
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockeleinlage` decimal(8,2) NOT NULL default '0.00'"
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table gruppenmitglieder"
       );
 
@@ -4340,11 +4341,14 @@ function update_database($version){
       doSql( "UPDATE `gruppenmitglieder` SET sockeleinlage = $sockelbetrag WHERE status = 'aktiv' "
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: set sockeleinlage = $sockelbetrag in gruppenmitglieder"
       );
+      doSql( "ALTER TABLE `leitvariable` MODIFY column `name` varchar(30) NOT NULL default '' "
+      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table leitvariable"
+      );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
       doSql( "DELETE FROM leitvariable WHERE name = 'sockelbetrag'" );
 
-      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) default '0.00'"
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) NOT NULL default '0.00'"
       , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column aufschlag to table gesamtbestellungen"
       );
       sql_insert( 'leitvariable', array( 'name' => 'aufschlag_default', 'value' => 0.0 ) );
@@ -4352,6 +4356,53 @@ function update_database($version){
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
       logger( 'update_database: update to version 12 successful' );
 
+  case 12:
+
+      doSql( "ALTER TABLE `bestellzuordnung` ADD INDEX `undnocheiner` (`art`,`gruppenbestellung_id`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index undnocheiner to bestellzuordnung"
+      );
+
+      doSql( "ALTER TABLE `dienste` DROP INDEX `GruppenID`"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop index GruppenID in dienste"
+      );
+      doSql( "ALTER TABLE `dienste` ADD INDEX `mitglied` (`gruppenmitglieder_id`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppenmitglieder_id to dienste"
+      );
+
+      doSql( "ALTER TABLE `gesamtbestellungen` DROP COLUMN `state`"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop column state"
+      );
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD INDEX `rechnungsstatus` (`rechnungsstatus`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index rechnungsstatus"
+      );
+
+      doSql( "ALTER TABLE `gruppenbestellungen` ADD INDEX `gruppe` (`bestellgruppen_id`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppe to gruppenbestellungen"
+      );
+
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD INDEX `gruppe` (`gruppen_id`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppe to gruppenmitglieder"
+      );
+
+      doSql( "ALTER TABLE `gruppenpfand` ADD INDEX `gruppe` (`gruppen_id`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppe to gruppenpfand"
+      );
+
+      doSql( "DROP TABLE `kategoriezuordnung`"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table kategoriezuordnung"
+      );
+      doSql( "DROP TABLE `produktkategorien`"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table produktkategorien"
+      );
+
+      doSql( "ALTER TABLE `pfandverpackungen` DROP INDEX `sort_id`"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop index sort_id from pfandverpackungen"
+      );
+      doSql( "ALTER TABLE `pfandverpackungen` ADD INDEX `sort_id` (`lieferanten_id`,`sort_id`)"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index sort_id to pfandverpackungen"
+      );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
 
 /*
 	case n:
