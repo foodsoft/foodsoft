@@ -1686,8 +1686,8 @@ function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis
   }
   return doSql( "
     INSERT INTO bestellvorschlaege
-      (produkt_id, gesamtbestellung_id, produktpreise_id, bestellmenge, liefermenge )
-    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, 0, 0 )
+      (produkt_id, gesamtbestellung_id, produktpreise_id, liefermenge )
+    VALUES ($produkt_id, $gesamtbestellung_id, $preis_id, 0 )
     ON DUPLICATE KEY UPDATE produktpreise_id = $preis_id
   ", LEVEL_IMPORTANT, "Konnte Bestellvorschlag nicht aufnehmen."
   );
@@ -1941,7 +1941,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte *
   // erste zuteilungsrunde: festbestellungen in bestellreihenfolge erfuellen, dabei berechnete
   // negativ-toleranz abziehen:
   //
-  $festbestellungen = sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, 0 );
+  $festbestellungen = sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, BESTELLZUORDNUNG_ART_FESTBESTELLUNG );
   $festzuteilungen = array();
   $offen = array();
   foreach( $festbestellungen as $row ) {
@@ -1989,7 +1989,7 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte *
   //
   $toleranzzuteilungen = array();
   if( $toleranzbestellmenge > 0 ) {
-    $toleranzbestellungen = sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, 1, '-menge' );
+    $toleranzbestellungen = sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG, '-menge' );
     $quote = ( 1.0 * $restmenge ) / $toleranzbestellmenge;
     need( $quote <= 1 );
     foreach( $toleranzbestellungen as $row ) {
@@ -2116,7 +2116,6 @@ function select_basar( $bestell_id = 0 ) {
          , bestellvorschlaege.produkt_id
          , bestellvorschlaege.produktpreise_id
          , bestellvorschlaege.liefermenge
-         , bestellvorschlaege.bestellmenge
          , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basar
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
     JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
@@ -2169,8 +2168,7 @@ function verteilmengenLoeschen( $bestell_id ) {
   , LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen."
   );
 
-  sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id )
-             , array( 'bestellmenge' => 0, 'liefermenge' => 0 ) );
+  sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id ), array( 'liefermenge' => 0 ) );
 }
 
 
@@ -2185,10 +2183,9 @@ function verteilmengenZuweisen($bestell_id){
   foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $zuteilungen = zuteilungen_berechnen( $produkt );
-    sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id ), array(
-      'bestellmenge' => $zuteilungen['bestellmenge']
-    , 'liefermenge' => $zuteilungen['bestellmenge']
-    ) );
+    sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id )
+               , array( 'liefermenge' => $zuteilungen['bestellmenge'] )
+    );
     $festzuteilungen = $zuteilungen['festzuteilungen'];
     $toleranzzuteilungen = $zuteilungen['toleranzzuteilungen'];
     foreach( $festzuteilungen as $gruppen_id => $menge ) {
@@ -4358,15 +4355,19 @@ function update_database($version){
 
   case 12:
 
+      doSql( "ALTER TABLE `bestellvorschlaege` MODIFY COLUMN `liefermenge` decimal(10,3) not null default 0
+                                             , DROP COLUMN `bestellmenge` "
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table bestellvorschlaege"
+      );
+
       doSql( "ALTER TABLE `bestellzuordnung` ADD INDEX `undnocheiner` (`art`,`gruppenbestellung_id`)"
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index undnocheiner to bestellzuordnung"
       );
 
-      doSql( "ALTER TABLE `dienste` DROP INDEX `GruppenID`"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop index GruppenID in dienste"
-      );
-      doSql( "ALTER TABLE `dienste` ADD INDEX `mitglied` (`gruppenmitglieder_id`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppenmitglieder_id to dienste"
+      doSql( "ALTER TABLE `dienste` DROP INDEX `GruppenID`
+                                  , ADD INDEX `mitglied` (`gruppenmitglieder_id`)
+                                  , MODIFY COLUMN `dienstkontrollblatt_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table dienste"
       );
 
       doSql( "ALTER TABLE `gesamtbestellungen` DROP COLUMN `state`"
@@ -4376,16 +4377,22 @@ function update_database($version){
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index rechnungsstatus"
       );
 
-      doSql( "ALTER TABLE `gruppenbestellungen` ADD INDEX `gruppe` (`bestellgruppen_id`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppe to gruppenbestellungen"
+      doSql( "ALTER TABLE `gruppenbestellungen` ADD INDEX `gruppe` (`bestellgruppen_id`)
+                                              , MODIFY COLUMN `bestellgruppen_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenbestellungen"
       );
 
-      doSql( "ALTER TABLE `gruppenmitglieder` ADD INDEX `gruppe` (`gruppen_id`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppe to gruppenmitglieder"
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD INDEX `gruppe` (`gruppen_id`)
+                        , MODIFY COLUMN `gruppen_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenmitglieder"
       );
 
-      doSql( "ALTER TABLE `gruppenpfand` ADD INDEX `gruppe` (`gruppen_id`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index gruppe to gruppenpfand"
+      doSql( "ALTER TABLE `gruppenpfand` ADD INDEX `gruppe` (`gruppen_id`)
+                        , MODIFY COLUMN `bestell_id` int(11) not null default 0
+                        , MODIFY COLUMN `gruppen_id` int(11) not null default 0
+                        , MODIFY COLUMN `pfand_wert` decimal(6,2) not null default 0.0
+                        , MODIFY COLUMN `anzahl_leer` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenpfand"
       );
 
       doSql( "DROP TABLE `kategoriezuordnung`"
@@ -4395,13 +4402,46 @@ function update_database($version){
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table produktkategorien"
       );
 
-      doSql( "ALTER TABLE `pfandverpackungen` DROP INDEX `sort_id`"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop index sort_id from pfandverpackungen"
-      );
-      doSql( "ALTER TABLE `pfandverpackungen` ADD INDEX `sort_id` (`lieferanten_id`,`sort_id`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index sort_id to pfandverpackungen"
+      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY COLUMN `lieferanten_id` int(11) not null default 0
+                                             , MODIFY COLUMN `mwst` decimal(4,2) not null default 0.0
+                                             , MODIFY COLUMN `pfand` decimal(6,2) not null default 0.0
+                                             , MODIFY COLUMN `preis` decimal(8,2) not null default 0.0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table lieferantenkatalog"
       );
 
+      doSql( "ALTER TABLE `lieferantenpfand` MODIFY COLUMN `verpackung_id` int(11) not null default 0
+                                           , MODIFY COLUMN `bestell_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table lieferantenpfand"
+      );
+
+      doSql( "ALTER TABLE `logbook` MODIFY COLUMN `session_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table logbook"
+      );
+
+      doSql( "ALTER TABLE `pfandverpackungen` DROP INDEX `sort_id`
+                                            , ADD INDEX `sort_id` (`lieferanten_id`,`sort_id`)
+                                            , MODIFY COLUMN `lieferanten_id` int(11) not null default 0
+                                            , MODIFY COLUMN `wert` decimal(8,2) not null default 0.0
+                                            , MODIFY COLUMN `mwst` decimal(6,2) not null default 0.0
+                                            , MODIFY COLUMN `sort_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table pfandverpackungen"
+      );
+
+      doSql( "ALTER TABLE `produkte` DROP COLUMN `einheit`"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table produkte"
+      );
+
+      doSql( "ALTER TABLE `produktpreise` MODIFY COLUMN `lieferpreis` decimal(8,2) not null default 0.0
+                                   , MODIFY COLUMN `verteileinheit` varchar(10) not null default '1 ST'
+                                   , MODIFY COLUMN `liefereinheit` varchar(10) not null default '1 ST'
+                                   , MODIFY COLUMN `gebindegroesse` int(11) not null default 1
+                                   , MODIFY COLUMN `lv_faktor` decimal(9,3) not null default 1.0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table produktpreise"
+      );
+
+      doSql( "ALTER TABLE `transactions` MODIFY COLUMN `session_id` int(11) not null default 0"
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table transactions"
+      );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
 
 /*

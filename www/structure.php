@@ -195,14 +195,8 @@ $tables = array(
       )
     , 'liefermenge' => array(
         'type' =>  "decimal(10,3)"
-      , 'null' => 'YES'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'bestellmenge' => array(
-        'type' =>  "decimal(10,3)"
-      , 'null' => 'YES'
-      , 'default' => ''
+      , 'null' => 'NO'
+      , 'default' => '0'
       , 'extra' => ''
       )
     )
@@ -268,8 +262,8 @@ $tables = array(
       )
     , 'dienstkontrollblatt_id' => array(
         'type' =>  "int(11)"
-      , 'null' => 'YES'
-      , 'default' => ''
+      , 'null' => 'NO'
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'dienst' => array(
@@ -481,8 +475,8 @@ $tables = array(
       )
     , 'bestellgruppen_id' => array(
         'type' =>  "int(11)"
-      , 'null' => 'YES'
-      , 'default' => ''
+      , 'null' => 'NO'
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'gesamtbestellung_id' => array(
@@ -510,7 +504,7 @@ $tables = array(
     , 'gruppen_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'name' => array(
@@ -579,25 +573,25 @@ $tables = array(
     , 'bestell_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'gruppen_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'pfand_wert' => array(
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'anzahl_leer' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     )
@@ -795,7 +789,7 @@ $tables = array(
     , 'lieferanten_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'name' => array(
@@ -831,13 +825,13 @@ $tables = array(
     , 'mwst' => array(
         'type' =>  "decimal(4,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'pfand' => array(
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'verband' => array(
@@ -855,7 +849,7 @@ $tables = array(
     , 'preis' => array(
         'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'katalogdatum' => array(
@@ -888,13 +882,13 @@ $tables = array(
     , 'verpackung_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'bestell_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'anzahl_voll' => array(
@@ -927,7 +921,7 @@ $tables = array(
     , 'session_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'time_stamp' => array(
@@ -959,7 +953,7 @@ $tables = array(
     , 'lieferanten_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'name' => array(
@@ -971,19 +965,19 @@ $tables = array(
     , 'wert' => array(
         'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'mwst' => array(
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'sort_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     )
@@ -1023,12 +1017,6 @@ $tables = array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'einheit' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
       , 'extra' => ''
       )
     , 'notiz' => array(
@@ -1079,8 +1067,8 @@ $tables = array(
       )
     , 'lieferpreis' => array(
         'type' =>  "decimal(8,2)"
-      , 'null' => 'YES'
-      , 'default' => '0.00'
+      , 'null' => 'NO'
+      , 'default' => '0.0'
       , 'extra' => ''
       )
     , 'zeitstart' => array(
@@ -1115,25 +1103,25 @@ $tables = array(
       )
     , 'verteileinheit' => array(
         'type' =>  "varchar(10)"
-      , 'null' => 'YES'
+      , 'null' => 'NO'
       , 'default' => '1 ST'
       , 'extra' => ''
       )
     , 'gebindegroesse' => array(
         'type' =>  "int(11)"
-      , 'null' => 'YES'
+      , 'null' => 'NO'
       , 'default' => '1'
       , 'extra' => ''
       )
     , 'liefereinheit' => array(
         'type' =>  "varchar(10)"
-      , 'null' => 'YES'
+      , 'null' => 'NO'
       , 'default' => '1 ST'
       , 'extra' => ''
       )
     , 'lv_faktor' => array(
         'type' =>  "decimal(9,3)"
-      , 'null' => 'YES'
+      , 'null' => 'NO'
       , 'default' => '1.0'
       , 'extra' => ''
       )
@@ -1205,7 +1193,7 @@ $tables = array(
     , 'session_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
       )
     )
