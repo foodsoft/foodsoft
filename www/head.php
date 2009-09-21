@@ -13,7 +13,7 @@ echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
 open_tag( 'html' );
 open_tag( 'head' );
 ?>
-  <title>FC <? echo $foodcoop_name; ?>  - Foodsoft</title>
+  <title>Food Coop <? echo $foodcoop_name; ?>  - Foodsoft</title>
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
   <link rel='stylesheet' type='text/css' href='<? echo $foodsoftdir; ?>/css/foodsoft.css'>
   <script type='text/javascript' src='<? echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
@@ -53,7 +53,7 @@ open_div( $headclass, "id='header'" );
         foreach( possible_areas() as $menu_area ) {
           areas_in_head($menu_area);
         }
-        open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki...", true );
+        open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki der Food Coop...", true );
       close_ul();
   close_table();
 close_div();
