@@ -306,10 +306,14 @@ ul#menu li {
   padding:0pt;
 }
 
-ul#menu li a {
+ul#menu li a, ul#menu li span {
   padding: 2px 8px 0px 8px;
   color: white;
   text-decoration: none;
+}
+ul#menu li span.inactive {
+  background:#e01010;
+  color:#cccccc;
 }
 ul#menu li a:hover {
   background: white;
