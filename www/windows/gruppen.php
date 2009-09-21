@@ -105,6 +105,10 @@ open_table('list');
   open_th( '','','Gruppenname' );
   open_th( '','','Kontostand' );
   open_th( '','','Mitgliederzahl' );
+  if( hat_dienst(4,5) ) {
+    open_th( '', 'title="Letzte Anmeldung der Gruppe in der Foodsoft"', 'letztes login' );
+    open_th( '', 'title="Lieferdatum der letzten Bestellung, an der sich die Gruppe beteiligte"', 'letzte Bestellung' );
+  }
   open_th( '','','Aktionen' );
 
   $summe = 0;
@@ -138,6 +142,22 @@ open_table('list');
       if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) )
         echo price_view( $kontostand );
       open_td( 'number', '', $row['mitgliederzahl'] );
+      if( hat_dienst(4,5) ) {
+        $letztes_login = sql_gruppe_letztes_login( $id );
+        if( $letztes_login )
+          open_td( '', '', $letztes_login['time_stamp'] );
+        else
+          open_td( '', '', '(nie)' );
+        $letzte_bestellung = sql_gruppe_letzte_bestellung( $id );
+        if( $letzte_bestellung )
+          open_td( '', '', fc_link( 'bestellschein', array(
+            'bestell_id' => $letzte_bestellung['id']
+          , 'text' => $letzte_bestellung['lieferdatum']
+          ) ) );
+        else
+          open_td( '', '', '(nie)' );
+      }
+
       open_td();
 
       if( $row['aktiv'] > 0 ) {
@@ -150,7 +170,7 @@ open_table('list');
         if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) ) {
           if( $offene_einzahlungen ) {
             open_table('list');
-                open_th( '', "colspan='3'", 'ungebuchte Einzahlungen:' );
+                open_th( '', "colspan='3'", 'ungebuchte Einzahlungen: ' . count($offene_einzahlungen) );
               foreach( $offene_einzahlungen as $trans ) {
                 open_tr();
                   open_td( 'left', '', $trans['eingabedatum_trad'] );
