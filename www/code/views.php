@@ -378,9 +378,14 @@ function areas_in_menu($area){
 }
 
 function areas_in_head($area){
-  open_li( '', '', fc_link( $area['area'], array(
-    'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] , 'class' => 'href'
-  ) ) );
+  global $angemeldet;
+  if( $angemeldet ) {
+    open_li( '', '', fc_link( $area['area'], array(
+      'window_id' => 'main' , 'text' => $area['title'] , 'title' => $area['hint'] , 'class' => 'href'
+    ) ) );
+  } else {
+    open_li( '', 'title="bitte erst Anmelden!"', "<span class='href inactive'>{$area['title']}</span>" );
+  }
 }
 
 function rotationsplanView($row){
@@ -569,7 +574,7 @@ function bestellschein_view(
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  $produkte = sql_bestellung_produkte( $bestell_id, $gruppen_id, 0 );
+  $produkte = sql_bestellung_produkte( $bestell_id, 0, $gruppen_id );
   $state = sql_bestellung_status($bestell_id);
 
   $warnung_vorlaeufig = "";
