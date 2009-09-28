@@ -1827,9 +1827,9 @@ function sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen
 // select_bestellung_produkte(): liefert fuer ein oder alle produkte einer bestellung
 // - produktdaten und preise (preisdatenSetzen() sollte zusaetzlich aufgerufen werden)
 // - gesamtbestellmenge
-// - basarbestellmenge: _toleranzbestellungen_ des basars
 // - toleranzbestellmenge: alle toleranzebestellungen _ohne_ basar
-// - verteilmenge (nicht sinnvoll fuer basar; liefert nicht den basarbestand!) _ohne_ muellgruppe
+// - basarbestellmenge: _toleranzbestellungen_ des basars
+// - verteilmenge _ohne_ muellgruppe (nicht sinnvoll fuer basar: liefert nicht den basarbestand!)
 // - muellmenge: zuteilung an muell-gruppe
 // $gruppen_id = 0: summe aller gruppen
 // $gruppen_id != 0: nur fuer diese gruppe (muell*, basar* sind dann nicht sinnvoll)
@@ -2143,11 +2143,13 @@ function select_basar( $bestell_id = 0 ) {
          , gesamtbestellungen.name as bestellung_name
          , gesamtbestellungen.lieferung as lieferung
          , gesamtbestellungen.id as gesamtbestellung_id
+         , gesamtbestellungen.aufschlag as aufschlag
          , produktpreise.lieferpreis
          , produktpreise.lv_faktor
          , produktpreise.lieferpreis / produktpreise.lv_faktor as nettopreis
          , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) as bruttopreis
          , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) + produktpreise.pfand as endpreis
+         , produktpreise.lieferpreis / produktpreise.lv_faktor * ( gesamtbestellungen.aufschlag / 100.0 ) as preisaufschlag
          , produktpreise.verteileinheit
          , bestellvorschlaege.produkt_id
          , bestellvorschlaege.produktpreise_id
@@ -2218,7 +2220,7 @@ function verteilmengenZuweisen($bestell_id){
       $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
-      , 'art' => 2, 'menge' => $menge
+      , 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG, 'menge' => $menge
       ) );
     }
     foreach( $toleranzzuteilungen as $gruppen_id => $menge ) {
@@ -2227,7 +2229,7 @@ function verteilmengenZuweisen($bestell_id){
       $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
         'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
-      , 'art' => 2, 'menge' => $menge
+      , 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG, 'menge' => $menge
       ) );
     }
   }
@@ -2315,7 +2317,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   }
 }
 
-function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id ) {
+function sql_change_verteilmengen( $bestell_id, $produkt_id, $gruppen_id, $menge ) {
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   doSql( " DELETE FROM bestellzuordnung
@@ -2329,14 +2331,15 @@ function changeVerteilmengen_sql( $menge, $gruppen_id, $produkt_id, $bestell_id 
   ) );
 }
 
-function sql_basar2group( $gruppe, $produkt, $bestell_id, $menge ) {
+function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
-  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppe, $bestell_id );
-  $sql = " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
-     VALUES ('$produkt','$gruppenbestellung_id','$menge', 2)
-     ON DUPLICATE KEY UPDATE menge = menge + $menge
-   ";
-  return doSql($sql, LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen..");
+  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
+  return doSql(
+    " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
+      VALUES ( '$produkt_id', '$gruppenbestellung_id','$menge', BESTELLZUORDNUNG_ART_ZUTEILUNG )
+      ON DUPLICATE KEY UPDATE menge = menge + $menge "
+  , LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen"
+  );
 }
 
 /**

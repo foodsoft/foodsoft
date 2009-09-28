@@ -38,7 +38,7 @@ switch( $action ) {
 }
 
 function update_distribution( $bestell_id, $produkt_id ) {
-  foreach( sql_bestellung_produkte( $bestell_id, 0, $produkt_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( $bestell_id, $produkt_id ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $verteilmult = $produkt['kan_verteilmult'];
     $verteileinheit = $produkt['kan_verteileinheit'];
@@ -58,7 +58,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
     $gruppen[] = array( 'id' => sql_muell_id() );
     foreach( $gruppen as $gruppe ) {
       $gruppen_id = $gruppe['id'];
-      $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $gruppen_id, $produkt_id ), true );
+      $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
       if( $mengen ) {
         $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
         $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
@@ -73,7 +73,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
       if( get_http_var( $feldname, 'f' ) ) {
         $menge_form = $$feldname;
         if( $verteilmenge != $menge_form ) {
-          changeVerteilmengen_sql( $menge_form / $verteilmult, $gruppen_id, $produkt_id, $bestell_id );
+          sql_change_verteilmengen( $bestell_id, $produkt_id, $gruppen_id, $menge_form / $verteilmult );
         }
       }
     }
@@ -90,7 +90,7 @@ if( $editable ) {
 open_table('list');
   distribution_tabellenkopf(); 
 
-  foreach( sql_bestellung_produkte( $bestell_id, 0, $produkt_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( $bestell_id, $produkt_id ) as $produkt ) {
     if( ( $produkt['liefermenge'] < 0.5 ) and ( $produkt['verteilmenge'] < 0.5 ) )
       continue;
     $produkt_id = $produkt['produkt_id'];

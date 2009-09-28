@@ -40,6 +40,7 @@ switch( $action ) {
     need_http_var( 'produkt_id', 'u' );
     // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
+ TODO: zusaetzlicheBestellung neu implementieren!!!
       zusaetzlicheBestellung( $produkt_id, $bestell_id );
     }
     break;
@@ -56,7 +57,7 @@ switch( $action ) {
   case 'update':
     nur_fuer_dienst(4);
     need( sql_bestellung_status( $bestell_id ) == STATUS_VERTEILT );
-    foreach( sql_bestellung_produkte($bestell_id, 0, 0 ) as $produkt ) {
+    foreach( sql_bestellung_produkte($bestell_id ) as $produkt ) {
       $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
         $lv_faktor = $produkt['lv_faktor'];

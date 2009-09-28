@@ -64,7 +64,7 @@ switch( $action ) {
   case 'bestellen':
     $gesamtpreis = 0;
     $bestellungen = array();
-    foreach( sql_bestellung_produkte( $bestell_id, 0, 0 ) as $produkt ) {
+    foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
       $n = $produkt['produkt_id'];
       get_http_var( "fest_$n", 'u', 0 );
       $fest = ${"fest_$n"};
