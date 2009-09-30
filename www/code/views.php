@@ -1568,7 +1568,7 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
   
         if($super_edit){
           open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
-          open_td( '', '', price_view( $row['sockeleinlage'], 12 ) );
+          open_td( '', '', price_view( $row['sockeleinlage'] ) );
           open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Gruppenmitglied löschen'
                                            , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
                                     , array( 'action' => 'delete', 'person_id' => $id ) ) );
