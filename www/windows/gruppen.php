@@ -210,7 +210,7 @@ open_table('list');
       open_td('right', "colspan='2'", 'Summe:' );
       open_td('number', '', price_view( $summe ) );
       open_td('number', '', $mitglieder_summe );
-      open_td();
+      open_td('', "colspan='3'" );
   }
 
 close_table();
