@@ -646,7 +646,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'kontobewegungs_datum' => array(
+    , 'valuta' => array(
         'type' =>  "date"
       , 'null' => 'NO'
       , 'default' => '0000-00-00'
@@ -667,8 +667,8 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'gruppen_id, kontobewegungs_datum' )
-      , 'tertiary' => array( 'unique' => 0, 'collist' => 'lieferanten_id, kontobewegungs_datum' )
+      , 'secondary' => array( 'unique' => 0, 'collist' => 'gruppen_id, valuta' )
+      , 'tertiary' => array( 'unique' => 0, 'collist' => 'lieferanten_id, valuta' )
     )
   )
 , 'leitvariable' => array(

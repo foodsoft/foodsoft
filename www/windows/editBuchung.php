@@ -78,7 +78,7 @@ switch( $action ) {
       $mod_1['betrag'] = - $soll;
     } else {
       $mod_1['notiz'] = $notiz;
-      $mod_1['kontobewegungs_datum'] = "$valuta_year-$valuta_month-$valuta_day";
+      $mod_1['valuta'] = "$valuta_year-$valuta_month-$valuta_day";
       $mod_1['summe'] = $soll;
       if( $b1['gruppen_id'] == $muell_id ) {
         if( in_array( $b1['transaktionstyp'], $selectable_types ) or ( $b1['transaktionstyp'] == TRANSAKTION_TYP_UNDEFINIERT ) ) {
@@ -98,7 +98,7 @@ switch( $action ) {
       $mod_2['betrag'] = $soll;
     } else {
       $mod_2['notiz'] = $notiz;
-      $mod_2['kontobewegungs_datum'] = "$valuta_year-$valuta_month-$valuta_day";
+      $mod_2['valuta'] = "$valuta_year-$valuta_month-$valuta_day";
       $mod_2['summe'] = - $soll;
       if( $b2['gruppen_id'] == $muell_id ) {
         if( in_array( $b2['transaktionstyp'], $selectable_types ) or ( $b2['transaktionstyp'] == TRANSAKTION_TYP_UNDEFINIERT ) ) {

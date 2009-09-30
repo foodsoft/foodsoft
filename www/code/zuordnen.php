@@ -2376,12 +2376,12 @@ function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
 function sql_gruppen_transaktion(
   $transaktionsart, $gruppen_id, $summe,
   $notiz ="",
-  $kontobewegungs_datum = 0, $lieferanten_id = 0, $konterbuchung_id = 0
+  $valuta = 0, $lieferanten_id = 0, $konterbuchung_id = 0
 ) {
   global $dienstkontrollblatt_id, $mysqlheute;
 
   need( $gruppen_id or $lieferanten_id );
-  $kontobewegungs_datum or $kontobewegungs_datum = $mysqlheute;
+  $valuta or $valuta = $mysqlheute;
 
   return sql_insert( 'gruppen_transaktion', array(
     'type' => $transaktionsart
@@ -2389,7 +2389,7 @@ function sql_gruppen_transaktion(
   , 'lieferanten_id' => $lieferanten_id
   /* , 'eingabe_zeit' => 'NOW()'  klappt so nicht, macht die DB aber sowieso automatisch! */
   , 'summe' => $summe
-  , 'kontobewegungs_datum' => $kontobewegungs_datum
+  , 'valuta' => $valuta
   , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
   , 'notiz' => $notiz
   , 'konterbuchung_id' => $konterbuchung_id
@@ -2500,20 +2500,20 @@ function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = 
     $and = "AND";
   }
   if( $from_date ) {
-    $filter .= " $and ( kontobewegungs_datum >= '$from_date' )";
+    $filter .= " $and ( valuta >= '$from_date' )";
     $and = "AND";
   }
   if( $to_date ) {
-    $filter .= " $and ( kontobewegungs_datum <= '$to_date' )";
+    $filter .= " $and ( valuta <= '$to_date' )";
     $and = "AND";
   }
   $sql = "
-    SELECT gruppen_transaktion.id, type, summe, kontobewegungs_datum
+    SELECT gruppen_transaktion.id, type, summe, valuta
          , konterbuchung_id, gruppen_transaktion.notiz
          , dienstkontrollblatt_id
          , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS date
-         , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
-         , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%Y%m%d') AS valuta_kan
+         , DATE_FORMAT(gruppen_transaktion.valuta,'%d.%m.%Y') AS valuta_trad
+         , DATE_FORMAT(gruppen_transaktion.valuta,'%Y%m%d') AS valuta_kan
          , dienstkontrollblatt.name as dienst_name
     FROM gruppen_transaktion
     LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
@@ -2547,7 +2547,7 @@ function sql_get_transaction( $id ) {
            , (-summe) as haben, summe as soll
            , gruppen_transaktion.notiz as kommentar
            , gruppen_transaktion.type as transaktionstyp
-           , gruppen_transaktion.kontobewegungs_datum as valuta
+           , gruppen_transaktion.valuta as valuta
            , gruppen_transaktion.eingabe_zeit as buchungsdatum
            , gruppen_transaktion.konterbuchung_id as konterbuchung_id
            , bankkonten.name as kontoname
@@ -3335,7 +3335,7 @@ function lieferantenpfandkontostand( $lieferanten_id = 0 ) {
 function select_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
   return "
     SELECT *
-      , DATE_FORMAT(gruppen_transaktion.kontobewegungs_datum,'%d.%m.%Y') AS valuta_trad
+      , DATE_FORMAT(gruppen_transaktion.valuta,'%d.%m.%Y') AS valuta_trad
       , DATE_FORMAT(gruppen_transaktion.eingabe_zeit,'%d.%m.%Y') AS eingabedatum_trad
     FROM gruppen_transaktion
     WHERE (konterbuchung_id = 0)
@@ -3370,12 +3370,12 @@ function select_verluste( $type, $not = false ) {
   return "
     SELECT id
          , summe as soll
-         , kontobewegungs_datum as valuta
+         , valuta as valuta
          , notiz
          , konterbuchung_id
     FROM gruppen_transaktion
     WHERE gruppen_transaktion.gruppen_id = $muell_id AND $filter
-    ORDER BY type, kontobewegungs_datum
+    ORDER BY type, valuta
   ";
 }
 
@@ -4418,6 +4418,10 @@ function update_database($version){
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index rechnungsstatus"
       );
 
+      doSql( "ALTER TABLE `gruppen_transaktion` CHANGE COLUMN `kontobewegungs_datum` `valuta` date not null default '0000-00-00' "
+      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppen_transaktion"
+      );
+
       doSql( "ALTER TABLE `gruppenbestellungen` ADD INDEX `gruppe` (`bestellgruppen_id`)
                                               , MODIFY COLUMN `bestellgruppen_id` int(11) not null default 0"
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenbestellungen"
@@ -4436,10 +4440,10 @@ function update_database($version){
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenpfand"
       );
 
-      doSql( "DROP TABLE `kategoriezuordnung`"
+      doSql( "DROP TABLE IF EXISTS `kategoriezuordnung` "
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table kategoriezuordnung"
       );
-      doSql( "DROP TABLE `produktkategorien`"
+      doSql( "DROP TABLE IF EXISTS `produktkategorien` "
       , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table produktkategorien"
       );
 
