@@ -76,7 +76,7 @@ open_table( 'layout hfill' );
         $seitensumme = 0;
 
         rubrik( "Einlagen der Gruppen" );
-          posten( fc_link( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'class' => 'href' ) ), sockeleinlagen_summe() );
+          posten( fc_link( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'class' => 'href' ) ), sockeleinlagen() );
           posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
           posten( fc_link( 'gruppenpfand', "class=href,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
 
