@@ -713,7 +713,7 @@ function mod_onclick( $id ) {
   return $id ? " onclick=\"document.getElementById('$id').className='modified';\" " : '';
 }
 
-function formular_artikelnummer( $produkt_id, $toggle = false, $mod_id = false ) {
+function formular_artikelnummer( $produkt_id, $toggle = false, $bestell_id = 0 ) {
   $produkt = sql_produkt_details( $produkt_id );
   $anummer = $produkt['artikelnummer'];
   $lieferanten_id = $produkt['lieferanten_id'];
@@ -728,7 +728,7 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $mod_id = false )
           close_form();
       open_tr();
         open_td();
-          open_form( "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id", 'action=search' );
+          open_form( "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id,bestell_id=$bestell_id", 'action=search' );
             ?>...oder: Katalogsuche nach: <?
             echo string_view( $produkt['name'], 40, 'name' );
             quad(); submission_button( 'Los!' );

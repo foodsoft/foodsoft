@@ -17,6 +17,11 @@ $lieferant_name = sql_lieferant_name( $lieferanten_id );
 need( preg_match( '&^Terra&', $lieferant_name ) or preg_match( '&^Bode&', $lieferant_name ) 
     , "Lieferanten-Katalog: bislang nur fuer Terra und Bode!" );
 
+// $bestell_id: falls aufgerufen aus 'preiseintrag fuer bestellung waehlen', muessen wir die
+// wieder zurueckgeben:
+//
+get_http_var( 'bestell_id', 'u', 0, true );
+
 get_http_var('action','w','');
 
 $filter = '';
@@ -165,7 +170,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( 'mult' );
             $anummer = $row['artikelnummer'];
             if ( $produkt_id > 0 ) {
-              echo fc_action( "window=produktpreise,class=button,text=$anummer,produkt_id=$produkt_id,title=Artikelnummer auswählen"
+              echo fc_action( "window=produktpreise,class=button,text=$anummer,produkt_id=$produkt_id,bestell_id=$bestell_id,title=Artikelnummer auswaehlen"
                             , "action=artikelnummer_setzen,anummer=$anummer" );
             } else {
               echo $anummer;
