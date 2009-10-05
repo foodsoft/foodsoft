@@ -79,14 +79,22 @@ function on_reset( id ) {
   }
 }
 
-function submit_form( $form_id ) {
-  f = document.getElementById( 'form_'+$form_id );
+function submit_form( form_id ) {
+  f = document.getElementById( 'form_'+form_id );
   // calling f.submit() explicitely will not trigger the onsubmit() handler, so we call it explicitely:
   if( f.onsubmit )
     f.onsubmit();
   f.submit();
 }
 
+function post_action( action, message ) {
+  f = document.forms['update_form'];
+  f.action.value = action;
+  f.message.value = message;
+  if( f.onsubmit )
+    f.onsubmit();
+  f.submit();
+}
 
 // experimenteller code - funktioniert noch nicht richtig...
 // 
