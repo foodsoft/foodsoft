@@ -94,7 +94,7 @@ open_table('layout hfill' );
   open_td();
     ?> <h3>Kontouszüge von Konto <? echo sql_kontoname($konto_id); ?>:</h3> <?
 
-    open_select( 'auszug', true );
+    open_select( 'auszug', 'autoreload' );
       $selected = false;
       $options = '';
       foreach( sql_kontoauszug( $konto_id ) as $auszug ) {

@@ -558,6 +558,10 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
 //   - use an <a>-element for the submit button and
 //   - insert the actual form at the end of the document
 //
+// if 'update' is one of the $get_parameters, the update_form (inserted at bottom of every page) will
+// be used; from $get_parameters, only pseudo-parameters will take effect, and the only $post_parameters
+// which can be passed are 'action' and 'message'.
+//
 function fc_action( $get_parameters = array(), $post_parameters = array(), $options = array() ) {
   global $print_on_exit, $self_post_fields, $pseudo_parameters;
 
@@ -565,8 +569,6 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
     $get_parameters = parameters_explode( $get_parameters );
   if( is_string( $post_parameters ) )
     $post_parameters = parameters_explode( $post_parameters );
-
-  $form_id = new_html_id();
 
   $window = adefault( $get_parameters, 'window', 'self' );
   unset( $get_parameters['window'] );
@@ -581,8 +583,16 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   if( $confirm = adefault( $get_parameters, 'confirm', '' ) )
     $confirm = " if( confirm( '$confirm' ) ) ";
 
+  if( isset( $get_parameters['update'] ) ) {
+    $action = adefault( $post_parameters, 'action', '' );
+    $message = adefault( $post_parameters, 'message', '' );
+    return alink( "javascript:$confirm post_action( '$action', '$message' );", $class, $text, $title, $img );
+  }
+
   $get_parameters['context'] = 'form';
   $action = fc_link( $window, $get_parameters );
+
+  $form_id = new_html_id();
 
   $form = "<form style='display:inline;' method='post' id='form_$form_id' name='form_$form_id' $action>";
   $form .= "<input type='hidden' name='itan' value='". get_itan() ."'>";

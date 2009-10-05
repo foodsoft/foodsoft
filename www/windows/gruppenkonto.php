@@ -98,7 +98,7 @@ if( $meinkonto ) {
     open_tr();
       open_td('', '', 'Gruppe:' );
       open_td();
-        open_select( 'gruppen_id', true );
+        open_select( 'gruppen_id', 'autoreload' );
           echo optionen_gruppen( $gruppen_id );
         close_select();
   close_table();

@@ -15,7 +15,7 @@ open_table( 'menu' );
   open_tr();
     open_td('', '', 'Lieferant:' );
     open_td();
-      open_select( 'lieferanten_id', true );
+      open_select( 'lieferanten_id', 'autoreload' );
         echo optionen_lieferanten( $lieferanten_id );
       close_select();
 close_table();

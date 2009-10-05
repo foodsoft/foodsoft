@@ -172,7 +172,7 @@ function open_tdh( $tag, $class= '', $attr = '', $payload = false ) {
       open_tag( $tag, $class, $attr . $td_title );
       break;
     default:
-      error( 'unexpected open_td' );
+      error( "unexpected open_td: innermost open tag: {$open_tags[$n]}" );
   }
   $td_title = '';
   if( $payload !== false ) {
@@ -431,21 +431,33 @@ function close_button( $text = 'Schließen' ) {
 }
 
 // open_select(): create <select> element
-// $autoreload: on change, reload current window with new value of $fieldname in the URL
+// $attr supports some magic values:
+//  - 'autoreload': on change, reload current window with the new value of $fieldname in the URL
+//  - 'autopost': on change, submit the update_form (inserted at end of every page), posting the
+//    $fieldname as hidden parameter 'action' and the selected option value as parameters 'message'.
 //
-function open_select( $fieldname, $autoreload = false ) {
+function open_select( $fieldname, $attr = '' ) {
   global $input_event_handlers;
-  if( $autoreload ) {
-    $id = new_html_id();
-    $url = fc_link( 'self', 'XXX=X,context=action' );
-    open_tag( 'select', '', "id='$id' onchange=\"
-      i = document.getElementById('$id').selectedIndex;
-      s = document.getElementById('$id').options[i].value;
-      self.location.href = '$url'.replace( /XXX=X/, '&$fieldname='+s );
-    \" " );
-  } else {
-    open_tag( 'select', '', "$input_event_handlers name='$fieldname'" );
+  switch( $attr ) {
+    case 'autoreload':
+      $id = new_html_id();
+      $url = fc_link( 'self', 'XXX=X,context=action' );
+      $attr = "id='$id' onchange=\"
+        i = document.getElementById('$id').selectedIndex;
+        s = document.getElementById('$id').options[i].value;
+        self.location.href = '$url'.replace( /XXX=X/, '&$fieldname='+s );
+      \" ";
+      break;
+    case 'autopost':
+      $id = new_html_id();
+      $attr = "id='$id' onchange=\"
+        i = document.getElementById('$id').selectedIndex;
+        s = document.getElementById('$id').options[i].value;
+        post_action( '$fieldname', s );
+      \" ";
+      break;
   }
+  open_tag( 'select', '', "$attr $input_event_handlers name='$fieldname'" );
 }
 
 function close_select() {
