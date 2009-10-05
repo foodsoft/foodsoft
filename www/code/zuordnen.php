@@ -32,7 +32,7 @@ function debug_args( $args, $tag = '' ) {
 }
 
 
-function doSql($sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ){
+function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
 	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".htmlspecialchars($sql)."</p>";
   $result = mysql_query($sql)
     or error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysql_error() );
@@ -166,17 +166,20 @@ function mysql2array( $result, $key = false, $val = false ) {
   if( is_array( $result ) )  // temporary kludge: make me idempotent
     return $result;
   $r = array();
+  $n = 1;
   while( $row = mysql_fetch_array( $result ) ) {
     if( $key ) {
       need( isset( $row[$key] ) );
       need( isset( $row[$val] ) );
       $r[$row[$key]] = $row[$val];
     } else {
+      $row['nr'] = $n++;
       $r[] = $row;
     }
   }
   return $r;
 }
+
 
 /*
  * need_joins: fuer skalare subqueries wie in "SELECT x , ( SELECT ... ) as y, z":
@@ -241,48 +244,70 @@ function rechnung_status_string( $state ) {
 ////////////////////////////////////
 
  $_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
-//  $_SESSION['ALLOWED_ORDER_STATES'] = array(
-// 	     'lieferschein' => array(STATUS_VERTEILT, STATUS_LIEFERANT),
-// 	     'bestellschein' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
-// 	     'bestellt_faxansicht' => array(STATUS_BESTELLEN, STATUS_LIEFERANT),
-// 	     'verteilung' => array(STATUS_LIEFERANT,STATUS_VERTEILT),
-// 	     'bestellungen_overview' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
-// 	     'konsument' => array(STATUS_BESTELLEN, STATUS_LIEFERANT,STATUS_VERTEILT, STATUS_ARCHIVIERT),
-// 	     'check_balanced' => array(STATUS_VERTEILT),
-// 	     'archiv' => array(STATUS_ARCHIVIERT)
-// 	 );
+
+function select_dienste( $filter = 'true' ) {
+  return "SELECT
+           dienste.*
+         , if( gruppenmitglieder.gruppen_id, gruppenmitglieder.gruppen_id, dienste.gruppen_id ) as gruppen_id
+         , gruppenmitglieder.name
+         , gruppenmitglieder.vorname
+         , gruppenmitglieder.telefon
+         , gruppenmitglieder.email
+         , gruppenmitglieder.diensteinteilung
+         , gruppenmitglieder.aktiv
+    FROM dienste
+    LEFT JOIN gruppenmitglieder
+      ON (gruppenmitglieder_id = gruppenmitglieder.id)
+    WHERE ( $filter )
+  ";
+}
+
+function sql_dienste( $filter = 'true', $orderby = 'lieferdatum ASC' ) {
+  return mysql2array( doSql(
+    select_dienste( $filter ) . " ORDER BY $orderby "
+  , LEVEL_ALL, "error while reading from dienste"
+  ) );
+}
+
+function sql_dienst( $dienst_id ) {
+  return sql_select_single_row( select_dienste( "dienste.id = $dienst_id" ) );
+}
 
 
 function sql_dienst_info( $dienst_rueckbestaetigen ) {
   global $login_gruppen_id;
-  $result = sql_get_dienst_group($login_gruppen_id ,"Akzeptiert");
   $critical_date = in_two_weeks();
   $show_dienste = array();
-  while($row = mysql_fetch_array($result)){
-    if(compare_date2($row["lieferdatum"], $critical_date)) {
-      $show_dienste[] = $row["lieferdatum"];
+  foreach( sql_dienste( "(dienste.gruppen_id = $login_gruppen_id) and ( status = 'Akzeptiert' )" ) as $dienst ) {
+    if(compare_date2( $dienst["lieferdatum"], $critical_date)) {
+      $show_dienste[] = $dienst;
     }
   }
   if( $show_dienste ) {
     if( $dienst_rueckbestaetigen ) {
-      foreach($show_dienste as $datum){
-        sql_dienst_bestaetigen($datum);
+      foreach( $show_dienste as $dienst ) {
+        sql_update( 'dienste', $dienst['id'], array( 'status' =>  'Bestaetigt' ) );
       }
       return true;
     } else {
-      ?> <h2> Du hast bald Dienste: </h2> <?
-      foreach($show_dienste as $datum){
-        echo "<h3>$datum:</h3>";
-        $current_dienst = "Initial";
-        foreach( sql_get_dienste( "lieferdatum = $datum" ) as $row ) {
-          if($current_dienst != $row["dienst"]){
-            $current_dienst = $row["dienst"];
-            echo "<h4> Dienst $current_dienst</h4>";
+      ?> <h2> Deine Gruppe hat bald Dienst: </h2> <?
+      open_table();
+        $current_date = false;
+        foreach( $show_dienste as $dienst ) {
+          if( $current_date != $dienst['lieferdatum'] ) {
+            open_tr();
+            $current_date = $dienst['lieferdatum'];
+            open_th( '', '', $current_date );
           }
-          dienst_view($row, $login_gruppen_id, FALSE);
+          open_td();
+          echo "Dienst {$dienst['dienst']}:";
+          if( $dienst['gruppenmitglieder_id'] )
+            echo $dienst['vorname'];
+          else
+            echo "(kein Mitglied ausgewaehlt)";
         }
-      }
-      echo fc_action( 'text=OK', 'dienst_rueckbestaetigen=1' );
+      close_table();
+      open_div( 'right smallskip', '', fc_action( 'text=OK', 'dienst_rueckbestaetigen=1' ) );
       return false;
     }
   }
@@ -291,196 +316,249 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
 
 
 /**
- *  Dienst bestaetigen 
- */ 
-function sql_dienst_bestaetigen($datum){
-  global $login_gruppen_id;
-  $sql = "UPDATE dienste inner join gruppenmitglieder on (gruppenmitglieder_id = gruppenmitglieder.id) SET dienste.status = 'Bestaetigt'
-          WHERE gruppen_id = ".$login_gruppen_id."
-	  AND lieferdatum = '".$datum."'";
-  doSql($sql, LEVEL_IMPORTANT, "Error while confirming Dienstplan");
-
-}
-
-/**
  *  Dienst Akzeptieren 
  */ 
-function sql_dienst_akzeptieren($dienst){
+function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false ) {
   global $login_gruppen_id;
-  $row = sql_get_dienst_by_id($dienst);
-  if($row["gruppen_id"]!=$login_gruppen_id || $row["status"]!="Vorgeschlagen" ){
-       error( "Falsche gruppen_id (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["status"]);
-  }
-  //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE dienste SET status = 'Akzeptiert' WHERE id = ".$dienst;
-  doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
 
+  $dienst = sql_dienst( $dienst_id );
+  need( ! $dienst['geleistet'], 'Dienst bereits geleistet!' );
+  switch( $dienst['status'] ) {
+    case 'Akzeptiert':
+    case 'Bestaetigt':
+      need( $abgesprochen );
+    case 'Vorgeschlagen':
+    case 'Offen':
+      break;
+    default:
+      error( "sql_dienst_akzeptieren(): falscher Status!" );
+  }
+  sql_update( 'dienste', $dienst_id, array( 'status' => 'Akzeptiert' ) );
+  if( $dienst['gruppen_id'] != $login_gruppen_id ) {
+    sql_update( 'dienste', $dienst_id, array(
+      'gruppen_id' => $login_gruppen_id, 'gruppenmitglieder_id' => 0
+    ) );
+  }
 }
 
 /**
  *  Dienst ablehnen, nachdem die Gruppe ihn schon akzeptiert hat (offen)
  */
-function sql_dienst_wird_offen($dienst){
+function sql_dienst_wird_offen( $dienst_id ) {
   global $login_gruppen_id;
-  $row = sql_get_dienst_by_id($dienst);
-  switch( $row['status'] ) {
-    case 'Offen':
-      return;
-    case 'Nicht geleistet':   /* TODO: auch auf 'Offen' aendern oder so lassen? */
-      return;
-  }
-  if( ! ( ($row["gruppen_id"] == $login_gruppen_id) || hat_dienst(5) ) || 
-         ($row["status"]!="Vorgeschlagen" && $row["status"]!="Bestaetigt" && $row["status"]!="Akzeptiert")){
-       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["status"]);
-  }
-  //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE dienste SET status = 'Offen', gruppenmitglieder_id=0  WHERE id = ".$dienst;
-  doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
+  $dienst = sql_dienst( $dienst_id );
+  need( ! $dienst['geleistet'], 'Dienst bereits geleistet!' );
+  need( hat_dienst(5) || ( $dienst['gruppen_id'] == $login_gruppen_id ) );
+  sql_update( 'dienste', $dienst_id, array(
+    'status' => 'Offen', 'gruppen_id' => 0, 'gruppenmitglieder_id' => 0
+  ) );
 }
 
 /**
  *  Dienst ablehnen und alternative suchen
  */
-function sql_dienst_abtauschen($dienst, $bevorzugt){
+function sql_dienst_abtauschen( $dienst_id, $bevorzugtes_datum ) {
   global $login_gruppen_id;
-  $row = sql_get_dienst_by_id($dienst);
-  if($row["gruppen_id"]!=$login_gruppen_id || $row["status"]!="Vorgeschlagen" ){
-       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder falscher Status ".$row["status"]);
+
+  $dienst = sql_dienst( $dienst_id );
+  need( ! $dienst['geleistet'], 'Dienst bereits geleistet!' );
+  need( $dienst["status"] == "Vorgeschlagen", "falscher Status ".$dienst['status'] );
+  need( $dienst["gruppen_id"] == $login_gruppen_id, "falsche gruppen_id" );
+
+  $ausweichdienste = sql_dienste( " ( lieferdatum = '$bevorzugtes_datum' )
+                                      and ( status = 'Offen' )
+                                      and ( not geleistet )
+                                      and ( dienst = '{$dienst['dienst']}' ) " );
+  if( ! $ausweichdienste ) {
+    $ausweichdienste = sql_dienste( " ( lieferdatum = '$bevorzugtes_datum' )
+                                        and ( status = 'Vorgeschlagen' )
+                                        and ( not geleistet )
+                                        and ( dienst = '{$dienst['dienst']}' ) " );
   }
-  $sql = "SELECT * from dienste 
-          WHERE lieferdatum = '".$bevorzugt.
-	  "' AND status = 'Vorgeschlagen'
-	  AND dienst = '".$row["dienst"]."'";
-  $result = doSql($sql, LEVEL_ALL, "Error while reading Dienste");
-  if(mysql_num_rows($result)==0){
-       error( "Kein ausweichsdienst an diesem Datum ".$bevorzugt." für Dienst ".$row["dienst"]);
-  }
-  
-  //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE dienste SET lieferdatum = '".$bevorzugt."', status = 'Akzeptiert' WHERE id = ".$dienst;
-  doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
-  $sql = "UPDATE dienste SET lieferdatum = '".$row["lieferdatum"]."' WHERE lieferdatum = '".$bevorzugt.
-	  "' AND status = 'Vorgeschlagen'
-	  AND dienst = '".$row["dienst"]."' LIMIT 1";
-  doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienste");
+  need( $ausweichdienste, "Kein Ausweichsdienst an diesem Datum $bevorzugtes_datum für Dienst ".$row["dienst"] );
+
+  $ausweichdienst = $ausweichdienste[0];
+  sql_dienst_akzeptieren( $ausweichdienst['id'] );
+  sql_update( 'dienste', $dienst_id, array(
+    'gruppen_id' => $ausweichdienst['gruppen_id']
+  , 'gruppenmitglieder_id' => $ausweichdienst['gruppenmitglieder_id']
+  , 'status' => $ausweichdienst['status']
+  ) );
 }
 
 /**
  * Person, die den Dienst ausführt verändern
  */
-function sql_dienst_person_aendern($neuPerson, $dienst){
+function sql_dienst_person_aendern( $dienst_id, $person_id ) {
   global $login_gruppen_id;
-  $row = sql_get_dienst_by_id($dienst);
-  //Rechte?
-  if( hat_dienst(5) || $row["gruppen_id"]==$login_gruppen_id  ){
-	  //OK, dürfen die Person verändern
-      $sql = "UPDATE dienste SET gruppenmitglieder_id = ".mysql_escape_string($neuPerson)." WHERE id = ".mysql_escape_string($dienst);
-      doSql($sql, LEVEL_IMPORTANT, "Error while changing Dienstplan");
-  } else {
-       error( "Falsche GruppenID (angemeldet als $login_gruppen_id, dienst gehört ".$row["gruppen_id"].") oder nicht als Dienst V angemeldet" );
-
+  $dienst = sql_dienst( $dienst_id );
+  $person = sql_gruppenmitglied( $person_id );
+  need( $person['aktiv'] );
+  need( ! $dienst['geleistet'] );
+  if( ! hat_dienst(5) ) {
+    need( $login_gruppen_id == $person['gruppen_id'] );
+    if( $dienst['gruppen_id'] )
+      need( $login_gruppen_id == $dienst['gruppen_id'] );
   }
-}
-/**
- *  Offenen oder nicht angenommnen Dienst übernehmen
- */
-function sql_dienst_uebernehmen($dienst){
-  global $login_gruppen_id;
-  // echo "uebernehmen $dienst";
-  $row = sql_get_dienst_by_id($dienst);
-  if( ($row["status"]!="Offen" && $row["status"]!="Akzeptiert"&& $row["status"]!="Vorgeschlagen")){
-       error( "Falscher Status ".$row["status"]);
+  sql_update( 'dienste', $dienst_id, array(
+    'gruppen_id' => $person['gruppen_id']
+  , 'gruppemitglieder_id' => $person_id
+  ) );
+  if( $person['gruppen_id'] != $dienst['gruppen_id'] ) {
+    sql_update( 'dienste', $dienst_id, array( 'status' => 'Vorgeschlagen' ) );
   }
-  //OK, wir dürfen den Dienst ändern
-  $sql = "UPDATE dienste SET status = 'Nicht geleistet' WHERE id = ".$dienst;
-  doSql($sql, LEVEL_IMPORTANT, "Error while reading Rotationsplan");
-
-  if(compare_date2($row["lieferdatum"], in_two_weeks())){
-       $status = "Bestaetigt";
-  } else {
-       $status = "Akzeptiert";
-  }
-
-  $person = current( sql_gruppe_mitglieder( $login_gruppen_id ) );
-  sql_create_dienst2($person["id"],$row["dienst"], "'".$row["lieferdatum"]."'", $status);
-
 }
 
 /**
- *  Fragt einen einzelnen Dienst basierend
- *  auf der ID ab
- */
-function sql_get_dienst_by_id($dienst){
-  $sql = "SELECT * FROM dienste INNER JOIN gruppenmitglieder
-	         ON (dienste.gruppenmitglieder_id = gruppenmitglieder.id) WHERE dienste.id = ".$dienst;
-  $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-  return mysql_fetch_array($result);
-}
-/**
- * Gibt es an einem Datum Dienste,
- * Die noch offen, vorgeschlagen oder akzeptiert sind
+ * Gibt es an einem Datum Dienste, die noch offen, vorgeschlagen oder akzeptiert sind
  * (so dass nicht sicher ist, ob der Dienst geleistet wird)
  */
+function sql_dienste_nicht_bestaetigt( $datum ) {
+  return sql_dienste( " ( lieferdatum = '$datum' ) and not status = 'Bestaetigt' " );
+}
 
-function sql_dienste_nicht_bestaetigt($datum){
-   $sql = "SELECT * FROM dienste 
-           WHERE lieferdatum = '".$datum."' 
-	   AND (status != 'Bestaetigt' OR
-	        status != 'Nicht geleistet')";
-   $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-   return mysql_num_rows($result) > 0;
+////////////////////////////////////
+//
+// rotationsplan-funktionen:
+//
+////////////////////////////////////
+
+function sql_rotationsplan_mitglied( $position ) {
+  return sql_select_single_field( "
+    SELECT id FROM gruppenmitglieder WHERE rotationsplanposition = $position
+  ", 'id'
+  );
+}
+
+function sql_rotationsplanposition( $mitglied_id ) {
+  return sql_select_single_field( "
+    SELECT rotationsplanposition FROM gruppenmitglieder WHERE id = $mitglied_id
+  ", 'rotationsplanposition'
+  );
+}
+
+/** Queries the rotation plan for a given task.
+ */
+function sql_rotationsplan( $dienst ) {
+  return sql_gruppenmitglieder( "aktiv AND ( diensteinteilung = '$dienst' ) ", "rotationsplanposition ASC" );
 }
 
 /**
- *  Macht eine Abfrage für den Dienstplan 
- *  Zurückgegeben wird ein mysql-set
+ *  Gibt die nächste Position für einen Dienst aus dem Rotationsplan zurück
+ */
+function sql_rotationsplan_next( $dienst, $current ) {
+  $morefilter = ( $current ? "rotationsplanposition > $current" : "true" );
+  $next = sql_select_single_field( "
+    SELECT min(rotationsplanposition) AS mynext FROM gruppenmitglieder
+    WHERE aktiv AND diensteinteilung = '$dienst' AND $morefilter
+  ", 'mynext', true
+  );
+  if( $next )
+    return $next;
+  need( $current, "Kein Eintrag im Rotationsplan fuer Dienst $dienst" );
+  return sql_rotationsplan_next( $dienst, 0 );
+}
+
+function sql_rotationsplan_prev( $dienst, $current ) {
+  $morefilter = ( $current ? "rotationsplanposition < $current" : "true" );
+  $prev = sql_select_single_field( "
+    SELECT max(rotationsplanposition) AS myprev FROM gruppenmitglieder
+    WHERE aktiv AND diensteinteilung = '$dienst' AND $morefilter
+  ", 'myprev', true
+  );
+  if( $prev )
+    return $prev;
+  need( $current, "Kein Eintrag im Rotationsplan fuer Dienst $dienst" );
+  return sql_rotationsplan_prev( $dienst, 0 );
+}
+
+
+/**
+ *  This function allows to rotate the
+ *  rotation system. This is used after
+ *  assigning new tasks. The rotation is
+ *  performed in a way that the group with
+ *  the latest assignment will the the last
+ *  in the rotation system.
+ */
+function sql_rotate_rotationsplan( $latest_position, $dienst ) {
+  nur_fuer_dienst(5);
+  $after = mysql2array( doSql( "
+    SELECT id, rotationsplanposition FROM gruppemnitglieder
+    WHERE diensteinteilung = '$dienst' AND aktiv AND rotationsplanposition > $latest_position
+    ORDER BY rotationsplanposition ASC
+  " ) );
+  if( ! $after )
+    return;
+  $before = mysql2array( doSql( "
+    SELECT id, rotationsplanposition FROM gruppemnitglieder
+    WHERE diensteinteilung = '$dienst' AND aktiv AND rotationsplanposition <= $latest_position
+    ORDER BY rotationsplanposition ASC
+  " ) );
+  need( $before, "Fehler im Rotationsplan: Eintrag $latest_position nicht gefunden" );
+
+  $old = array_merge( $before, $after );
+  $new = array_merge( $after, $before );
+
+  // rotationsplanposition ist UNIQUE KEY; daher erstmal alles aus dem Weg raeumen:
+  foreach( $new as $row ) {
+    sql_update( 'gruppenmitglieder', $row['id'],
+                 array( 'rotationsplanposition' => - $row['rotationsplanposition'] ) );
+  }
+
+  $oldrow = current( $old );
+  foreach( $new as $newrow ) {
+    sql_update( 'gruppenmitglieder', $newrow['id'],
+                 array( 'rotationsplanposition' => $oldrow['rotationsplanposition'] ) );
+    $oldrow = next( $old );
+  }
+}
+
+/**
+ *  This function allows to move a person up or down within the rotation system
+ */
+function sql_change_rotationsplan( $mitglied_id, $dienst, $move_down ) {
+  nur_fuer_dienst(5);
+  $position = sql_rotationsplanposition( $mitglied_id );
+  $newpos = ( $nove_down ? sql_rotationsplan_next( $dienst, $position )
+                         : sql_rotationsplan_prev( $dienst, $position ) );
+  if( $position == $newpos )
+    return;
+
+  $newmitglied_id = sql_rotationsplan_mitglied( $newpos );
+  sql_update( 'gruppenmitglieder', $mitglied_id, array( 'rotationsplanposition' => -1 ) );
+  sql_update( 'gruppenmitglieder', $newmitglied_id, array( 'rotationsplanposition' => $position ) );
+  sql_update( 'gruppenmitglieder', $mitglied_id, array( 'rotationsplanposition' => $newpos ) );
+}
+
+
+////////////////////////////////////
+//
+// dienstplan-funktionen:
+//
+////////////////////////////////////
+
+
+/** Fügt einen Dienst mit beliebigem Status in die Diensttabelle 
  */
 
-function sql_get_dienste( $where = 'TRUE' ) {
-  return mysql2array( doSql( "
-    SELECT *, dienste.id as dienst_id, dienste.status as dienst_status
-         , gruppenmitglieder.gruppen_id % 1000 as gruppennummer
-    FROM dienste 
-    LEFT JOIN gruppenmitglieder  /* fuer 'Offen': auch gruppenmitglieder_id==0 zulassen! */
-    ON (dienste.gruppenmitglieder_id = gruppenmitglieder.id)
-    WHERE ( $where )
-    ORDER BY lieferdatum DESC, dienst ASC
-  ", LEVEL_ALL, "Error while reading Dienste"
+function sql_create_dienst2( $mitglied_id, $dienst, $lieferdatum, $status ) {
+  $mitglied = sql_gruppenmitglied( $mitglied_id );
+  need( $mitglied['aktiv'] );
+  sql_insert( 'dienste', array(
+    'gruppenmitglieder_id' => $mitglied_id
+  , 'gruppen_id' => $mitglied['gruppen_id'] // falls mitglied ausscheidet: dienst bleibt bei gruppe!
+  , 'dienst' => $dienst
+  , 'lieferdatum' => $lieferdatum
+  , 'status' => $status
   ) );
 }
 
-/**
- *  Gibt die nächste Gruppe für einen Dienst aus
- *  dem Rotationsplan zurück
- */
-
-function sql_rotationsplan_next($dienst, $current){
-     $sql = "SELECT min(rotationsplanposition) as mynext
-		    FROM gruppenmitglieder
-		    WHERE rotationsplanposition > ".$current."
-		    AND status = 'aktiv' AND diensteinteilung = '".$dienst."'";
-     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-     $row = mysql_fetch_array($result);
-     $next = $row["mynext"];
-     if($next==NULL){
-         $next = sql_rotationsplan_extrem($dienst, FALSE);
-     }
-     return $next;
-}
-/** Fügt einen Dienst mit beliebigem Status in die Diensttabelle 
- *  Achtung, das Datum muss in Anführungszeichen sein.
- */
-
-function sql_create_dienst2($mitglied, $dienst, $sql_datum, $status){
-    $sql = "INSERT INTO dienste (gruppenmitglieder_id, dienst, lieferdatum, status)
-            VALUES (".$mitglied.", '".$dienst."', ".$sql_datum.", '".$status."')";
-    doSql($sql, LEVEL_IMPORTANT, "Error while adding Dienst");
-}
 
 /** Fügt einen neuen Dienst als Vorschlag in die Diensttabelle
  */
 function sql_create_dienst($datum, $dienst, $rotationsposition){
-    sql_create_dienst2(sql_rotationsplangruppe($dienst, $rotationsposition),
+    sql_create_dienst2( sql_rotationsplan_mitglied( $rotationsposition ),
                          $dienst,
 			 date_intern2sql($datum),
 			 "Vorgeschlagen");
@@ -489,19 +567,18 @@ function sql_create_dienst($datum, $dienst, $rotationsposition){
 /** 
  *  Erzeugt Dienste für einen Zeitraum
  */
-
 function create_dienste($start, $end, $spacing) {
    $dates = sql_date_list($start, $end, $spacing);
    //mit negativer Position in Reihenfolge intialisieren
    // wird beim ersten Durchlauf auf erste Position gesetzt
-   $dienste = array("1/2" => array("position" => -999, "anzahl" => 2), 
+   // TODO: "anzahl" konfigurierbar machen!
+   $dienste = array("1/2" => array("position" => -999, "anzahl" => 3),  
                       "3" => array("position" => -999, "anzahl" => 1), 
 		      "4" => array("position" => -999, "anzahl" => 2)
 		   );
    foreach($dates as $current){
        if(compare_date2(get_latest_dienst(), $current )){
 	       foreach(array_keys($dienste) as $dienst){
-                  sql_check_rotationsplan($dienst);
 	          for($i=1; $i<=$dienste[$dienst]["anzahl"]; $i++){
 		   $plan_position = sql_rotationsplan_next($dienst, $dienste[$dienst]["position"]);
 		   sql_create_dienst($current, $dienst, $plan_position);
@@ -658,221 +735,22 @@ function get_latest_dienst($add_days=0){
 
 }
 
-
-/**
- *  Wählt alle Dienste einer Gruppe mit bestimmtem Status
- */
-function sql_get_dienst_group($group, $status){
-    $sql = "SELECT *
-	    FROM dienste 
-	        inner join gruppenmitglieder on (gruppenmitglieder_id = gruppenmitglieder.id)
-	    WHERE dienste.status = '".$status.
-	    "' AND gruppen_id = ".$group."
-	    ORDER BY lieferdatum ASC";
-    return doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
-}
 /**
  *  Wählt Datum aus, mit bestimmtem Dienst und Status
  *  verwendet für Dienstabtausch
  */
-function sql_get_dienst_date($dienst, $status){
-    $sql = "SELECT DISTINCT lieferdatum as datum 
-            FROM dienste
-	    WHERE dienst = '".$dienst.
-	    "' AND status = '".$status."'";
-    return doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
-}
-/**
- *  This function allows to rotate the
- *  rotation system. This is used after
- *  assigning new tasks. The rotation is
- *  performed in a way that the group with
- *  the latest assignment will the the last
- *  in the rotation system.
- */
-function sql_rotate_rotationsplan($latest_position, $dienst){
-    /*move all before and including the latest assigned
-     *group to the back of the rotation system.
-     *Mark the changed entries with negative numbers.
-     */
-    // var_dump(sql_rotationsplan_extrem($dienst));
-    // var_dump($latest_position);
-    $shift =sql_rotationsplan_extrem($dienst) - $latest_position ;
-    $sql = "UPDATE gruppenmitglieder
-            SET rotationsplanposition = -1 * (rotationsplanposition +".$shift.") 
-	    WHERE rotationsplanposition <= ".$latest_position." AND status = 'aktiv' and diensteinteilung = '".$dienst."'";
-    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-    /* Move all remaining groups (the ones not assigned a
-     * task during the last round) to the front.
-     * They haven't been moved in the previous round,
-     * so they remain positive
-     */
-    $sql = "UPDATE gruppenmitglieder
-    	    SET rotationsplanposition 
-	        = (rotationsplanposition -".$latest_position.
-	   ") WHERE rotationsplanposition > 0 
-	    AND status = 'aktiv' AND diensteinteilung = '".$dienst."'";
-    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-    // Remove mark (negative numbers)
-    $sql = "UPDATE gruppenmitglieder
-    	    SET rotationsplanposition = -1*rotationsplanposition 
-	    WHERE rotationsplanposition < 0 
-	    AND status = 'aktiv' and diensteinteilung = '".$dienst."'";
-    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-   
-}
-/**
- *  This function allows to move a group up or down
- *  within the rotation system
- */
-function sql_change_rotationsplan($mitglied, $dienst, $move_down){
-    $position = sql_rotationsplanposition($mitglied);
-    if($move_down){
-    	$position_new = $position+1;
-    } else {
-    	$position_new = $position-1;
-    }
-    $sql = "UPDATE gruppenmitglieder
-    	    SET rotationsplanposition = ".$position.
-	   " WHERE rotationsplanposition = ".$position_new.
-	   " AND status = 'aktiv' and diensteinteilung = '".$dienst."'";
-    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-    $sql = "UPDATE gruppenmitglieder
-    	    SET rotationsplanposition = ".$position_new.
-	   " WHERE id = ".$mitglied;
-    doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-
+function sql_dates_dienst( $dienst, $status ) {
+  return mysql2array( doSql( "
+    SELECT DISTINCT lieferdatum as datum 
+    FROM dienste
+    WHERE ( dienst = '$dienst' )
+      AND ( status = '$status' )
+  ", LEVEL_ALL, "Error while reading Dienstplan" ) );
 }
 
-/**
- *  This function returns the highest
- *  position number in the rotation system.
- *  Usally, this corresponds to the number of
- *  groups
- */
 
-function sql_rotationsplan_extrem($dienst, $getMax=TRUE){
-     $max="min";
-     if($getMax){
-         $max="max";
-     }
-     $sql = "SELECT ".$max."(rotationsplanposition) as theMax
-		    FROM gruppenmitglieder
-		    WHERE status = 'aktiv' AND diensteinteilung = '". $dienst."'";
-     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-     $row = mysql_fetch_array($result);
-     return $row["theMax"];
-}
-/**
- *  Queries the group id for a
- *  given position in the
- *  rotation plan 
- */
-function sql_rotationsplangruppe($dienst, $position){
-     $sql = "SELECT id
-		    FROM gruppenmitglieder
-		    WHERE rotationsplanposition = ".$position."
-		    AND status = 'aktiv' and diensteinteilung = '".$dienst."'";
-     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-     $row = mysql_fetch_array($result);
-     return $row["id"];
 
-}
-/**
- *  Queries the position in the
- *  rotation plan for a group
- */
-function sql_rotationsplanposition($mitglied_id){
-     $sql = "SELECT rotationsplanposition
-		    FROM gruppenmitglieder
-		    WHERE id = ".$mitglied_id;
-     $result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-     $row = mysql_fetch_array($result);
-     return $row["rotationsplanposition"];
 
-}
-
-/**
- *  Checks the validity of a rotation system.
- *  If there are any groups with position 0
- *  or negative, they will be pushed to the
- *  end of the plan.
- *  One of multiple groups with duplicate positions will be
- *  moved to the end.
- */
-function sql_check_rotationsplan($dienst){
-     $theMax  = sql_rotationsplan_extrem($dienst);
-     while(sql_rotationsplan_has0($dienst)){
-	$theMax +=1;
-	$sql = "UPDATE gruppenmitglieder
-	        SET rotationsplanposition = ".$theMax.
-		" WHERE diensteinteilung = '". $dienst.
-		"' AND status = 'aktiv'  and rotationsplanposition <= 0 
-		LIMIT 1";
-	doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-
-    }
-    $position = sql_rotationsplan_hasDuplicates($dienst);
-     while($position !=0){
-          
-	$theMax +=1;
-	$sql = "UPDATE gruppenmitglieder
-	        SET rotationsplanposition = ".$theMax.
-		" WHERE diensteinteilung = '". $dienst.
-		"' AND status = 'aktiv' and rotationsplanposition = ".$position." 
-		LIMIT 1";
-	doSql($sql, LEVEL_IMPORTANT, "Error while changing Rotationsplan");
-        $position = sql_rotationsplan_hasDuplicates($dienst);
-     }
-
-}
-/** 
- *  Checks whether there are groups 
- *  which share position in the rotation system,
- */
-function sql_rotationsplan_hasDuplicates($dienst){
-
-        $sql = "SELECT rotationsplanposition FROM
-	            (SELECT rotationsplanposition, count(id) as anzahl
-			FROM gruppenmitglieder
-			WHERE status = 'aktiv' and diensteinteilung = '". $dienst.
-			"' GROUP BY rotationsplanposition) as c
-		      WHERE anzahl > 1";
-	$result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-	$answer = 0;
-        if(mysql_num_rows($result)!=0){
-	   $row = mysql_fetch_array($result);
-	   $answer = $row["rotationsplanposition"];
-	}
-        return($answer);
-}
-/** 
- *  Checks whether there are groups 
- *  which are not in the rotation system,
- *  i.e. their position is 0
- */
-function sql_rotationsplan_has0($dienst){
-
-        $sql = "SELECT id 
-		FROM gruppenmitglieder
-		WHERE status = 'aktiv' and diensteinteilung = '". $dienst.
-		"' AND  rotationsplanposition <= 0 ";
-	$result = doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-        return(mysql_num_rows($result)!=0);
-
-}
-/** Queries the rotation plan for a
- *  given task. Before querying it, a
- *  check is performed to fix problems.
- */
-function sql_rotationsplan($dienst){
-        sql_check_rotationsplan($dienst);
-	$sql = "SELECT * 
-		FROM gruppenmitglieder
-		WHERE status = 'aktiv' and diensteinteilung = '". $dienst.
-		"' ORDER BY rotationsplanposition ASC";
-	return doSql($sql, LEVEL_ALL, "Error while reading Rotationsplan");
-}
 
 
 
@@ -1102,27 +980,26 @@ function sql_dienstkontrollblatt_name( $id ) {
 //
 ////////////////////////////////////
 
-function sql_basar_id(){
+function sql_basar_id() {
   global $basar_id;
   need( $basar_id, "Spezielle Basar-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
   return $basar_id;
 }
 
-function sql_muell_id(){
+function sql_muell_id() {
   global $muell_id;
   need( $muell_id, "Spezielle Muell-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
   return $muell_id;
 }
 
-function sql_gruppe_mitglieder( $gruppen_id ) { 
-  return mysql2array( doSql( "SELECT * FROM gruppenmitglieder WHERE status = 'aktiv' AND gruppen_id = $gruppen_id" ) );
+function sql_gruppe_mitglieder( $gruppen_id, $filter = 'aktiv' ) { 
+  return mysql2array( doSql( "SELECT * FROM gruppenmitglieder WHERE ( gruppen_id = $gruppen_id ) AND ( $filter ) " ) );
 }
-
-function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
-  return sql_select_single_row( "
-    SELECT gruppen.name as gruppenname
-         , gruppen.id as gruppen_id
-         , gruppen.id % 1000 as gruppennummer
+function select_gruppenmitglieder() {
+  return "
+    SELECT bestellgruppen.name as gruppenname
+         , bestellgruppen.id as gruppen_id
+         , bestellgruppen.id % 1000 as gruppennummer
          , gruppenmitglieder.id as gruppenmitglieder_id
          , gruppenmitglieder.vorname as vorname
          , gruppenmitglieder.name as name
@@ -1130,13 +1007,22 @@ function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
          , gruppenmitglieder.email as email
          , gruppenmitglieder.diensteinteilung as diensteinteilung
          , gruppenmitglieder.rotationsplanposition as rotationsplanposition
-         , gruppenmitglieder.status as status
+         , gruppenmitglieder.aktiv as aktiv
          , gruppenmitglieder.sockeleinlage as sockeleinlage
     FROM gruppenmitglieder
     JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
-    WHERE gruppenmitglieder.id = $gruppenmitglieder_id
-  ", $allow_null
+  ";
+}
+
+function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
+  return sql_select_single_row(
+    select_gruppenmitglieder() . " WHERE gruppenmitglieder.id = $gruppenmitglieder_id "
+  , $allow_null
   );
+}
+
+function sql_gruppenmitglieder( $filter = 'true', $orderby = 'gruppennummer' ) {
+  return mysql2array( doSql( select_gruppenmitglieder() . " WHERE ( $filter ) ORDER BY $orderby " ) );
 }
 
 function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dienst){
@@ -1160,8 +1046,9 @@ function select_bestellgruppen( $filter = false ) {
     , bestellgruppen.salt as salt
     , bestellgruppen.sockeleinlage  as sockeleinlage_gruppe
     , ( SELECT count(*) FROM gruppenmitglieder
-        WHERE gruppenmitglieder.gruppen_id = bestellgruppen.id 
-              AND gruppenmitglieder.status='aktiv' ) as mitgliederzahl
+        WHERE gruppenmitglieder.aktiv
+          AND gruppenmitglieder.gruppen_id = bestellgruppen.id
+      ) as mitgliederzahl
     , bestellgruppen.id % 1000 as gruppennummer
     FROM bestellgruppen
     $where
@@ -1340,17 +1227,11 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
 
   $daten = sql_gruppenmitglied( $gruppenmitglieder_id );
-  need( $daten['status'] == 'aktiv', "Mitglied nicht aktiv" );
+  need( $daten['aktiv'], "Mitglied nicht aktiv" );
   $gruppen_id = $daten['gruppen_id'];
 
-  $bevorstehende_dienste= sql_get_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $gruppenmitglieder_id )" );
-  foreach( $bevorstehende_dienste as $row ) {
-    // var_dump($row);
-    sql_dienst_wird_offen($row['dienst_id']);
-  }
-
   sql_update( 'gruppenmitglieder', $gruppenmitglieder_id, array(
-    'status' => 'geloescht'
+    'aktiv' => 0
   , 'diensteinteilung' => 'freigestellt'
   , 'rotationsplanposition' => 0
   , 'sockeleinlage' => 0.0
@@ -1383,10 +1264,35 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     , $mysqlheute
     , "Erstattung Sockeleinlage Gruppe " . $gruppendaten['gruppenname']
     ) ) {
-      $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: ${gruppendaten['sockeleinlage']} Euro wurden erstattet.</div>";
+      $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: {$gruppendaten['sockeleinlage']} Euro wurden erstattet.</div>";
       sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => 0.0 ) );
     } else {
       $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
+    }
+  }
+
+  // bevorstehende dienste abklaeren:
+  if( $gruppendaten['mitgliederzahl'] > 0 ) {
+    $bevorstehende_dienste= sql_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppenmitglieder_id = $gruppenmitglieder_id )" );
+    if( $gruppendaten['mitgliederzahl'] == 1 ) {
+      // bei nur noch einem Mitglied ist klar, wer die Dienste abkriegt:
+      $mitglied = current( sql_gruppe_mitglieder( $gruppen_id ) );
+      $m_id = $mitglied['id'];
+    } else {
+      // dienst bleibt bei gruppe, aber Mitglied muss noch abgesprochen werden:
+      $m_id = 0;
+    }
+    foreach( $bevorstehende_dienste as $dienst ) {
+      update( 'dienste', $dienst['dienst_id'], array(
+        'gruppenmitglieder_id' => $m_id
+      , 'status' => 'Vorgeschlagen'
+      ) );
+    }
+  } else {
+    // gruppe jetzt ganz inaktiv, also: alle dienste werden offen:
+    $bevorstehende_dienste = sql_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppen_id = $gruppen_id ) and not geleistet" );
+    foreach( $bevorstehende_dienste as $dienst ) {
+      sql_dienst_wird_offen( $dienst['dienst_id'] );
     }
   }
 }
@@ -1410,8 +1316,12 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
   , 'telefon' => $newTelefon
   , 'diensteinteilung' => $newDiensteinteilung
   , 'sockeleinlage' => $sockelbetrag_mitglied
+  , 'aktiv' => 1
   ) );
+  sql_update( 'gruppenmitglieder', $id, array( 'rotationsplanposition' => $id ) );
   logger( "neues Gruppenmitglied $id ($newVorname) in Gruppe $gruppen_id angelegt" );
+
+  $gruppendaten = sql_gruppendaten( $gruppen_id );
 
   // sockelbetrag fuer mitglied verbuchen:
   if( $sockelbetrag_mitglied > 0 ) {
@@ -1420,7 +1330,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
     , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , $sockelbetrag_mitglied
     , $mysqlheute
-    , "Sockeleinlage fuer zusaetzliches Mitglied $newVorname"
+    , "Sockeleinlage fuer neues Mitglied $newVorname"
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag neues Mitglied: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
     } else {
@@ -1429,7 +1339,6 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
   }
   // falls erstes mitglied der gruppe: sockelbetrag fuer ganze gruppe verbuchen:
   if( $sockelbetrag_gruppe > 0 ) {
-    $gruppendaten = sql_gruppendaten( $gruppen_id );
     if( $gruppendaten['mitgliederzahl'] == 1 ) {
       if( sql_doppelte_transaktion(
         array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
@@ -1443,6 +1352,16 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
       } else {
         $problems .= "<div class='warn'>Verbuchen Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
       }
+    }
+  }
+
+  if( $gruppendaten['mitgliederzahl'] == 1 ) {
+    $bevorstehende_dienste= sql_dienste( "( lieferdatum >= $mysqlheute ) and ( dienste.gruppen_id = $gruppen_id )" );
+    foreach( $bevorstehende_dienste as $dienst ) {
+      update( 'dienste', $dienst['dienst_id'], array(
+        'gruppenmitglieder_id' => $id
+      , 'status' => 'Vorgeschlagen'
+      ) );
     }
   }
 }
@@ -2342,6 +2261,7 @@ function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
   );
 }
 
+
 /**
  *  zusaetzlicheBestellung:
  *    um nachtraeglich (insbesondere nach Lieferung) ein Produkt zu einer Bestellung hinzuzufuegen.
@@ -2349,9 +2269,9 @@ function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
  *    - liefermenge wird noch _nicht_ gesetzt
  */
 // function zusaetzlicheBestellung( $produkt_id, $bestell_id ) {
-//  need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
-//   sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
-   // $gruppenbestellung_id = sql_insert_gruppenbestellung( sql_basar_id(), $bestell_id );
+  // need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
+  // sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
+  // $gruppenbestellung_id = sql_insert_gruppenbestellung( sql_basar_id(), $bestell_id );
    // return sql_insert( 'bestellzuordnung', array(
    //  'produkt_id' => $produkt_id
    // , 'gruppenbestellung_id' => $gruppenbestellung_id
@@ -2628,22 +2548,13 @@ function optionen_konten( $selected = 0 ) {
   return $output;
 }
 
-function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
-  $where = "";
+function sql_kontoauszug( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
+  $filter = " WHERE ( konto_id = $konto_id ) ";
   $groupby = "GROUP BY konto_id, kontoauszug_jahr, kontoauszug_nr";
-  if( $konto_id ) {
-    $where .= (
-      ( $where ? " AND " : " WHERE " ) . "(konto_id=$konto_id)"
-    );
-  }
   if( $auszug_jahr ) {
-    $where .= (
-      ( $where ? " AND " : " WHERE " ) . "(kontoauszug_jahr=$auszug_jahr)"
-    );
+    $filter .= " AND ( kontoauszug_jahr = $auszug_jahr ) ";
     if( $auszug_nr ) {
-      $where .= (
-        ( $where ? " AND " : " WHERE " ) . "(kontoauszug_nr=$auszug_nr)"
-      );
+      $where .= " AND ( kontoauszug_nr = $auszug_nr ) ";
       $groupby = "";
     }
   }
@@ -2657,7 +2568,7 @@ function sql_kontoauszug( $konto_id = 0, $auszug_jahr = 0, $auszug_nr = 0 ) {
     FROM bankkonto
     JOIN bankkonten ON bankkonten.id=konto_id
     LEFT JOIN dienstkontrollblatt ON dienstkontrollblatt.id = dienstkontrollblatt_id
-    $where
+    $filter
     $groupby
     ORDER BY konto_id, kontoauszug_jahr, kontoauszug_nr
   " ) );
@@ -2989,19 +2900,19 @@ function select_waren_soll_gruppen( $using = array() ) {
   return select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, $using );
 }
 
+function select_pfand_soll_gruppen( $using = array() ) {
+  return " SELECT (
+      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, $using ). ")
+    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, $using ). ")
+    ) ";
+}
+
 function select_waren_aufschlag_gruppen( $using = array() ) {
   return select_bestellungen_soll_gruppen( OPTION_WAREN_AUFSCHLAG_SOLL, $using );
 }
 
 function select_waren_soll_lieferanten( $using = array() ) {
   return select_bestellungen_soll_lieferanten( OPTION_WAREN_BRUTTO_SOLL, $using );
-}
-
-function select_pfand_soll_gruppen( $using = array() ) {
-  return " SELECT (
-      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, $using ). ")
-    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, $using ). ")
-    ) ";
 }
 
 function select_pfand_soll_lieferanten( $using = array() ) {
@@ -3298,14 +3209,14 @@ function sockeleinlagen( $gruppen_id = 0 ) {
     $where = "WHERE bestellgruppen.id = $gruppen_id";
   return sql_select_single_field( "
     SELECT
-      sum( bestellgruppen.sockeleinlage
+      sum( bestellgruppen.sockeleinlage_gruppe
           + ( SELECT sum( gruppenmitglieder.sockeleinlage )
               FROM gruppenmitglieder
-              WHERE gruppenmitglieder.status = 'aktiv'
+              WHERE gruppenmitglieder.aktiv
                 AND gruppenmitglieder.gruppen_id = bestellgruppen.id
             )
       ) as soll
-    FROM (".select_aktive_bestellgruppen().") AS bestellgruppen 
+    FROM (".select_bestellgruppen().") AS bestellgruppen 
     $where
   ", 'soll' 
   );
@@ -4253,27 +4164,14 @@ function update_database($version){
     case 9:
       logger( 'starting update_database: from version 9' );
 
-      doSql( "ALTER TABLE `produktpreise` ADD column `lv_faktor` int(11) default '0'"
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: add column lv_faktor"
-      );
-      doSql( "ALTER TABLE `produktpreise` MODIFY column `liefereinheit` varchar(10) default '1 ST'"
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column liefereinheit"
-      );
-      doSql( "ALTER TABLE `produktpreise` MODIFY column `verteileinheit` varchar(10) default '1 ST'"
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column verteileinheit"
-      );
-      doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` int(11) default 1"
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column gebindegroesse"
-      );
-      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY column `bestellnummer` bigint(20) "
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column bestellnummer"
-      );
-      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY column `liefereinheit` varchar(20) "
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column liefereinheit"
-      );
-      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY column `gebinde` int(11) "
-      , "update datenbank von version 9 auf 10 fehlgeschlagen: failed: modify column gebinde"
-      );
+      doSql( "ALTER TABLE `produktpreise` ADD column `lv_faktor` int(11) default '0'" );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `liefereinheit` varchar(10) default '1 ST'" );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `verteileinheit` varchar(10) default '1 ST'" );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` int(11) default 1" );
+      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY column `bestellnummer` bigint(20) " );
+      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY column `liefereinheit` varchar(20) " );
+      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY column `gebinde` int(11) " );
+
       $preise = mysql2array( doSql( "SELECT * FROM produktpreise" ) );
       foreach( $preise as $p ) {
         $id = $p['id'];
@@ -4322,12 +4220,9 @@ function update_database($version){
       logger( 'starting update_database: from version 10' );
 
       // preise ab jetzt pro L-einheit speichern:
-      doSql( "ALTER TABLE `produktpreise` ADD column `lieferpreis` decimal(8,2) default '0.0'"
-      , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: add column lieferpreis"
-      );
-      doSql( "ALTER TABLE `produktpreise` MODIFY column `lv_faktor` decimal(9,3) default '1.0'"
-      , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: modify column lv_faktor"
-      );
+      doSql( "ALTER TABLE `produktpreise` ADD column `lieferpreis` decimal(8,2) default '0.0'" );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `lv_faktor` decimal(9,3) default '1.0'" );
+
       // gebindegroesse bleibt erstmal pro v-einheit (wie auch das pfand!)
       // doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` decimal(9,3) default '1.0'"
       // , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: modify column gebindegroesse"
@@ -4345,50 +4240,36 @@ function update_database($version){
                                             /* , 'gebindegroesse' => $gebindegroesse */
                                                ) );
       }
-      doSql( "ALTER TABLE `produktpreise` DROP column `preis` "
-      , "update datenbank von version 10 auf 11 fehlgeschlagen: failed: drop column preis"
-      );
+      doSql( "ALTER TABLE `produktpreise` DROP column `preis` " );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 11 ) );
       logger( 'update_database: update to version 11 successful' );
 
   case 11:
       logger( 'starting update_database: from version 11' );
 
-      doSql( "ALTER TABLE `gruppenbestellungen` CHANGE column `bestellguppen_id` `bestellgruppen_id` int(11)"
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table gruppenbestellungen "
-      );
+      doSql( "ALTER TABLE `gruppenbestellungen` CHANGE column `bestellguppen_id` `bestellgruppen_id` int(11)" );
 
       doSql( "ALTER TABLE `Dienste` CHANGE column `ID` `id` int(11) NOT NULL auto_increment
                                   , CHANGE column `Dienst` `dienst` enum('1/2','3','4','5','freigestellt')
                                   , CHANGE column `Lieferdatum` `lieferdatum` date
-                                  , CHANGE column `Status` `status` enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')
+                                  , CHANGE column `Status` `status` enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Offen')
+                                  , ADD column `geleistet` tinyint(1) not null default 0
                                   , CHANGE column `Bemerkung` `bemerkung` text
-                                  , RENAME to `dienste` "
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table Dienste "
-      );
+                                  , RENAME to `dienste`
+      " );
 
-      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockeleinlage` decimal(8,2) NOT NULL default '0.00'"
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table bestellgruppen"
-      );
-      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockeleinlage` decimal(8,2) NOT NULL default '0.00'"
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column sockeleinlage to table gruppenmitglieder"
-      );
+      doSql( "ALTER TABLE `bestellgruppen` ADD column `sockeleinlage` decimal(8,2) NOT NULL default '0.00'" );
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD column `sockeleinlage` decimal(8,2) NOT NULL default '0.00'" );
 
       $sockelbetrag = sql_select_single_field( "SELECT value FROM leitvariable WHERE name = 'sockelbetrag'", 'value' );
       echo "sockelbetrag: $sockelbetrag";
-      doSql( "UPDATE `gruppenmitglieder` SET sockeleinlage = $sockelbetrag WHERE status = 'aktiv' "
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: set sockeleinlage = $sockelbetrag in gruppenmitglieder"
-      );
-      doSql( "ALTER TABLE `leitvariable` MODIFY column `name` varchar(30) NOT NULL default '' "
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: alter table leitvariable"
-      );
+      doSql( "UPDATE `gruppenmitglieder` SET sockeleinlage = $sockelbetrag WHERE status = 'aktiv' " );
+      doSql( "ALTER TABLE `leitvariable` MODIFY column `name` varchar(30) NOT NULL default '' " );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_mitglied', 'value' => $sockelbetrag ) );
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
       doSql( "DELETE FROM leitvariable WHERE name = 'sockelbetrag'" );
 
-      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) NOT NULL default '0.00'"
-      , "update datenbank von version 11 auf 12 fehlgeschlagen: failed: add column aufschlag to table gesamtbestellungen"
-      );
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) NOT NULL default '0.00'" );
       sql_insert( 'leitvariable', array( 'name' => 'aufschlag_default', 'value' => 0.0 ) );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
@@ -4397,96 +4278,74 @@ function update_database($version){
   case 12:
 
       doSql( "ALTER TABLE `bestellvorschlaege` MODIFY COLUMN `liefermenge` decimal(10,3) not null default 0
-                                             , DROP COLUMN `bestellmenge` "
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table bestellvorschlaege"
-      );
+                                             , DROP COLUMN `bestellmenge` " );
 
-      doSql( "ALTER TABLE `bestellzuordnung` ADD INDEX `undnocheiner` (`art`,`gruppenbestellung_id`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index undnocheiner to bestellzuordnung"
-      );
+      doSql( "ALTER TABLE `bestellzuordnung` ADD INDEX `undnocheiner` (`art`,`gruppenbestellung_id`)" );
 
       doSql( "ALTER TABLE `dienste` DROP INDEX `GruppenID`
                                   , ADD INDEX `mitglied` (`gruppenmitglieder_id`)
-                                  , MODIFY COLUMN `dienstkontrollblatt_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table dienste"
-      );
+                                  , ADD COLUMN `gruppen_id` int(11) not null default 0
+                                  , MODIFY COLUMN `dienstkontrollblatt_id` int(11) not null default 0" );
 
-      doSql( "ALTER TABLE `gesamtbestellungen` DROP COLUMN `state`"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop column state"
-      );
-      doSql( "ALTER TABLE `gesamtbestellungen` ADD INDEX `rechnungsstatus` (`rechnungsstatus`)"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: add index rechnungsstatus"
-      );
+      doSql( "ALTER TABLE `gesamtbestellungen` DROP COLUMN `state`" );
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD INDEX `rechnungsstatus` (`rechnungsstatus`)" );
 
-      doSql( "ALTER TABLE `gruppen_transaktion` CHANGE COLUMN `kontobewegungs_datum` `valuta` date not null default '0000-00-00' "
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppen_transaktion"
-      );
+      doSql( "ALTER TABLE `gruppen_transaktion` CHANGE COLUMN `kontobewegungs_datum` `valuta` date not null default '0000-00-00' " );
 
       doSql( "ALTER TABLE `gruppenbestellungen` ADD INDEX `gruppe` (`bestellgruppen_id`)
-                                              , MODIFY COLUMN `bestellgruppen_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenbestellungen"
-      );
+                                              , MODIFY COLUMN `bestellgruppen_id` int(11) not null default 0
+      " );
 
+      doSql( "UPDATE `gruppenmitglieder` SET rotationsplanposition = id WHERE true" );
+      // hope we don't need this ^ !
       doSql( "ALTER TABLE `gruppenmitglieder` ADD INDEX `gruppe` (`gruppen_id`)
-                        , MODIFY COLUMN `gruppen_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenmitglieder"
-      );
+                        , ADD COLUMN `aktiv` tinyint(1) not null default 0
+                        , MODIFY COLUMN `gruppen_id` int(11) not null default 0
+                        , ADD UNIQUE KEY `rotationsplan` (`rotationsplanposition`)
+      " );
+      doSql( "UPDATE `gruppenmitglieder` SET aktiv=1 WHERE status='aktiv' " );
+      doSql( "ALTER TABLE `gruppenmitglieder` DROP COLUMN `status` " );
 
       doSql( "ALTER TABLE `gruppenpfand` ADD INDEX `gruppe` (`gruppen_id`)
                         , MODIFY COLUMN `bestell_id` int(11) not null default 0
                         , MODIFY COLUMN `gruppen_id` int(11) not null default 0
                         , MODIFY COLUMN `pfand_wert` decimal(6,2) not null default 0.0
-                        , MODIFY COLUMN `anzahl_leer` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table gruppenpfand"
-      );
+                        , MODIFY COLUMN `anzahl_leer` int(11) not null default 0
+      " );
 
-      doSql( "DROP TABLE IF EXISTS `kategoriezuordnung` "
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table kategoriezuordnung"
-      );
-      doSql( "DROP TABLE IF EXISTS `produktkategorien` "
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: drop table produktkategorien"
-      );
+      doSql( "DROP TABLE IF EXISTS `kategoriezuordnung` " );
+      doSql( "DROP TABLE IF EXISTS `produktkategorien` " );
 
       doSql( "ALTER TABLE `lieferantenkatalog` MODIFY COLUMN `lieferanten_id` int(11) not null default 0
                                              , MODIFY COLUMN `mwst` decimal(4,2) not null default 0.0
                                              , MODIFY COLUMN `pfand` decimal(6,2) not null default 0.0
-                                             , MODIFY COLUMN `preis` decimal(8,2) not null default 0.0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table lieferantenkatalog"
-      );
+                                             , MODIFY COLUMN `preis` decimal(8,2) not null default 0.0
+      " );
 
       doSql( "ALTER TABLE `lieferantenpfand` MODIFY COLUMN `verpackung_id` int(11) not null default 0
-                                           , MODIFY COLUMN `bestell_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table lieferantenpfand"
-      );
+                                           , MODIFY COLUMN `bestell_id` int(11) not null default 0
+      " );
 
-      doSql( "ALTER TABLE `logbook` MODIFY COLUMN `session_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table logbook"
-      );
+      doSql( "ALTER TABLE `logbook` MODIFY COLUMN `session_id` int(11) not null default 0" );
 
       doSql( "ALTER TABLE `pfandverpackungen` DROP INDEX `sort_id`
                                             , ADD INDEX `sort_id` (`lieferanten_id`,`sort_id`)
                                             , MODIFY COLUMN `lieferanten_id` int(11) not null default 0
                                             , MODIFY COLUMN `wert` decimal(8,2) not null default 0.0
                                             , MODIFY COLUMN `mwst` decimal(6,2) not null default 0.0
-                                            , MODIFY COLUMN `sort_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table pfandverpackungen"
-      );
+                                            , MODIFY COLUMN `sort_id` int(11) not null default 0
+      " );
 
-      doSql( "ALTER TABLE `produkte` DROP COLUMN `einheit`"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table produkte"
-      );
+      doSql( "ALTER TABLE `produkte` DROP COLUMN `einheit`" );
 
       doSql( "ALTER TABLE `produktpreise` MODIFY COLUMN `lieferpreis` decimal(8,2) not null default 0.0
                                    , MODIFY COLUMN `verteileinheit` varchar(10) not null default '1 ST'
                                    , MODIFY COLUMN `liefereinheit` varchar(10) not null default '1 ST'
                                    , MODIFY COLUMN `gebindegroesse` int(11) not null default 1
-                                   , MODIFY COLUMN `lv_faktor` decimal(9,3) not null default 1.0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table produktpreise"
-      );
+                                   , MODIFY COLUMN `lv_faktor` decimal(9,3) not null default 1.0
+      " );
 
-      doSql( "ALTER TABLE `transactions` MODIFY COLUMN `session_id` int(11) not null default 0"
-      , "update datenbank von version 12 auf 13 fehlgeschlagen: failed: alter table transactions"
-      );
+      doSql( "ALTER TABLE `transactions` MODIFY COLUMN `session_id` int(11) not null default 0" );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
 
 /*
