@@ -279,9 +279,15 @@ $tables = array(
       , 'extra' => ''
       )
     , 'status' => array(
-        'type' =>  "enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Geleistet','Nicht geleistet','Offen')"
+        'type' =>  "enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Offen')"
       , 'null' => 'YES'
       , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'geleistet' => array(
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
       , 'extra' => ''
       )
     , 'bemerkung' => array(
@@ -291,6 +297,13 @@ $tables = array(
       , 'extra' => ''
       )
     , 'gruppenmitglieder_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
+    )
+    , 'gruppen_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
@@ -549,16 +562,17 @@ $tables = array(
       , 'default' => '0.00'
       , 'extra' => ''
       )
-    , 'status' => array(
-        'type' =>  "enum('aktiv','geloescht')"
+    , 'aktiv' => array(
+        'type' =>  "tinyint(1)"
       , 'null' => 'NO'
-      , 'default' => 'aktiv'
+      , 'default' => '0'
       , 'extra' => ''
       )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'gruppe' => array( 'unique' => 0, 'collist' => 'gruppen_id' )
+      , 'rotationsplan' => array( 'unique' => 1, 'collist' => 'rotationsplanposition' )
     )
   )
 , 'gruppenpfand' => array(
