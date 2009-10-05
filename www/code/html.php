@@ -69,7 +69,7 @@ function close_tag( $tag ) {
     echo "</$tag>";
     unset( $open_tags[$n--] );
   } else {
-    error( "unmatched close_tag($tag)" );
+    error( "unmatched close_tag(got:$tag / exptected:{$open_tags[$n]})" );
   }
 }
 
@@ -441,18 +441,18 @@ function open_select( $fieldname, $attr = '' ) {
   switch( $attr ) {
     case 'autoreload':
       $id = new_html_id();
-      $url = fc_link( 'self', 'XXX=X,context=action' );
-      $attr = "id='$id' onchange=\"
-        i = document.getElementById('$id').selectedIndex;
-        s = document.getElementById('$id').options[i].value;
+      $url = fc_link( 'self', array( 'XXX' => 'X', 'context' => 'action', $fieldname => NULL ) );
+      $attr = "id='select_$id' onchange=\"
+        i = document.getElementById('select_$id').selectedIndex;
+        s = document.getElementById('select_$id').options[i].value;
         self.location.href = '$url'.replace( /XXX=X/, '&$fieldname='+s );
       \" ";
       break;
     case 'autopost':
       $id = new_html_id();
-      $attr = "id='$id' onchange=\"
-        i = document.getElementById('$id').selectedIndex;
-        s = document.getElementById('$id').options[i].value;
+      $attr = "id='select_$id' onchange=\"
+        i = document.getElementById('select_$id').selectedIndex;
+        s = document.getElementById('select_$id').options[i].value;
         post_action( '$fieldname', s );
       \" ";
       break;
