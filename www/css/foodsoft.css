@@ -25,7 +25,7 @@ div#payload {
   background:#ffeedd;
 }
 
-.smallskip {
+.smallskip, tr.smallskip td, tr.smallskip th {
   padding-top:0.5em;
 }
 .medskip {
@@ -140,7 +140,7 @@ table.debug tr th, table.debug tr td {
 table.tight {
   width:100% !important;
 }
-table.tight tr th, table.tight tr td, td.tight, th.tight {
+table.tight tr th, table.tight tr td, td.tight, th.tight, div.tight {
   padding:0pt !important;
   margin:0pt !important;
 }
