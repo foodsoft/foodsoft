@@ -40,26 +40,34 @@ switch( $action ) {
     need( $startdatum_day );
     create_dienste( $startdatum, $enddatum, $dienstfrequenz );
     break;
+  case 'dienstLoeschen':
+    need_http_var( 'message', 'U' );
+    sql_delete_dienst( $message );
+    break;
+  case 'dienstInsert':
+    // TODO...
+    break;
   case 'moveUp':
-    need_http_var( 'message', 'u' );
+    need_http_var( 'message', 'U' );
     sql_change_rotationsplan( $message, $plan_dienst, false );
     break;
   case 'moveDown':
-    need_http_var( 'message', 'u' );
+    need_http_var( 'message', 'U' );
     sql_change_rotationsplan( $message, $plan_dienst, true );
     break;
   case 'uebernehmen':
     need( $id );
-    get_http_var( 'confirmed', 'u', 0 );
+    get_http_var( 'message', 'u', 0 ) or $message = 0;
+    $abgesprochen = $message;
     $dienst = sql_dienst( $id );
-    if( $dienst["status"]=="Offen" || $confirmed ) {
-      sql_dienst_akzeptieren( $id, $confirmed );
+    if( $dienst["status"]=="Offen" || $abgesprochen ) {
+      sql_dienst_akzeptieren( $id, $abgesprochen );
     } else {
       open_div( 'warn' );
       ?> Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren
          Versuchen (Telefon und Email) nicht erreichbar 
       <?
-      echo fc_action( 'class=button,text=Klar', sprintf( 'action=uebernehmen_%u,confirmed=1', $id ) );
+      echo fc_action( 'class=button,text=Klar', sprintf( 'action=uebernehmen_%u,message=1', $id ) );
       close_div();
       smallskip();
     }
