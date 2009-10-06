@@ -25,7 +25,7 @@ div#payload {
   background:#ffeedd;
 }
 
-.smallskip, tr.smallskip td, tr.smallskip th {
+.smallskip, tr.smallskip td, tr.smallskip th, table.smallskip tr td, table.smallskip tr th {
   padding-top:0.5em;
 }
 .medskip {
