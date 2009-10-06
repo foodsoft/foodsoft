@@ -20,11 +20,24 @@ if( $action ) {
   }
 }
 
+get_http_var("startdatum_day",'u',0);
+get_http_var("startdatum_month",'u',0);
+get_http_var("startdatum_year",'u',0);
+get_http_var("enddatum_day",'u',0);
+get_http_var("enddatum_month",'u',0);
+get_http_var("enddatum_year",'u',0);
+
+if( $startdatum_day ) {
+  $startdatum = "$startdatum_year-$startdatum_month-$startdatum_day";
+  $enddatum = "$enddatum_year-$enddatum_month-$enddatum_day";
+} else {
+  $startdatum = date("Y-m-d");
+  $enddatum = $startdatum;
+}
+
 switch( $action ) {
   case 'diensteErstellen':
-    need_http_var( 'dienstfrequenz', 'u' );
-    need_http_var( 'startdatum', '/^[0-9 .-]+$/' ); //todo check for date
-    need_http_var( 'enddatum', '/^[0-9 .-]+$/' ); // todo check for date
+    need( $startdatum_day );
     create_dienste( $startdatum, $enddatum, $dienstfrequenz );
     break;
   case 'moveUp':
@@ -107,15 +120,16 @@ if( hat_dienst(5) or true ) {
     ?> <h1>Dienste erstellen</h1> <?
 
     open_form( '', 'action=create' );
-      ?> Verteile Dienste mit <?
-      echo int_view( 7, 'dienstfrequenz' );
-      ?> tägigem Abstand <br> ab dem <?
-      echo date_view( $startdatum, 'startdatum' );
-      ?> bis <?
-      echo date_view( $enddatum, 'enddatum' );
-      open_div( 'right' );
-        submission_button( 'Dienste Erstellen' );
-      close_div();
+      open_table( 'smallskip' );
+        open_tr();
+          open_td( '', '', "Verteile Dienste mit" );
+          open_td( 'quad', '', int_view( 7, 'dienstfrequenz' ) ." -taegigem Abstand" );
+        form_row_date( 'ab dem:', 'startdatum', $startdatum );
+        form_row_date( 'bis einschliesslich:', 'enddatum', $enddatum );
+        open_tr();
+          open_td( 'right', "colspan='2'" );
+            submission_button( 'Dienste Erstellen' );
+      close_table();
     close_form();
     smallskip();
 
