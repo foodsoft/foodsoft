@@ -1,5 +1,5 @@
 <?php
-  global $angemeldet, $login_gruppen_name, $coopie_name, $dienst
+  global $angemeldet, $login_gruppen_name, $coopie_name, $login_dienst
        , $readonly, $foodsoftdir;
 
 $headclass='head';
@@ -28,15 +28,15 @@ open_div( $headclass, "id='header'" );
           <span class='logoinvers'>FC</span><span class='logo'><? echo $foodcoop_name; ?>... Foodsoft</span></a> <?
     open_td( '', "style='padding-top:1em;'" );
       if( $angemeldet ) {
-        if( $dienst > 0 ) {
-          echo "Hallo $coopie_name ($login_gruppen_name) vom Dienst $dienst!";
+        if( $login_dienst > 0 ) {
+          echo "Hallo $coopie_name ($login_gruppen_name) vom Dienst $login_dienst!";
         } else {
           echo "Hallo Gruppe $login_gruppen_name!";
         }
       }
     open_td( '', "style='text-align:right;padding-top:1em;'" );
       if( $angemeldet ) {
-        if( $dienst > 0 ) {
+        if( $login_dienst > 0 ) {
           // fuer dienste: noch dienstkontrollblatteintrag aktualisieren:
           echo fc_action( 'window=dienstkontrollblatt,class=button,text=Abmelden,img=', 'action=abmelden' );
           // "<a class='button' href='index.php?window=dienstkontrollblatt&action=abmelden'>Abmelden</a>";

@@ -82,7 +82,7 @@ $self_fields = array();
 $self_post_fields = array();
 
 // Benutzerdaten:
-global $angemeldet, $login_gruppen_id, $login_gruppen_name, $dienst, $coopie_name, $dienstkontrollblatt_id, $session_id;
+global $angemeldet, $login_gruppen_id, $login_gruppen_name, $login_dienst, $coopie_name, $dienstkontrollblatt_id, $session_id;
 $angemeldet = false;
 
 require_once('code/views.php');

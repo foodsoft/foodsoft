@@ -309,16 +309,15 @@ function dienstplan_eintrag_view( $dienst_id ) {
 }
 
 function dienst_view( $dienst_id ) {
-  global $login_gruppen_id;
-  global $dienst;
+  global $login_gruppen_id, $login_dienst;
 
   $dienst = sql_dienst( $dienst_id );
 
   $edit_gruppe = hat_dienst(5);
   if( hat_dienst(5) )
-    echo "HAT dienst 5: $dienst";
+    echo "HAT dienst 5: $login_dienst";
   else
-    echo "KEIN dienst 5: $dienst";
+    echo "KEIN dienst 5: $login_dienst";
 
   $gruppen_id = $dienst['gruppen_id'];
   if( $gruppen_id ) {
@@ -973,7 +972,7 @@ function bestellschein_view(
  * Liste zur Auswahl einer Bestellung via Link
  */
 function select_bestellung_view() {
-  global $self, $foodsoftdir, $dienst, $login_gruppen_id, $mysqljetzt;
+  global $self, $foodsoftdir, $login_dienst, $login_gruppen_id, $mysqljetzt;
 
   echo "<h1 class='bigskip'>Liste aller Bestellungen</h1>";
 
@@ -984,7 +983,7 @@ function select_bestellung_view() {
     open_th('','','Lieferung');
     open_th('','','Summe');
     open_th('','','Detailansichten');
-    if( $dienst != 0 )
+    if( $login_dienst != 0 )
       open_th('','','Aktionen');
 
   foreach( sql_bestellungen() as $row ) {
@@ -1024,7 +1023,7 @@ function select_bestellung_view() {
                                 , array( 'action' => 'changeState'
                                        , 'change_id' => $bestell_id, 'change_to' => STATUS_BESTELLEN ) );
         }
-        if( $dienst > 0 )
+        if( $login_dienst > 0 )
           $actions[] = fc_action( array( 'text' => '>>> Lieferschein erstellen >>>'
                                        , 'title' => 'Bestellung wurde geliefert, Lieferschein abgleichen?'
                                        , 'confirm' => 'Bestellung wurde geliefert, Lieferschein abgleichen?' )
@@ -1034,7 +1033,7 @@ function select_bestellung_view() {
 
       case STATUS_VERTEILT:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
-        if( $dienst > 0 )
+        if( $login_dienst > 0 )
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
         if( hat_dienst(4) ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
@@ -1045,7 +1044,7 @@ function select_bestellung_view() {
       case STATUS_ABGERECHNET:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
         $views[] = fc_link( 'abrechnung', "class=href,bestell_id=$bestell_id" );
-        if( $dienst > 0 )
+        if( $login_dienst > 0 )
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
         break;
 
@@ -1077,7 +1076,7 @@ function select_bestellung_view() {
         } else {
           echo '-';
         }
-      if( $dienst != 0 ) {
+      if( $login_dienst != 0 ) {
         open_td();
           if( $actions ) {
             open_ul('plain');

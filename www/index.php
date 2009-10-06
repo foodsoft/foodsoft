@@ -34,7 +34,8 @@ switch( $window_id ) {
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
         break;
       case "bestellen":
-        if ( !( $dienst == 4 ) and ( mysql_num_rows(sql_get_dienst_group($login_gruppen_id ,"Vorgeschlagen"))>0 ) ) {
+        if( hat_dienst(0)
+             and sql_dienste( "(dienste.gruppen_id = $login_gruppen_id) and (status = 'Vorgeschlagen')" ) ) {
          //darf nur bestellen, wenn Dienste akzeptiert
          ?> <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> <?
          include('windows/dienstplan.php');
@@ -72,6 +73,6 @@ switch( $window_id ) {
 // force new iTAN (this form must still be submittable after any other):
 //
 get_itan( true );
-open_form( 'name=update_form', 'message=' );
+open_form( 'name=update_form', 'action=,message=' );
 
 ?>

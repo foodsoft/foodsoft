@@ -6,9 +6,9 @@ assert( $angemeldet ) or exit();
 
 get_http_var('action','w','');
 
-if( ( $action == 'abmelden' ) && ( $dienst >= 0 ) )  {
+if( ( $action == 'abmelden' ) && ( $login_dienst >= 0 ) )  {
   $row = false;
-  if( $dienst > 0 and $dienstkontrollblatt_id > 0 )
+  if( $login_dienst > 0 and $dienstkontrollblatt_id > 0 )
     $row = current( sql_dienstkontrollblatt( $dienstkontrollblatt_id ) );
   if( $row ) {
     open_form( '', 'login=logout' );

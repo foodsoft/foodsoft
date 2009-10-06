@@ -6,7 +6,7 @@
 // - ein "Close" Knopf wird automatisch erzeugt
 
 global $angemeldet, $login_gruppen_name, $coopie_name
-     , $dienst, $title, $subtitle, $wikitopic, $readonly
+     , $login_dienst, $title, $subtitle, $wikitopic, $readonly
      , $area;
 
 if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
@@ -48,8 +48,8 @@ open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt
       open_td();
       open_td( '', "style='font-size:11pt;'" );
         if( $angemeldet ) {
-          if( $dienst > 0 ) {
-            echo "$coopie_name ($login_gruppen_name) / Dienst $dienst";
+          if( $login_dienst > 0 ) {
+            echo "$coopie_name ($login_gruppen_name) / Dienst $login_dienst";
           } else {
             echo "angemeldet: $login_gruppen_name";
           }

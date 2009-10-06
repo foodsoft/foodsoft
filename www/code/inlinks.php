@@ -47,7 +47,7 @@ $pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 
 //  - text, title, class: default look and tooltip-help of the link
 //
 function fc_window_defaults( $name ) {
-  global $readonly, $dienst, $large_window_options, $small_window_options;
+  global $readonly, $login_dienst, $large_window_options, $small_window_options;
   $parameters = array();
   $options = $large_window_options;
   // echo "fc_window_defaults: $name<br>";
@@ -253,7 +253,7 @@ function fc_window_defaults( $name ) {
       break;
     case 'produktverteilung':
     case 'verteilliste':
-      if( $dienst > 0 ) {
+      if( $login_dienst > 0 ) {
         $parameters['window'] = 'produktverteilung';
         $parameters['window_id'] = 'verteilliste';
         $parameters['class'] = 'browse';
@@ -291,7 +291,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'editBestellung';
       $parameters['window_id'] = 'edit_bestellung';
       $parameters['title'] = 'zu den Stammdaten der Bestellung...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '480' ) );
       break;
     case 'editbuchung':
@@ -299,7 +299,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'editBuchung';
       $parameters['window_id'] = 'edit_buchung';
       $parameters['title'] = 'zu den Details der Buchung...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '600', 'height' => '600' ) );
       break;
     // case 'edit_group':  //  im moment nicht benutzt
@@ -308,7 +308,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'editKonto';
       $parameters['window_id'] = 'edit_konto';
       $parameters['title'] = 'zu den Stammdaten des Bankkontos...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
     case 'editlieferant':
@@ -316,7 +316,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'editLieferant';
       $parameters['window_id'] = 'edit_lieferant';
       $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
       break;
     case 'editprodukt':
@@ -324,7 +324,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'editProdukt';
       $parameters['window_id'] = 'edit_produkt';
       $parameters['title'] = 'zu den Stammdaten des Produkts...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '560', 'height' => 380 ) );
       break;
     case 'editverpackung':
@@ -332,7 +332,7 @@ function fc_window_defaults( $name ) {
       $parameters['window'] = 'editVerpackung';
       $parameters['window_id'] = 'edit_verpackung';
       $parameters['title'] = 'zu den Stammdaten der Pfandverpackung...';
-      $parameters['class'] = ( ( $dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '500' ) );
       break;
     case 'insertbestellung':

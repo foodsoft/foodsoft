@@ -362,7 +362,7 @@ open_table( 'list hfill' );  // bestelltabelle
     open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Bestellmenge gesamt' );
     open_th( '', "colspan='4' title='Bestellmenge eurer Gruppe'", 'eure Bestellmenge' );
     open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r eure Gruppe (mit Pfand und MWSt)'", 'Kosten' );
-    if( $dienst == 4 )
+    if( hat_dienst(4) )
       open_th( '', '', 'Aktionen' );
   open_tr( 'groupofrows_bottom' );
     open_th( '', '', '' );
@@ -372,7 +372,7 @@ open_table( 'list hfill' );  // bestelltabelle
     open_th( '', "colspan='2' title='Fest-Bestellmenge: wieviel Ihr wirklich haben wollt'", 'fest' );
     open_th( '', "colspan='2' title='Toleranz-Menge: wieviel Ihr auch mehr nehmen würdet'", 'Toleranz' );
     open_th( '', '', '' );
-    if( $dienst == 4 )
+    if( hat_dienst(4) )
       open_th( '', '', '' );
 
 $produktgruppen_zahl = array();
@@ -442,8 +442,7 @@ foreach( $produkte as $produkt ) {
   open_td('top center');
     open_table('layout');
       open_tr();
-        if( ( $dienst == 4 )
-            && ( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) {
+        if( hat_dienst(4) && ( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) ) {
           open_td( 'mult outdated', "title='Preis nicht aktuell!'" );
         } else {
           open_td( 'mult' );
@@ -528,7 +527,7 @@ foreach( $produkte as $produkt ) {
 
   open_td( "mult $tag", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
 
-  if( $dienst == 4 ) {
+  if( hat_dienst(4) ) {
     open_td();
       echo fc_link( 'edit_produkt', "produkt_id=$produkt_id" );
       echo fc_action( array( 'class' => 'drop', 'text' => '', 'title' => 'Bestellvorschlag löschen'
@@ -542,7 +541,7 @@ open_tr('summe');
   open_td( '', "colspan='12'", 'Gesamtpreis:' );
   open_td( 'number', "id='gesamtpreis2'", sprintf( '%.2lf', $gesamtpreis ) );
 
-  if( $dienst == 4 ) open_td();
+  if( hat_dienst(4) ) open_td();
 close_table();
 
 if( $js )
