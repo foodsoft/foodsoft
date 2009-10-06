@@ -58,8 +58,10 @@ function sql_select_single_field( $sql, $field, $allownull = false ) {
   $row = sql_select_single_row( $sql, $allownull );
   if( ! $row )
     return NULL;
-  need( isset( $row[$field] ), "Feld $field nicht gesetzt" );
-  return $row[$field];
+  if( isset( $row[$field] ) )
+    return $row[$field];
+  need( $allownull );
+  return NULL;
 }
 
 function sql_count( $table, $where ) {
@@ -255,6 +257,7 @@ function select_dienste( $filter = 'true' ) {
          , gruppenmitglieder.email
          , gruppenmitglieder.diensteinteilung
          , gruppenmitglieder.aktiv
+         , ( if( not dienste.geleistet and ( adddate( curdate(), 14 ) >= dienste.lieferdatum ), 1, 0 ) ) as soon
     FROM dienste
     LEFT JOIN gruppenmitglieder
       ON (gruppenmitglieder_id = gruppenmitglieder.id)
@@ -262,7 +265,7 @@ function select_dienste( $filter = 'true' ) {
   ";
 }
 
-function sql_dienste( $filter = 'true', $orderby = 'lieferdatum ASC' ) {
+function sql_dienste( $filter = 'true', $orderby = 'lieferdatum ASC, dienst' ) {
   return mysql2array( doSql(
     select_dienste( $filter ) . " ORDER BY $orderby "
   , LEVEL_ALL, "error while reading from dienste"
@@ -276,10 +279,9 @@ function sql_dienst( $dienst_id ) {
 
 function sql_dienst_info( $dienst_rueckbestaetigen ) {
   global $login_gruppen_id;
-  $critical_date = in_two_weeks();
   $show_dienste = array();
   foreach( sql_dienste( "(dienste.gruppen_id = $login_gruppen_id) and ( status = 'Akzeptiert' )" ) as $dienst ) {
-    if(compare_date2( $dienst["lieferdatum"], $critical_date)) {
+    if( $dienst['soon'] ) {
       $show_dienste[] = $dienst;
     }
   }
@@ -316,7 +318,7 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
 
 
 /**
- *  Dienst Akzeptieren 
+ *  Dienst Akzeptieren
  */ 
 function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false ) {
   global $login_gruppen_id;
@@ -335,14 +337,21 @@ function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false ) {
   }
   sql_update( 'dienste', $dienst_id, array( 'status' => 'Akzeptiert' ) );
   if( $dienst['gruppen_id'] != $login_gruppen_id ) {
+    $mitglieder = sql_gruppenmitglieder( $login_gruppen_id );
+    if( count( $mitglieder ) == 1 ) {
+      $mitglied = current( $mitglieder );
+      $m_id = $mitglied['id'];
+    } else {
+      $m_id = 0;
+    }
     sql_update( 'dienste', $dienst_id, array(
-      'gruppen_id' => $login_gruppen_id, 'gruppenmitglieder_id' => 0
+      'gruppen_id' => $login_gruppen_id, 'gruppenmitglieder_id' => $m_id
     ) );
   }
 }
 
 /**
- *  Dienst ablehnen, nachdem die Gruppe ihn schon akzeptiert hat (offen)
+ *  Dienst ablehnen, nachdem die Gruppe ihn schon akzeptiert hat (wird 'Offen')
  */
 function sql_dienst_wird_offen( $dienst_id ) {
   global $login_gruppen_id;
@@ -402,11 +411,33 @@ function sql_dienst_person_aendern( $dienst_id, $person_id ) {
   }
   sql_update( 'dienste', $dienst_id, array(
     'gruppen_id' => $person['gruppen_id']
-  , 'gruppemitglieder_id' => $person_id
+  , 'gruppenmitglieder_id' => $person_id
   ) );
   if( $person['gruppen_id'] != $dienst['gruppen_id'] ) {
     sql_update( 'dienste', $dienst_id, array( 'status' => 'Vorgeschlagen' ) );
   }
+}
+
+function sql_dienst_gruppe_aendern( $dienst_id, $gruppen_id ) {
+  global $login_gruppen_id;
+  $dienst = sql_dienst( $dienst_id );
+  if( $gruppen_id == $dienst['gruppen_id'] )
+    return;
+  $gruppe = sql_gruppendaten( $gruppen_id );
+  need( $gruppe['aktiv'] );
+  need( ! $dienst['geleistet'] );
+  nur_fuer_dienst(5);
+  if( $gruppe['mitgliederzahl'] == 1 ) {
+    $mitglied = current( sql_gruppenmitglieder( $gruppen_id ) );
+    $m_id = $mitglied['id'];
+  } else {
+    $m_id = 0;
+  }
+  sql_update( 'dienste', $dienst_id, array(
+    'gruppen_id' => $gruppen_id
+  , 'gruppenmitglieder_id' => $m_id
+  , 'status' => 'Vorgeschlagen'
+  ) );
 }
 
 /**
@@ -440,7 +471,7 @@ function sql_rotationsplanposition( $mitglied_id ) {
 /** Queries the rotation plan for a given task.
  */
 function sql_rotationsplan( $dienst ) {
-  return sql_gruppenmitglieder( "aktiv AND ( diensteinteilung = '$dienst' ) ", "rotationsplanposition ASC" );
+  return sql_gruppenmitglieder( "gruppenmitglieder.aktiv AND ( diensteinteilung = '$dienst' ) ", "rotationsplanposition ASC" );
 }
 
 /**
@@ -520,7 +551,7 @@ function sql_rotate_rotationsplan( $latest_position, $dienst ) {
 function sql_change_rotationsplan( $mitglied_id, $dienst, $move_down ) {
   nur_fuer_dienst(5);
   $position = sql_rotationsplanposition( $mitglied_id );
-  $newpos = ( $nove_down ? sql_rotationsplan_next( $dienst, $position )
+  $newpos = ( $move_down ? sql_rotationsplan_next( $dienst, $position )
                          : sql_rotationsplan_prev( $dienst, $position ) );
   if( $position == $newpos )
     return;
@@ -629,16 +660,6 @@ function compare_date2($first, $second){
         */
 
    return strtotime($first) < strtotime($second);
-}
-/**
- *
- */
-function in_two_weeks(){
-     //Now
-     $date = date_sql2intern(strftime("%Y-%m-%d %H:%M:%S"));
-     //Correct format
-    $toreturn = sql_add_days_to_date($date, 19);
-    return $toreturn;
 }
 
 if(!function_exists("date_parse")){
@@ -761,75 +782,74 @@ function sql_dates_dienst( $dienst, $status ) {
  * they are performing
  */
 function possible_areas(){
-  global $dienst;
 
-$areas = array();
+  $areas = array();
 
-$areas[] = array("area" => "bestellen",
-	"hint" => "Hier können ihr euch an den laufenden Bestellung beteiligen",
-	"title" => "Bestellen");
+   $areas[] = array("area" => "bestellen",
+     "hint" => "Hier können ihr euch an den laufenden Bestellung beteiligen",
+     "title" => "Bestellen");
 
-if( hat_dienst(0) ) {
- $areas[] = array("area" => "meinkonto", 
-	        "hint"  => "Hier könnt ihr euer Gruppenkonto einsehen", 
-		"title" => "Mein Konto" );
-}
-	$areas[] = array("area" => "gruppen",
-	"hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
-	"title" => "Gruppen");		
+   if( hat_dienst(0) ) {
+    $areas[] = array("area" => "meinkonto", 
+             "hint"  => "Hier könnt ihr euer Gruppenkonto einsehen", 
+       "title" => "Mein Konto" );
+   }
+     $areas[] = array("area" => "gruppen",
+     "hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
+     "title" => "Gruppen");
 
-$areas[] = array("area" => "bestellungen_overview",
-	"hint" => "Übersicht aller Bestellungen (laufende und abgeschlossene)",
-	"title" => "Alle Bestellungen");
+   $areas[] = array("area" => "bestellungen_overview",
+     "hint" => "Übersicht aller Bestellungen (laufende und abgeschlossene)",
+     "title" => "Alle Bestellungen");
 
-if( hat_dienst(3,4) ) {
-	$areas[] = array("area" => "basar",
-	"hint" => "Produkte im Basar an Gruppen verteilen",
-	"title" => "Basar");
-} else {
-	$areas[] = array("area" => "basar",
-	"hint" => "Waren im Basar auflisten",
-	"title" => "Basar");
-}
+   if( hat_dienst(3,4) ) {
+     $areas[] = array("area" => "basar",
+     "hint" => "Produkte im Basar an Gruppen verteilen",
+     "title" => "Basar");
+   } else {
+     $areas[] = array("area" => "basar",
+     "hint" => "Waren im Basar auflisten",
+     "title" => "Basar");
+   }
 
-$areas[] = array("area" => "bilanz",
-	"hint" => "Finanzen der FC: Überblick und Verwaltung",
-	"title" => "Bilanz");
+   $areas[] = array("area" => "bilanz",
+     "hint" => "Finanzen der FC: Überblick und Verwaltung",
+     "title" => "Bilanz");
 
-if( hat_dienst(4) ){
-	$areas[] = array("area" => "produkte",
-	"hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produkte");	 
-	$areas[] = array("area" => "konto",
-	"hint" => "Hier könnt ihr die Bankkonten verwalten...",
-	"title" => "Konten");		
-	$areas[] = array("area" => "lieferanten",
-	"hint" => "Hier kann man die LieferantInnen verwalten...",
-	"title" => "LieferantInnen");
-} else {
-	$areas[] = array("area" => "produkte",
-	"hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produkte");	 
-	$areas[] = array("area" => "konto",
-	"hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
-	"title" => "Konten");		
-	$areas[] = array("area" => "lieferanten",
-	"hint" => "Hier könnt ihr die LieferantInnen einsehen...",
-	"title" => "LieferantInnen");
-}
-if( hat_dienst(4) ) {
-} 
-	$areas[] = array("area" => "dienstkontrollblatt",
-	"hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
-	"title" => "Dienstkontrollblatt");		
-if( hat_dienst(1,3,4) ) {
-	$areas[] = array("area" => "updownload",
-	"hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
-	"title" => "Up/Download");
-} 
+   if( hat_dienst(4) ){
+     $areas[] = array("area" => "produkte",
+     "hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produkte");	 
+     $areas[] = array("area" => "konto",
+     "hint" => "Hier könnt ihr die Bankkonten verwalten...",
+     "title" => "Konten");
+     $areas[] = array("area" => "lieferanten",
+     "hint" => "Hier kann man die LieferantInnen verwalten...",
+     "title" => "LieferantInnen");
+   } else {
+     $areas[] = array("area" => "produkte",
+     "hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produkte");	 
+     $areas[] = array("area" => "konto",
+     "hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
+     "title" => "Konten");
+     $areas[] = array("area" => "lieferanten",
+     "hint" => "Hier könnt ihr die LieferantInnen einsehen...",
+     "title" => "LieferantInnen");
+  }
+
+  $areas[] = array("area" => "dienstkontrollblatt",
+    "hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
+    "title" => "Dienstkontrollblatt");
+
+  if( hat_dienst(1,3,4) ) {
+    $areas[] = array("area" => "updownload",
+    "hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
+    "title" => "Up/Download");
+  }
 
    $areas[] = array("area" => "dienstplan", 
-	        "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...", 
-		"title" => "Dienstplan"
-	   );
+     "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...", 
+     "title" => "Dienstplan" );
+
    return $areas;
 }
 
@@ -3930,6 +3950,7 @@ $foodsoft_get_vars = array(
 , 'optionen' => 'u'
 , 'options' => 'u'
 , 'orderby' => 'w'
+, 'plan_dienst' => '/^[0-9\/]+$/'
 , 'prev_id' => 'u'
 , 'produkt_id' => 'u'
 , 'ro' => 'u'
@@ -3977,53 +3998,53 @@ function sanitize_http_input() {
 
 
 function checkvalue( $val, $typ){
-	  $pattern = '';
-	  switch( substr( $typ, 0, 1 ) ) {
-	    case 'H':
+    $pattern = '';
+    switch( substr( $typ, 0, 1 ) ) {
+      case 'H':
         if( get_magic_quotes_gpc() )
           $val = stripslashes( $val );
-	      $val = htmlspecialchars( $val );
-	      break;
+        $val = htmlspecialchars( $val );
+        break;
       case 'R':
         break;
-	    case 'U':
-	      $val = trim($val);
-	      $pattern = '/^\d*[1-9]\d*$/';
-	      break;
-	    case 'u':
-		    //FIXME: zahl sollte als zahl zurückgegeben 
-		    //werden, zur Zeit String
-	      $val = trim($val);
+      case 'U':
+        $val = trim($val);
+        $pattern = '/^\d*[1-9]\d*$/';
+        break;
+      case 'u':
+        //FIXME: zahl sollte als zahl zurückgegeben 
+        //werden, zur Zeit String
+        $val = trim($val);
         // eventuellen nachkommateil (und sonstigen Muell) abschneiden:
         $val = preg_replace( '/[^\d].*$/', '', $val );
-	      $pattern = '/^\d+$/';
-	      break;
-	    case 'd':
-	      $val = trim($val);
+        $pattern = '/^\d+$/';
+        break;
+      case 'd':
+        $val = trim($val);
         // eventuellen nachkommateil abschneiden:
         $val = preg_replace( '/[.].*$/', '', $val );
-	      $pattern = '/^-{0,1}\d+$/';
-	      break;
-	    case 'f':
-	      $val = str_replace( ',', '.' , trim($val) );
-	      $pattern = '/^[-\d.]+$/';
-	      break;
-	    case 'w':
-	      $val = trim($val);
-	      $pattern = '/^[a-zA-Z0-9_]+$/';
-	      break;
-	    case '/':
-	      $val = trim($val);
-	      $pattern = $typ;
-	       break;
-	    default:
+        $pattern = '/^-{0,1}\d+$/';
+        break;
+      case 'f':
+        $val = str_replace( ',', '.' , trim($val) );
+        $pattern = '/^[-\d.]+$/';
+        break;
+      case 'w':
+        $val = trim($val);
+        $pattern = '/^[a-zA-Z0-9_]+$/';
+        break;
+      case '/':
+        $val = trim($val);
+        $pattern = $typ;
+         break;
+      default:
         return FALSE;
-	  }
-	  if( $pattern ) {
-	    if( ! preg_match( $pattern, $val ) ) {
-	      return FALSE;
-	    }
-	  }
+    }
+    if( $pattern ) {
+      if( ! preg_match( $pattern, $val ) ) {
+        return FALSE;
+      }
+    }
   return $val;
 }
 
