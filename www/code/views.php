@@ -274,7 +274,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
     }
   } else {
     if( $dienst['gruppen_id'] == $login_gruppen_id ) {
-      $class = 'bold alert bottomskip';
+      $class = 'bold alert';
     } else {
       if( $dienst['soon'] ) {
         $class = ( ( $status == 'Bestaetigt' ) ? 'ok' : 'warn' );
@@ -345,7 +345,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "right $class" );
         // smallskip();
         if( $show_buttons and $dienst['soon'] and ( $login_gruppen_id != $dienst['gruppen_id'] ) ) {
-          echo fc_action( 'update,class=button smalll,text=uebernehmen,confirm=Bereis akzeptierten Dienst von andere Gruppe uebernehmen: ist das mit der anderen Gruppe abgeprochen?'
+          echo fc_action( 'update,class=button smalll,text=uebernehmen,confirm=Bereis akzeptierten Dienst von andere Gruppe uebernehmen: ist das mit der anderen Gruppe abgesprochen?'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
         if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {

@@ -237,7 +237,6 @@ li {
   color:#ff0000;
 }
 
-
 .nodisplay {
   display:none;
 }
@@ -714,7 +713,6 @@ a + a , .link + .link {
   background-position:0px 0px;
   padding:0px 15px 0px 0px;
 }
-  
 
 
 img.button {
@@ -798,6 +796,7 @@ border-style:solid;
 border-color:#FF0000;
 background-color: #eee;
 }
+
 table.footer {
   margin-top:2em;
   padding:2em 1em 1ex 1em;
