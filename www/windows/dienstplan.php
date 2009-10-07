@@ -20,32 +20,47 @@ if( $action ) {
   }
 }
 
-get_http_var("startdatum_day",'u',0);
-get_http_var("startdatum_month",'u',0);
-get_http_var("startdatum_year",'u',0);
-get_http_var("enddatum_day",'u',0);
-get_http_var("enddatum_month",'u',0);
-get_http_var("enddatum_year",'u',0);
+get_http_var("startdatum_day",'U',0);
+get_http_var("startdatum_month",'U',0);
+get_http_var("startdatum_year",'U',0);
+get_http_var("dienstinterval","U",7) or $dienstinterval = 7;
+get_http_var("dienstanzahl","U",8) or $dienstanzahl = 8;
+get_http_var("personen_1","u",2) or $personen_1 = 2;
+get_http_var("personen_3","u",1) or $personen_3 = 1;
+get_http_var("personen_4","u",2) or $personen_4 = 2;
 
-if( $startdatum_day ) {
+if( $startdatum_day && $startdatum_month && $startdatum_year ) {
   $startdatum = "$startdatum_year-$startdatum_month-$startdatum_day";
-  $enddatum = "$enddatum_year-$enddatum_month-$enddatum_day";
 } else {
-  $startdatum = date("Y-m-d");
-  $enddatum = $startdatum;
+  $startdatum = false;
 }
 
 switch( $action ) {
   case 'diensteErstellen':
-    need( $startdatum_day );
-    create_dienste( $startdatum, $enddatum, $dienstfrequenz );
+    need( $startdatum );
+    need( $dienstinterval );
+    need( $dienstanzahl );
+    need( $personen_1 );
+    need( $personen_3 );
+    need( $personen_4 );
+    $personenzahlen = array( '1/2' => $personen_1, '3' => $personen_3, '4' => $personen_4 );
+    create_dienste( $startdatum, $dienstinterval, $dienstanzahl, $personenzahlen );
     break;
   case 'dienstLoeschen':
     need_http_var( 'message', 'U' );
     sql_delete_dienst( $message );
     break;
-  case 'dienstInsert':
-    // TODO...
+  case 'diensteTagLoeschen':
+    need_http_var( 'message', 'U' );
+    $dienst = sql_dienst( $message );
+    $dienste = sql_dienste( "lieferdatum = '{$dienst['lieferdatum']}'" );
+    foreach( $dienste as $d )
+      sql_delete_dienst( $d['id'] );
+    break;
+  case 'dienstEinfuegen':
+    need_http_var( 'message', '/^[0-9-]+_[0-9\/]+$/' );
+    $temp = explode( '_', $message );
+    sql_create_dienst( $temp[0], $temp[1] );
     break;
   case 'moveUp':
     need_http_var( 'message', 'U' );
@@ -86,16 +101,18 @@ switch( $action ) {
         sql_dienst_wird_offen( $id );
         open_div( 'warn', '', 'Keine Tauschmöglichkeit: Dienst ist jetzt offen!' );
       } else {
-        open_div( 'warn', 'Bitte Ausweichdatum auswählen:' );
+        open_div( 'warn' );
           open_form( '', sprintf( 'action=abtauschen_%u', $id ) );
-            open_select( 'abtauschdatum' );
-              echo "<option value=''>(bitte auswaehlen)</option>";
-              foreach( $dates as $date ) {
-                echo "<option value={$date['datum']}>{$date['datum']}</option>";
-              }
-            close_select();
-            open_div( 'right' );
-            submission_button( 'Dieses Datum geht' );
+            open_div( 'warn' );
+              echo 'Bitte Ausweichdatum auswählen: ';
+              open_select( 'abtauschdatum' );
+                echo "<option value=''>(bitte auswaehlen)</option>";
+                foreach( $dates as $date ) {
+                  echo "<option value={$date['datum']}>{$date['datum']}</option>";
+                }
+              close_select();
+              submission_button( 'Dieses Datum geht' );
+            close_div();
           close_form();
         close_div();
       }
@@ -106,6 +123,10 @@ switch( $action ) {
   case 'akzeptieren':
     need( $id );
     sql_dienst_akzeptieren( $id );
+    break;
+  case 'bestaetigen':
+    need( $id , "Fehler: id: $id" );
+    sql_dienst_akzeptieren( $id, 0, 'Bestaetigt' );
     break;
   case "gruppeAendern":
     need_http_var( 'message', 'u' );
@@ -122,20 +143,32 @@ switch( $action ) {
 }
 
 
-if( hat_dienst(5) or true ) {
+if( hat_dienst(5) ) {
   open_div( '', 'id=Zusatz' );
 
     ?> <h1>Dienste erstellen</h1> <?
 
-    open_form( '', 'action=create' );
+    $startdatum = get_latest_dienst( $dienstinterval );
+    open_form( '', 'action=diensteErstellen' );
       open_table( 'smallskip' );
         open_tr();
-          open_td( '', '', "Verteile Dienste mit" );
-          open_td( 'quad', '', int_view( 7, 'dienstfrequenz' ) ." -taegigem Abstand" );
-        form_row_date( 'ab dem:', 'startdatum', $startdatum );
-        form_row_date( 'bis einschliesslich:', 'enddatum', $enddatum );
+          open_td( '', '', "Verteile Dienste fuer " . int_view( $dienstanzahl, 'dienstanzahl', 2 ) . " Liefertage," );
         open_tr();
-          open_td( 'right', "colspan='2'" );
+          open_td( 'qquad', '', "im Abstand von je " . int_view( $dienstinterval, 'dienstinterval', 2 ) . " Tagen," );
+        open_tr();
+          open_td( 'qquad', '', "beginnend mit dem " . date_view( $startdatum, 'startdatum' ) );
+        open_tr();
+          open_td( 'qquad' );
+          smallskip();
+          echo "Eingeteilt werden für...";
+        open_tr();
+          open_td( 'qquad' );
+            open_span( 'qquad', '', "D 1/2: " . int_view( $personen_1, "personen_1", 1 ) );
+            open_span( 'qquad', '', "D 3: " . int_view( $personen_3, "personen_3", 1 ) );
+            open_span( 'qquad', '', "D 4: " . int_view( $personen_4, "personen_4", 1 ) . " Personen" );
+        open_tr();
+          open_td( 'right', '' );
+            smallskip();
             submission_button( 'Dienste Erstellen' );
       close_table();
     close_form();
@@ -195,18 +228,31 @@ open_table( 'list' );
     if( $dienst["lieferdatum"] != $currentDate ) {
       $currentDate = $dienst["lieferdatum"];
       open_tr();
-      open_th( 'top', '', $currentDate );
+      open_th( 'top' );
+        open_div( '', '', $currentDate );
+        if( hat_dienst(5) && ! $readonly ) {
+          open_div( 'bigskip center', ''
+            , fc_action( "update,title=Dienste fuer ganzen Liefertag loeschen,class=drop,text=,confirm=Alle Dienste dieses Tages wirklich loeschen?"
+                       , "action=diensteTagLoeschen,message={$dienst['id']}" )
+          );
+        }
     }
     foreach( $dienstnamen as $d ) {
       open_td( 'top' );
         open_table( 'inner layout hfill tight' );
-          while( $dienst and ( $dienst['dienst'] == $d ) ) {
+          while( $dienst and ( $dienst['dienst'] == $d ) and ( $dienst['lieferdatum'] == $currentDate ) ) {
             open_tr();
             open_td();
               // echo "{$dienst['id']} , {$dienst['soon']}";
               dienstplan_eintrag_view( $dienst['id'] );
               smallskip();
             $dienst = next( $dienste );
+          }
+          if( hat_dienst(5) && ! $readonly ) {
+            open_tr();
+            open_td( 'smallskip center', '',
+              fc_action( "update,title=Dienst hinzufuegen,class=button,text= + "
+                       , "action=dienstEinfuegen,message={$currentDate}_$d" ) );
           }
         close_table();
     }

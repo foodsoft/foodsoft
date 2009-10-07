@@ -276,6 +276,15 @@ function sql_dienst( $dienst_id ) {
   return sql_select_single_row( select_dienste( "dienste.id = $dienst_id" ) );
 }
 
+/** Gibt das Datum für den letzten
+ *  Dienst im Dienstplan zurück.
+ */
+function get_latest_dienst( $add_days = 0 ) {
+  return sql_select_single_field( "
+    SELECT ifnull( adddate( max(lieferdatum), $add_days ), curdate() ) AS datum FROM dienste
+  " , 'datum'
+  );
+}
 
 function sql_dienst_info( $dienst_rueckbestaetigen ) {
   global $login_gruppen_id;
@@ -292,24 +301,29 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
       }
       return true;
     } else {
-      ?> <h2> Deine Gruppe hat bald Dienst: </h2> <?
-      open_table();
+      $gruppennummer = sql_gruppennummer( $login_gruppen_id );
+      $gruppenname = sql_gruppenname( $login_gruppen_id );
+      echo "<h2> Deine Gruppe hat bald Dienst: </h2>";
+      open_table( 'smallskip list' );
         $current_date = false;
         foreach( $show_dienste as $dienst ) {
           if( $current_date != $dienst['lieferdatum'] ) {
             open_tr();
             $current_date = $dienst['lieferdatum'];
             open_th( '', '', $current_date );
+            open_td();
           }
-          open_td();
-          echo "Dienst {$dienst['dienst']}:";
+          open_span( 'qquad' );
+          echo "Dienst {$dienst['dienst']}: ";
           if( $dienst['gruppenmitglieder_id'] )
             echo $dienst['vorname'];
           else
             echo "(kein Mitglied ausgewaehlt)";
+          close_span();
         }
+        open_tr();
+        open_td( 'right', 'colspan="2"', fc_action( 'text=OK', 'dienst_rueckbestaetigen=1' ) );
       close_table();
-      open_div( 'right smallskip', '', fc_action( 'text=OK', 'dienst_rueckbestaetigen=1' ) );
       return false;
     }
   }
@@ -318,9 +332,9 @@ function sql_dienst_info( $dienst_rueckbestaetigen ) {
 
 
 /**
- *  Dienst Akzeptieren
+ *  Dienst Akzeptieren (oder auch bestaetigen)
  */ 
-function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false ) {
+function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false, $status_neu = 'Akzeptiert' ) {
   global $login_gruppen_id;
 
   $dienst = sql_dienst( $dienst_id );
@@ -328,19 +342,21 @@ function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false ) {
   switch( $dienst['status'] ) {
     case 'Akzeptiert':
     case 'Bestaetigt':
-      need( $abgesprochen );
+      if( $dienst['gruppen_id'] )
+        if( $login_gruppen_id != $dienst['gruppen_id'] )
+          need( $abgesprochen, 'Uebernahme nur nach Absprache' );
     case 'Vorgeschlagen':
     case 'Offen':
       break;
     default:
       error( "sql_dienst_akzeptieren(): falscher Status!" );
   }
-  sql_update( 'dienste', $dienst_id, array( 'status' => 'Akzeptiert' ) );
+  sql_update( 'dienste', $dienst_id, array( 'status' => $status_neu ) );
   if( $dienst['gruppen_id'] != $login_gruppen_id ) {
-    $mitglieder = sql_gruppenmitglieder( $login_gruppen_id );
+    $mitglieder = sql_gruppe_mitglieder( $login_gruppen_id );
     if( count( $mitglieder ) == 1 ) {
       $mitglied = current( $mitglieder );
-      $m_id = $mitglied['id'];
+      $m_id = $mitglied['gruppenmitglieder_id'];
     } else {
       $m_id = 0;
     }
@@ -384,7 +400,7 @@ function sql_dienst_abtauschen( $dienst_id, $bevorzugtes_datum ) {
                                         and ( not geleistet )
                                         and ( dienst = '{$dienst['dienst']}' ) " );
   }
-  need( $ausweichdienste, "Kein Ausweichsdienst an diesem Datum $bevorzugtes_datum für Dienst ".$row["dienst"] );
+  need( $ausweichdienste, "Kein Ausweichsdienst an diesem Datum $bevorzugtes_datum für Dienst ".$dienst["dienst"] );
 
   $ausweichdienst = $ausweichdienste[0];
   sql_dienst_akzeptieren( $ausweichdienst['id'] );
@@ -428,8 +444,8 @@ function sql_dienst_gruppe_aendern( $dienst_id, $gruppen_id ) {
   need( ! $dienst['geleistet'] );
   nur_fuer_dienst(5);
   if( $gruppe['mitgliederzahl'] == 1 ) {
-    $mitglied = current( sql_gruppenmitglieder( $gruppen_id ) );
-    $m_id = $mitglied['id'];
+    $mitglied = current( sql_gruppe_mitglieder( $gruppen_id ) );
+    $m_id = $mitglied['gruppenmitglieder_id'];
   } else {
     $m_id = 0;
   }
@@ -461,6 +477,13 @@ function sql_rotationsplan_mitglied( $position ) {
   );
 }
 
+function sql_rotationsplan_dienst( $position ) {
+  return sql_select_single_field( "
+    SELECT diensteinteilung FROM gruppenmitglieder WHERE rotationsplanposition = $position
+  ", 'diensteinteilung'
+  );
+}
+
 function sql_rotationsplanposition( $mitglied_id ) {
   return sql_select_single_field( "
     SELECT rotationsplanposition FROM gruppenmitglieder WHERE id = $mitglied_id
@@ -477,7 +500,11 @@ function sql_rotationsplan( $dienst ) {
 /**
  *  Gibt die nächste Position für einen Dienst aus dem Rotationsplan zurück
  */
-function sql_rotationsplan_next( $dienst, $current ) {
+function sql_rotationsplan_next( $current, $dienst = false ) {
+  if( ! $dienst ) {
+    need( $current );
+    $dienst = sql_rotationsplan_dienst( $current );
+  }
   $morefilter = ( $current ? "rotationsplanposition > $current" : "true" );
   $next = sql_select_single_field( "
     SELECT min(rotationsplanposition) AS mynext FROM gruppenmitglieder
@@ -487,10 +514,14 @@ function sql_rotationsplan_next( $dienst, $current ) {
   if( $next )
     return $next;
   need( $current, "Kein Eintrag im Rotationsplan fuer Dienst $dienst" );
-  return sql_rotationsplan_next( $dienst, 0 );
+  return sql_rotationsplan_next( 0, $dienst );
 }
 
-function sql_rotationsplan_prev( $dienst, $current ) {
+function sql_rotationsplan_prev( $current, $dienst = false ) {
+  if( ! $dienst ) {
+    need( $current );
+    $dienst = sql_rotationsplan_dienst( $current );
+  }
   $morefilter = ( $current ? "rotationsplanposition < $current" : "true" );
   $prev = sql_select_single_field( "
     SELECT max(rotationsplanposition) AS myprev FROM gruppenmitglieder
@@ -500,7 +531,7 @@ function sql_rotationsplan_prev( $dienst, $current ) {
   if( $prev )
     return $prev;
   need( $current, "Kein Eintrag im Rotationsplan fuer Dienst $dienst" );
-  return sql_rotationsplan_prev( $dienst, 0 );
+  return sql_rotationsplan_prev( 0, $dienst );
 }
 
 
@@ -512,17 +543,18 @@ function sql_rotationsplan_prev( $dienst, $current ) {
  *  the latest assignment will the the last
  *  in the rotation system.
  */
-function sql_rotate_rotationsplan( $latest_position, $dienst ) {
+function sql_rotate_rotationsplan( $latest_position ) {
   nur_fuer_dienst(5);
+  $dienst = sql_rotationsplan_dienst( $latest_position );
   $after = mysql2array( doSql( "
-    SELECT id, rotationsplanposition FROM gruppemnitglieder
+    SELECT id, rotationsplanposition FROM gruppenmitglieder
     WHERE diensteinteilung = '$dienst' AND aktiv AND rotationsplanposition > $latest_position
     ORDER BY rotationsplanposition ASC
   " ) );
   if( ! $after )
     return;
   $before = mysql2array( doSql( "
-    SELECT id, rotationsplanposition FROM gruppemnitglieder
+    SELECT id, rotationsplanposition FROM gruppenmitglieder
     WHERE diensteinteilung = '$dienst' AND aktiv AND rotationsplanposition <= $latest_position
     ORDER BY rotationsplanposition ASC
   " ) );
@@ -551,8 +583,7 @@ function sql_rotate_rotationsplan( $latest_position, $dienst ) {
 function sql_change_rotationsplan( $mitglied_id, $dienst, $move_down ) {
   nur_fuer_dienst(5);
   $position = sql_rotationsplanposition( $mitglied_id );
-  $newpos = ( $move_down ? sql_rotationsplan_next( $dienst, $position )
-                         : sql_rotationsplan_prev( $dienst, $position ) );
+  $newpos = ( $move_down ? sql_rotationsplan_next( $position ) : sql_rotationsplan_prev( $position ) );
   if( $position == $newpos )
     return;
 
@@ -570,191 +601,68 @@ function sql_change_rotationsplan( $mitglied_id, $dienst, $move_down ) {
 ////////////////////////////////////
 
 
-/** Fügt einen Dienst mit beliebigem Status in die Diensttabelle 
- */
 
-function sql_create_dienst2( $mitglied_id, $dienst, $lieferdatum, $status ) {
-  $mitglied = sql_gruppenmitglied( $mitglied_id );
-  need( $mitglied['aktiv'] );
-  sql_insert( 'dienste', array(
-    'gruppenmitglieder_id' => $mitglied_id
-  , 'gruppen_id' => $mitglied['gruppen_id'] // falls mitglied ausscheidet: dienst bleibt bei gruppe!
-  , 'dienst' => $dienst
-  , 'lieferdatum' => $lieferdatum
-  , 'status' => $status
-  ) );
+/** Fuegt einen neuen Dienstin die Diensttabelle
+ * - mit mitglied_id: dienst wird 'Vorgeschlagen'
+ * - ohne mitglied_id: diest wird 'Offen'
+ */
+function sql_create_dienst( $datum, $dienst, $mitglied_id = 0 ) {
+  nur_fuer_dienst(5);
+  if( $mitglied_id ) {
+    $mitglied = sql_gruppenmitglied( $mitglied_id );
+    need( $mitglied['aktiv'] );
+    sql_insert( 'dienste', array(
+      'gruppenmitglieder_id' => $mitglied_id
+    , 'gruppen_id' => $mitglied['gruppen_id'] // falls mitglied ausscheidet: dienst bleibt bei gruppe!
+    , 'dienst' => $dienst
+    , 'lieferdatum' => $datum
+    , 'status' => 'Vorgeschlagen'
+    ) );
+  } else {
+    sql_insert( 'dienste', array(
+      'gruppenmitglieder_id' => 0
+    , 'gruppen_id' => 0
+    , 'dienst' => $dienst
+    , 'lieferdatum' => $datum
+    , 'status' => 'Offen'
+    ) );
+  }
+}
+
+function sql_delete_dienst( $dienst_id ) {
+  nur_fuer_dienst(5);
+  return doSql(
+    "DELETE FROM dienste WHERE id=$dienst_id"
+  , LEVEL_IMPORTANT, "Dienst loeschen fehlgeschlagen"
+  );
 }
 
 
-/** Fügt einen neuen Dienst als Vorschlag in die Diensttabelle
- */
-function sql_create_dienst($datum, $dienst, $rotationsposition){
-    sql_create_dienst2( sql_rotationsplan_mitglied( $rotationsposition ),
-                         $dienst,
-			 date_intern2sql($datum),
-			 "Vorgeschlagen");
-}
-
-/** 
+/**
  *  Erzeugt Dienste für einen Zeitraum
  */
-function create_dienste($start, $end, $spacing) {
-   $dates = sql_date_list($start, $end, $spacing);
-   //mit negativer Position in Reihenfolge intialisieren
-   // wird beim ersten Durchlauf auf erste Position gesetzt
-   // TODO: "anzahl" konfigurierbar machen!
-   $dienste = array("1/2" => array("position" => -999, "anzahl" => 3),  
-                      "3" => array("position" => -999, "anzahl" => 1), 
-		      "4" => array("position" => -999, "anzahl" => 2)
-		   );
-   foreach($dates as $current){
-       if(compare_date2(get_latest_dienst(), $current )){
-	       foreach(array_keys($dienste) as $dienst){
-	          for($i=1; $i<=$dienste[$dienst]["anzahl"]; $i++){
-		   $plan_position = sql_rotationsplan_next($dienst, $dienste[$dienst]["position"]);
-		   sql_create_dienst($current, $dienst, $plan_position);
-		   $dienste[$dienst]["position"]=$plan_position;
-		  }
-	       }
-       }
-   }
-   //Wenn ein Dienst erzeugt wurde, rotationsplan umstellen
-   if($dienste["1/2"]["position"]!=-999){
-   foreach(array_keys($dienste) as $dienst){
-        sql_rotate_rotationsplan($dienste[$dienst]["position"],$dienst);
-   }
-   }
+function create_dienste( $start, $spacing, $zahl, $personenzahlen ) {
+  foreach( $personenzahlen as $dienstname => $personen ) {
+    $positionen[$dienstname] = 0;
+  }
+  for( $n = 1; $n <= $zahl; $n++ ) {
+    foreach( $personenzahlen as $dienstname => $personen ) {
+      for( $i=1; $i <= $personen; $i++ ) {
+        $plan_position = sql_rotationsplan_next( $positionen[$dienstname], $dienstname );
+        sql_create_dienst( $start, $dienstname, sql_rotationsplan_mitglied( $plan_position ) );
+        $positionen[$dienstname] = $plan_position;
+      }
+    }
+    $start = sql_select_single_field( "SELECT adddate( '$start', $spacing ) AS date", 'date' );
+  }
+  //Wenn ein Dienst erzeugt wurde, rotationsplan umstellen:
+  foreach( $positionen as $plan_position ) {
+    if( $plan_position) {
+      sql_rotate_rotationsplan( $plan_position);
+    }
+  }
 }
 
-/** 
- *  Erzeugt Array mit Daten in einem Zeitraum
- */
-function sql_date_list($start, $end, $spacing) {
-   if(compare_date2($end,$start)){
-   	error( "Enddatum muss später sein als Anfangsdatum" );
-   }
-	$list = array();
-	$newer=$start;
-	do{
-	     $list[]=$newer;
-	     $sql = "SELECT ADDDATE(".date_intern2sql($newer).", INTERVAL ".$spacing." DAY) as datum";
-	     $result = doSql($sql, LEVEL_ALL, "Error while making datelist");
-	     $row = mysql_fetch_array($result);
-	     $newer = date_sql2intern($row["datum"]);
-
-	} while(compare_date2($newer,$end));
-	return($list);
-}
-
-/**
- * Vergleicht zwei Datumswerte bezüglich Reihenfolge
- * True, wenn das erste Datum früher ist
- */ 
-function compare_date2($first, $second){
-	/*
-   echo "Debuginfo compare_date2 (first, second, time(first), time(second))";
-   var_dump($first);
-   var_dump($second);
-   var_dump(strtotime($first));
-   var_dump(strtotime($second));
-        */
-
-   return strtotime($first) < strtotime($second);
-}
-
-if(!function_exists("date_parse")){
-function date_parse($date_in){
-  echo "<!-- date_parse: $date_in -->";
-	$temp = explode(" ", $date_in);
-	
-   $date = explode("-", $temp[0]);
-   //echo("\n\ndebug date_parse (date)");
-   //var_dump($date);
-   if( count($date) == 3 ) {
-     $toReturn = array( "year" => $date[0],
-				   "month" => $date[1],
-				   "day" => $date[2]);
-   } else {
-	      $toReturn["year"] =  date('Y');
-	      $toReturn["month"] =  date('m');
-	      $toReturn["day"] =  date('d');
-   }
-
-	 if(isset($temp[1])){
-           $time = explode(":", $temp[1]);
-	 }
-   if( isset($time) && count($time) == 3 ) {
-	      $toReturn["hour"] =  $time[0];
-	      $toReturn["minute"] =  $time[1];
-	      $toReturn["second"] =  $time[2];
-	 } else {
-	      $toReturn["hour"] =  "00";
-	      $toReturn["minute"] =  "00";
-	      $toReturn["second"] =  "00";
-   }
-	return $toReturn;
-}
-}
-/** Converts a date string from mysql
- *  to a date of the form
- *   $date["day"].".".$date["month"].".".$date["year"]
- */
-function date_sql2intern($date_in){
-     #echo "debug info date_sql2intern (date_in, date)";
-     #var_dump($date_in);
-     $date = date_parse($date_in);
-     if($date["warning_count"]>0){
-	     echo "<!-- Warings in date_sql2intern:";
-	     var_dump($date["warnings"]);
-     }
-     if($date["error_count"]>0){
-	     echo "<!-- Errors in date_sql2intern:";
-	     var_dump($date["errors"]);
-     }
-     #var_dump($date);
-     return $date["day"].".".$date["month"].".".$date["year"];
-}
-
-/** Adds convertion commands in mysql to
- *  converts a date string 
- *  from  a date of the form
- *   $date["day"].".".$date["month"].".".$date["year"]
- */
-function date_intern2sql($date){
-   return "STR_TO_DATE('".$date."', '%e.%c.%Y')";
-}
-/**
- *  Tage zu Datum hinzufügen, da
- *  php-Funktionen nicht gut
- *  Date Format: $date["day"].".".$date["month"].".".$date["year"]
- */
-function sql_add_days_to_date($date, $add_days=0){
-     $sql = "SELECT ADDDATE(".date_intern2sql($date).", INTERVAL ".$add_days." DAY) as datum";
-     $result = doSql($sql, LEVEL_ALL, "Error while doing date function");
-     $row = mysql_fetch_array($result);
-     $toreturn=  date_sql2intern($row["datum"]);
-     return $toreturn;
-}
-
-/** Gibt das Datum für den letzten
- *  Dienst im Dienstplan zurück.
- *  Add days wird auf das Datum draufgeschlagen
- *
- *  Heute (ohne aufschlag), wenn kein Eintrag.
- */
-function get_latest_dienst($add_days=0){
-     $sql = "SELECT ADDDATE(max(lieferdatum), INTERVAL ".$add_days." DAY) as datum
-		    FROM dienste  ";
-     $result = doSql($sql, LEVEL_ALL, "Error while reading Dienstplan");
-     $row = mysql_fetch_array($result);
-     $date = date_parse($row["datum"]);
-     if($date["year"]==false){
-        $date = date_parse(strftime("%Y-%m-%d"));
-     }
-     $date_formated = $date["day"].".".$date["month"].".".$date["year"];
-     return $date_formated;
-
-}
 
 /**
  *  Wählt Datum aus, mit bestimmtem Dienst und Status
@@ -768,10 +676,6 @@ function sql_dates_dienst( $dienst, $status ) {
       AND ( status = '$status' )
   ", LEVEL_ALL, "Error while reading Dienstplan" ) );
 }
-
-
-
-
 
 
 
@@ -1012,9 +916,6 @@ function sql_muell_id() {
   return $muell_id;
 }
 
-function sql_gruppe_mitglieder( $gruppen_id, $filter = 'aktiv' ) { 
-  return mysql2array( doSql( "SELECT * FROM gruppenmitglieder WHERE ( gruppen_id = $gruppen_id ) AND ( $filter ) " ) );
-}
 function select_gruppenmitglieder() {
   return "
     SELECT bestellgruppen.name as gruppenname
@@ -1044,6 +945,11 @@ function sql_gruppenmitglied( $gruppenmitglieder_id, $allow_null = false ) {
 function sql_gruppenmitglieder( $filter = 'true', $orderby = 'gruppennummer' ) {
   return mysql2array( doSql( select_gruppenmitglieder() . " WHERE ( $filter ) ORDER BY $orderby " ) );
 }
+
+function sql_gruppe_mitglieder( $gruppen_id, $filter = 'gruppenmitglieder.aktiv' ) { 
+  return sql_gruppenmitglieder( "(bestellgruppen.id = $gruppen_id) and ($filter) " );
+}
+
 
 function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dienst){
   return sql_update( 'gruppenmitglieder', $id, array(
@@ -1297,7 +1203,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     if( $gruppendaten['mitgliederzahl'] == 1 ) {
       // bei nur noch einem Mitglied ist klar, wer die Dienste abkriegt:
       $mitglied = current( sql_gruppe_mitglieder( $gruppen_id ) );
-      $m_id = $mitglied['id'];
+      $m_id = $mitglied['gruppenmitglieder_id'];
     } else {
       // dienst bleibt bei gruppe, aber Mitglied muss noch abgesprochen werden:
       $m_id = 0;
@@ -4547,5 +4453,96 @@ function move_html( $id, $into_id ) {
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
+
+// /**
+//  * Vergleicht zwei Datumswerte bezüglich Reihenfolge
+//  * True, wenn das erste Datum früher ist
+//  */ 
+// function compare_date2($first, $second){
+// 	/*
+//    echo "Debuginfo compare_date2 (first, second, time(first), time(second))";
+//    var_dump($first);
+//    var_dump($second);
+//    var_dump(strtotime($first));
+//    var_dump(strtotime($second));
+//         */
+// 
+//    return strtotime($first) < strtotime($second);
+// }
+// 
+// if(!function_exists("date_parse")){
+// function date_parse($date_in){
+//   echo "<!-- date_parse: $date_in -->";
+// 	$temp = explode(" ", $date_in);
+// 	
+//    $date = explode("-", $temp[0]);
+//    //echo("\n\ndebug date_parse (date)");
+//    //var_dump($date);
+//    if( count($date) == 3 ) {
+//      $toReturn = array( "year" => $date[0],
+// 				   "month" => $date[1],
+// 				   "day" => $date[2]);
+//    } else {
+// 	      $toReturn["year"] =  date('Y');
+// 	      $toReturn["month"] =  date('m');
+// 	      $toReturn["day"] =  date('d');
+//    }
+// 
+// 	 if(isset($temp[1])){
+//            $time = explode(":", $temp[1]);
+// 	 }
+//    if( isset($time) && count($time) == 3 ) {
+// 	      $toReturn["hour"] =  $time[0];
+// 	      $toReturn["minute"] =  $time[1];
+// 	      $toReturn["second"] =  $time[2];
+// 	 } else {
+// 	      $toReturn["hour"] =  "00";
+// 	      $toReturn["minute"] =  "00";
+// 	      $toReturn["second"] =  "00";
+//    }
+// 	return $toReturn;
+// }
+// }
+// /** Converts a date string from mysql
+//  *  to a date of the form
+//  *   $date["day"].".".$date["month"].".".$date["year"]
+//  */
+// function date_sql2intern($date_in){
+//      #echo "debug info date_sql2intern (date_in, date)";
+//      #var_dump($date_in);
+//      $date = date_parse($date_in);
+//      if($date["warning_count"]>0){
+// 	     echo "<!-- Warings in date_sql2intern:";
+// 	     var_dump($date["warnings"]);
+//      }
+//      if($date["error_count"]>0){
+// 	     echo "<!-- Errors in date_sql2intern:";
+// 	     var_dump($date["errors"]);
+//      }
+//      #var_dump($date);
+//      return $date["day"].".".$date["month"].".".$date["year"];
+// }
+// 
+// /** Adds convertion commands in mysql to
+//  *  converts a date string 
+//  *  from  a date of the form
+//  *   $date["day"].".".$date["month"].".".$date["year"]
+//  */
+// function date_intern2sql($date){
+//    return "STR_TO_DATE('".$date."', '%e.%c.%Y')";
+// }
+// /**
+//  *  Tage zu Datum hinzufügen, da
+//  *  php-Funktionen nicht gut
+//  *  Date Format: $date["day"].".".$date["month"].".".$date["year"]
+//  */
+// function sql_add_days_to_date($date, $add_days=0){
+//      $sql = "SELECT ADDDATE(".date_intern2sql($date).", INTERVAL ".$add_days." DAY) as datum";
+//      $result = doSql($sql, LEVEL_ALL, "Error while doing date function");
+//      $row = mysql_fetch_array($result);
+//      $toreturn=  date_sql2intern($row["datum"]);
+//      return $toreturn;
+// }
+// 
 
 ?>
