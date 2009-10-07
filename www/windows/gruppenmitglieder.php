@@ -26,7 +26,7 @@ if( hat_dienst(5) and ! $readonly ) {
 $pwmsg = '';
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
-get_http_var('action','w','');
+get_http_var('action','w','') or $action = '';
 switch( $action ) {
   case 'new_pwd':
     need( $edit_pwd, "keine Berechtigung zur Passwortaenderung!" );
@@ -44,7 +44,7 @@ switch( $action ) {
   case 'edit':
     need( $edit_names, "keine Berechtigung!" );
     foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
-      $id = $row['id'];
+      $id = $row['gruppenmitglieder_id'];
       get_http_var( "vorname_$id", 'H', $row['vorname'] );
       get_http_var( "name_$id", 'H', $row['name'] );
       get_http_var( "email_$id", 'H', $row['email'] );
