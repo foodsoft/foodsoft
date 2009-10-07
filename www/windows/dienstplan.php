@@ -190,7 +190,10 @@ if( hat_dienst(5) ) {
         $id = $mitglied['gruppenmitglieder_id'];
         open_tr( 'smallskip' );
           open_th( '', '', $mitglied['nr'] );
-          open_td( '', '', "Gruppe {$mitglied['gruppennummer']}: {$mitglied['name']}" );
+          open_td( 'quad', '', fc_link( 'gruppenmitglieder', array(
+              'class' => 'href', 'gruppen_id' => $mitglied['gruppen_id']
+            , 'text' => "Gruppe {$mitglied['gruppennummer']}: {$mitglied['vorname']}"
+          ) ) );
           open_td( '', '', fc_action( 'update,text=UP', sprintf( "action=moveUp,message=%u", $id ) ) );
           open_td( '', '', fc_action( 'update,text=DOWN', sprintf( "action=moveDown,message=%u", $id ) ) );
         close_tr();
