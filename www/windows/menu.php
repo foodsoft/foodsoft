@@ -60,22 +60,20 @@ open_table( 'layout hfill' );
       , 'class' => 'href', 'gruppen_id' => $login_gruppen_id
       ) ) );
     }
+
     open_div( 'bigskip' );
       ?> <h4> Laufende Bestellungen: </h4> <?
       auswahl_bestellung();
     close_div();
 
     open_div( 'bigskip' );
-      ?> <h4> Eure nächsten <? echo fc_link( 'dienstplan', 'text=Dienste,class=href' ); ?>: </h4> <?
-      foreach( sql_get_dienste( " ( gruppen_id = $login_gruppen_id ) and ( lieferdatum >= $mysqlheute ) " ) as $row ) {
-        dienst_view2($row);
-      }
+      dienst_liste( $login_gruppen_id );
     close_div();
 
     if( false ) {
       open_div( 'bigskip' );
         ?> <h4> Letzte Dienste: </h4> <?
-        foreach( sql_get_dienste( " ( gruppen_id = $login_gruppen_id ) and ( lieferdatum < $mysqlheute ) " ) as $row ) {
+        foreach( sql_dienste( " ( gruppen_id = $login_gruppen_id ) and ( lieferdatum < $mysqlheute ) " ) as $row ) {
           if($row['dienstkontrollblatt_id']!="NULL"){
             dienst_view3($row);
           }

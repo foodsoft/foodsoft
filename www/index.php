@@ -20,29 +20,22 @@ if( get_http_var( 'download','w' ) ) {  // Spezialfall: Datei-Download (.pdf, ..
 get_http_var( 'window', 'w', 'menu', true );     // eigentlich: name des skriptes
 get_http_var( 'window_id', 'w', 'main', true );  // ID des browserfensters
 setWikiHelpTopic( "foodsoft:$window" );
+
+
+
+
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');
-    if( hat_dienst(0) ) { // dienst 5 kommt hier sonst nicht vorbei!
-      get_http_var( 'dienst_rueckbestaetigen', 'u', 0 );
-      if( ! sql_dienst_info( $dienst_rueckbestaetigen ) ) {
-        break;
-      }
-    }
     switch( $window ) {
       case "wiki":
         reload_immediately( "$foodsoftdir/../wiki/doku.php?do=show" );
         break;
-      case "bestellen":
-        if( hat_dienst(0)
-             and sql_dienste( "(dienste.gruppen_id = $login_gruppen_id) and (status = 'Vorgeschlagen')" ) ) {
-         //darf nur bestellen, wenn Dienste akzeptiert
-         ?> <h2> Vor dem Bestellen bitte Dienstvorschl&auml;ge akzeptieren </h2> <?
-         include('windows/dienstplan.php');
-         break;
-        }
       case 'menu':
-        setWikiHelpTopic( "foodsoft" );
+      case "bestellen":
+        if( hat_dienst(0) )
+          if( dienst_liste( $login_gruppen_id, 'bestaetigen lassen' ) )
+            break;
       default:
         if( is_readable( "windows/$window.php" ) ) {
           include( "windows/$window.php" );
