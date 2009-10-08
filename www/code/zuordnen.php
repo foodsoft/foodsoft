@@ -258,6 +258,8 @@ function select_dienste( $filter = 'true' ) {
          , gruppenmitglieder.diensteinteilung
          , gruppenmitglieder.aktiv
          , ( if( not dienste.geleistet and ( adddate( curdate(), 14 ) >= dienste.lieferdatum ), 1, 0 ) ) as soon
+         , if( lieferdatum <= CURDATE(), 1, 0 ) as over
+         , ( if( lieferdatum < ( SELECT max(lieferdatum) FROM dienste WHERE lieferdatum < CURDATE() ), 1, 0 ) ) as historic
     FROM dienste
     LEFT JOIN gruppenmitglieder
       ON (gruppenmitglieder_id = gruppenmitglieder.id)
@@ -284,50 +286,6 @@ function get_latest_dienst( $add_days = 0 ) {
     SELECT ifnull( adddate( max(lieferdatum), $add_days ), curdate() ) AS datum FROM dienste
   " , 'datum'
   );
-}
-
-function sql_dienst_info( $dienst_rueckbestaetigen ) {
-  global $login_gruppen_id;
-  $show_dienste = array();
-  foreach( sql_dienste( "(dienste.gruppen_id = $login_gruppen_id) and ( status = 'Akzeptiert' )" ) as $dienst ) {
-    if( $dienst['soon'] ) {
-      $show_dienste[] = $dienst;
-    }
-  }
-  if( $show_dienste ) {
-    if( $dienst_rueckbestaetigen ) {
-      foreach( $show_dienste as $dienst ) {
-        sql_update( 'dienste', $dienst['id'], array( 'status' =>  'Bestaetigt' ) );
-      }
-      return true;
-    } else {
-      $gruppennummer = sql_gruppennummer( $login_gruppen_id );
-      $gruppenname = sql_gruppenname( $login_gruppen_id );
-      echo "<h2> Deine Gruppe hat bald Dienst: </h2>";
-      open_table( 'smallskip list' );
-        $current_date = false;
-        foreach( $show_dienste as $dienst ) {
-          if( $current_date != $dienst['lieferdatum'] ) {
-            open_tr();
-            $current_date = $dienst['lieferdatum'];
-            open_th( '', '', $current_date );
-            open_td();
-          }
-          open_span( 'qquad' );
-          echo "Dienst {$dienst['dienst']}: ";
-          if( $dienst['gruppenmitglieder_id'] )
-            echo $dienst['vorname'];
-          else
-            echo "(kein Mitglied ausgewaehlt)";
-          close_span();
-        }
-        open_tr();
-        open_td( 'right', 'colspan="2"', fc_action( 'text=OK', 'dienst_rueckbestaetigen=1' ) );
-      close_table();
-      return false;
-    }
-  }
-  return true;
 }
 
 
@@ -1116,31 +1074,28 @@ function optionen_gruppen(
  * html-Warnung
  */
 function check_new_group_nr( $newNummer, & $problems ){
-    global $specialgroups;
+  global $specialgroups;
 
-    if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
-      $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
-      return FALSE;
+  if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
+    $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
+    return false;
+  }
+  if( in_array( $newNummer, $specialgroups ) ) {
+    $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer (reserviert fuer Basar oder Muell)</div>";
+    return false;
+  }
+  $id = $newNummer;
+  $result = sql_bestellgruppen( "( id % 1000 ) = $newNummer" );
+  foreach( $result as $row ) {
+    if( $row['aktiv'] ) {
+      $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
+      return false;
     }
-    if( in_array( $newNummer, $specialgroups ) ) {
-      $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer (reserviert fuer Basar oder Muell)</div>";
-      return FALSE;
+    if( $row['id'] >= $id ) {
+      $id += 1000;
     }
-    $id = $newNummer;
-    $result = sql_bestellgruppen( "gruppennummer = $newNummer" );
-    foreach( $result as $row ) {
-      if( $row['aktiv'] ) {
-        $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
-        break;
-      }
-      if( $row['id'] >= $id )
-        $id += 1000;
-    }
-    if($problems!=""){
-	    return FALSE;
-    } else {
-	    return $id;
-    }
+  }
+  return $id;
 }
 
 /**
@@ -1159,7 +1114,6 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   sql_update( 'gruppenmitglieder', $gruppenmitglieder_id, array(
     'aktiv' => 0
   , 'diensteinteilung' => 'freigestellt'
-  , 'rotationsplanposition' => 0
   , 'sockeleinlage' => 0.0
   ) );
   logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppennummer']} geloescht" );
@@ -1182,13 +1136,13 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
 
   // falls letztes mitglied der gruppe ausgetreten: sockelbetrag der Gruppe rueckerstatten:
   $gruppendaten = sql_gruppendaten( $gruppen_id );
-  if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockeleinlage'] > 0 ) ) {
+  if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockeleinlage_gruppe'] > 0 ) ) {
     if( sql_doppelte_transaktion(
       array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
     , array( 'konto_id' => -1, 'gruppen_id' => $muell_id, 'transaktionsart' => TRANSAKTION_TYP_SOCKEL )
-    , $gruppendaten['sockeleinlage']
+    , $gruppendaten['sockeleinlage_gruppe']
     , $mysqlheute
-    , "Erstattung Sockeleinlage Gruppe " . $gruppendaten['gruppenname']
+    , "Erstattung Sockeleinlage Gruppe " . $gruppendaten['name']
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: {$gruppendaten['sockeleinlage']} Euro wurden erstattet.</div>";
       sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => 0.0 ) );
@@ -1216,9 +1170,9 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     }
   } else {
     // gruppe jetzt ganz inaktiv, also: alle dienste werden offen:
-    $bevorstehende_dienste = sql_dienste( "( lieferdatum >= $mysqlheute ) and ( gruppen_id = $gruppen_id ) and not geleistet" );
+    $bevorstehende_dienste = sql_dienste( "( lieferdatum >= $mysqlheute ) and ( dienste.gruppen_id = $gruppen_id ) and not geleistet" );
     foreach( $bevorstehende_dienste as $dienst ) {
-      sql_dienst_wird_offen( $dienst['dienst_id'] );
+      sql_dienst_wird_offen( $dienst['id'] );
     }
   }
 }
@@ -1271,7 +1225,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
       , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
       , $sockelbetrag_gruppe
       , $mysqlheute
-      , "Sockeleinlage fuer Gruppe " . $gruppendaten['gruppenname']
+      , "Sockeleinlage fuer Gruppe " . $gruppendaten['name']
       ) ) {
         $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: $sockelbetrag_gruppe Euro wurden verbucht.</div>";
         sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => $sockelbetrag_gruppe ) );
@@ -1284,7 +1238,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
   if( $gruppendaten['mitgliederzahl'] == 1 ) {
     $bevorstehende_dienste= sql_dienste( "( lieferdatum >= $mysqlheute ) and ( dienste.gruppen_id = $gruppen_id )" );
     foreach( $bevorstehende_dienste as $dienst ) {
-      update( 'dienste', $dienst['dienst_id'], array(
+      sql_update( 'dienste', $dienst['dienst_id'], array(
         'gruppenmitglieder_id' => $id
       , 'status' => 'Vorgeschlagen'
       ) );
@@ -2278,6 +2232,8 @@ function sql_link_transaction( $soll_id, $haben_id ) {
     sql_update( 'bankkonto', $haben_id, array( 'konterbuchung_id' => $soll_id ) );
   else
     sql_update( 'gruppen_transaktion', -$haben_id, array( 'konterbuchung_id' => $soll_id ) );
+
+  return true;
 }
 
 /*
@@ -2330,8 +2286,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spe
   }
   logger( "sql_doppelte_transaktion: $soll_id, $haben_id" );
 
-  sql_link_transaction( $soll_id, $haben_id );
-  return;
+  return sql_link_transaction( $soll_id, $haben_id );
 }
 
 function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
