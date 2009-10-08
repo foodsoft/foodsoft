@@ -239,20 +239,6 @@ function dienst_view3($row){
   close_form();
 }
 
-/**
- *  Zeigt einen Dienst mit Name, Dienst und Datum
- */
-function dienst_view2($row){
-  open_div();
-    echo "{$row['lieferdatum']} Dienst {$row['dienst']} ";
-    if( $row['gruppenmitglieder_id'] ) {
-      echo $row['vorname'];
-    } else {
-      echo "(kein Gruppenmitglied ausgewaehlt)";
-    }
-    echo "(Status: {$row['status']}";
-  close_div();
-}
 
 
 /**
@@ -264,7 +250,14 @@ function dienstplan_eintrag_view( $dienst_id ) {
   $dienst = sql_dienst( $dienst_id );
   $status = $dienst['status'];
 
-  $show_buttons = ( ! $readonly and ! $dienst['geleistet'] and ! hat_dienst(5) );
+  $soon = $dienst['soon'];
+  $over = $dienst['over'];
+  $historic = $dienst['historic'];
+  $geleistet = $dienst['geleistet'];
+
+  $show_buttons = ! ( $readonly || $geleistet || hat_dienst(5) || $historic );
+  $dienst_view_editable = ( ! $readonly and ! $geleistet and ( hat_dienst(5) || ! $historic ) );
+  $geleistet_button = ( $over and ! $readonly and ! $geleistet );
 
   if( hat_dienst(5) ) {
     if( $dienst['soon'] ) {
@@ -286,7 +279,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
 
   open_table( "hfill smallskip" );
     open_td( $class, "colspan='2'" );
-      dienst_view( $dienst_id, ! $readonly );
+      dienst_view( $dienst_id, $dienst_view_editable );
 
     open_tr();
     switch( $dienst['status'] ) {
@@ -362,6 +355,11 @@ function dienstplan_eintrag_view( $dienst_id ) {
         }
         break;
     }
+    // if( $geleistet_button ) {
+    //   if( hat_dienst(5) or ( $dienst['gruppen_id'] == $login_gruppen_id ) ) {
+    //     open_tr
+    //  }
+    // }
     if( hat_dienst(5) ) {
       smallskip();
       if( ! $readonly ) {
@@ -377,6 +375,7 @@ function dienst_view( $dienst_id, $editable = false ) {
 
   $dienst = sql_dienst( $dienst_id );
 
+  // echo "[ soon:{$dienst['soon']}, over: {$dienst['over']}, historic:{$dienst['historic']} ]";
   $edit_gruppe = ( $editable && hat_dienst(5) );
 
   $gruppen_id = $dienst['gruppen_id'];
@@ -454,6 +453,66 @@ function dienst_view( $dienst_id, $editable = false ) {
     }
   close_div();
 }
+
+function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
+  global $login_gruppen_id, $action, $dienst_id;
+
+  if( $rueckbestaetigen_lassen ) {
+    get_http_var( 'action', 'w', '' ) or $action = '';
+    get_http_var( 'dienst_id', 'U', 0 );
+    if( ( $action == 'dienstBestaetigen' ) and ( $dienst_id > 0 ) ) {
+      sql_dienst_akzeptieren( $dienst_id, false, 'Bestaetigt' );
+    }
+  }
+
+  $dienste = sql_dienste( "( dienste.gruppen_id = $gruppen_id ) and not geleistet" );
+  $show_dienste = array();
+  if( $rueckbestaetigen_lassen ) {
+    foreach( $dienste as $dienst ) {
+      switch( $dienst['status'] ) {
+        case 'Akzeptiert':
+        case 'Vorgeschlagen':
+          if( $dienst['soon'] and ! $dienst['historic'] )
+            $show_dienste[] = $dienst;
+          break;
+        default:
+          break;
+      }
+    }
+  } else {
+    $show_dienste = $dienste;
+  }
+  if( ! $show_dienste )
+    return false;
+
+  if( $rueckbestaetigen_lassen ) {
+    echo "<h1> Deine Gruppe hat bald " . fc_link( 'dienstplan', 'text=Dienst:,class=href' ) ."</h1>";
+  } else {
+    echo "<h4> Eure naechsten ". fc_link( 'dienstplan', 'text=Dienste:,class=href' ) ."</h4>";
+  }
+
+  open_table( 'smallskip list' );
+    $gruppennummer = sql_gruppennummer( $gruppen_id );
+    $gruppenname = sql_gruppenname( $gruppen_id );
+    foreach( $show_dienste as $dienst ) {
+      open_tr();
+      open_th( 'wide', '', $dienst['lieferdatum'] );
+      open_td( 'wide' );
+         echo "Dienst {$dienst['dienst']}: ";
+          if( $dienst['gruppenmitglieder_id'] ) {
+            echo $dienst['vorname'];
+          } else {
+            echo "(kein Mitglied ausgewaehlt)";
+          }
+          if( $rueckbestaetigen_lassen ) {
+            echo fc_action( 'class=button,text=geht klar!', "action=dienstBestaetigen,dienst_id={$dienst['id']}" );
+          }
+    }
+  close_table();
+  return true;
+}
+
+
 
 /**
  * Ausgabe der Links im Hauptmenue und im Foodsoft-Kopf
