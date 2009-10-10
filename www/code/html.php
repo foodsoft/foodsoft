@@ -312,7 +312,7 @@ function open_form( $get_parameters = array(), $post_parameters = array() ) {
 // - register parameter $name, value $val to be inserted as a hidden input field
 //   just before </form> 
 // - thus, this function can be called anywhere in the html structure, not just
-//   where <input> is allowed)
+//   where <input> is allowed
 // - $attr can be used to set e.g. an id='foo' to modify the value from javascript
 //
 function hidden_input( $name, $val = false, $attr = '' ) {
