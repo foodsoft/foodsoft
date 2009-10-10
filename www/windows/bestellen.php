@@ -13,7 +13,7 @@ if( hat_dienst(4) ) {
 } else {
   $gruppen_id = $login_gruppen_id;  // ...alle anderen fuer sich selbst!
   $kontostand = kontostand( $gruppen_id );
-  $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
+  // $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
   echo "<h1>Bestellen f&uuml;r Gruppe $login_gruppen_name</h1>";
 }
 
@@ -36,7 +36,7 @@ open_table( 'layout hfill' );
 if( $bestell_id ) {
   $gesamtbestellung = sql_bestellung( $bestell_id );
   open_td( 'left' );
-    bestellung_overview( $gesamtbestellung, TRUE, $gruppen_id );
+    bestellung_overview( $bestell_id, $gruppen_id );
 }
 
 open_td( 'qquad smallskip floatright' );
@@ -89,7 +89,7 @@ switch( $action ) {
 $produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
 
-$festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
+// $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
 
 if( ! $readonly ) {
   $bestellform_id = open_form( '', 'action=bestellen' );
@@ -190,56 +190,70 @@ if( ! $readonly ) {
       } else {
         zuteilung_toleranz = 0;
       }
-  
+
       // anzeige aktualisieren:
       //
-      document.getElementById('fz_'+produkt).firstChild.nodeValue = zuteilung_fest;
-      document.getElementById('fr_'+produkt).firstChild.nodeValue = fest[produkt] - zuteilung_fest;
-      document.getElementById('fg_'+produkt).firstChild.nodeValue = fest[produkt] + fest_andere[produkt];
-      if( gebindegroesse[produkt] > 1 ) {
-        document.getElementById('tz_'+produkt).firstChild.nodeValue = zuteilung_toleranz;
-        document.getElementById('tr_'+produkt).firstChild.nodeValue = toleranz[produkt] - zuteilung_toleranz;
-        document.getElementById('tg_'+produkt).firstChild.nodeValue = toleranz[produkt] + toleranz_andere[produkt];
-      }
-  
+      if( festmenge )
+        s = festmenge * verteilmult[produkt];
+      else
+        s = '0';
+      if( toleranzmenge > 0 )
+        s = s + ' ... ' + (festmenge + toleranzmenge) * verteilmult[produkt];
+      document.getElementById('gv_'+produkt).firstChild.nodeValue = s;
+
       if( gebinde > 0 ) {
-        document.getElementById('gv_'+produkt).firstChild.nodeValue = gebinde;
-        document.getElementById('gv_'+produkt).className = 'mult highlight';
+        document.getElementById('gg_'+produkt).firstChild.nodeValue = gebinde;
+        document.getElementById('g_'+produkt).className = 'mult highlight';
       } else {
-        document.getElementById('gv_'+produkt).firstChild.nodeValue = '0';
+        document.getElementById('gg_'+produkt).firstChild.nodeValue = '0';
         if( festmenge + toleranzmenge > 0 ) {
-          document.getElementById('gv_'+produkt).className = 'mult crit';
+          document.getElementById('g_'+produkt).className = 'mult crit';
         } else {
-          document.getElementById('gv_'+produkt).className = 'mult';
+          document.getElementById('g_'+produkt).className = 'mult';
         }
       }
-  
+
       // formularfelder aktualisieren:
       //
-      document.getElementById('fest_'+produkt).value = fest[produkt];
-      document.getElementById('toleranz_'+produkt).value = toleranz[produkt];
-  
+      s = fest[produkt] * verteilmult[produkt];
+      if( toleranz[produkt] > 0 ) {
+        s = s + ' ... ';
+        document.getElementById('t_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] ) * verteilmult[produkt];
+      } else {
+        document.getElementById('t_'+produkt).firstChild.nodeValue = '';
+      }
+      document.getElementById('f_'+produkt).firstChild.nodeValue = s;
+
       // kosten und neuen kontostand berechnen und anzeigen:
       kosten_neu = preis[produkt] * ( fest[produkt] + toleranz[produkt] );
       gesamtpreis += ( kosten_neu - kosten[produkt] );
       kosten[produkt] = kosten_neu;
       if( ( fest[produkt] + toleranz[produkt] ) > 0 ) {
         document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
-        document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
+        // document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
         if( gebinde > 0 ) {
           document.getElementById('k_'+produkt).className = 'mult highlight';
-          document.getElementById('m_'+produkt).className = 'mult highlight';
+          document.getElementById('gv_'+produkt).className = 'mult highlight';
+          document.getElementById('gg_'+produkt).className = 'mult highlight';
+          document.getElementById('ev_'+produkt).className = 'unit highlight';
+          document.getElementById('eg_'+produkt).className = 'unit highlight';
         } else {
           document.getElementById('k_'+produkt).className = 'mult crit';
-          document.getElementById('m_'+produkt).className = 'mult crit';
+          document.getElementById('gv_'+produkt).className = 'mult crit';
+          document.getElementById('gg_'+produkt).className = 'mult crit';
+          document.getElementById('ev_'+produkt).className = 'unit crit';
+          document.getElementById('eg_'+produkt).className = 'unit crit';
         }
       } else {
         document.getElementById('k_'+produkt).firstChild.nodeValue = '0.00'
         document.getElementById('k_'+produkt).className = 'mult';
-        document.getElementById('m_'+produkt).firstChild.nodeValue = '0';
-        document.getElementById('m_'+produkt).className = 'mult';
+        // document.getElementById('m_'+produkt).firstChild.nodeValue = '0';
+        document.getElementById('gv_'+produkt).className = 'mult';
+        document.getElementById('gg_'+produkt).className = 'mult';
+        document.getElementById('ev_'+produkt).className = 'unit';
+        document.getElementById('eg_'+produkt).className = 'unit';
       }
-  
+
       document.getElementById('gesamtpreis1').firstChild.nodeValue = gesamtpreis.toFixed(2);
       document.getElementById('gesamtpreis2').firstChild.nodeValue = gesamtpreis.toFixed(2);
       kontostand_neu = ( kontostand - gesamtpreis ).toFixed(2);
@@ -259,12 +273,12 @@ if( ! $readonly ) {
       if( gesamtpreis > kontostand ) {
         konto_rest.style.color = '#c00000';
         document.getElementById('submit').className = 'bigbutton warn';
-        document.getElementById('submit').value = 'Konto überzogen';
+        document.getElementById('submit').firstChild.nodeValue = 'Konto überzogen';
       } else {
         konto_rest.style.color = '#000000';
-        document.getElementById('submit').style.color = '#000000;'
+        document.getElementById('submit').style.color = '#000000';
         document.getElementById('submit').className = 'bigbutton';
-        document.getElementById('submit').value = 'Bestellung Speichern';
+        document.getElementById('submit').firstChild.nodeValue = 'Bestellung Speichern';
       }
 
       return true;
@@ -347,7 +361,7 @@ if( ! $readonly ) {
         open_td('alert smallskip');
       open_tr();
         open_td('alert');
-        open_td('center alert', '', "<a class='bigbutton' href='javascript:bestellung_submit();'>Speichern</a>" );
+        open_td('center alert', '', "<a class='bigbutton' id='submit' href='javascript:bestellung_submit();'>Speichern</a>" );
         open_td('center alert', '', fc_link( 'self', 'bestell_id=0,class=bigbutton,text=Abbrechen' ) );
     close_table();
   close_div();
@@ -360,8 +374,8 @@ open_table( 'list hfill' );  // bestelltabelle
     open_th( '', '', 'Bezeichnung' );
     open_th( '', "colspan='1' title='Einzelpreis (mit Pfand und MWSt)'", 'Preis' );
     open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Bestellmenge gesamt' );
-    open_th( '', "colspan='4' title='Bestellmenge eurer Gruppe'", 'eure Bestellmenge' );
-    open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r eure Gruppe (mit Pfand und MWSt)'", 'Kosten' );
+    open_th( '', "colspan='4' title='Bestellmenge deiner Gruppe'", 'deine Bestellmenge' );
+    open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r deine Gruppe (mit Pfand und MWSt)'", 'Kosten' );
     if( hat_dienst(4) )
       open_th( '', '', 'Aktionen' );
   open_tr( 'groupofrows_bottom' );
@@ -369,8 +383,8 @@ open_table( 'list hfill' );  // bestelltabelle
     open_th( 'small', '', '' );
     open_th( '', "colspan='1'", '' );
     open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'Gebinde' );
-    open_th( '', "colspan='2' title='Fest-Bestellmenge: wieviel Ihr wirklich haben wollt'", 'fest' );
-    open_th( '', "colspan='2' title='Toleranz-Menge: wieviel Ihr auch mehr nehmen würdet'", 'Toleranz' );
+    open_th( '', "colspan='2' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'Fest' );
+    open_th( '', "colspan='2' title='Toleranz-Menge: wieviel du auch mehr nehmen würdest'", 'Toleranz' );
     open_th( '', '', '' );
     if( hat_dienst(4) )
       open_th( '', '', '' );
@@ -419,7 +433,7 @@ foreach( $produkte as $produkt ) {
   );
   $produktgruppe = $produkt['produktgruppen_id'];
   if( $produktgruppe != $produktgruppe_alt ) {
-    if( $activate_mozilla_kludges ) {
+    if( 0 * $activate_mozilla_kludges ) {
       // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
       // so we set rowspan=1 first and modify later :-/
       open_td( '', "rowspan='1' id='pg_$produktgruppe'", $produkt['produktgruppen_name'] );
@@ -462,62 +476,60 @@ foreach( $produkte as $produkt ) {
   open_td( 'top center ' . ( ( $zuteilungen[gebinde] > 0 )  ?  'highlight'
                           : ( ( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) ? 'crit' : '' ) )
           , "id='g_$n' " );
-    open_table( 'layout' );
+    open_table( 'layout hfill' );
         // v-menge:
-        open_td( 'mult', "id='gv_$n'", mult2string( $verteilmult * ( $festmenge_gesamt + $toleranzmenge_gesamt ) ) );
-        open_td( 'unit', '', $produkt['verteileinheit_anzeige'] );
+        open_td( 'mult', "id='gv_$n'" );
+          echo mult2string( $verteilmult * $festmenge_gesamt );
+          if( $toleranzmenge_gesamt > 0 ) {
+            echo ' ... ' . mult2string( $verteilmult * ( $festmenge_gesamt + $toleranzmenge_gesamt ) );
+          }
+        open_td( 'unit', "id='ev_$n'", $produkt['kan_verteileinheit'] );
       open_tr();
        // gebinde:
-        open_td( 'mult', "id='gg_$n'", fprintf( '%u', $zuteilungen[gebinde] );
-        open_td( 'unit', '', "* ({$produkt['gebindegroesse']} * {$produkt['verteileinheit_anzeige']})" );
+        open_td( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen[gebinde] ) );
+        open_td( 'unit', "id='eg_$n'", "* ({$produkt['gebindegroesse']} * {$produkt['verteileinheit_anzeige']})" );
     close_table();
 
-  // festmenge:
-  $tag = '';
-  if( $festmenge + $toleranzmenge > 0 )
-    $tag = ( ( $zuteilungen[gebinde] > 0 ) ? 'highlight' : 'crit' );
-  open_td( "mult $tag", "id='m_$n'", sprintf( "%u", $festmenge + $toleranzmenge ) );
-  open_td( 'unit', '', sprintf( "* %s %s", $produkt['kan_verteilmult'], $produkt['kan_verteileinheit'] ) );
 
   // festmenge
-  open_td( 'center', "colspan='2'" );
+  open_td( 'center mult', "colspan='2' style='border-right-style:none;'" );
     open_div( 'oneline mult' );
       open_span( '', "id='f_$n'" );
-        echo mult2string( $festmenge * produkt['kam_verteilmult'] ) );
+        echo mult2string( $festmenge * $produkt['kan_verteilmult'] );
         if( $toleranzmenge > 0 )
-          echo " ...";
+          echo " ... ";
       close_span();
     close_div();
 
     if( ! $readonly ) {
       open_div('oneline center');
         // if( $gebindegroesse > 1 )
-        //  echo "<input type='button' value='<<' onclick='fest_minusminus($n);' >";
-        ?> <input type='button' value='<' onclick='fest_minus(<? echo $n; ?>);' >
+        //  echo "<input type='button' value='--' onclick='fest_minusminus($n);' >";
+        ?> <input type='button' value='-' onclick='fest_minus(<? echo $n; ?>);' >
             <span style='width:4em;'>&nbsp;</span>
-            <input type='button' value='>' onclick='fest_plus(<? echo $n; ?>);' > <?
+            <input type='button' value='+' onclick='fest_plus(<? echo $n; ?>);' > <?
         // if( $gebindegroesse > 1 )
-        //  echo "<input type='button' value='>>' onclick='fest_plusplus($n);' >";
+        //  echo "<input type='button' value='++' onclick='fest_plusplus($n);' >";
       close_div();
     }
 
   // toleranzmenge
-  open_td('center'); // toleranzwahl
+  open_td('center unit', "colspan='2' style='border-left-style:none;'" ); // toleranzwahl
     open_div( 'oneline unit' );
       open_span( '', "id='t_$n'" );
         if( $toleranzmenge > 0 )
-          echo mult2string( ( $festmenge + $toleranzmenge ) * produkt['kan_verteilmult'] );
+          echo mult2string( ( $festmenge + $toleranzmenge ) * $produkt['kan_verteilmult'] );
       close_span();
       echo " {$produkt['kan_verteileinheit']}";
     close_div();
     if( $gebindegroesse > 1 ) {
       if( ! $readonly ) {
         open_div('oneline center');
-          ?> <input type='button' value='<' onclick='toleranz_minus(<? echo $n; ?>);' >
+          ?> <input type='button' value='-' onclick='toleranz_minus(<? echo $n; ?>);' >
              <span style='width:2em;'>&nbsp;</span>
              <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
              <span style='width:2em;'>&nbsp;</span>
-             <input type='button' value='>' onclick='toleranz_plus(<? echo $n; ?>);' > <?
+             <input type='button' value='+' onclick='toleranz_plus(<? echo $n; ?>);' > <?
         close_div();
       }
     } else {
@@ -538,10 +550,11 @@ foreach( $produkte as $produkt ) {
 
 
 open_tr('summe');
-  open_td( '', "colspan='12'", 'Gesamtpreis:' );
+  open_td( '', "colspan='8'", 'Gesamtpreis:' );
   open_td( 'number', "id='gesamtpreis2'", sprintf( '%.2lf', $gesamtpreis ) );
 
-  if( hat_dienst(4) ) open_td();
+  if( hat_dienst(4) )
+    open_td();
 close_table();
 
 if( $js )
@@ -558,10 +571,10 @@ if( ! $readonly ) {
         $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );
         if( $anzahl_eintraege > 0 ) {
           div_msg( 'kommentar', "
-            Ist Dein gewünschter Artikel nicht in der Auswahlliste? 
+            Ist ein gewünschter Artikel nicht in der Auswahlliste? 
             Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
-            findest Du $anzahl_eintraege Artikel; bitte wende Dich an die Leute vom Dienst 4, wenn
-            Du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
+            findest du $anzahl_eintraege Artikel; bitte wende dich an die Leute vom Dienst 4, wenn
+            du eineN davon in die Bestellvorlage aufnehmen lassen möchtest!
           " );
         }
       close_form();
