@@ -24,7 +24,7 @@ if( $produkt_id ) {
 } else {
   ?> <h1>Verteilliste</h1> <?
 }
-bestellung_overview( sql_bestellung( $bestell_id ) );
+bestellung_overview( $bestell_id );
 
 
 // aktionen verarbeiten; hier: liefer/verteilmengen aendern:

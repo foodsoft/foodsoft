@@ -1006,7 +1006,7 @@ function bestellschein_view(
           open_td( 'number', '', $produkte_row['pfand'] );
 
         if( $spalten & PR_COL_VPREIS ) {
-          open_td( 'mult', '', price_view( $produkte_row['preis'] ) );
+          open_td( 'mult', '', price_view( $produkte_row['endpreis'] ) );
           open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
@@ -1328,48 +1328,48 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   close_tr();
 }
 
-function bestellung_overview($row, $showGroup=FALSE, $gruppen_id = NULL){
+function bestellung_overview( $bestell_id, $gruppen_id ) {
   global $login_gruppen_id, $window_id;
-  $bestell_id = $row['id'];
+
+  $bestellung = sql_bestellung( $bestell_id );
 
   open_table('list');
       open_th('','','Bestellung:');
       open_td('bold large');
         echo fc_link( 'lieferschein', array(
-          'class' => 'href', 'text' => $row['name'], 'bestell_id' => $row['id']
+          'class' => 'href', 'text' => $bestellung['name'], 'bestell_id' => $bestell_id
           , 'title' => 'zum Bestellschein/Lieferschein...'
         ) );
         if( hat_dienst(4) and sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET )
           echo fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=" );
-        if(sql_dienste_nicht_bestaetigt($row['lieferung']))
-          div_msg( 'bold warn', "Vorsicht:". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
+        if( sql_dienste_nicht_bestaetigt( $bestellung['lieferung'] ) )
+          div_msg( 'warn', "Vorsicht:". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
     open_tr();
       open_th('','','Lieferant:');
-      open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $row['lieferanten_id'] )
-                                                     , 'class' => 'href' , 'lieferanten_id' => $row['lieferanten_id'] ) ) );
+      open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $bestellung['lieferanten_id'] )
+                                                     , 'class' => 'href' , 'lieferanten_id' => $bestellung['lieferanten_id'] ) ) );
     open_tr();
       open_th('','','Bestellzeitraum:');
-      open_td('','', $row['bestellstart'] .' - '. $row['bestellende'] );
+      open_td('','', $bestellung['bestellstart'] .' - '. $bestellung['bestellende'] );
     open_tr();
       open_th('','','Lieferung:');
-      open_td('','', $row['lieferung'] );
+      open_td('','', $bestellung['lieferung'] );
   if( $window_id != 'abrechnung' ) {
     open_tr();
       open_th('','','Status:');
       open_td();
         abrechnung_kurzinfo( $bestell_id );
   }
-  if( $showGroup and $gruppen_id ){
+  if( $gruppen_id ){
     open_tr();
       open_th('','','Gruppe:');
         if( $gruppen_id == sql_basar_id() ) {
-          open_td( 'warn', '', 'Basar' );
+          open_td( 'alert', '', 'Basar' );
         } elseif( $gruppen_id == sql_muell_id() ) {
-          open_td( 'warn', '', 'Müll' );
-        } else {
+          need( $gruppen_id != sql_muell_id() );
           open_td( '', '', gruppe_view( $gruppen_id ) );
           if( hat_dienst(4) or ( $gruppen_id == $login_gruppen_id ) ) {
-            $kontostand = kontostand($gruppen_id);
+            $kontostand = kontostand( $gruppen_id );
             open_tr();
               open_th('','','Kontostand:');
               open_td( $kontostand < 0 ? 'crit' : '' );
@@ -1515,7 +1515,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'number', '', $pr1['mwst'] );
       open_td( 'number', '', $pr1['pfand'] );
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
-      open_td( 'mult', '', price_view( $pr1['preis'] ) );
+      open_td( 'mult', '', price_view( $pr1['endpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
 
     if( $bestell_id ) {

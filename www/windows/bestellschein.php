@@ -145,7 +145,7 @@ get_http_var( 'spalten', 'w', $default_spalten, true );
 
 open_table( 'layout hfill' );
     open_td( 'left' );
-      bestellung_overview($bestellung,$gruppen_id,$gruppen_id);
+      bestellung_overview( $bestell_id, $gruppen_id );
     open_td( 'right qquad floatright' );
       open_table( 'menu', "id='option_menu_table'" );
         open_th( '', "colspan='2'", 'Anzeigeoptionen' );
