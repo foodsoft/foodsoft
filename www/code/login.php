@@ -90,11 +90,11 @@ switch( $login ) {
     get_http_var( 'dienst', 'u' )
       or $problems .= "<div class='warn'>FEHLER: kein Dienst ausgewaehlt</div>";
 
-    if( ! in_array( $login_dienst, array( 0, 1, 3, 4, 5 ) ) ) {
+    if( ! in_array( $dienst, array( 0, 1, 3, 4, 5 ) ) ) {
       $problems .= "<div class='warn'>FEHLER: kein gueltiger Dienst angegeben</div>";
     }
 
-    if( $login_dienst != 0 ) {
+    if( $dienst != 0 ) {
       get_http_var( 'coopie_name', 'H', '' );
       if( ! $coopie_name || ( strlen( $coopie_name ) < 2 ) ) {
         $problems = $problems . "<div class='warn'>FEHLER: kein Name angegeben</div>";
@@ -111,7 +111,8 @@ switch( $login ) {
       }
     }
 
-    if ( ( ! $problems ) && ( $login_dienst > 0 ) ) {
+    if ( ( ! $problems ) && ( $dienst > 0 ) ) {
+      $login_dienst = $dienst;
       $dienstkontrollblatt_id = dienstkontrollblatt_eintrag(
         false, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz 
       );
