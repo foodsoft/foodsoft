@@ -160,12 +160,12 @@ if( hat_dienst(5) ) {
         open_tr();
           open_td( 'qquad' );
           smallskip();
-          echo "Eingeteilt werden für...";
+          echo "Eingeteilt werden für Dienst...";
         open_tr();
           open_td( 'qquad' );
-            open_span( 'qquad', '', "D 1/2: " . int_view( $personen_1, "personen_1", 1 ) );
-            open_span( 'qquad', '', "D 3: " . int_view( $personen_3, "personen_3", 1 ) );
-            open_span( 'qquad', '', "D 4: " . int_view( $personen_4, "personen_4", 1 ) . " Personen" );
+            open_span( 'qquad', '', "1/2: " . int_view( $personen_1, "personen_1", 1 ) );
+            open_span( 'qquad', '', "3: " . int_view( $personen_3, "personen_3", 1 ) );
+            open_span( 'qquad', '', "4: " . int_view( $personen_4, "personen_4", 1 ) . " Personen" );
         open_tr();
           open_td( 'right', '' );
             smallskip();
