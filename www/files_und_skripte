@@ -1,0 +1,71 @@
+
+Skripte und Dateien:
+========================
+
+- Nur die PHP-skripte index.php und setup.php werden direkt aufgerufen
+- setup.php nur, wenn IP-Adresse in code/config.php erlaubt (sollte im laufenden Betrieb deaktiviert sein)
+
+- verzeichnis windows:
+   jedes Skript entspricht einer Web-Seite, aufrufbar per
+     index.php?window=<name>
+   (Details: siehe code/inlinks.php)
+
+- verzeichnis code:
+   Skripte mit Code, der von allen anderen gemeinsam genutzt wird
+
+- js, css, img: javascript, CSS code, Bilder (gemeinsam fuer alle Skripte)
+
+- structure.php: aktuelle Datenbankstruktur als php-array (benutzt von setup.php)
+
+- leitvariable.php: konfigurationsvariable und default-werte fuer tabelle; benutzt
+  von setup.php beim anlegen der tabelle 'leitvariable'
+
+- dump.php: dump der datenbankstruktur im setup.php format
+
+- fcck.php: unfertig (ziel: check und reparatur der datenbankstruktur, garbage collection)
+
+- antixls.modif: perl-skript zur konversion xls -> csv (modifiziert: benutzt Klammeraffe @ statt Komma 
+  als Trennzeichen
+  
+- foodsoft.class.php: 
+    authentication backend fuers doku-wiki: damit gelten im doku-wiki die Benutzeraccounts der foodsoft
+    (diese datei muss nach Installation des doku-wiki nach /wiki/inc/auth kopiert werden und wird aktiviert
+     durch
+        $conf['authtype'] = 'foodsoft';
+     in /wiki/conf/dokuwiki.php)
+
+- head.php: erzeugt den Seitenkopf fuer Seiten, die im Hauptfenster des Browsers angezeigt werden
+
+
+Unterverzeichnis code:
+========================
+
+- common.php:
+  * baut datenbankverbindung auf
+  * liest alle anderen dateien --- ausser login.php! --- ein:
+      config.php
+      err_functions.php
+      html.php
+      forms.php
+      inlinks.php
+      katalogsuche.php
+      views.php
+      zuordnen.php
+  * setzt alle variablen aus tabelle 'leitvariable' als globale variable, initialisiert einige globale variable
+  * ruft update_database()
+
+- login.php:
+  prueft, ob benutzer bereits angemeldet (per cookie):
+  * gegebenenfalls wird eine neuanmeldung ausgewertet (setzt cookie, erzeugt ggf. eintrag in dienstkontrollblatt)
+  * falls angemeldet: globale variable werden gesetzt
+      $angemeldet == TRUE
+      $login_gruppen_id
+      $login_gruppen_name
+      $session_id
+      $login_dienst (0, 1, 3, 4 oder 5)
+    falls $login_dienst > 0 ausserdem:
+      $coopie_name
+      $dienstkontrollblatt_id
+  * falls nicht angemeldet: Ausgabe Anmeldedialog, dann exit()
+
+

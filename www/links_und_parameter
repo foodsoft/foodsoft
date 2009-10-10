@@ -1,0 +1,50 @@
+
+
+parameteruebergabe an skripte:
+==============================
+
+* GET und POST koennen benutzt werden (auch gemischt); dabei gilt die konvention:
+
+   * GET nur fuer parameter, die die Ansicht definieren:
+     - in der Regel sind das
+       - Primaerschluessel fuer Tabellen ('id'-Spalten), oder
+       - Anzeige-Optionen wir $order (Sortierreihenfolge) oder $options (flags)
+     - GET-parameter duerfen _keine_ Aktionen / Schreibzugriffe auf Datenbanken zur Folge haben
+     - URLs mit GET-parametern sollten mehrfach aufrufbar sein und immer dieselbe Ansicht erzeugen
+     - GET-parameter gehoeren meist in $self_fields (fuer reload derselben oder modifizierten Ansicht)
+     - GET-parameter muessen in code/zuordnen.php in $foodsoft_get_vars deklariert werden
+  
+   * URLs enthalten in der Regel mindestens die parameter
+     $window (identifiziert das Skript) (default: Hauptmenue) und
+     $window_id (Name des Anzeigefensters; default: 'main', also Hauptfenster des Browsers)
+   * POST parameter loesen Aktionen / Schreibzugriffe aus; in der Regel benutzt fuer Formularfelder
+
+* Zugriff auf parameter sollte _immer_ ueber die funktion get_http_var() erfolgen:
+  funktioniert fuer GET oder POST, Typenpruefung erfolgt, Default kann angegeben werden.
+
+
+interne Links:
+=============
+
+* interne Links sollten per
+    fc_link( $window, $parameters, $options )
+  (in code/inlinks.php) erzeugt werden; typische Anwendung:
+    fc_link( 'self', 'options=<neue_optionen>' )
+  zum Neuladen einer Ansicht mit geaenderten Optionen
+
+* Formulare per open_form (in code/html.php); notfalls per fc_link( ..., 'context=form' )
+
+* Einfache Aktionen (Loeschen, Bestaetigen, ...) per
+   fc_action( $get_parameters, $post_parameters, $options)
+  typische Anwendung:
+    fc_action( '', array( 'action'=> 'delete', 'id' => $id, 'confirm' => 'Wirklich loeschen?' ) );
+  zum Loeschen eines Datensatzes, mit Sicherheitsabfrage; ruft dasselbe Skript wieder auf, welches
+  $action auswerten muss
+
+* Links mit parameter 'window=self' (ist der default) uebergeben automatisch  alle parameter aus
+    global $self_fields
+  (array mit 'name' => 'wert' -Paaren) per GET
+  fc_action() zusaetzlich alle parameter aus
+    global $self_post_fields
+  per POST
+
