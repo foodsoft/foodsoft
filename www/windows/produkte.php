@@ -59,7 +59,7 @@ bigskip();
 //
 /////////////////////////////
 
-get_http_var('action','w','');
+get_http_var('action','w','') or $action = '';
 $editable or $action = '';
 if( $action == 'delete' ) {
   need_http_var('produkt_id','u');
