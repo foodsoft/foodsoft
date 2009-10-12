@@ -776,8 +776,8 @@ input.checkbox {
 .flatbutton, .flatbutton:hover {
   border-style:none;
   outline:1px solid black;
-  font-weidht:bold;
-  font-decoration:none;
+  font-weight:bold;
+  text-decoration:none;
   padding:0px 1ex 0px 1ex;
   margin:0px;
   background-color:#cccccc;
