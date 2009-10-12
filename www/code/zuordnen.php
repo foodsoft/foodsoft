@@ -3466,9 +3466,11 @@ function mult2string( $mult ) {
 /*  preisdaten setzen:
  *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
  *   - kan_verteileinheit, kan_verteilmult, kan_liefereinheit, kan_liefermult:
- *     kanonische darstellung der einheiten (masszahl abgespalten, einheit wie in global $masseinheiten)
+ *     kanonische einheiten (masszahl abgespalten, einheit wie in global $masseinheiten)
  *   - liefereinheit_anzeige, verteileinheit_anzeige:
  *     alternative darstellung fuer bildschirmanzeige (kg und L statt g und ml bei grossen masszahlen)
+ *   - kan_{liefer,verteil}einheit_anzeige, kan_{liefer,verteil}mult_anzeige:
+ *     dito, zerlegt in masszahl und einheit
  *   - nettolieferpreis, bruttolieferpreis: preise pro L-Einheit
  *   - nettopreis, bruttopreis: preise pro V-Einheit
  *   - endpreis:  bruttopreis plus pfand
@@ -3499,6 +3501,8 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
     default:
   }
   $pr['verteileinheit_anzeige'] = mult2string( $m ) . " $e";
+  $pr['kan_verteileinheit_anzeige'] = $e;
+  $pr['kan_verteilmult_anzeige'] = $m;
 
   kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
   $m = $pr['kan_liefermult'];
@@ -3520,6 +3524,8 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
     default:
   }
   $pr['liefereinheit_anzeige'] = mult2string( $m ) ." $e";
+  $pr['kan_liefereinheit_anzeige'] = $e;
+  $pr['kan_liefermult_anzeige'] = $m;
 
   if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
     $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
