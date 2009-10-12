@@ -1367,6 +1367,7 @@ function bestellung_overview( $bestell_id, $gruppen_id ) {
           open_td( 'alert', '', 'Basar' );
         } elseif( $gruppen_id == sql_muell_id() ) {
           need( $gruppen_id != sql_muell_id() );
+        } else {
           open_td( '', '', gruppe_view( $gruppen_id ) );
           if( hat_dienst(4) or ( $gruppen_id == $login_gruppen_id ) ) {
             $kontostand = kontostand( $gruppen_id );
