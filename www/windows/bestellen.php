@@ -220,13 +220,14 @@ if( ! $readonly ) {
         s = s + ' ... ';
         document.getElementById('t_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] ) * verteilmult[produkt];
       } else {
-        document.getElementById('t_'+produkt).firstChild.nodeValue = '';
+        document.getElementById('t_'+produkt).firstChild.nodeValue = ' ';
       }
       document.getElementById('f_'+produkt).firstChild.nodeValue = s;
 
       document.getElementById('fest_'+produkt).value = fest[produkt];
       document.getElementById('toleranz_'+produkt).value = toleranz[produkt];
 
+      <? if( ! hat_dienst(4) ) { ?>
       zuteilung = zuteilung_fest + zuteilung_toleranz;
       if( zuteilung > 0 ) {
         document.getElementById('z_'+produkt).firstChild.nodeValue = zuteilung * verteilmult[produkt];
@@ -239,6 +240,7 @@ if( ! $readonly ) {
           document.getElementById('zt_'+produkt).className = 'center';
         }
       }
+      <? } ?>
 
       // kosten und neuen kontostand berechnen und anzeigen:
       //
@@ -496,7 +498,7 @@ foreach( $produkte as $produkt ) {
         open_td( 'mult small', '', price_view( $preis * $produkt['lv_faktor'] ) );
         open_td( 'unit small', '', "/ {$produkt['liefereinheit']}" );
       } else {
-        open_td( 'mult small', "colspan='2'", '&nbsp;' );
+        open_td( 'mult small', "colspan='2'", ' ' );
       }
     close_table('layout');
 
@@ -529,6 +531,8 @@ foreach( $produkte as $produkt ) {
       open_span( '', "id='t_$n'" );
         if( $toleranzmenge > 0 )
           echo mult2string( ( $festmenge + $toleranzmenge ) * $produkt['kan_verteilmult'] );
+        else
+          echo '&nbsp;';
       close_span();
       echo " {$produkt['kan_verteileinheit_anzeige']}";
     close_div();
@@ -578,7 +582,7 @@ foreach( $produkte as $produkt ) {
   } else {
     open_td( 'center', "id='zt_$n'" );
       open_div( 'oneline center' );
-        open_span( '', "id='z_$n'", '' );
+        open_span( '', "id='z_$n'", '&nbsp;' ); // IE _braucht_ hier ein space!
         open_span( '', '', $produkt['kan_verteileinheit_anzeige'] );
       close_div();
     close_td();
