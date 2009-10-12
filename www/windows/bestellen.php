@@ -256,6 +256,7 @@ if( ! $readonly ) {
           tag = 'crit';
         }
       } else {
+        document.getElementById('k_'+produkt).firstChild.nodeValue = ' ';
         tag = '';
       }
       document.getElementById('tf_'+produkt).className = 'center mult ' + tag; // festmenge
@@ -397,12 +398,12 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
     open_th( '', '', 'Bezeichnung' );
     open_th( '', "colspan='1' title='Einzelpreis (mit Pfand, MWSt und ggf. Aufschlag)'", 'Preis' );
     open_th( '', "colspan='2' title='Bestellmenge deiner Gruppe'", 'deine Bestellmenge' );
-    open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r deine Gruppe (mit Pfand und MWSt)'", 'Kosten' );
+    open_th( '', "title='maximale (bei voller Zuteilung) Kosten f&uuml;r deine Gruppe'", 'Kosten' );
     open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Gesamtbestellmenge' );
     if( hat_dienst(4) )
       open_th( '', '', 'Aktionen' );
     else
-      open_th( '', "colspan='1' title='voraussichtliche Zuteilung an deine Gruppe'", 'Zuteilung' );
+      open_th( '', "colspan='1' title='Zuteilung (nach aktuellem Stand) an deine Gruppe'", 'Zuteilung' );
   open_tr( 'groupofrows_bottom' );
     open_th( '', '', '' );
     open_th( 'small', '', '' );
@@ -413,9 +414,9 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
     }
     open_th( '', "colspan='1' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'Fest' );
     open_th( '', "colspan='1' title='Toleranz-Menge: wieviel du auch mehr nehmen würdest'", 'Toleranz' );
-    open_th( '', '', '' );
+    open_th( 'small', '', '(maximal)' );
     open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'Gebinde' );
-    open_th( '', '', '' );
+    open_th( 'small tight', '', '(aktuell)' );
 
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
