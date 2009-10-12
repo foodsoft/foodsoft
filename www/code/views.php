@@ -1351,6 +1351,11 @@ function bestellung_overview( $bestell_id, $gruppen_id ) {
     open_tr();
       open_th('','','Bestellzeitraum:');
       open_td('','', $bestellung['bestellstart'] .' - '. $bestellung['bestellende'] );
+  if( $bestellung['aufschlag'] ) {
+    open_tr();
+      open_th('', "title='prozentualer Aufschlag auf den Nettopreis aller Produkte'", 'Aufschlag der FC:');
+      open_td('','', sprintf( "%.2lf %%", $bestellung['aufschlag'] ) );
+  }
     open_tr();
       open_th('','','Lieferung:');
       open_td('','', $bestellung['lieferung'] );
