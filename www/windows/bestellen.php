@@ -235,27 +235,20 @@ if( ! $readonly ) {
         document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
         // document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
         if( gebinde > 0 ) {
-          document.getElementById('k_'+produkt).className = 'mult highlight';
-          document.getElementById('gv_'+produkt).className = 'mult highlight';
-          document.getElementById('gg_'+produkt).className = 'mult highlight';
-          document.getElementById('ev_'+produkt).className = 'unit highlight';
-          document.getElementById('eg_'+produkt).className = 'unit highlight';
+          tag = 'highlight';
         } else {
-          document.getElementById('k_'+produkt).className = 'mult crit';
-          document.getElementById('gv_'+produkt).className = 'mult crit';
-          document.getElementById('gg_'+produkt).className = 'mult crit';
-          document.getElementById('ev_'+produkt).className = 'unit crit';
-          document.getElementById('eg_'+produkt).className = 'unit crit';
+          tag = 'crit';
         }
       } else {
-        document.getElementById('k_'+produkt).firstChild.nodeValue = '0.00'
-        document.getElementById('k_'+produkt).className = 'mult';
-        // document.getElementById('m_'+produkt).firstChild.nodeValue = '0';
-        document.getElementById('gv_'+produkt).className = 'mult';
-        document.getElementById('gg_'+produkt).className = 'mult';
-        document.getElementById('ev_'+produkt).className = 'unit';
-        document.getElementById('eg_'+produkt).className = 'unit';
+        tag = '';
       }
+      document.getElementById('k_'+produkt).className = 'mult ' + tag;
+      document.getElementById('gv_'+produkt).className = 'mult ' + tag;
+      document.getElementById('gg_'+produkt).className = 'mult ' + tag;
+      document.getElementById('ev_'+produkt).className = 'unit ' + tag;
+      document.getElementById('eg_'+produkt).className = 'unit ' + tag;
+      document.getElementById('tf_'+produkt).className = 'center mult ' + tag;
+      document.getElementById('tt_'+produkt).className = 'center unit ' + tag;
 
       document.getElementById('gesamtpreis1').firstChild.nodeValue = gesamtpreis.toFixed(2);
       document.getElementById('gesamtpreis2').firstChild.nodeValue = gesamtpreis.toFixed(2);
@@ -372,7 +365,7 @@ if( ! $readonly ) {
 }
 
 open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
-  ?>
+  ?> <!-- colgroup scheint bei firefox nicht die spur einer wirkung zu haben...
     <colgroup>
       <col width='2*'>
       <col width='3*'>
@@ -383,26 +376,28 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
       <col width='1*'>
       <? if( hat_dienst(4) ) echo "<col width='1*'>"; ?>
     </colgroup>
+    -->
   <?
   open_tr( 'groupofrows_top' );
     open_th( '', '', 'Produktgruppe' );
     open_th( '', '', 'Bezeichnung' );
     open_th( '', "colspan='1' title='Einzelpreis (mit Pfand und MWSt)'", 'Preis' );
-    open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Gesamtbestellmenge' );
     open_th( '', "colspan='2' title='Bestellmenge deiner Gruppe'", 'deine Bestellmenge' );
     open_th( '', "title='voraussichtliche maximale Kosten f&uuml;r deine Gruppe (mit Pfand und MWSt)'", 'Kosten' );
+    open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Gesamtbestellmenge' );
     if( hat_dienst(4) )
       open_th( '', '', 'Aktionen' );
+    else
+      open_th( '', "colspan='1' title='voraussichtliche Zuteilung an deine Gruppe'", 'Zuteilung' );
   open_tr( 'groupofrows_bottom' );
     open_th( '', '', '' );
     open_th( 'small', '', '' );
     open_th( '', "colspan='1'", '' );
-    open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'Gebinde' );
     open_th( '', "colspan='1' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'Fest' );
     open_th( '', "colspan='1' title='Toleranz-Menge: wieviel du auch mehr nehmen würdest'", 'Toleranz' );
     open_th( '', '', '' );
-    if( hat_dienst(4) )
-      open_th( '', '', '' );
+    open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'Gebinde' );
+    open_th( '', '', '' );
 
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
@@ -489,10 +484,61 @@ foreach( $produkte as $produkt ) {
       }
     close_table('layout');
 
+  $tag = ( $zuteilungen['gebinde'] > 0 ? 'highlight' : ( ( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) ? 'crit' : '' ) );
+
+
+  // festmenge
+  open_td( "center mult $tag", "colspan='1' id='tf_$n'" );
+    open_div( 'oneline right' );
+      open_span( '', "id='f_$n'" );
+        echo mult2string( $festmenge * $produkt['kan_verteilmult'] );
+        if( $toleranzmenge > 0 )
+          echo " ...";
+      close_span();
+    close_div();
+
+    if( ! $readonly ) {
+      open_div('oneline center smallskip');
+        // if( $gebindegroesse > 1 )
+        //  echo "<input type='button' value='--' onclick='fest_minusminus($n);' >";
+        ?> <span class='flatbutton' onclick='fest_minus(<? echo $n; ?>);' >-</span>
+            <span class='quad'>&nbsp;</span>
+            <span class='flatbutton' onclick='fest_plus(<? echo $n; ?>);' >+</span> <?
+        // if( $gebindegroesse > 1 )
+        //  echo "<input type='button' value='++' onclick='fest_plusplus($n);' >";
+        qquad();
+      close_div();
+    }
+
+  // toleranzmenge
+  open_td( "center unit $tag", "colspan='1' id='tt_$n'" ); // toleranzwahl
+    open_div( 'oneline left' );
+      open_span( '', "id='t_$n'" );
+        if( $toleranzmenge > 0 )
+          echo mult2string( ( $festmenge + $toleranzmenge ) * $produkt['kan_verteilmult'] );
+      close_span();
+      echo " {$produkt['kan_verteileinheit']}";
+    close_div();
+    if( $gebindegroesse > 1 ) {
+      if( ! $readonly ) {
+        open_div('oneline center smallskip');
+          qquad();
+          ?> <span class='flatbutton' onclick='toleranz_minus(<? echo $n; ?>);' >-</span>
+             <span class='quad'>&nbsp;</span>
+             <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
+             <span class='flatbutton' onclick='toleranz_plus(<? echo $n; ?>);' >+</span> <?
+        close_div();
+      }
+    } else {
+      ?> - <?
+    }
+
+
+  open_td( "mult $tag", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
+
   // bestellungen aller gruppen:
   //
   // open_div( '', '', "f: $festmenge_gesamt; t: $toleranzmenge_gesamt" );
-  $tag = ( $zuteilungen['gebinde'] > 0 ? 'highlight' : ( ( $festmenge_gesamt + $toleranzmenge_gesamt > 0 ) ? 'crit' : '' ) );
   open_td( "top center $tag", "id='g_$n' " );
     open_div( 'oneline center' );
         // v-menge:
@@ -510,72 +556,23 @@ foreach( $produkte as $produkt ) {
         open_span( 'unit', "id='eg_$n'", "* (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
     close_div();
 
-
-  // festmenge
-  open_td( 'center mult', "colspan='1' style='border-right-style:none;'" );
-    open_div( 'oneline right' );
-      open_span( '', "id='f_$n'" );
-        echo mult2string( $festmenge * $produkt['kan_verteilmult'] );
-        if( $toleranzmenge > 0 )
-          echo " ...";
-      close_span();
-    close_div();
-
-    if( ! $readonly ) {
-      open_div('oneline center');
-        // if( $gebindegroesse > 1 )
-        //  echo "<input type='button' value='--' onclick='fest_minusminus($n);' >";
-        ?> <span class='flatbutton' onclick='fest_minus(<? echo $n; ?>);' >-</span>
-            <span class='quad'>&nbsp;</span>
-            <span class='flatbutton' onclick='fest_plus(<? echo $n; ?>);' >+</span> <?
-        // if( $gebindegroesse > 1 )
-        //  echo "<input type='button' value='++' onclick='fest_plusplus($n);' >";
-        qquad();
-      close_div();
-    }
-
-  // toleranzmenge
-  open_td('center unit', "colspan='1' style='border-left-style:none;'" ); // toleranzwahl
-    open_div( 'oneline left' );
-      open_span( '', "id='t_$n'" );
-        if( $toleranzmenge > 0 )
-          echo mult2string( ( $festmenge + $toleranzmenge ) * $produkt['kan_verteilmult'] );
-      close_span();
-      echo " {$produkt['kan_verteileinheit']}";
-    close_div();
-    if( $gebindegroesse > 1 ) {
-      if( ! $readonly ) {
-        open_div('oneline center');
-          qquad();
-          ?> <span class='flatbutton' onclick='toleranz_minus(<? echo $n; ?>);' >-</span>
-             <span class='quad'>&nbsp;</span>
-             <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
-             <span class='flatbutton' onclick='toleranz_plus(<? echo $n; ?>);' >+</span> <?
-        close_div();
-      }
-    } else {
-      ?> - <?
-    }
-
-
-  open_td( "mult $tag", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
-
   if( hat_dienst(4) ) {
     open_td();
       echo fc_link( 'edit_produkt', "produkt_id=$produkt_id" );
       echo fc_action( array( 'class' => 'drop', 'text' => '', 'title' => 'Bestellvorschlag löschen'
                            , 'confirm' => 'Bestellvorschlag wirklich löschen?' )
                     , array( 'action' => 'delete', 'produkt_id' => $produkt_id ) );
+  } else {
+    open_td();
   }
 }
 
 
 open_tr('summe');
-  open_td( '', "colspan='6'", 'Gesamtpreis:' );
+  open_td( '', "colspan='5'", 'Gesamtpreis:' );
   open_td( 'number', "id='gesamtpreis2'", sprintf( '%.2lf', $gesamtpreis ) );
+  open_td( '', "colspan='2'", '' );
 
-  if( hat_dienst(4) )
-    open_td();
 close_table();
 
 if( $js )
