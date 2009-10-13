@@ -66,6 +66,6 @@ switch( $window_id ) {
 // force new iTAN (this form must still be submittable after any other):
 //
 get_itan( true );
-open_form( 'name=update_form', 'action=,message=' );
+open_form( 'name=update_form', 'action=nop,message=' );
 
 ?>
