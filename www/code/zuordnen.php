@@ -2135,7 +2135,7 @@ function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
   return doSql(
     " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
-      VALUES ( '$produkt_id', '$gruppenbestellung_id','$menge', BESTELLZUORDNUNG_ART_ZUTEILUNG )
+      VALUES ( '$produkt_id', '$gruppenbestellung_id','$menge', ".BESTELLZUORDNUNG_ART_ZUTEILUNG." )
       ON DUPLICATE KEY UPDATE menge = menge + $menge "
   , LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen"
   );
@@ -3624,6 +3624,8 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
     $produkt_row['verteileinheit'] = $preis_row['verteileinheit'];
     $produkt_row['verteileinheit_anzeige'] = $preis_row['verteileinheit_anzeige'];
+    $produkt_row['kan_verteileinheit_anzeige'] = $preis_row['kan_verteileinheit_anzeige'];
+    $produkt_row['kan_verteilmult_anzeige'] = $preis_row['kan_verteilmult_anzeige'];
     //
     // L-Mult L-einheit: fuer abgleich mit Katalog/Rechnung oder zum Bestellen beim Lieferanten:
     $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
@@ -3631,6 +3633,8 @@ function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
     $produkt_row['liefereinheit'] = $preis_row['liefereinheit'];
     $produkt_row['lv_faktor'] = $preis_row['lv_faktor'];
     $produkt_row['liefereinheit_anzeige'] = $preis_row['liefereinheit_anzeige'];
+    $produkt_row['kan_liefereinheit_anzeige'] = $preis_row['kan_liefereinheit_anzeige'];
+    $produkt_row['kan_liefermult_anzeige'] = $preis_row['kan_liefermult_anzeige'];
     //
     // Gebindegroesse: wieviele V-Einheiten muessen jeweils bestellt werden:
     $produkt_row['gebindegroesse'] = $preis_row['gebindegroesse'];

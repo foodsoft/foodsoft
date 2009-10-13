@@ -1347,7 +1347,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   close_tr();
 }
 
-function bestellung_overview( $bestell_id, $gruppen_id ) {
+function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
   global $login_gruppen_id, $window_id;
 
   $bestellung = sql_bestellung( $bestell_id );
