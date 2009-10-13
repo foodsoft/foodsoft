@@ -1353,7 +1353,7 @@ function bestellung_overview( $bestell_id, $gruppen_id ) {
   $bestellung = sql_bestellung( $bestell_id );
 
   open_table('list');
-      open_th('','','Bestellung:');
+      open_th('left','','Bestellung:');
       open_td('bold large');
         echo fc_link( 'lieferschein', array(
           'class' => 'href', 'text' => $bestellung['name'], 'bestell_id' => $bestell_id
@@ -1364,29 +1364,29 @@ function bestellung_overview( $bestell_id, $gruppen_id ) {
         if( sql_dienste_nicht_bestaetigt( $bestellung['lieferung'] ) )
           div_msg( 'warn', "Vorsicht:". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
     open_tr();
-      open_th('','','Lieferant:');
+      open_th('left','','Lieferant:');
       open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $bestellung['lieferanten_id'] )
                                                      , 'class' => 'href' , 'lieferanten_id' => $bestellung['lieferanten_id'] ) ) );
     open_tr();
-      open_th('','','Bestellzeitraum:');
+      open_th('left','','Bestellzeitraum:');
       open_td('','', $bestellung['bestellstart'] .' - '. $bestellung['bestellende'] );
   if( $bestellung['aufschlag'] ) {
     open_tr();
-      open_th('', "title='prozentualer Aufschlag auf den Nettopreis aller Produkte'", 'Aufschlag der FC:');
+      open_th('left', "title='prozentualer Aufschlag auf den Nettopreis aller Produkte'", 'Aufschlag der FC:');
       open_td('','', sprintf( "%.2lf %%", $bestellung['aufschlag'] ) );
   }
     open_tr();
-      open_th('','','Lieferung:');
+      open_th('left','','Lieferung:');
       open_td('','', $bestellung['lieferung'] );
   if( $window_id != 'abrechnung' ) {
     open_tr();
-      open_th('','','Status:');
+      open_th('left','','Status:');
       open_td();
         abrechnung_kurzinfo( $bestell_id );
   }
   if( $gruppen_id ){
     open_tr();
-      open_th('','','Gruppe:');
+      open_th('left','','Gruppe:');
         if( $gruppen_id == sql_basar_id() ) {
           open_td( 'alert', '', 'Basar' );
         } elseif( $gruppen_id == sql_muell_id() ) {
@@ -1396,7 +1396,7 @@ function bestellung_overview( $bestell_id, $gruppen_id ) {
           if( hat_dienst(4) or ( $gruppen_id == $login_gruppen_id ) ) {
             $kontostand = kontostand( $gruppen_id );
             open_tr();
-              open_th('','','Kontostand:');
+              open_th('left','','Kontostand:');
               open_td( $kontostand < 0 ? 'crit' : '' );
                 echo fc_link( hat_dienst(4) ? 'gruppenkonto' : 'meinkonto'
                             , array( 'gruppen_id' => $gruppen_id, 'class' => 'href', 'text' => price_view( $kontostand ) ) );
