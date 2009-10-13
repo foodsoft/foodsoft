@@ -288,8 +288,9 @@ if( ! $readonly ) {
         while( id.firstChild ) {
           id.removeChild( id.firstChild );
         }
-        id.appendChild( document.createTextNode( 'Vor dem Hinzufügen: bitte erst Änderungen speichern!' ) );
+        id.appendChild( document.createTextNode( 'Produkt hinzufuegen: bitte vorher erst Änderungen speichern!' ) );
         id.style.backgroundColor = '#ffffa0';
+        id.className = 'inactive';
       }
 
       return true;
