@@ -678,14 +678,15 @@ define( 'PR_COL_LIEFERMENGE', 0x200 );    // gelieferte Menge (1,2)
 define( 'PR_COL_LIEFERGEBINDE', 0x400 ); // gelieferte Gebinde(1,2)
 define( 'PR_COL_NETTOSUMME', 0x800 );    // Gesamtpreis Netto (1,3)
 define( 'PR_COL_BRUTTOSUMME', 0x1000 );   // Gesamtpreis Brutto (1,3)
-define( 'PR_COL_ENDSUMME', 0x2000 );      // Endpreis (mit Pfand) (1,3)
+define( 'PR_COL_AUFSCHLAG', 0x2000 );      // Aufschlag (prozentual vom Nettopreis)
+define( 'PR_COL_ENDSUMME', 0x4000 );      // Endpreis (mit Pfand und Aufschlag) (1,3)
 //
 // (1) mit $gruppen_id: Anzeige nur fuer diese gruppe
 // (2) nur moeglich ab STATUS_LIEFERANT
 // (3) bei STATUS_BESTELLEN: berechnet aus Bestellmenge, sonst aus Liefermenge
 //
-define( 'PR_ROWS_NICHTGELIEFERT', 0x4000 ); // nicht gelieferte Produkte auch anzeigen
-define( 'PR_ROWS_NICHTGEFUELLT', 0x8000 ); // nicht gefuellte gebinde auch anzeigen?
+define( 'PR_ROWS_NICHTGELIEFERT', 0x8000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGEFUELLT', 0x10000 ); // nicht gefuellte gebinde auch anzeigen?
 //
 // $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
 // $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
@@ -700,7 +701,11 @@ function bestellschein_view(
   $muell_id = sql_muell_id();
 
   $produkte = sql_bestellung_produkte( $bestell_id, 0, $gruppen_id );
-  $state = sql_bestellung_status($bestell_id);
+
+  $bestellung = sql_bestellung( $bestell_id );
+
+  $state = $bestellung['rechnungsstatus'];
+  $aufschlag_prozent = $bestellung['aufschlag'];
 
   $warnung_vorlaeufig = "";
   if( $gruppen_id and ( $state == STATUS_BESTELLEN ) ) {
@@ -735,9 +740,15 @@ function bestellschein_view(
     'header' => "Gesamt<br>Brutto", 'cols' => 1,
     'title' => "Brutto-Gesamtpreis (mit MWSt, ohne Pfand)$warnung_vorlaeufig"
   );
+  if( $aufschlag_prozent > 0 ) {
+    $col[PR_COL_AUFSCHLAG] = array(
+      'header' => "Aufschlag<br>$aufschlag_prozent %", 'cols' => 1,
+      'title' => "Aufschlag der FC auf den Netto-Preis"
+    );
+  }
   $col[PR_COL_ENDSUMME] = array(
     'header' => "Gesamt<br>Endpreis", 'cols' => 1,
-    'title' => "Konsumenten-Gesamtpreis (mit MWSt, mit Pfand)$warnung_vorlaeufig"
+    'title' => "Konsumenten-Gesamtpreis (mit MWSt, mit Pfand und ggf. Aufschlag)$warnung_vorlaeufig"
   );
 
   if( $gruppen_id ) {
@@ -865,6 +876,8 @@ function bestellschein_view(
             open_td( 'number', '', price_view( \$netto_summe ) );
           if( $spalten & PR_COL_BRUTTOSUMME )
             open_td( 'number', '', price_view( \$brutto_summe ) );
+          if( $spalten & PR_COL_AUFSCHLAG )
+            open_td( 'number', '', price_view( \$aufschlag_summe ) );
           if( $spalten & PR_COL_ENDSUMME )
             open_td( 'number', '', price_view( \$endpreis_summe ) );
       ";
@@ -885,6 +898,7 @@ function bestellschein_view(
 
     $netto_summe = 0;
     $brutto_summe = 0;
+    $aufschlag_summe = 0;
     $endpreis_summe = 0;
     $haben_nichtgeliefert = false;
     $haben_nichtgefuellt = false;
@@ -960,12 +974,14 @@ function bestellschein_view(
       }
       $liefermenge_scaled = $liefermenge / $lv_faktor;
 
-      $nettogesamtpreis = sprintf( '%.2lf', $nettopreis * $liefermenge );
-      $bruttogesamtpreis = sprintf( '%.2lf', $bruttopreis * $liefermenge );
-      $endgesamtpreis = sprintf( '%.2lf', $endpreis * $liefermenge );
+      $nettogesamtpreis = $nettopreis * $liefermenge;
+      $bruttogesamtpreis = $bruttopreis * $liefermenge;
+      $aufschlag = $nettogesamtpreis * $aufschlag_prozent / 100.0;
+      $endgesamtpreis = $endpreis * $liefermenge + $aufschlag;
 
       $netto_summe += $nettogesamtpreis;
       $brutto_summe += $bruttogesamtpreis;
+      $aufschlag_summe += $aufschlag;
       $endpreis_summe += $endgesamtpreis;
 
       if( $option_nichtgefuellt ) {
@@ -1071,6 +1087,9 @@ function bestellschein_view(
 
         if( $spalten & PR_COL_BRUTTOSUMME )
           open_td( 'number', '', price_view( $bruttogesamtpreis ) );
+
+        if( $spalten & PR_COL_AUFSCHLAG )
+          open_td( 'number', '', price_view( $aufschlag ) );
 
         if( $spalten & PR_COL_ENDSUMME )
           open_td( 'number', '', price_view( $endgesamtpreis ) );
