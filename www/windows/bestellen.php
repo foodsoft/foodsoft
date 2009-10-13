@@ -183,7 +183,7 @@ if( ! $readonly ) {
 
       }
 
-      // falls noch toleranz beruechsichtigt wird: moeglichst gleichmaessig nach quote verteilen:
+      // falls noch toleranz beruecksichtigt wird: moeglichst gleichmaessig nach quote verteilen:
       //
       if( restmenge > 0 ) {
         quote = restmenge / ( toleranz_andere[produkt] + toleranz[produkt] );
@@ -415,10 +415,10 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
     } else {
       open_th( 'small', "colspan='1'", '' );
     }
-    open_th( '', "colspan='1' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'Fest' );
+    open_th( '', "colspan='1' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'fest' );
     open_th( '', "colspan='1' title='Toleranz-Menge: wieviel du auch mehr nehmen würdest'", 'Toleranz' );
     open_th( 'small', '', '(maximal)' );
-    open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'Gebinde' );
+    open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'volle Gebinde' );
     open_th( 'small tight', '', '(aktuell)' );
 
 $produktgruppen_zahl = array();
@@ -615,7 +615,7 @@ if( ! $readonly ) {
             Ist ein gewünschter Artikel nicht in der Auswahlliste? 
             Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
             findest du $anzahl_eintraege Artikel; bitte wende dich an die Leute vom Dienst 4, wenn
-            du eineN davon in die Bestellvorlage aufnehmen lassen möchtest!
+            du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
           " );
         }
       close_form();
