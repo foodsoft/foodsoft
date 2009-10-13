@@ -205,7 +205,9 @@ if( ! $readonly ) {
 
       if( gebinde > 0 ) {
         document.getElementById('g_'+produkt).className = 'mult highlight';
+        document.getElementById('gg_'+produkt).firstChild.nodeValue = gebinde;
       } else {
+        document.getElementById('gg_'+produkt).firstChild.nodeValue = '0';
         if( festmenge + toleranzmenge > 0 ) {
           document.getElementById('g_'+produkt).className = 'mult crit';
         } else {
@@ -571,7 +573,7 @@ foreach( $produkte as $produkt ) {
     close_div();
     open_div( 'oneline center' );
        // gebinde:
-        open_span( 'mult', '', sprintf( '%u', $zuteilungen[gebinde] ) );
+        open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen[gebinde] ) );
         open_span( 'unit', '', "* (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
     close_div();
 
