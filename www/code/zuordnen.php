@@ -1542,6 +1542,7 @@ function sql_bestellvorschlag( $bestell_id, $produkt_id ) {
                , produkte.name as produkt_name
                , produktgruppen.name as produktgruppen_name
                , gesamtbestellungen.name as name
+               , gesamtbestellungen.aufschlag as aufschlag
       FROM gesamtbestellungen
       INNER JOIN bestellvorschlaege
               ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
@@ -1586,12 +1587,15 @@ function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
 ////////////////////////////////////
 
 // werte fuer feld `art' in bestellzuordnung:
-// < 2 sind bestellungen, >=2 verbindliche zuteilungen
-define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 0 );
-define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 1 );
-define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 2 );
+//  1x: vormerkungen
+//  2x: bestellungen
+//  3x: zuteilungen
+define( 'BESTELLZUORDNUNG_ART_VORMERKUNG', 10 );
+define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 20 );
+define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 21 );
+define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 30 );
 // todo: basarzuteilungen unterscheiden:
-// define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 3 );
+// define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 31 );
 
 function sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, $art, $orderby = 'bestellzuordnung.zeitpunkt' ) {
   $query = "
@@ -1642,8 +1646,8 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
   $gesamtbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0) ), 0.0 )
   ";
-  // basarbestellmenge: _eigentliche_ basarbestellungen sind art=1,
-  // basar mit art=0 zaehlt wie gewoehnliche festmenge!
+  // basarbestellmenge: _eigentliche_ basarbestellungen sind TOLERANZBESTELLUNG,
+  // basar mit FESTBESTELLUNG zaehlt wie gewoehnliche festmenge!
   $basarbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF(gruppenbestellungen.bestellgruppen_id=$basar_id,1,0)
                                * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG.",1,0) ), 0.0 )
@@ -1704,11 +1708,13 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     , produkte.notiz as notiz
     , bestellvorschlaege.liefermenge as liefermenge
     , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
+    , gesamtbestellungen.aufschlag as aufschlag
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.lv_faktor as lv_faktor
     , produktpreise.gebindegroesse as gebindegroesse
     , produktpreise.lieferpreis as lieferpreis
+    , produktpreise.lieferpreis * gesamtbestellungen.aufschlag / 100.0 as preisaufschlag
     , produktpreise.id as preis_id
     , produktpreise.pfand as pfand
     , produktpreise.mwst as mwst
@@ -1728,6 +1734,8 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     ON (produktpreise.id=bestellvorschlaege.produktpreise_id)
   INNER JOIN produktgruppen
     ON (produktgruppen.id=produkte.produktgruppen_id)
+  INNER JOIN gesamtbestellungen
+    ON (gesamtbestellungen.id = $bestell_id)
   LEFT JOIN gruppenbestellungen
     ON (gruppenbestellungen.gesamtbestellung_id=$bestell_id)
   LEFT JOIN bestellzuordnung
@@ -1947,8 +1955,11 @@ function select_basar( $bestell_id = 0 ) {
          , produktpreise.lv_faktor
          , produktpreise.lieferpreis / produktpreise.lv_faktor as nettopreis
          , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) as bruttopreis
-         , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) + produktpreise.pfand as endpreis
+         , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) + produktpreise.pfand as vpreis
          , produktpreise.lieferpreis / produktpreise.lv_faktor * ( gesamtbestellungen.aufschlag / 100.0 ) as preisaufschlag
+         , ( produktpreise.lieferpreis / produktpreise.lv_faktor )
+            * ( 1.0 + ( produktpreise.mwst + gesamtbestellungen.aufschlag ) / 100.0 )
+            + produktpreise.pfand as endpreis
          , produktpreise.verteileinheit
          , bestellvorschlaege.produkt_id
          , bestellvorschlaege.produktpreise_id
@@ -4239,6 +4250,13 @@ function update_database($version){
 
       doSql( "ALTER TABLE `transactions` MODIFY COLUMN `session_id` int(11) not null default 0" );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
+
+  case 13:
+
+      doSql( "UPDATE `bestellzuordnung` SET art=20 WHERE art=0" );
+      doSql( "UPDATE `bestellzuordnung` SET art=21 WHERE art=1" );
+      doSql( "UPDATE `bestellzuordnung` SET art=30 WHERE art=2" );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 14 ) );
 
 /*
 	case n:

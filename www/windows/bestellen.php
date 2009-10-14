@@ -438,8 +438,8 @@ foreach( $produkte as $produkt ) {
   $preis = $produkt['endpreis'] + $produkt['nettopreis'] * $gesamtbestellung['aufschlag'] / 100.0;
   $lv_faktor = $produkt['lv_faktor'];
 
-  $festmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, 0 );
-  $toleranzmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, 1 );
+  $festmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, BESTELLZUORDNUNG_ART_FESTBESTELLUNG );
+  $toleranzmenge = sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG );
 
   $toleranzmenge_gesamt = $produkt['toleranzbestellmenge'] + $produkt['basarbestellmenge'];
   $toleranzmenge_andere = $toleranzmenge_gesamt - $toleranzmenge;
