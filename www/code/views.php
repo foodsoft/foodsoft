@@ -1260,7 +1260,7 @@ function distribution_tabellenkopf() {
     open_th(''       ,''           ,'Gruppe');
     open_th('oneline','colspan="2"','bestellt (toleranz)');
     open_th(''       ,'colspan="2"','geliefert');
-    open_th(''       ,"title='Endpreis: mit Pfand und MWSt, ohne FC-Aufschlag'",'Gesamtpreis');
+    open_th(''       ,"title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag'",'Gesamtpreis');
   close_tr();
 }
 
@@ -1283,10 +1283,10 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
 }
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
-  $vorschlag = sql_bestellvorschlag($bestell_id,$produkt_id);
+  $vorschlag = sql_bestellvorschlag( $bestell_id, $produkt_id );
   $verteilmult = $vorschlag['kan_verteilmult'];
   $verteileinheit = $vorschlag['kan_verteileinheit'];
-  $endpreis = $vorschlag['endpreis'];
+  $endpreis = $vorschlag['endpreis'] + $vorschlag['preisaufschlag'];
   $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
 
   open_tr('summe');
@@ -1305,8 +1305,9 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
 
   foreach( sql_bestellung_gruppen( $bestell_id, $produkt_id ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
-    $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $gruppen_id, $produkt_id ), true );
+    $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
     if( $mengen ) {
+      preisdatenSetzen( & $mengen );
       $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
       $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
       $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
