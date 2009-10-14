@@ -537,7 +537,7 @@ function areas_in_head($area){
 }
 
 
-function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts = false ) {
+function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = false ) {
   global $muell_id, $input_event_handlers;
 
   if( $editAmounts ) {
@@ -553,7 +553,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
     "<th>" . fc_link( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
   , "<th>" . fc_link( 'self', "orderby=bestellung,text=Bestellung,title=Sortieren nach Bestellung" ) ."</th>"
   , "<th>" . fc_link( 'self', "orderby=datum,text=Lieferdatum,title=Sortieren nach Lieferdatum" ) ."</th>"
-  , "<th colspan='2'>Preis</th>"
+  , "<th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
   , "<th title='Wert incl. MWSt. und Pfand'>Wert</th>"
   , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
@@ -581,10 +581,10 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
   $output = '';
   foreach( sql_basar( $bestell_id, $order ) as $basar_row ) {
      kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
-     $menge=$basar_row['basar'];
+     $menge = $basar_row['basar'];
      // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
      $menge *= $kan_verteilmult;
-     $wert = $basar_row['basar'] * $basar_row['endpreis'];
+     $wert = $basar_row['basar'] * ( $basar_row['endpreis'] + $basar_row['preisaufschlag'] );
      $gesamtwert += $wert;
      $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
 
@@ -597,7 +597,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
      , "<td class='mult'>"
          . fc_link( 'produktdetails', array(
              'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
-           , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] )
+           , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] + $basar_row['preisaufschlag'] )
            ) )
          . "</td>
          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
@@ -641,7 +641,7 @@ function basar_overview( $bestell_id = 0, $order = 'produktname', $editAmounts =
     open_td( 'right', "colspan='8'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
     if( $editAmounts )
-      open_td();
+      open_td( '', "colspan='2'" );
 
   if( $editAmounts ) {
     open_tr();

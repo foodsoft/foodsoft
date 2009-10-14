@@ -37,6 +37,6 @@ if( $action == 'basarzuteilung' ) {
 
 ?> <h1>Basar</h1> <?
 
-basar_overview( $bestell_id, $orderby, $editable );
+basar_view( $bestell_id, $orderby, $editable );
 
 ?>
