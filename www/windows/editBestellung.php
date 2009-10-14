@@ -18,7 +18,7 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
   $lieferung = $bestellung['lieferung'];
   $bestellname = $bestellung['name'];
   $aufschlag = $bestellung['aufschlag'];
-  $status = $bestellung['state'];
+  $status = $bestellung['rechnungsstatus'];
   $lieferanten_id = $bestellung['lieferanten_id'];
 } else {  // neue bestellvorlage erstellen:
   $startzeit = date("Y-m-d H:i:s");
