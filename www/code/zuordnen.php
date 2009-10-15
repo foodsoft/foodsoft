@@ -1587,13 +1587,16 @@ function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
 ////////////////////////////////////
 
 // werte fuer feld `art' in bestellzuordnung:
-//  1x: vormerkungen
-//  2x: bestellungen
-//  3x: zuteilungen
+//
 define( 'BESTELLZUORDNUNG_ART_VORMERKUNG', 10 );
 define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 20 );
 define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 21 );
 define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 30 );
+
+define( 'BESTELLZUORDNUNG_ART_VORMERKUNGEN', 'BETWEEN 10 AND 19' );
+define( 'BESTELLZUORDNUNG_ART_BESTELLUNGEN', 'BETWEEN 20 AND 29' );
+define( 'BESTELLZUORDNUNG_ART_ZUTEILUNGEN', 'BETWEEN 30 AND 39' );
+
 // todo: basarzuteilungen unterscheiden:
 // define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 31 );
 
@@ -1644,7 +1647,7 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art<".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0) ), 0.0 )
+    ifnull( sum(bestellzuordnung.menge * IF( bestellzuordnung.art ". BESTELLZUORDNUNG_ART_BESTELLUNGEN .", 1, 0 ) ), 0.0 )
   ";
   // basarbestellmenge: _eigentliche_ basarbestellungen sind TOLERANZBESTELLUNG,
   // basar mit FESTBESTELLUNG zaehlt wie gewoehnliche festmenge!
@@ -2073,9 +2076,17 @@ function nichtGeliefert( $bestell_id, $produkt_id ) {
   );
 }
 
-function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge = -1, $toleranzmenge = -1 ) {
+function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge = -1, $toleranzmenge = -1, $vormerken = false ) {
   need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Bestellen bei dieser Bestellung nicht mehr moeglich" );
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
+
+  doSql( " DELETE bestellzuordnung.* FROM bestellzuordnung
+           INNER JOIN gruppenbestellungen
+             ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
+           WHERE produkt_id = $produkt_id
+             AND bestellgruppen_id = $gruppen_id 
+             AND art = ".BESTELLZUORDNUNG_ART_VORMERKUNG );
+
   if( $festmenge >= 0 ) {
     $festmenge_alt = sql_select_single_field(
       "SELECT IFNULL( SUM( menge ), 0 ) AS festmenge FROM bestellzuordnung
@@ -2102,6 +2113,12 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
         ) );
       }
     } // else: ( $ festmenge == $festmenge_alt ): nix zu tun...
+   if( $vormerken ) {
+     sql_insert( 'bestellzuordnung', array(
+       'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
+     , 'menge' => $festmenge, 'art' => BESTELLZUORDNUNG_ART_VORMERKUNG
+     ) );
+   }
   }
 
   if( $toleranzmenge >= 0 ) {
