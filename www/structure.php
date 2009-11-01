@@ -459,7 +459,7 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'aufschlag' => array(
+    , 'aufschlag_prozent' => array(
         'type' =>  "decimal(4,2)"
       , 'null' => 'NO'
       , 'default' => '0.0'
