@@ -1707,6 +1707,7 @@ function query_bestellzuordnungen( $op, $keys = array(), $using = array(), $orde
         $filters['bestellzuordnung.art'] = $cond;
         break;
       case 'lieferanten_id':
+      case 'lieferant_id':
         $joins['gesamtbestellungen'] = 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id';
         $filters['gesamtbestellungen.lieferanten_id'] = $cond;
         break;
@@ -4312,6 +4313,7 @@ function update_database($version){
       logger( 'update_database: update to version 12 successful' );
 
   case 12:
+      logger( 'starting update_database: from version 12' );
 
       doSql( "ALTER TABLE `bestellvorschlaege` MODIFY COLUMN `liefermenge` decimal(10,3) not null default 0
                                              , DROP COLUMN `bestellmenge` " );
@@ -4384,12 +4386,24 @@ function update_database($version){
       doSql( "ALTER TABLE `transactions` MODIFY COLUMN `session_id` int(11) not null default 0" );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
 
+      logger( 'update_database: update to version 13 successful' );
   case 13:
+      logger( 'starting update_database: from version 13' );
 
-      doSql( "UPDATE `bestellzuordnung` SET art=20 WHERE art=0" );
-      doSql( "UPDATE `bestellzuordnung` SET art=21 WHERE art=1" );
-      doSql( "UPDATE `bestellzuordnung` SET art=30 WHERE art=2" );
+      doSql( "update `bestellzuordnung` set art=20 where art=0" );
+      doSql( "update `bestellzuordnung` set art=21 where art=1" );
+      doSql( "update `bestellzuordnung` set art=30 where art=2" );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 14 ) );
+
+      logger( 'update_database: update to version 14 successful' );
+  case 14:
+      logger( 'starting update_database: from version 14' );
+
+      doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `katalogformat` varchar(20) not null default '' " );
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogformat` varchar(20) not null default '' " );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 15 ) );
+
+      logger( 'update_database: update to version 15 successful' );
 
 /*
 	case n:

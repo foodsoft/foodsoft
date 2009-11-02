@@ -786,6 +786,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
+    , 'katalogformat' => array(
+        'type' => varchar(20)
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
@@ -874,6 +880,12 @@ $tables = array(
       )
     , 'katalogtyp' => array(
         'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'katalogformat' => array(
+        'type' => varchar(20)
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
