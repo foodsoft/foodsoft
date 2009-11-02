@@ -81,7 +81,8 @@ if( $editable )
 open_table('list');
     open_th( '', "colspan='10'", "<h3>Produktübersicht von $lieferant_name </h3>" );
   open_tr();
-    open_th();
+    if( $editable )
+      open_th();
     open_th( '', "title='generische Produktbezeichnung'", 'Bezeichnung' );
     open_th( '', '', 'Produktgruppe' );
     open_th( '', "title='aktuelle Details zum Produkt'", 'Notiz' );
@@ -90,12 +91,31 @@ open_table('list');
     open_th( '', "colspan='2' title='Verbraucher-Preis mit Pfand und MWSt'", 'V-Endpreis' );
     open_th( '', '', 'Aktionen' );
 
-  foreach( sql_lieferant_produkt_ids($lieferanten_id) as $id ) {
+  foreach( sql_lieferant_produkt_ids( $lieferanten_id ) as $id ) {
     $produkt = sql_produkt_details( $id, 0, $mysqljetzt );
     $references = references_produkt( $id );
+    $vormerkungen_menge = sql_bestellzuordnung_menge( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $id ) );
 
     open_tr( 'groupofrows_top' );
-      open_td( 'top', '', $produkt['zeitstart'] ? "<input type='checkbox' name='bestellliste[]' value='$id' $input_event_handlers>" : '-' );
+      if( $editable ) {
+        if( $produkt['zeitstart'] ) {
+          if( $vormerkungen_menge > 0 ) {
+            $title = sprintf(
+              "Vormerkungen fuer %s %s vorhanden!"
+            , $vormerkungen_menge * $produkt['kan_verteilmult']
+            , $produkt['kan_verteileinheit']
+            );
+            open_td( 'top alert', "title='$title'" );
+            $checked = 'checked';
+          } else {
+            open_td( 'top' );
+            $checked = '';
+          }
+          echo "<input type='checkbox' name='bestellliste[]' value='$id' $input_event_handlers $checked>";
+        } else {
+          open_td( 'top', '', '-' );
+        }
+      }
       open_td( 'top bold', '', $produkt['name'] );
       open_td( 'top', '', $produkt['produktgruppen_name'] );
       if( $produkt['zeitstart'] ) {
