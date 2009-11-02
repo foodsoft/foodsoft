@@ -16,16 +16,16 @@ need_http_var( 'katalogkw', 'w' );
 // echo '<br>tmpfile: ' . $_FILES['katalog']['tmp_name'];
 // echo '<br>katalogkw: ' . $katalogkw . '<br>';
 
-open_div( '', '', "Katalog einlesen: Lieferant: $lieferant['name'] / g&uuml;ltig: $katalogkw" );
+open_div( '', '', "Katalog einlesen: Lieferant: {$lieferant['name']} / g&uuml;ltig: $katalogkw" );
 
 
 function katalog_update(
   $lieferant_id, $tag, $katalogkw
-, $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto
+, $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, $katalogformat
 ) {
 
   open_div( 'ok' );
-    open_div( 'ok qquad', '', "erfasst: $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto" );
+    open_div( 'ok qquad', '', "erfasst: $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, $katalogformat" );
   close_div();
 
   doSql( "
@@ -43,6 +43,7 @@ function katalog_update(
     , preis
     , katalogdatum
     , katalogtyp
+    , katalogformat
     ) VALUES (
       '$lieferant_id'
     , '$anummer'
@@ -57,6 +58,7 @@ function katalog_update(
     , '$netto'
     , '$katalogkw'
     , '$tag'
+    , '$katalogformat'
     ) ON DUPLICATE KEY UPDATE
       bestellnummer='$bnummer'
     , name='$name'
@@ -69,6 +71,7 @@ function katalog_update(
     , preis='$netto'
     , katalogdatum='$katalogkw'
     , katalogtyp='$tag'
+    , katalogformat='$katalogformat'
   " );
 }
 
@@ -191,7 +194,7 @@ function upload_terra() {
     }
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'terra'
     );
     $success++;
   }
@@ -253,9 +256,10 @@ function upload_rapunzel() {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
+    $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'rapunzel'
     );
     $success++;
   }
@@ -326,7 +330,7 @@ function upload_bode() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'bode'
     );
     $success++;
   }
@@ -348,7 +352,7 @@ switch( $lieferant['katalogformat'] ) {
     break;
   case 'keins':
   default:
-    error( "kann Katalog von $lieferant['name'] nicht parsen" );
+    error( "kann Katalog von {$lieferant['name']} nicht parsen" );
 }
 
 

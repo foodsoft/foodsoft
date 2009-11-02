@@ -3,7 +3,7 @@
 //
 // Timo, 2007, 2008
 //
-// verwaltet und sucht im lieferantenkatalog (funktioniert bislang nur mit Terra und Bode)
+// verwaltet und sucht im lieferantenkatalog (soweit implementiert; aktuell: Terra, Bode, Rapunzel)
 
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and hat_dienst(4) );
@@ -12,10 +12,22 @@ setWindowSubtitle( "Artikelsuche im Lieferanten-Katalog" );
 setWikiHelpTopic( "foodsoft:katalogsuche" );
 
 need_http_var( 'lieferanten_id', 'U', true );
-$lieferant_name = sql_lieferant_name( $lieferanten_id );
+$lieferant = sql_lieferant( $lieferanten_id );
+$lieferant_name = $lieferant['name'];
+$katalogformat = $lieferant['katalogformat'];
 
-need( preg_match( '&^Terra&', $lieferant_name ) or preg_match( '&^Bode&', $lieferant_name ) 
-    , "Lieferanten-Katalog: bislang nur fuer Terra und Bode!" );
+$have_mwst = false;
+switch( $katalogformat ) {
+  case 'terra':
+    $have_mwst = true;  // terra listed die MWSt im Katalog; andere nicht!
+    break;
+  case 'bode':
+  case 'rapunzel':
+    break;
+  default:
+  case 'keins':
+    error( "Katalogformat unbekannt oder nicht implementiert: $katalogformat" );
+}
 
 // $bestell_id: falls aufgerufen aus 'preiseintrag fuer bestellung waehlen', muessen wir die
 // wieder zurueckgeben:
@@ -56,7 +68,7 @@ if( $produkt_id ) {
   $produktname = $produkt['name'];
 }
 
-?> <h1>Lieferantenkatalog - bislang nur fuer Terra und Bode! </h1> <?
+?> <h1>Lieferantenkatalog </h1> <?
 
 $editable or $action = '';
 if( $action == 'delete' ) {
@@ -158,14 +170,14 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       open_th( '', '', 'Land' );
       open_th( '', '', 'Verband' );
       open_th( '', '', 'Netto' );
-      open_th( '', '', 'MWSt' );
-      open_th( '', '', 'Brutto' );
+      if( $have_mwst ) {
+        open_th( '', '', 'MWSt' );
+        open_th( '', '', 'Brutto' );
+      }
       open_th( '', '', 'Katalog' );
 
       while( $row = mysql_fetch_array( $result ) ) {
         $netto = $row['preis'];
-        $mwst = $row['mwst'];
-        $brutto = $netto * (1 + $mwst / 100.0 );
         open_tr();
           open_td( 'mult' );
             $anummer = $row['artikelnummer'];
@@ -182,8 +194,12 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( '', '', $row['herkunft'] );
           open_td( '', '', $row['verband'] );
           open_td( '', '', price_view( $netto ) );
-          open_td( 'mult', '', price_view( $mwst ) );
-          open_td( 'mult', '', price_view( $brutto ) );
+          if( $have_mwst ) {
+            $mwst = $row['mwst'];
+            $brutto = $netto * (1 + $mwst / 100.0 );
+            open_td( 'mult', '', price_view( $mwst ) );
+            open_td( 'mult', '', price_view( $brutto ) );
+          }
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
       }
     close_table();
