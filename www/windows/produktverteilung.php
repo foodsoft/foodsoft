@@ -50,7 +50,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
     if( get_http_var( $feldname, 'f' ) ) {
       $liefermenge_form = $$feldname;
       if( $liefermenge != $liefermenge_form ) {
-        changeLiefermengen_sql( $liefermenge_form / $verteilmult, $produkt_id, $bestell_id );
+        sql_change_liefermenge( $bestell_id, $produkt_id, $liefermenge_form / $verteilmult );
       }
     }
 
@@ -73,7 +73,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
       if( get_http_var( $feldname, 'f' ) ) {
         $menge_form = $$feldname;
         if( $verteilmenge != $menge_form ) {
-          sql_change_verteilmengen( $bestell_id, $produkt_id, $gruppen_id, $menge_form / $verteilmult );
+          sql_change_verteilmenge( $bestell_id, $produkt_id, $gruppen_id, $menge_form / $verteilmult );
         }
       }
     }
