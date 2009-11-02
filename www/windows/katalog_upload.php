@@ -7,8 +7,8 @@ setWindowSubtitle( 'Katalog einlesen' );
 
 nur_fuer_dienst(4);
 
-need_http_var( 'lieferanten_id', 'u' );
-$lieferant_name = sql_lieferant_name( $lieferanten_id );
+need_http_var( 'lieferanten_id', 'U' );
+$lieferant = sql_lieferant( $lieferanten_id );
 
 need_http_var( 'katalogkw', 'w' );
 
@@ -16,7 +16,7 @@ need_http_var( 'katalogkw', 'w' );
 // echo '<br>tmpfile: ' . $_FILES['katalog']['tmp_name'];
 // echo '<br>katalogkw: ' . $katalogkw . '<br>';
 
-open_div( '', '', "Katalog einlesen: Lieferant: $lieferant_name / g&uuml;ltig: $katalogkw" );
+open_div( '', '', "Katalog einlesen: Lieferant: $lieferant['name'] / g&uuml;ltig: $katalogkw" );
 
 
 function katalog_update(
@@ -74,7 +74,7 @@ function katalog_update(
 
 
 function upload_terra() {
-  global $katalogkw, $lieferanten_id, $lieferant_name;
+  global $katalogkw, $lieferanten_id;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
@@ -200,8 +200,73 @@ function upload_terra() {
   open_div( 'ok', '', 'finis.' );
 }
 
+
+function upload_rapunzel() {
+  global $katalogkw, $lieferanten_id;
+
+  exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
+  $tag = 'Tr'; // Rapunzel: nur ein Katalog, entspricht "Trocken" bei Terra
+  $pattern = '/^[^@]*@\d+@/';
+  $splitat = '@';
+
+  $n = 0;
+  $success = 0;
+  foreach ( $klines as $line ) {
+    if( $n++ > 99999 )
+      break;
+
+    if( ! preg_match( $pattern, $line ) ) {
+      open_div( 'alert', '', "Zeile nicht ausgewertet: $line" );
+      continue;
+    }
+
+    $anummer = "";
+    $bnummer = "";
+    $name = "";
+    $einheit = "";
+    $gebinde = "";
+    $mwst = "-1";
+    $pfand = "0.00";
+    $verband = "";
+    $herkunft = "";
+    $netto = "0.00";
+
+    $splitline = split( $splitat, $line );
+
+    $bnummer = $splitline[1]; // if $pattern matches, this is purely numerical
+    $anummer = $bnummer;
+    $name = mysql_real_escape_string( $splitline[2] );
+    $verband = mysql_real_escape_string( $splitline[5] );
+    $herkunft = mysql_real_escape_string( $splitline[6] );
+
+    $gebinde = $splitline[9];
+
+    sscanf( $splitline[9], '%d x %s', & $gebinde, & $einheit );
+    $einheit = preg_replace( '/,/', '.', $einheit );
+
+    sscanf( $splitline[11], '%f ', & $netto );
+
+    if( preg_match( '&^[\d\s]*$&', $einheit ) )
+      $einheit = "$einheit ST";
+
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, &$e, &$m, false ) ) {
+      open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
+      continue;
+    }
+
+    katalog_update( $lieferanten_id, $tag, $katalogkw
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto
+    );
+    $success++;
+  }
+
+  logger( "Rapunzel-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $n" );
+  open_div( 'ok', '', 'finis.' );
+}
+
+
 function upload_bode() {
-  global $katalogkw, $lieferanten_id, $lieferant_name;
+  global $katalogkw, $lieferanten_id;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -271,12 +336,19 @@ function upload_bode() {
 }
 
 
-if( preg_match( '&^Terra&', $lieferant_name ) ) {
-  upload_terra();
-} elseif( preg_match( '&^Bode&', $lieferant_name ) ) {
-  upload_bode();
-} else {
-  error( "kann Katalog von $lieferant_name nicht parsen" );
+switch( $lieferant['katalogformat'] ) {
+  case 'terra':
+    upload_terra();
+    break;
+  case 'bode':
+    upload_bode();
+    break;
+  case 'rapunzel':
+    upload_rapunzel();
+    break;
+  case 'keins':
+  default:
+    error( "kann Katalog von $lieferant['name'] nicht parsen" );
 }
 
 
