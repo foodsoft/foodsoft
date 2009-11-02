@@ -17,7 +17,7 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
   $endzeit = $bestellung['bestellende'];
   $lieferung = $bestellung['lieferung'];
   $bestellname = $bestellung['name'];
-  $aufschlag = $bestellung['aufschlag'];
+  $aufschlag = $bestellung['aufschlag_prozent'];
   $status = $bestellung['rechnungsstatus'];
   $lieferanten_id = $bestellung['lieferanten_id'];
 } else {  // neue bestellvorlage erstellen:
@@ -74,8 +74,23 @@ if( $action == 'save' ) {
       $bestell_id = sql_insert_bestellung( $bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag );
 
       // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
+      $vormerkungen = array();
       foreach( $bestellliste as $produkt_id ) {
         sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
+        $vormerkungen = $vormerkungen + sql_bestellungzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $produkt_id ) );
+      }
+      // erst _alle_ vormerkungen fuer diesen lieferanten loeschen...
+      sql_delete_bestellzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'lieferanten_id' => $lieferanten_id ) );
+      // ...dann die vormerkungen fuer in der vorlage aufgefuehrte produkte in bestellungen wandeln:
+      foreach( $vormerkungen as $vormerkung ) {
+        switch( $vormerkung['art'] ) {
+          case BESTELLZUORDNUNG_ART_VORMERKUNG_FEST:
+            change_bestellmengen( $vormerkung['gruppen_id'], $bestell_id, $vormerkung['produkt_id'], $vormerkung['menge'], -1, true );
+            break;
+          case BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ:
+            change_bestellmengen( $vormerkung['gruppen_id'], $bestell_id, $vormerkung['produkt_id'], -1, $vormerkung['menge'], true );
+            break;
+        }
       }
       $done = true;
       $self_fields['bestell_id'] = $bestell_id;
@@ -83,7 +98,7 @@ if( $action == 'save' ) {
   }
 }
 
-open_form( '', 'action=save' );
+open_form( '', "action=save,lieferanten_id=$lieferanten_id" );
   if( isset( $bestellliste ) and is_array( $bestellliste ) )
     foreach( $bestellliste as $produkt_id )
       hidden_input( 'bestellliste[]', $produkt_id );
