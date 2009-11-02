@@ -25,6 +25,7 @@ get_http_var('liefertage','H',$row);
 get_http_var('bestellmodalitaeten','H',$row);
 get_http_var('kundennummer','H',$row);
 get_http_var('url','H',$row);
+get_http_var('katalogformat','w',$row);
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
@@ -40,6 +41,7 @@ if( $action == 'save' ) {
   , 'bestellmodalitaeten' => $bestellmodalitaeten
   , 'kundennummer' => $kundennummer
   , 'url' => $url
+  , 'katalogformat' => $katalogformat
   );
   if( ! $name ) {
     $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
@@ -74,6 +76,28 @@ open_form( '', 'action=save' );
       form_row_text( 'Bestellmodalit&auml;ten:', ( $editable ? 'bestellmodalitaeten' : false ), 50, $bestellmodalitaeten );
       form_row_text( 'Kundennummer:', ( $editable ? 'kundennummer' : false ), 50, $kundennummer );
       form_row_text( 'Webadresse:', ( $editable ? 'url' : false ), 50, $url );
+      open_tr();
+        open_td( '', '', 'Katalogformat:' );
+        open_td();
+        open_select( 'katalogformat' );
+          $selected = false;
+          $options = '';
+          foreach( array( 'terra', 'bode', 'rapunzel' ) as $parser ) {
+            if( $katalogformat == $parser ) {
+              $checked = 'selected';
+              $selected = true;
+            } else {
+              $checked = '';
+            }
+            $options .= "<option value='$parser' $checked>$parser</option>";
+          }
+          if( $selected ) {
+            echo "<option value='keins'>(unbekannt oder nicht implementiert)</option>";
+          } else {
+            echo "<option value='keins' checked>(bitte Katalogformat waehlen)</option>";
+          }
+          echo "$options";
+        close_select();
       open_tr();
         open_td( 'right', "colspan='2'" );
           if( $lieferanten_id > 0 )
