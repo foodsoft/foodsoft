@@ -580,63 +580,65 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   $gesamtwert = 0;
   $output = '';
   foreach( sql_basar( $bestell_id, $order ) as $basar_row ) {
-     kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
-     $menge = $basar_row['basar'];
-     // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
-     $menge *= $kan_verteilmult;
-     $wert = $basar_row['basar'] * ( $basar_row['endpreis'] + $basar_row['preisaufschlag'] );
-     $gesamtwert += $wert;
-     $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
+    kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
+    $menge = $basar_row['basarmenge'];
+    // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
+    $menge *= $kan_verteilmult;
+    $wert = $basar_row['basarmenge'] * ( $basar_row['endpreis'] + $basar_row['preisaufschlag'] );
+    $gesamtwert += $wert;
+    $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
 
-     $row = array( 
-       "<td>{$basar_row['produkt_name']}</td>"
-     , "<td>" . fc_link( 'bestellschein', array(
-          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'class' => 'href'
-        ) ) . "</td>"
-     , "<td>{$basar_row['lieferung']}</td>"
-     , "<td class='mult'>"
-         . fc_link( 'produktdetails', array(
-             'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
-           , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] + $basar_row['preisaufschlag'] )
-           ) )
-         . "</td>
-         <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
-     , "<td class='mult'><b>$menge</b></td>
-        <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
-        <td class='unit'>"
-        . fc_link( 'produktverteilung', array( 'class' => 'question', 'text' => false
-           , 'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
-        ) ) . "</td>"
-     , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
-     , ( $editAmounts ? ( $rechnungsstatus < STATUS_ABGERECHNET ?
-         "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
-          <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
-          <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
-          <input name='menge$fieldcount' type='text' size='5' $input_event_handlers></td>
-          <td class='unit'>$kan_verteileinheit</td>"
-         : "<td> (Bestellung abgeschlossen) </td>"
-       ) : ""
-       )
-     );
-     $fieldcount++;
+    $row = array( 
+      "<td>{$basar_row['produkt_name']}</td>"
+    , "<td>" . fc_link( 'bestellschein', array(
+         'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'class' => 'href'
+       ) ) . "</td>"
+    , "<td>{$basar_row['lieferung']}</td>"
+    , "<td class='mult'>"
+        . fc_link( 'produktdetails', array(
+            'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
+          , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] + $basar_row['preisaufschlag'] )
+          ) )
+        . "</td>
+        <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
+    , "<td class='mult'><b>$menge</b></td>
+       <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
+       <td class='unit'>"
+       . fc_link( 'produktverteilung', array( 'class' => 'question', 'text' => false
+          , 'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
+       ) ) . "</td>"
+    , "<td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
+    , ( $editAmounts ? ( $rechnungsstatus < STATUS_ABGERECHNET ?
+        "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
+         <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
+         <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
+         <input name='menge$fieldcount' type='text' size='5' $input_event_handlers></td>
+         <td class='unit'>$kan_verteileinheit</td>"
+        : "<td> (Bestellung abgeschlossen) </td>"
+      ) : ""
+      )
+    );
+    $fieldcount++;
 
-     // sortierschluessel nur einmal ausgeben:
-     //
-     if( $last_key == $row[$keyfield] ) {
-       $rowspan++;
-       $row[$keyfield] = '<tr>';
-     } else {
-       if( $output )
-         echo "<tr><td rowspan='$rowspan ' " . $output;
-       $output = '';
-       $last_key = $row[$keyfield];
-       $rowspan = 1;
-       $row[$keyfield] = preg_replace( "/^<td/", ' ', $row[$keyfield], 1 );
-     }
-     $output .= vsprintf( "$rowformat</tr>\n", $row );
+    // sortierschluessel nur einmal ausgeben:
+    //
+    if( $last_key == $row[$keyfield] ) {
+      $rowspan++;
+      $row[$keyfield] = '<tr>';
+    } else {
+      if( $output )
+        echo "<tr><td rowspan='$rowspan ' " . $output;
+      $output = '';
+      $last_key = $row[$keyfield];
+      $rowspan = 1;
+      $row[$keyfield] = preg_replace( "/^<td/", ' ', $row[$keyfield], 1 );
+    }
+    $output .= vsprintf( "$rowformat</tr>\n", $row );
+
   }
   if( $output )
     echo "<tr><td rowspan='$rowspan' " . $output;
+
   open_tr('summe');
     open_td( 'right', "colspan='8'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
@@ -657,8 +659,6 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   } else {
     close_table();
   }
-  // if( $js_out )
-  //   open_javascript( $js_out );
 
 }
 
@@ -705,7 +705,7 @@ function bestellschein_view(
   $bestellung = sql_bestellung( $bestell_id );
 
   $state = $bestellung['rechnungsstatus'];
-  $aufschlag_prozent = $bestellung['aufschlag'];
+  $aufschlag_prozent = $bestellung['aufschlag_prozent'];
 
   $warnung_vorlaeufig = "";
   if( $gruppen_id and ( $state == STATUS_BESTELLEN ) ) {
@@ -1286,14 +1286,14 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $vorschlag = sql_bestellvorschlag( $bestell_id, $produkt_id );
   $verteilmult = $vorschlag['kan_verteilmult'];
   $verteileinheit = $vorschlag['kan_verteileinheit'];
-  $endpreis = $vorschlag['endpreis'] + $vorschlag['preisaufschlag'];
+  $vpreis = $vorschlag['endpreis']; //  + $vorschlag['preisaufschlag'];
   $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
 
   open_tr('summe');
     open_th('', "colspan='3'", 'Liefermenge:' );
     open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
     open_td('unit','',$verteileinheit );
-    open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult ) );
+    open_td('number','', price_view( $vpreis * $liefermenge / $verteilmult ) );
   close_tr();
 
   $basar_id = sql_basar_id();
@@ -1331,20 +1331,20 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
       open_td( 'unit', '', $verteileinheit );
       open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult ) );
+      open_td( 'number', '', price_view( $vpreis * $verteilmenge / $verteilmult ) );
   }
   open_tr('summe');
     open_td('', "colspan='3'", "M&uuml;ll:" );
     open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult ) );
+    open_td( 'number', '', price_view( $vpreis * $muellmenge / $verteilmult ) );
   open_tr('summe');
     open_td('', '', "Basar:" );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'mult', '', mult_view( $basar_verteilmenge ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult ) );
+    open_td( 'number', '', price_view( $vpreis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
 }
 
@@ -1371,10 +1371,10 @@ function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
     open_tr();
       open_th('left','','Bestellzeitraum:');
       open_td('','', $bestellung['bestellstart'] .' - '. $bestellung['bestellende'] );
-  if( $bestellung['aufschlag'] ) {
+  if( $bestellung['aufschlag_prozent'] ) {
     open_tr();
       open_th('left', "title='prozentualer Aufschlag auf den Nettopreis aller Produkte'", 'Aufschlag der FC:');
-      open_td('','', sprintf( "%.2lf %%", $bestellung['aufschlag'] ) );
+      open_td('','', sprintf( "%.2lf %%", $bestellung['aufschlag_prozent'] ) );
   }
     open_tr();
       open_th('left','','Lieferung:');
