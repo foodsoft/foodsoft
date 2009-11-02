@@ -63,7 +63,7 @@ switch( $action ) {
         $liefermenge = $produkt['liefermenge'] / $lv_faktor;
         if( abs( ${"liefermenge$produkt_id"} - $liefermenge ) > 0.001 ) {
           $liefermenge = ${"liefermenge$produkt_id"};
-          changeLiefermengen_sql( $liefermenge * $lv_faktor, $produkt_id, $bestell_id );
+          sql_change_liefermenge( $bestell_id, $produkt_id, $liefermenge * $lv_faktor );
         }
       }
     }

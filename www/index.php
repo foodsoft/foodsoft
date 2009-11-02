@@ -21,9 +21,6 @@ get_http_var( 'window', 'w', 'menu', true );     // eigentlich: name des skripte
 get_http_var( 'window_id', 'w', 'main', true );  // ID des browserfensters
 setWikiHelpTopic( "foodsoft:$window" );
 
-
-
-
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');
