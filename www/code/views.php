@@ -1488,7 +1488,12 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     $legend = "Preis-Historie";
   }
 
-  open_fieldset( 'big_form', '', $legend, 'on' );
+  if( sql_aktueller_produktpreis_id( $produkt_id ) ) {
+    $initial = 'off';
+  } else {
+    $initial = 'on';
+  }
+  open_fieldset( 'big_form', '', $legend, $initial );
     open_table( 'list hfill' );
       open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'id' );
       open_th( '', "title='Bestellnummer'", 'B-Nr' );
