@@ -1425,6 +1425,19 @@ function sql_lieferant_offene_bestellungen( $lieferanten_id ) {
   " ) );
 }
 
+function sql_lieferant_katalogeintraege( $lieferanten_id ) {
+  $lieferant = sql_lieferant( $lieferanten_id );
+  $katalogformat = $lieferant['katalogformat'];
+  if( ( $katalogformat == 'keins' ) || ( $katalogformat == '' ) ) {
+    return 0;
+  }
+  return sql_select_single_field( "
+    SELECT count(*) AS anzahl FROM lieferantenkatalog
+    WHERE ( lieferanten_id = $lieferanten_id ) and ( katalogformat = '$katalogformat' )
+  ", 'anzahl'
+  );
+}
+
 ////////////////////////////////////
 //
 // funktionen fuer gesamtbestellung, bestellvorschlaege und gruppenbestellungen:

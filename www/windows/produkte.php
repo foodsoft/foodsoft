@@ -26,20 +26,23 @@ open_table('layout hfill' );
                      , "class=bigbutton,lieferanten_id=$lieferanten_id,title=Neues Produkt eintragen,text=Neues Produkt" ) );
         }
         open_tr();
-          open_td( '', '', fc_link( 'katalog', "class=bigbutton,text=Katalogsuche,lieferanten_id=$lieferanten_id" ) );
+          open_td( '', '', fc_link( 'katalog', "class=bigbutton,text=Lieferantenkatalog,lieferanten_id=$lieferanten_id" ) );
       }
       open_tr();
         open_td( '', '', fc_link( 'self', "class=bigbutton,text=Seite aktualisieren" ) );
       open_tr();
         open_td( '', '', fc_link( 'index', "class=bigbutton" ) );
-      open_tr();
-        open_td();
-          option_checkbox( 'options', OPTION_PREISKONSISTENZTEST, 'Preiskonsistenztest'
-                         , 'Soll die Preishistorie aller Einträge auf Inkonsistenzen geprüft werden?' );
-      open_tr();
-        open_td();
-          option_checkbox( 'options', OPTION_KATALOGABGLEICH, 'Abgleich mit Lieferantenkatalog'
-                         , 'Sollen alle Einträge mit dem Lieferantenkatalog verglichen werden?' );
+      // braucht nicht mehr optional zu sein - preise sollten immer konsistent sein!
+      // open_tr();
+      //   open_td();
+      //     option_checkbox( 'options', OPTION_PREISKONSISTENZTEST, 'Preiskonsistenztest'
+      //                   , 'Soll die Preishistorie aller Einträge auf Inkonsistenzen geprüft werden?' );
+      if( $lieferanten_id && sql_lieferant_katalogeintraege( $lieferanten_id ) ) {
+        open_tr();
+          open_td();
+            option_checkbox( 'options', OPTION_KATALOGABGLEICH, 'Abgleich mit Lieferantenkatalog'
+                           , 'Sollen alle Einträge mit dem Lieferantenkatalog verglichen werden?' );
+      }
     close_table();
 
   open_td('floatright');

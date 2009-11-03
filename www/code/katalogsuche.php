@@ -20,9 +20,9 @@ function katalogsuche( $produkt ) {
   $lieferanten_id = $produkt['lieferanten_id'];
   $where = "WHERE lieferanten_id='$lieferanten_id' ";
 
-  $c = sql_select_single_field( "SELECT count(*) AS c FROM lieferantenkatalog $where", 'c' );
-  if( ! $c )
+  if( ! sql_lieferant_katalogeintraege( $lieferanten_id ) ) {
     return 1;
+  }
   if( ( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) )
     $where .= " AND artikelnummer='$artikelnummer' ";
   // elseif( ( $bestellnummer = adefault( $produkt, 'bestellnummer', 0 ) ) )
@@ -39,7 +39,8 @@ function katalogsuche( $produkt ) {
 // rueckgabe:
 //  0: ok
 //  1: Katalogeintrag weicht ab (oder kein Preiseintrag in der Foodsoft-Datenbank)
-//  2: Katalogsuche fehlgeschlagen (kann auch heissen: kein Katalog dieses Lieferanten erfasst)
+//  2: Katalogsuche fehlgeschlagen
+//  3: kein Katalog dieses Lieferanten erfasst
 // 
 //
 function katalogabgleich(
@@ -56,7 +57,7 @@ function katalogabgleich(
   $katalogeintrag = katalogsuche( $artikel );
   if( $katalogeintrag == 1 ) {
     div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
-    return 2;
+    return 3;
   } else if( $katalogeintrag == 2 ) {
     div_msg( 'warn', 'Katalogsuche: Artikelnummer des Produktes fehlt --- Suche nicht moeglich!' );
     return 2;
