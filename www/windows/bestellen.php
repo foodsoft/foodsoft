@@ -427,7 +427,10 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
     open_th( 'small', '', '(maximal)' );
     open_th( '', '', '' );
     open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'volle Gebinde' );
-    open_th( 'small tight', '', '(aktuell)' );
+    if( hat_dienst(4) )
+      open_th( 'small tight', '', '' );
+    else
+      open_th( 'small tight', '', '(aktuell)' );
 
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
