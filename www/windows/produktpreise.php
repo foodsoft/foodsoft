@@ -58,25 +58,17 @@ switch( $action ) {
     need_http_var( 'preis_id','u' );
     need( $bestell_id );
     need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
-    doSql ( "UPDATE bestellvorschlaege
-       SET produktpreise_id='$preis_id'
-       WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produkt_id'
-    ", LEVEL_IMPORTANT, "Auswahl Preiseintrag fehlgeschlagen: " );
+    sql_update( 'bestellvorschlaege'
+    , array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id )
+    , array( 'produktpreise_id' => $preis_id )
+    );
     break;
 }
 
 
-// flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
-//
-$neednewprice = FALSE;
-
-// flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
-//
-$neednewarticlenumber = FALSE;
-
-// felder fuer neuen preiseintrag initialisieren:
-//
-$preiseintrag_neu = array();
+$neednewprice = FALSE;         // flag: neuen preiseintrag vorschlagen (falls gar keiner oder fehlerhaft):
+$neednewarticlenumber = FALSE; // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
+$preiseintrag_neu = array();   // array fuer vorschlag neuer preiseintrag
 
 // neu laden (falls durch $action geaendert):
 //
@@ -142,7 +134,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
       div_msg( 'warn', 'FEHLER: keine gültige Liefereinheit' );
       $neednewprice = TRUE;
     }
-    // FIXME: hier mehr tests machen!
+    // FIXME: hier mehr tests machen! aber: waere nur fuer lieferanten ohne erfassten katalog nuetzlich!
   }
 
 close_fieldset();
@@ -151,7 +143,7 @@ close_fieldset();
 // Artikeldaten im Katalog suchen und ggf. anzeigen:
 //
 
-$result = katalogabgleich( $produkt_id, $editable, true, & $preiseintrag_neu );
+$result = katalogabgleich( $produkt_id, true, & $preiseintrag_neu );
 switch( $result ) {
   case 0:
     // alles ok!
@@ -166,7 +158,7 @@ switch( $result ) {
     break;
   default:
   case 3:
-    // Katalogsuche fehlgeschlagen: das ist normal bei allen ausser Terra:
+    // Katalogsuche fehlgeschlagen: das ist normal bei allen Lieferanten ohne erfassten Katalog:
     break;
 }
 medskip();
