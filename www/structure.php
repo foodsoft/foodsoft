@@ -302,7 +302,6 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
-    )
     , 'gruppen_id' => array(
         'type' =>  "int(11)"
       , 'null' => 'NO'
@@ -689,7 +688,7 @@ $tables = array(
     'updownload' => false  // leitvariable werden gesondert behandelt!
   , 'cols' => array(
       'name' => array(
-        'type' =>  "varchar(30)"
+        'type' =>  'varchar(30)'
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
@@ -787,7 +786,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'katalogformat' => array(
-        'type' => varchar(20)
+        'type' => 'varchar(20)'
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
@@ -831,7 +830,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'liefereinheit' => array(
-        'type' =>  "varchar(20)"
+        'type' =>  'varchar(20)'
       , 'null' => 'YES'
       , 'default' => ''
       , 'extra' => ''
@@ -885,7 +884,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'katalogformat' => array(
-        'type' => varchar(20)
+        'type' => 'varchar(20)'
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
@@ -1110,7 +1109,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'bestellnummer' => array(
-        'type' =>  "varchar(20)"
+        'type' =>  'varchar(20)'
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
