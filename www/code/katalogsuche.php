@@ -76,7 +76,9 @@ function katalogabgleich(
   $katalog_herkunft =  $katalogeintrag["herkunft"];
   $katalog_verband = $katalogeintrag["verband"];
   $katalog_netto = $katalogeintrag["preis"];
+  $katalog_id = $katalogeintrag["id"];
 
+  $kgueltig = $katalogeintrag['gueltig'];
 
   if( ! kanonische_einheit( $katalog_einheit, &$kan_liefereinheit, &$kan_liefermult, false ) ) {
     div_msg( 'warn', "Katalogsuche: unbekannte Einheit: $katalog_einheit" );
@@ -168,6 +170,15 @@ function katalogabgleich(
   }
 
   if( $detail ) {
+    if( $kgueltig ) {
+      $class = 'ok';
+      $checkedyes = 'checked';
+      $checkedno = 'onclick="'. fc_action( 'update,context=js', "action=katalog_ungueltig,message=$katalog_id" ) . ';"';
+    } else {
+      $class = 'alert';
+      $checkedyes = 'onclick="'. fc_action( 'update,context=js', "action=katalog_gueltig,message=$katalog_id" ) . ';"';
+      $checkedno = 'checked';
+    }
     open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_typ / $katalog_datum" );
       open_table( 'list hfill' );
           open_th( '', "title='Artikelnummer'", 'A-Nr.' );
@@ -180,6 +191,7 @@ function katalogabgleich(
           open_th( '', '', 'Netto' );
           open_th( '', '', 'MWSt' );
           open_th( '', '', 'Brutto' );
+          open_th( '', "title='hier koennt ihr fehlerhafte oder ungueltige Katalogeintraege markieren'", 'gilt noch' );
         open_tr();
           open_td( '', '', $katalog_artikelnummer );
           open_td( '', '', $katalog_bestellnummer );
@@ -191,6 +203,9 @@ function katalogabgleich(
           open_td( '', '', $katalog_netto );
           open_td( '', '', $katalog_mwst );
           open_td( '', '', $katalog_brutto );
+          open_td( "$class", "rowspan='2'" );
+            open_div( '', '', "<input type='radio' class='radiooption' name='kgueltig' $checkedyes> ja" );
+            open_div( '', '', "<input type='radio' class='radiooption' name='kgueltig' $checkedno> nein" );
         open_tr();
           open_td( 'left small top', "colspan='3'", 'Interpretation der Foodsoft:' );
           open_td( 'center small top', "colspan='2'", "1 Gebinde = $liefergebinde * ($liefereinheit)" );

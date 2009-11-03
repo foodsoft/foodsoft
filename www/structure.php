@@ -889,6 +889,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
+    , 'gueltig' => array(
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '1'
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

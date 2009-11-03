@@ -4429,6 +4429,14 @@ function update_database($version){
 
       logger( 'update_database: update to version 15 successful' );
 
+  case 15:
+      logger( 'starting update_database: from version 15' );
+
+      doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `gueltig` tinyint(1) not null default 1 " );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 16 ) );
+
+      logger( 'update_database: update to version 16 successful' );
+
 /*
 	case n:
 		$sql = "

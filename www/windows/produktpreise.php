@@ -54,6 +54,14 @@ switch( $action ) {
     need_http_var('preis_id','u');
     sql_delete_produktpreis( $preis_id );
     break;
+  case 'katalog_gueltig':
+    need_http_var( 'message','U' );
+    sql_update( 'lieferantenkatalog', $message, array( 'gueltig' => 1 ) );
+    break;
+  case 'katalog_ungueltig':
+    need_http_var( 'message','U' );
+    sql_update( 'lieferantenkatalog', $message, array( 'gueltig' => 0 ) );
+    break;
   case 'preiseintrag_waehlen':
     need_http_var( 'preis_id','u' );
     need( $bestell_id );
