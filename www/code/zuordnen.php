@@ -290,31 +290,6 @@ function use_filters( $using, $rules ) {
   return $filters;
 }
 
-define('STATUS_BESTELLEN', 10 );
-define('STATUS_LIEFERANT', 20 );
-define('STATUS_VERTEILT', 30 );
-define('STATUS_ABGERECHNET', 40 );
-define('STATUS_ABGESCHLOSSEN', 45 );
-define('STATUS_ARCHIVIERT', 50 );
-
-function rechnung_status_string( $state ) {
-  switch( $state ) {
-    case STATUS_BESTELLEN:
-      return 'Bestellen';
-    case STATUS_LIEFERANT:
-      return 'beim Lieferanten';
-    case STATUS_VERTEILT:
-      return 'geliefert und verteilt';
-    case STATUS_ABGERECHNET:
-      return 'abgerechnet';
-    case STATUS_ABGESCHLOSSEN:
-      return 'abgeschlossen';
-    case STATUS_ARCHIVIERT:
-      return 'archiviert';
-  }
-  return "FEHLER: undefinierter Status: $state";
-}
-
 
 ////////////////////////////////////
 //
@@ -322,7 +297,7 @@ function rechnung_status_string( $state ) {
 //
 ////////////////////////////////////
 
- $_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
+$_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
 
 function select_dienste( $filter = 'true' ) {
   return "SELECT
@@ -983,16 +958,6 @@ function sql_gruppe_mitglieder( $gruppen_id, $filter = 'gruppenmitglieder.aktiv'
 }
 
 
-function sql_update_gruppen_member($id, $name, $vorname, $email, $telefon, $dienst){
-  return sql_update( 'gruppenmitglieder', $id, array(
-    'name' => $name
-  , 'vorname' => $vorname
-  , 'email' => $email
-  , 'telefon' => $telefon
-  , 'diensteinteilung' => $dienst
-  ) );
-}
-
 function select_bestellgruppen( $filter = false ) {
   $where = ( $filter ? "WHERE ($filter)" : '' );
   return "
@@ -1095,6 +1060,18 @@ function sql_gruppe_letzte_bestellung( $gruppen_id ) {
   return mysql_fetch_array( $result );
 }
 
+function sql_gruppe_offene_bestellungen( $gruppen_id ) {
+  need( hat_dienst(4,5) );
+  return mysql2array( doSql( "
+    SELECT gesamtbestellungen.name as name
+    FROM gesamtbestellungen
+    INNER JOIN gruppenbestellungen
+      ON gruppenbestellungen.bestellgruppen_id = $gruppen_id
+    WHERE gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET."
+    ORDER BY gesamtbestellungen.lieferung
+  " ) );
+}
+
 function optionen_gruppen(
   $selected = 0
 , $filter = 'aktiv'
@@ -1151,18 +1128,18 @@ function check_new_group_nr( $newNummer, & $problems ){
   global $specialgroups;
 
   if( ( ! ( $newNummer > 0 ) ) || ( $newNummer > 98 ) ) {
-    $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
+    $problems .= "<div class='warn'>Ung&uuml;ltige Gruppennummer!</div>";
     return false;
   }
   if( in_array( $newNummer, $specialgroups ) ) {
-    $problems = $problems . "<div class='warn'>Ung&uuml;ltige Gruppennummer (reserviert fuer Basar oder Muell)</div>";
+    $problems .= "<div class='warn'>Ung&uuml;ltige Gruppennummer (reserviert fuer Basar oder Muell)</div>";
     return false;
   }
   $id = $newNummer;
   $result = sql_bestellgruppen( "( id % 1000 ) = $newNummer" );
   foreach( $result as $row ) {
     if( $row['aktiv'] ) {
-      $problems = $problems . "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
+      $problems .= "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
       return false;
     }
     if( $row['id'] >= $id ) {
@@ -1439,11 +1416,45 @@ function sql_delete_lieferant( $lieferanten_id ) {
   logger( "Lieferant $lieferanten_id geloescht" );
 }
 
+function sql_lieferant_offene_bestellungen( $lieferanten_id ) {
+  return mysql2array( doSql( "
+    SELECT gesamtbestellungen.name
+      FROM gesamtbestellungen
+     WHERE ( lieferanten.id = $lieferanten_id )
+       AND ( rechnungsstatus < ".STATUS_ABGERECHNET." )
+  " ) );
+}
+
 ////////////////////////////////////
 //
 // funktionen fuer gesamtbestellung, bestellvorschlaege und gruppenbestellungen:
 //
 ////////////////////////////////////
+
+define('STATUS_BESTELLEN', 10 );
+define('STATUS_LIEFERANT', 20 );
+define('STATUS_VERTEILT', 30 );
+define('STATUS_ABGERECHNET', 40 );
+define('STATUS_ABGESCHLOSSEN', 45 );
+define('STATUS_ARCHIVIERT', 50 );
+
+function rechnung_status_string( $state ) {
+  switch( $state ) {
+    case STATUS_BESTELLEN:
+      return 'Bestellen';
+    case STATUS_LIEFERANT:
+      return 'beim Lieferanten';
+    case STATUS_VERTEILT:
+      return 'geliefert und verteilt';
+    case STATUS_ABGERECHNET:
+      return 'abgerechnet';
+    case STATUS_ABGESCHLOSSEN:
+      return 'abgeschlossen';
+    case STATUS_ARCHIVIERT:
+      return 'archiviert';
+  }
+  return "FEHLER: undefinierter Status: $state";
+}
 
 function sql_bestellung( $bestell_id ) {
   return sql_select_single_row( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" );
