@@ -1,9 +1,17 @@
 <?php
 
 
-// katalogsuche: sucht im lieferantenkatalog nach $produkt.
-// bisher nur fuer Terra und Bode.
+// katalogsuche: sucht im lieferantenkatalog nach $produkt (soweit fuer den Lieferanten implementiert)
+// 
+// !!! dieses Skript ist nur fuer den _internen_ katalogabgleich aufgrund der Artikelnummer zustaendig!
+// !!! fuer die manuelle Suche ist windows/artikelsuche.php da!
+//
 // $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
+// moegliche rueckgabewerte:
+//   1: kein Katalog vom Lieferanten vorhanden (ist kein Fehler)
+//   2: keine Artikelnummer - Suche nicht moeglich
+//   0 / NULL: Suche ohne (eindeutigen) Treffer
+//   array(): enthaelt gefundenen Katalogeintrag
 //
 function katalogsuche( $produkt ) {
   if( is_numeric( $produkt ) ) {
@@ -15,44 +23,44 @@ function katalogsuche( $produkt ) {
 
   $c = sql_select_single_field( "SELECT count(*) AS c FROM lieferantenkatalog $where", 'c' );
   if( ! $c )
-    return 0;
+    return 1;
   if( ( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) )
     $where .= " AND artikelnummer='$artikelnummer' ";
   // elseif( ( $bestellnummer = adefault( $produkt, 'bestellnummer', 0 ) ) )
   //  $where .= " AND bestellnummer='$bestellnummer' ";
   else
-    return false;
+    return 2;
 
   return sql_select_single_row( "SELECT * FROM lieferantenkatalog $where " , true );
 }
 
 
-// katalogvergleich
+// katalogabgleich
 //
 // rueckgabe:
 //  0: ok
 //  1: Katalogeintrag weicht ab
-//  2: Katalogsuche ohne Treffer
-//  3: Katalogsuche fehlgeschlagen
+//  2: Katalogsuche fehlgeschlagen (kann auch heissen: kein Katalog dieses Lieferanten erfasst)
+// 
 //
 function katalogabgleich(
   $produkt_id
-, $editable = false
-, $detail = false
-, & $preiseintrag_neu = array()
+, $detail = false  // Katalogeintrag auch anzeigen?
+, & $preiseintrag_neu = array() // aus Katalogeintrag Vorschlag fuer Preiseintrag generieren
 ) {
   $artikel = sql_produkt_details( $produkt_id );
   $prgueltig = $artikel['zeitstart'];
   $neednewprice = false;
 
   $katalogeintrag = katalogsuche( $artikel );
-  if( ! $katalogeintrag ) {
-    if( $katalogeintrag === 0 )
-      div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
-    else
-      div_msg( 'warn', 'Katalogsuche: Artikelnummer nicht gefunden!' );
-    // if( $detail and $editable )
-    //  formular_artikelnummer( $produkt_id, false );
+  if( $katalogeintrag == 1 ) {
+    div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
+    return 2;
+  } else if( $katalogeintrag == 2 ) {
+    div_msg( 'warn', 'Katalogsuche: Artikelnummer des Produktes fehlt --- Suche nicht moeglich!' );
+    return 2;
+  } else if( ! $katalogeintrag ) {
+    div_msg( 'warn', 'Katalogsuche fehlgeschlagen oder ohne Treffer' );
     return 2;
   }
 
@@ -73,8 +81,10 @@ function katalogabgleich(
     return 2;
   }
 
-  $lieferant_name = sql_lieferant_name( $artikel['lieferanten_id'] );
-  if( preg_match( '&^Terra&', $lieferant_name ) ) {
+  $have_mwst = false; // ist die mwst im katalog gelisted? (terra ja, andere nicht!)
+  switch( $katalogeintrag['katalogformat'] ) {
+  case 'terra':
+    $have_mwst = true;
 
     // setze:
     //   $liefereinheit: auf diese bezieht sich der preis $katalog_netto
@@ -118,15 +128,30 @@ function katalogabgleich(
         break;
     }
 
-  } else if( preg_match( '&^Bode&', $lieferant_name ) ) {
+      break;
 
-    $gebindegroesse = $katalog_gebindegroesse;
-    $liefereinheit = $katalog_einheit;
-    $verteileinheit_default = $liefereinheit;
-    $lv_faktor_default = 1;
+    case 'bode':
 
-  } else {
-    error( "katalogabgleich fuer $lieferant_name nicht moeglich" );
+      $gebindegroesse = $katalog_gebindegroesse;
+      $liefereinheit = $katalog_einheit;
+      $verteileinheit_default = $liefereinheit;
+      $lv_faktor_default = 1;
+
+      break;
+
+    case 'rapunzel':
+
+      $gebindegroesse = $katalog_gebindegroesse;
+      $liefereinheit = $katalog_einheit;
+      $verteileinheit_default = $liefereinheit;
+      $lv_faktor_default = 1;
+
+      break;
+
+    default:
+    case 'keins':
+      error( "unbekanntes oder undefiniertes Katalogformat --- Katalogabgleich nicht moeglich" );
+      break;
   }
 
   $katalog_brutto = $katalog_netto * (1 + $katalog_mwst / 100.0 );
@@ -254,14 +279,16 @@ function katalogabgleich(
       }
     }
 
-    $preiseintrag_neu['preis']
-      = $katalog_brutto / $preiseintrag_neu['lv_faktor'] + $artikel['pfand'];
-    if( abs( $preiseintrag_neu['preis'] - $artikel['endpreis'] ) > 0.005 ) {
+    // lieferpreis: nettopreis wie katalog, aber pro V-einheit:
+    //
+    $preiseintrag_neu['lieferpreis'] = $katalog_netto / $preiseintrag_neu['lv_faktor'];
+
+    if( abs( $preiseintrag_neu['lieferpreis'] - $artikel['nettopreis'] ) > 0.005 ) {
       $neednewprice = TRUE;
       open_div( 'warn', '', "Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
-        <p class='li'>Katalog: <kbd>$katalog_brutto / $liefereinheit</kbd></p>
-        <p class='li'>Foodsoft: <kbd>{$artikel['bruttopreis']} / {$artikel['verteileinheit']}
-               = " . $artikel['bruttopreis'] * $preiseintrag_neu['lv_faktor'] . " / $liefereinheit
+        <p class='li'>Katalog: <kbd>$katalog_netto / $liefereinheit</kbd></p>
+        <p class='li'>Foodsoft: <kbd>{$artikel['nettopreis']} / {$artikel['verteileinheit']}
+               = " . $artikel['nettoliefer'] . " / $liefereinheit
           </kbd></p>
       " );
     }
@@ -285,7 +312,7 @@ function katalogabgleich(
     $preiseintrag_neu['gebindegroesse'] = $gebindegroesse * $lv_faktor_default;
     $preiseintrag_neu['mwst'] = $katalog_mwst;
     $preiseintrag_neu['bestellnummer'] = $katalog_bestellnummer;
-    $preiseintrag_neu['preis'] = $katalog_brutto / $lv_faktor_default;
+    $preiseintrag_neu['lieferpreis'] = $katalog_netto / $lv_faktor_default;
 
     $rv = 1;
   }
