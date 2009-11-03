@@ -777,8 +777,8 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   if( ! isset( $vorschlag['pfand'] ) )
     $vorschlag['pfand'] = $valid ? $produkt['pfand'] : '0.00';
 
-  if( ! isset( $vorschlag['preis'] ) )
-    $vorschlag['preis'] = $valid ? $produkt['endpreis'] : '0.00';
+  if( ! isset( $vorschlag['lieferpreis'] ) )
+    $vorschlag['lieferpreis'] = $valid ? $produkt['nettolieferpreis'] : '0.00';
 
   if( ! isset( $vorschlag['bestellnummer'] ) )
     $vorschlag['bestellnummer'] = $valid ? $produkt['bestellnummer'] : '';
@@ -838,7 +838,6 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            </span>
          <?
 
-
       open_tr();  // endpreis und verteileinheit
 
         open_td( 'label', 'Endverbraucher-Preis (Brutto, mit Pfand)', 'Endpreis:' );
@@ -846,8 +845,8 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         ?>
            <span onmouseover="help('Endverbraucher-Preis: Endpreis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
                  onmouseout="help(' ');" >
-           <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newpreis' name='preis'
-             value='<? echo $vorschlag['preis']; ?>'
+           <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newendpreis' name='endpreis'
+             value='<? echo $vorschlag['endpreis']; ?>'
              onchange='preisberechnung_rueckwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
@@ -935,7 +934,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       verteileinheit = document.forms[preisform].newverteileinheit.value;
       liefermult = parseFloat( document.forms[preisform].newliefermult.value );
       liefereinheit = document.forms[preisform].newliefereinheit.value;
-      preis = parseFloat( document.forms[preisform].newpreis.value );
+      endpreis = parseFloat( document.forms[preisform].newendpreis.value );
       lieferpreis = parseFloat( document.forms[preisform].newlieferpreis.value );
       gebindegroesse_in_liefereinheiten = parseFloat( document.forms[preisform].newgebindegroesse.value );
       lv_faktor = parseFloat( document.forms[preisform].newlv_faktor.value );
@@ -953,10 +952,10 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
     function preiseintrag_update() {
       document.forms[preisform].newmwst.value = mwst;
-      document.forms[preisform].newmwst.pfand = pfand;
+      document.forms[preisform].newpfand.value = pfand;
       document.forms[preisform].newverteilmult.value = verteilmult;
       document.forms[preisform].newverteileinheit.value = verteileinheit;
-      document.forms[preisform].newpreis.value = preis;
+      document.forms[preisform].newendpreis.value = endpreis;
       document.forms[preisform].newgebindegroesse.value = gebindegroesse_in_liefereinheiten;
       document.forms[preisform].newliefermult.value = liefermult;
       document.forms[preisform].newliefereinheit.value = liefereinheit;
@@ -977,7 +976,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         lieferpreis = 
-          parseInt( 0.499 + 100 * ( preis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
+          parseInt( 0.499 + 100 * ( endpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
       }
       preiseintrag_update();
     }
@@ -987,7 +986,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       preiseintrag_auslesen();
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        preis = 
+        endpreis = 
           parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / lv_faktor + pfand ) ) / 10000.0;
       }
       preiseintrag_update();
@@ -1010,7 +1009,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
 function action_form_produktpreis() {
   global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
-       , $gebindegroesse, $mwst, $pfand, $preis, $bestellnummer, $lv_faktor
+       , $gebindegroesse, $mwst, $pfand, $lieferpreis, $bestellnummer, $lv_faktor
        , $day, $month, $year, $notiz, $produkt_id;
 
   need_http_var('produkt_id','u');
@@ -1022,10 +1021,11 @@ function action_form_produktpreis() {
   need_http_var('liefermult','f');
   $liefermult = mult2string( $liefermult );
   need_http_var('liefereinheit','w');
+
   need_http_var('gebindegroesse','f'); // in liefereinheiten!
   need_http_var('mwst','f');
   need_http_var('pfand','f');
-  need_http_var('preis','f');
+  need_http_var('lieferpreis','f');
   need_http_var('lv_faktor','f');
   get_http_var('bestellnummer','H','');
   need_http_var('day','u');
@@ -1045,7 +1045,7 @@ function action_form_produktpreis() {
   }
 
   sql_insert_produktpreis(
-    $produkt_id, $preis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
+    $produkt_id, $lieferpreis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
   , "$liefermult $liefereinheit", "$verteilmult $verteileinheit", $lv_faktor
   );
 }
