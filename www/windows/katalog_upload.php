@@ -44,6 +44,7 @@ function katalog_update(
     , katalogdatum
     , katalogtyp
     , katalogformat
+    , gueltig
     ) VALUES (
       '$lieferant_id'
     , '$anummer'
@@ -59,6 +60,7 @@ function katalog_update(
     , '$katalogkw'
     , '$tag'
     , '$katalogformat'
+    , 1
     ) ON DUPLICATE KEY UPDATE
       bestellnummer='$bnummer'
     , name='$name'
@@ -72,6 +74,7 @@ function katalog_update(
     , katalogdatum='$katalogkw'
     , katalogtyp='$tag'
     , katalogformat='$katalogformat'
+    , gueltig=1
   " );
 }
 
