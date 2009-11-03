@@ -26,7 +26,7 @@ switch( $katalogformat ) {
     break;
   default:
   case 'keins':
-    error( "Katalogformat unbekannt oder nicht implementiert: $katalogformat" );
+    error( "Artikelsuche: Katalogformat unbekannt oder nicht implementiert: $katalogformat" );
 }
 
 // $bestell_id: falls aufgerufen aus 'preiseintrag fuer bestellung waehlen', muessen wir die

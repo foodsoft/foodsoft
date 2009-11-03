@@ -846,7 +846,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('Endverbraucher-Preis: Endpreis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
                  onmouseout="help(' ');" >
            <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newendpreis' name='endpreis'
-             value='<? echo $vorschlag['endpreis']; ?>'
+             value='<? printf( '%.4lf', $vorschlag['endpreis'] ); ?>'
              onchange='preisberechnung_rueckwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
