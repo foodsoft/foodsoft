@@ -1762,6 +1762,10 @@ function query_bestellzuordnungen( $op, $keys = array(), $using = array(), $orde
     case 'DELETE':
       $selects = 'bestellzuordnung.*'; // override selects from above!
       break;
+    case 'SUM':
+      $op = 'SELECT';
+      $selects = 'IFNULL( SUM( bestellzuordnung.menge ), 0 ) AS menge';
+      break;
     default:
       error( "undefined op: $op" );
   }
@@ -1782,10 +1786,7 @@ function sql_delete_bestellzuordnungen( $keys = array() ) {
 
 
 function select_bestellzuordnung_menge( $keys = array(), $using = array() ) {
-  return "
-    SELECT IFNULL( SUM( bestellzuordnungen.menge ), 0 ) AS menge
-    FROM ( " .select_bestellzuordnungen( $keys, $using ). " ) AS bestellzuordnungen
-  ";
+  return query_bestellzuordnungen( 'SUM', $keys, $using );
 }
 
 function sql_bestellzuordnung_menge( $keys = array() ) {
@@ -1862,11 +1863,10 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
             break;
           case $muell_id:
             $firstorder_expr = $muellmenge_expr;
-            $firstorder_expr = 'muellmenge';
             break;
           default:
             $firstorder_expr = $verteilmenge_expr;
-            $firstorder_expr = 'verteilmenge';
+            break;
         }
       else
         $firstorder_expr = "liefermenge";
