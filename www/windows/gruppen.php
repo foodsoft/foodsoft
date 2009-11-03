@@ -57,8 +57,11 @@ switch( $action ) {
 
     $row = sql_gruppendaten( $gruppen_id );
     $kontostand = kontostand( $gruppen_id );
+    $offene_bestellungen = sql_gruppe_offene_bestellungen( $gruppen_id );
     if( abs($kontostand) > 0.005 ) {
       div_msg( 'warn', "Kontostand ($kontostand EUR) ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
+    } elseif( $offene_bestellungen ) {
+      div_msg( 'warn', "nicht alle Bestellungen der Gruppe abgeschlossen: Loeschen nicht moeglich!" );
     } elseif( $row['mitgliederzahl'] != 0 ) {
       div_msg( 'warn', "Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
       div_msg( 'warn', "(bitte erst Mitglieder l&ouml;schen, um Sockelbetrag zu verbuchen)" );
@@ -184,8 +187,10 @@ open_table('list');
         // loeschen nur wenn
         // - kontostand 0
         // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
+        // - bestellungen, an denen sich die gruppe beteiligt hat, sind abgeschlossen
         if(    hat_dienst(5)
             && ( abs($kontostand) < 0.005 )
+            && ( ! sql_gruppe_offene_bestellungen( $row['id'] ) )
             && ( $row['mitgliederzahl'] == 0 )
             && ( ! in_array( $id, $specialgroups ) )
         ) {
