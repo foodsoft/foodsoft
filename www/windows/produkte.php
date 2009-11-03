@@ -42,6 +42,8 @@ open_table('layout hfill' );
           open_td();
             option_checkbox( 'options', OPTION_KATALOGABGLEICH, 'Abgleich mit Lieferantenkatalog'
                            , 'Sollen alle Einträge mit dem Lieferantenkatalog verglichen werden?' );
+      } else {
+        $options &= ~OPTION_KATALOGABGLEICH;
       }
     close_table();
 
