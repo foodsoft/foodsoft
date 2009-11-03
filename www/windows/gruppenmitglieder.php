@@ -20,7 +20,6 @@ if( hat_dienst(5) and ! $readonly ) {
   $edit_names = TRUE;
   $edit_dienst_einteilung=TRUE;
   $edit_pwd = TRUE;
-  $edit_gruppenname = TRUE;
 }
 
 $pwmsg = '';
@@ -54,7 +53,13 @@ switch( $action ) {
       } else {
         ${"dienst_$id"} = $row['diensteinteilung'];
       }
-      sql_update_gruppen_member( $id, ${"name_$id"}, ${"vorname_$id"}, ${"email_$id"}, ${"telefon_$id"}, ${"dienst_$id"} );
+      sql_update( 'gruppenmitglieder', $id, array(
+        'name' => ${"name_$id"}
+      , 'vorname' => ${"vorname_$id"}
+      , 'email' => ${"email_$id"}
+      , 'telefon' => ${"telefon_$id"}
+      , 'diensteinteilung' => ${"dienst_$id"}
+      ) );
     }
     if( hat_dienst(5) ) {
       get_http_var( 'gruppenname', 'H', sql_gruppenname( $gruppen_id ) );
