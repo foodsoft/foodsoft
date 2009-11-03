@@ -579,6 +579,7 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   $text = adefault( $get_parameters, 'text', '' );
   $class = adefault( $get_parameters, 'class', 'button' );
   $img = adefault( $get_parameters, 'img', '' );
+  $context = adefault( $get_parameters, 'context', 'a' );
 
   if( $confirm = adefault( $get_parameters, 'confirm', '' ) )
     $confirm = " if( confirm( '$confirm' ) ) ";
@@ -586,7 +587,11 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   if( isset( $get_parameters['update'] ) ) {
     $action = adefault( $post_parameters, 'action', '' );
     $message = adefault( $post_parameters, 'message', '' );
-    return alink( "javascript:$confirm post_action( '$action', '$message' );", $class, $text, $title, $img );
+    if( $context == 'js' ) {
+      return "$confirm post_action( '$action', '$message' );";
+    } else {
+      return alink( "javascript:$confirm post_action( '$action', '$message' );", $class, $text, $title, $img );
+    }
   }
 
   $get_parameters['context'] = 'form';
