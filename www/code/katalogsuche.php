@@ -231,25 +231,24 @@ function katalogabgleich(
   }
 
   if( $prgueltig ) {
+    $problems = array();
 
     // liefereinheit und mwst sollten mit katalog uebereinstimmen:
     //
     if( $preiseintrag_neu['liefereinheit'] != $artikel['liefereinheit'] ) {
-      $neednewprice = TRUE;
-      open_div( 'warn', '', "Problem: L-Einheit stimmt nicht:
+      $problems[] = "Problem: L-Einheit stimmt nicht:
         <p class='li'>Katalog: <kbd>{$preiseintrag_neu['liefereinheit']}</kbd></p>
         <p class='li'>Foodsoft: <kbd>{$artikel['liefereinheit']}</kbd></p>
         <div class='small'>die L-Einheit sollte dem Einzelpreis im Katalog zugrundeliegen</div>
-      " );
+      ";
     }
     if( $have_mwst ) {
       $preiseintrag_neu['mwst'] = $katalog_mwst;
       if( abs( $preiseintrag_neu['mwst'] - $artikel['mwst'] ) > 0.005 ) {
-        $neednewprice = TRUE;
-        open_div( 'warn', '', "Problem: MWSt-Satz stimmt nicht:
+        $problems[] = "Problem: MWSt-Satz stimmt nicht:
           <p class='li'>Katalog: <kbd>{$preiseintrag_neu['mwst']}</kbd></p>
           <p class='li'>Foodsoft: <kbd>{$artikel['mwst']}</kbd></p>
-        " );
+        ";
       }
     }
 
@@ -265,12 +264,11 @@ function katalogabgleich(
       default:
         if( $kan_liefereinheit !== $artikel['kan_verteileinheit'] ) {
           $preiseintrag_neu['verteileinheit'] = $verteileinheit_default;
-          $neednewprice = TRUE;
-          open_div( 'alert', '', "Warnung: Einheiten inkompatibel:
+          $problems[] = "Warnung: Einheiten inkompatibel:
                   <p class='li'>Katalog: <kbd>$kan_liefereinheit</kbd></p>
                   <p class='li'>Verteilung: <kbd>{$artikel['kan_verteileinheit']}</kbd></p>
                   <div class='small'>die Einheiten sollten in der Regel Vielfache voneinander sein - Ausnahmen auf eigene Gefahr!</div>
-          " );
+          ";
         }
     }
 
@@ -283,12 +281,11 @@ function katalogabgleich(
         $preiseintrag_neu['lv_faktor'] = $artikel['lv_faktor'];
         $preiseintrag_neu['gebindegroesse'] = $liefergebinde * $preiseintrag_neu['lv_faktor'];
         if( abs( $preiseintrag_neu['gebindegroesse'] - $artikel['gebindegroesse'] ) > 0.001 ) {
-          $neednewprice = TRUE;
-          open_div( 'warn', '', "Problem: Gebindegroessen oder Umrechnung Liefer/Verteileinheit stimmen nicht:
+          $problems[] = "Problem: Gebindegroessen oder Umrechnung Liefer/Verteileinheit stimmen nicht:
             <p class='li'>Katalog: <kbd>$liefergebinde * $liefereinheit</kbd></p>
             <p class='li'>Foodsoft: <kbd>{$artikel['gebindegroesse']} * {$artikel['verteileinheit']}</kbd></p>
             <div class='small'>Bitte manuell pr&uuml;en und neuen Preiseintrag erfassen!</div>
-          " );
+          ";
         }
       } else {
         if( $artikel['gebindegroesse'] > 0.001 ) {
@@ -296,10 +293,9 @@ function katalogabgleich(
         } else {
           $preiseintrag_neu['lv_faktor'] = 1.0;
         }
-        $neednewprice = TRUE;
-        open_div( 'warn', '', "Problem: Umrechnungsfaktor von Liefer und Verteileinheit noch nicht erfasst.
+        $problems[] = "Problem: Umrechnungsfaktor von Liefer und Verteileinheit noch nicht erfasst.
             <div class='small'>Bitte manuell pr&uuml;en und neuen Preiseintrag erfassen!</div>
-        " );
+        ";
       }
 
     } else {
@@ -310,33 +306,51 @@ function katalogabgleich(
       $preiseintrag_neu['lv_faktor'] = $kan_liefermult / $kan_verteilmult_neu;
       $preiseintrag_neu['gebindegroesse'] = $liefergebinde * $preiseintrag_neu['lv_faktor'];
       if( abs( $preiseintrag_neu['gebindegroesse'] - $artikel['gebindegroesse'] ) > 0.001 ) {
-        $neednewprice = TRUE;
-        open_div( 'warn', '', "Problem: Gebindegroessen stimmen nicht:
+        $problems[] = "Problem: Gebindegroessen stimmen nicht:
           <p class='li'>Katalog: <kbd>$liefergebinde * $liefereinheit</kbd></p>
           <p class='li'>Foodsoft: <kbd>{$artikel['gebindegroesse']} * {$artikel['verteileinheit']}</kbd></p>
-        " );
+        ";
       }
     }
 
     if( abs( $preiseintrag_neu['lieferpreis'] - $artikel['nettolieferpreis'] ) > 0.005 ) {
-      $neednewprice = TRUE;
-      open_div( 'warn' );
-        echo "Problem: Preise stimmen nicht (beide Brutto ohne Pfand):
-          <p class='li'>Katalog: <kbd>$katalog_netto / $liefereinheit</kbd></p>
-          <p class='li'>Foodsoft: <kbd>{$artikel['nettopreis']} / {$artikel['verteileinheit']} ";
-        if( $liefereinheit != $artikel['verteileinheit'] ) {
-          echo " = {$artikel['nettolieferpreis']} / $liefereinheit";
-        }
-        echo "</kbd></p>";
-      close_div();
+      $p = "Problem: Preise stimmen nicht (beide Netto ohne Pfand):
+        <p class='li'>Katalog: <kbd>$katalog_netto / $liefereinheit</kbd></p>
+        <p class='li'>Foodsoft: <kbd>". price_view($artikel['nettopreis'])." / {$artikel['verteileinheit']} ";
+      if( $liefereinheit != $artikel['verteileinheit'] ) {
+        $p .= " = {$artikel['nettolieferpreis']} / $liefereinheit";
+      }
+      $p .= "</kbd></p>";
+      $problems[] = $p;
     }
 
     if( $katalog_bestellnummer != $artikel['bestellnummer'] ) {
-      $neednewprice = TRUE;
-      open_div( 'warn', '', "Problem: Bestellnummern stimmen nicht:
+      $problems[] = "Problem: Bestellnummern stimmen nicht:
         <p class='li'>Katalog: <kbd>$katalog_bestellnummer</kbd></p>
         <p class='li'>Foodsoft: <kbd>{$artikel['bestellnummer']}</kbd></p>
-      " );
+      ";
+    }
+
+    if( $problems ) {
+      $neednewprice = true;
+      if( $kgueltig ) {
+        open_div( 'warn' );
+      } else {
+        open_div( 'alert' );
+        smallskip();
+        echo "Katalogeintrag ist als ungueltig markiert --- bitte manuell pruefen, was richtig ist!";
+        medskip();
+      }
+      foreach( $problems as $p ) {
+        open_div( '', '', $p );
+        smallskip();
+      }
+      close_div( 'warn' );
+    } else {
+      if( ! $kgueltig ) {
+        open_div( 'warn', '', "Katalogeintrag ist als ungueltig markiert, stimmt aber mit aktuellem Preiseintrag ueberein --- bitte manuell pruefen!" );
+        $neednewprice = true;
+      }
     }
 
   } else {
