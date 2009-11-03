@@ -1488,7 +1488,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     $legend = "Preis-Historie";
   }
 
-  if( sql_aktueller_produktpreis_id( $produkt_id ) ) {
+  if( sql_aktueller_produktpreis_id( $produkt_id ) and ! $bestell_id ) {
     $initial = 'off';
   } else {
     $initial = 'on';
