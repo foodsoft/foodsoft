@@ -46,6 +46,7 @@ function katalogsuche( $produkt ) {
 function katalogabgleich(
   $produkt_id
 , $detail = false  // Katalogeintrag auch anzeigen?
+, $editable = false
 , & $preiseintrag_neu = array() // aus Katalogeintrag Vorschlag fuer Preiseintrag generieren
 ) {
   global $mwst_default;
@@ -173,10 +174,16 @@ function katalogabgleich(
     if( $kgueltig ) {
       $class = 'ok';
       $checkedyes = 'checked';
-      $checkedno = 'onclick="'. fc_action( 'update,context=js', "action=katalog_ungueltig,message=$katalog_id" ) . ';"';
+      if( $editable )
+        $checkedno = 'onclick="'. fc_action( 'update,context=js', "action=katalog_ungueltig,message=$katalog_id" ) . ';"';
+      else
+        $checkedno = 'disabled';
     } else {
       $class = 'alert';
-      $checkedyes = 'onclick="'. fc_action( 'update,context=js', "action=katalog_gueltig,message=$katalog_id" ) . ';"';
+      if( $editable )
+        $checkedyes = 'onclick="'. fc_action( 'update,context=js', "action=katalog_gueltig,message=$katalog_id" ) . ';"';
+      else
+        $checkedyes = 'disabled';
       $checkedno = 'checked';
     }
     open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_typ / $katalog_datum" );
