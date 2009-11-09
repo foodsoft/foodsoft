@@ -35,6 +35,8 @@ if( $bestell_id ) {  // existierende bestellvorlage bearbeiten:
 }
 $editable = ( hat_dienst(4) and ( ! $readonly ) and ( $status < STATUS_ABGERECHNET ) );
 
+$lieferant_name = sql_lieferant_name( $lieferanten_id );
+
 get_http_var('action','w','');
 $editable or $action = '';
 
@@ -73,24 +75,47 @@ if( $action == 'save' ) {
     } else {
       $bestell_id = sql_insert_bestellung( $bestellname, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag );
 
-      // jetzt die ganzen werte in die tabelle bestellvorschlaege schreiben:
+      // bestellvorschlaege eintragen und vormerkungen raussuchen:
       $vormerkungen = array();
       foreach( $bestellliste as $produkt_id ) {
         sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
-        $vormerkungen = $vormerkungen + sql_bestellungzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $produkt_id ) );
+        $vormerkungen = $vormerkungen + sql_bestellungzuordnungen( array(
+          'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $produkt_id
+        ) );
       }
-      // erst _alle_ vormerkungen fuer diesen lieferanten loeschen...
-      sql_delete_bestellzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'lieferanten_id' => $lieferanten_id ) );
-      // ...dann die vormerkungen fuer in der vorlage aufgefuehrte produkte in bestellungen wandeln:
+      // alle vormerkungen dieses lieferanten loeschen:
+      sql_delete_bestellzuordnungen( array(
+        'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'lieferanten_id' => $lieferanten_id
+      ) );
+      $vorbestellungen_fest = 0;
+      $vorbestellungen_toleranz = 0;
       foreach( $vormerkungen as $vormerkung ) {
+        $gruppen_id = $vormerkung['gruppen_id'];
+        $produkt_id = $vormerkung['produkt_id'];
+        $menge = $vormerkung['menge'];
+        $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
+        $keys = array( 'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id );
         switch( $vormerkung['art'] ) {
           case BESTELLZUORDNUNG_ART_VORMERKUNG_FEST:
-            change_bestellmengen( $vormerkung['gruppen_id'], $bestell_id, $vormerkung['produkt_id'], $vormerkung['menge'], -1, true );
+            change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $menge, -1, true );
+            $vorbestellungen_fest++;
             break;
           case BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ:
-            change_bestellmengen( $vormerkung['gruppen_id'], $bestell_id, $vormerkung['produkt_id'], -1, $vormerkung['menge'], true );
+            change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, -1, $menge, true );
+            $vorbestellungen_toleranz++;
             break;
         }
+        // vormerkungen zu produkten in bestellvorlage bleiben bestehen:
+        sql_insert( 'bestellzuordnung', $keys + array( 'art' => $vormerkung['art'], 'menge' => $menge ) );
+      }
+      if( $vorbestellungen_fest + $vorbestellungen_toleranz ) {
+        $js_on_exit[] = " alert( '
+          Aufgrund bestehender Vormerkungen fuer Produkte in dieser Bestellvorlage wurden
+          $vorbestellungen_fest Festbestellungen und $vorbestellungen_toleranz Toleranzbestellungen
+          automatisch eingetragen.
+          Fuer Produkte dieses Lieferanten, die nicht in diese Bestellvorlage aufgenommen sind, wurden alle
+          Vormerkungen geloescht.
+        ' ); ";
       }
       $done = true;
       $self_fields['bestell_id'] = $bestell_id;
