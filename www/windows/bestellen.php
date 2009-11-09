@@ -7,7 +7,7 @@ setWikiHelpTopic( "foodsoft:bestellen" );
 
 if( hat_dienst(4) ) {
   $gruppen_id = $basar_id;
-  $kontostand = 100.0;
+  $kontostand = 250.0;
   $festgelegt = 0.0;
   echo "<h1>Bestellen f&uuml;r den Basar</h1>";
 } else {
@@ -54,8 +54,11 @@ if( ! $bestell_id )
 //
 
 $lieferanten_id = $gesamtbestellung['lieferanten_id'];
+$lieferant = sql_lieferant( $lieferanten_id );
 
 get_http_var( 'action', 'w', '' );
+if( $readonly )
+  $action = '';
 switch( $action ) {
   case 'produkt_hinzufuegen':
     need_http_var( 'produkt_id', 'U' );
@@ -86,10 +89,37 @@ switch( $action ) {
     need_http_var( 'produkt_id', 'U' );
     sql_delete_bestellvorschlag( $produkt_id, $bestell_id );
     break;
+  case 'update_prices':
+    // preiseintrage automatisch aktualisieren: bisher nur fuer bestellnummern:
+    $n = 0;
+    foreach( sql_bestellung_produkte( $bestell_id ) as $p ) {
+      if( update_preis( $p['produkt_id'] ) ) {
+        $n++;
+      }
+    }
+    if( $n ) {
+      $js_on_exit[] = "alert( 'Die Preiseintraege von $n Produkten wurden aktualisiert.' );";
+    } else {
+      $js_on_exit[] = "alert( 'Fuer kein Produkt konnte der Preis automatisch aktualisiert werden --- bitte manuell pruefen!' );";
+    }
+    break;
 }
 
 $produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
+
+
+if( hat_dienst( 4 ) ) {
+  $bestellnummer_falsch = array();
+  $preis_falsch = array();
+  open_div( "class='nodisplay'", "id='bestellnummer_warnung'" );
+    echo "Warnung: bei <span id='bestellnummern_falsch'>?</span> Produkten scheinen die Bestellnummern falsch ";
+    echo fc_action( 'update,class=button,text=alle aktualisieren', 'action=update_prices' );
+  close_div();
+  open_div( "class='nodisplay'", "id='preis_warnung'" );
+    echo "Warnung: bei <span id='preise_falsch'>?</span> Produkten scheinen die Preise falsch --- bitte pruefen!";
+  close_div();
+}
 
 // $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
 
@@ -501,11 +531,39 @@ foreach( $produkte as $produkt ) {
   open_td('top center');
     open_table('layout');
       open_tr();
-        if( hat_dienst(4) && ( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) ) {
-          open_td( 'mult outdated', "title='Preis nicht aktuell!'" );
-        } else {
-          open_td( 'mult' );
+        $class = 'mult ';
+        $title = '';
+        if( hat_dienst(4) ) {
+          if( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) {
+            $preis_falsch[] = $n;
+            $class .= 'outdated';
+            $title = 'Preis nicht aktuell!';
+          } else {
+            $katalogdaten = array();
+            switch( katalogabgleich( $produkt_id, 0, 0, & $katalogdaten ) == 1 ) {
+              case 0:
+                $class .= 'ok';
+                $title = 'Preis aktuell und konsistent mit Lieferantenkatalog '. $katalogdaten['katalogname'];
+                break;
+              case 3:
+                // kein Katalog erfasst: Abgleich nicht moeglich!
+                break;
+              case 4:
+                $bestellnummer_falsch[] = $n;
+                $class .= 'alert';
+                $title = 'Bestellnummer anders als in Lieferantenkatalog ' . $katalogdaten['katalogname'];
+                break;
+              case 1:
+              case 2:
+              default:
+                $preis_falsch[] = $n;
+                $class .= 'warn';
+                $title = 'Abweichung oder kein Treffer bei Katalogabgleich!';
+                break;
+            }
+          }
         }
+        open_td( $class, "title='$title'" );
         echo fc_link( 'produktdetails', array( 'produkt_id' => $n, 'bestell_id' => $bestell_id
                                           , 'text' => sprintf( '%.2lf', $preis ), 'class' => 'href' ) );
         open_td( 'unit', '', "/ {$produkt['verteileinheit']}" );
@@ -623,12 +681,23 @@ close_table();
 if( ! $readonly ) {
   close_form();
 
+  if( hat_dienst( 4 ) ) {
+    if( $bestellnummern_falsch ) {
+      $js_on_exit[] = "document.getElementById('bestellnummer_warnung').firstChild.nodeValue
+                        = count( $bestellnummern_falsch );";
+      $js_on_exit[] = "document.getElementById('bestellnummern_falsch').className = 'alert';";
+    }
+    if( $preise_falsch ) {
+      $js_on_exit[] = "document.getElementById('preis_warnung').className = 'alert';";
+    }
+  }
+
   open_div( 'middle', "id='hinzufuegen'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen' );
         select_products_not_in_list($bestell_id);
         submission_button( 'Produkt hinzuf&uuml;gen' );
-        $anzahl_eintraege = sql_anzahl_katalogeintraege( $lieferanten_id );
+        $anzahl_eintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
         if( $anzahl_eintraege > 0 ) {
           div_msg( 'kommentar', "
             Ist ein gewünschter Artikel nicht in der Auswahlliste? 
