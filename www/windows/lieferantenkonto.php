@@ -87,7 +87,7 @@ open_table('list');
     open_td();
     open_td( 'number', '', price_view( $kontostand ) );
 
-  $konto_result = sql_get_group_transactions( 0, $lieferanten_id );
+  $konto_result = sql_transactions( 0, $lieferanten_id );
   $vert_result = sql_bestellungen_soll_lieferant( $lieferanten_id );
 
   $summe = $kontostand;
