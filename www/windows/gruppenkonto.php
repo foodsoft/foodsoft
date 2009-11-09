@@ -155,16 +155,15 @@ if( $meinkonto ) {
 $kontostand = kontostand($gruppen_id);
 $pfandkontostand = pfandkontostand($gruppen_id);
 
-// aktuelle Gruppendaten laden
-$bestellgruppen_row = sql_gruppendaten( $gruppen_id );
-	
+
 // wieviele Kontenbewegungen werden ab wo angezeigt...
 if (isset($HTTP_GET_VARS['start_pos'])) $start_pos = $HTTP_GET_VARS['start_pos']; else $start_pos = 0;
 //Funktioniert erstmal mit der Mischung aus Automatischer Berechung und manuellen Einträgen nicht
 //FIXME: vielleicht ggf. start/enddatum waehlbar machen? oder immer ganze jahre?
 $size          = 2000;
-	 
-	
+
+$aufschlag_anzeigen = ( sql_bestellungen( 'aufschlag_prozent > 0' ) ? true : false );
+
 $cols = 9;
 open_table('list');
     open_th( '', '', 'Typ' );
@@ -175,19 +174,26 @@ open_table('list');
     open_th( 'bottom', '', 'RÃ¼ckgabe' );
     open_th( '', '', 'Pfandkonto' );
     open_th( '', '', 'Waren' );
-    open_th( '', '', 'Buchung' );
+    if( $aufschlag_anzeigen ) {
+      open_th( '', '', 'Aufschlag' );
+      $cols++;
+    }
+    open_th( '', '', 'Betrag' );
     open_th( '', '', 'Kontostand' );
   open_tr( 'summe' );
     open_td( 'right', "colspan='6'", 'Kontostand:' );
     open_td( 'number', '', price_view( $pfandkontostand ) );
     open_td();
     open_td();
+    if( $aufschlag_anzeigen ) {
+      open_td();
+    }
     open_td( 'number', '', price_view( $kontostand ) );
 
-  $konto_result = sql_get_group_transactions( $gruppen_id, 0 );
+  $konto_result = sql_transactions( $gruppen_id, 0 );
   $num_rows = count($result);
 
-  $vert_result = sql_bestellungen_soll_gruppe($gruppen_id);
+  $vert_result = sql_bestellungen_soll_gruppe( $gruppen_id );
   $summe = $kontostand;
   $pfandsumme = $pfandkontostand;
   $konto_row = current($konto_result);
@@ -202,7 +208,8 @@ open_table('list');
       $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
       $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
       $waren_soll = $vert_row['waren_brutto_soll'];
-      $soll = $pfand_soll + $waren_soll;
+      $aufschlag_soll = $vert_row['aufschlag_soll'];
+      $soll = $pfand_soll + $waren_soll + $aufschlag_soll;
       $have_pfand = false;
 
       open_td('bold', '', 'Bestellung' );
@@ -225,13 +232,18 @@ open_table('list');
         }
       open_td( 'number', '', $have_pfand ? price_view( $pfandsumme ) : '' );
       open_td( 'number', '', price_view( $waren_soll ) );
+      if( $aufschlag_anzeigen ) {
+        open_td( 'number', '', price_view( $aufschlag_soll ) );
+      }
       open_td( 'number bold', '', price_view( $soll ) );
       open_td( 'number', '', price_view( $summe ) );
 
       $summe -= $soll;
       $pfandsumme -= $pfand_soll;
       $vert_row = next($vert_result);
+
     } else {
+
       $k_id = $konto_row['konterbuchung_id'];
       open_td( 'bold' );
         if( $k_id >= 0 ) {
@@ -257,6 +269,9 @@ open_table('list');
         open_td();
         open_td();
         open_td();
+        if( $aufschlag_anzeigen ) {
+          open_td();
+        }
         open_td( 'number bold', '', price_view( $konto_row['summe'] ) );
         open_td( 'number', '', price_view( $summe ) );
 
@@ -269,34 +284,11 @@ open_table('list');
     open_td( 'number', '', price_view( $pfandsumme ) );
     open_td();
     open_td();
+    if( $aufschlag_anzeigen ) {
+      open_td();
+    }
     open_td( 'number', '', price_view( $summe ) );
 
 close_table();
-
-if( 0 ) { // noch ausser betrieb
-  ?>
-	 <form name="skip" action="showGroupTransaktions.php">
-	    <input type="hidden" name="gruppen_id" value="<?PHP echo $gruppen_id; ?>">
-			<input type="hidden" name="gruppen_pwd" value="<?PHP echo $gruppen_pwd; ?>">
-			<input type="hidden" name="start_pos" value="<?PHP echo $start_pos; ?>">
-			<?PHP 
-			   $downButtonScript = "";
-			   if ($start_pos > 0 && $start_pos > $size)
-				    $downButtonScript="document.forms['skip'].start_pos.value=".($start_pos-$size).";";
-				 else if ($start_pos > 0)
-				    $downButtonScript="document.forms['skip'].start_pos.value=0;";
-						
-				 if ($downButtonScript != "")
-				    echo "<input type=button value='<' onClick=\"".$downButtonScript." ;document.forms['skip'].submit();\">";
-
-			   $upButtonScript = "";
-			   if ($num_rows == $size)
-				    $upButtonScript="document.forms['skip'].start_pos.value=".($start_pos+$size).";";
-
-				 if ($upButtonScript != "") echo "<input type=button value='>' onClick=\"".$upButtonScript.";document.forms['skip'].submit()\"";
-			?>
-	 </form>
-   <?
-}
 
 ?>
