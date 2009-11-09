@@ -41,11 +41,11 @@ function katalogsuche( $produkt ) {
 //  1: Katalogeintrag weicht ab (oder kein Preiseintrag in der Foodsoft-Datenbank)
 //  2: Katalogsuche fehlgeschlagen
 //  3: kein Katalog dieses Lieferanten erfasst
-// 
+//  4: Abweichung nur bei Bestellnummer (Terra.....)
 //
 function katalogabgleich(
   $produkt_id
-, $detail = false  // Katalogeintrag auch anzeigen?
+, $display_level = 0  // 0: garnix, 1: abweichungen, 2: voller katalogeintrag
 , $editable = false
 , & $preiseintrag_neu = array() // aus Katalogeintrag Vorschlag fuer Preiseintrag generieren
 ) {
@@ -54,6 +54,7 @@ function katalogabgleich(
   $artikel = sql_produkt_details( $produkt_id );
   $prgueltig = $artikel['zeitstart'];
   $neednewprice = false;
+  $neednewbestellnummer = false;
 
   $katalogeintrag = katalogsuche( $artikel );
   if( $katalogeintrag == 1 ) {
@@ -78,6 +79,8 @@ function katalogabgleich(
   $katalog_verband = $katalogeintrag["verband"];
   $katalog_netto = $katalogeintrag["preis"];
   $katalog_id = $katalogeintrag["id"];
+
+  $katalog_katalogname = sql_katalogname( $katalog_id );
 
   $kgueltig = $katalogeintrag['gueltig'];
 
@@ -170,7 +173,7 @@ function katalogabgleich(
     $katalog_brutto = 'n/a';
   }
 
-  if( $detail ) {
+  if( $display_level >= 2 ) {
     if( $kgueltig ) {
       $class = 'ok';
       $checkedyes = 'checked';
@@ -186,7 +189,7 @@ function katalogabgleich(
         $checkedyes = 'disabled';
       $checkedno = 'checked';
     }
-    open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_typ / $katalog_datum" );
+    open_fieldset( 'big_form', '', "Lieferantenkatalog: Artikel gefunden in Katalog $katalog_katalogname" );
       open_table( 'list hfill' );
           open_th( '', "title='Artikelnummer'", 'A-Nr.' );
           open_th( '', "title='Bestellnummer'", 'B-Nr.' );
@@ -228,8 +231,9 @@ function katalogabgleich(
   // - die L-felder werden immer aus dem katalog uebernommen, 
   // - die V-felder wenn moeglich aus dem letzten Preiseintrag
   //
-  $preiseintrag_neu = array();
 
+  $preiseintrag_neu['katalog_id'] = $katalog_id;
+  $preiseintrag_neu['katalogname'] = $katalog_katalogname;
   $preiseintrag_neu['liefereinheit'] = $liefereinheit;
   $preiseintrag_neu['lieferpreis'] = $katalog_netto;
   $preiseintrag_neu['bestellnummer'] = $katalog_bestellnummer;
@@ -331,33 +335,37 @@ function katalogabgleich(
       $problems[] = $p;
     }
 
+    if( $problems ) {
+      $neednewprice = true;
+    }
+
     if( $katalog_bestellnummer != $artikel['bestellnummer'] ) {
+      $neednewbestellnummer = true;
       $problems[] = "Problem: Bestellnummern stimmen nicht:
         <p class='li'>Katalog: <kbd>$katalog_bestellnummer</kbd></p>
         <p class='li'>Foodsoft: <kbd>{$artikel['bestellnummer']}</kbd></p>
       ";
     }
 
-    if( $problems ) {
+    if( ( ! $problems ) and ( ! $kgueltig ) ) {
+      $problems[] = "Katalogeintrag ist als ungueltig markiert, stimmt aber mit aktuellem Preiseintrag ueberein --- bitte manuell pruefen!";
       $neednewprice = true;
+    }
+
+    if( $problems && ( $display_level >= 1 ) ) {
       if( $kgueltig ) {
         open_div( 'warn' );
       } else {
         open_div( 'alert' );
         smallskip();
-        echo "Katalogeintrag ist als ungueltig markiert --- bitte manuell pruefen, was richtig ist!";
+        echo "Katalogeintrag ist als ungueltig markiert --- bitte pruefen:";
         medskip();
       }
       foreach( $problems as $p ) {
         open_div( '', '', $p );
         smallskip();
       }
-      close_div( 'warn' );
-    } else {
-      if( ! $kgueltig ) {
-        open_div( 'warn', '', "Katalogeintrag ist als ungueltig markiert, stimmt aber mit aktuellem Preiseintrag ueberein --- bitte manuell pruefen!" );
-        $neednewprice = true;
-      }
+      close_div();
     }
 
   } else {
@@ -369,7 +377,50 @@ function katalogabgleich(
     $neednewprice = TRUE;
   }
 
-  return ( $neednewprice ? 1 : 0 );
+  if( $neednewprice ) {
+    // inkonsistenz: sollte manuell ueberprueft werden:
+    return 1;
+  }
+  if( $neednewbestellnummer ) {
+    if( $kgueltig ) {
+      // automatisches update sollte unproblematisch sein:
+      return 4;
+    } else {
+      return 1;
+    }
+  }
+  return 0; // keine probleme
+}
+
+// update_preis:
+//   aktuellen preiseintrag aus katalog automatisch erzeugen
+//   (zur zeit: nur falsche bestellnummern werden automatisch korrigiert!)
+// rueckgabe:
+//  0 : preis ist aktuell, kein neueintrag notwendig
+//  1 : preis wurde aktualisiert
+//  2 : automatische aktualisierung nicht moeglich oder fehlgeschlagen
+//
+function update_preis( $produkt_id ) {
+  global $mysql_heute;
+  $preiseintrag_neu = array();
+  $r = katalogabgleich( $produkt_id, 0, 0, & $preiseintrag_neu );
+  switch( $r ) {
+    case 0:
+      return 0;
+    case 1:
+    case 2:
+    case 3:
+      return 2;
+    case 4:
+      sql_insert_produktpreis(
+        $produkt_id, $preiseintrag_neu['lieferpreis'], $mysql_heute
+      , $preiseintrag_neu['bestellnummer'], $preiseintrag_neu['gebindegroesse']
+      , $preiseintrag_neu['mwst'], $preiseintrag_neu['pfand']
+      , $preiseintrag_neu['liefereinheit'], $preiseintrag_neu['verteileinheit']
+      , $preiseintrag_neu['lv_faktor']
+      );
+      return 1;
+  }
 }
 
 ?>
