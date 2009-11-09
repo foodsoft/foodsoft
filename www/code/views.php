@@ -555,7 +555,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   , "<th>" . fc_link( 'self', "orderby=datum,text=Lieferdatum,title=Sortieren nach Lieferdatum" ) ."</th>"
   , "<th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
-  , "<th title='Wert incl. MWSt. und Pfand'>Wert</th>"
+  , "<th title='Wert incl. MWSt und ggf. Pfand und Aufschlag der FC '>Wert</th>"
   , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   switch( $order ) {
