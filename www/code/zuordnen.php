@@ -1430,6 +1430,94 @@ function sql_lieferant_katalogeintraege( $lieferanten_id ) {
                   , "(lieferanten_id = $lieferanten_id) and (katalogformat = '$katalogformat')" );
 }
 
+
+////////////////////////////////////
+//
+// funktionen fuer produkte
+//
+////////////////////////////////////
+
+
+function query_produkte( $op, $keys = array(), $using = array(), $orderby = false ) {
+  $selects = array();
+  $filters = array();
+  $joins = need_joins_array( $using, array(
+    'produktgruppen' => 'produktgruppen.id = produkte.produktgruppen_id'
+  , 'lieferanten' => 'lieferanten.id = produkte.lieferanten_id'
+  ) );
+
+  $selects[] = 'produkte.id as produkt_id';
+  $selects[] = 'produkte.artikelnummer';
+  $selects[] = 'produkte.name as name';
+  $selects[] = 'produkte.lieferanten_id';
+  $selects[] = 'produkte.produktgruppen_id';
+  $selects[] = 'produkte.notiz';
+  $selects[] = 'produktgruppen.name as produktgruppen_name';
+  $selects[] = 'produktgruppen.id as produktgruppen_id';
+  $selects[] = 'lieferanten.name as lieferant_name';
+
+  foreach( $keys as $key => $cond ) {
+    switch( $key ) {
+      case 'lieferant_id':
+      case 'lieferanten_id':
+        $filters['lieferanten.id'] = $cond;
+        break;
+      case 'bestell_id':
+      case 'gesamtbestellung_id':
+        $joins['bestellvorschlaege'] = 'bestellvorschlaege.produkt_id = produkte.id';
+        $joins['gesamtbestellungen'] = 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id';
+        $filters['gesamtbestellungen.id'] = $cond;
+        break;
+      default:
+          error( "undefined key: $key" );
+    }
+  }
+  if( $using ) {
+    is_array( $using ) or ( $using = array( $using ) );
+    foreach( $using as $table ) {
+      switch( $table ) {
+        case 'gesamtbestellungen':
+          $joins['bestellvorschlaege'] = 'bestellvorschlaege.produkt_id = produkte.id';
+          $filters[] = 'bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id';
+          break;
+        case 'lieferanten':
+          $filters[] = 'produkte.lieferanten_id = lieferanten.id';
+          break;
+        default:
+          error( "Sorry, I have no use for table $table" );
+      }
+    }
+  }
+
+  switch( $op ) {
+    case 'SELECT':
+      break;
+    case 'COUNT':
+      $op = 'SELECT';
+      $selects = 'COUNT(*) as anzahl';
+      break;
+    default:
+      error( "undefined op: $op" );
+  }
+  return get_sql_query( $op, 'produkte', $selects, $joins, $filters, $orderby );
+}
+
+function select_produkte( $keys = array(), $using = array(), $orderby = false ) {
+  return query_produkte( 'SELECT', $keys, $using, $orderby );
+}
+
+function select_produkte_anzahl( $keys = array(), $using = array() ) {
+  return query_produkte( 'COUNT', $keys, $using );
+}
+
+function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produktgruppen.id, produkte.name' ) {
+  return mysql2array( doSql( select_produkte( $keys, array(), $orderby ) ) );
+}
+
+function sql_produkte_anzahl( $keys = array() ) {
+  return sql_select_single_field( select_produkte_anzahl( $keys ), 'anzahl' );
+}
+
 ////////////////////////////////////
 //
 // funktionen fuer gesamtbestellung, bestellvorschlaege und gruppenbestellungen:
@@ -1742,6 +1830,8 @@ function query_bestellzuordnungen( $op, $keys = array(), $using = array(), $orde
         case 'gruppenbestellungen':
           $filters[] = 'bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id';
           break;
+        default:
+          error( "Sorry, I have no use for table $table" );
       }
     }
   }
@@ -1770,7 +1860,7 @@ function select_bestellzuordnungen( $keys = array(), $using = array(), $orderby 
 }
 
 function sql_bestellzuordnungen( $keys = array(), $orderby = 'bestellzuordnung.zeitpunkt' ) {
-  return mysql2array( doSql( select_bestellzuordnungen( $keys, $orderby ) ) );
+  return mysql2array( doSql( select_bestellzuordnungen( $keys, array(), $orderby ) ) );
 }
 
 function sql_delete_bestellzuordnungen( $keys = array() ) {
