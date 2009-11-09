@@ -340,17 +340,19 @@ function get_latest_dienst( $add_days = 0 ) {
   );
 }
 
-/**
- *  giebt daten mit bestimmten Diensten und Status
- *  (benutzt beim dienstabtausch)
- */
-function sql_dates_dienst( $dienst, $status ) {
-  return mysql2array( doSql( "
-    SELECT DISTINCT lieferdatum as datum 
-    FROM dienste
-    WHERE ( dienst = '$dienst' )
-      AND ( status = '$status' )
-  ", LEVEL_ALL, "Error while reading Dienstplan" ) );
+function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
+  $dienst = sql_dienst( $dienst_id );
+  $filter = "
+        ( dienste.dienst = {$dienst['dienst']} )
+    AND ( dienste.id != $dienst_id )
+    AND ( NOT dienste.geleistet )
+    AND ( dienste.lieferdatum <= curdate() )
+  ";
+
+  $r = sql_dienste( $filter . " and ( dienste.status = 'Offen' ) " );
+  if( !r )
+    $r = sql_dienste( $filter . " and ( dienste.status = 'Vorgeschlagen' ) " );
+  return $r;
 }
 
 
@@ -367,7 +369,7 @@ function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false, $status_neu 
     case 'Bestaetigt':
       if( $dienst['gruppen_id'] )
         if( $login_gruppen_id != $dienst['gruppen_id'] )
-          need( $abgesprochen, 'Uebernahme nur nach Absprache' );
+          need( $abgesprochen, "Dienst schon {$dienst['status']}: Uebernahme nur nach Absprache" );
     case 'Vorgeschlagen':
     case 'Offen':
       break;
@@ -405,7 +407,7 @@ function sql_dienst_wird_offen( $dienst_id ) {
 /**
  *  Dienst ablehnen und alternative suchen
  */
-function sql_dienst_abtauschen( $dienst_id, $bevorzugtes_datum ) {
+function sql_dienst_abtauschen( $dienst_id, $tausch_id ) {
   global $login_gruppen_id;
 
   $dienst = sql_dienst( $dienst_id );
@@ -413,25 +415,18 @@ function sql_dienst_abtauschen( $dienst_id, $bevorzugtes_datum ) {
   need( $dienst["status"] == "Vorgeschlagen", "falscher Status ".$dienst['status'] );
   need( $dienst["gruppen_id"] == $login_gruppen_id, "falsche gruppen_id" );
 
-  $ausweichdienste = sql_dienste( " ( lieferdatum = '$bevorzugtes_datum' )
-                                      and ( status = 'Offen' )
-                                      and ( not geleistet )
-                                      and ( dienst = '{$dienst['dienst']}' ) " );
-  if( ! $ausweichdienste ) {
-    $ausweichdienste = sql_dienste( " ( lieferdatum = '$bevorzugtes_datum' )
-                                        and ( status = 'Vorgeschlagen' )
-                                        and ( not geleistet )
-                                        and ( dienst = '{$dienst['dienst']}' ) " );
+  $ausweichdienste = sql_dienste_tauschmoeglichkeiten( $dienst_id );
+  foreach( $ausweichdienste as $h ) {
+    if( $h['id'] == $tausch_id ) {
+      sql_dienst_akzeptieren( $h['id'] );
+      return sql_update( 'dienste', $dienst_id, array(
+        'gruppen_id' => $h['gruppen_id']
+      , 'gruppenmitglieder_id' => $h['gruppenmitglieder_id']
+      , 'status' => $h['status']
+      ) );
+    }
   }
-  need( $ausweichdienste, "Kein Ausweichsdienst an diesem Datum $bevorzugtes_datum für Dienst ".$dienst["dienst"] );
-
-  $ausweichdienst = $ausweichdienste[0];
-  sql_dienst_akzeptieren( $ausweichdienst['id'] );
-  sql_update( 'dienste', $dienst_id, array(
-    'gruppen_id' => $ausweichdienst['gruppen_id']
-  , 'gruppenmitglieder_id' => $ausweichdienst['gruppenmitglieder_id']
-  , 'status' => $ausweichdienst['status']
-  ) );
+  error( "Diensttausch fehlgeschlagen: kein gueltiger Ausweichdienst gewaehlt" );
 }
 
 /**
@@ -1431,11 +1426,8 @@ function sql_lieferant_katalogeintraege( $lieferanten_id ) {
   if( ( $katalogformat == 'keins' ) || ( $katalogformat == '' ) ) {
     return 0;
   }
-  return sql_select_single_field( "
-    SELECT count(*) AS anzahl FROM lieferantenkatalog
-    WHERE ( lieferanten_id = $lieferanten_id ) and ( katalogformat = '$katalogformat' )
-  ", 'anzahl'
-  );
+  return sql_count( 'lieferantenkatalog'
+                  , "(lieferanten_id = $lieferanten_id) and (katalogformat = '$katalogformat')" );
 }
 
 ////////////////////////////////////
@@ -1515,6 +1507,7 @@ function sql_change_bestellung_status($bestell_id, $state){
       verteilmengenLoeschen( $bestell_id );
       break;
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
+      vormerkungenLoeschen( $bestell_id );
       $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
     case STATUS_VERTEILT . "," . STATUS_ABGERECHNET:
@@ -2250,10 +2243,7 @@ function verteilmengenLoeschen( $bestell_id ) {
 }
 
 
-/**
- *
- */
-function verteilmengenZuweisen($bestell_id){
+function verteilmengenZuweisen( $bestell_id ) {
   $basar_id = sql_basar_id();
 
   need( sql_bestellung_status($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
@@ -2266,44 +2256,82 @@ function verteilmengenZuweisen($bestell_id){
     );
     $festzuteilungen = $zuteilungen['festzuteilungen'];
     $toleranzzuteilungen = $zuteilungen['toleranzzuteilungen'];
+    $zuteilungen = array();
     foreach( $festzuteilungen as $gruppen_id => $menge ) {
-      if( $gruppen_id == $basar_id )
-        continue;
-      if( isset( $toleranzzuteilungen[$gruppen_id] ) ) {
-        $menge += $toleranzzuteilungen[$gruppen_id];
-        unset( $toleranzzuteilungen[$gruppen_id] );
-      }
-      $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
-      sql_insert( 'bestellzuordnung', array(
-        'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
-      , 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG, 'menge' => $menge
-      ) );
+      if( isset( $zuteilungen[$gruppen_id] ) )
+        $zuteilungen[$gruppen_id] += $menge;
+      else
+        $zuteilungen[$gruppen_id] = $menge;
     }
     foreach( $toleranzzuteilungen as $gruppen_id => $menge ) {
+      if( isset( $zuteilungen[$gruppen_id] ) )
+        $zuteilungen[$gruppen_id] += $menge;
+      else
+        $zuteilungen[$gruppen_id] = $menge;
+    }
+    foreach( $zuteilungen as $gruppen_id => $menge ) {
       if( $gruppen_id == $basar_id )
+        continue;
+      if( $menge <= 0 )
         continue;
       $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
       sql_insert( 'bestellzuordnung', array(
-        'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id
-      , 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG, 'menge' => $menge
+               'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
+             , 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG, 'menge' => $menge
       ) );
     }
-    foreach( $festzuteilungen + $toleranzzuteilungen as $gruppen_id => $menge ) {
+  }
+}
+
+function vormerkungenLoeschen( $bestell_id ) {
+  $vormerkungen_teilerfuellt = 0;
+  $vormerkungen_unerfuellt = 0;
+  $vormerkungen_erfuellt = 0;
+  $lieferant_id = sql_bestellung_lieferant_id( $bestell_id );
+  foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+    foreach( sql_bestellung_gruppen( $bestell_id, $produkt['produkt_id'] ) as $gruppe ) {
+      $gruppen_id = $gruppe['id'];
       $vormerkung_fest = sql_bestellzuordnung_menge( array(
-        'art' => BESTELLZUORDNUNG_ART_VORKERMUNG_FEST
+        'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST
       , 'gruppen_id' => $gruppen_id, 'produkt_id' => $produkt_id
       ) );
       $vormerkung_toleranz = sql_bestellzuordnung_menge( array(
-        'art' => BESTELLZUORDNUNG_ART_VORKERMUNG_TOLERANZ
+        'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ
       , 'gruppen_id' => $gruppen_id, 'produkt_id' => $produkt_id
       ) );
       sql_delete_bestellzuordnungen( array(
-        'art' => BESTELLZUORDNUNG_ART_VORKERMUNGEN
+        'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN
       , 'gruppen_id' => $gruppen_id, 'produkt_id' => $produkt_id
       ) );
-      error( "men at work!" );
-      // if( $festzuteilungen[$gruppen_id] <= $vormerkung_fest ) ) {
+      if( $vormerkung_fest + $vormerkung_toleranz <= 0 )
+        continue;
+      $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
+      $keys = array( 'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id );
+      $zuteilung = sql_bestellzuordnung_menge( $keys + array( 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNGEN ) );
+      if( $zuteilung < $vormerkung_fest ) {
+        // nicht vollstaendig erfuellt: neue vormerkung eintragen:
+        sql_insert( 'bestellzuordnung', $keys + array(
+          'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST, 'menge' => ( $vormerkung_fest - $zuteilung )
+        ) );
+        sql_insert( 'bestellzuordnung', $keys + array(
+          'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ, 'menge' => $vormerkung_toleranz
+        ) );
+        if( $zuteilung ) {
+          $vormerkungen_teilerfuellt++;
+        } else {
+          $vormerkungen_unerfuellt++;
+        }
+      } else {
+        $vormerkungen_erfuellt++;
+      }
     }
+  }
+  if( $vormerkungen_teilerfuellt + $vormerkungen_unerfuellt + $vormerkungen_erfuellt ) {
+    $js_on_exit[] = " alert( '
+      Durch diese Lieferung wurden $vormerkungen_erfuellt Vormerkungen erfuellt und geloescht;
+      $vormerkungen_teilerfuellt wurden teilweise erfuellt und reduziert;
+      $vormerkungen_unerfuellt unerfuellte Vormerkungen fuer Produkte dieser Bestellvorlage bleiben unveraendert.
+    ' ); ";
   }
 }
 
@@ -2526,7 +2554,7 @@ function sql_doppelte_transaktion( $soll, $haben, $betrag, $valuta, $notiz, $spe
   return sql_link_transaction( $soll_id, $haben_id );
 }
 
-function sql_get_group_transactions( $gruppen_id, $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
+function sql_transactions( $gruppen_id, $lieferanten_id, $from_date = NULL, $to_date = NULL ) {
   $filter = "";
   $and = "WHERE";
   if( $gruppen_id ) {
@@ -2819,7 +2847,7 @@ function transaktion_typ_string( $typ ) {
 //
 define( 'OPTION_WAREN_NETTO_SOLL', 1 );       /* waren ohne pfand */
 define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );      /* mit mwst, ohne pfand */
-define( 'OPTION_WAREN_AUFSCHLAG_SOLL', 3 );   /* Aufschlag zur Kostendeckung der FC */
+define( 'OPTION_AUFSCHLAG_SOLL', 3 );         /* Aufschlag zur Kostendeckung der FC */
 define( 'OPTION_ENDPREIS_SOLL', 4 );          /* waren brutto inclusive pfand, aber _ohne_ aufschlag (nur gruppenseitig sinnvoll) */
 define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 );   /* schuld aus kauf voller pfandverpackungen */
 define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 15 );
@@ -2846,7 +2874,7 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
                                            * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
       $query = 'waren';
       break;
-    case OPTION_WAREN_AUFSCHLAG_SOLL:
+    case OPTION_AUFSCHLAG_SOLL:
       $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor )
                  * ( gesamtbestellungen.aufschlag_prozent / 100.0 ) )";
       $query = 'waren';
@@ -3032,7 +3060,7 @@ function select_pfand_soll_gruppen( $using = array() ) {
 }
 
 function select_aufschlag_soll_gruppen( $using = array() ) {
-  return select_bestellungen_soll_gruppen( OPTION_WAREN_AUFSCHLAG_SOLL, $using );
+  return select_bestellungen_soll_gruppen( OPTION_AUFSCHLAG_SOLL, $using );
 }
 
 function select_waren_soll_lieferanten( $using = array() ) {
@@ -3164,8 +3192,9 @@ function sql_lieferantenpfand( $lieferanten_id, $bestell_id = 0, $group_by = 'pf
   " ) );
 }
 
-// sql_verbindlichkeiten_lieferanten: liefert verbindlichkeiten (positiv) _und_ forderungen (negativ)
-// letztere kommen da aber ja nur sehr selten vor!
+// sql_verbindlichkeiten_lieferanten:
+// liefert verbindlichkeiten (positiv) _und_ forderungen (negativ) --- anders als bei gruppen!
+// (letztere kommen da aber ja nur sehr selten vor, anders als forderungen an gruppen...)
 //
 function sql_verbindlichkeiten_lieferanten() {
   return mysql2array( doSql( "
@@ -3211,7 +3240,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
-         , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_AUFSCHLAG_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_aufschlag_soll
+         , (" .select_bestellungen_soll_gruppen( OPTION_AUFSCHLAG_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as aufschlag_soll
          , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_NETTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_netto_soll
          , (" .select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as waren_brutto_soll
          , (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, array('bestellgruppen','gesamtbestellungen') ). ") as pfand_voll_brutto_soll
@@ -3294,9 +3323,8 @@ function sql_bestellung_pfandsumme( $bestell_id ) {
 
 
 function kontostand( $gruppen_id ) {
-	//FIXME: zu langsam auf Gruppenview wenn Dienst5
-  if( $gruppen_id == sql_basar_id() )
-    return 100.0;
+  global $specialgroups;
+  need( ! in_array( $gruppen_id, $specialgroups ), "kontostand fuer Basar und BadBank nicht definiert" );
   $row = sql_select_single_row( "
     SELECT (".select_soll_gruppen('bestellgruppen').") as soll
     FROM bestellgruppen
@@ -3384,6 +3412,14 @@ function select_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
 
 function sql_ungebuchte_einzahlungen( $gruppen_id = 0 ) {
   return mysql2array( doSql( select_ungebuchte_einzahlungen( $gruppen_id ) ) );
+}
+
+function sql_ungebuchte_einzahlungen_summe( $gruppen_id = 0 ) {
+  return sql_select_single_field( "
+      SELECT IFNULL( sum( einzahlungen.summe ), 0.0 ) as summe
+      FROM ( ".select_ungebuchte_einzahlungen( $gruppen_id )." ) as einzahlungen
+    ", 'summe'
+  );
 }
 
 
@@ -3951,8 +3987,18 @@ function getProdukteVonLieferant($lieferant_id, $bestell_id = Null ) {
 //
 ////////////////////////////////////
 
-function sql_anzahl_katalogeintraege( $lieferanten_id ) {
-  return sql_count( 'lieferantenkatalog', "lieferanten_id = $lieferanten_id" );
+function sql_katalogeintrag( $katalog_id, $allow_null = false ) {
+  return sql_select_single_row( "SELECT * FROM lieferantenkatalog WHERE id=$katalog_id", $allow_null );
+}
+function sql_katalogname( $katalog_id, $allow_null = false ) {
+  $k = sql_katalogeintrag( $katalog_id, true );
+  if( ! $k )
+    return '';
+  switch( $k['katalogformat'] ) {
+    case 'terra':
+    default:
+      return $k['katalogtyp'] . '/' . $k['katalogdatum'];
+  }
 }
 
 
