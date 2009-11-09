@@ -94,10 +94,10 @@ switch( $action ) {
   case 'abtauschen':
     need( $id );
     $dienst = sql_dienst( $id );
-    get_http_var( 'abtauschdatum', 'R', false );
-    if( ! $abtauschdatum ){
-      $dates = sql_dates_dienst( $dienst['dienst'], "Vorgeschlagen" );
-      if( count($dates) <= 1 ) {
+    get_http_var( 'tausch_id', 'U', false );
+    if( ! $tausch_id ){
+      $tauschmoeglichkeiten = sql_dienste_tauschmoeglichkeiten( $id );
+      if( ! $tauschmoeglichkeiten ) {
         sql_dienst_wird_offen( $id );
         open_div( 'warn', '', 'Keine Tauschmöglichkeit: Dienst ist jetzt offen!' );
       } else {
@@ -105,10 +105,10 @@ switch( $action ) {
           open_form( '', sprintf( 'action=abtauschen_%u', $id ) );
             open_div( 'warn' );
               echo 'Bitte Ausweichdatum auswählen: ';
-              open_select( 'abtauschdatum' );
+              open_select( 'tausch_id' );
                 echo "<option value=''>(bitte auswaehlen)</option>";
-                foreach( $dates as $date ) {
-                  echo "<option value={$date['datum']}>{$date['datum']}</option>";
+                foreach( $tauschmoeglichkeiten as $t ) {
+                  echo "<option value={$t['id']}>{$t['lieferdatum']}</option>";
                 }
               close_select();
               submission_button( 'Dieses Datum geht' );
@@ -117,7 +117,7 @@ switch( $action ) {
         close_div();
       }
     } else {
-      sql_dienst_abtauschen( $id, $abtauschdatum );
+      sql_dienst_abtauschen( $id, $tausch_id );
     }
     break;
   case 'akzeptieren':
@@ -216,7 +216,6 @@ close_div();
 
 $dienstnamen = array( '1/2', '3', '4' );
 
-//Formular vorbereiten und anzeigen
 open_table( 'list' );
   open_th( '', '', 'Datum' );
   open_th( '', '', 'Dienst 1/2' );
