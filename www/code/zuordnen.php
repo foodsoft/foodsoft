@@ -1433,7 +1433,7 @@ function sql_lieferant_katalogeintraege( $lieferanten_id ) {
 
 ////////////////////////////////////
 //
-// funktionen fuer produkte
+// funktionen fuer produkte und produktgruppen
 //
 ////////////////////////////////////
 
@@ -1516,6 +1516,42 @@ function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produkt
 
 function sql_produkte_anzahl( $keys = array() ) {
   return sql_select_single_field( select_produkte_anzahl( $keys ), 'anzahl' );
+}
+
+function references_produkt( $produkt_id ) {
+  return sql_count( 'bestellvorschlaege', "produkt_id=$produkt_id" )
+       + sql_count( 'bestellzuordnung', "produkt_id=$produkt_id" );
+}
+
+
+function sql_produktgruppen(){
+  return mysql2array( doSql( "SELECT * FROM produktgruppen ORDER BY name"
+  , LEVEL_ALL, "Konnte Produktgruppen nicht aus DB laden.." ) );
+}
+
+function references_produktgruppe( $produktgruppen_id ) {
+  return sql_count( 'produkte', "produktgruppen_id = $produktgruppen_id" );
+}
+
+function optionen_produktgruppen( $selected = 0 ) {
+  $output = "";
+  foreach( sql_produktgruppen() as $pg ) {
+    $id = $pg['id'];
+    $output .= "<option value='$id'";
+    if( $selected == $id ) {
+      $output .= " selected";
+      $selected = -1;
+    }
+    $output .= ">{$pg['name']}</option>";
+  }
+  if( $selected >=0 ) {
+    $output = "<option value='0' selected>(bitte Produktgruppe wählen)</option>" . $output;
+  }
+  return $output;
+}
+
+function sql_produktgruppen_name( $id ) {
+  return sql_select_single_field( "SELECT name FROM produktgruppen WHERE id=$id" , 'name' );
 }
 
 ////////////////////////////////////
@@ -3837,54 +3873,6 @@ function mult2string( $mult ) {
 }
 
 
-/**
- *  Produktgruppen abfragen
- */
-function sql_produktgruppen(){
-  return mysql2array( doSql( "SELECT * FROM produktgruppen ORDER BY name"
-  , LEVEL_ALL, "Konnte Produktgruppen nicht aus DB laden.." ) );
-}
-
-function references_produktgruppe( $produktgruppen_id ) {
-  return sql_count( 'produkte', "produktgruppen_id = $produktgruppen_id" );
-}
-
-
-function optionen_produktgruppen( $selected = 0 ) {
-  $output = "";
-  foreach( sql_produktgruppen() as $pg ) {
-    $id = $pg['id'];
-    $output .= "<option value='$id'";
-    if( $selected == $id ) {
-      $output .= " selected";
-      $selected = -1;
-    }
-    $output .= ">{$pg['name']}</option>";
-  }
-  if( $selected >=0 ) {
-    $output = "<option value='0' selected>(bitte Produktgruppe wählen)</option>" . $output;
-  }
-  return $output;
-}
-
-function sql_produktgruppen_name( $id ) {
-  return sql_select_single_field( "SELECT name FROM produktgruppen WHERE id=$id" , 'name' );
-}
-
-
-/**
- *  Produktinformationen abfragen
- */
-function getProdukt($produkt_id){
-   $sql = "SELECT * FROM produkte WHERE id = ".$produkt_id;
-    $result = doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..");
-    return mysql_fetch_array($result);
-}
-
-function references_produkt( $produkt_id ) {
-  return sql_count( 'bestellvorschlaege', "produkt_id=$produkt_id" )
-       + sql_count( 'bestellzuordnung', "produkt_id=$produkt_id" );
-}
 
 // sql_produkt_details:
 //   interface zur abfrage aktueller produktdaten inklusive preis, gebinde, einheiten...
