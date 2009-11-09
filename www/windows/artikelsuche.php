@@ -88,7 +88,7 @@ if( $editable and ( ! $produkt_id ) ) {
   open_form( array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload', 'lieferanten_id' => $lieferanten_id ) );
     open_fieldset( 'small_form', '', "Kataloge von $lieferant_name" );
 
-      ?><h4>erfasste Kataloge (insgesamt <? echo sql_anzahl_katalogeintraege( $lieferanten_id ); ?> Einträge):</h4> <?
+      ?><h4>erfasste Kataloge (insgesamt <? echo sql_lieferant_katalogeintraege( $lieferanten_id ); ?> Einträge):</h4> <?
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
         open_th( '', '', 'Typ' );
