@@ -9,11 +9,7 @@ setWikiHelpTopic( 'foodsoft:Bilanz' );
 
 ?> <h1>Bilanz </h1> <?
 
-$gruppen_einzahlungen_ungebucht = sql_select_single_field( "
-    SELECT IFNULL( sum( einzahlungen.summe ), 0.0 ) as summe
-    FROM ( ".select_ungebuchte_einzahlungen()." ) as einzahlungen
-  ", 'summe'
-);
+$gruppen_einzahlungen_ungebucht = sql_ungebuchte_einzahlungen_summe();
 
 $erster_posten = 1;
 function rubrik( $name ) {
@@ -56,7 +52,7 @@ open_table( 'layout hfill' );
           posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
 
         rubrik( "Umlaufvermögen" );
-          posten( fc_link( 'basar', "class=href,text=Warenbestand Basar" ), basar_wert_brutto() );
+          posten( fc_link( 'basar', "class=href,text=Warenbestand Basar" ), basar_wert_bilanz() );
           posten( fc_link( 'pfandzettel', "class=href,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
 
         rubrik( "Forderungen" );
