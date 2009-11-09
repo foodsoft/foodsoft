@@ -83,25 +83,35 @@ $lieferant_name = sql_lieferant_name($lieferanten_id);
 if( $editable )
   open_form( 'window=insert_bestellung', "lieferanten_id=$lieferanten_id" );
 
+$produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
+
+$produktgruppen_zahl = array();
+foreach( $produkte as $produkt ) {
+  $id = $produkt['produktgruppen_id'];
+  $produktgruppen_zahl[$id] = adefault( $produktgruppen_zahl, $id, 0 ) + 1;
+}
+$produktgruppen_id_alt = -1;
+
 open_table('list');
     open_th( '', "colspan='10'", "<h3>Produktübersicht von $lieferant_name </h3>" );
-  open_tr();
+  open_tr( 'groupofrows_top' );
     if( $editable )
       open_th();
-    open_th( '', "title='generische Produktbezeichnung'", 'Bezeichnung' );
     open_th( '', '', 'Produktgruppe' );
+    open_th( '', "title='generische Produktbezeichnung'", 'Bezeichnung' );
     open_th( '', "title='aktuelle Details zum Produkt'", 'Notiz' );
     open_th( '', '', 'Gebindegroesse' );
     open_th( '', "colspan='2' title='Lieferanten-Preis (ohne Pfand, ohne MWSt)'", 'L-Nettopreis' );
     open_th( '', "colspan='2' title='Verbraucher-Preis mit Pfand und MWSt'", 'V-Endpreis' );
     open_th( '', '', 'Aktionen' );
 
-  foreach( sql_lieferant_produkt_ids( $lieferanten_id ) as $id ) {
+  foreach( $produkte as $p ) {
+    $id = $p['produkt_id'];
     $produkt = sql_produkt_details( $id, 0, $mysqljetzt );
     $references = references_produkt( $id );
     $vormerkungen_menge = sql_bestellzuordnung_menge( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $id ) );
 
-    open_tr( 'groupofrows_top' );
+    open_tr();
       if( $editable ) {
         if( $produkt['zeitstart'] ) {
           if( $vormerkungen_menge > 0 ) {
@@ -121,8 +131,13 @@ open_table('list');
           open_td( 'top', '', '-' );
         }
       }
+      $produktgruppen_id = $produkt['produktgruppen_id'];
+      if( $produktgruppen_id != $produktgruppen_id_alt ) {
+        $rows = $produktgruppen_zahl[$produktgruppen_id] * 2;
+        open_td( 'top', "rowspan='$rows'", $produkt['produktgruppen_name'] );
+        $produktgruppen_id_alt = $produktgruppen_id;
+      }
       open_td( 'top bold', '', $produkt['name'] );
-      open_td( 'top', '', $produkt['produktgruppen_name'] );
       if( $produkt['zeitstart'] ) {
         open_td( 'top small', '', $produkt['notiz'] );
         open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
@@ -142,12 +157,12 @@ open_table('list');
                         , array( 'action' => 'delete', 'produkt_id' => $id ) );
         }
     open_tr( 'groupofrows_bottom' );
-      open_td();
+      // open_td();
       open_td( '', "colspan='9'" );
         if( $options & OPTION_PREISKONSISTENZTEST )
           produktpreise_konsistenztest( $id );
         if( $options & OPTION_KATALOGABGLEICH )
-          katalogabgleich( $id );
+          katalogabgleich( $id, 1 );
   }
 
   if( $editable ) {
