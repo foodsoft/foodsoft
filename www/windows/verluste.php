@@ -23,6 +23,7 @@ function verlust_bestellungen( $detail = false ) {
     open_table( 'list', "width='98%'" );
       open_th('','','Bestellung');
       open_th('','','Schwund/Müll');
+      // open_th('','','Aufschlag');
       open_th('',"colspan='2'",'Sonstiges');
       open_th('','','Haben FC');
   }
@@ -35,15 +36,19 @@ function verlust_bestellungen( $detail = false ) {
     HAVING ( extra_soll <> 0 ) OR ( muell_soll <> 0)
     ORDER BY gesamtbestellungen.lieferung
   " );
+  // , (" .select_bestellungen_soll_gruppen( OPTION_AUFSCHLAG_SOLL, array( 'gesamtbestellungen' ) ). ") as aufschlag_soll
 
   $muell_soll_summe = 0;
   $extra_soll_summe = 0;
+  // $aufschlag_soll_summe = 0;
   $soll_summe = 0;
 
   while( $row = mysql_fetch_array( $result ) ) {
     $muell_soll = - $row['muell_soll'];  // soll _aus_sicht_von_gruppe_13_! (also der FC-Gemeinschaft!)
     $extra_soll = $row['extra_soll'];
+    // $aufschlag_soll = $row['aufschlag_soll'];
     $soll = $muell_soll + $extra_soll;
+    // $soll = $muell_soll + $extra_soll + $aufschlag_soll;
     $bestell_id = $row['id'];
 
     if( $detail ) {
@@ -51,20 +56,61 @@ function verlust_bestellungen( $detail = false ) {
         open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'bestell_id' => $bestell_id, 'text' => $row['name'] ) ) );
         open_td( 'number', '', fc_link( 'lieferschein'
                     , "class=href,bestell_id=$bestell_id,gruppen_id=$muell_id,text=". sprintf( "%.2lf", - $muell_soll ) ) );
+        // open_td( 'number', '', price_view( - $aufschlag_soll ) );
         open_td( '', '',  $row['extra_text'] );
         open_td( 'number', '', price_view( - $extra_soll ) );
         open_td( 'number', '', price_view( - $soll ) );
     }
     $muell_soll_summe += $muell_soll;
     $extra_soll_summe += $extra_soll;
+    // $aufschlag_soll_summe += $aufschlag_soll;
     $soll_summe += $soll;
   }
   if( $detail ) {
     open_tr('summe');
       open_td('','','Summe:');
       open_td( 'number', '', price_view( - $muell_soll_summe ) );
+      // open_td( 'number', '', price_view( - $aufschlag_soll_summe ) );
       open_td();
       open_td( 'number', '', price_view( - $extra_soll_summe ) );
+      open_td( 'number', '', price_view( - $soll_summe ) );
+    close_table();
+  }
+
+  return $soll_summe;
+}
+
+function verlust_aufschlag( $detail = false ) {
+  global $muell_id;
+  if( $detail ) {
+    ?> <h2>Aufschlaege auf Bestellungen:</h2> <?
+    open_table( 'list', "width='98%'" );
+      open_th('','','Bestellung');
+      open_th('','','Aufschlag');
+      open_th('','','Haben FC');
+  }
+
+  $bestellungen = mysql2array( doSql( "
+    SELECT gesamtbestellungen.*
+    , (" .select_bestellungen_soll_gruppen( OPTION_AUFSCHLAG_SOLL, array( 'gesamtbestellungen' ) ). ") as aufschlag_soll
+    FROM (".select_gesamtbestellungen_schuldverhaeltnis().") as gesamtbestellungen
+    ORDER BY gesamtbestellungen.lieferung
+  " ) );
+  $soll_summe = 0;
+  foreach( $bestellungen as $b ) {
+    $soll = $b['aufschlag_soll'];
+    $soll_summe += $soll;
+    if( $detail ) {
+      open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'bestell_id' => $b['id']
+                                                   , 'text' => $b['name'] ) ) );
+      open_td( 'number', '', price_view( - $soll ) );
+      open_td( 'number', '', price_view( - $soll_summe ) );
+    }
+  }
+
+  if( $detail ) {
+    open_tr( 'summe' );
+      open_td('', "colspan='2'",'Summe:');
       open_td( 'number', '', price_view( - $soll_summe ) );
     close_table();
   }
@@ -118,6 +164,8 @@ switch( $action ) {
 if( $detail ) {
   if( $detail == 'bestellungen' ) {
     verlust_bestellungen( true );
+  } else if( $detail == 'aufschlag' ) {
+    verlust_aufschlag( true );
   } else if ( $detail == 'undefiniert' ) {
     verlust_transaktionen( TRANSAKTION_TYP_UNDEFINIERT, true );
   } else {
@@ -234,20 +282,34 @@ open_tr();
   open_td( 'number', '', price_view( - $soll - $ausgleich ) );
 
 
-open_tr();
+open_tr( 'groupofrows_top' );
   open_td( '', '', 'Umlagen:' );
 
-  $soll = verlust_transaktionen( TRANSAKTION_TYP_UMLAGE );
-  $verluste_summe += $soll;
+  $soll_umlage = verlust_transaktionen( TRANSAKTION_TYP_UMLAGE );
+  $verluste_summe += $soll_umlage;
+
+  open_td( 'number', '', fc_link( 'verlust_details'
+    , array( 'detail' => TRANSAKTION_TYP_UMLAGE, 'class' => 'href' , 'text' => price_view( -$soll ) ) ) );
+
+  open_td();
+
+  open_td();
+
+open_tr( 'groupofrows_bottom' );
+  open_td( '', '', 'Aufschlag:' );
+  $soll_aufschlag = verlust_aufschlag();
+  $verluste_summe += $soll_aufschlag;
 
   $ausgleich = verlust_transaktionen( TRANSAKTION_TYP_UMBUCHUNG_UMLAGE );
   $ausgleich_summe += $ausgleich;
 
   open_td( 'number', '', fc_link( 'verlust_details'
-    , array( 'detail' => TRANSAKTION_TYP_UMLAGE, 'class' => 'href' , 'text' => price_view( -$soll ) ) ) );
+    , array( 'detail' => 'aufschlag', 'class' => 'href' , 'text' => price_view( -$soll_aufschlag ) ) ) );
+
   open_td( 'number', '', fc_link( 'verlust_details'
     , array( 'detail' => TRANSAKTION_TYP_UMBUCHUNG_UMLAGE, 'class' => 'href' , 'text' => price_view( -$ausgleich ) ) ) );
-  open_td( 'number', '', price_view( - $soll - $ausgleich ) );
+
+  open_td( 'number', '', price_view( - $soll_umlage - $soll_aufschlag - $ausgleich ) );
 
 
 open_tr();
