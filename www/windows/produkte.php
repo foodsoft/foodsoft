@@ -92,14 +92,15 @@ foreach( $produkte as $produkt ) {
 }
 $produktgruppen_id_alt = -1;
 
-open_table('list');
-    open_th( '', "colspan='10'", "<h3>Produktübersicht von $lieferant_name </h3>" );
-  open_tr( 'groupofrows_top' );
-    if( $editable )
-      open_th();
+$cols = ( $editable ? 9 : 8 );
+open_table('list hfill');
+    open_th( '', "colspan='$cols'", "<h3>Produktübersicht von $lieferant_name </h3>" );
+  open_tr();
     open_th( '', '', 'Produktgruppe' );
     open_th( '', "title='generische Produktbezeichnung'", 'Bezeichnung' );
-    open_th( '', "title='aktuelle Details zum Produkt'", 'Notiz' );
+    if( $editable )
+      open_th( '', "title='in Bestellvorlage aufnehmen?'", 'aufnehmen?' );
+    // open_th( '', "title='aktuelle Details zum Produkt'", 'Notiz' );
     open_th( '', '', 'Gebindegroesse' );
     open_th( '', "colspan='2' title='Lieferanten-Preis (ohne Pfand, ohne MWSt)'", 'L-Nettopreis' );
     open_th( '', "colspan='2' title='Verbraucher-Preis mit Pfand und MWSt'", 'V-Endpreis' );
@@ -111,42 +112,43 @@ open_table('list');
     $references = references_produkt( $id );
     $vormerkungen_menge = sql_bestellzuordnung_menge( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $id ) );
 
-    open_tr();
-      if( $editable ) {
-        if( $produkt['zeitstart'] ) {
-          if( $vormerkungen_menge > 0 ) {
-            $title = sprintf(
-              "Vormerkungen fuer %s %s vorhanden!"
-            , $vormerkungen_menge * $produkt['kan_verteilmult']
-            , $produkt['kan_verteileinheit']
-            );
-            open_td( 'top alert', "title='$title'" );
-            $checked = 'checked';
-          } else {
-            open_td( 'top' );
-            $checked = '';
-          }
-          echo "<input type='checkbox' name='bestellliste[]' value='$id' $input_event_handlers $checked>";
-        } else {
-          open_td( 'top', '', '-' );
-        }
-      }
+    open_tr( 'groupofrows_top' );
       $produktgruppen_id = $produkt['produktgruppen_id'];
       if( $produktgruppen_id != $produktgruppen_id_alt ) {
         $rows = $produktgruppen_zahl[$produktgruppen_id] * 2;
         open_td( 'top', "rowspan='$rows'", $produkt['produktgruppen_name'] );
         $produktgruppen_id_alt = $produktgruppen_id;
       }
-      open_td( 'top bold', '', $produkt['name'] );
+      open_td( 'top' );
+        open_div( 'bold', '', $produkt['name'] );
+        open_div( 'small', '', $produkt['notiz'] );
+      if( $editable ) {
+        if( $produkt['zeitstart'] ) {
+          if( $vormerkungen_menge > 0 ) {
+            $title = sprintf(
+              "Vormerkungen fuer %s %s vorhanden"
+            , $vormerkungen_menge * $produkt['kan_verteilmult']
+            , $produkt['kan_verteileinheit']
+            );
+            open_td( 'top center alert', "title='$title'" );
+            $checked = 'checked';
+          } else {
+            open_td( 'top center' );
+            $checked = '';
+          }
+          echo "<input type='checkbox' name='bestellliste[]' value='$id' $input_event_handlers $checked>";
+        } else {
+          open_td( 'top center', '', '-' );
+        }
+      }
       if( $produkt['zeitstart'] ) {
-        open_td( 'top small', '', $produkt['notiz'] );
         open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
         open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
         open_td( 'mult', '', price_view( $produkt['endpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['kan_verteilmult']} {$produkt['kan_verteileinheit']}" );
       } else {
-        open_td( 'center', "colspan='6'", '(kein aktueller Preiseintrag)' );
+        open_td( 'center', "colspan='5'", '(kein aktueller Preiseintrag)' );
       }
       open_td( 'top oneline', '' );
         if( $editable )
@@ -158,7 +160,7 @@ open_table('list');
         }
     open_tr( 'groupofrows_bottom' );
       // open_td();
-      open_td( '', "colspan='9'" );
+      open_td( '', "colspan='$cols'" );
         if( $options & OPTION_PREISKONSISTENZTEST )
           produktpreise_konsistenztest( $id );
         if( $options & OPTION_KATALOGABGLEICH )
