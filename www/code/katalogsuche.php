@@ -58,13 +58,19 @@ function katalogabgleich(
 
   $katalogeintrag = katalogsuche( $artikel );
   if( $katalogeintrag == 1 ) {
-    div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
+    if( $display_level >= 1 ) {
+      div_msg( 'alert', 'Katalogsuche: kein Katalog dieses Lieferanten erfasst!' );
+    }
     return 3;
   } else if( $katalogeintrag == 2 ) {
-    div_msg( 'warn', 'Katalogsuche: Artikelnummer des Produktes fehlt --- Suche nicht moeglich!' );
+    if( $display_level >= 1 ) {
+      div_msg( 'warn', 'Katalogsuche: Artikelnummer des Produktes fehlt --- Suche nicht moeglich!' );
+    }
     return 2;
   } else if( ! $katalogeintrag ) {
-    div_msg( 'warn', 'Katalogsuche fehlgeschlagen oder ohne Treffer' );
+    if( $display_level >= 1 ) {
+      div_msg( 'warn', 'Katalogsuche fehlgeschlagen oder ohne Treffer' );
+    }
     return 2;
   }
 
@@ -161,7 +167,9 @@ function katalogabgleich(
 
     default:
     case 'keins':
-      open_div( 'warn', '', "unbekanntes oder undefiniertes Katalogformat --- Katalogabgleich nicht moeglich" );
+      if( $display_level >= 1 ) {
+        open_div( 'warn', '', "unbekanntes oder undefiniertes Katalogformat --- Katalogabgleich nicht moeglich" );
+      }
       return 2;
   }
 
