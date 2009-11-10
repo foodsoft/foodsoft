@@ -110,15 +110,16 @@ $gesamtpreis = 0.0;
 
 
 if( hat_dienst( 4 ) ) {
-  $bestellnummer_falsch = array();
-  $preis_falsch = array();
-  open_div( "class='nodisplay'", "id='bestellnummer_warnung'" );
+  $bestellnummern_falsch = array();
+  $preise_falsch = array();
+  open_div( 'nodisplay', "id='bestellnummern_warnung'" );
     echo "Warnung: bei <span id='bestellnummern_falsch'>?</span> Produkten scheinen die Bestellnummern falsch ";
     echo fc_action( 'update,class=button,text=alle aktualisieren', 'action=update_prices' );
   close_div();
-  open_div( "class='nodisplay'", "id='preis_warnung'" );
+  open_div( 'nodisplay', "id='preise_warnung'" );
     echo "Warnung: bei <span id='preise_falsch'>?</span> Produkten scheinen die Preise falsch --- bitte pruefen!";
   close_div();
+  smallskip();
 }
 
 // $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
@@ -528,54 +529,54 @@ foreach( $produkte as $produkt ) {
     open_div('oneline small', '', $produkt['notiz']);
 
   // preis:
-  open_td('top center');
-    open_table('layout');
+  $class = '';
+  $title = '';
+  if( hat_dienst(4) ) {
+    if( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) {
+      $preise_falsch[] = $n;
+      $class .= 'outdated';
+      $title = 'Preis nicht aktuell!';
+    } else {
+      $katalogdaten = array();
+      switch( katalogabgleich( $produkt_id, 0, 0, & $katalogdaten ) ) {
+        case 0:
+          $class .= 'ok';
+          $title = 'Preis aktuell und konsistent mit Lieferantenkatalog '. $katalogdaten['katalogname'];
+          break;
+        case 3:
+          // kein Katalog erfasst: Abgleich nicht moeglich!
+          break;
+        case 4:
+          $bestellnummern_falsch[] = $n;
+          $class .= 'alert';
+          $title = 'Bestellnummer anders als in Lieferantenkatalog ' . $katalogdaten['katalogname'];
+          break;
+        case 1:
+        case 2:
+        default:
+          $preise_falsch[] = $n;
+          $class .= 'warn';
+          $title = 'Abweichung oder kein Treffer bei Katalogabgleich!';
+          break;
+      }
+    }
+  }
+  open_td( "top center $class", "title='$title'" );
+    open_table( "layout $class" );
       open_tr();
-        $class = 'mult ';
-        $title = '';
-        if( hat_dienst(4) ) {
-          if( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) {
-            $preis_falsch[] = $n;
-            $class .= 'outdated';
-            $title = 'Preis nicht aktuell!';
-          } else {
-            $katalogdaten = array();
-            switch( katalogabgleich( $produkt_id, 0, 0, & $katalogdaten ) == 1 ) {
-              case 0:
-                $class .= 'ok';
-                $title = 'Preis aktuell und konsistent mit Lieferantenkatalog '. $katalogdaten['katalogname'];
-                break;
-              case 3:
-                // kein Katalog erfasst: Abgleich nicht moeglich!
-                break;
-              case 4:
-                $bestellnummer_falsch[] = $n;
-                $class .= 'alert';
-                $title = 'Bestellnummer anders als in Lieferantenkatalog ' . $katalogdaten['katalogname'];
-                break;
-              case 1:
-              case 2:
-              default:
-                $preis_falsch[] = $n;
-                $class .= 'warn';
-                $title = 'Abweichung oder kein Treffer bei Katalogabgleich!';
-                break;
-            }
-          }
-        }
-        open_td( $class, "title='$title'" );
+        open_td( "mult $class" );
         echo fc_link( 'produktdetails', array( 'produkt_id' => $n, 'bestell_id' => $bestell_id
                                           , 'text' => sprintf( '%.2lf', $preis ), 'class' => 'href' ) );
-        open_td( 'unit', '', "/ {$produkt['verteileinheit']}" );
+        open_td( "unit $class", '', "/ {$produkt['verteileinheit']}" );
 
       open_tr();
       if( $lv_faktor != 1 ) {
-        open_td( 'mult small', '', price_view( $preis * $produkt['lv_faktor'] ) );
-        open_td( 'unit small', '', "/ {$produkt['liefereinheit']}" );
+        open_td( "mult small $class", '', price_view( $preis * $produkt['lv_faktor'] ) );
+        open_td( "unit small $class", '', "/ {$produkt['liefereinheit']}" );
       } else {
-        open_td( 'mult small', "colspan='2'", ' ' );
+        open_td( "mult small $class", "colspan='2'", ' ' );
       }
-    close_table('layout');
+    close_table();
 
   // festmenge
   open_td( "center mult", "colspan='1' id='tf_$n' " );
@@ -683,12 +684,14 @@ if( ! $readonly ) {
 
   if( hat_dienst( 4 ) ) {
     if( $bestellnummern_falsch ) {
-      $js_on_exit[] = "document.getElementById('bestellnummer_warnung').firstChild.nodeValue
-                        = count( $bestellnummern_falsch );";
-      $js_on_exit[] = "document.getElementById('bestellnummern_falsch').className = 'alert';";
+      $js_on_exit[] = "document.getElementById('bestellnummern_falsch').firstChild.nodeValue
+                        = ".count( $bestellnummern_falsch ).";";
+      $js_on_exit[] = "document.getElementById('bestellnummern_warnung').className = 'alert';";
     }
     if( $preise_falsch ) {
-      $js_on_exit[] = "document.getElementById('preis_warnung').className = 'alert';";
+      $js_on_exit[] = "document.getElementById('preise_falsch').firstChild.nodeValue
+                        = ".count( $preise_falsch )." ;";
+      $js_on_exit[] = "document.getElementById('preise_warnung').className = 'alert';";
     }
   }
 
