@@ -85,6 +85,7 @@ $self_post_fields = array();
 global $angemeldet, $login_gruppen_id, $login_gruppen_name, $login_dienst, $coopie_name, $dienstkontrollblatt_id, $session_id;
 $angemeldet = false;
 
+require_once('structure.php');
 require_once('code/views.php');
 require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
