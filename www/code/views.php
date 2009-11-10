@@ -1265,12 +1265,12 @@ function distribution_tabellenkopf() {
 }
 
 function distribution_produktdaten( $bestell_id, $produkt_id ) {
-  $produkt = sql_bestellvorschlag( $bestell_id, $produkt_id );
+  $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   open_tr();
     open_th( '', "colspan='6'" );
       open_div( '', "style='font-size:1.2em; margin:5px;'" );
         echo fc_link( 'produktpreise', array(
-         'text' => $produkt['produkt_name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
+         'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
       close_div();
       open_div('small');
         printf( "Nettopreis: %.2lf / %s, Produktgruppe: %s"
@@ -1283,11 +1283,11 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
 }
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
-  $vorschlag = sql_bestellvorschlag( $bestell_id, $produkt_id );
-  $verteilmult = $vorschlag['kan_verteilmult'];
-  $verteileinheit = $vorschlag['kan_verteileinheit'];
-  $vpreis = $vorschlag['endpreis']; //  + $vorschlag['preisaufschlag'];
-  $liefermenge = $vorschlag['liefermenge'] * $verteilmult;
+  $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
+  $verteilmult = $produkt['kan_verteilmult'];
+  $verteileinheit = $produkt['kan_verteileinheit'];
+  $vpreis = $produkt['endpreis']; //  + $produkt['preisaufschlag'];
+  $liefermenge = $produkt['liefermenge'] * $verteilmult;
 
   open_tr('summe');
     open_th('', "colspan='3'", 'Liefermenge:' );
@@ -1479,7 +1479,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   need( $produkt_id );
 
   if( $bestell_id ) {
-    $bestellvorschlag = sql_bestellvorschlag( $bestell_id, $produkt_id );
+    $bestellvorschlag = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
     $preisid_in_bestellvorschlag = $bestellvorschlag['preis_id'];
     $rechnungsstatus = sql_bestellung_status( $bestell_id );
     $bestellung_name = sql_bestellung_name( $bestell_id );
