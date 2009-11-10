@@ -10,33 +10,26 @@ global $from_dokuwiki;
 $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
   error_reporting(E_ALL); // alle Fehler anzeigen
 
-//Debug LEVEL_
- define('LEVEL_NEVER',  5);
- define('LEVEL_ALL',  4);
- define('LEVEL_MOST',  3);
- define('LEVEL_IMPORTANT',  2);  //All UPDATE and INSERT statments should have level important
- define('LEVEL_KEY',  1);
- define('LEVEL_NONE',  0);
- $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
+define('LEVEL_NEVER', 5);
+define('LEVEL_ALL', 4);
+define('LEVEL_MOST', 3);
+define('LEVEL_IMPORTANT', 2); // all UPDATE and INSERT statements should have level important
+define('LEVEL_KEY', 1);
+define('LEVEL_NONE', 0);
 
-function debug_args( $args, $tag = '' ) {
-  echo "<br><pre>";
-  $i = 1;
-  foreach( $args as $k => $a ) {
-    echo "$tag: $i: $k => ";
-    var_export( $a );
-    echo '';
-    echo "</pre>";
-    $i++;
-  }
-}
+// LEVEL_CURRENT: alle sql-aufrufe bis zu diesem level werden angezeigt:
+$_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
 
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
-	if($debug_level <= $_SESSION['LEVEL_CURRENT']) echo "<p>".htmlspecialchars($sql)."</p>";
-  $result = mysql_query($sql)
-    or error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysql_error() );
-	return $result;
+  if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
+    open_div( 'alert', '', htmlspecialchars( $sql ) );
+  }
+  $result = mysql_query($sql);
+  if( ! $result ) {
+    error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysql_error() );
+  }
+  return $result;
 }
 
 function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = false, $orderby = false ) {
@@ -85,7 +78,7 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
 function select_query( $table, $selects = '*', $joins = '', $filters = false, $orderby = false ) {
   return get_sql_query( 'SELECT', $table, $selects, $joins, $filters, $orderby );
 }
-// 
+
 // function delete_query( $table, $what = '*', $joins = '', $filters = false ) {
 //   return get_sql_query( 'DELETE', $table, $what, $joins, $filters, $orderby );
 // }
@@ -1439,6 +1432,8 @@ function sql_lieferant_katalogeintraege( $lieferanten_id ) {
 
 
 function query_produkte( $op, $keys = array(), $using = array(), $orderby = false ) {
+  $have_price = false;
+
   $selects = array();
   $filters = array();
   $joins = need_joins_array( $using, array(
@@ -1458,19 +1453,55 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
 
   foreach( $keys as $key => $cond ) {
     switch( $key ) {
+      case 'id':
+      case 'produkt_id':
+        $filters['produkte.id'] = $cond;
+        break;
       case 'lieferant_id':
       case 'lieferanten_id':
         $filters['lieferanten.id'] = $cond;
+        break;
+      case 'zeitpunkt':
+        $joins[] = "
+          ( SELECT LAST( produktpreise.* )
+            FROM produktpreise
+            WHERE ( produktpreise.zeitstart <= '$zeitpunkt' )
+              AND ( isnull(produktpreise.zeitende) or '$zeitpunkt' <= produktpreise.zeitende )
+              AND ( produktpreise.produkt_id = produkte.id )
+            ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31')
+          ) as produktpreise
+        ";
+        $have_price = true;
         break;
       case 'bestell_id':
       case 'gesamtbestellung_id':
         $joins['bestellvorschlaege'] = 'bestellvorschlaege.produkt_id = produkte.id';
         $joins['gesamtbestellungen'] = 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id';
+        $joins['produktpreise']
+          = '(produktpreise.id = bestellvorschlaege.produktpreise_id) and (produktpreise.produkt_id = produkte.id)';
+        $have_price = true;
         $filters['gesamtbestellungen.id'] = $cond;
+        $selects[] = 'bestellvorschlaege.liefermenge';
+        $selects[] = 'bestellvorschlaege.produktpreise_id';
+        $selects[] = 'gesamtbestellungen.aufschlag_prozent';
+        $selects[] = 'gesamtbestellungen.name as gesamtbestellung_name';
         break;
       default:
           error( "undefined key: $key" );
     }
+  }
+  if( $have_price ) {
+    $selects[] = 'produktpreise.liefereinheit';
+    $selects[] = 'produktpreise.verteileinheit';
+    $selects[] = 'produktpreise.lv_faktor';
+    $selects[] = 'produktpreise.mwst';
+    $selects[] = 'produktpreise.pfand';
+    $selects[] = 'produktpreise.gebindegroesse';
+    $selects[] = 'produktpreise.bestellnummer';
+    $selects[] = 'produktpreise.zeitstart';
+    $selects[] = 'produktpreise.zeitende';
+    $selects[] = 'produktpreise.lieferpreis';
+    $selects[] = 'produktpreise.id as preis_id';
   }
   if( $using ) {
     is_array( $using ) or ( $using = array( $using ) );
@@ -1488,7 +1519,6 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
       }
     }
   }
-
   switch( $op ) {
     case 'SELECT':
       break;
@@ -1511,7 +1541,20 @@ function select_produkte_anzahl( $keys = array(), $using = array() ) {
 }
 
 function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produktgruppen.id, produkte.name' ) {
-  return mysql2array( doSql( select_produkte( $keys, array(), $orderby ) ) );
+  $r = mysql2array( doSql( select_produkte( $keys, array(), $orderby ) ) );
+  foreach( $r as $p ) {
+    if( isset( $p['preis_id'] ) ) {
+      preisdatenSetzen( & $p );
+    }
+  }
+  return $r;
+}
+function sql_produkt( $keys = array(), $allow_null = false ) {
+  $p = sql_select_single_row( select_produkte( $keys ), $allow_null );
+  if( $p and isset( $p['preis_id'] ) ) {
+    preisdatenSetzen( & $p );
+  }
+  return $p;
 }
 
 function sql_produkte_anzahl( $keys = array() ) {
@@ -1743,30 +1786,6 @@ function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
     DELETE FROM bestellvorschlaege
     WHERE produkt_id = $produkt_id AND gesamtbestellung_id = $bestell_id
   " );
-}
-
-function sql_bestellvorschlag( $bestell_id, $produkt_id ) {
-  $row = sql_select_single_row( "
-      SELECT *
-               , produktpreise.id as preis_id
-               , produkte.name as produkt_name
-               , produktgruppen.name as produktgruppen_name
-               , gesamtbestellungen.name as name
-               , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
-      FROM gesamtbestellungen
-      INNER JOIN bestellvorschlaege
-              ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
-      INNER JOIN produkte
-              ON produkte.id=bestellvorschlaege.produkt_id
-      INNER JOIN produktpreise
-              ON produktpreise.id=bestellvorschlaege.produktpreise_id
-      INNER JOIN produktgruppen
-              ON produktgruppen.id=produkte.produktgruppen_id
-      WHERE     gesamtbestellungen.id='$bestell_id'
-            AND bestellvorschlaege.produkt_id='$produkt_id'
-  " );
-  preisdatenSetzen( & $row );
-  return $row;
 }
 
 function sql_references_gesamtbestellung( $bestell_id ) {
@@ -3958,18 +3977,6 @@ function sql_delete_produktpreis( $preis_id ) {
 }
 
 
-/**
- * Alle Produkte von einem Lieferanten, auch mit ungültigem Preis
- */
-function sql_lieferant_produkt_ids( $lieferanten_id ) {
-  return mysql2array( doSql( "
-    SELECT produkte.id as id
-    FROM produkte
-    LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
-    WHERE lieferanten_id = '$lieferanten_id'
-    ORDER BY produktgruppen.name, produkte.name
-  " ), 'id', 'id' );
-}
 
 /**
  *   Produkte von einem Bestimmten Lieferanten abfragen
@@ -3980,23 +3987,7 @@ function sql_lieferant_produkt_ids( $lieferanten_id ) {
  *   die Produkte zurückgegeben, die noch nicht in der
  *   Bestellung drin sind.
  */
-function getProdukteVonLieferant($lieferant_id, $bestell_id = Null ) {
-  if($bestell_id === Null){
-    $sql = "
-      SELECT *
-      , produkte.name as name
-      , produktgruppen.name as produktgruppen_name
-      , produkte.id as produkt_id
-      , produktgruppen.id as produktgruppen_id
-      FROM produkte
-      INNER JOIN produktgruppen
-        ON produktgruppen.id = produkte.produktgruppen_id
-      INNER JOIN produktpreise
-        ON (produkte.id = produktpreise.produkt_id)
-      WHERE lieferanten_id = $lieferant_id
-            AND zeitstart <= NOW() AND ( ISNULL(zeitende) OR zeitende >= NOW() )
-    ";
-  } else {
+function getProdukteVonLieferant( $lieferant_id, $bestell_id ) {
     $state = sql_bestellung_status( $bestell_id );
     switch( $state ) {
       case STATUS_BESTELLEN:
@@ -4054,7 +4045,6 @@ function getProdukteVonLieferant($lieferant_id, $bestell_id = Null ) {
         ";
       break;
     }
-  }
   $sql .= " ORDER BY produktgruppen.name, produkte.name ";
   return mysql2array( doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..") ) ;
 }

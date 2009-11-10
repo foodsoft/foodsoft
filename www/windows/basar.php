@@ -22,15 +22,14 @@ if( $action == 'basarzuteilung' ) {
     if( ! get_http_var( "produkt$i", 'u' ) )
       continue;
     need_http_var( "bestellung$i", 'u' );
-    $id = ${"bestellung$i"};
-    if( sql_bestellung_status( $id ) >= STATUS_ABGERECHNET )
+    $bestell_id = ${"bestellung$i"};
+    if( sql_bestellung_status( $bestell_id ) >= STATUS_ABGERECHNET )
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
-        $pr = sql_bestellvorschlag( $id, ${"produkt$i"} );
-        // preisdatenSetzen( & $pr );
-        $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
-        if( $gruppen_menge > 0 or ( $gruppen_id == $muell_id ) )
-          sql_basar2group( $gruppen_id, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
+      $pr = sql_produkt( array( 'bestell_id' => $id, 'produkt_id' => ${"produkt$i"} ) );
+      $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
+      if( $gruppen_menge > 0 or ( $gruppen_id == $muell_id ) )
+        sql_basar2group( $gruppen_id, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
     }
   }
 }
