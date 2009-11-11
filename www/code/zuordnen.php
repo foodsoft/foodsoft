@@ -20,6 +20,27 @@ define('LEVEL_NONE', 0);
 // LEVEL_CURRENT: alle sql-aufrufe bis zu diesem level werden angezeigt:
 $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
+function sql_selects( $table, $prefix = false ) {
+  global $tables;
+  $cols = $tables[$table]['cols'];
+  $selects = array();
+  foreach( $cols as $name => $type ) {
+    if( $name == 'id' ) {
+      if( isstring( $prefix ) )
+        $selects[] = "$table.id as {$prefix}id";
+      else
+        $selects[] = "$table.id as $table_id";
+    } else {
+      if( isstring( $prefix ) )
+        $selects[] = "$table.$name as $prefix$name";
+      else if( $prefix )
+        $selects[] = "$table.$name as $table_$name";
+      else
+        $selects[] = "$table.$name as $name";
+    }
+  }
+  return $selects;
+}
 
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
@@ -32,7 +53,7 @@ function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfe
   return $result;
 }
 
-function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = false, $orderby = false ) {
+function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = false, $orderby = false, $groupby = false ) {
   if( is_string( $selects ) ) {
     $select_string = $selects;
   } else {
@@ -68,6 +89,9 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
         $and = 'AND';
       }
     }
+  }
+  if( $groupby ) {
+    $query .= " GROUP BY $groupby ";
   }
   if( $orderby ) {
     $query .= " ORDER BY $orderby ";
@@ -450,7 +474,7 @@ function sql_dienst_gruppe_aendern( $dienst_id, $gruppen_id ) {
   $dienst = sql_dienst( $dienst_id );
   if( $gruppen_id == $dienst['gruppen_id'] )
     return;
-  $gruppe = sql_gruppendaten( $gruppen_id );
+  $gruppe = sql_gruppe( $gruppen_id );
   need( $gruppe['aktiv'] );
   need( ! $dienst['geleistet'] );
   nur_fuer_dienst(5);
@@ -778,7 +802,7 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     if( in_array( $gruppen_id, $specialgroups ) )
       return false;
-    $row = sql_gruppendaten( $gruppen_id );
+    $row = sql_gruppe( $gruppen_id );
     if( ! $row['aktiv'] )
       return false;
     if( $row['passwort'] == crypt($gruppen_pwd,$row['salt']) )
@@ -945,80 +969,89 @@ function sql_gruppe_mitglieder( $gruppen_id, $filter = 'gruppenmitglieder.aktiv'
   return sql_gruppenmitglieder( "(bestellgruppen.id = $gruppen_id) and ($filter) " );
 }
 
+function query_gruppen( $op, $keys = array(), $using = array(), $orderby = false ) {
+  $selects = array();
+  $filters = array();
+  $joins = array();
 
-function select_bestellgruppen( $filter = false ) {
-  $where = ( $filter ? "WHERE ($filter)" : '' );
-  return "
-    SELECT
-      bestellgruppen.name as name
-    , bestellgruppen.id as id
-    , bestellgruppen.aktiv as aktiv
-    , bestellgruppen.passwort as passwort
-    , bestellgruppen.salt as salt
-    , bestellgruppen.sockeleinlage  as sockeleinlage_gruppe
-    , ( SELECT count(*) FROM gruppenmitglieder
+  $selects[] = 'bestellgruppen.name as name';
+  $selects[] = 'bestellgruppen.id as id';
+  $selects[] = 'bestellgruppen.aktiv as aktiv';
+  $selects[] = 'bestellgruppen.passwort as passwort';
+  $selects[] = 'bestellgruppen.salt as salt';
+  $selects[] = 'bestellgruppen.sockeleinlage as sockeleinlage_gruppe';
+  $selects[] = '
+    ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.aktiv
           AND gruppenmitglieder.gruppen_id = bestellgruppen.id
       ) as mitgliederzahl
-    , bestellgruppen.id % 1000 as gruppennummer
-    FROM bestellgruppen
-    $where
-  ";
+  ';
+  $selects[] = 'bestellgruppen.id % 1000 as gruppennummer';
+
+  foreach( $keys as $key => $cond ) {
+    switch( $key ) {
+      case 'id':
+      case 'gruppen_id':
+        $filters['bestellgruppen.id'] = $cond;
+        break;
+      case 'aktiv':
+        $filters['bestellgruppen.aktiv'] = $cond;
+        break;
+      case 'bestell_id':
+        $joins['gruppenbestellungen'] = 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id';
+        $filters['gruppenbestellungen.gesamtbestellung_id'] = $cond;
+        $selects[] = 'gruppenbestellungen.id as gruppenbestellung_id';
+        break;
+      case 'produkt_id':
+        $joins['gruppenbestellungen'] = 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id';
+        $joins['bestellzuordnung'] = 'bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id';
+        $filters['bestellzuordnung.produkt_id'] = $cond;
+        // $selects[] = 'bestellzuordnung.menge as menge';
+        // $selects[] = 'bestellzuordnung.art as art';
+        break;
+      case 'where':
+        $filters = $cond;
+        break;
+      default:
+          error( "undefined key: $key" );
+    }
+  }
+  switch( $op ) {
+    case 'SELECT':
+      break;
+    case 'COUNT':
+      $op = 'SELECT';
+      $selects = 'COUNT(*) as anzahl';
+      break;
+    default:
+      error( "undefined op: $op" );
+  }
+  return get_sql_query( $op, 'bestellgruppen', $selects, $joins, $filters, $orderby, 'bestellgruppen.id' );
+}
+function select_gruppen( $keys = array(), $using = array(), $orderby = false ) {
+  return query_gruppen( 'SELECT', $keys, $using, $orderby );
 }
 
-function select_aktive_bestellgruppen() {
-  return select_bestellgruppen( 'bestellgruppen.aktiv' );
+function sql_gruppen( $keys = array(), $orderby = 'NOT(aktiv), gruppennummer' ) {
+  return mysql2array( doSql( select_gruppen( $keys, array(), $orderby ) ) );
 }
 
-function sql_bestellgruppen( $filter = 'true', $order = 'NOT(aktiv), gruppennummer' ) {
-  return mysql2array( doSql( select_bestellgruppen( $filter ) . " ORDER BY $order" ) );
+function sql_gruppe( $gruppen_id, $allow_null = false ) {
+  return sql_select_single_row( select_gruppen( array( 'gruppen_id' => $gruppen_id ) ), $allow_null );
 }
 
-function sql_aktive_bestellgruppen( $order = 'gruppennummer' ) {
-  return sql_bestellgruppen( 'bestellgruppen.aktiv', $order );
+function sql_gruppenname( $gruppen_id ) {
+  return sql_select_single_field( select_gruppen( array( 'gruppen_id' => $gruppen_id ) ), 'name' );
 }
 
-function sql_gruppendaten( $gruppen_id, $allow_null = false ) {
-  return sql_select_single_row( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ), $allow_null ); 
-}
-
-function sql_gruppenname($gruppen_id){
-  return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ), 'name' );
-}
-
-function sql_gruppennummer($gruppen_id){
+function sql_gruppennummer( $gruppen_id ) {
   return $gruppen_id % 1000;
 }
 
-function sql_gruppe_aktiv($gruppen_id) {
-  return sql_select_single_field( select_bestellgruppen( "bestellgruppen.id = $gruppen_id" ), 'aktiv' );
+function sql_gruppe_aktiv( $gruppen_id ) {
+  return sql_select_single_field( select_gruppen( array( 'gruppen_id' => $gruppen_id ) ), 'aktiv' );
 }
 
-/*
- * sql_bestellung_gruppen: liefert
- * - alle an einer gesamtbestellung beteiligten (durch bestellung oder zuordnung!) gruppen,
- * - optional eingeschraenkt auf einen bestimmten artikel dieser bestellung
- * auch pfandrueckgabe zaehlt als teilnahme an einer bestellung
- */
-function sql_bestellung_gruppen( $bestell_id, $produkt_id = FALSE, $filter = FALSE ){
-  $query = select_bestellgruppen()
-           . " INNER JOIN gruppenbestellungen
-               ON ( gruppenbestellungen.bestellgruppen_id = bestellgruppen.id )";
-  if( $produkt_id ) {
-    $query .= "
-      INNER JOIN bestellzuordnung
-      ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-    ";
-  }
-  $query .= " WHERE ( gruppenbestellungen.gesamtbestellung_id = $bestell_id ) ";
-  if( $produkt_id )
-    $query .= " AND ( bestellzuordnung.produkt_id = $produkt_id ) ";
-  if( $filter )
-    $query .= " AND ( $filter ) ";
-  $query .= " GROUP BY bestellgruppen.id
-              ORDER BY NOT(aktiv), gruppennummer"; //  13 (und andere inaktive) am ende zeigen
-  return mysql2array( doSql( $query ) );
-}
 
 // sql_gruppe_letztes_login(), sql_gruppe_letzte_bestellung():
 // 2 Funktionen zum Ermitteln von Karteileichen:
@@ -1062,9 +1095,8 @@ function sql_gruppe_offene_bestellungen( $gruppen_id ) {
 
 function optionen_gruppen(
   $selected = 0
-, $filter = 'aktiv'
+, $keys = array( 'aktiv' => 'true' )
 , $option_0 = false
-, $bestell_id = 0
 ) {
   $output='';
   if( $option_0 ) {
@@ -1075,12 +1107,7 @@ function optionen_gruppen(
     }
     $output = $output . ">$option_0</option>";
   }
-  if( $bestell_id ) {
-    $gruppen = sql_bestellung_gruppen( $bestell_id, false, $filter );
-  } else {
-    $gruppen = sql_bestellgruppen( $filter );
-  }
-  foreach( $gruppen as $gruppe ) {
+  foreach( sql_gruppen( $keys ) as $gruppe ) {
     $id = $gruppe['id'];
     $output = "$output
       <option value='$id'";
@@ -1174,7 +1201,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   }
 
   // falls letztes mitglied der gruppe ausgetreten: sockelbetrag der Gruppe rueckerstatten:
-  $gruppendaten = sql_gruppendaten( $gruppen_id );
+  $gruppendaten = sql_gruppe( $gruppen_id );
   if( ( $gruppendaten['mitgliederzahl'] == 0 ) and ( $gruppendaten['sockeleinlage_gruppe'] > 0 ) ) {
     if( sql_doppelte_transaktion(
       array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
@@ -1240,7 +1267,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
   sql_update( 'gruppenmitglieder', $id, array( 'rotationsplanposition' => $id ) );
   logger( "neues Gruppenmitglied $id ($newVorname) in Gruppe $gruppen_id angelegt" );
 
-  $gruppendaten = sql_gruppendaten( $gruppen_id );
+  $gruppendaten = sql_gruppe( $gruppen_id );
 
   // sockelbetrag fuer mitglied verbuchen:
   if( $sockelbetrag_mitglied > 0 ) {
@@ -2434,7 +2461,7 @@ function vormerkungenLoeschen( $bestell_id ) {
   $vormerkungen_erfuellt = 0;
   $lieferant_id = sql_bestellung_lieferant_id( $bestell_id );
   foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
-    foreach( sql_bestellung_gruppen( $bestell_id, $produkt['produkt_id'] ) as $gruppe ) {
+    foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt['produkt_id'] ) ) as $gruppe ) {
       $gruppen_id = $gruppe['id'];
       $vormerkung_fest = sql_bestellzuordnung_menge( array(
         'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST
@@ -3356,7 +3383,7 @@ function forderungen_gruppen_summe() {
     SELECT ifnull( -sum( table_soll.soll ), 0.0 ) as forderungen
     FROM (
       SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
-      FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
+      FROM (" .select_gruppen( array( 'aktiv' => 'true' ) ). ") AS bestellgruppen
       HAVING ( soll < 0 )
     ) AS table_soll
   ", 'forderungen' );
@@ -3367,7 +3394,7 @@ function verbindlichkeiten_gruppen_summe() {
     SELECT ifnull( sum( table_soll.soll ), 0.0 ) as verbindlichkeiten
     FROM (
       SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
-      FROM (" .select_aktive_bestellgruppen(). ") AS bestellgruppen
+      FROM (" .select_gruppen( array( 'aktiv' => 'true' ) ). ") AS bestellgruppen
       HAVING ( soll > 0 )
     ) AS table_soll
   ", 'verbindlichkeiten' );
@@ -3517,7 +3544,7 @@ function sockeleinlagen( $gruppen_id = 0 ) {
                 AND gruppenmitglieder.gruppen_id = bestellgruppen.id
             )
       ) as soll
-    FROM (".select_aktive_bestellgruppen().") AS bestellgruppen 
+    FROM (".select_gruppen( array( 'aktiv' => 'true' ) ).") AS bestellgruppen 
     $where
   ", 'soll' 
   );
