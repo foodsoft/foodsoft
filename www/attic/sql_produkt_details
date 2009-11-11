@@ -1,0 +1,70 @@
+// sql_produkt_details:
+//   interface zur abfrage aktueller produktdaten inklusive preis, gebinde, einheiten...
+//
+function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
+  $produkt_row = sql_select_single_row( "
+    SELECT produkte.id
+         , produkte.artikelnummer
+         , produkte.name
+         , produkte.lieferanten_id
+         , produkte.notiz
+         , produktgruppen.id as produktgruppen_id
+         , produktgruppen.name as produktgruppen_name
+    FROM produkte
+    LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
+    WHERE produkte.id=$produkt_id
+  " );
+  $produkt_row['lieferanten_name'] = sql_lieferant_name( $produkt_row['lieferanten_id'] );
+  if( $preis_id ) {
+    $preis_row = sql_select_single_row( "SELECT * FROM produktpreise WHERE id=$preis_id" );
+  } else {
+    $preis_row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
+  }
+  if( $preis_row ) {
+    preisdatenSetzen( & $preis_row );
+    //
+    // definierten Satz von Werten umkopieren:
+    $produkt_row['preis_id'] = $preis_row['id'];
+    //
+    // V-Mult V-einheit: Vielfache davon bestellen die Gruppen:
+    $produkt_row['kan_verteileinheit'] = $preis_row['kan_verteileinheit'];
+    $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
+    $produkt_row['verteileinheit'] = $preis_row['verteileinheit'];
+    $produkt_row['verteileinheit_anzeige'] = $preis_row['verteileinheit_anzeige'];
+    $produkt_row['kan_verteileinheit_anzeige'] = $preis_row['kan_verteileinheit_anzeige'];
+    $produkt_row['kan_verteilmult_anzeige'] = $preis_row['kan_verteilmult_anzeige'];
+    //
+    // L-Mult L-einheit: fuer abgleich mit Katalog/Rechnung oder zum Bestellen beim Lieferanten:
+    $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
+    $produkt_row['kan_liefermult'] = $preis_row['kan_liefermult'];
+    $produkt_row['liefereinheit'] = $preis_row['liefereinheit'];
+    $produkt_row['lv_faktor'] = $preis_row['lv_faktor'];
+    $produkt_row['liefereinheit_anzeige'] = $preis_row['liefereinheit_anzeige'];
+    $produkt_row['kan_liefereinheit_anzeige'] = $preis_row['kan_liefereinheit_anzeige'];
+    $produkt_row['kan_liefermult_anzeige'] = $preis_row['kan_liefermult_anzeige'];
+    //
+    // Gebindegroesse: wieviele V-Einheiten muessen jeweils bestellt werden:
+    $produkt_row['gebindegroesse'] = $preis_row['gebindegroesse'];
+    //
+    // Preise pro V-Einheit:
+    $produkt_row['nettopreis'] = $preis_row['nettopreis'];
+    $produkt_row['bruttopreis'] = $preis_row['bruttopreis'];  // mit MWSt.
+    $produkt_row['endpreis'] = $preis_row['endpreis'];        // mit MWSt. und Pfand
+    //
+    // Preise pro L-Einheit:
+    $produkt_row['nettolieferpreis'] = $preis_row['nettolieferpreis'];
+    $produkt_row['bruttolieferpreis'] = $preis_row['bruttolieferpreis'];
+    //
+    $produkt_row['pfand'] = $preis_row['pfand'];  // in Euro
+    $produkt_row['mwst'] = $preis_row['mwst'];    // in Prozent
+    //
+    $produkt_row['bestellnummer'] = $preis_row['bestellnummer'];
+    //
+    $produkt_row['zeitstart'] = $preis_row['zeitstart'];
+    $produkt_row['zeitende'] = $preis_row['zeitende'];
+  } else {
+    // flag: kein gueltiger preis:
+    $produkt_row['zeitstart'] = false;
+  }
+  return $produkt_row;
+}

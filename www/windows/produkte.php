@@ -108,7 +108,8 @@ open_table('list hfill');
 
   foreach( $produkte as $p ) {
     $id = $p['produkt_id'];
-    $produkt = sql_produkt_details( $id, 0, $mysqljetzt );
+    $preis_id = sql_aktueller_produktpreis_id( $id );
+    $produkt = sql_produkt( array( 'produkt_id' => $id, 'preis_id' => $preis_id ) );
     $references = references_produkt( $id );
     $vormerkungen_menge = sql_bestellzuordnung_menge( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $id ) );
 
@@ -123,7 +124,7 @@ open_table('list hfill');
         open_div( 'bold', '', $produkt['name'] );
         open_div( 'small', '', $produkt['notiz'] );
       if( $editable ) {
-        if( $produkt['zeitstart'] ) {
+        if( $preis_id ) {
           if( $vormerkungen_menge > 0 ) {
             $title = sprintf(
               "Vormerkungen fuer %s %s vorhanden"
@@ -141,7 +142,7 @@ open_table('list hfill');
           open_td( 'top center', '', '-' );
         }
       }
-      if( $produkt['zeitstart'] ) {
+      if( $preis_id ) {
         open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
         open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
