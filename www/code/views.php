@@ -1244,13 +1244,32 @@ function select_bestellung_view() {
   close_table();
 }
 
-function select_products_not_in_list($bestell_id){
+function select_products_not_in_list( $bestell_id ) {
+  $bestellung = sql_bestellung( $bestell_id );
+  $lieferanten_id = $bestellung['lieferanten_id'];
+  $produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
+
   ?> Produkt: <?
   open_select( 'produkt_id' );
     echo "<option value='0' selected>(Bitte Produkt wählen)</option>";
-    foreach( getProdukteVonLieferant( sql_bestellung_lieferant_id( $bestell_id ), $bestell_id ) as $prod ) {
-      echo "<option value='".$prod['produkt_id']."'>"
-      . $prod['name'] . " (" . $prod['verteileinheit']. ") " ."</option>";
+    foreach( $produkte as $p ) {
+      $produkt_id = $p['produkt_id'];
+      $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+      if( $preis_id ) {
+        $p = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
+      } else if( ! hat_dienst(4) ) {
+        continue;
+      }
+      if( sql_produkte_anzahl( array( 'produkt_id' => $produkt_id, 'bestell_id' => $bestell_id ) ) ) {
+        continue;
+      }
+      echo "<option value='{$p['produkt_id']}'>{$p['name']} (";
+      if( $preis_id ) {
+        echo price_view( $p['endpreis'] ) ." / {$p['verteileinheit_anzeige']}";
+      } else {
+        echo "kein aktueller Preiseintrag";
+      }
+      echo ")</option>";
     }
   close_select();
 }

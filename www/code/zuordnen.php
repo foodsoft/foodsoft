@@ -1490,18 +1490,6 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
       case 'lieferanten_id':
         $filters['lieferanten.id'] = $cond;
         break;
-//       case 'zeitpunkt':
-//         $joins[] = "
-//           ( SELECT LAST( produktpreise.* )
-//             FROM produktpreise
-//             WHERE ( produktpreise.zeitstart <= '$zeitpunkt' )
-//               AND ( isnull(produktpreise.zeitende) or '$zeitpunkt' <= produktpreise.zeitende )
-//               AND ( produktpreise.produkt_id = produkte.id )
-//             ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31')
-//           ) as produktpreise
-//         ";
-//         $have_price = true;
-//         break;
       case 'bestell_id':
       case 'gesamtbestellung_id':
         if( $cond ) {
@@ -1604,6 +1592,13 @@ function sql_produkte_anzahl( $keys = array() ) {
 function references_produkt( $produkt_id ) {
   return sql_count( 'bestellvorschlaege', "produkt_id=$produkt_id" )
        + sql_count( 'bestellzuordnung', "produkt_id=$produkt_id" );
+}
+
+function sql_delete_produkt( $produkt_id ) {
+  $count = references_produkt( $produkt_id );
+  need( $count == 0, 'Produkteintrag nicht löschbar, da in Bestellungen oder -vorlagen benutzt!' );
+  doSql( "DELETE FROM produktpreise WHERE produkt_id=$produkt_id" );
+  doSql( "DELETE FROM produkte WHERE id=$produkt_id" );
 }
 
 
@@ -2412,7 +2407,6 @@ function basar_wert_bilanz( $bestell_id = 0 ) {
 
 
 
-
 /**
  * verteilmengenLoeschen: bei statuswechsel LIEFERANT -> BESTELLEN:
  */
@@ -3205,7 +3199,7 @@ function select_bestellungen_soll_lieferanten( $art, $using = array() ) {
   }
 }
 
-/*  select_transaktionen_haben_gruppen:
+/*  select_transaktionen_soll_gruppen:
  *   liefert als skalarer subquery schuld an gruppen aus gruppen_transaktion
  *   aus $using werden verwendet: 'bestellgruppen'
  */
@@ -3652,7 +3646,7 @@ function sql_verluste_summe( $type ) {
 
 /////////////////////////////////////////////
 //
-// produkte und produktpreise
+// produktpreise
 //
 /////////////////////////////////////////////
 
@@ -3934,90 +3928,12 @@ function mult2string( $mult ) {
 }
 
 
-function sql_delete_produkt( $produkt_id ) {
-  $count = references_produkt( $produkt_id );
-  need( $count == 0, 'Produkteintrag nicht löschbar, da in Bestellungen oder -vorlagen benutzt!' );
-  doSql( "DELETE FROM produktpreise WHERE produkt_id=$produkt_id" );
-  doSql( "DELETE FROM produkte WHERE id=$produkt_id" );
-}
-
 function sql_delete_produktpreis( $preis_id ) {
   need( references_produktpreise( $preis_id ) == 0 , 'Preiseintrag nicht löschbar, da er benutzt wird!' );
   doSql( "DELETE FROM produktpreise WHERE id=$preis_id" );
 }
 
 
-
-/**
- *   Produkte von einem Bestimmten Lieferanten abfragen
- *
- *   Es werden nur Proukte mit gültigen Preis zurückgegeben.
- *   
- *   Wenn eine Bestellung angegeben wird, werden nur
- *   die Produkte zurückgegeben, die noch nicht in der
- *   Bestellung drin sind.
- */
-function getProdukteVonLieferant( $lieferant_id, $bestell_id ) {
-    $state = sql_bestellung_status( $bestell_id );
-    switch( $state ) {
-      case STATUS_BESTELLEN:
-        // produkte in bestellvorlage aufnehmen:
-        //  - wenn noch kein vorschlag vorhanden und
-        //  - aktuell gueltiger preis existiert
-        $zeitpunkt = " (SELECT bestellende FROM gesamtbestellungen WHERE id = ".$bestell_id.") ";
-        $sql = "
-          SELECT *
-          , produkte.name as name
-          , produktgruppen.name as produktgruppen_name
-          , produkte.id as produkt_id
-          , produktgruppen.id as produktgruppen_id
-          FROM produkte
-          INNER JOIN produktgruppen
-            ON produktgruppen.id = produkte.produktgruppen_id
-          INNER JOIN produktpreise ON
-            (produkte.id = produktpreise.produkt_id)
-          LEFT JOIN (SELECT * FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id ) as vorschlaege
-            ON (produkte.id = vorschlaege.produkt_id)
-          WHERE lieferanten_id = $lieferant_id AND isnull(gesamtbestellung_id)
-          AND zeitstart <= $zeitpunkt AND ( ISNULL(zeitende) OR zeitende >= $zeitpunkt )
-        ";
-        break;
-      default:
-        // zusaetzlich geliefertes produkt aufnehmen:
-        //  - wenn keine bestellung vorliegt (aber vorschlag evtl. schon!)
-        //  - zeiten seien hier fast egal (lieferschein wird sowieso abgeglichen;
-        //    (bei nachtraeglichem einfuegen wird die startzeit fast nie passen :-) )
-        $sql = "
-          SELECT *
-          , produkte.name as name
-          , produktgruppen.name as produktgruppen_name
-          , produkte.id as produkt_id
-          , produktgruppen.id as produktgruppen_id
-          FROM produkte
-          INNER JOIN produktgruppen
-            ON produktgruppen.id = produkte.produktgruppen_id
-          INNER JOIN produktpreise ON
-            (produkte.id = produktpreise.produkt_id)
-          LEFT JOIN
-            ( SELECT bestellvorschlaege.produkt_id, bestellvorschlaege.gesamtbestellung_id
-              FROM bestellvorschlaege
-              INNER JOIN gruppenbestellungen
-                ON gruppenbestellungen.gesamtbestellung_id = bestellvorschlaege.gesamtbestellung_id
-              INNER JOIN bestellzuordnung
-                ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
-                   AND bestellzuordnung.produkt_id = bestellvorschlaege.produkt_id
-              WHERE bestellvorschlaege.gesamtbestellung_id = $bestell_id
-              GROUP BY produkt_id
-            ) as bestellungen
-            ON (produkte.id = bestellungen.produkt_id)
-          WHERE lieferanten_id = $lieferant_id AND isnull(gesamtbestellung_id)
-          GROUP BY produkte.id
-        ";
-      break;
-    }
-  $sql .= " ORDER BY produktgruppen.name, produkte.name ";
-  return mysql2array( doSql($sql, LEVEL_ALL, "Konnte Produkte nich aus DB laden..") ) ;
-}
 
 ////////////////////////////////////
 //
