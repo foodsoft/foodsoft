@@ -703,7 +703,7 @@ if( ! $readonly ) {
   open_div( 'middle', "id='hinzufuegen'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen' );
-        select_products_not_in_list($bestell_id);
+        select_products_not_in_list( $bestell_id );
         submission_button( 'Produkt hinzuf&uuml;gen' );
         $anzahl_eintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
         if( $anzahl_eintraege > 0 ) {

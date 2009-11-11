@@ -791,7 +791,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   $form_id = open_form( '', 'action=neuer_preiseintrag' );
 
     open_table('layout');
-      form_row_text( 'Produkt:', false, 1, "{$produkt['name']} von {$produkt['lieferanten_name']}" );
+      form_row_text( 'Produkt:', false, 1, "{$produkt['name']} von {$produkt['lieferant_name']}" );
 
       tr_title( 'Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant' );
       form_row_text( 'Notiz:', 'notiz', 42, $vorschlag['notiz'] );
