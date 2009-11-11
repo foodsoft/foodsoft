@@ -25,7 +25,7 @@ if( $action == 'basarzuteilung' ) {
     if( sql_bestellung_status( $bestell_id ) >= STATUS_ABGERECHNET )
       continue;
     if( get_http_var( "menge$i", "f" ) ) {
-      $pr = sql_produkt( array( 'bestell_id' => $id, 'produkt_id' => ${"produkt$i"} ) );
+      $pr = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => ${"produkt$i"} ) );
       $gruppen_menge = ${"menge$i"} / $pr['kan_verteilmult'];
       if( $gruppen_menge > 0 or ( $gruppen_id == $muell_id ) )
         sql_basar2group( $gruppen_id, ${"produkt$i"}, ${"bestellung$i"}, $gruppen_menge );
