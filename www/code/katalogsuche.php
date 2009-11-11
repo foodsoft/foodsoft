@@ -404,30 +404,29 @@ function katalogabgleich(
 //   aktuellen preiseintrag aus katalog automatisch erzeugen
 //   (zur zeit: nur falsche bestellnummern werden automatisch korrigiert!)
 // rueckgabe:
-//  0 : preis ist aktuell, kein neueintrag notwendig
-//  1 : preis wurde aktualisiert
-//  2 : automatische aktualisierung nicht moeglich oder fehlgeschlagen
+//  -1 : preis ist aktuell, kein neueintrag notwendig
+//   0 : automatische aktualisierung nicht moeglich oder fehlgeschlagen
+//  >0 : preis wurde aktualisiert, rueckgabe ist produktpreise.id
 //
 function update_preis( $produkt_id ) {
-  global $mysql_heute;
+  global $mysqlheute;
   $preiseintrag_neu = array();
   $r = katalogabgleich( $produkt_id, 0, 0, & $preiseintrag_neu );
   switch( $r ) {
     case 0:
-      return 0;
+      return -1;
     case 1:
     case 2:
     case 3:
-      return 2;
+      return 0;
     case 4:
-      sql_insert_produktpreis(
-        $produkt_id, $preiseintrag_neu['lieferpreis'], $mysql_heute
+      return sql_insert_produktpreis(
+        $produkt_id, $preiseintrag_neu['lieferpreis'], $mysqlheute
       , $preiseintrag_neu['bestellnummer'], $preiseintrag_neu['gebindegroesse']
       , $preiseintrag_neu['mwst'], $preiseintrag_neu['pfand']
       , $preiseintrag_neu['liefereinheit'], $preiseintrag_neu['verteileinheit']
       , $preiseintrag_neu['lv_faktor']
       );
-      return 1;
   }
 }
 

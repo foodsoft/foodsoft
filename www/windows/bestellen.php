@@ -93,7 +93,12 @@ switch( $action ) {
     // preiseintrage automatisch aktualisieren: bisher nur fuer bestellnummern:
     $n = 0;
     foreach( sql_bestellung_produkte( $bestell_id ) as $p ) {
-      if( update_preis( $p['produkt_id'] ) ) {
+      $id = update_preis( $p['produkt_id'] );
+      if( $id > 0 ) {
+        sql_update( 'bestellvorschlaege'
+        , array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $p['produkt_id'] )
+        , array( 'produktpreise_id' => $id )
+        );
         $n++;
       }
     }
