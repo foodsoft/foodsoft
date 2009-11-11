@@ -55,14 +55,14 @@ switch( $action ) {
     nur_fuer_dienst(5);
     need_http_var('gruppen_id','u');
 
-    $row = sql_gruppendaten( $gruppen_id );
+    $gruppe = sql_gruppe( $gruppen_id );
     $kontostand = kontostand( $gruppen_id );
     $offene_bestellungen = sql_gruppe_offene_bestellungen( $gruppen_id );
     if( abs($kontostand) > 0.005 ) {
       div_msg( 'warn', "Kontostand ($kontostand EUR) ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
     } elseif( $offene_bestellungen ) {
       div_msg( 'warn', "nicht alle Bestellungen der Gruppe abgeschlossen: Loeschen nicht moeglich!" );
-    } elseif( $row['mitgliederzahl'] != 0 ) {
+    } elseif( $gruppe['mitgliederzahl'] != 0 ) {
       div_msg( 'warn', "Mitgliederzahl ist nicht null: L&ouml;schen nicht m&ouml;glich!" );
       div_msg( 'warn', "(bitte erst Mitglieder l&ouml;schen, um Sockelbetrag zu verbuchen)" );
     } else {
@@ -116,13 +116,13 @@ open_table('list');
 
   $summe = 0;
   $mitglieder_summe = 0;
-  $gruppen = ( $optionen & GRUPPEN_OPT_INAKTIV ? sql_bestellgruppen() : sql_aktive_bestellgruppen() );
-  foreach( $gruppen as $row ) {
-    $id = $row['id'];
+  $gruppen = sql_gruppen( $optionen & GRUPPEN_OPT_INAKTIV ? array() : array( 'aktiv' => 1 ) );
+  foreach( $gruppen as $gruppe ) {
+    $id = $gruppe['id'];
     if( in_array( $id, $specialgroups ) )
       continue;
     if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) ) {
-      $kontostand = sprintf( '%10.2lf', kontostand($row['id']) );
+      $kontostand = sprintf( '%10.2lf', kontostand( $gruppe['id'] ) );
       if( $optionen & GRUPPEN_OPT_SCHULDEN )
         if( $kontostand >= 0 )
           continue;
@@ -135,16 +135,16 @@ open_table('list');
           continue;
       $summe += $kontostand;
     }
-    $nr = $row['gruppennummer'];
-    $mitglieder_summe += $row['mitgliederzahl'];
+    $nr = $gruppe['gruppennummer'];
+    $mitglieder_summe += $gruppe['mitgliederzahl'];
 
     open_tr();
       open_td( '', '', $nr );
-      open_td( '', '', $row['name'] );
+      open_td( '', '', $gruppe['name'] );
       open_td( 'number' );
       if( hat_dienst(4,5) || ( $login_gruppen_id == $id ) )
         echo price_view( $kontostand );
-      open_td( 'number', '', $row['mitgliederzahl'] );
+      open_td( 'number', '', $gruppe['mitgliederzahl'] );
       if( hat_dienst(4,5) ) {
         $letztes_login = sql_gruppe_letztes_login( $id );
         if( $letztes_login )
@@ -163,7 +163,7 @@ open_table('list');
 
       open_td();
 
-      if( $row['aktiv'] > 0 ) {
+      if( $gruppe['aktiv'] ) {
         echo fc_link( 'gruppenmitglieder', "gruppen_id=$id,title=Mitglieder,text=" );
         if( hat_dienst(4,5) ) {
           echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,text=" );
@@ -190,13 +190,13 @@ open_table('list');
         // - bestellungen, an denen sich die gruppe beteiligt hat, sind abgeschlossen
         if(    hat_dienst(5)
             && ( abs($kontostand) < 0.005 )
-            && ( ! sql_gruppe_offene_bestellungen( $row['id'] ) )
-            && ( $row['mitgliederzahl'] == 0 )
+            && ( ! sql_gruppe_offene_bestellungen( $gruppe['id'] ) )
+            && ( $gruppe['mitgliederzahl'] == 0 )
             && ( ! in_array( $id, $specialgroups ) )
         ) {
           echo fc_action( array( 'class' => 'drop', 'title' => 'Gruppe l&ouml;schen?', 'text' => ''
                                , 'confirm' => 'Soll die Gruppe wirklich GEL&Ouml;SCHT werden?' )
-                        , array( 'action' => 'delete', 'gruppen_id' => $row['id'] ) );
+                        , array( 'action' => 'delete', 'gruppen_id' => $gruppe['id'] ) );
         }
       } else {
         ?>(inaktiv)<?

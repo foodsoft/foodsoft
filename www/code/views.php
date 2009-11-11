@@ -152,7 +152,7 @@ function date_view( $date, $fieldname = '' ) {
 function produktgruppe_view( $produktgruppen_id = 0, $fieldname = false ) {
   global $input_event_handlers, $window_id;
   if( $fieldname ) {
-     return "<select name='$fieldname' $input_event_handlers>".optionen_produktgruppen( $produktgruppen_id )."</select>";
+    return "<select name='$fieldname' $input_event_handlers>".optionen_produktgruppen( $produktgruppen_id )."</select>";
   } else {
     $text = ( $produktgruppen_id ? sql_produktgruppen_name( $produktgruppen_id ) : '-' );
     if( $produktgruppen_id and ( $window_id != 'produktgruppen' ) )
@@ -162,10 +162,10 @@ function produktgruppe_view( $produktgruppen_id = 0, $fieldname = false ) {
   }
 }
 
-function gruppe_view( $gruppen_id = 0, $fieldname = '', $filter = 'aktiv', $option_0 = '' ) {
+function gruppe_view( $gruppen_id = 0, $fieldname = '', $keys = array( 'aktiv' => 'true' ), $option_0 = '' ) {
   global $input_event_handlers, $window_id;
   if( $fieldname ) {
-     return "<select name='$fieldname' $input_event_handlers>".optionen_gruppen( $gruppen_id, $filter, $option_0 )."</select>";
+    return "<select name='$fieldname' $input_event_handlers>".optionen_gruppen( $gruppen_id, $keys, $option_0 )."</select>";
   } else {
     $text = ( $gruppen_id ? sql_gruppenname( $gruppen_id )." (".sql_gruppennummer( $gruppen_id ).")" : $option_0 );
     if(  $gruppen_id and ( $window_id != 'gruppenmitglieder' ) )
@@ -178,7 +178,7 @@ function gruppe_view( $gruppen_id = 0, $fieldname = '', $filter = 'aktiv', $opti
 function konto_view( $konto_id = 0, $fieldname = '' ) {
   global $input_event_handlers, $window;
   if( $fieldname ) {
-     return "<select name='$fieldname' $input_event_handlers>".optionen_konten( $konto_id )."</select>";
+    return "<select name='$fieldname' $input_event_handlers>".optionen_konten( $konto_id )."</select>";
   } else {
     $text = ( $konto_id ? sql_kontoname( $konto_id ) : '-' );
     if( $window != 'konto' )
@@ -380,7 +380,7 @@ function dienst_view( $dienst_id, $editable = false ) {
 
   $gruppen_id = $dienst['gruppen_id'];
   if( $gruppen_id ) {
-    $gruppe = sql_gruppendaten( $gruppen_id );
+    $gruppe = sql_gruppe( $gruppen_id );
     $gruppenmitglieder_id = $dienst['gruppenmitglieder_id'];
     $edit_mitglieder = ( $editable && ( hat_dienst(5) || ( $gruppen_id == $login_gruppen_id ) ) );
     $mitglieder = sql_gruppe_mitglieder( $gruppen_id );
@@ -649,7 +649,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     open_tr();
       open_td( 'right medskip', "colspan='$cols'" );
         open_select( 'gruppen_id' );
-          echo optionen_gruppen( false, "( aktiv or ( id = $muell_id ) )" );
+          echo optionen_gruppen( false, array( 'where' => "aktiv or ( bestellgruppen.id = $muell_id )" ) );
         close_select();
         hidden_input( 'fieldcount', $fieldcount );
         qquad();
@@ -1303,7 +1303,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult;
   $muellmenge = 0;
 
-  foreach( sql_bestellung_gruppen( $bestell_id, $produkt_id ) as $gruppe ) {
+  foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
     $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
     if( $mengen ) {
@@ -1689,7 +1689,7 @@ function dienst_selector($pre_select, $id=""){
  * Argument: sql_members($group_id)
  */
 function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, $head = TRUE ) {
-  $gruppendaten = sql_gruppendaten( $gruppen_id );
+  $gruppendaten = sql_gruppe( $gruppen_id );
   if( $editable or $super_edit )
     open_form( '', 'action=edit' );
 

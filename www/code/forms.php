@@ -695,7 +695,7 @@ function action_gruppen_umlage() {
   }
   // echo "action_gruppen_umlage:";
   if( ! $problems ) {
-    foreach( sql_aktive_bestellgruppen() as $gruppe ) {
+    foreach( sql_gruppen( array( 'aktiv' => 'true' ) ) as $gruppe ) {
       if( $gruppe['mitgliederzahl'] > 0 ) {
         sql_doppelte_transaktion(
           array( 'konto_id' => -1, 'gruppen_id' => sql_muell_id(), 'transaktionsart' => TRANSAKTION_TYP_UMLAGE )

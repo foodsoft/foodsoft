@@ -54,7 +54,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
       }
     }
 
-    $gruppen = sql_bestellung_gruppen( $bestell_id, $produkt_id );
+    $gruppen = sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
     $gruppen[] = array( 'id' => sql_muell_id() );
     foreach( $gruppen as $gruppe ) {
       $gruppen_id = $gruppe['id'];
