@@ -175,6 +175,9 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
         open_th( '', '', 'Brutto' );
       }
       open_th( '', '', 'Katalog' );
+      if( ! $produkt_id ) {
+        open_th( '', '', 'Foodsoft-Datenbank' );
+      }
 
       while( $row = mysql_fetch_array( $result ) ) {
         $netto = $row['preis'];
@@ -201,6 +204,27 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
             open_td( 'mult', '', price_view( $brutto ) );
           }
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
+          if( ! $produkt_id ) {
+            open_td( 'center' );
+            $p = sql_produkt( array( 'artikelnummer' => $row['artikelnummer'], 'lieferanten_id' => $lieferanten_id ), true );
+            if( $p ) {
+              echo fc_link( 'produktpreise', "text=,produkt_id={$p['produkt_id']}" );
+            } else {
+              echo fc_action(
+                array(
+                  'window' => 'edit_produkt'
+                , 'class' => 'button'
+                , 'text' => 'Eintragen'
+                , 'title' => 'in Foodsoft Datenbank uebernehmen'
+                , 'confirm' => 'Artikel in Foodsoft Datenbank uebernehmen?'
+                )
+              , array(
+                  'lieferanten_id' => $lieferanten_id
+                , 'name' => $row['name']
+                , 'artikelnummer' => $row['artikelnummer']
+              ) );
+            }
+          }
       }
     close_table();
     if( $produkt_id )
