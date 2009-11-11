@@ -12,7 +12,7 @@ $done = "";
 
 get_http_var( 'produkt_id', 'u', 0, true );
 if( $produkt_id ) {
-  $row = sql_produkt_details( $produkt_id );
+  $row = sql_produkt( $produkt_id );
   setWindowSubtitle( 'Artikeldaten' );
   setWikiHelpTopic( 'foodsoft:artikeldaten' );
   $lieferanten_id = $row['lieferanten_id'];

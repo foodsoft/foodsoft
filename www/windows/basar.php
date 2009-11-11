@@ -14,8 +14,7 @@ if( $action == 'basarzuteilung' ) {
   need_http_var('fieldcount','u' );
   need_http_var('gruppen_id','U', false );
   if( $gruppen_id != sql_muell_id() ) {
-    $gruppe = sql_gruppe( $gruppen_id );
-    need( $gruppe['aktiv'] , "Keine aktive Bestellgruppe ausgewaehlt!" );
+    need( sql_gruppe_aktiv( $gruppen_id ) , "Keine aktive Bestellgruppe ausgewaehlt!" );
   }
 
   for( $i = 0; $i < $fieldcount; $i++ ) {

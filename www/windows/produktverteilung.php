@@ -91,7 +91,7 @@ open_table('list');
   distribution_tabellenkopf(); 
 
   foreach( sql_bestellung_produkte( $bestell_id, $produkt_id ) as $produkt ) {
-    if( ( $produkt['liefermenge'] < 0.5 ) and ( $produkt['verteilmenge'] < 0.5 ) )
+    if( ( $produkt['liefermenge'] < 0.001 ) and ( $produkt['verteilmenge'] < 0.001 ) )
       continue;
     $produkt_id = $produkt['produkt_id'];
 

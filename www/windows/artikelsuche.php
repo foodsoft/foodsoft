@@ -64,7 +64,7 @@ if( $action != 'search' )
 // produkt_id: wenn gesetzt, erlaube update der artikelnummer!
 get_http_var( 'produkt_id', 'u', 0, true );
 if( $produkt_id ) {
-  $produkt = sql_produkt_details( $produkt_id );
+  $produkt = sql_produkt( $produkt_id );
   $produktname = $produkt['name'];
 }
 

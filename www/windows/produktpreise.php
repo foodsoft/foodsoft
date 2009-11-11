@@ -13,7 +13,7 @@ $editable = ( hat_dienst(4) and ! $readonly );
 need_http_var('produkt_id','u',true);
 get_http_var('bestell_id','u',0,true);  // optional: waehle preiseintrag fuer diese bestellung!
 
-$produkt = sql_produkt_details( $produkt_id );
+$produkt = sql_produkt( $produkt_id );
 $lieferanten_id = $produkt['lieferanten_id'];
 $produkt_name = $produkt['name'];
 $lieferanten_name = sql_lieferant_name( $lieferanten_id );
@@ -78,13 +78,11 @@ $neednewprice = FALSE;         // flag: neuen preiseintrag vorschlagen (falls ga
 $neednewarticlenumber = FALSE; // flag: suche nach artikelnummer vorschlagen (falls kein Treffer bei Katalogsuche):
 $preiseintrag_neu = array();   // array fuer vorschlag neuer preiseintrag
 
-// neu laden (falls durch $action geaendert):
+// neu laden (falls durch $action geaendert), mit aktuellen preisdaten (soweit vorhanden):
 //
-$produkt = sql_produkt_details( $produkt_id );
+$preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+$produkt = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
 
-$prgueltig = false;
-if( $produkt['zeitstart'] )
-  $prgueltig = true;
 $lieferanten_id = $produkt['lieferanten_id'];
 $produkt_name = $produkt['name'];
 
@@ -123,7 +121,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
           open_tr();
             open_td( 'oneline small', '', $produkt['notiz'] );
         close_table();
-  if( $prgueltig ) {
+  if( $preis_id ) {
     open_td( '', '', $produkt['bestellnummer'] );
     open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
     open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
@@ -137,7 +135,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
   }
   close_table();
 
-  if( $prgueltig ) {
+  if( $preis_id ) {
     if( ! $produkt['kan_liefereinheit'] ) {
       div_msg( 'warn', 'FEHLER: keine gültige Liefereinheit' );
       $neednewprice = TRUE;
