@@ -210,19 +210,23 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
             if( $p ) {
               echo fc_link( 'produktpreise', "text=,produkt_id={$p['produkt_id']}" );
             } else {
-              echo fc_action(
-                array(
-                  'window' => 'edit_produkt'
-                , 'class' => 'button'
-                , 'text' => 'Eintragen'
-                , 'title' => 'in Foodsoft Datenbank uebernehmen'
-                , 'confirm' => 'Artikel in Foodsoft Datenbank uebernehmen?'
-                )
-              , array(
-                  'lieferanten_id' => $lieferanten_id
-                , 'name' => $row['name']
-                , 'artikelnummer' => $row['artikelnummer']
-              ) );
+              if( hat_dienst(4) ) {
+                echo fc_action(
+                  array(
+                    'window' => 'edit_produkt'
+                  , 'class' => 'button'
+                  , 'text' => 'Eintragen'
+                  , 'title' => 'in Foodsoft Datenbank uebernehmen'
+                  , 'confirm' => 'Artikel in Foodsoft Datenbank uebernehmen?'
+                  )
+                , array(
+                    'lieferanten_id' => $lieferanten_id
+                  , 'name' => $row['name']
+                  , 'artikelnummer' => $row['artikelnummer']
+                ) );
+              } else {
+                echo "-";
+              }
             }
           }
       }
