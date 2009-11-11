@@ -1486,6 +1486,10 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
       case 'produkt_id':
         $filters['produkte.id'] = $cond;
         break;
+      case 'anummer':
+      case 'artikelnummer':
+        $filters['produkte.artikelnummer'] = $cond;
+        break;
       case 'lieferant_id':
       case 'lieferanten_id':
         $filters['lieferanten.id'] = $cond;
