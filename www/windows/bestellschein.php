@@ -40,7 +40,9 @@ switch( $action ) {
     need_http_var( 'produkt_id', 'u' );
     // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
-      insert_bestellvorschlag( $produkt_id, $bestell_id );
+      if( sql_insert_bestellvorschlag( $produkt_id, $bestell_id ) ) {
+        $js_on_exit[] = "alert( 'Produkt wurde aufgenommen, steht aber noch unter \"nicht geliefert\" (da Liefermenge 0): bitte Menge nachtragen!' );";
+      }
     }
     break;
 
@@ -141,7 +143,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
 
-  echo "<h1>$title</h1>";
+echo "<h1>$title</h1>";
 
 open_table( 'layout hfill' );
     open_td( 'left' );
