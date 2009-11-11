@@ -109,7 +109,7 @@ function mult_view( $mult, $fieldname = false ) {
     return "<span class='number'>$mult</span>";
 }
 
-function gebindegroesse_view( $pr /* result of sql_produkt_details */ ) {
+function gebindegroesse_view( $pr /* a row from table produktpreise */ ) {
    $s = "{$pr['gebindegroesse']} * {$pr['verteileinheit_anzeige']}";
    if( $pr['verteileinheit_anzeige'] != $pr['liefereinheit_anzeige'] ) {
      $s .= "<span class='quad small'>(" . mult_view( $pr['gebindegroesse'] / $pr['lv_faktor'] ) . " * {$pr['liefereinheit_anzeige']})</span>";
@@ -1511,8 +1511,6 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
 
   foreach( sql_produktpreise( $produkt_id ) as $pr1 ) {
-    preisdatenSetzen( &$pr1 );
-    // var_export( $pr1 );
     $references = references_produktpreise( $pr1['id'] );
     open_tr();
       open_td( 'oneline' );

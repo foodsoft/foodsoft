@@ -76,6 +76,8 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
     } else {
       $and = 'WHERE';
       foreach( $filters as $key => $cond ) {
+        if( $cond === NULL )
+          continue;
         if( is_numeric( $key ) ) {   // assume $cond is a complete boolean expression
           $f = $cond;
         } else {
@@ -1488,30 +1490,39 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
       case 'lieferanten_id':
         $filters['lieferanten.id'] = $cond;
         break;
-      case 'zeitpunkt':
-        $joins[] = "
-          ( SELECT LAST( produktpreise.* )
-            FROM produktpreise
-            WHERE ( produktpreise.zeitstart <= '$zeitpunkt' )
-              AND ( isnull(produktpreise.zeitende) or '$zeitpunkt' <= produktpreise.zeitende )
-              AND ( produktpreise.produkt_id = produkte.id )
-            ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31')
-          ) as produktpreise
-        ";
-        $have_price = true;
-        break;
+//       case 'zeitpunkt':
+//         $joins[] = "
+//           ( SELECT LAST( produktpreise.* )
+//             FROM produktpreise
+//             WHERE ( produktpreise.zeitstart <= '$zeitpunkt' )
+//               AND ( isnull(produktpreise.zeitende) or '$zeitpunkt' <= produktpreise.zeitende )
+//               AND ( produktpreise.produkt_id = produkte.id )
+//             ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31')
+//           ) as produktpreise
+//         ";
+//         $have_price = true;
+//         break;
       case 'bestell_id':
       case 'gesamtbestellung_id':
-        $joins['bestellvorschlaege'] = 'bestellvorschlaege.produkt_id = produkte.id';
-        $joins['gesamtbestellungen'] = 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id';
-        $joins['produktpreise']
-          = '(produktpreise.id = bestellvorschlaege.produktpreise_id) and (produktpreise.produkt_id = produkte.id)';
-        $have_price = true;
-        $filters['gesamtbestellungen.id'] = $cond;
-        $selects[] = 'bestellvorschlaege.liefermenge';
-        $selects[] = 'bestellvorschlaege.produktpreise_id';
-        $selects[] = 'gesamtbestellungen.aufschlag_prozent';
-        $selects[] = 'gesamtbestellungen.name as gesamtbestellung_name';
+        if( $cond ) {
+          $joins['bestellvorschlaege'] = 'bestellvorschlaege.produkt_id = produkte.id';
+          $joins['gesamtbestellungen'] = 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id';
+          $joins['produktpreise']
+            = '(produktpreise.id = bestellvorschlaege.produktpreise_id) and (produktpreise.produkt_id = produkte.id)';
+          $have_price = true;
+          $filters['gesamtbestellungen.id'] = $cond;
+          $selects[] = 'bestellvorschlaege.liefermenge';
+          $selects[] = 'bestellvorschlaege.produktpreise_id';
+          $selects[] = 'gesamtbestellungen.aufschlag_prozent';
+          $selects[] = 'gesamtbestellungen.name as gesamtbestellung_name';
+        }
+        break;
+      case 'preis_id':
+        if( $cond ) {
+          $joins['produktpreise'] = 'produktpreise.produkt_id = produkte.id';
+          $filters['produktpreise.id'] = $cond;
+          $have_price = true;
+        }
         break;
       default:
           error( "undefined key: $key" );
@@ -1569,7 +1580,7 @@ function select_produkte_anzahl( $keys = array(), $using = array() ) {
 
 function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produktgruppen.id, produkte.name' ) {
   $r = mysql2array( doSql( select_produkte( $keys, array(), $orderby ) ) );
-  foreach( $r as $p ) {
+  foreach( $r as & $p ) {
     if( isset( $p['preis_id'] ) ) {
       preisdatenSetzen( & $p );
     }
@@ -1577,6 +1588,8 @@ function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produkt
   return $r;
 }
 function sql_produkt( $keys = array(), $allow_null = false ) {
+  if( is_numeric( $keys ) )
+    $keys = array( 'produkt_id' => $keys );
   $p = sql_select_single_row( select_produkte( $keys ), $allow_null );
   if( $p and isset( $p['preis_id'] ) ) {
     preisdatenSetzen( & $p );
@@ -1957,8 +1970,6 @@ function select_bestellzuordnung_menge( $keys = array(), $using = array() ) {
 function sql_bestellzuordnung_menge( $keys = array() ) {
   return sql_select_single_field( select_bestellzuordnung_menge( $keys ), 'menge' );
 }
-
-
 
 
 // select_bestellung_produkte():
@@ -3721,7 +3732,11 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
     WHERE produkt_id= $produkt_id $zeitfilter
     ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31'), id";
   //  ORDER BY IFNULL(zeitende,'9999-12-31'), id";
-  return mysql2array( doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..") );
+  $result = mysql2array( doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..") );
+  foreach( $result as & $r ) {
+    preisdatenSetzen( & $r );
+  }
+  return $result;
 }
 
 /* sql_aktueller_produktpreis:
@@ -3918,78 +3933,6 @@ function mult2string( $mult ) {
   return preg_replace( '/\.$/', '', $mult );
 }
 
-
-
-// sql_produkt_details:
-//   interface zur abfrage aktueller produktdaten inklusive preis, gebinde, einheiten...
-//
-function sql_produkt_details( $produkt_id, $preis_id = 0, $zeitpunkt = false ) {
-  $produkt_row = sql_select_single_row( "
-    SELECT produkte.id
-         , produkte.artikelnummer
-         , produkte.name
-         , produkte.lieferanten_id
-         , produkte.notiz
-         , produktgruppen.id as produktgruppen_id
-         , produktgruppen.name as produktgruppen_name
-    FROM produkte
-    LEFT JOIN produktgruppen ON produktgruppen.id = produkte.produktgruppen_id
-    WHERE produkte.id=$produkt_id
-  " );
-  $produkt_row['lieferanten_name'] = sql_lieferant_name( $produkt_row['lieferanten_id'] );
-  if( $preis_id ) {
-    $preis_row = sql_select_single_row( "SELECT * FROM produktpreise WHERE id=$preis_id" );
-  } else {
-    $preis_row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
-  }
-  if( $preis_row ) {
-    preisdatenSetzen( & $preis_row );
-    //
-    // definierten Satz von Werten umkopieren:
-    $produkt_row['preis_id'] = $preis_row['id'];
-    //
-    // V-Mult V-einheit: Vielfache davon bestellen die Gruppen:
-    $produkt_row['kan_verteileinheit'] = $preis_row['kan_verteileinheit'];
-    $produkt_row['kan_verteilmult'] = $preis_row['kan_verteilmult'];
-    $produkt_row['verteileinheit'] = $preis_row['verteileinheit'];
-    $produkt_row['verteileinheit_anzeige'] = $preis_row['verteileinheit_anzeige'];
-    $produkt_row['kan_verteileinheit_anzeige'] = $preis_row['kan_verteileinheit_anzeige'];
-    $produkt_row['kan_verteilmult_anzeige'] = $preis_row['kan_verteilmult_anzeige'];
-    //
-    // L-Mult L-einheit: fuer abgleich mit Katalog/Rechnung oder zum Bestellen beim Lieferanten:
-    $produkt_row['kan_liefereinheit'] = $preis_row['kan_liefereinheit'];
-    $produkt_row['kan_liefermult'] = $preis_row['kan_liefermult'];
-    $produkt_row['liefereinheit'] = $preis_row['liefereinheit'];
-    $produkt_row['lv_faktor'] = $preis_row['lv_faktor'];
-    $produkt_row['liefereinheit_anzeige'] = $preis_row['liefereinheit_anzeige'];
-    $produkt_row['kan_liefereinheit_anzeige'] = $preis_row['kan_liefereinheit_anzeige'];
-    $produkt_row['kan_liefermult_anzeige'] = $preis_row['kan_liefermult_anzeige'];
-    //
-    // Gebindegroesse: wieviele V-Einheiten muessen jeweils bestellt werden:
-    $produkt_row['gebindegroesse'] = $preis_row['gebindegroesse'];
-    //
-    // Preise pro V-Einheit:
-    $produkt_row['nettopreis'] = $preis_row['nettopreis'];
-    $produkt_row['bruttopreis'] = $preis_row['bruttopreis'];  // mit MWSt.
-    $produkt_row['endpreis'] = $preis_row['endpreis'];        // mit MWSt. und Pfand
-    //
-    // Preise pro L-Einheit:
-    $produkt_row['nettolieferpreis'] = $preis_row['nettolieferpreis'];
-    $produkt_row['bruttolieferpreis'] = $preis_row['bruttolieferpreis'];
-    //
-    $produkt_row['pfand'] = $preis_row['pfand'];  // in Euro
-    $produkt_row['mwst'] = $preis_row['mwst'];    // in Prozent
-    //
-    $produkt_row['bestellnummer'] = $preis_row['bestellnummer'];
-    //
-    $produkt_row['zeitstart'] = $preis_row['zeitstart'];
-    $produkt_row['zeitende'] = $preis_row['zeitende'];
-  } else {
-    // flag: kein gueltiger preis:
-    $produkt_row['zeitstart'] = false;
-  }
-  return $produkt_row;
-}
 
 function sql_delete_produkt( $produkt_id ) {
   $count = references_produkt( $produkt_id );

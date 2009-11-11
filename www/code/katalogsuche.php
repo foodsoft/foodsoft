@@ -5,7 +5,7 @@
 // !!! dieses Skript ist nur fuer den _internen_ katalogabgleich aufgrund der Artikelnummer zustaendig!
 // !!! fuer die manuelle Suche ist windows/artikelsuche.php da!
 //
-// $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt_details().
+// $produkt ist entweder eine produkt_id, oder das Ergebnis von sql_produkt().
 // moegliche rueckgabewerte:
 //   1: kein Katalog vom Lieferanten vorhanden (ist kein Fehler)
 //   2: keine Artikelnummer - Suche nicht moeglich
@@ -14,17 +14,16 @@
 //
 function katalogsuche( $produkt ) {
   if( is_numeric( $produkt ) ) {
-    $produkt = sql_produkt_details( $produkt );
+    $produkt = sql_produkt( $produkt );
   }
 
-  $lieferanten_id = $produkt['lieferanten_id'];
-  $where = "WHERE lieferanten_id='$lieferanten_id' ";
+  $where = "WHERE ( lieferanten_id = {$produkt['lieferanten_id']} ) ";
 
-  if( ! sql_lieferant_katalogeintraege( $lieferanten_id ) ) {
+  if( ! sql_lieferant_katalogeintraege( $produkt['lieferanten_id'] ) ) {
     return 1;
   }
   if( ( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) )
-    $where .= " AND artikelnummer='$artikelnummer' ";
+    $where .= " AND ( artikelnummer = '$artikelnummer' ) ";
   // elseif( ( $bestellnummer = adefault( $produkt, 'bestellnummer', 0 ) ) )
   //  $where .= " AND bestellnummer='$bestellnummer' ";
   else
@@ -51,8 +50,8 @@ function katalogabgleich(
 ) {
   global $mwst_default;
 
-  $artikel = sql_produkt_details( $produkt_id );
-  $prgueltig = $artikel['zeitstart'];
+  $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+  $artikel = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
   $neednewprice = false;
   $neednewbestellnummer = false;
 
@@ -249,7 +248,7 @@ function katalogabgleich(
     $preiseintrag_neu['mwst'] = $katalog_mwst;
   }
 
-  if( $prgueltig ) {
+  if( $preis_id ) {
     $problems = array();
 
     // liefereinheit und mwst sollten mit katalog uebereinstimmen:

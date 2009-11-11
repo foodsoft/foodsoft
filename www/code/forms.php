@@ -714,7 +714,7 @@ function mod_onclick( $id ) {
 }
 
 function formular_artikelnummer( $produkt_id, $toggle = false, $bestell_id = 0 ) {
-  $produkt = sql_produkt_details( $produkt_id );
+  $produkt = sql_produkt( $produkt_id );
   $anummer = $produkt['artikelnummer'];
   $lieferanten_id = $produkt['lieferanten_id'];
 
@@ -744,10 +744,8 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $bestell_id = 0 )
 function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   global $mwst_default;
 
-  $produkt = sql_produkt_details( $produkt_id );
-  $valid = false;
-  if( $produkt['zeitstart'] )  // aktuell gueltiger Preis ist vorhanden
-    $valid = true;
+  $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
+  $produkt = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
 
   // besetze $vorschlag mit Werten fuer Formularfelder; benutze nacheinander
   //  - existierende Werte in $vorschlag (typischerweise: automatisch aus lieferantenkatalog entnommen)
@@ -755,10 +753,10 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   //  - vernuenftigen Default
 
   if( ! isset( $vorschlag['gebindegroesse'] ) )
-    $vorschlag['gebindegroesse'] = $valid ? $produkt['gebindegroesse'] : 1;
+    $vorschlag['gebindegroesse'] = $preis_id ? $produkt['gebindegroesse'] : 1;
 
   if( ! isset( $vorschlag['verteileinheit'] ) )
-    if( $valid )
+    if( $preis_id )
       $vorschlag['verteileinheit'] =
         ( ( $produkt['kan_verteilmult'] > 0.0001 ) ? $produkt['kan_verteilmult'] : 1 )
         . ( $produkt['kan_verteileinheit'] ? " {$produkt['kan_verteileinheit']} " : ' ST' );
@@ -766,22 +764,22 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       $vorschlag['verteileinheit'] = '1 ST';
 
   if( ! isset( $vorschlag['liefereinheit'] ) )
-    $vorschlag['liefereinheit'] = $valid ? "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}"
+    $vorschlag['liefereinheit'] = $preis_id ? "{$produkt['kan_liefermult']} {$produkt['kan_liefereinheit']}"
                                            : $vorschlag['verteileinheit'];
   if( ! isset( $vorschlag['lv_faktor'] ) )
     $vorschlag['lv_faktor'] = 1;
 
   if( ! isset( $vorschlag['mwst'] ) )
-    $vorschlag['mwst'] = $valid ? $produkt['mwst'] : $mwst_default;
+    $vorschlag['mwst'] = $preis_id ? $produkt['mwst'] : $mwst_default;
 
   if( ! isset( $vorschlag['pfand'] ) )
-    $vorschlag['pfand'] = $valid ? $produkt['pfand'] : '0.00';
+    $vorschlag['pfand'] = $preis_id ? $produkt['pfand'] : '0.00';
 
   if( ! isset( $vorschlag['lieferpreis'] ) )
-    $vorschlag['lieferpreis'] = $valid ? $produkt['nettolieferpreis'] : '0.00';
+    $vorschlag['lieferpreis'] = $preis_id ? $produkt['nettolieferpreis'] : '0.00';
 
   if( ! isset( $vorschlag['bestellnummer'] ) )
-    $vorschlag['bestellnummer'] = $valid ? $produkt['bestellnummer'] : '';
+    $vorschlag['bestellnummer'] = $preis_id ? $produkt['bestellnummer'] : '';
 
   if( ! isset( $vorschlag['notiz'] ) )
     $vorschlag['notiz'] = $produkt['notiz'];  // braucht _keinen_ gueltigen preiseintrag!
@@ -1035,7 +1033,7 @@ function action_form_produktpreis() {
 
   $gebindegroesse *= $lv_faktor;
 
-  $produkt = sql_produkt_details( $produkt_id );
+  $produkt = sql_produkt( $produkt_id );
 
   if( "$name" and ( "$name" != $produkt['name'] ) ) {
     sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
