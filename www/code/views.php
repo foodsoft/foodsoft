@@ -1358,7 +1358,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $vpreis * $muellmenge / $verteilmult ) );
   open_tr('summe');
-    open_td('', '', "Basar:" );
+    open_td('', '', fc_link( 'basar', 'class=href,text=Basar:' ) );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'mult', '', mult_view( $basar_verteilmenge ) );
