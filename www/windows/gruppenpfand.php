@@ -68,7 +68,7 @@ medskip();
 get_http_var('action','w','');
 $editable or $action = '';
 if( $bestell_id and ( $action == 'save' ) ) {
-  foreach( sql_bestellgruppen() as $row ) {
+  foreach( sql_gruppen() as $row ) {
     $id = $row['id'];
     if( get_http_var( "anzahl_leer_$id", 'u' ) ) {
       sql_pfandzuordnung_gruppe( $bestell_id, $id, ${"anzahl_leer_$id"} );

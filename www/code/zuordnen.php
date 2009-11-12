@@ -996,6 +996,10 @@ function query_gruppen( $op, $keys = array(), $using = array(), $orderby = false
       case 'gruppen_id':
         $filters['bestellgruppen.id'] = $cond;
         break;
+      case 'gruppennummer':
+        need( is_numeric( $cond ) );
+        $filters[] = "(bestellgruppen.id % 1000) = $cond";
+        break;
       case 'aktiv':
         $filters['bestellgruppen.aktiv'] = $cond;
         break;
@@ -1153,7 +1157,7 @@ function check_new_group_nr( $newNummer, & $problems ){
     return false;
   }
   $id = $newNummer;
-  $result = sql_bestellgruppen( "( id % 1000 ) = $newNummer" );
+  $result = sql_gruppen( array( 'gruppennummer' => $newNummer ) );
   foreach( $result as $row ) {
     if( $row['aktiv'] ) {
       $problems .= "<div class='warn'>Aktive Gruppe der Nummer $newNummer existiert bereits!</div>";
