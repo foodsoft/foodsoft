@@ -16,6 +16,16 @@ $lieferant = sql_lieferant( $lieferanten_id );
 $lieferant_name = $lieferant['name'];
 $katalogformat = $lieferant['katalogformat'];
 
+?> <h1>Lieferantenkatalog </h1> <?
+
+open_div( 'oneline' );
+  echo "Lieferant auswaehlen: ";
+  open_select( 'lieferanten_id', 'autoreload' );
+    echo optionen_lieferanten( $lieferanten_id );
+  close_select();
+close_div();
+bigskip();
+
 $have_mwst = false;
 switch( $katalogformat ) {
   case 'terra':
@@ -26,7 +36,15 @@ switch( $katalogformat ) {
     break;
   default:
   case 'keins':
-    error( "Artikelsuche: Katalogformat unbekannt oder nicht implementiert: $katalogformat" );
+    medskip();
+    open_div( 'warn' );
+      medskip();
+      echo "Artikelsuche: fuer Lieferant ";
+      echo fc_link( 'edit_lieferant', array( 'text' => $lieferant_name, 'class' => 'href', 'lieferanten_id' => $lieferanten_id ) );
+      echo " ist das Katalogformat [$katalogformat] eingestellt; dieses wird leider (noch) nicht unterstuetzt!";
+      medskip();
+    close_div();
+    return;
 }
 
 // $bestell_id: falls aufgerufen aus 'preiseintrag fuer bestellung waehlen', muessen wir die
@@ -68,7 +86,7 @@ if( $produkt_id ) {
   $produktname = $produkt['name'];
 }
 
-?> <h1>Lieferantenkatalog </h1> <?
+
 
 $editable or $action = '';
 if( $action == 'delete' ) {
