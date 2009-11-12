@@ -1819,8 +1819,7 @@ function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis
 
 function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
   need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Loeschen von Bestellvorschlaegen nur in der Bestellzeit!" );
-  $keys = array( 'produkt_id' => $produkt_id, 'bestell_id' => $bestell_id );
-  sql_delete_bestellzuordnungen( $keys );
+  sql_delete_bestellzuordnungen( array( 'produkt_id' => $produkt_id, 'bestell_id' => $bestell_id ) );
   doSql( "
     DELETE FROM bestellvorschlaege
     WHERE produkt_id = $produkt_id AND gesamtbestellung_id = $bestell_id
@@ -2587,7 +2586,8 @@ function sql_change_verteilmenge( $bestell_id, $produkt_id, $gruppen_id, $menge 
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
 
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
-  sql_delete_bestellzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG , 'gruppenbestellung_id' => $gruppenbestellung_id ) );
+  sql_delete_bestellzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG
+                                       , 'gruppenbestellung_id' => $gruppenbestellung_id, 'produkt_id' => $produkt_id ) );
   return sql_insert( 'bestellzuordnung', array(
     'produkt_id' => $produkt_id
   , 'menge' => $menge
