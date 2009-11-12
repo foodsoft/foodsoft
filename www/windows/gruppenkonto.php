@@ -166,29 +166,37 @@ $aufschlag_anzeigen = ( sql_bestellungen( 'aufschlag_prozent > 0' ) ? true : fal
 
 $cols = 9;
 open_table('list');
+  open_tr( 'groupofrows_top' );
     open_th( '', '', 'Typ' );
     open_th( '', '', 'Valuta' );
     open_th( '', '', 'Buchung' );
-    open_th( '', '', 'Informationen' );
-    open_th( '', '', 'Pfand Kauf' );
-    open_th( 'bottom', '', 'Rückgabe' );
-    open_th( '', '', 'Pfandkonto' );
-    open_th( '', '', 'Waren' );
+    open_th( 'solidright', '', 'Informationen' );
+    open_th( 'center solidright', "colspan='3'", 'Pfand' );
+    open_th( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : '' ), 'Waren' );
+    open_th( 'solidright', '', 'Buchung' );
+    open_th( 'solidright', '', 'Kontostand' );
+  open_tr( 'groupofrows_bottom' );
+    open_th();
+    open_th();
+    open_th();
+    open_th( 'solidright' );
+    open_th( '', '', 'Kauf' );
+    open_th( '', '', 'Rückgabe' );
+    open_th( 'solidright', '', 'Konto' );
     if( $aufschlag_anzeigen ) {
-      open_th( '', '', 'Aufschlag' );
+      open_th( '', '', 'Wert' );
+      open_th( 'solidright', '', 'Aufschlag' );
       $cols++;
+    } else {
+      open_th( 'solidright', '', 'Wert' );
     }
-    open_th( '', '', 'Betrag' );
-    open_th( '', '', 'Kontostand' );
+    open_th();
+    open_th( 'solidright' );
   open_tr( 'summe' );
-    open_td( 'right', "colspan='6'", 'Kontostand:' );
-    open_td( 'number', '', price_view( $pfandkontostand ) );
-    open_td();
-    open_td();
-    if( $aufschlag_anzeigen ) {
-      open_td();
-    }
-    open_td( 'number', '', price_view( $kontostand ) );
+    open_td( 'left solidright', "colspan='6'", 'Kontostand:' );
+    open_td( 'number solidright', '', price_view( $pfandkontostand ) );
+    open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='3'" : "colspan='2'" ) );
+    open_td( 'number solidright', '', price_view( $kontostand ) );
 
   $konto_result = sql_transactions( $gruppen_id, 0 );
   $num_rows = count($result);
@@ -215,7 +223,7 @@ open_table('list');
       open_td('bold', '', 'Bestellung' );
       open_td('', '', $vert_row['valuta_trad'] );
       open_td('', '', $vert_row['lieferdatum_trad'] );
-      open_td('', '', 'Bestellung '. fc_link( 'lieferschein', array(
+      open_td('solidright', '', 'Bestellung '. fc_link( 'lieferschein', array(
         'class' => 'href', 'text' => $vert_row['name'], 'title' => 'zum Lieferschein...'
       , 'bestell_id' => $vert_row['gesamtbestellung_id'] , 'gruppen_id' => $gruppen_id
       , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME )
@@ -230,13 +238,13 @@ open_table('list');
           echo price_view( $pfand_leer_soll );
           $have_pfand = true;
         }
-      open_td( 'number', '', $have_pfand ? price_view( $pfandsumme ) : '' );
+      open_td( 'number solidright', '', $have_pfand ? price_view( $pfandsumme ) : '' );
       open_td( 'number', '', price_view( $waren_soll ) );
       if( $aufschlag_anzeigen ) {
         open_td( 'number', '', price_view( $aufschlag_soll ) );
       }
-      open_td( 'number bold', '', price_view( $soll ) );
-      open_td( 'number', '', price_view( $summe ) );
+      open_td( 'solidleft solidright number bold', '', price_view( $soll ) );
+      open_td( 'solidright number', '', price_view( $summe ) );
 
       $summe -= $soll;
       $pfandsumme -= $pfand_soll;
@@ -254,7 +262,7 @@ open_table('list');
         echo $k_id ? fc_link( 'edit_buchung', "class=href,transaktion_id={$konto_row['id']},text=$text" ) : $text;
       open_td('', '', $konto_row['valuta_trad'] );
        open_td( '', '', $konto_row['date'] ."<div class='small'>{$konto_row['dienst_name']}</div>" );
-      open_td();
+      open_td( 'solidright' );
         open_div( '', '', $konto_row['notiz'] );
         if( $k_id ) {
           buchung_kurzinfo( $k_id );
@@ -265,29 +273,19 @@ open_table('list');
             form_finish_transaction( $konto_row['id'] );
           }
         }
-        open_td();
-        open_td();
-        open_td();
-        open_td();
-        if( $aufschlag_anzeigen ) {
-          open_td();
-        }
-        open_td( 'number bold', '', price_view( $konto_row['summe'] ) );
-        open_td( 'number', '', price_view( $summe ) );
+        open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='5'" : "colspan='4'" ) );
+        open_td( 'number bold solidright', '', price_view( $konto_row['summe'] ) );
+        open_td( 'number solidright', '', price_view( $summe ) );
 
       $summe -= $konto_row['summe'];
       $konto_row = next($konto_result);
     }
   }
   open_tr( 'summe' );
-    open_td( 'right', "colspan='6'", 'Startsaldo:' );
-    open_td( 'number', '', price_view( $pfandsumme ) );
-    open_td();
-    open_td();
-    if( $aufschlag_anzeigen ) {
-      open_td();
-    }
-    open_td( 'number', '', price_view( $summe ) );
+    open_td( 'left solidright', "colspan='6'", 'Startsaldo:' );
+    open_td( 'number solidright', '', price_view( $pfandsumme ) );
+    open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='3'" : "colspan='2'" ) );
+    open_td( 'solidright number', '', price_view( $summe ) );
 
 close_table();
 

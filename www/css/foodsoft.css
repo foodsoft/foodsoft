@@ -399,6 +399,13 @@ table tr.summe td, table tr.summe th, table.list tr.summe td {
   border-bottom:2px solid #666666;
 }
 
+td.solidright, th.solidright {
+  border-right:1px solid !important;
+}
+td.solidleft, th.solidleft {
+  border-left:1px solid !important;
+}
+
 /* formatierung der bilanzaufstellung */
 
 table.inner tr.rubrik th {
