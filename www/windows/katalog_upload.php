@@ -342,6 +342,123 @@ function upload_bode() {
   open_div( 'ok', '', 'finis.' );
 }
 
+//
+// format midgard.bnn:
+//
+// 30503  ;X ;20060410 ; ; ; ;Naturata Dinkel Bandnudeln  ; ; ; ;Na ; ;D ;DEM  ; ;     ;1000;13 ;43 ;  ;1 ; 10 x 500g; 10 ; 500g  ; 1 ; ; ; ; ;      ; ; ; ;1 ; ;      ; ; 1,86  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
+// 25540  ;A ;20090901 ; ; ; ;Schoko-Msli               ; ; ; ;Rg ; ;D ;kbA  ; ;     ;900 ;9  ;51 ;  ;1 ; 6 x 750g ;  6 ; 750g  ; 1 ; ; ; ; ;4,73  ; ; ; ;1 ; ; 4,49 ; ; 3,07  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
+// 353555 ;A ;20090402 ; ; ; ;Kichererbsen, gekocht       ; ; ; ;LS ; ;I ;kbA  ; ;     ;300 ;3  ;35 ;  ;1 ; 6 x 340g ;  6 ; 340g  ; 1 ; ; ; ; ;3,348 ; ; ; ;1 ; ; 2,45 ; ; 1,67  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
+// 424902 ;A ;20090403 ; ; ; ;Bio-Hirse aus dem Spreewald ; ; ; ;SH ; ;D ;kbA  ; ;     ;    ;   ;57 ;  ;1 ; 6 x 1 kg ;  6 ; 1 kg  ; 1 ; ; ; ; ;6     ; ; ; ;1 ; ;      ; ; 2,4   ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;1kg;1;;
+// 424903 ;A ;20090402 ; ; ; ;Bio-Hirse aus dem Spreewald ; ; ; ;SH ; ;D ;kbA  ; ;     ;    ;   ;57 ;  ;1 ; 1 x 25kg ;  1 ; 25kg  ; 1 ; ; ; ; ;25    ; ; ; ;1 ; ;      ; ; 46,42 ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
+// 121580 ;A ;20090512 ; ; ; ;Ziegengouda jung ca.4kg     ; ; ; ;Au ; ;NL;BL   ; ;     ;200 ;2  ;3  ;  ;1 ; 1 x kg   ;  1 ; kg    ; 1 ; ; ; ; ;4     ; ; ; ;1 ; ;      ; ; 13,92 ;J;;;;;;;;;;;;;;;;;;;;;;F;;;;;;;;
+// 323660 ;A ;20090902 ; ; ; ;Zwiebelschmelz              ; ; ; ;ZG ; ;D ;kbA  ; ;     ;700 ;7  ;29 ;  ;1 ; 6 x 150g ;  6 ; 150g  ; 1 ; ; ; ; ;1,9   ; ; ; ;1 ; ; 2,89 ; ; 1,89  ;N;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
+// 101152 ;A ;20090402 ; ; ; ;BGL Vollmilch Flasche 3,8%  ; ; ; ;Pi ; ;D ;DEM  ; ;     ;200 ;2  ;10 ;  ;1 ; 6 x 1 Ltr;  6 ; 1 Ltr ; 1 ; ; ; ; ;10,01 ; ; ; ;1 ; ; 1,55 ; ; 1,17  ;J;;;;;;;;;;;;;;;;;;;;;;F;;;;;;;;
+//
+// vermutliche semantik:
+//
+//  0 anummer
+//        1?
+//           2datum    
+//                     4 5 ean?
+//                           6 name
+//                                                        7 8 9 ?
+//                                                             10 hersteller
+//                                                                  11?
+//                                                                     12 land
+//                                                                       13 verband
+//                                                                             14 ...                20  ?
+//                                                                                                       21 geb*einh
+//                                                                                                                  23 gebinde
+//                                                                                                                        23 ; Leinheit
+//                                                                                                                               24..28?
+//                                                                                                                                          29 bruttogewicht
+//                                                                                                                                                30..32 ?
+//                                                                                                                                                     33: mwst: 1=7, 2=19?
+//                                                                                                                                                       34 ?
+//                                                                                                                                                              35 evp
+//                                                                                                                                                               36 ?
+//                                                                                                                                                                 37 nettopreis
+
+function upload_midgard() {
+  global $katalogkw, $lieferanten_id;
+
+  $klines = file( $_FILES['katalog']['tmp_name'] );
+  $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
+  $pattern = '/^\d+;[AX];/';
+  $splitat = ';';
+
+  $n = 0;
+  $success = 0;
+  foreach ( $klines as $line ) {
+    if( $n++ > 9999 )
+      break;
+
+    if( ! preg_match( $pattern, $line ) ) {
+      open_div( 'alert', '', "Zeile nicht ausgewertet: $line" );
+      continue;
+    }
+
+    $anummer = "";
+    $bnummer = "";
+    $name = "";
+    $einheit = "";
+    $gebinde = "";
+    $mwst = "-1";
+    $pfand = "0.00";
+    $verband = "";
+    $herkunft = "";
+    $netto = "0.00";
+
+    $splitline = split( $splitat, $line );
+
+    // var_dump( $splitline );
+    
+    $bnummer = $splitline[0];
+    $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
+    $anummer = $bnummer;
+
+    $name = mysql_real_escape_string( $splitline[6] );
+    $herkunft = mysql_real_escape_string( $splitline[12] );
+    $verband = mysql_real_escape_string( $splitline[13] );
+
+    $gebinde = $splitline[22];
+    $gebinde = preg_replace( '/,/', '.', trim( $gebinde ) );
+    $gebinde = sprintf( '%d', $gebinde );
+
+    $einheit = $splitline[23];
+    $einheit = preg_replace( '/,/', '.', trim( $einheit ) );
+
+    switch( trim( $splitline[33] ) ) {
+      case '1':
+        $mwst = "7.00";
+        break;
+      case '2':
+        $mwst = "19.00";
+        break;
+      default:
+        break;
+    }
+
+    $netto = $splitline[37];
+    $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
+
+    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, &$e, &$m, false ) ) {
+      open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
+      continue;
+    }
+    $einheit = "$m $e";
+
+    katalog_update( $lieferanten_id, $tag, $katalogkw
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'midgard'
+    );
+    $success++;
+  }
+
+  logger( "Midgard-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $n" );
+  open_div( 'ok', '', 'finis.' );
+}
+
+
 
 switch( $lieferant['katalogformat'] ) {
   case 'terra':
@@ -352,6 +469,9 @@ switch( $lieferant['katalogformat'] ) {
     break;
   case 'rapunzel':
     upload_rapunzel();
+    break;
+  case 'midgard':
+    upload_midgard();
     break;
   case 'keins':
   default:
