@@ -7,10 +7,10 @@
 
 global $angemeldet, $login_gruppen_name, $coopie_name
      , $login_dienst, $title, $subtitle, $wikitopic, $readonly
-     , $area;
+     , $area, $foodcoop_name;
 
-if( ! $title ) $title = "FC Nahrungskette - Foodsoft";
-if( ! $subtitle ) $subtitle = "FC Nahrungskette - Foodsoft";
+if( ! $title ) $title = "FC $foodcoop_name - Foodsoft";
+if( ! $subtitle ) $subtitle = "FC $foodcoop_name - Foodsoft";
 
 if( $readonly ) {
   $headclass='headro';
