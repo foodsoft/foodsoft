@@ -18,9 +18,9 @@ if( $action == 'basarzuteilung' ) {
   }
 
   for( $i = 0; $i < $fieldcount; $i++ ) {
-    if( ! get_http_var( "produkt$i", 'u' ) )
+    if( ! get_http_var( "produkt$i", 'U' ) )
       continue;
-    need_http_var( "bestellung$i", 'u' );
+    need_http_var( "bestellung$i", 'U' );
     $bestell_id = ${"bestellung$i"};
     if( sql_bestellung_status( $bestell_id ) >= STATUS_ABGERECHNET )
       continue;
