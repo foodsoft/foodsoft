@@ -79,7 +79,7 @@ if( $action == 'save' ) {
       $vormerkungen = array();
       foreach( $bestellliste as $produkt_id ) {
         sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
-        $vormerkungen = $vormerkungen + sql_bestellungzuordnungen( array(
+        $vormerkungen = $vormerkungen + sql_bestellzuordnungen( array(
           'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $produkt_id
         ) );
       }
