@@ -1122,7 +1122,7 @@ function optionen_gruppen(
       $selected = -1;
     }
     if( $id == sql_muell_id() )
-      $gruppe['name'] = "== Müll ==";
+      $gruppe['name'] = "== BadBank ==";
     if( $id == sql_basar_id() )
       $gruppe['name'] = "== Basar ==";
     $output = $output . ">{$gruppe['name']} ({$gruppe['gruppennummer']})</option>";
@@ -2351,6 +2351,7 @@ function select_basar( $bestell_id = 0 ) {
          , gesamtbestellungen.lieferung as lieferung
          , gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
+         , max( gesamtbestellungen.aufschlag_prozent ) as max_aufschlag_prozent
          , produktpreise.lieferpreis
          , produktpreise.mwst
          , produktpreise.pfand
@@ -2366,6 +2367,7 @@ function select_basar( $bestell_id = 0 ) {
     JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
     JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
     $where
+    GROUP BY produkte.id, gesamtbestellungen.id
     HAVING ( basarmenge <> 0 )
   " ;
 }
