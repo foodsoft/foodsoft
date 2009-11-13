@@ -39,7 +39,7 @@ if( $bestell_id ) {
     bestellung_overview( $bestell_id, $gruppen_id );
 }
 
-open_td( 'qquad smallskip floatright' );
+open_td( 'qquad smallskip floatright', "id='auswahl_bestellung'" );
   ?> <h4> Zur Zeit laufende Bestellungen: </h4> <?
   auswahl_bestellung( $bestell_id );
 
@@ -338,6 +338,8 @@ if( ! $readonly ) {
       id.appendChild( document.createTextNode( 'Produkt hinzufuegen: bitte vorher erst Änderungen speichern!' ) );
       id.style.backgroundColor = '#ffffa0';
       id.className = 'inactive';
+
+      document.getElementById('auswahl_bestellung').style.visibility = 'hidden';
     }
 
     function fest_plus( produkt ) {
