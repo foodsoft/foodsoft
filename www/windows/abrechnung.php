@@ -129,7 +129,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_td( 'bold number', '', price_view( -$gruppenpfand['pfand_leer_brutto_soll'] ) );
 }
 
-if( $bestellung['aufschlag'] > 0 ) {
+if( $bestellung['aufschlag_prozent'] > 0 ) {
   // open_tr();
   //  open_th( '', "colspan='5'" );
   open_tr();

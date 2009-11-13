@@ -2475,7 +2475,8 @@ function vormerkungenLoeschen( $bestell_id ) {
   $vormerkungen_erfuellt = 0;
   $lieferant_id = sql_bestellung_lieferant_id( $bestell_id );
   foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
-    foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt['produkt_id'] ) ) as $gruppe ) {
+    $produkt_id = $produkt['produkt_id'];
+    foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
       $gruppen_id = $gruppe['id'];
       $vormerkung_fest = sql_bestellzuordnung_menge( array(
         'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST
