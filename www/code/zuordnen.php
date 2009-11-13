@@ -3286,10 +3286,10 @@ function select_soll_gruppen( $using = array() ) {
 function sql_verteilt_brutto_soll( $bestell_id = 0, $gruppen_id = 0 ) {
   $muell_id = sql_muell_id();
   $cond_bestellungen = ( $bestell_id ? "( gesamtbestellungen.id = $bestell_id )" : "TRUE" );
-  $cond_gruppen = ( $gruppen_id ? "( bestellgruppen.id = $gruppen_id )" : "( bestellgruppen_id != $muell_id )" );
+  $cond_gruppen = ( $gruppen_id ? "( bestellgruppen.id = $gruppen_id )" : "( bestellgruppen.id != $muell_id )" );
   return sql_select_single_field(
     " SELECT sum(
-        (" .select_waren_brutto_soll( array( 'gesamtbestellungen', 'bestellgruppen' ) ). ")
+        (" .select_bestellungen_soll_gruppen( OPTION_WAREN_BRUTTO_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ). ")
       ) as soll
       FROM gesamtbestellungen
       INNER JOIN bestellgruppen
@@ -3897,6 +3897,9 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult, $die_on_error 
     case 'l':
     case 'lt':
     case 'li':
+    case 'ltr':
+    case 'l.':    // midgardism...
+    case 'ltr.':  // midgardism...
       $kan_einheit = 'ml';
       $kan_mult *= 1000;
       break;
