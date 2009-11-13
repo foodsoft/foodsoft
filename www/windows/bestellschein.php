@@ -96,27 +96,25 @@ if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
 $bestellung = sql_bestellung($bestell_id);
 $state = sql_bestellung_status($bestell_id);
 
-$default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND;
+$default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND | PR_COL_AUFSCHLAG;
 switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_BESTELLEN:
     $editable = FALSE;
     if( $gruppen_id ) {
-      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_ENDSUMME );
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_VSUMME );
     } else {
       $default_spalten
-        |= ( PR_COL_BESTELLMENGE | PR_COL_BESTELLGEBINDE | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME
-             | PR_ROWS_NICHTGEFUELLT );
+        |= ( PR_COL_BESTELLMENGE | PR_COL_BESTELLGEBINDE | PR_COL_NETTOSUMME | PR_ROWS_NICHTGEFUELLT );
     }
     $title="Bestellschein (vorläufig)";
     break;
   case STATUS_LIEFERANT:
     $editable= FALSE;
     if( $gruppen_id ) {
-      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_VSUMME );
     } else {
       $default_spalten
-        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
-             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME | PR_ROWS_NICHTGEFUELLT );
+        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE | PR_COL_NETTOSUMME | PR_ROWS_NICHTGEFUELLT );
     }
     $title="Bestellschein";
     // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
@@ -125,19 +123,21 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_ABGERECHNET:
     if( $gruppen_id ) {
       $editable= FALSE;
-      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_VSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
       $editable = (!$readonly) && ( hat_dienst(1,3,4) && ( $state == STATUS_VERTEILT ) );
       $default_spalten
-        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE
-             | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME | PR_ROWS_NICHTGEFUELLT );
+        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE | PR_COL_NETTOSUMME | PR_ROWS_NICHTGEFUELLT );
     }
     $title="Lieferschein";
     break;
   default: 
     div_msg( 'warn', 'Keine Detailanzeige verfügbar' );
     return;
+}
+if( hat_dienst(0) ) {
+  $default_spalten |= PR_COL_VSUMME;
 }
 
 get_http_var( 'spalten', 'w', $default_spalten, true );

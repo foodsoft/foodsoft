@@ -542,10 +542,17 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
 
   if( $editAmounts ) {
     open_form( '', 'action=basarzuteilung' );
-    $cols=11;
+    $cols=12;
   } else {
-    $cols=9;
+    $cols=10;
   }
+
+  $basar = sql_basar( $bestell_id, $order );
+  if( count( $basar ) < 1 ) {
+    open_div( 'alert', '', 'Basar ist leer!' );
+    return;
+  }
+  $have_aufschlag = ( $basar[0]['max_aufschlag_prozent'] > 0 );
 
   open_table('list');
 
@@ -553,23 +560,27 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     "<th>" . fc_link( 'self', "orderby=produktname,text=Produkt,title=Sortieren nach Produkten" ) ."</th>"
   , "<th>" . fc_link( 'self', "orderby=bestellung,text=Bestellung,title=Sortieren nach Bestellung" ) ."</th>"
   , "<th>" . fc_link( 'self', "orderby=datum,text=Lieferdatum,title=Sortieren nach Lieferdatum" ) ."</th>"
-  , "<th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Preis</th>"
+  , "<th colspan='2' title='Nettopreis des Lieferanten'>L-Preis</th>"
+  , ( $have_aufschlag ? "<th title='Aufschlag der FC in Prozent'>Aufschlag</th>" : '' )
+  , "<th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>V-Preis</th>"
   , "<th colspan='3'>Menge im Basar</th>"
   , "<th title='Wert incl. MWSt und ggf. Pfand und Aufschlag der FC '>Wert</th>"
   , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
+  if( $have_aufschlag )
+    $cols++;
   switch( $order ) {
     case 'bestellung':
-      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s%7$s';
+      $rowformat='%2$s%1$s%3$s%4$s%5$s%6$s%7$s%8$s%9$s';
       $keyfield=1;
       break;
     case 'datum':
-      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s%7$s';
+      $rowformat='%3$s%1$s%2$s%4$s%5$s%6$s%7$s%8$s%9$s';
       $keyfield=2;
       break;
     default:
     case 'produktname':
-      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s%7$s';
+      $rowformat='%1$s%2$s%3$s%4$s%5$s%6$s%7$s%8$s%9$s';
       $keyfield=0;
       break;
   }
@@ -579,13 +590,17 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   $fieldcount = 0;
   $gesamtwert = 0;
   $output = '';
-  foreach( sql_basar( $bestell_id, $order ) as $basar_row ) {
+  foreach( $basar as $basar_row ) {
     kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
     $menge = $basar_row['basarmenge'];
+
+    // wir zeigen den V-preis: endpreis + aufschlag:
+    $preis = $basar_row['endpreis'] + $basar_row['preisaufschlag'];
+    $wert = $menge * $preis;
+    $gesamtwert += $wert;
+
     // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
     $menge *= $kan_verteilmult;
-    $wert = $basar_row['basarmenge'] * ( $basar_row['endpreis'] + $basar_row['preisaufschlag'] );
-    $gesamtwert += $wert;
     $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
 
     $row = array( 
@@ -594,10 +609,19 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'class' => 'href'
        ) ) . "</td>"
     , "<td>{$basar_row['lieferung']}</td>"
+    , "<td class='mult'>" 
+        . fc_link( 'produktdetails', array(
+            'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
+          , 'text' => sprintf( "%.2lf", $basar_row['nettolieferpreis'] )
+          ) )
+        ." </td>
+          <td class='unit'>/ {$basar_row['liefereinheit_anzeige']}
+          </td>"
+    , ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' )
     , "<td class='mult'>"
         . fc_link( 'produktdetails', array(
             'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
-          , 'text' => sprintf( "%.2lf", $basar_row['endpreis'] + $basar_row['preisaufschlag'] )
+          , 'text' => sprintf( "%.2lf", $preis )
           ) )
         . "</td>
         <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
@@ -640,7 +664,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     echo "<tr><td rowspan='$rowspan' " . $output;
 
   open_tr('summe');
-    open_td( 'right', "colspan='8'", 'Summe:' );
+    open_td( 'right', $have_aufschlag ? "colspan='11'" : "colspan='10'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
     if( $editAmounts )
       open_td( '', "colspan='2'" );
@@ -665,21 +689,27 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
 // bestellschein_view:
 // uebersicht ueber bestellte und gelieferte mengen einer Bestellung anzeigen
 // moegliche Tabellenspalten:
+// die terminologie:
+//   nettopreis (wie im katalog)
+//   bruttopreis = netto + mwst
+//   endpreis = bruttopreis + pfand
+//   vpreis = endpreis + aufschlag
 define( 'PR_COL_NAME' , 0x1 );           // produktname
 define( 'PR_COL_ANUMMER', 0x2 );      // Artikelnummer
 define( 'PR_COL_BNUMMER', 0x4 );      // Bestellnummer
 define( 'PR_COL_LPREIS', 0x8 );          // Netto-L-Preis
 define( 'PR_COL_MWST', 0x10 );            // Mehrwertsteuersatz
 define( 'PR_COL_PFAND', 0x20 );           // Pfand
-define( 'PR_COL_VPREIS', 0x40 );         // V-Preis
-define( 'PR_COL_BESTELLMENGE', 0x80 );   // bestellte menge (1)
-define( 'PR_COL_BESTELLGEBINDE', 0x100 ); // bestellte Gebinde (1)
-define( 'PR_COL_LIEFERMENGE', 0x200 );    // gelieferte Menge (1,2)
-define( 'PR_COL_LIEFERGEBINDE', 0x400 ); // gelieferte Gebinde(1,2)
-define( 'PR_COL_NETTOSUMME', 0x800 );    // Gesamtpreis Netto (1,3)
-define( 'PR_COL_BRUTTOSUMME', 0x1000 );   // Gesamtpreis Brutto (1,3)
-define( 'PR_COL_AUFSCHLAG', 0x2000 );      // Aufschlag (prozentual vom Nettopreis)
-define( 'PR_COL_ENDSUMME', 0x4000 );      // Endpreis (mit Pfand und Aufschlag) (1,3)
+define( 'PR_COL_AUFSCHLAG', 0x40 );      // Aufschlag (prozentual vom Nettopreis)
+define( 'PR_COL_VPREIS', 0x80 );         // V-Preis
+define( 'PR_COL_BESTELLMENGE', 0x100 );   // bestellte menge (1)
+define( 'PR_COL_BESTELLGEBINDE', 0x200 ); // bestellte Gebinde (1)
+define( 'PR_COL_LIEFERMENGE', 0x400 );    // gelieferte Menge (1,2)
+define( 'PR_COL_LIEFERGEBINDE', 0x800 ); // gelieferte Gebinde(1,2)
+define( 'PR_COL_NETTOSUMME', 0x1000 );    // Gesamtpreis Netto (1,3)
+define( 'PR_COL_BRUTTOSUMME', 0x2000 );   // Gesamtpreis Brutto ohne Pfand (1,3)
+define( 'PR_COL_ENDSUMME', 0x4000 );   // Gesamtpreis Brutto mit Pfand (1,3)
+define( 'PR_COL_VSUMME', 0x8000 );      // V-Preis (brutto mit Pfand und Aufschlag) (1,3)
 //
 // (1) mit $gruppen_id: Anzeige nur fuer diese gruppe
 // (2) nur moeglich ab STATUS_LIEFERANT
@@ -729,26 +759,32 @@ function bestellschein_view(
   $col[PR_COL_PFAND] = array(
     'header' => "Pfand", 'title' => "Pfand pro V-Einheit", 'cols' => 1
   );
-  $col[PR_COL_VPREIS] = array(
-    'header' => "V-Preis", 'title' => "Endpreis (mit MWSt und Pfand) pro V-Einheit", 'cols' => 2
-  );
-  $col[PR_COL_NETTOSUMME] = array(
-    'header' => "Gesamt<br>Netto", 'cols' => 1,
-    'title' => "Netto-Gesamtpreis (ohne MWSt, ohne Pfand)$warnung_vorlaeufig"
-  );
-  $col[PR_COL_BRUTTOSUMME] = array(
-    'header' => "Gesamt<br>Brutto", 'cols' => 1,
-    'title' => "Brutto-Gesamtpreis (mit MWSt, ohne Pfand)$warnung_vorlaeufig"
-  );
   if( $aufschlag_prozent > 0 ) {
     $col[PR_COL_AUFSCHLAG] = array(
-      'header' => "Aufschlag<br>$aufschlag_prozent %", 'cols' => 1,
+      'header' => "Aufschlag<br>$aufschlag_prozent %", 'cols' => 2,
       'title' => "Aufschlag der FC auf den Netto-Preis"
     );
   }
-  $col[PR_COL_ENDSUMME] = array(
-    'header' => "Gesamt<br>Endpreis", 'cols' => 1,
-    'title' => "Konsumenten-Gesamtpreis (mit MWSt, mit Pfand und ggf. Aufschlag)$warnung_vorlaeufig"
+  $col[PR_COL_VPREIS] = array(
+    'header' => "V-Preis", 'title' => "V-Preis (mit MWSt und ggf. Pfand und Aufschlag) pro V-Einheit", 'cols' => 2
+  );
+  $col[PR_COL_NETTOSUMME] = array(
+    'header' => "Gesamt<br>Netto", 'cols' => 1,
+    'title' => "Gesamtpreis Netto (ohne MWSt, ohne Pfand)$warnung_vorlaeufig"
+  );
+  $col[PR_COL_BRUTTOSUMME] = array(
+    'header' => "Gesamt<br>Brutto", 'cols' => 1,
+    'title' => "Gesamtpreis Brutto (mit MWSt, ohne Pfand)$warnung_vorlaeufig"
+  );
+  if( $aufschlag_prozent > 0 ) {
+    $col[PR_COL_ENDSUMME] = array(
+      'header' => "Gesamt<br>Endpreis", 'cols' => 1,
+      'title' => "Gesamtpreis mit MWSt und Pfand$warnung_vorlaeufig"
+    );
+  }
+  $col[PR_COL_VSUMME] = array(
+    'header' => "Gesamt<br>V-Preis", 'cols' => 1,
+    'title' => "Konsumenten-Gesamtpreis (mit MWSt und ggf. Pfand und Aufschlag)$warnung_vorlaeufig"
   );
 
   if( $gruppen_id ) {
@@ -763,7 +799,7 @@ function bestellschein_view(
     if( $state != STATUS_BESTELLEN ) {
       if( $gruppen_id == $basar_id ) {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "der Gruppe zugeteilte Menge", 'header' => "Basarbestand", 'cols' => 2
+          'title' => "Basarbestand", 'header' => "Basarbestand", 'cols' => 2
         );
       } else {
         $col[PR_COL_LIEFERMENGE] = array(
@@ -811,7 +847,7 @@ function bestellschein_view(
   if( $select_columns ) {
     $opts_insert="";
     $opts_drop="";
-    for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
+    for( $n=1 ; $n <= PR_COL_VSUMME; $n *= 2 ) {
       if( array_key_exists( $n, $col ) ) {
         $c = $col[$n];
         if( $spalten & $n ) {
@@ -853,7 +889,7 @@ function bestellschein_view(
     open_tr('legende');
       $cols = 0;
       $cols_vor_summe = 0;
-      for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
+      for( $n=1 ; $n <= PR_COL_VSUMME; $n *= 2 ) {
         if( $spalten & $n ) {
           if( array_key_exists( $n, $col ) ) {
             $c = $col[$n];
@@ -876,10 +912,10 @@ function bestellschein_view(
             open_td( 'number', '', price_view( \$netto_summe ) );
           if( $spalten & PR_COL_BRUTTOSUMME )
             open_td( 'number', '', price_view( \$brutto_summe ) );
-          if( $spalten & PR_COL_AUFSCHLAG )
-            open_td( 'number', '', price_view( \$aufschlag_summe ) );
           if( $spalten & PR_COL_ENDSUMME )
             open_td( 'number', '', price_view( \$endpreis_summe ) );
+          if( $spalten & PR_COL_VSUMME )
+            open_td( 'number', '', price_view( \$vpreis_summe ) );
       ";
     } else {
       $summenzeile = '';
@@ -898,8 +934,8 @@ function bestellschein_view(
 
     $netto_summe = 0;
     $brutto_summe = 0;
-    $aufschlag_summe = 0;
     $endpreis_summe = 0;
+    $vpreis_summe = 0;
     $haben_nichtgeliefert = false;
     $haben_nichtgefuellt = false;
 
@@ -921,10 +957,11 @@ function bestellschein_view(
       $nettopreis = $produkte_row['nettopreis'];
       $bruttopreis = $produkte_row['bruttopreis'];
       $endpreis = $produkte_row['endpreis'];
+      $aufschlag = $produkte_row['preisaufschlag'];
+      $vpreis = $endpreis + $aufschlag;
 
-      // einzelpreise
-      $nettoeinzelpreis = $produkte_row['nettolieferpreis'];
-      $bruttoeinzelpreis = $produkte_row['bruttolieferpreis'];
+      $nettolieferpreis = $produkte_row['nettolieferpreis'];
+      $bruttolieferpreis = $produkte_row['bruttolieferpreis'];
       $lv_faktor = $produkte_row['lv_faktor'];
 
       $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
@@ -976,13 +1013,13 @@ function bestellschein_view(
 
       $nettogesamtpreis = $nettopreis * $liefermenge;
       $bruttogesamtpreis = $bruttopreis * $liefermenge;
-      $aufschlag = $nettogesamtpreis * $aufschlag_prozent / 100.0;
-      $endgesamtpreis = $endpreis * $liefermenge + $aufschlag;
+      $endgesamtpreis = $endpreis * $liefermenge;
+      $vgesamtpreis = $vpreis * $liefermenge;
 
       $netto_summe += $nettogesamtpreis;
       $brutto_summe += $bruttogesamtpreis;
-      $aufschlag_summe += $aufschlag;
       $endpreis_summe += $endgesamtpreis;
+      $vpreis_summe += $vgesamtpreis;
 
       if( $option_nichtgefuellt ) {
         if( $gebinde < 1 ) {
@@ -1005,7 +1042,7 @@ function bestellschein_view(
 
         if( $spalten & PR_COL_LPREIS ) {
           open_td( 'mult', '', fc_link( 'produktdetails',
-            "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettoeinzelpreis ) ) );
+            "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) ) );
           open_td( 'unit' );
             echo "/ {$produkte_row['liefereinheit_anzeige']}";
             if( $produkte_row['kan_liefereinheit'] != $produkte_row['kan_verteileinheit'] ) {
@@ -1021,8 +1058,13 @@ function bestellschein_view(
         if( $spalten & PR_COL_PFAND )
           open_td( 'number', '', $produkte_row['pfand'] );
 
+        if( $spalten & PR_COL_AUFSCHLAG ) {
+          open_td( 'mult', '', price_view( $aufschlag ) );
+          open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
+        }
+
         if( $spalten & PR_COL_VPREIS ) {
-          open_td( 'mult', '', price_view( $produkte_row['endpreis'] ) );
+          open_td( 'mult', '', price_view( $vpreis ) );
           open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
@@ -1088,11 +1130,11 @@ function bestellschein_view(
         if( $spalten & PR_COL_BRUTTOSUMME )
           open_td( 'number', '', price_view( $bruttogesamtpreis ) );
 
-        if( $spalten & PR_COL_AUFSCHLAG )
-          open_td( 'number', '', price_view( $aufschlag ) );
-
         if( $spalten & PR_COL_ENDSUMME )
           open_td( 'number', '', price_view( $endgesamtpreis ) );
+
+        if( $spalten & PR_COL_VSUMME )
+          open_td( 'number', '', price_view( $vgesamtpreis ) );
 
     } //end while produkte array
 
@@ -1410,7 +1452,8 @@ function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
         if( $gruppen_id == sql_basar_id() ) {
           open_td( 'alert', '', 'Basar' );
         } elseif( $gruppen_id == sql_muell_id() ) {
-          need( $gruppen_id != sql_muell_id() );
+          // need( $gruppen_id != sql_muell_id() );
+          open_td( 'alert', '', 'BadBank' );
         } else {
           open_td( '', '', gruppe_view( $gruppen_id ) );
           if( hat_dienst(4) or ( $gruppen_id == $login_gruppen_id ) ) {
