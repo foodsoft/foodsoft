@@ -80,10 +80,7 @@ switch( $action ) {
     $gruppen_id = sql_insert_group( $newNumber, $newName, $pwd );
     if( $gruppen_id ) {
       echo fc_openwindow( 'gruppenmitglieder', "gruppen_id=$gruppen_id" );
-      $msg .= "
-        <div class='ok'>Gruppe erfolgreich angelegt</div>
-        <div class='ok'>Vorl&auml;ufiges Passwort: <b>$pwd</b> (bitte notieren!)</div>
-      ";
+      $js_on_exit[] = "alert( ' Gruppe erfolgreich angelegt! Vorl&auml;ufiges Passwort: $pwd (bitte notieren!) ' ); ";
     } else {
       $msg .= "<div class='warn'>Eintrag fehlgeschlagen!</div>";
     }
