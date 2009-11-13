@@ -82,7 +82,7 @@ open_form( '', 'action=save' );
         open_select( 'katalogformat' );
           $selected = false;
           $options = '';
-          foreach( array( 'terra', 'bode', 'rapunzel' ) as $parser ) {
+          foreach( array( 'terra', 'bode', 'rapunzel', 'midgard' ) as $parser ) {
             if( $katalogformat == $parser ) {
               $checked = 'selected';
               $selected = true;
