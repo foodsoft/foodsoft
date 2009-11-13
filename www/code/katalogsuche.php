@@ -164,10 +164,20 @@ function katalogabgleich(
 
       break;
 
+    case 'midgard':
+      $have_mwst = true;
+
+      $liefergebinde = $katalog_gebindegroesse;
+      $liefereinheit = "$kan_liefermult $kan_liefereinheit";
+      $verteileinheit_default = $liefereinheit;
+      $lv_faktor_default = 1;
+
+      break;
+
     default:
     case 'keins':
       if( $display_level >= 1 ) {
-        open_div( 'warn', '', "unbekanntes oder undefiniertes Katalogformat --- Katalogabgleich nicht moeglich" );
+        open_div( 'warn', '', "unbekanntes oder undefiniertes Katalogformat [{$katalogeintrag['katalogformat']}] --- Katalogabgleich nicht moeglich" );
       }
       return 2;
   }

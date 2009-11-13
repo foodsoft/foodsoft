@@ -29,7 +29,8 @@ bigskip();
 $have_mwst = false;
 switch( $katalogformat ) {
   case 'terra':
-    $have_mwst = true;  // terra listed die MWSt im Katalog; andere nicht!
+  case 'midgard':
+    $have_mwst = true;  // terra, midgard listen die MWSt im Katalog; andere nicht!
     break;
   case 'bode':
   case 'rapunzel':
