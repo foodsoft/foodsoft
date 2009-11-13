@@ -62,8 +62,8 @@ $gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbe
 
 $lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
 
-$warenwert_verteilt_brutto = verteilung_wert_brutto( $bestell_id ); 
-$warenwert_muell_brutto = muell_wert_brutto( $bestell_id ); 
+$warenwert_verteilt_brutto = - sql_verteilt_brutto_soll( $bestell_id ); 
+$warenwert_muell_brutto = - sql_muell_brutto_soll( $bestell_id ); 
 $warenwert_basar_brutto = basar_wert_brutto( $bestell_id ); 
 
 $aufschlag_soll = sql_aufschlag_soll( $bestell_id );
