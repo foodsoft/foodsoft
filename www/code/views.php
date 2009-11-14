@@ -1211,6 +1211,8 @@ function select_bestellung_view() {
 
       case STATUS_LIEFERANT:
         $views[] = fc_link( 'bestellschein', "class=href,bestell_id=$bestell_id,text=Bestellschein" );
+        if( $login_dienst > 0 )
+          $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
         if( hat_dienst(4) ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
           $actions[] = fc_action( array( 'text' => '<<< Nachbestellen lassen <<<'
@@ -1334,10 +1336,12 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
       close_div();
       open_div('small');
-        printf( "Nettopreis: %.2lf / %s, Produktgruppe: %s"
+        printf( "Produktgruppe %s,  Nettopreis: %.2lf/%s / V-Preis: %.2lf/%s"
+          , $produkt['produktgruppen_name']
           , $produkt['nettopreis']
           , $produkt['verteileinheit']
-          , $produkt['produktgruppen_name']
+          , $produkt['endpreis'] + $produkt['preisaufschlag']
+          , $produkt['verteileinheit']
         );
       close_div();
   close_tr();
@@ -1561,9 +1565,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_th( '', "title='Bestellnummer'", 'B-Nr' );
       open_th( '', "title='Preiseintrag gültig ab'", 'von' );
       open_th( '', "title='Preiseintrag gültig bis'", 'bis' );
-      // open_th( '', "title='Liefer-Einheit: fürs Bestellen beim Lieferanten' colspan='2'", 'L-Einheit' );
       open_th( '', "title='Nettopreis beim Lieferanten pro Liefer-Einheit' colspan='2'", 'L-Preis / L-Einheit' );
-      // open_th( '', "title='Verteil-Einheit: f&uuml;rs Bestellen und Verteilen bei uns' colspan='2'", 'V-Einheit' );
       open_th( '', '', 'MWSt' );
       open_th( '', "title='Pfand je V-Einheit'", 'Pfand' );
       open_th( '', "title='Gebindegröße'", 'Gebindegröße' );
@@ -1597,12 +1599,8 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
             echo " - ";
           }
         }
-      // open_td( 'mult', '', $pr1['kan_liefermult'] );
-      // open_td( 'unit', '', $pr1['kan_liefereinheit'] );
       open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['liefereinheit_anzeige']}" );
-      // open_td( 'mult', '', mult_view( $pr1['kan_verteilmult'] ) );
-      // open_td( 'unit', '', $pr1['kan_verteileinheit'] );
       open_td( 'number', '', $pr1['mwst'] );
       open_td( 'number', '', $pr1['pfand'] );
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
@@ -1696,7 +1694,8 @@ function auswahl_konto( $selected = 0 ) {
 
 function auswahl_bestellung( $bestell_id = 0 ) {
   global $mysqljetzt;
-  $laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
+  $laufende_bestellungen = sql_bestellungen( '( rechnungsstatus = '. STATUS_BESTELLEN.' )
+                                                            and ( bestellstart <= NOW() ) ' );
   if( !  $laufende_bestellungen ) {
     div_msg( 'kommentar', 'Zur Zeit laufen leider keine Bestellungen!' );
     return;
