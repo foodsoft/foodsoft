@@ -38,7 +38,7 @@ if( $action == 'save' ) {
     get_http_var( 'rechnungsnummer', 'H', '' ) or $rechnungsnummer = '';
     get_http_var( 'extra_text', 'H', '' ) or $extra_text = '';
     need_http_var( 'extra_soll', 'f' );
-    get_http_var( 'aufschlag', 'f', $bestellung['aufschlag'] );
+    get_http_var( 'aufschlag', 'f', $bestellung['aufschlag_prozent'] );
     sql_update( 'gesamtbestellungen', $bestell_id, array(
       'rechnungsnummer' => $rechnungsnummer
     , 'extra_text' => $extra_text
@@ -133,11 +133,11 @@ if( $bestellung['aufschlag_prozent'] > 0 ) {
   // open_tr();
   //  open_th( '', "colspan='5'" );
   open_tr();
-    open_td( '', "colspan='2'"
-      , "Aufschlag " . price_view( $bestellung['aufschlag'], ( $editable ? 'aufschlag' : false ) ) . "% fuer Bestellgruppen:"
+    open_td( '', "colspan='3'"
+      , "Aufschlag " . price_view( $bestellung['aufschlag_prozent'], ( $editable ? 'aufschlag' : false ) ) . "% fuer Bestellgruppen:"
     );
     open_td( 'bold number', '', price_view( -$aufschlag_soll ) );
-    open_td( '', "colspan='2'" );
+    open_td( '', "colspan='1'" );
 }
 
   //
