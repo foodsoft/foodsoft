@@ -4,6 +4,10 @@ assert($angemeldet) or exit();
 $editable = ! $readonly;
  
 get_http_var( 'meinkonto', 'u', 0, true );
+get_http_var( 'gruppen_id', 'u', 0, true );
+if( ( ! hat_dienst(4,5) ) and ( $gruppen_id == $login_gruppen_id ) ) {
+  $meinkonto = 1;
+}
 
 if( $meinkonto ) {
   setWikiHelpTopic( 'foodsoft:MeinKonto' );
@@ -66,7 +70,6 @@ if( $meinkonto ) {
 } else { // kontoblatt-anzeige fuer dienste
   nur_fuer_dienst(4,5);
   setWikiHelpTopic( 'foodsoft:kontoblatt' );
-  get_http_var( 'gruppen_id', 'u', 0, true );
   ?> <h1>Kontoblatt</h1> <?
 
   if( ! $readonly ) {
