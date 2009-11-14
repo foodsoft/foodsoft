@@ -3708,15 +3708,9 @@ function sql_verluste_summe( $type ) {
 
 
 function references_produktpreise( $preis_id ) {
-  return sql_select_single_field(
-    "SELECT count(*) as count FROM bestellvorschlaege WHERE produktpreise_id=$preis_id"
-  , "count"
-  );
+  return sql_count( 'bestellvorschlaege', "produktpreise_id=$preis_id" );
 }
 
-/**
- *
- */
 function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
   if( $zeitpunkt ) {
     $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
@@ -3946,7 +3940,6 @@ function sql_delete_produktpreis( $preis_id ) {
   need( references_produktpreise( $preis_id ) == 0 , 'Preiseintrag nicht löschbar, da er benutzt wird!' );
   doSql( "DELETE FROM produktpreise WHERE id=$preis_id" );
 }
-
 
 
 ////////////////////////////////////
@@ -4182,17 +4175,19 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
     foreach($arry as $key => $val){
       $new = checkvalue($val, $typ);
       if($new===FALSE){
+        // error( 'unerwarteter Wert fuer Variable $name' );
         unset( $GLOBALS[$name] );
-	      return FALSE;
+        return FALSE;
       } else {
-	      $arry[$key]=$new;
+        $arry[$key]=$new;
       }
     }
-	  //FIXME self_fields for arrays?
-	  $GLOBALS[$name] = $arry;
+    //FIXME self_fields for arrays?
+    $GLOBALS[$name] = $arry;
   } else {
       $new = checkvalue($arry, $typ);
       if($new===FALSE){
+        // error( 'unerwarteter Wert fuer Variable $name' );
         unset( $GLOBALS[$name] );
         return FALSE;
       } else {
@@ -4629,96 +4624,5 @@ function move_html( $id, $into_id ) {
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
 }
-
-// /**
-//  * Vergleicht zwei Datumswerte bezüglich Reihenfolge
-//  * True, wenn das erste Datum früher ist
-//  */ 
-// function compare_date2($first, $second){
-// 	/*
-//    echo "Debuginfo compare_date2 (first, second, time(first), time(second))";
-//    var_dump($first);
-//    var_dump($second);
-//    var_dump(strtotime($first));
-//    var_dump(strtotime($second));
-//         */
-// 
-//    return strtotime($first) < strtotime($second);
-// }
-// 
-// if(!function_exists("date_parse")){
-// function date_parse($date_in){
-//   echo "<!-- date_parse: $date_in -->";
-// 	$temp = explode(" ", $date_in);
-// 	
-//    $date = explode("-", $temp[0]);
-//    //echo("\n\ndebug date_parse (date)");
-//    //var_dump($date);
-//    if( count($date) == 3 ) {
-//      $toReturn = array( "year" => $date[0],
-// 				   "month" => $date[1],
-// 				   "day" => $date[2]);
-//    } else {
-// 	      $toReturn["year"] =  date('Y');
-// 	      $toReturn["month"] =  date('m');
-// 	      $toReturn["day"] =  date('d');
-//    }
-// 
-// 	 if(isset($temp[1])){
-//            $time = explode(":", $temp[1]);
-// 	 }
-//    if( isset($time) && count($time) == 3 ) {
-// 	      $toReturn["hour"] =  $time[0];
-// 	      $toReturn["minute"] =  $time[1];
-// 	      $toReturn["second"] =  $time[2];
-// 	 } else {
-// 	      $toReturn["hour"] =  "00";
-// 	      $toReturn["minute"] =  "00";
-// 	      $toReturn["second"] =  "00";
-//    }
-// 	return $toReturn;
-// }
-// }
-// /** Converts a date string from mysql
-//  *  to a date of the form
-//  *   $date["day"].".".$date["month"].".".$date["year"]
-//  */
-// function date_sql2intern($date_in){
-//      #echo "debug info date_sql2intern (date_in, date)";
-//      #var_dump($date_in);
-//      $date = date_parse($date_in);
-//      if($date["warning_count"]>0){
-// 	     echo "<!-- Warings in date_sql2intern:";
-// 	     var_dump($date["warnings"]);
-//      }
-//      if($date["error_count"]>0){
-// 	     echo "<!-- Errors in date_sql2intern:";
-// 	     var_dump($date["errors"]);
-//      }
-//      #var_dump($date);
-//      return $date["day"].".".$date["month"].".".$date["year"];
-// }
-// 
-// /** Adds convertion commands in mysql to
-//  *  converts a date string 
-//  *  from  a date of the form
-//  *   $date["day"].".".$date["month"].".".$date["year"]
-//  */
-// function date_intern2sql($date){
-//    return "STR_TO_DATE('".$date."', '%e.%c.%Y')";
-// }
-// /**
-//  *  Tage zu Datum hinzufügen, da
-//  *  php-Funktionen nicht gut
-//  *  Date Format: $date["day"].".".$date["month"].".".$date["year"]
-//  */
-// function sql_add_days_to_date($date, $add_days=0){
-//      $sql = "SELECT ADDDATE(".date_intern2sql($date).", INTERVAL ".$add_days." DAY) as datum";
-//      $result = doSql($sql, LEVEL_ALL, "Error while doing date function");
-//      $row = mysql_fetch_array($result);
-//      $toreturn=  date_sql2intern($row["datum"]);
-//      return $toreturn;
-// }
-// 
 
 ?>
