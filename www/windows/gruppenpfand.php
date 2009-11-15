@@ -116,7 +116,7 @@ foreach( sql_gruppenpfand( $lieferanten_id, $bestell_id ) as $row ) {
   }
   open_tr();
     open_td( '', '', $row['gruppen_name'] );
-    open_td( '', '', "{$row['gruppen_nummer']} ($gruppen_id)" );
+    open_td( '', '', "{$row['gruppennummer']} ($gruppen_id)" );
     open_td( '', '', $row['aktiv'] );
     open_td( 'number', '', price_view( $row['pfand_voll_brutto_soll'] ) );
     open_td( 'number', '', int_view( $row['pfand_leer_anzahl'], ( $editable ? "anzahl_leer_$gruppen_id" : false ) ) );
