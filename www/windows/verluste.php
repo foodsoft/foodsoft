@@ -92,8 +92,10 @@ function verlust_aufschlag( $detail = false ) {
 
   $bestellungen = mysql2array( doSql( "
     SELECT gesamtbestellungen.*
-    , (" .select_bestellungen_soll_gruppen( OPTION_AUFSCHLAG_SOLL, array( 'gesamtbestellungen' ) ). ") as aufschlag_soll
-    FROM (".select_gesamtbestellungen_schuldverhaeltnis().") as gesamtbestellungen
+    , (" .select_bestellungen_soll_gruppen( OPTION_AUFSCHLAG_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ). ")
+         AS aufschlag_soll
+    FROM (".select_gesamtbestellungen_schuldverhaeltnis().") AS gesamtbestellungen
+    JOIN (".select_gruppen( array( 'aktiv' => 1 ) ).") AS bestellgruppen
     ORDER BY gesamtbestellungen.lieferung
   " ) );
   $soll_summe = 0;
@@ -289,7 +291,7 @@ open_tr( 'groupofrows_top' );
   $verluste_summe += $soll_umlage;
 
   open_td( 'number', '', fc_link( 'verlust_details'
-    , array( 'detail' => TRANSAKTION_TYP_UMLAGE, 'class' => 'href' , 'text' => price_view( -$soll ) ) ) );
+    , array( 'detail' => TRANSAKTION_TYP_UMLAGE, 'class' => 'href' , 'text' => price_view( -$soll_umlage ) ) ) );
 
   open_td();
 
