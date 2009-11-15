@@ -1254,8 +1254,8 @@ function select_bestellung_view() {
       open_td('','', $row['name'] );
       open_td('','', rechnung_status_string( $row['rechnungsstatus'] ) );
       open_td();
-        open_div( 'left', '',  $row['bestellstart'] );
-        open_div( 'right', '', "- ".$row['bestellende'] );
+        open_div( 'left small', '',  $row['bestellstart'] );
+        open_div( 'right small', '', "- ".$row['bestellende'] );
       open_td( '', '', $row['lieferung'] );
       open_td();
         if( $rechnungsstatus == STATUS_ABGERECHNET ) {
