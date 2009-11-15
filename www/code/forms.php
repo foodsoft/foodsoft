@@ -866,7 +866,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            open_td( 'label', '', 'Gebindegr&ouml;&szlig;e:' );
            open_td();
            ?>
-           <span onmouseover="help('Gebindegroesse: wieviel von diesem Produkt muessen wir auf einmal bestellen');"
+           <span onmouseover="help('Gebindegroesse: wieviel von diesem Produkt muessen wir auf einmal bestellen --- muss ein Vielfaches fer V-Einheit sein!');"
                  onmouseout="help(' ');" >
            <input type='text' size='4' class='number' name='gebindegroesse' id='newgebindegroesse'
              value='<? echo mult2string( $vorschlag['gebindegroesse'] / $vorschlag['lv_faktor'] ) ; ?>'
