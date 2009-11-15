@@ -4049,6 +4049,7 @@ function sanitize_http_input() {
 
 function checkvalue( $val, $typ){
     $pattern = '';
+    $format = '';
     switch( substr( $typ, 0, 1 ) ) {
       case 'H':
         if( get_magic_quotes_gpc() )
@@ -4077,6 +4078,7 @@ function checkvalue( $val, $typ){
         break;
       case 'f':
         $val = str_replace( ',', '.' , trim($val) );
+        $format = '%f';
         $pattern = '/^[-\d.]+$/';
         break;
       case 'w':
@@ -4098,6 +4100,9 @@ function checkvalue( $val, $typ){
       if( ! preg_match( $pattern, $val ) ) {
         return FALSE;
       }
+    }
+    if( $format ) {
+      sscanf( $val, $format, & $val );
     }
   return $val;
 }
@@ -4182,7 +4187,7 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
     foreach($arry as $key => $val){
       $new = checkvalue($val, $typ);
       if($new===FALSE){
-        error( 'unerwarteter Wert fuer Variable $name' );
+        // error( 'unerwarteter Wert fuer Variable $name' );
         unset( $GLOBALS[$name] );
         return FALSE;
       } else {
@@ -4194,7 +4199,7 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
   } else {
       $new = checkvalue($arry, $typ);
       if($new===FALSE){
-        error( 'unerwarteter Wert fuer Variable $name' );
+        // error( 'unerwarteter Wert fuer Variable $name' );
         unset( $GLOBALS[$name] );
         return FALSE;
       } else {
