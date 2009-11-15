@@ -1575,7 +1575,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
 
   foreach( sql_produktpreise( $produkt_id ) as $pr1 ) {
-    $references = references_produktpreise( $pr1['id'] );
+    $references = references_produktpreis( $pr1['id'] );
     open_tr();
       open_td( 'oneline' );
         echo $pr1['id'];
