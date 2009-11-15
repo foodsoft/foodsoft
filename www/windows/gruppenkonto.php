@@ -276,7 +276,15 @@ open_table('list');
             form_finish_transaction( $konto_row['id'] );
           }
         }
-        open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='5'" : "colspan='4'" ) );
+        if( $konto_row['type'] == TRANSAKTION_TYP_PFANDSALDO ) {
+          open_td( 'solidright', "colspan='2'" );
+          $pfand_soll = $konto_row['summe'];
+          open_td( 'solidright', '', price_view( $pfand_summe ) );
+          $pfand_summe -= $pfand_soll;
+          open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : "colspan='1'" ) );
+        } else {
+          open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='5'" : "colspan='4'" ) );
+        }
         open_td( 'number bold solidright', '', price_view( $konto_row['summe'] ) );
         open_td( 'number solidright', '', price_view( $summe ) );
 
