@@ -1590,6 +1590,9 @@ function sql_produkt( $keys = array(), $allow_null = false ) {
   if( $p and isset( $p['preis_id'] ) ) {
     preisdatenSetzen( & $p );
   }
+  // foreach( $p as $k => $v ) {
+  //  open_div( '', '', "$k: [$v]" );
+  //}
   return $p;
 }
 
@@ -2402,17 +2405,18 @@ function basar_wert_brutto( $bestell_id = 0 ) {
 }
 
 
-// in der bilanz: wert der basarwaren entspricht dem, was wir den gruppen beim verkauf abziehen
-// (inclusive pfand, aufschlag, und mwst (solange wir letztere nicht abfuehren muessen))
-//
-function basar_wert_bilanz( $bestell_id = 0 ) {
-  $basar = sql_basar( $bestell_id );
-  $wert = 0.0;
-  foreach( $basar as $r ) {
-    $wert += ( $r['basarmenge'] * ( $r['endpreis'] + $r['preisaufschlag'] ) );
-  }
-  return $wert;
-}
+// // in der bilanz: wert der basarwaren entspricht dem, was wir den gruppen beim verkauf abziehen
+// // (inclusive pfand, aufschlag, und mwst (solange wir letztere nicht abfuehren muessen))
+///// keine gute idee: _pfand_ gehoert da nicht rein!
+// //
+// function basar_wert_bilanz( $bestell_id = 0 ) {
+//   $basar = sql_basar( $bestell_id );
+//   $wert = 0.0;
+//   foreach( $basar as $r ) {
+//     $wert += ( $r['basarmenge'] * ( $r['endpreis'] + $r['preisaufschlag'] ) );
+//   }
+//   return $wert;
+// }
 
 
 

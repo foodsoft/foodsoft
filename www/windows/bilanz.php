@@ -52,7 +52,7 @@ open_table( 'layout hfill' );
           posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
 
         rubrik( "Umlaufvermögen" );
-          posten( fc_link( 'basar', "class=href,text=Warenbestand Basar" ), basar_wert_bilanz() );
+          posten( fc_link( 'basar', "class=href,text=Warenbestand Basar" ), basar_wert_brutto() );
           posten( fc_link( 'pfandzettel', "class=href,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
 
         rubrik( "Forderungen" );
