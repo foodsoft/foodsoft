@@ -2975,7 +2975,9 @@ define( 'TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE', 7 ); // Umlage Bestellverlu
 define( 'TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN', 8 ); // Umlage Sonderausgaben
 define( 'TRANSAKTION_TYP_UMBUCHUNG_SPENDE', 9 );   // umbuchung von spenden nach TRANSAKTION_TYP_AUSGLEICH_*
 define( 'TRANSAKTION_TYP_UMBUCHUNG_UMLAGE', 10 );  // umbuchung von umlagen nach TRANSAKTION_TYP_AUSGLEICH_*
+
 define( 'TRANSAKTION_TYP_SALDO', 11 );             // saldo nach jahresabschluss
+define( 'TRANSAKTION_TYP_PFANDSALDO', 12 );        // pfandsaldo nach jahresabschluss
 
 // die folgenden sind historisch und sollten nicht erzeugt werden (aber teils noch in der db vorhanden):
 define( 'TRANSAKTION_TYP_STORNO', 98 );          // Buchungen, die sich gegenseitig neutralisieren
@@ -3018,7 +3020,9 @@ function transaktion_typ_string( $typ ) {
     case TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN:
       return 'Ausgleich für Differenz Anfangsguthaben';
     case TRANSAKTION_TYP_SALDO:
-      return 'Saldo';
+      return 'Saldo nach Abschluss';
+    case TRANSAKTION_TYP_PFANDSALDO:
+      return 'Pfandsaldo nach Abschluss';
     case TRANSAKTION_TYP_STORNO:
       return 'Storno';
     case TRANSAKTION_TYP_SONSTIGES:
@@ -3707,7 +3711,7 @@ function sql_verluste_summe( $type ) {
 //   Bauer/Kartoffeln      500 g      1 kg     (2 (automatisch)     25 (= 12.5kg ("1/4 Zentner"))
 
 
-function references_produktpreise( $preis_id ) {
+function references_produktpreis( $preis_id ) {
   return sql_count( 'bestellvorschlaege', "produktpreise_id=$preis_id" );
 }
 
@@ -3937,7 +3941,7 @@ function mult2string( $mult ) {
 
 
 function sql_delete_produktpreis( $preis_id ) {
-  need( references_produktpreise( $preis_id ) == 0 , 'Preiseintrag nicht löschbar, da er benutzt wird!' );
+  need( references_produktpreis( $preis_id ) == 0 , 'Preiseintrag nicht löschbar, da er benutzt wird!' );
   doSql( "DELETE FROM produktpreise WHERE id=$preis_id" );
 }
 
@@ -3974,7 +3978,6 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
 //
 $foodsoft_get_vars = array(
   'action' => 'w'
-, 'aktion' => 'w'
 , 'area' => 'w'
 , 'auszug' => '/\d+-\d+/'
 , 'auszug_jahr' => 'u'
@@ -4005,7 +4008,7 @@ $foodsoft_get_vars = array(
 , 'state' => 'u'
 , 'transaktion_id' => 'u'
 , 'verpackung_id' => 'u'
-, 'window' => 'w'
+, 'window' => 'W'
 , 'window_id' => 'w'
 );
 
@@ -4077,6 +4080,10 @@ function checkvalue( $val, $typ){
         $pattern = '/^[-\d.]+$/';
         break;
       case 'w':
+        $val = trim($val);
+        $pattern = '/^[a-zA-Z0-9_]*$/';
+        break;
+      case 'W':
         $val = trim($val);
         $pattern = '/^[a-zA-Z0-9_]+$/';
         break;
@@ -4175,7 +4182,7 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
     foreach($arry as $key => $val){
       $new = checkvalue($val, $typ);
       if($new===FALSE){
-        // error( 'unerwarteter Wert fuer Variable $name' );
+        error( 'unerwarteter Wert fuer Variable $name' );
         unset( $GLOBALS[$name] );
         return FALSE;
       } else {
@@ -4187,7 +4194,7 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
   } else {
       $new = checkvalue($arry, $typ);
       if($new===FALSE){
-        // error( 'unerwarteter Wert fuer Variable $name' );
+        error( 'unerwarteter Wert fuer Variable $name' );
         unset( $GLOBALS[$name] );
         return FALSE;
       } else {
