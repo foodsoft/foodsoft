@@ -2076,7 +2076,7 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     , ( $toleranzbestellmenge_expr ) as toleranzbestellmenge
     , ( $verteilmenge_expr ) as verteilmenge
     , ( $muellmenge_expr ) as muellmenge
-    , IF( $firstorder_expr > 0, 0, 1 ) as menge_ist_null
+    , IF( abs($firstorder_expr) > 0, 0, 1 ) as menge_ist_null
     FROM bestellvorschlaege
     INNER JOIN produkte
       ON (produkte.id=bestellvorschlaege.produkt_id)
