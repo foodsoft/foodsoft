@@ -159,7 +159,7 @@ open_option_menu_row();
   open_td( '', '', 'Gruppenansicht:' );
   open_td();
     open_select( 'gruppen_id', 'autoreload' );
-      $keys = array( 'bestell_id' => $bestell_id, 'aktiv' => 'true' );
+      $keys = array( 'bestell_id' => $bestell_id );
       if( ! hat_dienst(4) )
         $keys['where'] = "bestellgruppen.id in ( $login_gruppen_id, ".sql_muell_id().", ".sql_basar_id()." )";
       echo optionen_gruppen( $gruppen_id, $keys, "Alle (Gesamtbestellung)" );
