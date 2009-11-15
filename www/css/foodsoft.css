@@ -446,15 +446,19 @@ table.list tr.groupofrows_top td, table.list tr.groupofrows_top th {
 }
 table.list tr.groupofrows_middle td, table.list tr.groupofrows_middle th {
   /* folgezeilen koennen auf groesse 0 kollabieren: */
-  padding:0pt;
-  margin:0pt;
+  padding-top:0pt;
+  padding-bottom:0pt;
+  margin-top:0pt;
+  margin-bottom:0pt;
   height:0pt;
   border-top-style:none;
   border-bottom-style:none;
 }
 table.list tr.groupofrows_bottom td, table.list tr.groupofrows_bottom th {
-  padding:0pt;
-  margin:0pt;
+  padding-top:0pt;
+  margin-top:0pt;
+  padding-bottom:0pt;
+  margin-bottom:0pt;
   height:0pt;
   border-top-style:none;
 }
