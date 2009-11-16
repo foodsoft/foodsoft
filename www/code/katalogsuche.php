@@ -215,7 +215,7 @@ function katalogabgleich(
           open_th( '', '', 'Gebinde' );
           open_th( '', '', 'Land' );
           open_th( '', '', 'Verband' );
-          open_th( '', '', 'Netto' );
+          open_th( '', '', 'L-Preis' );
           open_th( '', '', 'MWSt' );
           open_th( '', '', 'Brutto' );
           open_th( '', "title='hier koennt ihr fehlerhafte oder ungueltige Katalogeintraege markieren'", 'gilt noch' );
@@ -307,13 +307,15 @@ function katalogabgleich(
       // manuell geprueft und bei bedarf korrigiert werden muessen:
       if( $artikel['lv_faktor'] > 0.001 ) {
         $preiseintrag_neu['lv_faktor'] = $artikel['lv_faktor'];
-        $preiseintrag_neu['gebindegroesse'] = $liefergebinde * $preiseintrag_neu['lv_faktor'];
-        if( abs( $preiseintrag_neu['gebindegroesse'] - $artikel['gebindegroesse'] ) > 0.001 ) {
-          $problems[] = "Problem: Gebindegroessen oder Umrechnung Liefer/Verteileinheit stimmen nicht:
-            <p class='li'>Katalog: <kbd>$liefergebinde * $liefereinheit</kbd></p>
-            <p class='li'>Foodsoft: <kbd>{$artikel['gebindegroesse']} * {$artikel['verteileinheit']}</kbd></p>
-            <div class='small'>Bitte manuell pr&uuml;en und neuen Preiseintrag erfassen!</div>
-          ";
+        if( $liefergebinde > 0 ) { // terra listet manchmal gebindegroesse 0
+          $preiseintrag_neu['gebindegroesse'] = $liefergebinde * $preiseintrag_neu['lv_faktor'];
+          if( abs( $preiseintrag_neu['gebindegroesse'] - $artikel['gebindegroesse'] ) > 0.001 ) {
+            $problems[] = "Problem: Gebindegroessen oder Umrechnung Liefer/Verteileinheit stimmen nicht:
+              <p class='li'>Katalog: <kbd>$liefergebinde * $liefereinheit</kbd></p>
+              <p class='li'>Foodsoft: <kbd>{$artikel['gebindegroesse']} * {$artikel['verteileinheit']}</kbd></p>
+              <div class='small'>Bitte manuell pr&uuml;en und neuen Preiseintrag erfassen!</div>
+            ";
+          }
         }
       } else {
         if( $artikel['gebindegroesse'] > 0.001 ) {
@@ -332,12 +334,14 @@ function katalogabgleich(
       // anschliessend mit dem ist-zustand:
 
       $preiseintrag_neu['lv_faktor'] = $kan_liefermult / $kan_verteilmult_neu;
-      $preiseintrag_neu['gebindegroesse'] = $liefergebinde * $preiseintrag_neu['lv_faktor'];
-      if( abs( $preiseintrag_neu['gebindegroesse'] - $artikel['gebindegroesse'] ) > 0.001 ) {
-        $problems[] = "Problem: Gebindegroessen stimmen nicht:
-          <p class='li'>Katalog: <kbd>$liefergebinde * $liefereinheit</kbd></p>
-          <p class='li'>Foodsoft: <kbd>{$artikel['gebindegroesse']} * {$artikel['verteileinheit']}</kbd></p>
-        ";
+      if( $liefergebinde > 0 ) { // terra listet manchmal gebindegroesse 0
+        $preiseintrag_neu['gebindegroesse'] = $liefergebinde * $preiseintrag_neu['lv_faktor'];
+        if( abs( $preiseintrag_neu['gebindegroesse'] - $artikel['gebindegroesse'] ) > 0.001 ) {
+          $problems[] = "Problem: Gebindegroessen stimmen nicht:
+            <p class='li'>Katalog: <kbd>$liefergebinde * $liefereinheit</kbd></p>
+            <p class='li'>Foodsoft: <kbd>{$artikel['gebindegroesse']} * {$artikel['verteileinheit']}</kbd></p>
+          ";
+        }
       }
     }
 
@@ -429,6 +433,12 @@ function update_preis( $produkt_id ) {
     case 3:
       return 0;
     case 4:
+      foreach( array( 'lieferpreis', 'bestellnummer', 'gebindegroesse', 'mwst', 'pfand'
+                    , 'liefereinheit', 'verteileinheit', 'lv_faktor' ) as $key ) {
+        if( ! isset( $preiseintrag_neu[ $key ] ) ) {
+          continue 2;
+        }
+      }
       return sql_insert_produktpreis(
         $produkt_id, $preiseintrag_neu['lieferpreis'], $mysqlheute
       , $preiseintrag_neu['bestellnummer'], $preiseintrag_neu['gebindegroesse']
