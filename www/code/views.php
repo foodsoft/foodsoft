@@ -1352,11 +1352,11 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
       close_div();
       open_div('small');
-        printf( "Produktgruppe %s,  Nettopreis: %.2lf/%s / V-Preis: %.2lf/%s"
+        printf( "Produktgruppe %s,  Nettopreis: %.2lf/%s / Endpreis: %.2lf/%s"
           , $produkt['produktgruppen_name']
           , $produkt['nettopreis']
           , $produkt['verteileinheit']
-          , $produkt['endpreis'] + $produkt['preisaufschlag']
+          , $produkt['endpreis']
           , $produkt['verteileinheit']
         );
       close_div();
@@ -1367,14 +1367,14 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   $verteilmult = $produkt['kan_verteilmult'];
   $verteileinheit = $produkt['kan_verteileinheit'];
-  $vpreis = $produkt['endpreis']; //  + $produkt['preisaufschlag'];
+  $endpreis = $produkt['endpreis'];
   $liefermenge = $produkt['liefermenge'] * $verteilmult;
 
   open_tr('summe');
     open_th('', "colspan='3'", 'Liefermenge:' );
     open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
     open_td('unit','',$verteileinheit );
-    open_td('number','', price_view( $vpreis * $liefermenge / $verteilmult ) );
+    open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult ) );
   close_tr();
 
   $basar_id = sql_basar_id();
@@ -1412,20 +1412,20 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
       open_td( 'unit', '', $verteileinheit );
       open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $vpreis * $verteilmenge / $verteilmult ) );
+      open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult ) );
   }
   open_tr('summe');
     open_td('', "colspan='3'", "M&uuml;ll:" );
     open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $vpreis * $muellmenge / $verteilmult ) );
+    open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult ) );
   open_tr('summe');
     open_td('', '', fc_link( 'basar', 'class=href,text=Basar:' ) );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'mult', '', mult_view( $basar_verteilmenge ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $vpreis * $basar_verteilmenge / $verteilmult ) );
+    open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
 }
 
