@@ -2192,6 +2192,7 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   if( isset( $pr['aufschlag_prozent'] ) ) { // needs JOIN gesamtbestellungen
     $pr['lieferpreisaufschlag'] = $pr['nettolieferpreis'] * $pr['aufschlag_prozent'] / 100.0;
     $pr['preisaufschlag'] = $pr['lieferpreisaufschlag'] / $pr['lv_faktor'];
+    $pr['endpreis'] = $pr['vpreis'] + $pr['preisaufschlag'];
   }
 }
 
