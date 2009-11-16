@@ -812,10 +812,10 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
       open_tr();  // lieferpreis und liefereinheit
 
-        open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'Einzelpreis Netto:' );
+        open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'L-Preis Netto:' );
         open_td();
         ?>
-           <span onmouseover="help('Netto-Preis: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
+           <span onmouseover="help('L-Preis: Netto: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
                  onmouseout="help(' ');" >
            <input title='Nettopreis' class='number' type='text' size='8' id='newlieferpreis' name='lieferpreis'
              value='<? printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
@@ -836,15 +836,15 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            </span>
          <?
 
-      open_tr();  // endpreis und verteileinheit
+      open_tr();  // vpreis und verteileinheit
 
-        open_td( 'label', 'Endverbraucher-Preis (Brutto, mit Pfand)', 'Endpreis:' );
+        open_td( 'label', 'Endverbraucher-Preis (Brutto, mit Pfand)', 'V-Preis:' );
         open_td();
         ?>
-           <span onmouseover="help('Endverbraucher-Preis: Endpreis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
+           <span onmouseover="help('Verbraucher-Preis: der Preis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
                  onmouseout="help(' ');" >
-           <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newendpreis' name='endpreis'
-             value='<? printf( '%.4lf', $vorschlag['endpreis'] ); ?>'
+           <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newvpreis' name='vpreis'
+             value='<? printf( '%.4lf', $vorschlag['vpreis'] ); ?>'
              onchange='preisberechnung_rueckwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
@@ -932,7 +932,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       verteileinheit = document.forms[preisform].newverteileinheit.value;
       liefermult = parseFloat( document.forms[preisform].newliefermult.value );
       liefereinheit = document.forms[preisform].newliefereinheit.value;
-      endpreis = parseFloat( document.forms[preisform].newendpreis.value );
+      vpreis = parseFloat( document.forms[preisform].newvpreis.value );
       lieferpreis = parseFloat( document.forms[preisform].newlieferpreis.value );
       gebindegroesse_in_liefereinheiten = parseFloat( document.forms[preisform].newgebindegroesse.value );
       lv_faktor = parseFloat( document.forms[preisform].newlv_faktor.value );
@@ -953,7 +953,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       document.forms[preisform].newpfand.value = pfand;
       document.forms[preisform].newverteilmult.value = verteilmult;
       document.forms[preisform].newverteileinheit.value = verteileinheit;
-      document.forms[preisform].newendpreis.value = endpreis;
+      document.forms[preisform].newvpreis.value = vpreis;
       document.forms[preisform].newgebindegroesse.value = gebindegroesse_in_liefereinheiten;
       document.forms[preisform].newliefermult.value = liefermult;
       document.forms[preisform].newliefereinheit.value = liefereinheit;
@@ -974,7 +974,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         lieferpreis = 
-          parseInt( 0.499 + 100 * ( endpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
+          parseInt( 0.499 + 100 * ( vpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
       }
       preiseintrag_update();
     }
@@ -984,7 +984,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       preiseintrag_auslesen();
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        endpreis = 
+        vpreis = 
           parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / lv_faktor + pfand ) ) / 10000.0;
       }
       preiseintrag_update();
