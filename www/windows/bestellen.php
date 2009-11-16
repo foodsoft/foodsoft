@@ -484,7 +484,7 @@ foreach( $produkte as $produkt ) {
   $n = $produkt_id;
 
   $gebindegroesse = $produkt['gebindegroesse'];
-  $preis = $produkt['endpreis'] + $produkt['nettopreis'] * $gesamtbestellung['aufschlag'] / 100.0;
+  $preis = $produkt['endpreis'];
   $lv_faktor = $produkt['lv_faktor'];
 
   $keys = array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id, 'gruppen_id' => $gruppen_id );

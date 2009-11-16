@@ -3,6 +3,8 @@
 // abschluss.php:
 //
 
+error( 'men at work --- funktioniert noch nicht!' );
+
 assert( $angemeldet ) or exit();
 $editable = ( hat_dienst(4) and ! $readonly );
 

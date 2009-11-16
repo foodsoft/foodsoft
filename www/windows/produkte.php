@@ -103,7 +103,7 @@ open_table('list hfill');
     // open_th( '', "title='aktuelle Details zum Produkt'", 'Notiz' );
     open_th( '', '', 'Gebindegroesse' );
     open_th( '', "colspan='2' title='Lieferanten-Preis (ohne Pfand, ohne MWSt)'", 'L-Nettopreis' );
-    open_th( '', "colspan='2' title='Verbraucher-Preis mit Pfand und MWSt'", 'V-Endpreis' );
+    open_th( '', "colspan='2' title='Verbraucher-Preis mit Pfand und MWSt'", 'V-Preis' );
     open_th( '', '', 'Aktionen' );
 
   foreach( $produkte as $p ) {
@@ -146,7 +146,7 @@ open_table('list hfill');
         open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
         open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
-        open_td( 'mult', '', price_view( $produkt['endpreis'] ) );
+        open_td( 'mult', '', price_view( $produkt['vpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['kan_verteilmult']} {$produkt['kan_verteileinheit']}" );
       } else {
         open_td( 'center', "colspan='5'", '(kein aktueller Preiseintrag)' );

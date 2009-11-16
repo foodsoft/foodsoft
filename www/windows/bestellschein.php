@@ -96,7 +96,7 @@ if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
 $bestellung = sql_bestellung($bestell_id);
 $state = sql_bestellung_status($bestell_id);
 
-$default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_VPREIS | PR_COL_MWST | PR_COL_PFAND | PR_COL_AUFSCHLAG;
+$default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_ENDPREIS | PR_COL_MWST | PR_COL_PFAND | PR_COL_AUFSCHLAG;
 switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_BESTELLEN:
     $editable = FALSE;
