@@ -694,9 +694,9 @@ foreach( $produkte as $produkt ) {
 
 
 open_tr('summe');
-  open_td( '', "colspan='5'", 'Gesamtpreis:' );
+  open_td( '', "colspan='6'", 'Gesamtpreis:' );
   open_td( 'number', "id='gesamtpreis2'", sprintf( '%.2lf', $gesamtpreis ) );
-  open_td( '', "colspan='3'", '' );
+  open_td( '', "colspan='2'", '' );
 
 close_table();
 
