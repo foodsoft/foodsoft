@@ -241,9 +241,15 @@ if( ! $readonly ) {
         s = s + ' ... ' + (festmenge + toleranzmenge) * verteilmult[produkt];
       document.getElementById('gv_'+produkt).firstChild.nodeValue = s;
 
+      gwidth = document.getElementById('g_'+produkt).offsetWidth;
       if( gebinde > 0 ) {
         document.getElementById('g_'+produkt).className = 'mult highlight';
         document.getElementById('gg_'+produkt).firstChild.nodeValue = gebinde;
+        if( gwidth > 40 ) {
+          nw = ( Math.floor( gwidth * ( ( festmenge + toleranzmenge ) / gebindegroesse[produkt] ) - gebinde ) + 'px' );
+          document.getElementById('gi_'+produkt).style.width = 0;
+          document.getElementById('g_'+produkt).style.offsetWidth = gwidth;
+        }
       } else {
         document.getElementById('gg_'+produkt).firstChild.nodeValue = '0';
         if( festmenge + toleranzmenge > 0 ) {
@@ -251,7 +257,14 @@ if( ! $readonly ) {
         } else {
           document.getElementById('g_'+produkt).className = 'mult';
         }
+        if( gwidth > 40 ) {
+          nw = Math.floor( gwidth * ( festmenge + toleranzmenge ) / gebindegroesse[produkt] );
+          document.getElementById('gi_'+produkt).style.width = ( nw + 'px' );
+          document.getElementById('gi_'+produkt).style.marginRight = ((-nw) + 'px');
+          document.getElementById('g_'+produkt).style.offsetWidth = gwidth;
+        }
       }
+      // document.getElementById('g_'+produkt).style.backgroundImage = 'url(img/green.png)';
 
       // anzeige gruppe aktualisieren:
       //
@@ -426,7 +439,7 @@ if( ! $readonly ) {
 
 }
 
-open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
+open_table( 'list hfill' );  // bestelltabelle
   ?> <!-- colgroup scheint bei firefox nicht die spur einer wirkung zu haben...
     <colgroup>
       <col width='2*'>
@@ -444,10 +457,13 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
     open_th( '', '', 'Produktgruppe' );
     open_th( '', '', 'Bezeichnung' );
     open_th( '', "colspan='1' title='Einzelpreis (mit Pfand, MWSt und ggf. Aufschlag)'", 'Preis' );
-    open_th( '', "colspan='2' title='Bestellmenge deiner Gruppe'", 'deine Bestellmenge' );
+    open_th( '', "colspan='3'" );
+      open_div();
+      open_span( 'floatleft', "title='Bestellmenge deiner Gruppe'", 'deine Bestellung' );
+      open_span( 'quad floatright', "title='Falls Produkt nicht kommt: automatisch vormerken für kommende Wochen?'", "vormerken" );
+      close_div();
     open_th( '', "title='maximale (bei voller Zuteilung) Kosten f&uuml;r deine Gruppe'", 'Kosten' );
-    open_th( '', "title='Falls Produkt nicht kommt: automatisch vormerken für kommende Wochen'", "vormerken" );
-    open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Gesamtbestellmenge' );
+    open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Gesamtbestellung' );
     if( hat_dienst(4) )
       open_th( '', '', 'Aktionen' );
     else
@@ -462,8 +478,8 @@ open_table( 'list hfill', "style='width:100%;'" );  // bestelltabelle
     }
     open_th( '', "colspan='1' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'fest' );
     open_th( '', "colspan='1' title='Toleranz-Menge: wieviel du auch mehr nehmen würdest'", 'Toleranz' );
-    open_th( 'small', '', '(maximal)' );
     open_th( '', '', '' );
+    open_th( 'small', '', '(maximal)' );
     open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'volle Gebinde' );
     if( hat_dienst(4) )
       open_th( 'small tight', '', '' );
@@ -633,27 +649,30 @@ foreach( $produkte as $produkt ) {
       ?> - <?
     }
 
-
-  open_td( "mult", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
-
   open_td( 'center bottom' );
     $checked = ( $vormerkung > 0 ? 'checked' : '' );
     echo "<input type='checkbox' onclick='reminder_on();' name='vm_$n' value='yes' $checked>";
   close_td();
 
+  open_td( "mult", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
+
+
   // bestellungen aller gruppen:
   //
   // open_div( '', '', "f: $festmenge_gesamt; t: $toleranzmenge_gesamt" );
-  open_td( "top center", "id='g_$n' " );
+  open_td( "top left tight", "id='g_$n' style='margin:0pt; padding:0pt;'" );
+    open_div( 'left', "style='margin-bottom:-30px; margin-right:0px; margin-left:0px; padding:0px; top:0px; left:0px'" );
+      echo "<img src='img/green.png' id='gi_$n' style='width:0px;height:30px;margin:0px;padding:0px;' >";
+    close_div();
     open_div( 'oneline center' );
-        // v-menge:
-        open_span( 'mult', "id='gv_$n'" );
-          echo mult2string( $verteilmult * $festmenge_gesamt );
-          if( $toleranzmenge_gesamt > 0 ) {
-            echo ' ... ' . mult2string( $verteilmult * ( $festmenge_gesamt + $toleranzmenge_gesamt ) );
-          }
-        close_span();
-        open_span( 'unit', '', $produkt['kan_verteileinheit_anzeige'] );
+      // v-menge:
+      open_span( 'mult', "id='gv_$n'" );
+        echo mult2string( $verteilmult * $festmenge_gesamt );
+        if( $toleranzmenge_gesamt > 0 ) {
+          echo ' ... ' . mult2string( $verteilmult * ( $festmenge_gesamt + $toleranzmenge_gesamt ) );
+        }
+      close_span();
+      open_span( 'unit', '', $produkt['kan_verteileinheit_anzeige'] );
     close_div();
     open_div( 'oneline center' );
        // gebinde:
