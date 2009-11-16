@@ -30,7 +30,7 @@ function verlust_bestellungen( $detail = false ) {
 
   $result = doSql( "
     SELECT gesamtbestellungen.*
-    , (" .select_bestellungen_soll_gruppen( OPTION_ENDPREIS_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ). ") as muell_soll
+    , (" .select_bestellungen_soll_gruppen( OPTION_VPREIS_SOLL, array( 'gesamtbestellungen', 'bestellgruppen' ) ). ") as muell_soll
     FROM gesamtbestellungen
     JOIN bestellgruppen ON bestellgruppen.id = $muell_id
     HAVING ( extra_soll <> 0 ) OR ( muell_soll <> 0)

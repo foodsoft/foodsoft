@@ -2188,7 +2188,7 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   // Preise je V-Einheit:
   $pr['nettopreis'] = $pr['nettolieferpreis'] / $pr['lv_faktor'];
   $pr['bruttopreis'] = $pr['bruttolieferpreis'] / $pr['lv_faktor'];
-  $pr['endpreis'] = $pr['bruttopreis'] + $pr['pfand'];
+  $pr['vpreis'] = $pr['bruttopreis'] + $pr['pfand'];
   if( isset( $pr['aufschlag_prozent'] ) ) { // needs JOIN gesamtbestellungen
     $pr['lieferpreisaufschlag'] = $pr['nettolieferpreis'] * $pr['aufschlag_prozent'] / 100.0;
     $pr['preisaufschlag'] = $pr['lieferpreisaufschlag'] / $pr['lv_faktor'];
@@ -2354,7 +2354,6 @@ function select_basar( $bestell_id = 0 ) {
          , gesamtbestellungen.lieferung as lieferung
          , gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
-         , max( gesamtbestellungen.aufschlag_prozent ) as max_aufschlag_prozent
          , produktpreise.lieferpreis
          , produktpreise.mwst
          , produktpreise.pfand
@@ -2370,7 +2369,6 @@ function select_basar( $bestell_id = 0 ) {
     JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
     JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
     $where
-    GROUP BY produkte.id, gesamtbestellungen.id
     HAVING ( basarmenge <> 0 )
   " ;
 }
@@ -2966,7 +2964,8 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 //
 ////////////////////////////////////////////
 
-// TRANSAKTION_TYP_xxx: dienen zur Klassifikation der BadBank-Buchungen:
+// TRANSAKTION_TYP_xxx: dienen zur Klassifikation der BadBank-Buchungen,
+// die *SALDO*-typen auch fuer gruppen/lieferanten/bank:
 //
 define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );      // noch nicht zugeordnet
 define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben: gruppen, lieferanten und bank
@@ -3044,7 +3043,7 @@ function transaktion_typ_string( $typ ) {
 define( 'OPTION_WAREN_NETTO_SOLL', 1 );       /* waren ohne pfand */
 define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );      /* mit mwst, ohne pfand */
 define( 'OPTION_AUFSCHLAG_SOLL', 3 );         /* Aufschlag zur Kostendeckung der FC */
-define( 'OPTION_ENDPREIS_SOLL', 4 );          /* waren brutto inclusive pfand, aber _ohne_ aufschlag (nur gruppenseitig sinnvoll) */
+define( 'OPTION_VPREIS_SOLL', 4 );          /* waren brutto inclusive pfand, aber _ohne_ aufschlag (nur gruppenseitig sinnvoll) */
 define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 );   /* schuld aus kauf voller pfandverpackungen */
 define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 15 );
 define( 'OPTION_PFAND_VOLL_ANZAHL', 16 );
@@ -3064,7 +3063,7 @@ define( 'OPTION_EXTRA_BRUTTO_SOLL', 20 );   /* sonstiges: Rabatte, Versandkosten
 */
 function select_bestellungen_soll_gruppen( $art, $using = array() ) {
   switch( $art ) {
-    case OPTION_ENDPREIS_SOLL:
+    case OPTION_VPREIS_SOLL:
       $expr = "( -1.0 * bestellzuordnung.menge *
                    ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
                                            * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
