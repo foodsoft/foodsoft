@@ -405,6 +405,12 @@ td.solidright, th.solidright {
 td.solidleft, th.solidleft {
   border-left:1px solid !important;
 }
+td.noleft, th.noleft {
+  border-left:none !important;
+}
+td.noright, th.noright {
+  border-right:none !important;
+}
 
 /* formatierung der bilanzaufstellung */
 

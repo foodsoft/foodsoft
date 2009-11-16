@@ -241,15 +241,9 @@ if( ! $readonly ) {
         s = s + ' ... ' + (festmenge + toleranzmenge) * verteilmult[produkt];
       document.getElementById('gv_'+produkt).firstChild.nodeValue = s;
 
-      gwidth = document.getElementById('g_'+produkt).offsetWidth;
       if( gebinde > 0 ) {
         document.getElementById('g_'+produkt).className = 'mult highlight';
         document.getElementById('gg_'+produkt).firstChild.nodeValue = gebinde;
-        if( gwidth > 40 ) {
-          nw = ( Math.floor( gwidth * ( ( festmenge + toleranzmenge ) / gebindegroesse[produkt] ) - gebinde ) + 'px' );
-          document.getElementById('gi_'+produkt).style.width = 0;
-          document.getElementById('g_'+produkt).style.offsetWidth = gwidth;
-        }
       } else {
         document.getElementById('gg_'+produkt).firstChild.nodeValue = '0';
         if( festmenge + toleranzmenge > 0 ) {
@@ -257,14 +251,15 @@ if( ! $readonly ) {
         } else {
           document.getElementById('g_'+produkt).className = 'mult';
         }
-        if( gwidth > 40 ) {
-          nw = Math.floor( gwidth * ( festmenge + toleranzmenge ) / gebindegroesse[produkt] );
-          document.getElementById('gi_'+produkt).style.width = ( nw + 'px' );
-          document.getElementById('gi_'+produkt).style.marginRight = ((-nw) + 'px');
-          document.getElementById('g_'+produkt).style.offsetWidth = gwidth;
-        }
       }
-      // document.getElementById('g_'+produkt).style.backgroundImage = 'url(img/green.png)';
+      gwidth = document.getElementById('g_'+produkt).offsetWidth;
+      toleranzmax = Math.min( gebindegroesse[produkt] - 1, toleranzmenge );
+      if( gwidth > 40 ) {
+        nw = Math.floor( gwidth * ( ( festmenge + toleranzmax ) / gebindegroesse[produkt] - gebinde ) );
+        document.getElementById('gi_'+produkt).style.width = ( nw + 'px' );
+        document.getElementById('gi_'+produkt).style.marginRight = ((-nw) + 'px');
+        document.getElementById('g_'+produkt).style.offsetWidth = gwidth;
+      }
 
       // anzeige gruppe aktualisieren:
       //
@@ -467,7 +462,7 @@ open_table( 'list hfill' );  // bestelltabelle
     if( hat_dienst(4) )
       open_th( '', '', 'Aktionen' );
     else
-      open_th( '', "colspan='1' title='Zuteilung (nach aktuellem Stand) an deine Gruppe'", 'Zuteilung' );
+      open_th( 'tight', "colspan='1' title='Zuteilung (nach aktuellem Stand) an deine Gruppe'", 'Zuteilung' );
   open_tr( 'groupofrows_bottom' );
     open_th( '', '', '' );
     open_th( 'small', '', '' );
@@ -479,7 +474,7 @@ open_table( 'list hfill' );  // bestelltabelle
     open_th( '', "colspan='1' title='Fest-Bestellmenge: wieviel du wirklich haben willst'", 'fest' );
     open_th( '', "colspan='1' title='Toleranz-Menge: wieviel du auch mehr nehmen würdest'", 'Toleranz' );
     open_th( '', '', '' );
-    open_th( 'small', '', '(maximal)' );
+    open_th( 'small tight', '', '(maximal)' );
     open_th( '', "colspan='1' title='insgesamt gefuellte Gebinde'", 'volle Gebinde' );
     if( hat_dienst(4) )
       open_th( 'small tight', '', '' );
@@ -584,7 +579,7 @@ foreach( $produkte as $produkt ) {
       }
     }
   }
-  open_td( "top center $class", "title='$title'" );
+  open_td( "top center tight $class", "title='$title'" );
     open_table( "layout $class" );
       open_tr();
         open_td( "mult $class" );
@@ -625,7 +620,7 @@ foreach( $produkte as $produkt ) {
     }
 
   // toleranzmenge
-  open_td( "center unit", "colspan='1' id='tt_$n' " ); // toleranzwahl
+  open_td( "center unit noright", "colspan='1' id='tt_$n' " ); // toleranzwahl
     open_div( 'oneline left' );
       open_span( '', "id='t_$n'" );
         if( $toleranzmenge > 0 )
@@ -646,10 +641,10 @@ foreach( $produkte as $produkt ) {
         close_div();
       }
     } else {
-      ?> - <?
+      ?> &nbsp; <?
     }
 
-  open_td( 'center bottom' );
+  open_td( 'center bottom noleft' );
     $checked = ( $vormerkung > 0 ? 'checked' : '' );
     echo "<input type='checkbox' onclick='reminder_on();' name='vm_$n' value='yes' $checked>";
   close_td();
