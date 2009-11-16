@@ -724,14 +724,14 @@ define( 'PR_COL_ENDSUMME', 0x10000 );   // Endsumme: V-summe mit aufschlag (1,3)
 // (2) nur moeglich ab STATUS_LIEFERANT
 // (3) bei STATUS_BESTELLEN: berechnet aus Bestellmenge, sonst aus Liefermenge
 //
-define( 'PR_ROWS_NICHTGELIEFERT', 0x8000 ); // nicht gelieferte Produkte auch anzeigen
-define( 'PR_ROWS_NICHTGEFUELLT', 0x10000 ); // nicht gefuellte gebinde auch anzeigen?
+define( 'PR_ROWS_NICHTGELIEFERT', 0x20000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGEFUELLT', 0x40000 ); // nicht gefuellte gebinde auch anzeigen?
 //
 // $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
 // $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
 //
 function bestellschein_view(
-    $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfff, $gruppen_id = false,
+    $bestell_id, $editAmounts = FALSE, $editPrice = FALSE, $spalten = 0xfffff, $gruppen_id = false,
     $select_columns = false, $select_nichtgeliefert = false
   ) {
   global $input_event_handlers;
@@ -859,7 +859,7 @@ function bestellschein_view(
   if( $select_columns ) {
     $opts_insert="";
     $opts_drop="";
-    for( $n=1 ; $n <= PR_COL_VSUMME; $n *= 2 ) {
+    for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
       if( array_key_exists( $n, $col ) ) {
         $c = $col[$n];
         if( $spalten & $n ) {

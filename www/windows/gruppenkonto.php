@@ -229,7 +229,7 @@ open_table('list');
       open_td('solidright', '', 'Bestellung '. fc_link( 'lieferschein', array(
         'class' => 'href', 'text' => $vert_row['name'], 'title' => 'zum Lieferschein...'
       , 'bestell_id' => $vert_row['gesamtbestellung_id'] , 'gruppen_id' => $gruppen_id
-      , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_LIEFERMENGE | PR_COL_VSUMME )
+      , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME )
       ) ) );
       open_td( 'number' );
         if( abs( $pfand_voll_soll ) > 0.005 ) {

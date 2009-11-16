@@ -123,7 +123,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_ABGERECHNET:
     if( $gruppen_id ) {
       $editable= FALSE;
-      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_VSUMME );
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
       $editable = (!$readonly) && ( hat_dienst(1,3,4) && ( $state == STATUS_VERTEILT ) );
@@ -137,7 +137,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
     return;
 }
 if( hat_dienst(0) ) {
-  $default_spalten |= PR_COL_VSUMME;
+  $default_spalten |= PR_COL_ENDSUMME;
 }
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
