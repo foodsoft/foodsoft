@@ -551,6 +551,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     open_div( 'alert', '', 'Basar ist leer!' );
     return;
   }
+  $have_aufschlag = false;
   foreach( $basar as $b ) {
     if( $b['aufschlag_prozent'] > 0 ) {
       $have_aufschlag = true;
@@ -1715,12 +1716,21 @@ function auswahl_bestellung( $bestell_id = 0 ) {
     div_msg( 'kommentar', 'Zur Zeit laufen leider keine Bestellungen!' );
     return;
   }
+  $have_aufschlag = false;
+  foreach( $laufende_bestellungen as $b ) {
+    if( $b['aufschlag_prozent'] > 0 ) {
+      $have_aufschlag = true;
+    }
+  }
   open_table( 'list', "style='width:600px;'" );
       open_th( '', '', 'Name' );
       open_th( '', '', 'Lieferant' );
       open_th( '', '', 'Bestellschluss' );
       open_th( '', '', 'Lieferung' );
       open_th( '', '', 'Produkte' );
+      if( $have_aufschlag ) {
+        open_th( '', "title='Aufschlag der Foodcoop (Prozent vom Nettopreis)'", 'Aufschlag' );
+      }
 
     foreach( $laufende_bestellungen as $row ) {
       $id = $row['id'];
@@ -1738,6 +1748,9 @@ function auswahl_bestellung( $bestell_id = 0 ) {
       open_td( '', '', fc_link( 'bestellschein', array( 'title' => 'zum Bestellschein'
                        , 'class' => 'href', 'bestell_id' => $id, 'text' => $row['lieferung'] ) ) );
       open_td( '', '', $num );
+      if( $have_aufschlag ) {
+        open_td( 'number', '', $row['aufschlag_prozent'] . '%' );
+      }
     }
   close_table();
 }
