@@ -610,9 +610,9 @@ foreach( $produkte as $produkt ) {
       open_div('oneline center smallskip');
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='--' onclick='fest_minusminus($n);' >";
-        ?> <span class='flatbutton' onclick='fest_minus(<? echo $n; ?>);' >-</span>
+        ?> <span onclick='fest_minus(<? echo $n; ?>);' ><img src='img/minus.png'></span>
             <span class='quad'>&nbsp;</span>
-            <span class='flatbutton' onclick='fest_plus(<? echo $n; ?>);' >+</span> <?
+            <span onclick='fest_plus(<? echo $n; ?>);' ><img src='img/plus.png'></span> <?
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='++' onclick='fest_plusplus($n);' >";
         qquad();
@@ -634,10 +634,10 @@ foreach( $produkte as $produkt ) {
       if( ! $readonly ) {
         open_div('oneline center smallskip');
           qquad();
-          ?> <span class='flatbutton' onclick='toleranz_minus(<? echo $n; ?>);' >-</span>
+          ?> <span onclick='toleranz_minus(<? echo $n; ?>);' ><img src='img/minus.png'></span>
              <span class='quad'>&nbsp;</span>
              <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
-             <span class='flatbutton' onclick='toleranz_plus(<? echo $n; ?>);' >+</span> <?
+             <span onclick='toleranz_plus(<? echo $n; ?>);' ><img src='img/plus.png'></span> <?
         close_div();
       }
     } else {
