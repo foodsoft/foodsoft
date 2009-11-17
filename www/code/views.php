@@ -1620,7 +1620,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'number', '', $pr1['mwst'] );
       open_td( 'number', '', $pr1['pfand'] );
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
-      open_td( 'mult', '', price_view( $pr1['endpreis'] ) );
+      open_td( 'mult', '', price_view( $pr1['vpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
 
     if( $bestell_id ) {

@@ -812,7 +812,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
       open_tr();  // lieferpreis und liefereinheit
 
-        open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'L-Preis Netto:' );
+        open_td( 'label', "title='Katalogpreis (Netto, ohne Pfand) des Lieferanten'", 'L-Preis:' );
         open_td();
         ?>
            <span onmouseover="help('L-Preis: Netto: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
@@ -838,7 +838,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
       open_tr();  // vpreis und verteileinheit
 
-        open_td( 'label', 'Endverbraucher-Preis (Brutto, mit Pfand)', 'V-Preis:' );
+        open_td( 'label', "title='Endverbraucher-Preis (Brutto, mit Pfand)'", 'V-Preis:' );
         open_td();
         ?>
            <span onmouseover="help('Verbraucher-Preis: der Preis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
