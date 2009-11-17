@@ -597,7 +597,7 @@ foreach( $produkte as $produkt ) {
     close_table();
 
   // festmenge
-  open_td( "center mult", "colspan='1' id='tf_$n' " );
+  open_td( "center mult noright", "colspan='1' id='tf_$n' " );
     open_div( 'oneline right' );
       open_span( '', "id='f_$n'" );
         echo mult2string( $festmenge * $produkt['kan_verteilmult'] );
@@ -620,7 +620,7 @@ foreach( $produkte as $produkt ) {
     }
 
   // toleranzmenge
-  open_td( "center unit noright", "colspan='1' id='tt_$n' " ); // toleranzwahl
+  open_td( "center unit noleft noright", "colspan='1' id='tt_$n' " ); // toleranzwahl
     open_div( 'oneline left' );
       open_span( '', "id='t_$n'" );
         if( $toleranzmenge > 0 )
