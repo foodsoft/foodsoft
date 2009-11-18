@@ -401,12 +401,14 @@ function floating_submission_button() {
   close_tag('span');
 }
 
-function submission_button( $text = '', $active = true ) {
+function submission_button( $text = '', $active = true, $confirm = '' ) {
   global $form_id;
   $text or $text = 'Speichern';
   $class = ( $active ? 'button' : 'button inactive' );
   // open_span( 'qquad', '', "<a href='javascript:return true;' class='$class' id='submit_button_$form_id' title='$text' onClick=\"submit_form( $form_id );\">$text</a>" );
-  open_span( 'qquad', '', "<a href='javascript:submit_form( $form_id );' class='$class' id='submit_button_$form_id' title='$text' >$text</a>" );
+  if( $confirm )
+    $confirm = "if( confirm( '$confirm' ) ) ";
+  open_span( 'qquad', '', "<a href=\"javascript:$confirm submit_form( $form_id );\" class='$class' id='submit_button_$form_id' title='$text' >$text</a>" );
 }
 
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
