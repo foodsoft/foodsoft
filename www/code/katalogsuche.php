@@ -433,6 +433,17 @@ function update_preis( $produkt_id ) {
     case 3:
       return 0;
     case 4:
+      if( ! isset( $preiseintrag_neu['pfand'] ) || ! isset( $preiseintrag_neu['mwst'] ) ) {
+        // pfand und mwst, wenn nicht im katalog, aus letztem aktuellen preiseintrag uebernehmen:
+        $preis_id = sql_aktueller_produktpreis( $produkt_id );
+        if( $preis_id ) {
+          $p_alt = sql_produkt( array( 'preis_id' => $preis_id['id'] ) );
+          if( ! isset( $preiseintrag_neu['pfand'] ) )
+            $preiseintrag_neu['pfand'] = $p_alt['pfand'];
+          if( ! isset( $preiseintrag_neu['mwst'] ) )
+            $preiseintrag_neu['mwst'] = $p_alt['mwst'];
+        }
+      }
       foreach( array( 'lieferpreis', 'bestellnummer', 'gebindegroesse', 'mwst', 'pfand'
                     , 'liefereinheit', 'verteileinheit', 'lv_faktor' ) as $key ) {
         if( ! isset( $preiseintrag_neu[ $key ] ) ) {
