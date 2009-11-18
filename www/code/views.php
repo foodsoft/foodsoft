@@ -1329,7 +1329,7 @@ function select_products_not_in_list( $bestell_id ) {
       }
       echo "<option value='{$p['produkt_id']}'>{$p['name']} (";
       if( $preis_id ) {
-        echo price_view( $p['endpreis'] ) ." / {$p['verteileinheit_anzeige']}";
+        echo "V-Preis: " . price_view( $p['vpreis'] ) ." / {$p['verteileinheit_anzeige']}";
       } else {
         echo "kein aktueller Preiseintrag";
       }
