@@ -1216,7 +1216,11 @@ function select_bestellung_view() {
                                   , array( 'action' => 'changeState'
                                          , 'change_id' => $bestell_id, 'change_to' => STATUS_LIEFERANT ) );
           } else {
-            $actions[] = "<div class='alert qquad'>Bestellung läuft noch!</div>";
+            $actions[] = "
+              <div class='alert qquad'>Bestellung läuft noch!</div>
+              <div class='alert qquad'>".fc_link( 'bestellen', array( 'bestell_id' => $bestell_id
+                                        , 'class' => 'href', 'text' => 'zum Bestellen...' ) )."</div>
+            ";
           }
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
           if( sql_references_gesamtbestellung( $bestell_id ) == 0 ) {
@@ -1490,34 +1494,40 @@ function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
 }
 
 function abrechnung_kurzinfo( $bestell_id ) {
+  global $window;
   $row = sql_bestellung( $bestell_id );
   $status = $row['rechnungsstatus'];
-  if( $status < STATUS_VERTEILT ) {
-    echo rechnung_status_string( $status );
-    return;
+  switch( $status ) {
+    case STATUS_BESTELLEN:
+      if( $window != 'bestellen' )
+        echo fc_link( 'bestellen', array( 'bestell_id' => $bestell_id, 'class' => 'href' , 'text' => 'Bestellen...', 'window_id' => 'top' ) );
+      else
+        echo 'Bestellen';
+      break;
+    case STATUS_ABGERECHNET:
+      $text = "abgerechnet
+       <div class='quad smallskip'>
+       <table class='layout hfill' style='color:#ed0000;'>
+        <tr>
+          <td class='small'>Rechnungsnummer:</td>
+          <td class='small right'>". $row['rechnungsnummer'] ."</td>
+        </tr>
+        <tr>
+          <td class='small'>Rechnungssumme:</td>
+          <td class='small right'>". sprintf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ) ."</td>
+        </tr>
+        <tr>
+          <td class='small'>abgerechnet von:</td>
+          <td class='small right'>". sql_dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ) ."</td>
+        </tr>
+      </table>
+      </div>";
+      echo fc_link( 'abrechnung', array( 'bestell_id' => $bestell_id, 'class' => 'href' , 'text' => $text ) );
+      break;
+    default:
+      echo "rechnung_status_string( $status )";
+      break;
   }
-  if( $status == STATUS_ABGERECHNET ) {
-    $text = "abgerechnet
-     <div class='quad smallskip'>
-     <table class='layout hfill' style='color:#ed0000;'>
-      <tr>
-        <td class='small'>Rechnungsnummer:</td>
-        <td class='small right'>". $row['rechnungsnummer'] ."</td>
-      </tr>
-      <tr>
-        <td class='small'>Rechnungssumme:</td>
-        <td class='small right'>". sprintf( '%.2lf', sql_bestellung_rechnungssumme($bestell_id) ) ."</td>
-      </tr>
-      <tr>
-        <td class='small'>abgerechnet von:</td>
-        <td class='small right'>". sql_dienstkontrollblatt_name( $row['abrechnung_dienstkontrollblatt_id'] ) ."</td>
-      </tr>
-    </table>
-    </div>";
-  } else {
-    $text = rechnung_status_string( $status );
-  }
-  echo fc_link( 'abrechnung', array( 'bestell_id' => $bestell_id, 'class' => 'href' , 'text' => $text ) );
 }
 
 function buchung_kurzinfo( $id ) {
@@ -1709,7 +1719,7 @@ function auswahl_konto( $selected = 0 ) {
 }
 
 function auswahl_bestellung( $bestell_id = 0 ) {
-  global $mysqljetzt;
+  global $mysqljetzt, $login_gruppen_id, $window;
   $laufende_bestellungen = sql_bestellungen( '( rechnungsstatus = '. STATUS_BESTELLEN.' )
                                                             and ( bestellstart <= NOW() ) ' );
   if( !  $laufende_bestellungen ) {
@@ -1723,7 +1733,7 @@ function auswahl_bestellung( $bestell_id = 0 ) {
     }
   }
   open_table( 'list', "style='width:600px;'" );
-      open_th( '', '', 'Name' );
+      open_th( '', '', 'Bestellung' );
       open_th( '', '', 'Lieferant' );
       open_th( '', '', 'Bestellschluss' );
       open_th( '', '', 'Lieferung' );
@@ -1751,6 +1761,13 @@ function auswahl_bestellung( $bestell_id = 0 ) {
       if( $have_aufschlag ) {
         open_td( 'number', '', $row['aufschlag_prozent'] . '%' );
       }
+    }
+    if( ( $window != 'bestellen' ) && ! sql_gruppe_letzte_bestellung( $login_gruppen_id ) ) {
+      open_tr();
+        open_th( 'left', $have_aufschlag ? "colspan='6'" : "colspan='5'" );
+          open_span( 'bold alert', '', "<img src='img/arrow.up.blue.png'><blink> HIER </blink><img src='img/arrow.up.blue.png'>" );
+          echo " klicken zum Mitbestellen! ";
+          open_span( 'small', '', '(this message will appear once)' );
     }
   close_table();
 }
