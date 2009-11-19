@@ -242,14 +242,14 @@ if( ! $readonly ) {
       document.getElementById('gv_'+produkt).firstChild.nodeValue = s;
 
       if( gebinde > 0 ) {
-        document.getElementById('g_'+produkt).className = 'mult highlight';
+        document.getElementById('g_'+produkt).className = 'highlight';
         document.getElementById('gg_'+produkt).firstChild.nodeValue = gebinde;
       } else {
         document.getElementById('gg_'+produkt).firstChild.nodeValue = '0';
         if( festmenge + toleranzmenge > 0 ) {
-          document.getElementById('g_'+produkt).className = 'mult crit';
+          document.getElementById('g_'+produkt).className = 'crit';
         } else {
-          document.getElementById('g_'+produkt).className = 'mult';
+          document.getElementById('g_'+produkt).className = '';
         }
       }
       gwidth = document.getElementById('g_'+produkt).offsetWidth;
