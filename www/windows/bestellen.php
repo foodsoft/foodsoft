@@ -610,9 +610,9 @@ foreach( $produkte as $produkt ) {
       open_div('oneline center smallskip');
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='--' onclick='fest_minusminus($n);' >";
-        ?> <span onclick='fest_minus(<? echo $n; ?>);' ><img src='img/minus.png'></span>
+        ?> <span onclick='fest_minus(<? echo $n; ?>);' ><img alt='-' src='img/minus.png'></span>
             <span class='quad'>&nbsp;</span>
-            <span onclick='fest_plus(<? echo $n; ?>);' ><img src='img/plus.png'></span> <?
+            <span onclick='fest_plus(<? echo $n; ?>);' ><img alt='+' src='img/plus.png'></span> <?
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='++' onclick='fest_plusplus($n);' >";
         qquad();
@@ -634,10 +634,10 @@ foreach( $produkte as $produkt ) {
       if( ! $readonly ) {
         open_div('oneline center smallskip');
           qquad();
-          ?> <span onclick='toleranz_minus(<? echo $n; ?>);' ><img src='img/minus.png'></span>
+          ?> <span onclick='toleranz_minus(<? echo $n; ?>);' ><img alt='-' src='img/minus.png'></span>
              <span class='quad'>&nbsp;</span>
              <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
-             <span onclick='toleranz_plus(<? echo $n; ?>);' ><img src='img/plus.png'></span> <?
+             <span onclick='toleranz_plus(<? echo $n; ?>);' ><img alt='+' src='img/plus.png'></span> <?
         close_div();
       }
     } else {
@@ -655,9 +655,9 @@ foreach( $produkte as $produkt ) {
   // bestellungen aller gruppen:
   //
   // open_div( '', '', "f: $festmenge_gesamt; t: $toleranzmenge_gesamt" );
-  open_td( "top left tight", "id='g_$n' style='margin:0pt; padding:0pt;'" );
+  open_td( "top left tight ", "id='g_$n' style='margin:0pt; padding:0pt;'" );
     open_div( 'left', "style='margin-bottom:-30px; margin-right:0px; margin-left:0px; padding:0px; top:0px; left:0px'" );
-      echo "<img src='img/green.png' id='gi_$n' style='width:0px;height:30px;margin:0px;padding:0px;' >";
+      echo "<img src='img/green.png' alt='progressbar' id='gi_$n' style='width:0px;height:30px;margin:0px;padding:0px;' >";
     close_div();
     open_div( 'oneline center' );
       // v-menge:
@@ -683,7 +683,7 @@ foreach( $produkte as $produkt ) {
                     , array( 'action' => 'delete', 'produkt_id' => $produkt_id ) );
     close_td();
   } else {
-    open_td( 'center', "id='zt_$n'" );
+    open_td( '', "id='zt_$n'" );
       open_div( 'oneline center' );
         open_span( '', "id='z_$n'", '&nbsp;' ); // IE _braucht_ hier ein space!
         open_span( '', '', $produkt['kan_verteileinheit_anzeige'] );

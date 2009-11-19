@@ -399,6 +399,9 @@ table tr.summe td, table tr.summe th, table.list tr.summe td {
   border-bottom:2px solid #666666;
 }
 
+/* netscrap version 3+x now claims to support at least 10 gazillion XML-standards up to 2.34beta-2107-bloo-bar-blub-8.-34/5,
+ * but it still can't get table cell borders right without spoon-feeding:
+*/
 td.solidright, th.solidright {
   border-right:1px solid !important;
 }
@@ -410,6 +413,12 @@ td.noleft, th.noleft {
 }
 td.noright, th.noright {
   border-right:none !important;
+}
+td.dottedright, th.dottedright {
+  border-right:1px dotted black !important;
+}
+td.dottedleft, th.dottedleft {
+  border-left:1px dotted black !important;
 }
 
 /* formatierung der bilanzaufstellung */
