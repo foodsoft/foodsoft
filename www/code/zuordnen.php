@@ -1063,7 +1063,8 @@ function sql_gruppe_aktiv( $gruppen_id ) {
 // 2 Funktionen zum Ermitteln von Karteileichen:
 //
 function sql_gruppe_letztes_login( $gruppen_id ) {
-  need( hat_dienst(4,5) );
+  global $login_gruppen_id;
+  need( hat_dienst(4,5) or ( $gruppen_id == $login_gruppen_id ) );
   $result = doSql( "
     SELECT sessions.id, logbook.time_stamp
     FROM sessions
@@ -1075,7 +1076,8 @@ function sql_gruppe_letztes_login( $gruppen_id ) {
   return mysql_fetch_array( $result );
 }
 function sql_gruppe_letzte_bestellung( $gruppen_id ) {
-  need( hat_dienst(4,5) );
+  global $login_gruppen_id;
+  need( hat_dienst(4,5) or ( $gruppen_id == $login_gruppen_id ) );
   $result = doSql( "
     SELECT gesamtbestellungen.id, gesamtbestellungen.lieferung as lieferdatum
     FROM gruppenbestellungen
