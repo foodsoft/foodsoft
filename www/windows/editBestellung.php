@@ -79,9 +79,9 @@ if( $action == 'save' ) {
       $vormerkungen = array();
       foreach( $bestellliste as $produkt_id ) {
         sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
-        $vormerkungen = $vormerkungen + sql_bestellzuordnungen( array(
+        $vormerkungen = array_merge( $vormerkungen, sql_bestellzuordnungen( array(
           'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $produkt_id
-        ) );
+        ) ) );
       }
       // alle vormerkungen dieses lieferanten loeschen:
       sql_delete_bestellzuordnungen( array(
@@ -90,7 +90,7 @@ if( $action == 'save' ) {
       $vorbestellungen_fest = 0;
       $vorbestellungen_toleranz = 0;
       foreach( $vormerkungen as $vormerkung ) {
-        $gruppen_id = $vormerkung['gruppen_id'];
+        $gruppen_id = $vormerkung['bestellgruppen_id'];
         $produkt_id = $vormerkung['produkt_id'];
         $menge = $vormerkung['menge'];
         $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
