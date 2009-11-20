@@ -49,7 +49,10 @@ switch( $action ) {
   case 'delete':
     nur_fuer_dienst(4);
     need_http_var( 'delete_id', 'U' );
-    need( sql_references_gesamtbestellung( $bestell_id ) == 0 );
+    need( sql_bestellung_status( $delete_id ) <= STATUS_LIEFERANT );
+    sql_delete_bestellzuordnungen( array( 'bestell_id' => $delete_id ) );
+    doSql( "DELETE FROM gruppenbestellungen WHERE gesamtbestellung_id = $delete_id " );
+    doSql( "DELETE FROM bestellvorschlaege WHERE gesamtbestellung_id = $delete_id " );
     doSql( "DELETE FROM gesamtbestellungen WHERE id = $delete_id " );
     $bestell_id = 0;
     unset( $self_fields['bestell_id'] );

@@ -1223,9 +1223,8 @@ function select_bestellung_view() {
             ";
           }
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
-          if( sql_references_gesamtbestellung( $bestell_id ) == 0 ) {
-            $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen", "action=delete,delete_id=$bestell_id" );
-          }
+          $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
+                                , "action=delete,delete_id=$bestell_id" );
         }
         break;
 
@@ -1246,6 +1245,8 @@ function select_bestellung_view() {
                                        , 'confirm' => 'Bestellung wurde geliefert, Lieferschein abgleichen?' )
                                 , array( 'action' => 'changeState'
                                        , 'change_id' => $bestell_id, 'change_to' => STATUS_VERTEILT ) );
+          $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
+                                , "action=delete,delete_id=$bestell_id" );
         break;
 
       case STATUS_VERTEILT:
