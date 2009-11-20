@@ -2893,7 +2893,7 @@ function sql_kontoauszug( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
   if( $auszug_jahr ) {
     $filter .= " AND ( kontoauszug_jahr = $auszug_jahr ) ";
     if( $auszug_nr ) {
-      $where .= " AND ( kontoauszug_nr = $auszug_nr ) ";
+      $filter .= " AND ( kontoauszug_nr = $auszug_nr ) ";
       $groupby = "";
     }
   }
