@@ -81,7 +81,15 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
         if( is_numeric( $key ) ) {   // assume $cond is a complete boolean expression
           $f = $cond;
         } else {
-          if( strchr( $cond, ' ' ) ) {  // assume $cond contains an operator
+          if( is_array( $cond ) ) {
+            $f = "$key IN ";
+            $komma = '(';
+            foreach( $cond as $c ) {
+              $f .= "$komma '$c'";
+              $komma = ',';
+            }
+            $f .= ') ';
+          } else if( strchr( $cond, ' ' ) ) {  // assume $cond contains an operator
             $f = "$key $cond";
           } else {                      // assume we need a '=':
             $f = "$key = $cond";  
@@ -365,7 +373,7 @@ function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
         ( dienste.dienst = {$dienst['dienst']} )
     AND ( dienste.id != $dienst_id )
     AND ( NOT dienste.geleistet )
-    AND ( dienste.lieferdatum <= curdate() )
+    AND ( dienste.lieferdatum >= curdate() )
   ";
 
   $r = sql_dienste( $filter . " and ( dienste.status = 'Offen' ) " );
