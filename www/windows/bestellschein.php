@@ -4,7 +4,7 @@
 //
 
 error_reporting(E_ALL);
-//$_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
+// $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
 assert( $angemeldet ) or exit();
 
@@ -12,6 +12,7 @@ need_http_var( 'bestell_id', 'U', true );
 
 get_http_var( 'action', 'w', '' );
 $readonly and $action = '';
+
 switch( $action ) {
 
   case 'insert':
@@ -53,10 +54,6 @@ switch( $action ) {
     break;
 }
 
-if( ! $bestell_id ) {
-  select_bestellung_view();
-  return;
-}
 get_http_var( 'gruppen_id', 'u', 0, true );
 
 if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
@@ -65,11 +62,11 @@ if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
   $gruppen_name = sql_gruppenname($gruppen_id);
 }
 
-$bestellung = sql_bestellung($bestell_id);
-$state = sql_bestellung_status($bestell_id);
+$bestellung = sql_bestellung( $bestell_id );
+$status = $bestellung['rechnungsstatus'];
 
 $default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_ENDPREIS | PR_COL_MWST | PR_COL_PFAND | PR_COL_AUFSCHLAG;
-switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
+switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_BESTELLEN:
     $editable = FALSE;
     if( $gruppen_id ) {
@@ -98,7 +95,7 @@ switch($state){    // anzeigedetails abhaengig vom Status auswaehlen
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
-      $editable = (!$readonly) && ( hat_dienst(1,3,4) && ( $state == STATUS_VERTEILT ) );
+      $editable = (!$readonly) && ( hat_dienst(1,3,4) && ( $status == STATUS_VERTEILT ) );
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE | PR_COL_NETTOSUMME | PR_ROWS_NICHTGEFUELLT );
     }
@@ -152,7 +149,7 @@ bestellschein_view(
 );
 
 medskip();
-switch( $state ) {
+switch( $status ) {
   case STATUS_LIEFERANT:
   case STATUS_VERTEILT:
     if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
@@ -162,7 +159,7 @@ switch( $state ) {
             ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
             open_ul();
               open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
-              open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hingerher gesetzt werden!' );
+              open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
             close_ul();
           close_div();
           select_products_not_in_list($bestell_id);
