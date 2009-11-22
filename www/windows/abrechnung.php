@@ -30,15 +30,15 @@ $editable or $action = '';
 
 if( $action == 'save' ) {
   if( $status == STATUS_ABGERECHNET ) {
-    get_http_var( 'rechnung_abschluss', 'w', '' );
+    need_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'reopen' ) {
       sql_change_bestellung_status( $bestell_id, STATUS_VERTEILT );
     }
   } else if( $status < STATUS_ABGERECHNET ) {
-    get_http_var( 'rechnungsnummer', 'H', '' ) or $rechnungsnummer = '';
-    get_http_var( 'extra_text', 'H', '' ) or $extra_text = '';
+    need_http_var( 'rechnungsnummer', 'H' );
+    need_http_var( 'extra_text', 'H' );
     need_http_var( 'extra_soll', 'f' );
-    get_http_var( 'aufschlag', 'f', $bestellung['aufschlag_prozent'] );
+    need_http_var( 'aufschlag', 'f' );
     sql_update( 'gesamtbestellungen', $bestell_id, array(
       'rechnungsnummer' => $rechnungsnummer
     , 'extra_text' => $extra_text

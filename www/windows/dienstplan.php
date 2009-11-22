@@ -7,7 +7,7 @@ get_http_var( 'plan_dienst', '/^[0-9\/]+$/', '1/2', true ); // fuer anzeige rota
 
 $editable = ! $readonly;
 
-get_http_var( 'action', 'w', false );
+get_http_var( 'action', 'w', '' );
 $editable or $action = false;
 
 if( $action ) {

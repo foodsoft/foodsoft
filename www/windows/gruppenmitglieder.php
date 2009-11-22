@@ -25,7 +25,7 @@ if( hat_dienst(5) and ! $readonly ) {
 $pwmsg = '';
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
-get_http_var('action','w','') or $action = '';
+get_http_var('action','w','');
 switch( $action ) {
   case 'new_pwd':
     need( $edit_pwd, "keine Berechtigung zur Passwortaenderung!" );
