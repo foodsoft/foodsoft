@@ -1012,7 +1012,7 @@ function action_form_produktpreis() {
 
   need_http_var('produkt_id','u');
 
-  get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
+  need_http_var('name','H');  // notwendig, sollte aber moeglichst nicht geaendert werden!
   need_http_var('verteilmult','f');
   $verteilmult = mult2string( $verteilmult ); // ...maximal 3 nachkommastellen, und nur wenn noetig!
   need_http_var('verteileinheit','w');
@@ -1025,11 +1025,11 @@ function action_form_produktpreis() {
   need_http_var('pfand','f');
   need_http_var('lieferpreis','f');
   need_http_var('lv_faktor','f');
-  get_http_var('bestellnummer','H','');
+  need_http_var('bestellnummer','H','');
   need_http_var('day','u');
   need_http_var('month','u');
   need_http_var('year','u');
-  get_http_var('notiz','H','');
+  need_http_var('notiz','H');
 
   $gebindegroesse *= $lv_faktor;
 

@@ -140,9 +140,9 @@ switch( $login ) {
   case 'silentlogout':
     // ggf. noch  dienstkontrollblatt-Eintrag aktualisieren:
     if( $login_dienst > 0 and $dienstkontrollblatt_id > 0 ) {
-      get_http_var('coopie_name','H','');
-      get_http_var('telefon','H','');
-      get_http_var('notiz','H','');
+      need_http_var('coopie_name','H');
+      need_http_var('telefon','H');
+      need_http_var('notiz','H');
       dienstkontrollblatt_eintrag(
         $dienstkontrollblatt_id, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz 
       );
