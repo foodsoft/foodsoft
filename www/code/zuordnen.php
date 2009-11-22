@@ -2013,7 +2013,21 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
 function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
-  $state = sql_bestellung_status( $bestell_id );
+
+  // if( is_array( $bestell_id ) ) {
+  //  $state = sql_bestellung_status( $bestell_id[0] );
+  //  $bestell_id_filter = ' gesamtbestellungen.id IN ';
+  //  $komma = '(';
+  //  foreach( $bestell_id as $b_id ) {
+  //    $bestell_id_filter .= "$komma $b_id";
+  //    $komma = ',';
+  //  }
+  //  $bestell_id_filter .= ')';
+  //  $bestell_id_filter = ' gesamtbestellungen.id IN ( 11, 20 ) ';
+  // } else {
+    $state = sql_bestellung_status( $bestell_id );
+    $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
+  // }
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_BESTELLUNGEN."), bestellzuordnung.menge, 0 ) ), 0 )";
@@ -2081,7 +2095,7 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     , produktgruppen.id as produktgruppen_id
     , produkte.id as produkt_id
     , produkte.notiz as notiz
-    , bestellvorschlaege.liefermenge as liefermenge
+    , bestellvorschlaege.liefermenge  as liefermenge
     , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
     , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
     , produktpreise.liefereinheit as liefereinheit
@@ -2109,28 +2123,31 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     INNER JOIN produktgruppen
       ON (produktgruppen.id=produkte.produktgruppen_id)
     INNER JOIN gesamtbestellungen
-      ON (gesamtbestellungen.id = $bestell_id)
+      ON (gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id)
     LEFT JOIN gruppenbestellungen
-      ON (gruppenbestellungen.gesamtbestellung_id=$bestell_id)
+      ON (gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id)
     LEFT JOIN bestellzuordnung
       ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
          AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
-    WHERE bestellvorschlaege.gesamtbestellung_id=$bestell_id
+    WHERE ( $bestell_id_filter )
     " . ( $gruppen_id ? " and gruppenbestellungen.bestellgruppen_id=$gruppen_id " : "" )
       . ( $produkt_id ? " and produkte.id=$produkt_id " : "" )
     . "
-    GROUP BY bestellvorschlaege.produkt_id
+    GROUP BY produkte.id
     ORDER BY $orderby
   ";
 }
 
 function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
-  $result = doSql( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id, $orderby ) );
+  $result = doSql( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id, $orderby ), LEVEL_KEY );
   $r = mysql2array( $result );
   foreach( $r as & $val )
     preisdatenSetzen( & $val );
   return $r;
 }
+
+
+
 
 /*  preisdaten setzen:
  *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
