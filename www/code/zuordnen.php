@@ -511,7 +511,7 @@ function sql_dienste_nicht_bestaetigt( $datum ) {
 
 /** Fuegt einen neuen Dienst in die Diensttabelle
  * - mit mitglied_id: dienst wird 'Vorgeschlagen'
- * - ohne mitglied_id: diest wird 'Offen'
+ * - ohne mitglied_id: dienst wird 'Offen'
  */
 function sql_create_dienst( $datum, $dienst, $mitglied_id = 0 ) {
   nur_fuer_dienst(5);
@@ -1688,6 +1688,15 @@ function sql_bestellung( $bestell_id ) {
   return sql_select_single_row( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" );
 }
 
+function sql_abrechnung_set( $abrechnung_id ) {
+  $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id" );
+  $r = array();
+  while( $row = mysql_fetch_array( $result ) {
+    $r[] = $row['bestell_id'];
+  }
+  return $r;
+}
+
 function sql_bestellung_status($bestell_id){
   return sql_select_single_field( "SELECT rechnungsstatus FROM gesamtbestellungen WHERE id=$bestell_id", 'rechnungsstatus' );
 }
@@ -1701,11 +1710,11 @@ function sql_bestellung_lieferant_id($bestell_id){
 }
 
 /**
- *  sql_change_bestellung_status: 
+ *  sql_change_bestellung_status:
  *   - fuehrt erlaubte Statusaenderungen einer Bestellung aus
  *   - ggf. werden Nebenwirkungen, wie verteilmengenZuweisen, ausgeloest
  */
-function sql_change_bestellung_status($bestell_id, $state){
+function sql_change_bestellung_status( $bestell_id, $state ) {
   global $mysqljetzt, $dienstkontrollblatt_id;
 
   $bestellung = sql_bestellung( $bestell_id );
@@ -1763,7 +1772,7 @@ function sql_change_bestellung_status($bestell_id, $state){
   return $result;
 }
 
-function sql_bestellungen( $filter = 'true', $orderby = 'bestellende DESC, name' ) {
+function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
   return mysql2array( doSql( "SELECT * FROM gesamtbestellungen WHERE $filter ORDER BY $orderby" ) );
 }
 
@@ -1788,12 +1797,14 @@ function select_gesamtbestellungen_unverbindlich() {
  */
 function sql_insert_bestellung( $name, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag_prozent ) {
   nur_fuer_dienst(4);
-  return sql_insert( 'gesamtbestellungen', array(
+  $id = sql_insert( 'gesamtbestellungen', array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
   , 'lieferung' => $lieferung, 'lieferanten_id' => $lieferanten_id
   , 'aufschlag_prozent' => $aufschlag_prozent
   , 'rechnungsstatus' => STATUS_BESTELLEN
   ) );
+  sql_update( 'gesamtbestellungen', $id, array( 'abrechnung_id' => $id ) );
+  return $id;
 }
 
 function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag_prozent ) {
@@ -4130,7 +4141,8 @@ function checkvalue( $val, $typ){
 //   H : wendet htmlspecialchars an (erlaubt sichere und korrekte ausgabe in HTML)
 //   R : raw: keine Einschraenkung, keine Umwandlung
 //   f : Festkommazahl
-//   w : bezeichner: alphanumerisch und _
+//   w : bezeichner: alphanumerisch und _; leerstring zugelassen
+//   W : bezeichner: alphanumerisch und _, mindestens ein zeichen
 //   /.../: regex pattern. Wert wird ausserdem ge-trim()-t
 // - default:
 //   - wenn array erwartet wird, kann der default ein array sein.
@@ -4471,6 +4483,14 @@ function update_database($version){
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 16 ) );
 
       logger( 'update_database: update to version 16 successful' );
+
+  case 16:
+      logger( 'starting update_database: from version 16' );
+
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD COLUMN `abrechnung_id` int(11) not null default 0 " );
+      doSql( "update `gesamtbestellungen` set abrechnung_id=id where true" );
+
+      logger( 'update_database: update to version 17 successful' );
 
 /*
 	case n:

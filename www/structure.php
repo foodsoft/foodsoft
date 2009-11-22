@@ -471,6 +471,12 @@ $tables = array(
       , 'extra' => ''
       )
     )
+    , 'abrechnung_id' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'rechnungsstatus' => array( 'unique' => 0, 'collist' => 'rechnungsstatus' )
