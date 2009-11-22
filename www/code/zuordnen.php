@@ -1691,7 +1691,7 @@ function sql_bestellung( $bestell_id ) {
 function sql_abrechnung_set( $abrechnung_id ) {
   $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id" );
   $r = array();
-  while( $row = mysql_fetch_array( $result ) {
+  while( $row = mysql_fetch_array( $result ) ) {
     $r[] = $row['bestell_id'];
   }
   return $r;
@@ -4490,6 +4490,7 @@ function update_database($version){
       doSql( "ALTER TABLE `gesamtbestellungen` ADD COLUMN `abrechnung_id` int(11) not null default 0 " );
       doSql( "update `gesamtbestellungen` set abrechnung_id=id where true" );
 
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 17 ) );
       logger( 'update_database: update to version 17 successful' );
 
 /*
