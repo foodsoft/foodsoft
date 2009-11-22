@@ -175,6 +175,12 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'browse';
       $options = $large_window_options;
       break;
+    case 'gesamtlieferschein':
+      $parameters['window'] = 'gesamtlieferschein';
+      $parameters['window_id'] = 'gesamtlieferschein';
+      $parameters['class'] = 'browse';
+      $options = $large_window_options;
+      break;
     case 'gruppenkonto':
       $parameters['window'] = 'gruppenkonto';
       $parameters['window_id'] = 'gruppenkonto';
