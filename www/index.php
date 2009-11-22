@@ -10,15 +10,15 @@ if( ! $angemeldet ) {
   exit();
 }
 
-if( get_http_var( 'download','w' ) ) {  // Spezialfall: Datei-Download (.pdf, ...): ohne HTTP-header!
-  $window = $download;
-  $self_fields['download'] = $window;
-  include( "windows/$download.php" );
-  exit();
-}
+// if( get_http_var( 'download','W' ) ) {  // Spezialfall: Datei-Download (.pdf, ...): ohne HTTP-header!
+//   $window = $download;
+//   $self_fields['download'] = $window;
+//   include( "windows/$download.php" );
+//   exit();
+// }
 
-get_http_var( 'window', 'w', 'menu', true );     // eigentlich: name des skriptes
-get_http_var( 'window_id', 'w', 'main', true );  // ID des browserfensters
+get_http_var( 'window', 'W', 'menu', true );     // eigentlich: name des skriptes
+get_http_var( 'window_id', 'W', 'main', true );  // ID des browserfensters
 setWikiHelpTopic( "foodsoft:$window" );
 
 switch( $window_id ) {
