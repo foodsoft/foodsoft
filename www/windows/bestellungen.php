@@ -2,7 +2,6 @@
 
 assert( $angemeldet ) or exit();
 
-
 get_http_var( 'action', 'w', '' );
 $readonly and $action = '';
 switch( $action ) {
@@ -12,13 +11,11 @@ switch( $action ) {
     need_http_var( 'change_id', 'u' );
     need_http_var( 'change_to', 'w' );
     if( sql_change_bestellung_status( $change_id, $change_to ) ) {
-      if( ! $bestell_id ) {  // falls nicht bereits in detailanzeige:
-        switch( $change_to ) {
-          case STATUS_LIEFERANT:   // bestellschein oder ...
-          case STATUS_VERTEILT:    // ... lieferschein anzeigen:
-            echo fc_openwindow( 'bestellschein', "bestell_id=$change_id" );
-          break;
-        }
+      switch( $change_to ) {
+        case STATUS_LIEFERANT:   // detailanzeige bestellschein oder ...
+        case STATUS_VERTEILT:    // ... lieferschein aufrufen:
+          echo fc_openwindow( 'bestellschein', "bestell_id=$change_id" );
+        break;
       }
     }
     break;
@@ -34,6 +31,7 @@ switch( $action ) {
     $bestell_id = 0;
     unset( $self_fields['bestell_id'] );
     break;
+
   default:
     break;
 }
@@ -75,11 +73,11 @@ foreach( $bestellungen as $row ) {
                                        , 'change_id' => $bestell_id, 'change_to' => STATUS_LIEFERANT ) );
         } else {
           $actions[] = "
-            <div class='alert qquad'>Bestellung läuft noch!</div>
-            <div class='alert qquad'>".fc_link( 'bestellen', array( 'bestell_id' => $bestell_id
-                                      , 'class' => 'href', 'text' => 'zum Bestellen...' ) )."</div>
+            <div class='alert qquad'>Bestellzeit läuft noch!</div>
           ";
         }
+        $actions[] = fc_link( 'bestellen', array( 'bestell_id' => $bestell_id
+                                      , 'class' => 'browse', 'text' => 'zum Bestellen...' ) );
         $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
         $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
                               , "action=delete,delete_id=$bestell_id" );

@@ -1,11 +1,6 @@
 <?php
 //
-// bestellschein.php:
-// - wenn bestell_id (oder bestellungs_id...) uebergeben:
-//   detailanzeige, abhaengig vom status der bestellung
-// - wenn keine bestell_id uebergeben:
-//   auswahlliste aller bestellungen zeigen
-//   (ggf. mit filter "status")
+// bestellschein.php: detailanzeige bestellschein / lieferschein, abhaengig vom status der bestellung
 //
 
 error_reporting(E_ALL);

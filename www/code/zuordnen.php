@@ -2444,8 +2444,8 @@ function basar_wert_brutto( $bestell_id = 0 ) {
  * verteilmengenLoeschen: bei statuswechsel LIEFERANT -> BESTELLEN:
  */
 function verteilmengenLoeschen( $bestell_id ) {
-  need( sql_bestellung_status( $bestell_id ) < STATUS_GELIEFERT,
-        "Bestellung in Status $state: verteilmengen_loeschen() nicht mehr moeglich!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_VERTEILT,
+        "Bestellung schon verteilt: verteilmengen_loeschen() nicht mehr moeglich!" );
   nur_fuer_dienst(1,3,4);
 
   sql_delete_bestellzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNGEN, 'bestell_id' => $bestell_id ) );
