@@ -741,13 +741,25 @@ function bestellschein_view(
 
   $produkte = sql_bestellung_produkte( $bestell_id, 0, $gruppen_id );
 
-  $bestellung = sql_bestellung( $bestell_id );
+//   if( is_array( $bestell_id ) ) {
+//     // gesamt-lieferschein anzeigen:
+//     $bestellung = sql_bestellung( $bestell_id[0] );
+//     // einiges macht hier keinen sinn:
+//     $editAmounts = false;
+//     $editPrice = false;
+//     $gruppen_id = 0;
+//     $select_nichtgeliefert = false;
+//     $select_columns = false;
+//     $spalten = PR_COL_NAME | PR_COL_ANUMMER | PR_COL_LIEFERMENGE | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME;
+//   } else {
+    $bestellung = sql_bestellung( $bestell_id );
+//  }
 
-  $state = $bestellung['rechnungsstatus'];
+  $status = $bestellung['rechnungsstatus'];
   $aufschlag_prozent = $bestellung['aufschlag_prozent'];
 
   $warnung_vorlaeufig = "";
-  if( $gruppen_id and ( $state == STATUS_BESTELLEN ) ) {
+  if( $gruppen_id and ( $status == STATUS_BESTELLEN ) ) {
     $warnung_vorlaeufig = " (vorläufige obere Abschätzung!)";
   }
   $col[PR_COL_NAME] = array(
@@ -808,7 +820,7 @@ function bestellschein_view(
      'title' => "von der Gruppe bestellte Gebinde: fest / maximal",
      'header' => "bestellt Gebinde<br>fest/maximal</th>", 'cols' => 2
     );
-    if( $state != STATUS_BESTELLEN ) {
+    if( $status != STATUS_BESTELLEN ) {
       if( $gruppen_id == $basar_id ) {
         $col[PR_COL_LIEFERMENGE] = array(
           'title' => "Basarbestand", 'header' => "Basarbestand", 'cols' => 2
@@ -825,7 +837,7 @@ function bestellschein_view(
      'title' => "von Konsumenten bestellte Mengen: fest/Toleranz/Basar",
      'header' => "bestellt<br>fest/Toleranz/Basar", 'cols' => 2
     );
-    if( $state == STATUS_BESTELLEN ) {
+    if( $status == STATUS_BESTELLEN ) {
       $col[PR_COL_BESTELLGEBINDE] = array(
         'title' => "von Konsumenten und Basar bestellte Gebinde: aufgefüllt / fest /maximal",
         'header' => "bestellt Gebinde<br>voll / fest / max", 'cols' => 2
@@ -836,7 +848,7 @@ function bestellschein_view(
         'title' => "von Konsumenten und Basar bestellte Gebinde: fest /maximal",
         'header' => "bestellt Gebinde<br>fest / max", 'cols' => 2
       );
-      if( $state == STATUS_LIEFERANT ) {
+      if( $status == STATUS_LIEFERANT ) {
         $col[PR_COL_LIEFERMENGE] = array(
           'title' => "beim Lieferanten bestellte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 )
         );
@@ -846,7 +858,7 @@ function bestellschein_view(
         $option_nichtgefuellt = true;
       } else {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 )
+          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 ) 
         );
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "vom Lieferanten gelieferte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
@@ -932,7 +944,7 @@ function bestellschein_view(
     } else {
       $summenzeile = '';
     }
-    switch( $state ) {
+    switch( $status ) {
       case STATUS_BESTELLEN:
       case STATUS_LIEFERANT:
         $nichtgeliefert_header = 'Nicht bestellte Produkte';
@@ -985,7 +997,7 @@ function bestellschein_view(
       $gebindegroesse = $produkte_row['gebindegroesse'];
       $kan_verteilmult = $produkte_row['kan_verteilmult'];
 
-      switch($state) {
+      switch($status) {
         case STATUS_BESTELLEN:
           if( $gruppen_id ) {
             $liefermenge = $gesamtbestellmenge;  // obere abschaetzung...
@@ -1095,7 +1107,7 @@ function bestellschein_view(
 
         if( $spalten & PR_COL_BESTELLGEBINDE ) {
           open_td( 'mult' );
-            if( $state == STATUS_BESTELLEN and ! $gruppen_id ) {
+            if( $status == STATUS_BESTELLEN and ! $gruppen_id ) {
               open_span( 'bold', '', $gebinde );
               echo ' / ';
             }
@@ -1303,6 +1315,21 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     open_td( 'unit', '', $verteileinheit );
     open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult ) );
   close_tr();
+}
+
+function abrechnung_overview( $abrechnung_id ) {
+  $bestell_id = sql_abrechnung_set( $abrechnung_id );
+  $lieferanten_id = sql_bestellung_lieferant_id( current( $bestell_id ) );
+
+  open_table('list');
+    open_th('left',"colspan='2'", count( $bestell_id ) .' Bestellungen:');
+
+    open_tr();
+      open_th('left','','Lieferant:');
+      open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $lieferanten_id )
+                                                     , 'class' => 'href' , 'lieferanten_id' => $lieferanten_id ) ) );
+
+  close_table();
 }
 
 function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
