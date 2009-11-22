@@ -32,6 +32,40 @@ switch( $action ) {
     unset( $self_fields['bestell_id'] );
     break;
 
+  case 'combine':
+    nur_fuer_dienst(4);
+    need_http_var( 'message', '/\d+,\d+/' );
+    $sets = explode( ',', $message );
+    $abrechnung_id = $sets[0];
+    $set2 = sql_abrechnung_set( $sets[1] );
+    $lieferanten_id = sql_bestellung_lieferant_id( $abrechnung_id );
+    foreach( $set2 as $bestell_id ) {
+      need( $lieferanten_id == sql_bestellung_lieferant_id( $bestell_id ), "Nur Bestellungen bei demselben Lieferanten koennen zusammengefasst werden!" );
+      sql_update( 'gesamtbestellungen', $bestell_id, array( 'abrechnung_id' => $abrechnung_id ) );
+    }
+
+    break;
+
+  case 'split':
+    nur_fuer_dienst(4);
+    need_http_var( 'message', 'U' );
+    $bestell_id = $message;
+    $bestellung = sql_bestellung( $bestell_id );
+    if( $bestell_id != $bestellung['abrechnung_id'] ) {
+      sql_update( 'gesamtbestellungen', $bestell_id, array( 'abrechnung_id' => $bestell_id ) );
+    } else {
+      $set = sql_abrechnung_set( $bestellung['abrechnung_id'] );
+      $abrechnung_id = 0;
+      foreach( $set as $b_id ) {
+        if( $b_id == $bestell_id )
+          continue;
+        if( ! $abrechnung_id )
+          $abrechnung_id = $b_id;
+        sql_update( 'gesamtbestellungen', $b_id, array( 'abrechnung_id' => $abrechnung_id ) );
+      }
+    }
+    break;
+
   default:
     break;
 }
@@ -46,19 +80,30 @@ open_table( 'list hfill' );
   open_th('','','Lieferung');
   open_th('','','Summe');
   open_th('','','Detailansichten');
-  if( $login_dienst != 0 ) {
+  if( $login_dienst != 0 )
     open_th('','','Aktionen');
-    open_th('','','Zusammenfassen');
-  }
+  if( hat_dienst(4) )
+    open_th('','','Abrechnung');
 
 $bestellungen = sql_bestellungen( 'true', 'rechnungsstatus, abrechnung_id' );
 $abrechnung_id = -1;
 foreach( $bestellungen as $row ) {
+  $views = array();
+  $actions = array();
+  $combs = array();
+
   $bestell_id = $row['id'];
   $rechnungsstatus = sql_bestellung_status( $bestell_id );
   $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
-  $views = array();
-  $actions = array();
+
+  if( $row['abrechnung_id'] != $abrechnung_id ) {
+    $abrechnung_id = $row['abrechnung_id'];
+    $abrechnung_set = sql_abrechnung_set( $abrechnung_id );
+    $abrechnung_set_count = count( $abrechnung_set );
+    $n = 1;
+  } else {
+    $n++;
+  }
 
   switch( $rechnungsstatus ) {
 
@@ -111,15 +156,33 @@ foreach( $bestellungen as $row ) {
         $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
       if( hat_dienst(4) ) {
         $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
-        $actions[] = fc_link( 'abrechnung', "bestell_id=$bestell_id,text=Abrechnung beginnen..." );
+        if( $abrechnung_set_count > 1 ) {
+          $combs[] = fc_action( 'update,text=Trennen', "action=split,message=$bestell_id" );
+        }
+        if( $n == $abrechnung_set_count ) {
+          $combs[] = "<div class='bigskip'>&nbsp;</div>";
+          if( $abrechnung_set_count > 1 ) {
+            $combs[] = fc_link( 'lieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
+          }
+          $combs[] = fc_link( 'abrechnung', "class=href,bestell_id=$abrechnung_id,text=Abrechnung beginnen..." );
+          $combs[] = "<input type='checkbox' onclick='kombinieren($abrechnung_id);'> Kombinieren";
+        }
       }
       break;
 
     case STATUS_ABGERECHNET:
       $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
-      $views[] = fc_link( 'abrechnung', "class=href,bestell_id=$bestell_id" );
       if( $login_dienst > 0 )
         $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
+
+
+      if( $n == $abrechnung_set_count ) {
+        if( $abrechnung_set_count > 1 ) {
+          $combs[] = fc_link( 'lieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
+        }
+        $combs[] = fc_link( 'abrechnung', "class=href,bestell_id=$abrechnung_id,Text=Abrechnung" );
+      }
+
       break;
 
     case STATUS_ARCHIVIERT:
@@ -160,19 +223,37 @@ foreach( $bestellungen as $row ) {
         } else {
           echo '-';
         }
-      if( $row['abrechnung_id'] != $abrechnung_id ) {
-        $abrechnung_id = $row['abrechnung_id'];
-        $abrechnung_set = sql_abrechnung_set( $abrechnung_id );
-        open_td( ( count( $abrechnung_set ) > 1 ) ? 'nobottom' : '' );
-      } else {
-        open_td( 'notop' );
+    }
+
+    if( hat_dienst(4) ) {
+      open_td( ( ( $n == 1 ) ? '' : 'notop ' ) . ( ( $n == $abrechnung_set_count ) ? '' : ' nobottom' ) );
+      if( $combs ) {
+        open_ul('plain');
+          foreach( $combs as $comb )
+            open_li( '', '', $comb );
+        close_ul();
       }
-      if( count( $abrechnung_set ) > 1 ) {
-        fc_action( 'update,text=Trennen', "action=split,message=$bestell_id" );
-      }
-      
     }
 }
 close_table();
+
+
+open_javascript();
+  ?>
+    var abrechnung_id = 0;
+
+    function kombinieren( id2 ) {
+      if( ! abrechnung_id ) {
+        abrechnung_id = id2;
+        return;
+      }
+      if( id2 == abrechnung_id ) {
+        abrechnung_id = 0;
+        return;
+      }
+      post_action( 'combine', abrechnung_id + ',' + id2 );
+    }
+  <?
+close_javascript();
 
 ?>

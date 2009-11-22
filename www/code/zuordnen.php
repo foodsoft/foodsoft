@@ -4002,7 +4002,8 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
 // mit typen:
 //
 $foodsoft_get_vars = array(
-  'action' => 'w'
+  'abrechnung_id' => 'u'
+, 'action' => 'w'
 , 'area' => 'w'
 , 'auszug' => '/\d+-\d+/'
 , 'auszug_jahr' => 'u'
