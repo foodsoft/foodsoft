@@ -1,9 +1,9 @@
 <?php
 
+$window = 'menu';     // preliminary settings for login script, or very early errors
+$window_id = 'main';
 require_once('code/common.php');
 
-$window = 'menu';     // preliminary settings for login script
-$window_id = 'main';
 require_once( 'code/login.php' );
 if( ! $angemeldet ) {
   div_msg( 'warn', "Bitte erst <a href='/foodsoft/index.php'>Anmelden...</a>" );
@@ -17,8 +17,8 @@ if( ! $angemeldet ) {
 //   exit();
 // }
 
-get_http_var( 'window', 'W', 'menu', true );     // eigentlich: name des skriptes
-get_http_var( 'window_id', 'W', 'main', true );  // ID des browserfensters
+get_http_var( 'window', 'w', 'menu', true );         // eigentlich: name des skriptes
+get_http_var( 'window_id', 'w', 'main', true );   // ID des browserfensters
 setWikiHelpTopic( "foodsoft:$window" );
 
 switch( $window_id ) {
