@@ -411,6 +411,9 @@ td.noleft, th.noleft {
 td.noright, th.noright {
   border-right:none !important;
 }
+td.notop, th.notop {
+  border-top:none !important;
+}
 
 /* formatierung der bilanzaufstellung */
 
