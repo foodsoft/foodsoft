@@ -457,7 +457,7 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
   global $login_gruppen_id, $action, $dienst_id;
 
   if( $rueckbestaetigen_lassen ) {
-    get_http_var( 'action', 'w', '' ) or $action = '';
+    get_http_var( 'action', 'w', '' );
     get_http_var( 'dienst_id', 'U', 0 );
     if( ( $action == 'dienstBestaetigen' ) and ( $dienst_id > 0 ) ) {
       sql_dienst_akzeptieren( $dienst_id, false, 'Bestaetigt' );
@@ -1190,14 +1190,18 @@ function select_bestellung_view() {
   open_table( 'list hfill' );
     open_th('','','Name');
     open_th('','','Status');
-    open_th('','','Bestellzeitraum');
+    open_th('','','Bestellzeit');
     open_th('','','Lieferung');
     open_th('','','Summe');
     open_th('','','Detailansichten');
-    if( $login_dienst != 0 )
+    if( $login_dienst != 0 ) {
       open_th('','','Aktionen');
+      open_th('','','Zusammenfassen');
+    }
 
-  foreach( sql_bestellungen() as $row ) {
+  $bestellungen = sql_bestellungen( 'true', 'rechnungsstatus, abrechnung_id' );
+  $abrechnung_id = -1;
+  foreach( $bestellungen as $row ) {
     $bestell_id = $row['id'];
     $rechnungsstatus = sql_bestellung_status( $bestell_id );
     $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
@@ -1304,6 +1308,17 @@ function select_bestellung_view() {
           } else {
             echo '-';
           }
+        if( $row['abrechnung_id'] != $abrechnung_id ) {
+          $abrechnung_id = $row['abrechnung_id'];
+          $abrechnung_set = sql_abrechnung_set( $abrechnung_id );
+          open_td( ( count( $abrechnung_set ) > 1 ) ? 'nobottom' : '' );
+        } else {
+          open_td( 'notop' );
+        }
+        if( count( $abrechnung_set ) > 1 ) {
+          fc_action( 'update,text=Trennen', "action=split,message=$bestell_id" );
+        }
+        
       }
   }
   close_table();
