@@ -730,7 +730,7 @@ function possible_areas(){
      "hint" => "Hier kann man die Bestellgruppen und deren Konten verwalten...",
      "title" => "Gruppen");
 
-   $areas[] = array("area" => "bestellungen_overview",
+   $areas[] = array("area" => "bestellungen",
      "hint" => "Übersicht aller Bestellungen (laufende und abgeschlossene)",
      "title" => "Alle Bestellungen");
 
@@ -1692,7 +1692,7 @@ function sql_abrechnung_set( $abrechnung_id ) {
   $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id" );
   $r = array();
   while( $row = mysql_fetch_array( $result ) ) {
-    $r[] = $row['bestell_id'];
+    $r[] = $row['id'];
   }
   return $r;
 }

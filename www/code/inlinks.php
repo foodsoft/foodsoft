@@ -79,8 +79,8 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'cash';
       $options = $large_window_options;
       break;
-    case 'bestellungen_overview':
-      $parameters['window'] = 'bestellschein';
+    case 'bestellungen':
+      $parameters['window'] = 'bestellungen';
       $parameters['window_id'] = 'main';
       $parameters['text'] = 'alle Bestellungen';
       $parameters['title'] = 'Tabelle aller Bestellungen...';

@@ -13,26 +13,11 @@ error_reporting(E_ALL);
 
 assert( $angemeldet ) or exit();
 
-get_http_var( 'bestell_id', 'u', 0, true );
+need_http_var( 'bestell_id', 'U', true );
 
 get_http_var( 'action', 'w', '' );
 $readonly and $action = '';
 switch( $action ) {
-  case 'changeState':
-    nur_fuer_dienst(1,3,4);
-    need_http_var( 'change_id', 'u' );
-    need_http_var( 'change_to', 'w' );
-    if( sql_change_bestellung_status( $change_id, $change_to ) ) {
-      if( ! $bestell_id ) {  // falls nicht bereits in detailanzeige:
-        switch( $change_to ) {
-          case STATUS_LIEFERANT:   // bestellschein oder ...
-          case STATUS_VERTEILT:    // ... lieferschein anzeigen:
-            echo fc_openwindow( 'bestellschein', "bestell_id=$change_id" );
-          break;
-        }
-      }
-    }
-    break;
 
   case 'insert':
     nur_fuer_dienst(1,3,4);
@@ -46,17 +31,6 @@ switch( $action ) {
     }
     break;
 
-  case 'delete':
-    nur_fuer_dienst(4);
-    need_http_var( 'delete_id', 'U' );
-    need( sql_bestellung_status( $delete_id ) <= STATUS_LIEFERANT );
-    sql_delete_bestellzuordnungen( array( 'bestell_id' => $delete_id ) );
-    doSql( "DELETE FROM gruppenbestellungen WHERE gesamtbestellung_id = $delete_id " );
-    doSql( "DELETE FROM bestellvorschlaege WHERE gesamtbestellung_id = $delete_id " );
-    doSql( "DELETE FROM gesamtbestellungen WHERE id = $delete_id " );
-    $bestell_id = 0;
-    unset( $self_fields['bestell_id'] );
-    break;
 
   case 'update':
     nur_fuer_dienst(4);
