@@ -162,9 +162,9 @@ foreach( $bestellungen as $row ) {
         if( $n == $abrechnung_set_count ) {
           $combs[] = "<div class='bigskip'>&nbsp;</div>";
           if( $abrechnung_set_count > 1 ) {
-            $combs[] = fc_link( 'lieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
+            $combs[] = fc_link( 'gesamtlieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
           }
-          $combs[] = fc_link( 'abrechnung', "class=href,bestell_id=$abrechnung_id,text=Abrechnung beginnen..." );
+          $combs[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,text=Abrechnung beginnen..." );
           $combs[] = "<input type='checkbox' onclick='kombinieren($abrechnung_id);'> Kombinieren";
         }
       }
@@ -175,12 +175,13 @@ foreach( $bestellungen as $row ) {
       if( $login_dienst > 0 )
         $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
 
+      $views[] = fc_link( 'abrechnung', "class=href,bestell_id=$bestell_id,text=Abrechnung" );
 
       if( $n == $abrechnung_set_count ) {
         if( $abrechnung_set_count > 1 ) {
-          $combs[] = fc_link( 'lieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
+          $combs[] = fc_link( 'gesamtlieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
+          $combs[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Abrechnung" );
         }
-        $combs[] = fc_link( 'abrechnung', "class=href,bestell_id=$abrechnung_id,Text=Abrechnung" );
       }
 
       break;

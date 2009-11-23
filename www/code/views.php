@@ -1324,7 +1324,7 @@ function abrechnung_overview( $abrechnung_id ) {
   open_table('list');
     open_th('left',"colspan='5'" );
       echo count( $bestell_id_set ) .' Bestellungen bei ' . fc_link( 'edit_lieferant',
-        array( 'text' => sql_lieferant_name( $lieferanten_id ) , 'class' => 'href' , 'lieferanten_id' => $lieferanten_id ) );
+        array( 'text' => sql_lieferant_name( $lieferanten_id ) , 'class' => 'href' , 'lieferanten_id' => $lieferanten_id ) ) . ':';
 
     foreach( $bestell_id_set as $bestell_id ) {
       $bestellung = sql_bestellung( $bestell_id );
