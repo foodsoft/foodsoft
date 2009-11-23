@@ -53,6 +53,30 @@ function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfe
   return $result;
 }
 
+// turn $key and $cond into a boolean sql expression, using some heuristics.
+//
+function cond2filter( $key, $cond ) {
+  if( $cond === NULL )
+    return ' true ';
+  if( is_numeric( $key ) ) {   // assume $cond is a complete boolean expression
+    return " $cond ";
+  } else {
+    if( is_array( $cond ) ) {
+      $f = "$key IN ";
+      $komma = '(';
+      foreach( $cond as $c ) {
+        $f .= "$komma '$c'";
+        $komma = ',';
+      }
+      return $f . ') ';
+    } else if( strchr( $cond, ' ' ) ) {  // assume $cond contains an operator
+      return " $key $cond ";
+    } else {                      // assume we need a '=':
+      return " $key = $cond ";
+    }
+  }
+}
+
 function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = false, $orderby = false, $groupby = false ) {
   if( is_string( $selects ) ) {
     $select_string = $selects;
@@ -76,26 +100,7 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
     } else {
       $and = 'WHERE';
       foreach( $filters as $key => $cond ) {
-        if( $cond === NULL )
-          continue;
-        if( is_numeric( $key ) ) {   // assume $cond is a complete boolean expression
-          $f = $cond;
-        } else {
-          if( is_array( $cond ) ) {
-            $f = "$key IN ";
-            $komma = '(';
-            foreach( $cond as $c ) {
-              $f .= "$komma '$c'";
-              $komma = ',';
-            }
-            $f .= ') ';
-          } else if( strchr( $cond, ' ' ) ) {  // assume $cond contains an operator
-            $f = "$key $cond";
-          } else {                      // assume we need a '=':
-            $f = "$key = $cond";  
-          }
-        }
-        $query .= " $and ( $f ) ";
+        $query .= " $and (". cond2filter( $key, $cond ) .") ";
         $and = 'AND';
       }
     }
@@ -1706,6 +1711,8 @@ function sql_bestellung_name($bestell_id){
 }
 
 function sql_bestellung_lieferant_id($bestell_id){
+  if( is_array( $bestell_id ) )           // usually: result of sql_abrechnung_set()
+    $bestell_id = current( $bestell_id );
   return sql_select_single_field( "SELECT lieferanten_id FROM gesamtbestellungen WHERE id=$bestell_id", 'lieferanten_id' );
 }
 
@@ -3491,14 +3498,9 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
 }
 
 
-function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
+function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = NULL ) {
   $where = '';
-  $having = 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 )';
-  if( $bestell_id ) {
-    need( sql_bestellung_status( $bestell_id ) >= STATUS_LIEFERANT );
-    $where = "WHERE gesamtbestellungen.id = $bestell_id";
-    $having = '';
-  }
+  $having = ( $bestell_id ? '' : 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 )' );
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
@@ -3515,7 +3517,7 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = 0 ) {
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
     JOIN lieferanten
       ON lieferanten.id = $lieferanten_id
-    $where
+    WHERE " .cond2filter( 'gesamtbestellungen.id', $bestell_id ) ."
     $having
     ORDER BY valuta_kan DESC;
   ";
