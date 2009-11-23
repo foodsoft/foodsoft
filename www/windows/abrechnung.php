@@ -4,21 +4,52 @@
 //
 
 assert( $angemeldet ) or exit();
-$editable = ( hat_dienst(4) and ! $readonly );
-need_http_var( 'bestell_id', 'U', true );
 
-setWikiHelpTopic( 'foodsoft:Abrechnung' );
+// flags:
+//   $teil_abrechnung: nur teil einer gesamtabrechnung: nicht edierbar!
+//   $gesamt_abrechnung: gesamtsicht ueber mehr als eine teil-abrechnung
 
-$status = sql_bestellung_status( $bestell_id );
+get_http_var( 'abrechnung_id', 'u', 0, true );
+if( $abrechnung_id ) {
+  $teil_abrechnung = false;
+  $gesamt_abrechnung = true;
+  $bestell_id = $abrechnung_id;  // group leader...
+} else {
+  need_http_var( 'bestell_id', 'U', true );
+  $bestellung = sql_bestellung( $bestell_id );
+  $abrechnung_id = $bestellung['abrechnung_id'];
+  $teil_abrechnung = true;
+  $gesamt_abrechnung = false;
+}
 
-need( $status >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
-need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
+$bestell_id_set = sql_abrechnung_set( $abrechnung_id );
+$bestell_id_count = count( $bestell_id_set );
+if( $bestell_id_count == 1 ) {
+  $teil_abrechnung = false;
+  $gesamt_abrechnung = false;
+}
 
 $bestellung = sql_bestellung( $bestell_id );
 $bestellung_name = $bestellung['name'];
 $lieferant_id = $bestellung['lieferanten_id'];
 $lieferant = sql_lieferant( $lieferant_id );
 $lieferant_name = $lieferant['name'];
+
+foreach( $bestell_id_set as $bestell_id ) {
+  $status = sql_bestellung_status( $bestell_id );
+  need( $status >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
+  need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
+  need( sql_bestellung_lieferant_id( $bestell_id ) == $lieferant_id, "Inkonsistenz: Bestellungen verschiedener Lieferanten sind zusammengefasst" );
+}
+
+$editable = ( hat_dienst(4)
+          and ! $readonly
+          and ! $teil_abrechnung
+          and ( $status < STATUS_ABGERECHNET ) );
+
+
+setWikiHelpTopic( 'foodsoft:Abrechnung' );
+
 
 //
 // aktionen verarbeiten:
@@ -52,15 +83,10 @@ if( $action == 'save' ) {
   }
 }
 
-$bestellung = sql_bestellung( $bestell_id );
-$status = sql_bestellung_status( $bestell_id );
-if( $status >= STATUS_ABGERECHNET ) {
-  $editable = false;
-}
 
-$gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" ) );
+$gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" ) ); // TODO
 
-$lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id );
+$lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id ); // TODO
 
 $warenwert_verteilt_brutto = - sql_verteilt_brutto_soll( $bestell_id ); 
 $warenwert_muell_brutto = - sql_muell_brutto_soll( $bestell_id ); 
@@ -69,9 +95,19 @@ $warenwert_basar_brutto = basar_wert_brutto( $bestell_id );
 $aufschlag_soll = sql_aufschlag_soll( $bestell_id );
 
 
-open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung $bestellung_name"
-                                 . fc_link( 'edit_bestellung', "bestell_id=$bestell_id" )
-                                 . " / Lieferant: " .lieferant_view( $lieferant_id ) );
+
+if( $bestell_id_count > 1 )
+  abrechnung_overview( $abrechnung_id );
+
+
+
+if( $gesamtabrechnung ) {
+  open_fieldset( '', "'style='padding:1em;'", "Gesamt-Abrechnung: $bestell_id_count Bestellungen"
+} else {
+  open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung $bestellung_name"
+                                   . fc_link( 'edit_bestellung', "bestell_id=$bestell_id" )
+                                   . " / Lieferant: " .lieferant_view( $lieferant_id ) );
+}
 
 if( hat_dienst(4) and ! $readonly )
   open_form( '', 'action=save' );
@@ -84,7 +120,7 @@ open_table( 'list', "style='width:98%'" );
   open_th( '', '', 'Aktionen' );
 
   //
-  // gruppennteil:
+  // gruppenteil:
   //
   open_tr();
     open_th( '', "colspan='5' style='padding-top:2em;'", 'Bestellgruppen:' );
