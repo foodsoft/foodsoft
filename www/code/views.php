@@ -1318,16 +1318,29 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
 }
 
 function abrechnung_overview( $abrechnung_id ) {
-  $bestell_id = sql_abrechnung_set( $abrechnung_id );
-  $lieferanten_id = sql_bestellung_lieferant_id( current( $bestell_id ) );
+  $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
+  $lieferanten_id = sql_bestellung_lieferant_id( current( $bestell_id_set ) );
 
   open_table('list');
-    open_th('left',"colspan='2'", count( $bestell_id ) .' Bestellungen:');
+    open_th('left',"colspan='5'" );
+      echo count( $bestell_id_set ) .' Bestellungen bei ' . fc_link( 'edit_lieferant',
+        array( 'text' => sql_lieferant_name( $lieferanten_id ) , 'class' => 'href' , 'lieferanten_id' => $lieferanten_id ) );
 
-    open_tr();
-      open_th('left','','Lieferant:');
-      open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $lieferanten_id )
-                                                     , 'class' => 'href' , 'lieferanten_id' => $lieferanten_id ) ) );
+    foreach( $bestell_id_set as $bestell_id ) {
+      $bestellung = sql_bestellung( $bestell_id );
+      open_tr();
+        open_th( 'qquad', '', '&nbsp;' );
+        open_td( '', '', $bestellung['name'] );
+        open_td( '', '', $bestellung['lieferung'] );
+        open_td( '', '', fc_link( 'bestellschein', "class=browse,bestell_id=$bestell_id,text=Einzel-Lieferschein" ) );
+        open_td( '', '', fc_link( 'abrechnung', "class=browse,bestell_id=$bestell_id,text=Einzel-Abrechnung" ) );
+    }
+    open_tr( 'summe' );
+        open_th( 'qquad', '', '&nbsp;' );
+        open_td();
+        open_td();
+        open_td( '', '', fc_link( 'gesamtlieferschein', "class=browse,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" ) );
+        open_td( '', '', fc_link( 'abrechnung', "class=browse,abrechnung_id=$abrechnung_id,text=Gesamt-Abrechnung" ) );
 
   close_table();
 }
