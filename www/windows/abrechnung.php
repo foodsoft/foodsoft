@@ -9,17 +9,16 @@ assert( $angemeldet ) or exit();
 //   $teil_abrechnung: nur teil einer abrechnung mehrerer verbundener rechnungen: nicht edierbar!
 //   $gesamt_abrechnung: gesamtsicht ueber mehr als eine teil-abrechnung
 
-get_http_var( 'abrechnung_id', 'u', 0, true );
-if( $abrechnung_id ) {
-  $teil_abrechnung = false;
-  $gesamt_abrechnung = true;
-  $bestell_id = $abrechnung_id;  // group leader...
-} else {
-  need_http_var( 'bestell_id', 'U', true );
-  $bestellung = sql_bestellung( $bestell_id );
-  $abrechnung_id = $bestellung['abrechnung_id'];
+need_http_var( 'abrechnung_id', 'u', true );
+$teil_abrechnung = false;
+$gesamt_abrechnung = true;
+
+get_http_var( 'bestell_id', 'U', 0, true );
+if( $bestell_id ) {
   $teil_abrechnung = true;
   $gesamt_abrechnung = false;
+} else {
+  $bestell_id = $abrechnung_id;  // group leader...
 }
 
 $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
@@ -27,6 +26,7 @@ $bestell_id_count = count( $bestell_id_set );
 if( $bestell_id_count == 1 ) {
   $teil_abrechnung = false;
   $gesamt_abrechnung = false;
+  $bestell_id = $abrechnung_id;
 }
 
 $bestellung = sql_bestellung( $bestell_id );
@@ -45,7 +45,7 @@ foreach( $bestell_id_set as $b_id ) {
 $editable = ( hat_dienst(4)
           and ! $readonly
           and ! $teil_abrechnung
-          and ( $status < STATUS_ABGERECHNET ) );
+          and ( $status <= STATUS_ABGERECHNET ) );
 
 
 setWikiHelpTopic( 'foodsoft:Abrechnung' );
@@ -61,9 +61,12 @@ $editable or $action = '';
 
 if( $action == 'save' ) {
   if( $status == STATUS_ABGERECHNET ) {
-    need_http_var( 'rechnung_abschluss', 'w', '' );
+    get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'reopen' ) {
-      sql_change_bestellung_status( $bestell_id, STATUS_VERTEILT );
+      foreach( $bestell_id_set as $b_id ) {
+        echo "change: $b_id";
+        sql_change_bestellung_status( $b_id, STATUS_VERTEILT );
+      }
     }
   } else if( $status < STATUS_ABGERECHNET ) {
     need_http_var( 'rechnungsnummer', 'H' );

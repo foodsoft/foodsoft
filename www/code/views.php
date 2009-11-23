@@ -1336,7 +1336,7 @@ function abrechnung_overview( $abrechnung_id, $bestell_id_current = 0 ) {
         open_td( ( $window == 'bestellschein' && $bestell_id_current == $bestell_id ) ? 'highlight' : '', ''
           , fc_link( 'bestellschein', "class=browse,bestell_id=$bestell_id,text=Einzel-Lieferschein" ) );
         open_td( ( $window == 'abrechnung' && $bestell_id_current == $bestell_id ) ? 'highlight' : '', ''
-          , fc_link( 'abrechnung', "class=browse,bestell_id=$bestell_id,text=Einzel-Abrechnung" ) );
+          , fc_link( 'abrechnung', "class=browse,abrechnung_id=$abrechnung_id,bestell_id=$bestell_id,text=Einzel-Abrechnung" ) );
     }
     open_tr( 'summe' );
         open_th( 'qquad', '', '&nbsp;' );

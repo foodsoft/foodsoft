@@ -175,7 +175,7 @@ foreach( $bestellungen as $row ) {
       if( $login_dienst > 0 )
         $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
 
-      $views[] = fc_link( 'abrechnung', "class=href,bestell_id=$bestell_id,text=Abrechnung" );
+      $views[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,bestell_id=$bestell_id,text=Abrechnung" );
 
       if( $n == $abrechnung_set_count ) {
         if( $abrechnung_set_count > 1 ) {
