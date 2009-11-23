@@ -177,7 +177,7 @@ function fc_window_defaults( $name ) {
       break;
     case 'gesamtlieferschein':
       $parameters['window'] = 'gesamtlieferschein';
-      $parameters['window_id'] = 'gesamtlieferschein';
+      $parameters['window_id'] = 'bestellschein';
       $parameters['class'] = 'browse';
       $options = $large_window_options;
       break;

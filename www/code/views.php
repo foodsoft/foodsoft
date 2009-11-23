@@ -1317,7 +1317,8 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   close_tr();
 }
 
-function abrechnung_overview( $abrechnung_id ) {
+function abrechnung_overview( $abrechnung_id, $bestell_id_current = 0 ) {
+  global $window;
   $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
   $lieferanten_id = sql_bestellung_lieferant_id( current( $bestell_id_set ) );
 
@@ -1332,15 +1333,19 @@ function abrechnung_overview( $abrechnung_id ) {
         open_th( 'qquad', '', '&nbsp;' );
         open_td( '', '', $bestellung['name'] );
         open_td( '', '', $bestellung['lieferung'] );
-        open_td( '', '', fc_link( 'bestellschein', "class=browse,bestell_id=$bestell_id,text=Einzel-Lieferschein" ) );
-        open_td( '', '', fc_link( 'abrechnung', "class=browse,bestell_id=$bestell_id,text=Einzel-Abrechnung" ) );
+        open_td( ( $window == 'bestellschein' && $bestell_id_current == $bestell_id ) ? 'highlight' : '', ''
+          , fc_link( 'bestellschein', "class=browse,bestell_id=$bestell_id,text=Einzel-Lieferschein" ) );
+        open_td( ( $window == 'abrechnung' && $bestell_id_current == $bestell_id ) ? 'highlight' : '', ''
+          , fc_link( 'abrechnung', "class=browse,bestell_id=$bestell_id,text=Einzel-Abrechnung" ) );
     }
     open_tr( 'summe' );
         open_th( 'qquad', '', '&nbsp;' );
         open_td();
         open_td();
-        open_td( '', '', fc_link( 'gesamtlieferschein', "class=browse,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" ) );
-        open_td( '', '', fc_link( 'abrechnung', "class=browse,abrechnung_id=$abrechnung_id,text=Gesamt-Abrechnung" ) );
+        open_td( ( $window == 'gesamtlieferschein' && $bestell_id_current == 0 ) ? 'highlight' : '', ''
+          , fc_link( 'gesamtlieferschein', "class=browse,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" ) );
+        open_td( ( $window == 'abrechnung' && $bestell_id_current == 0 ) ? 'highlight' : '', ''
+          , fc_link( 'abrechnung', "class=browse,abrechnung_id=$abrechnung_id,text=Gesamt-Abrechnung" ) );
 
   close_table();
 }

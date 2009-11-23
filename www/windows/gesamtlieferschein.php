@@ -22,10 +22,11 @@ foreach( $bestell_id_set as $b ) {
 $bestell_id_list .= ')';
 
 
-echo "<h1>Gesamtlieferschein</h1>";
-
 abrechnung_overview( $abrechnung_id );
 medskip();
+
+echo "<h1>Gesamtlieferschein</h1>";
+
 
 $p = mysql2array( doSql( "
   SELECT DISTINCT produkt_id

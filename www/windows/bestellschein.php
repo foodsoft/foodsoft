@@ -111,16 +111,24 @@ if( hat_dienst(0) ) {
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
+$abrechnung_id = $bestellung['abrechnung_id'];
+$bestell_id_set = sql_abrechnung_set( $abrechnung_id );
+if( count( $bestell_id_set ) > 1 ) {
+  abrechnung_overview( $abrechnung_id, $bestell_id );
+}
+medskip();
 
 echo "<h1>$title</h1>";
 
+
+
 open_table( 'layout hfill' );
-    open_td( 'left' );
-      bestellung_overview( $bestell_id, $gruppen_id );
-    open_td( 'right qquad floatright' );
-      open_table( 'menu', "id='option_menu_table'" );
-        open_th( '', "colspan='2'", 'Anzeigeoptionen' );
-      close_table();
+  open_td( 'left' );
+    bestellung_overview( $bestell_id, $gruppen_id );
+  open_td( 'right qquad floatright' );
+    open_table( 'menu', "id='option_menu_table'" );
+      open_th( '', "colspan='2'", 'Anzeigeoptionen' );
+    close_table();
 close_table();
 medskip();
 
