@@ -72,7 +72,6 @@ if( $action == 'save' ) {
     need_http_var( 'rechnungsnummer', 'H' );
     need_http_var( 'extra_text', 'H' );
     need_http_var( 'extra_soll', 'f' );
-    need_http_var( 'aufschlag', 'f' );
     sql_update( 'gesamtbestellungen', $bestell_id, array(
       'rechnungsnummer' => $rechnungsnummer
     , 'extra_text' => $extra_text
@@ -81,11 +80,15 @@ if( $action == 'save' ) {
     get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'yes' ) {
       need( abs( basar_wert_brutto( $bestell_id ) ) < 0.01 , "Abschluss noch nicht möglich: da sind noch Reste im Basar!" );
-      sql_change_bestellung_status( $bestell_id, STATUS_ABGERECHNET );
+      foreach( $bestell_id_set as $b_id ) {
+        sql_change_bestellung_status( $b_id, STATUS_ABGERECHNET );
+      }
     }
   }
 }
 
+$bestellung = sql_bestellung( $bestell_id );
+$status = sql_bestellung_status( $abrechnung_id );
 
 $gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" ) ); // TODO
 
@@ -188,7 +191,7 @@ if( $bestellung['aufschlag_prozent'] > 0 ) {
       open_td( '', "colspan='3'", "Aufschlag gesamt:" );
     } else {
       open_td( '', "colspan='3'"
-        , "Aufschlag " . price_view( $bestellung['aufschlag_prozent'], ( $editable ? 'aufschlag' : false ) ) . "% fuer Bestellgruppen:"
+        , "Aufschlag " . price_view( $bestellung['aufschlag_prozent'] ) . "% fuer Bestellgruppen:"
       );
     }
     open_td( 'bold number', '', price_view( -$aufschlag_soll ) );
