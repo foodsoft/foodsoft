@@ -544,7 +544,7 @@ foreach( $produkte as $produkt ) {
 
   open_td();
     open_div('oneline', '', $produkt['produkt_name']);
-    open_div('oneline small', '', $produkt['notiz']);
+    open_div('small', '', $produkt['notiz']);
 
   // preis:
   $class = '';
