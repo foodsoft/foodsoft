@@ -46,15 +46,25 @@ switch( $action ) {
     $set = sql_abrechnung_set( $abrechnung_id );
     $extra_soll = 0;
     $extra_text = '';
+    $anzahl_voll = array();
+    $anzahl_leer = array();
     foreach( $set as $b_id ) {
       $extra_soll += sql_select_single_field( "SELECT extra_soll FROM gesamtbestellungen WHERE id = $b_id", 'extra_soll' );
-      $extra_text .= sql_select_single_field( "SELECT extra_text FROM gesamtbestellungen WHERE id = $b_id", 'extra_text' );
+      $extra_text .= ( sql_select_single_field( "SELECT extra_text FROM gesamtbestellungen WHERE id = $b_id", 'extra_text' ) . ' ' );
+      foreach( sql_lieferantenpfand( $lieferanten_id, $b_id ) as $pfandrow ) {
+        $verpackung_id = $pfandrow['verpackung_id'];
+        $anzahl_voll[$verpackung_id] = adefault( $anzahl_voll, $verpackung_id, 0 ) + $pfandrow['pfand_voll_anzahl'];
+        $anzahl_leer[$verpackung_id] = adefault( $anzahl_leer, $verpackung_id, 0 ) + $pfandrow['pfand_leer_anzahl'];
+      }
       if( $b_id == $abrechnung_id )
         continue;
-      doSql( "UPDATE lieferantenpfand SET bestell_id=$abrechnung_id WHERE bestell_id=$b_id" );
+      doSql( "DELETE FROM lieferantenpfand WHERE bestell_id = $b_id" );
       sql_update( 'gesamtbestellungen', $b_id, array( 'extra_soll' => 0, 'extra_text' => '' ) );
     }
     sql_update( 'gesamtbestellungen', $abrechnung_id, array( 'extra_soll' => $extra_soll, 'extra_text' => $extra_text ) );
+    foreach( $anzahl_voll as $verpackung_id => $voll ) {
+      sql_pfandzuordnung_lieferant( $abrechnung_id, $verpackung_id, $voll, $anzahl_leer[$verpackung_id] );
+    }
 
     break;
 
@@ -97,7 +107,7 @@ open_table( 'list hfill' );
   if( hat_dienst(4) )
     open_th('','','Abrechnung');
 
-$bestellungen = sql_bestellungen( 'true', 'rechnungsstatus, abrechnung_id' );
+$bestellungen = sql_bestellungen( 'true', 'rechnungsstatus, abrechnung_id DESC' );
 $abrechnung_id = -1;
 foreach( $bestellungen as $row ) {
   $views = array();
