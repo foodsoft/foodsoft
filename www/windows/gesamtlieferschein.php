@@ -40,7 +40,7 @@ foreach( $p as $q ) {
 
 open_table('list');
   open_tr();
-    open_th( '', '', 'Name' );
+    open_th( '', '', 'Produkt' );
     open_th( '', '', 'Bestellung' );
     open_th( '', '', 'Lieferung' );
     open_th( '', '', 'A-Nummer' );

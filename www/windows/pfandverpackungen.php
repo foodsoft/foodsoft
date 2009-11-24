@@ -40,8 +40,8 @@ open_table( 'layout hfill' );
   open_td('floatright');
     if( $abrechnung_id ) {
       if( $bestell_id_count > 1 ) {
-        abrechnung_overview( $abrechnung_id );
         echo "<h3>Pfandabrechnung: $bestell_id_count zusammengefasste Bestellungen:</h3>";
+        abrechnung_overview( $abrechnung_id );
       } else {
         echo "<h3>Pfandabrechnung: Bestellung" . fc_link( 'abrechnung', array(
                  'abrechnung_id' => $abrechnung_id, 'class' => 'href'
