@@ -257,8 +257,12 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_td( 'right', '', 'berechnet (Kauf):' );
     open_td( 'bold number', '', price_view( $pfand_voll_netto_soll ) );
     open_td( 'bold number', '', price_view( $pfand_voll_brutto_soll ) );
-    open_td( 'vcenter', "rowspan='2'"
-      , fc_link( 'pfandzettel', "abrechnung_id=$abrechnung_id,lieferanten_id=$lieferant_id,class=href,text=zum Pfandzettel..." ) );
+    if( $teil_abrechnung ) {
+      open_td( 'italic small', "colspan='5'", 'Lieferantenpfand bitte in Gesamtabrechnung erfassen' );
+    } else {
+      open_td( 'vcenter', "rowspan='2'"
+        , fc_link( 'pfandzettel', "abrechnung_id=$abrechnung_id,lieferanten_id=$lieferant_id,class=href,text=zum Pfandzettel..." ) );
+    }
 
   open_tr();
     open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
