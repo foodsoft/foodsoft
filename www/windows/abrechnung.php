@@ -18,7 +18,7 @@ if( $bestell_id ) {
   $teil_abrechnung = true;
   $gesamt_abrechnung = false;
 } else {
-  $bestell_id = $abrechnung_id;  // group leader...
+  $bestell_id = $abrechnung_id;  // use group leader...
 }
 
 $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
@@ -26,19 +26,19 @@ $bestell_id_count = count( $bestell_id_set );
 if( $bestell_id_count == 1 ) {
   $teil_abrechnung = false;
   $gesamt_abrechnung = false;
-  $bestell_id = $abrechnung_id;
 }
 
 $bestellung = sql_bestellung( $bestell_id );
-$bestellung_name = $bestellung['name'];
+$status = sql_bestellung_status( $bestell_id );
 $lieferant_id = $bestellung['lieferanten_id'];
 $lieferant = sql_lieferant( $lieferant_id );
 $lieferant_name = $lieferant['name'];
 
+need( $status >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
+need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
+
 foreach( $bestell_id_set as $b_id ) {
-  $status = sql_bestellung_status( $b_id );
-  need( $status >= STATUS_VERTEILT, "Bestellung ist noch nicht verteilt!" );
-  need( $status < STATUS_ARCHIVIERT, "Bestellung ist bereits archiviert!" );
+  need( sql_bestellung_status( $b_id ) == $status,  "Inkonsistenz: Bestellungen mit unterschiedlichem Status sind zusammengefasst" );
   need( sql_bestellung_lieferant_id( $b_id ) == $lieferant_id, "Inkonsistenz: Bestellungen verschiedener Lieferanten sind zusammengefasst" );
 }
 
@@ -72,11 +72,21 @@ if( $action == 'save' ) {
     need_http_var( 'rechnungsnummer', 'H' );
     need_http_var( 'extra_text', 'H' );
     need_http_var( 'extra_soll', 'f' );
-    sql_update( 'gesamtbestellungen', $bestell_id, array(
-      'rechnungsnummer' => $rechnungsnummer
-    , 'extra_text' => $extra_text
-    , 'extra_soll' => $extra_soll
-    ) );
+    foreach( $bestell_id_set as $b_id ) {
+      if( $b_id == $abrechnung_id ) {
+        sql_update( 'gesamtbestellungen', $bestell_id, array(
+          'rechnungsnummer' => $rechnungsnummer
+        , 'extra_text' => $extra_text
+        , 'extra_soll' => $extra_soll
+        ) );
+      } else {
+        sql_update( 'gesamtbestellungen', $bestell_id, array(
+          'rechnungsnummer' => $rechnungsnummer
+        , 'extra_text' => ''
+        , 'extra_soll' => 0
+        ) );
+      }
+    }
     get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'yes' ) {
       need( abs( basar_wert_brutto( $bestell_id ) ) < 0.01 , "Abschluss noch nicht möglich: da sind noch Reste im Basar!" );
@@ -102,7 +112,8 @@ $warenwert_basar_brutto = 0;
 $aufschlag_soll = 0;
 $gruppenpfand_leer_brutto_soll = 0;
 $gruppenpfand_voll_brutto_soll = 0;
-foreach( ( $gesamt_abrechnung ? $bestell_id_set : array( $bestell_id ) as $b_id ) {
+$rechnungssumme = 0;
+foreach( ( $gesamt_abrechnung ? $bestell_id_set : array( $bestell_id ) ) as $b_id ) {
   $lieferanten_soll = sql_bestellung_soll_lieferant( $b_id );
   $waren_netto_soll += $lieferanten_soll['waren_netto_soll'];
   $waren_brutto_soll += $lieferanten_soll['waren_brutto_soll'];
@@ -117,6 +128,7 @@ foreach( ( $gesamt_abrechnung ? $bestell_id_set : array( $bestell_id ) as $b_id 
   $gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $b_id, "gesamtbestellungen.id" ) );
   $gruppenpfand_voll_brutto_soll += $gruppenpfand['pfand_voll_brutto_soll'];
   $gruppenpfand_leer_brutto_soll += $gruppenpfand['pfand_leer_brutto_soll'];
+  $rechnungssumme += sql_bestellung_rechnungssumme( $b_id );
 }
 
 if( $bestell_id_count > 1 ) {
@@ -128,7 +140,7 @@ if( $bestell_id_count > 1 ) {
 if( $gesamt_abrechnung ) {
   open_fieldset( '', "'style='padding:1em;'", "Gesamt-Abrechnung: $bestell_id_count Bestellungen" );
 } else {
-  open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung $bestellung_name"
+  open_fieldset( '', "'style='padding:1em;'", "Abrechnung: Bestellung " . $bestellung['name']
                                    . fc_link( 'edit_bestellung', "bestell_id=$bestell_id" )
                                    . " / Lieferant: " .lieferant_view( $lieferant_id ) );
 }
@@ -276,7 +288,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
 
   open_tr( 'summe' );
     open_td( '', "colspan='3'", 'Summe:' );
-    open_td( 'number', '', price_view( sql_bestellung_rechnungssumme( $bestell_id ) ) );
+    open_td( 'number', '', price_view( $rechnungssumme ) );
     open_td();
 
   open_tr();
