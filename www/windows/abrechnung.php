@@ -64,7 +64,6 @@ if( $action == 'save' ) {
     get_http_var( 'rechnung_abschluss', 'w', '' );
     if( $rechnung_abschluss == 'reopen' ) {
       foreach( $bestell_id_set as $b_id ) {
-        echo "change: $b_id";
         sql_change_bestellung_status( $b_id, STATUS_VERTEILT );
       }
     }
