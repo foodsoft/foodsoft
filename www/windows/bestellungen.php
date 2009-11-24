@@ -43,6 +43,18 @@ switch( $action ) {
       need( $lieferanten_id == sql_bestellung_lieferant_id( $bestell_id ), "Nur Bestellungen bei demselben Lieferanten koennen zusammengefasst werden!" );
       sql_update( 'gesamtbestellungen', $bestell_id, array( 'abrechnung_id' => $abrechnung_id ) );
     }
+    $set = sql_abrechnung_set( $abrechnung_id );
+    $extra_soll = 0;
+    $extra_text = '';
+    foreach( $set as $b_id ) {
+      $extra_soll += sql_select_single_field( "SELECT extra_soll FROM gesamtbestellungen WHERE id = $b_id", 'extra_soll' );
+      $extra_text .= sql_select_single_field( "SELECT extra_text FROM gesamtbestellungen WHERE id = $b_id", 'extra_text' );
+      if( $b_id == $abrechnung_id )
+        continue;
+      doSql( "UPDATE lieferantenpfand SET bestell_id=$abrechnung_id WHERE bestell_id=$b_id" );
+      sql_update( 'gesamtbestellungen', $b_id, array( 'extra_soll' => 0, 'extra_text' => '' ) );
+    }
+    sql_update( 'gesamtbestellungen', $abrechnung_id, array( 'extra_soll' => $extra_soll, 'extra_text' => $extra_text ) );
 
     break;
 
