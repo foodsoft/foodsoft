@@ -7,13 +7,16 @@ setWindowSubtitle( 'Pfandzettel Lieferant' );
 
 $editable = ( hat_dienst(4) and ! $readonly );
 
-get_http_var( 'bestell_id', 'u', 0, true );
-if( $bestell_id ) {
-  $bestellung_name = sql_bestellung_name( $bestell_id );
-  $lieferanten_id = sql_bestellung_lieferant_id( $bestell_id );
+get_http_var( 'abrechnung_id', 'U', 0, true );
+if( $abrechnung_id ) {
+  $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
+  $bestell_id_count = count( $bestell_id_set );
+}
+
+if( $abrechnung_id ) {
+  $lieferanten_id = sql_bestellung_lieferant_id( $abrechnung_id );
   $lieferant_name = sql_lieferant_name( $lieferanten_id );
 } else {
-  $bestellung_name = '';
   get_http_var( 'lieferanten_id', 'u', 0, true );
 }
 
@@ -35,8 +38,16 @@ open_table( 'layout hfill' );
       }
     close_table();
   open_td('floatright');
-    if( $bestell_id ) {
-      ?> <h3>Pfandabrechnung: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3> <?
+    if( $abrechnung_id ) {
+      if( $bestell_id_count > 1 ) {
+        abrechnung_overview( $abrechnung_id );
+        echo "<h3>Pfandabrechnung: $bestell_id_count zusammengefasste Bestellungen:</h3>";
+      } else {
+        echo "<h3>Pfandabrechnung: Bestellung" . fc_link( 'abrechnung', array(
+                 'abrechnung_id' => $abrechnung_id, 'class' => 'href'
+               , 'text' => sql_bestellung_name( $abrechnung_id )
+             ) ) . "</h3>";
+      }
     } else {
       ?> <h3>Pfandverpackungen</h3> <?
       auswahl_lieferant( $lieferanten_id );
@@ -59,11 +70,11 @@ $lieferant_name = sql_lieferant_name( $lieferanten_id );
 get_http_var('action','w','');
 $editable or $action = '';
 
-if( $bestell_id and ( $action == 'save' ) ) {
-  foreach( sql_lieferantenpfand( $lieferanten_id, $bestell_id ) as $row ) {
+if( $abrechnung_id and ( $action == 'save' ) ) {
+  foreach( sql_lieferantenpfand( $lieferanten_id, $abrechnung_id ) as $row ) {
     $id = $row['verpackung_id'];
     if( get_http_var( "anzahl_voll_$id", 'u' ) and get_http_var( "anzahl_leer_$id", 'u' ) ) {
-      sql_pfandzuordnung_lieferant( $bestell_id, $id, ${"anzahl_voll_$id"}, ${"anzahl_leer_$id"} );
+      sql_pfandzuordnung_lieferant( $abrechnung_id, $id, ${"anzahl_voll_$id"}, ${"anzahl_leer_$id"} );
     }
   }
 }
@@ -109,7 +120,7 @@ if( $action == 'movedown' ) {
 // Pfandzettel anzeigen:
 //
 
-if( $bestell_id && $editable )
+if( $abrechnung_id && $editable )
   open_form( '', 'action=save' );
 
 open_table('list');
@@ -135,18 +146,18 @@ $summe_leer_anzahl = 0;
 $summe_leer_netto = 0;
 $summe_leer_brutto = 0;
 
-foreach( sql_lieferantenpfand( $lieferanten_id, $bestell_id ) as $row ) {
+foreach( sql_lieferantenpfand( $lieferanten_id, $abrechnung_id ) as $row ) {
   $verpackung_id = $row['verpackung_id'];
   open_tr();
     open_td( '', '', $row['name'] );
     open_td( 'number', '', price_view( $row['wert'] ) );
     open_td( 'number', '', price_view( $row['mwst'] ) );
 
-    open_td( 'number', '', int_view( $row['pfand_voll_anzahl'], ( ($editable and $bestell_id) ? "anzahl_voll_$verpackung_id" : false ) ) );
+    open_td( 'number', '', int_view( $row['pfand_voll_anzahl'], ( ($editable and $abrechnung_id) ? "anzahl_voll_$verpackung_id" : false ) ) );
     open_td( 'number', '', price_view( $row['pfand_voll_netto_soll'] ) );
     open_td( 'number', '', price_view( $row['pfand_voll_brutto_soll'] ) );
 
-    open_td( 'number', '', int_view( $row['pfand_leer_anzahl'], ( ($editable and $bestell_id) ? "anzahl_leer_$verpackung_id" : false ) ) );
+    open_td( 'number', '', int_view( $row['pfand_leer_anzahl'], ( ($editable and $abrechnung_id) ? "anzahl_leer_$verpackung_id" : false ) ) );
     open_td( 'number', '', price_view( $row['pfand_leer_netto_soll'] ) );
     open_td( 'number', '', price_view( $row['pfand_leer_brutto_soll'] ) );
 
@@ -171,8 +182,8 @@ foreach( sql_lieferantenpfand( $lieferanten_id, $bestell_id ) as $row ) {
 
 // zwischensummen nach MWSt-Saetzen ausgeben (erleichtert Abgleich mit Terra-Rechnungen):
 //
-if( $bestell_id ) {
-  foreach( sql_lieferantenpfand( $lieferanten_id, $bestell_id, 'mwst' ) as $row ) {
+if( $abrechnung_id ) {
+  foreach( sql_lieferantenpfand( $lieferanten_id, $abrechnung_id, 'mwst' ) as $row ) {
     open_tr('summe');
       open_td( '', "colspan='3'", "Teilsumme {$row['mwst']}%:" );
 
@@ -211,7 +222,7 @@ open_tr('summe');
 
 close_table();
 
-if( $bestell_id && $editable ) {
+if( $abrechnung_id && $editable ) {
   floating_submission_button();
   close_form();
 }
