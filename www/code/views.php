@@ -1439,7 +1439,7 @@ function abrechnung_kurzinfo( $bestell_id ) {
         </tr>
       </table>
       </div>";
-      echo fc_link( 'abrechnung', array( 'bestell_id' => $bestell_id, 'class' => 'href' , 'text' => $text ) );
+      echo fc_link( 'abrechnung', array( 'abrechnung_id' => $bestell_id, 'class' => 'href' , 'text' => $text ) );
       break;
     default:
       echo rechnung_status_string( $status );
