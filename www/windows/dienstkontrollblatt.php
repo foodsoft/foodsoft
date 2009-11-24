@@ -64,7 +64,7 @@ echo "<h1>Dienstkontrollblatt</h1>";
 if( $id_from > 1 ) {
   $n = ( $id_from > 10 ) ? $id_from : 10;
   open_tr();
-    open_th('', "colspan='7'", fc_link( '', "class=button,id_to=$n,text= &lt; &lt; &lt;  Bl&auml;ttern &lt; &lt; &lt; " ) );
+    open_th('', "colspan='8'", fc_link( '', "class=button,id_to=$n,text= &lt; &lt; &lt;  Bl&auml;ttern &lt; &lt; &lt; " ) );
 }
 foreach( $result as $row ) {
   open_tr();
@@ -82,7 +82,7 @@ if( $id_to < $id_max ) {
   if( $n > $id_max )
     $n = $id_max;
   open_tr();
-    open_th('',"colspan='7'", fc_link( '', "class=button,id_to=$n,text= &gt; &gt; &gt;  Bl&auml;ttern &gt; &gt; &gt; " ) );
+    open_th('',"colspan='8'", fc_link( '', "class=button,id_to=$n,text= &gt; &gt; &gt;  Bl&auml;ttern &gt; &gt; &gt; " ) );
 }
 close_table();
 
