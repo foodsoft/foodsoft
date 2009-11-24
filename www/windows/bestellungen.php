@@ -169,7 +169,7 @@ foreach( $bestellungen as $row ) {
       if( hat_dienst(4) ) {
         $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
         if( $abrechnung_set_count > 1 ) {
-          $combs[] = fc_action( 'update,text=Trennen', "action=split,message=$bestell_id" );
+          $combs[] = fc_action( 'update,text=Trennen,confirm=Bestellung von Gesamtabrechnung abtrennen?', "action=split,message=$bestell_id" );
         }
         if( $n == $abrechnung_set_count ) {
           $combs[] = "<div class='bigskip'>&nbsp;</div>";
@@ -264,7 +264,11 @@ open_javascript();
         abrechnung_id = 0;
         return;
       }
-      post_action( 'combine', abrechnung_id + ',' + id2 );
+      if( confirm( "Bestellungen zu einer Gesamtabrechnung zusammenfassen?" ) ) {
+        post_action( 'combine', abrechnung_id + ',' + id2 );
+      } else {
+        post_action( 'nop', 0 );
+      }
     }
   <?
 close_javascript();
