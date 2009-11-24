@@ -90,23 +90,39 @@ if( $action == 'save' ) {
 $bestellung = sql_bestellung( $bestell_id );
 $status = sql_bestellung_status( $abrechnung_id );
 
-$gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $bestell_id, "gesamtbestellungen.id" ) ); // TODO
-
-$lieferanten_soll = sql_bestellung_soll_lieferant( $bestell_id ); // TODO
-
-$warenwert_verteilt_brutto = - sql_verteilt_brutto_soll( $bestell_id ); 
-$warenwert_muell_brutto = - sql_muell_brutto_soll( $bestell_id ); 
-$warenwert_basar_brutto = basar_wert_brutto( $bestell_id ); 
-
-$aufschlag_soll = sql_aufschlag_soll( $bestell_id );
-
-
+$waren_netto_soll = 0;
+$waren_brutto_soll = 0;
+$pfand_voll_netto_soll = 0;
+$pfand_voll_brutto_soll = 0;
+$pfand_leer_netto_soll = 0;
+$pfand_leer_brutto_soll = 0;
+$warenwert_verteilt_brutto = 0;
+$warenwert_muell_brutto = 0;
+$warenwert_basar_brutto = 0;
+$aufschlag_soll = 0;
+$gruppenpfand_leer_brutto_soll = 0;
+$gruppenpfand_voll_brutto_soll = 0;
+foreach( ( $gesamt_abrechnung ? $bestell_id_set : array( $bestell_id ) as $b_id ) {
+  $lieferanten_soll = sql_bestellung_soll_lieferant( $b_id );
+  $waren_netto_soll += $lieferanten_soll['waren_netto_soll'];
+  $waren_brutto_soll += $lieferanten_soll['waren_brutto_soll'];
+  $pfand_voll_netto_soll += $lieferanten_soll['pfand_voll_netto_soll'];
+  $pfand_voll_brutto_soll += $lieferanten_soll['pfand_voll_brutto_soll'];
+  $pfand_leer_netto_soll += $lieferanten_soll['pfand_leer_netto_soll'];
+  $pfand_leer_brutto_soll += $lieferanten_soll['pfand_leer_brutto_soll'];
+  $warenwert_verteilt_brutto -= sql_verteilt_brutto_soll( $b_id ); 
+  $warenwert_muell_brutto -= sql_muell_brutto_soll( $b_id ); 
+  $warenwert_basar_brutto += basar_wert_brutto( $b_id ); 
+  $aufschlag_soll += sql_aufschlag_soll( $b_id );
+  $gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $b_id, "gesamtbestellungen.id" ) );
+  $gruppenpfand_voll_brutto_soll += $gruppenpfand['pfand_voll_brutto_soll'];
+  $gruppenpfand_leer_brutto_soll += $gruppenpfand['pfand_leer_brutto_soll'];
+}
 
 if( $bestell_id_count > 1 ) {
   abrechnung_overview( $abrechnung_id, ( $gesamt_abrechnung ? 0 : $bestell_id ) );
   medskip();
 }
-
 
 
 if( $gesamt_abrechnung ) {
@@ -170,7 +186,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
     open_td( '', "rowspan='2'", 'Pfandabrechnung Bestellgruppen:' );
     open_td( 'right', '', 'berechnet (Kauf):' );
     open_td();
-    open_td( 'bold number', '', price_view( -$gruppenpfand['pfand_voll_brutto_soll'] ) );
+    open_td( 'bold number', '', price_view( -$gruppenpfand_voll_brutto_soll ) );
     open_td( 'vcenter', "rowspan='2'" );
       if( $gesamt_abrechnung ) {
         open_div( 'italic small', '', 'Gruppen-Pfand bitte in den Einzel-Abrechnungen abgleichen!' );
@@ -180,7 +196,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
   open_tr();
     open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
     open_td();
-    open_td( 'bold number', '', price_view( -$gruppenpfand['pfand_leer_brutto_soll'] ) );
+    open_td( 'bold number', '', price_view( -$gruppenpfand_leer_brutto_soll ) );
 }
 
 if( $bestellung['aufschlag_prozent'] > 0 ) {
@@ -214,8 +230,8 @@ if( $bestellung['aufschlag_prozent'] > 0 ) {
   open_tr();
     open_td( '', '', 'Liefermengen und -preise abgleichen:' );
     open_td( 'right', '', 'Warenwert:' );
-    open_td( 'bold number', '', price_view( $lieferanten_soll['waren_netto_soll'] ) );
-    open_td( 'bold number', '', price_view( $lieferanten_soll['waren_brutto_soll'] ) );
+    open_td( 'bold number', '', price_view( $waren_netto_soll ) );
+    open_td( 'bold number', '', price_view( $waren_brutto_soll ) );
     open_td( 'bottom' );
     if( $gesamt_abrechnung ) {
       echo fc_link( 'gesamtlieferschein', "abrechnung_id=$abrechnung_id,class=href,text=zum Gesamt-Lieferschein..." );
@@ -227,24 +243,24 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
   open_tr();
     open_td( '', "rowspan='2'", "Pfandabrechnung Lieferant: <div class='small'>(falls zutreffend, etwa bei Terra!)</div>" );
     open_td( 'right', '', 'berechnet (Kauf):' );
-    open_td( 'bold number', '', price_view( $lieferanten_soll['pfand_voll_netto_soll'] ) );
-    open_td( 'bold number', '', price_view( $lieferanten_soll['pfand_voll_brutto_soll'] ) );
+    open_td( 'bold number', '', price_view( $pfand_voll_netto_soll ) );
+    open_td( 'bold number', '', price_view( $pfand_voll_brutto_soll ) );
     open_td( 'vcenter', "rowspan='2'"
-      , fc_link( 'pfandzettel', "bestell_id=$bestell_id,lieferanten_id=$lieferant_id,class=href,text=zum Pfandzettel..." ) );
+      , fc_link( 'pfandzettel', "abrechnung_id=$abrechnung_id,lieferanten_id=$lieferant_id,class=href,text=zum Pfandzettel..." ) );
 
   open_tr();
     open_td( 'right', '', 'gutgeschrieben (Rückgabe):' );
-    open_td( 'bold number', '', price_view( $lieferanten_soll['pfand_leer_netto_soll'] ) );
-    open_td( 'bold number', '', price_view( $lieferanten_soll['pfand_leer_brutto_soll'] ) );
+    open_td( 'bold number', '', price_view( $pfand_leer_netto_soll ) );
+    open_td( 'bold number', '', price_view( $pfand_leer_brutto_soll ) );
 }
   open_tr( 'summe' );
     open_td( '', "colspan='2'", 'Zwischensumme:' );
-    open_td( 'number', '', price_view( $lieferanten_soll['waren_netto_soll']
-                                       + $lieferanten_soll['pfand_leer_netto_soll']
-                                       + $lieferanten_soll['pfand_voll_netto_soll'] ) );
-    open_td( 'number', '', price_view( $lieferanten_soll['waren_brutto_soll']
-                                       + $lieferanten_soll['pfand_leer_brutto_soll']
-                                       + $lieferanten_soll['pfand_voll_brutto_soll'] ) );
+    open_td( 'number', '', price_view( $waren_netto_soll
+                                       + $pfand_leer_netto_soll
+                                       + $pfand_voll_netto_soll ) );
+    open_td( 'number', '', price_view( $waren_brutto_soll
+                                       + $pfand_leer_brutto_soll
+                                       + $pfand_voll_brutto_soll ) );
     open_td( '', "colspan='2'" );
 
     open_tr();
