@@ -1062,6 +1062,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
+    , 'dauerbrenner' => array(
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

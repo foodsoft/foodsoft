@@ -134,8 +134,13 @@ open_table('list hfill');
             open_td( 'top center alert', "title='$title'" );
             $checked = 'checked';
           } else {
-            open_td( 'top center' );
-            $checked = '';
+            if( $produkt['dauerbrenner'] ) {
+              open_td( 'top center highlight', "title='Produkt ist als Dauerbrenner markiert (siehe Stammdaten)'" );
+              $checked = 'checked';
+            } else {
+              open_td( 'top center' );
+              $checked = '';
+            }
           }
           echo "<input type='checkbox' name='bestellliste[]' value='$id' $input_event_handlers $checked>";
         } else {

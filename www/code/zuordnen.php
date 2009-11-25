@@ -1495,6 +1495,7 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
   $selects[] = 'produkte.lieferanten_id';
   $selects[] = 'produkte.produktgruppen_id';
   $selects[] = 'produkte.notiz';
+  $selects[] = 'produkte.dauerbrenner';
   $selects[] = 'produktgruppen.name as produktgruppen_name';
   $selects[] = 'produktgruppen.id as produktgruppen_id';
   $selects[] = 'lieferanten.name as lieferant_name';
@@ -4513,6 +4514,13 @@ function update_database($version){
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 17 ) );
       logger( 'update_database: update to version 17 successful' );
 
+  case 17:
+      logger( 'starting update_database: from version 17' );
+
+      doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
+      logger( 'update_database: update to version 18 successful' );
 /*
 	case n:
 		$sql = "

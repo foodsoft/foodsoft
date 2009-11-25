@@ -26,6 +26,7 @@ get_http_var('name','H',$row);
 get_http_var('produktgruppen_id','u',$row);
 get_http_var('notiz','H',$row);
 get_http_var('artikelnummer','H',$row);
+get_http_var('dauerbrenner','u',$row);
 $lieferant_name = sql_lieferant_name( $lieferanten_id );
 
 $action = '';
@@ -33,12 +34,14 @@ get_http_var( 'action', 'w', '' );
 $editable or $action = '';
 
 if( $action == 'save' ) {
+  get_http_var('dauerbrenner','u',0); // re-init: missing parameter will override $row!
   $values = array(
     'name' => $name
   , 'produktgruppen_id' => $produktgruppen_id
   , 'lieferanten_id' => $lieferanten_id
   , 'artikelnummer' => $artikelnummer
   , 'notiz' => $notiz
+  , 'dauerbrenner' => $dauerbrenner
   );
 
   if( ! $name ) $problems .= "<div class='warn'>Das neue Produkt muﬂ einen Name haben!</div>";
@@ -92,6 +95,12 @@ open_form( '', 'action=save' );
       open_tr();
         open_td('label', '', 'Notiz:' );
         open_td( 'kbd', '', string_view( $notiz, 40, ( $editable ? 'notiz' : false ) ) );
+      open_tr();
+        open_td( 'label', "colspan='2'" );
+          echo "Produkt als Dauerbrenner markieren: <input type='checkbox' name='dauerbrenner' value='1'";
+          if( $dauerbrenner )
+            echo " checked";
+          echo ">";
       open_tr();
         open_td('right smallskip', "colspan='2'");
           if( $produkt_id > 0 )
