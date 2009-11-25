@@ -70,7 +70,11 @@ open_form( '', 'action=save' );
     echo $msg . $problems;
     open_table('small_form hfill');
         open_td('label', '', 'Lieferant:' );
-        open_td('kbd', '', $lieferant_name );
+        open_td();
+          open_span( 'kbd', '', $lieferant_name );
+          open_span( 'qquad', '', fc_link( 'artikelsuche', array(
+            'lieferanten_id' => $lieferanten_id, 'class' => 'browse', 'text' => 'im Katalog suchen...'
+          ) ) );
       open_tr();
         open_td('label', '', 'Bezeichnung:' );
         open_td('kbd');
