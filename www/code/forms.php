@@ -1012,7 +1012,7 @@ function action_form_produktpreis() {
 
   need_http_var('produkt_id','u');
 
-  need_http_var('name','H');  // notwendig, sollte aber moeglichst nicht geaendert werden!
+  // get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
   need_http_var('verteilmult','f');
   $verteilmult = mult2string( $verteilmult ); // ...maximal 3 nachkommastellen, und nur wenn noetig!
   need_http_var('verteileinheit','w');
@@ -1035,9 +1035,9 @@ function action_form_produktpreis() {
 
   $produkt = sql_produkt( $produkt_id );
 
-  if( "$name" and ( "$name" != $produkt['name'] ) ) {
-    sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
-  }
+  // if( "$name" and ( "$name" != $produkt['name'] ) ) {
+  //  sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
+  // }
   if( "$notiz" != $produkt['notiz'] ) {
     sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
   }
