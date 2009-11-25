@@ -13,7 +13,7 @@ need_http_var( 'abrechnung_id', 'u', true );
 $teil_abrechnung = false;
 $gesamt_abrechnung = true;
 
-get_http_var( 'bestell_id', 'U', 0, true );
+get_http_var( 'bestell_id', 'u', 0, true );
 if( $bestell_id ) {
   $teil_abrechnung = true;
   $gesamt_abrechnung = false;
@@ -300,7 +300,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
         ?> Abrechnung durchgeführt: <?
          echo sql_dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ) .", "
               . $bestellung['abrechnung_datum'];
-        if( hat_dienst(4) && ( $status == STATUS_ABGERECHNET ) ) {
+        if( hat_dienst(4) && ( $status == STATUS_ABGERECHNET ) && ! $teil_abrechnung ) {
           qquad();
           echo "Nochmal öffnen:
             <input type='checkbox' name='rechnung_abschluss' value='reopen' $input_event_handlers>";
