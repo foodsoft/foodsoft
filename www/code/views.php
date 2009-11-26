@@ -1365,7 +1365,7 @@ function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
         if( hat_dienst(4) and sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET )
           echo fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=" );
         if( sql_dienste_nicht_bestaetigt( $bestellung['lieferung'] ) )
-          div_msg( 'warn', "Vorsicht:". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
+          div_msg( 'warn', "Vorsicht: ". fc_link( 'dienstplan', 'class=href,text=Dienstegruppen abwesend?' ) );
     open_tr();
       open_th('left','','Lieferant:');
       open_td('','', fc_link( 'edit_lieferant', array( 'text' => sql_lieferant_name( $bestellung['lieferanten_id'] )
@@ -1636,7 +1636,7 @@ function auswahl_konto( $selected = 0 ) {
 }
 
 function auswahl_bestellung( $bestell_id = 0 ) {
-  global $mysqljetzt, $login_gruppen_id, $window;
+  global $mysqljetzt, $mysqlheute, $login_gruppen_id, $window;
   $laufende_bestellungen = sql_bestellungen( '( rechnungsstatus = '. STATUS_BESTELLEN.' )
                                                             and ( bestellstart <= NOW() ) ' );
   if( !  $laufende_bestellungen ) {
@@ -1672,8 +1672,15 @@ function auswahl_bestellung( $bestell_id = 0 ) {
         open_td( 'bold', '', $row['name'] );
       open_td( '', '', lieferant_view($row['lieferanten_id']) );
       open_td( ( $row['bestellende'] < $mysqljetzt ? 'bold' : '' ), '', $row['bestellende'] );
-      open_td( '', '', fc_link( 'bestellschein', array( 'title' => 'zum Bestellschein'
-                       , 'class' => 'href', 'bestell_id' => $id, 'text' => $row['lieferung'] ) ) );
+      $link = fc_link( 'bestellschein', array( 'title' => 'zum Bestellschein'
+                    , 'class' => 'href', 'bestell_id' => $id, 'text' => $row['lieferung'] ) );
+      if( hat_dienst(4) && ( $row['lieferung'] < $mysqlheute ) ) {
+        open_td( 'Alert', "title='Lieferdatum in der Vergangenheit --- bitte korrigieren!'" );
+        $link = "<blink>$link</blink";
+      } else {
+        open_td();
+      }
+        echo $link;
       open_td( '', '', $num );
       if( $have_aufschlag ) {
         open_td( 'number', '', $row['aufschlag_prozent'] . '%' );

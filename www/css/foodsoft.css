@@ -587,6 +587,11 @@ div.warn {
   color:#000000;
   font-weight:bold;
 }
+.Alert {
+  background-color:#ffffa0 !important;
+  color:#000000;
+  font-weight:bold !important;
+}
 .ok, .ok th, .ok td, .ok div, .ok span {
   background-color:#ccffcc;
   color:#000000;
