@@ -1747,7 +1747,6 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
       verteilmengenLoeschen( $bestell_id );
       break;
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
-      vormerkungenLoeschen( $bestell_id );
       $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
     case STATUS_VERTEILT . "," . STATUS_ABGERECHNET:
@@ -1774,8 +1773,13 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
   $sql = "UPDATE gesamtbestellungen SET $changes WHERE id = $bestell_id";
   $result = doSql($sql, LEVEL_KEY, "Konnte status der Bestellung nicht ändern..");
   if( $result ) {
-    if( $do_verteilmengen_zuweisen )
+    if( $do_verteilmengen_zuweisen ) {
       verteilmengenZuweisen( $bestell_id );
+      // befriedigender waere, vormerkungen erst bei lieferung zu loeschen - das kann aber
+      // eventuell _nach_ erstellung der naechsten bestellvorlage sein; wir muessen also
+      // schon hier loeschen:
+      vormerkungenLoeschen( $bestell_id );
+    }
   }
   return $result;
 }
@@ -2519,6 +2523,7 @@ function verteilmengenZuweisen( $bestell_id ) {
 }
 
 function vormerkungenLoeschen( $bestell_id ) {
+  global $js_on_exit;
   $vormerkungen_teilerfuellt = 0;
   $vormerkungen_unerfuellt = 0;
   $vormerkungen_erfuellt = 0;
@@ -2552,7 +2557,7 @@ function vormerkungenLoeschen( $bestell_id ) {
         sql_insert( 'bestellzuordnung', $keys + array(
           'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ, 'menge' => $vormerkung_toleranz
         ) );
-        if( $zuteilung ) {
+        if( $zuteilung > 0.001 ) {
           $vormerkungen_teilerfuellt++;
         } else {
           $vormerkungen_unerfuellt++;
@@ -2563,11 +2568,10 @@ function vormerkungenLoeschen( $bestell_id ) {
     }
   }
   if( $vormerkungen_teilerfuellt + $vormerkungen_unerfuellt + $vormerkungen_erfuellt ) {
-    $js_on_exit[] = " alert( '
-      Durch diese Lieferung wurden $vormerkungen_erfuellt Vormerkungen erfuellt und geloescht;
-      $vormerkungen_teilerfuellt wurden teilweise erfuellt und reduziert;
-      $vormerkungen_unerfuellt unerfuellte Vormerkungen fuer Produkte dieser Bestellvorlage bleiben unveraendert.
-    ' ); ";
+    $js_on_exit[] = " alert( ' Durch diese Bestellung werden $vormerkungen_erfuellt Vormerkungen erfuellt und geloescht; '
+      + ' $vormerkungen_teilerfuellt wurden teilweise erfuellt und reduziert;'
+      + ' $vormerkungen_unerfuellt unerfuellte Vormerkungen fuer Produkte dieser Bestellvorlage bleiben unveraendert.'
+    ); ";
   }
 }
 
