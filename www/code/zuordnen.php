@@ -375,14 +375,14 @@ function get_latest_dienst( $add_days = 0 ) {
 function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
   $dienst = sql_dienst( $dienst_id );
   $filter = "
-        ( dienste.dienst = {$dienst['dienst']} )
+        ( dienste.dienst = '{$dienst['dienst']}' )
     AND ( dienste.id != $dienst_id )
     AND ( NOT dienste.geleistet )
     AND ( dienste.lieferdatum >= curdate() )
   ";
 
   $r = sql_dienste( $filter . " and ( dienste.status = 'Offen' ) " );
-  if( !r )
+  if( ! $r )
     $r = sql_dienste( $filter . " and ( dienste.status = 'Vorgeschlagen' ) " );
   return $r;
 }
