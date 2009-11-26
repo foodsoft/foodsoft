@@ -4,6 +4,9 @@
 // $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
 get_http_var( 'plan_dienst', '/^[0-9\/]+$/', '1/2', true ); // fuer anzeige rotationsplan
+get_http_var( 'options', 'u', 0, true );
+
+define( 'OPTION_SHOW_HISTORY', 1 );
 
 $editable = ! $readonly;
 
@@ -213,6 +216,13 @@ open_div( 'kommentar' );
   open_span( '', '', wikiLink("foodsoft:dienstplan", "Mehr Infos im Wiki..." ) );
 close_div();
 
+medskip();
+open_table( 'menu', "id='option_menu_table'" );
+  open_th( '', "colspan='2'", 'Anzeigeoptionen' );
+  open_td();
+    option_checkbox( 'options', OPTION_SHOW_HISTORY, " historische Dienste anzeigen" );
+close_table();
+medskip();
 
 $dienstnamen = array( '1/2', '3', '4' );
 
@@ -227,6 +237,10 @@ open_table( 'list' );
   $currentDate = "initial";
   $dienst = current( $dienste );
   while( $dienst ) {
+    if( $dienst['historic'] && ! ( $options & OPTION_SHOW_HISTORY ) ) {
+      $dienst = next( $dienste );
+      continue;
+    }
     if( $dienst["lieferdatum"] != $currentDate ) {
       $currentDate = $dienst["lieferdatum"];
       open_tr();
