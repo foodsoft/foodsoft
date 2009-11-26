@@ -22,7 +22,13 @@ switch( $action ) {
     // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
       if( sql_insert_bestellvorschlag( $produkt_id, $bestell_id ) ) {
-        $js_on_exit[] = "alert( 'Produkt wurde aufgenommen, steht aber noch unter \"nicht geliefert\" (da Liefermenge 0): bitte Menge nachtragen!' );";
+        if( sql_bestellung_status( $bestell_id ) < STATUS_VERTEILT ) {
+          $msg = 'Produkt wurde aufgenommen, steht aber noch unter \"nicht bestellt\" (da Menge 0); bitte nach Lieferung die Menge nachtragen!'
+                 . ' (das geht leider erst nach \"Lieferschein fertigmachen\"!)';
+        } else {
+          $msg = 'Produkt wurde aufgenommen, steht aber noch unter \"nicht geliefert\" (da Liefermenge 0): bitte Menge nachtragen!';
+        }
+        $js_on_exit[] = "alert( '$msg' );";
       }
     }
     break;
@@ -78,7 +84,7 @@ switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
     $title="Bestellschein (vorläufig)";
     break;
   case STATUS_LIEFERANT:
-    $editable= FALSE;
+    $editable = FALSE;
     if( $gruppen_id ) {
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_VSUMME );
     } else {
@@ -91,7 +97,7 @@ switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_VERTEILT:
   case STATUS_ABGERECHNET:
     if( $gruppen_id ) {
-      $editable= FALSE;
+      $editable = FALSE;
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
