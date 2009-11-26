@@ -60,7 +60,7 @@ function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr, 
   $s .= '.';
   $s .= number_selector($monat_feld,1, 12, $monat,"%02d",false);
   $s .= '.';
-  $s .=  number_selector($jahr_feld, 2004, 2011, $jahr,"%04d",false);
+  $s .=  number_selector($jahr_feld, 2009, 2015, $jahr,"%04d",false);
   if( $to_stdout )
     echo $s;
   return $s;
@@ -256,7 +256,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
   $geleistet = $dienst['geleistet'];
 
   $show_buttons = ! ( $readonly || $geleistet || hat_dienst(5) || $historic );
-  $dienst_view_editable = ( ! $readonly and ! $geleistet and ( hat_dienst(5) || ! $historic ) );
+  $dienst_view_editable = ( ! $readonly and ! $geleistet and ! $historic );
   $geleistet_button = ( $over and ! $readonly and ! $geleistet );
 
   if( hat_dienst(5) ) {
@@ -288,7 +288,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
           smallskip();
         open_td( "right $class" );
         // smallskip();
-        if($show_buttons){
+        if( $show_buttons ) {
           echo fc_action( 'update,class=button smalll,text=uebernehmen,confirm=Diesen offenen Dienst uebernehmen?'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
