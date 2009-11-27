@@ -117,6 +117,11 @@ $gesamtpreis = 0.0;
 if( hat_dienst( 4 ) ) {
   $bestellnummern_falsch = array();
   $preise_falsch = array();
+  if( $gesamtbestellung['lieferung'] < $mysqlheute ) {
+    open_div( 'warn', '', 'Lieferdatum liegt in der Vergangenheit --- bitte '
+        .fc_link( 'editBestellung', "bestell_id=$bestell_id,text=hier korrigieren!" )
+       );
+  }
   open_div( 'nodisplay', "id='bestellnummern_warnung'" );
     echo "Warnung: bei <span id='bestellnummern_falsch'>?</span> Produkten scheinen die Bestellnummern falsch ";
     echo fc_action( 'update,class=button,text=alle aktualisieren', 'action=update_prices' );
