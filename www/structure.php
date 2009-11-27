@@ -1109,7 +1109,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'lieferpreis' => array(
-        'type' =>  "decimal(8,2)"
+        'type' =>  "decimal(12,4)"
       , 'null' => 'NO'
       , 'default' => '0.0'
       , 'extra' => ''
@@ -1163,7 +1163,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'lv_faktor' => array(
-        'type' =>  "decimal(9,3)"
+        'type' =>  "decimal(12,6)"
       , 'null' => 'NO'
       , 'default' => '1.0'
       , 'extra' => ''

@@ -3448,7 +3448,7 @@ function sql_verbindlichkeiten_lieferanten() {
          , lieferanten.name as name
          , ( ".select_soll_lieferanten('lieferanten')." ) as soll
     FROM lieferanten
-    HAVING (soll <> 0)
+    HAVING (abs(soll) > 0.005)
   " ) );
 }
 
@@ -4353,8 +4353,8 @@ function update_database($version){
       logger( 'starting update_database: from version 10' );
 
       // preise ab jetzt pro L-einheit speichern:
-      doSql( "ALTER TABLE `produktpreise` ADD column `lieferpreis` decimal(8,2) default '0.0'" );
-      doSql( "ALTER TABLE `produktpreise` MODIFY column `lv_faktor` decimal(9,3) default '1.0'" );
+      doSql( "ALTER TABLE `produktpreise` ADD column `lieferpreis` decimal(12,4) default '0.0'" );
+      doSql( "ALTER TABLE `produktpreise` MODIFY column `lv_faktor` decimal(12,6) default '1.0'" );
 
       // gebindegroesse bleibt erstmal pro v-einheit (wie auch das pfand!)
       // doSql( "ALTER TABLE `produktpreise` MODIFY column `gebindegroesse` decimal(9,3) default '1.0'"
@@ -4472,11 +4472,11 @@ function update_database($version){
 
       doSql( "ALTER TABLE `produkte` DROP COLUMN `einheit`" );
 
-      doSql( "ALTER TABLE `produktpreise` MODIFY COLUMN `lieferpreis` decimal(8,2) not null default 0.0
+      doSql( "ALTER TABLE `produktpreise` MODIFY COLUMN `lieferpreis` decimal(12,4) not null default 0.0
                                    , MODIFY COLUMN `verteileinheit` varchar(10) not null default '1 ST'
                                    , MODIFY COLUMN `liefereinheit` varchar(10) not null default '1 ST'
                                    , MODIFY COLUMN `gebindegroesse` int(11) not null default 1
-                                   , MODIFY COLUMN `lv_faktor` decimal(9,3) not null default 1.0
+                                   , MODIFY COLUMN `lv_faktor` decimal(12,6) not null default 1.0
       " );
 
       doSql( "ALTER TABLE `transactions` MODIFY COLUMN `session_id` int(11) not null default 0" );
