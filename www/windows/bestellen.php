@@ -455,7 +455,7 @@ open_table( 'list hfill' );  // bestelltabelle
     open_th( '', "colspan='3'" );
       open_div();
       open_span( 'floatleft', "title='Bestellmenge deiner Gruppe'", 'deine Bestellung' );
-      open_span( 'quad floatright', "title='Falls Produkt nicht kommt: automatisch vormerken für kommende Wochen?'", "vormerken" );
+      open_span( 'quad floatright', "title='Falls Produkt nicht kommt: automatisch vormerken für nächste Bestellung?'", "vormerken" );
       close_div();
     open_th( '', "title='maximale (bei voller Zuteilung) Kosten f&uuml;r deine Gruppe'", 'Kosten' );
     open_th( '', "colspan='1' title='Bestellungen aller Gruppen'", 'Gesamtbestellung' );
