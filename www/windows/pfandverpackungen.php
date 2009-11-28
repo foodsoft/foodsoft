@@ -7,7 +7,7 @@ setWindowSubtitle( 'Pfandzettel Lieferant' );
 
 $editable = ( hat_dienst(4) and ! $readonly );
 
-get_http_var( 'abrechnung_id', 'U', 0, true );
+get_http_var( 'abrechnung_id', 'u', 0, true );
 if( $abrechnung_id ) {
   $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
   $bestell_id_count = count( $bestell_id_set );
