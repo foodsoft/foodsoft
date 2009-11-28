@@ -30,7 +30,7 @@ switch( $window_id ) {
         break;
       case 'menu':
       case "bestellen":
-        if( hat_dienst(0) )
+        // if( hat_dienst(0) )
           if( dienst_liste( $login_gruppen_id, 'bestaetigen lassen' ) )
             break;
       default:
