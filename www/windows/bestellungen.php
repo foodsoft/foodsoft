@@ -138,6 +138,8 @@ foreach( $bestellungen as $row ) {
                                        , 'confirm' => 'Jetzt Bestellschein für Lieferanten fertigmachen?' )
                                 , array( 'action' => 'changeState'
                                        , 'change_id' => $bestell_id, 'change_to' => STATUS_LIEFERANT ) );
+          $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
+                                , "action=delete,delete_id=$bestell_id" );
         } else {
           $actions[] = "
             <div class='alert qquad'>Bestellzeit läuft noch!</div>
@@ -146,8 +148,6 @@ foreach( $bestellungen as $row ) {
         $actions[] = fc_link( 'bestellen', array( 'bestell_id' => $bestell_id
                                       , 'class' => 'browse', 'text' => 'zum Bestellen...' ) );
         $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
-        $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
-                              , "action=delete,delete_id=$bestell_id" );
       }
       break;
 
@@ -162,12 +162,13 @@ foreach( $bestellungen as $row ) {
                               , array( 'action' => 'changeState'
                                      , 'change_id' => $bestell_id, 'change_to' => STATUS_BESTELLEN ) );
       }
-      if( $login_dienst > 0 )
+      if( hat_dienst(1,3,4) )
         $actions[] = fc_action( array( 'text' => '>>> Lieferschein erstellen >>>'
                                      , 'title' => 'Bestellung wurde geliefert, Lieferschein abgleichen?'
                                      , 'confirm' => 'Bestellung wurde geliefert, Lieferschein abgleichen?' )
                               , array( 'action' => 'changeState'
                                      , 'change_id' => $bestell_id, 'change_to' => STATUS_VERTEILT ) );
+      if( hat_dienst(4) )
         $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
                               , "action=delete,delete_id=$bestell_id" );
       break;
