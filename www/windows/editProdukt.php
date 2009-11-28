@@ -75,9 +75,11 @@ open_form( '', 'action=save' );
         open_td('label', '', 'Lieferant:' );
         open_td();
           open_span( 'kbd', '', $lieferant_name );
-          open_span( 'qquad', '', fc_link( 'artikelsuche', array(
-            'lieferanten_id' => $lieferanten_id, 'class' => 'browse', 'text' => 'im Katalog suchen...'
-          ) ) );
+          if( ! $produkt_id ) {
+            open_span( 'qquad', '', fc_link( 'artikelsuche', array(
+              'lieferanten_id' => $lieferanten_id, 'class' => 'browse', 'text' => 'im Katalog suchen...'
+            ) ) );
+          }
       open_tr();
         open_td('label', '', 'Bezeichnung:' );
         open_td('kbd');
@@ -91,16 +93,18 @@ open_form( '', 'action=save' );
         open_td( 'kbd', '', string_view( $artikelnummer, 10, ( $editable ? 'artikelnummer' : false ) ) );
       open_tr();
         open_td('label', '', fc_link( 'produktgruppen', 'class=href,text=Produktgruppe:' ) );
-        open_td('kbd', '', produktgruppe_view( $produktgruppen_id, 'produktgruppen_id' ) );
+        open_td('kbd', '', produktgruppe_view( $produktgruppen_id, ( $editable ? 'produktgruppen_id' : false ) ) );
       open_tr();
         open_td('label', '', 'Notiz:' );
         open_td( 'kbd', '', string_view( $notiz, 40, ( $editable ? 'notiz' : false ) ) );
+      if( $editable ) {
       open_tr();
         open_td( 'label', "colspan='2'" );
           echo "Produkt als Dauerbrenner markieren: <input type='checkbox' name='dauerbrenner' value='1'";
           if( $dauerbrenner )
             echo " checked";
           echo ">";
+      }
       open_tr();
         open_td('right smallskip', "colspan='2'");
           if( $produkt_id > 0 )
