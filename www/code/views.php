@@ -362,7 +362,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
     // }
     if( hat_dienst(5) ) {
       smallskip();
-      if( ! $readonly ) {
+      if( ( ( $dienst['status'] == 'Offen') or $dienst['editable'] ) && ! $readonly ) {
         echo fc_action( "update,title=Dienst loeschen,class=drop,text=,confirm=Dienst wirklich loeschen?"
                                               , "action=dienstLoeschen,message=$dienst_id" );
       }
