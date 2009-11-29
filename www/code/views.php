@@ -256,7 +256,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
   $geleistet = $dienst['geleistet'];
 
   $show_buttons = ! ( $readonly || $geleistet || hat_dienst(5) || $historic );
-  $dienst_view_editable = ( ! $readonly and ! $geleistet and ! $historic );
+  $dienst_view_editable = ( ! $readonly and ! $geleistet and $dienst['editable'] );
   $geleistet_button = ( $over and ! $readonly and ! $geleistet );
 
   if( hat_dienst(5) ) {

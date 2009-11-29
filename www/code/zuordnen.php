@@ -344,6 +344,7 @@ function select_dienste( $filter = 'true' ) {
          , ( if( not dienste.geleistet and ( adddate( curdate(), 14 ) >= dienste.lieferdatum ), 1, 0 ) ) as soon
          , if( lieferdatum <= CURDATE(), 1, 0 ) as over
          , ( if( lieferdatum < ( SELECT max(lieferdatum) FROM dienste WHERE lieferdatum < CURDATE() ), 1, 0 ) ) as historic
+         , if( lieferdatum > adddate( curdate(), -32 ), 1, 0 ) as editable
     FROM dienste
     LEFT JOIN gruppenmitglieder
       ON (gruppenmitglieder_id = gruppenmitglieder.id)
@@ -4283,8 +4284,8 @@ function self_field( $name, $default = NULL ) {
 /**
  *
  */
-function update_database($version){
-  switch($version){
+function update_database( $version ) {
+  switch( $version ) {
     case 8:
       logger( 'starting update_database: from version 8' );
        doSql( "ALTER TABLE Dienste ADD `dienstkontrollblatt_id` INT NULL DEFAULT NULL "
