@@ -1,5 +1,7 @@
 <?
 
+setWikiHelpTopic( 'foodsoft:' );
+
 get_http_var( 'action', 'w', '' );
 if( $readonly )
   $action = '';
