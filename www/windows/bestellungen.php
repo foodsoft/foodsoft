@@ -245,13 +245,14 @@ foreach( $bestellungen as $bestellung ) {
       open_td();
         open_div( '','', $row['name'] );
         open_div( 'small','', $row['lieferantenname'] );
+        // echo "[$abrechnung_id,$bestell_id,$abrechnung_set_count,$n]";
       open_td();
         open_div( '','', rechnung_status_string( $row['rechnungsstatus'] ) );
         if( $row['rechnungsnummer'] )
           open_div( '','', $row['rechnungsnummer'] );
       open_td();
-        open_div( 'left small', '',  $row['bestellstart'] );
-        open_div( 'right small', '', "- ".$row['bestellende'] );
+        open_div( 'left small oneline', '',  $row['bestellstart'] );
+        open_div( 'right small oneline', '', "- ".$row['bestellende'] );
       open_td( '', '', $row['lieferung'] );
       open_td();
         if( $rechnungsstatus == STATUS_ABGERECHNET ) {
