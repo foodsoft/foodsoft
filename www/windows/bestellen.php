@@ -78,7 +78,9 @@ switch( $action ) {
       $bestellungen[$n] = array( 'fest' => $fest, 'toleranz' => $toleranz, 'vormerken' => $vormerken );
       $gesamtpreis += $produkt['endpreis'] * ( $fest + $toleranz );
     }
-    need( $gesamtpreis <= $kontostand, "Konto &uuml;berzogen!" );
+    if( $gesamtpreis > 0.005 ) {
+      need( $gesamtpreis <= $kontostand, "Konto &uuml;berzogen!" );
+    }
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'], $m['vormerken'] );
     }
@@ -322,7 +324,7 @@ if( ! $readonly ) {
       konto_rest = document.getElementById('konto_rest');
       konto_rest.firstChild.nodeValue = kontostand_neu;
 
-      if( gesamtpreis > kontostand ) {
+      if( ( gesamtpreis > 0.005 ) && ( gesamtpreis > kontostand ) ) {
         konto_rest.style.color = '#c00000';
         document.getElementById('submit').className = 'bigbutton warn';
         document.getElementById('submit').firstChild.nodeValue = 'Konto überzogen';
