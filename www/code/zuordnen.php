@@ -1689,10 +1689,6 @@ function rechnung_status_string( $state ) {
   return "FEHLER: undefinierter Status: $state";
 }
 
-function sql_bestellung( $bestell_id ) {
-  return sql_select_single_row( "SELECT * FROM gesamtbestellungen WHERE id=$bestell_id" );
-}
-
 function sql_abrechnung_set( $abrechnung_id ) {
   $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id" );
   $r = array();
@@ -1784,8 +1780,19 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
 }
 
 function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
-  return mysql2array( doSql( "SELECT * FROM gesamtbestellungen WHERE $filter ORDER BY $orderby" ) );
+  return mysql2array( doSql( "
+    SELECT gesamtbestellungen.*, lieferanten.name as lieferantenname FROM gesamtbestellungen
+    JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
+    WHERE $filter ORDER BY $orderby
+  " ) );
 }
+
+function sql_bestellung( $bestell_id ) {
+  $r = sql_bestellungen( "gesamtbestellungen.id = $bestell_id" );
+  need( count($r) == 1 );
+  return current($r);
+}
+
 
 /* function select_gesamtbestellungen_schuldverhaeltnis():
  *  liefert gesamtbestellungen, fuer die bereits ein verbindlicher vertrag besteht
