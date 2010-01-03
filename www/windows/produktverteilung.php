@@ -62,7 +62,11 @@ function update_distribution( $bestell_id, $produkt_id ) {
       if( $mengen ) {
         $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
         $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
-        $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+        if( $gruppen_id == sql_muell_id() ) {
+          $verteilmenge = $mengen['muellmenge'] * $verteilmult;
+        } else {
+          $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+        }
       } else {
         $toleranzmenge = 0;
         $festmenge = 0;
@@ -72,6 +76,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
       global $$feldname;
       if( get_http_var( $feldname, 'f' ) ) {
         $menge_form = $$feldname;
+        // echo "[$feldname, $menge_form, $verteilmenge]<br>";
         if( $verteilmenge != $menge_form ) {
           sql_change_verteilmenge( $bestell_id, $produkt_id, $gruppen_id, $menge_form / $verteilmult );
         }
