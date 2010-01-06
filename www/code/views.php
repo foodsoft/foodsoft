@@ -1462,8 +1462,8 @@ function buchung_kurzinfo( $id ) {
     if( $gruppen_id == $muell_id ) {
       $typ = $row['transaktionstyp'];
       echo "interne Verrechnung: ";
-      echo fc_link( 'verluste', array( 'class' => 'href', 'detail' => $typ, 'text' => transaktion_typ_string( $typ )
-                                     , 'title' => 'zur &Uuml;bersicht: '.transaktion_typ_string( $typ ) ) );
+      echo fc_link( 'verluste', array( 'class' => 'href', 'detail' => 0, 'text' => transaktion_typ_string( $typ )
+                                     , 'title' => 'zur &Uuml;bersicht der Verluste...' ) );
     } else {
        $gruppen_name = sql_gruppenname($gruppen_id);
        if( ($gruppen_id == $login_gruppen_id) or hat_dienst(4,5) )
