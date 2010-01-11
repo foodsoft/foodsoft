@@ -50,10 +50,11 @@ function verlust_bestellungen( $detail = false ) {
     $soll = $muell_soll + $extra_soll;
     // $soll = $muell_soll + $extra_soll + $aufschlag_soll;
     $bestell_id = $row['id'];
+    $abrechnung_id = $row['abrechnung_id'];
 
     if( $detail ) {
       open_tr();
-        open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'bestell_id' => $bestell_id, 'text' => $row['name'] ) ) );
+        open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'abrechnung_id' => $abrechnung_id, 'text' => $row['name'] ) ) );
         open_td( 'number', '', fc_link( 'lieferschein'
                     , "class=href,bestell_id=$bestell_id,gruppen_id=$muell_id,text=". sprintf( "%.2lf", - $muell_soll ) ) );
         // open_td( 'number', '', price_view( - $aufschlag_soll ) );
@@ -103,7 +104,7 @@ function verlust_aufschlag( $detail = false ) {
     $soll = $b['aufschlag_soll'];
     $soll_summe += $soll;
     if( $detail ) {
-      open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'bestell_id' => $b['id']
+      open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'abrechnung_id' => $b['abrechnung_id']
                                                    , 'text' => $b['name'] ) ) );
       open_td( 'number', '', price_view( - $soll ) );
       open_td( 'number', '', price_view( - $soll_summe ) );
