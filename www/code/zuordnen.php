@@ -4538,6 +4538,7 @@ function update_database( $version ) {
       logger( 'starting update_database: from version 17' );
 
       doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
+      doSql( "ALTER TABLE `sessions` ADD COLUMN `session_timestamp` timestamp not null default CURRENT_TIMESTAMP " );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
       logger( 'update_database: update to version 18 successful' );

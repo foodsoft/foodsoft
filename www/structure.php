@@ -1207,6 +1207,12 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
+    , 'session_timestamp' => array(
+        'type' =>  "timestamp"
+      , 'null' => 'NO'
+      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
