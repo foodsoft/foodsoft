@@ -1105,10 +1105,12 @@ function sql_gruppe_offene_bestellungen( $gruppen_id ) {
   need( hat_dienst(4,5) );
   return mysql2array( doSql( "
     SELECT gesamtbestellungen.name as name
+         , gesamtbestellungen.rechnungsstatus as rechnungsstatus
     FROM gesamtbestellungen
     INNER JOIN gruppenbestellungen
-      ON gruppenbestellungen.bestellgruppen_id = $gruppen_id
-    WHERE gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET."
+      ON gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id
+    WHERE ( gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET." )
+      AND ( gruppenbestellungen.bestellgruppen_id = $gruppen_id )
     ORDER BY gesamtbestellungen.lieferung
   " ) );
 }
