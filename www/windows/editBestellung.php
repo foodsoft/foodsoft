@@ -105,8 +105,6 @@ if( $action == 'save' ) {
             $vorbestellungen_toleranz++;
             break;
         }
-        // vormerkungen zu produkten in bestellvorlage bleiben bestehen:
-        sql_insert( 'bestellzuordnung', $keys + array( 'art' => $vormerkung['art'], 'menge' => $menge ) );
       }
       if( $vorbestellungen_fest + $vorbestellungen_toleranz ) {
         $js_on_exit[] = " alert( '

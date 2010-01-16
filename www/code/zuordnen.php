@@ -2605,7 +2605,11 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   $keys = array( 'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id );
 
   if( $festmenge >= 0 ) {
-    sql_delete_bestellzuordnungen( $keys + array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST ) );
+    sql_delete_bestellzuordnungen( array(
+      'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST
+    , 'gruppen_id' => $gruppen_id
+    , 'produkt_id' => $produkt_id
+    ) );
     $festmenge_alt = sql_bestellzuordnung_menge( $keys + array( 'art' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG ) );
     if( $festmenge > $festmenge_alt ) {
       // Erhoehung der festmenge: zusaetzliche Bestellung am Ende der Schlange:
@@ -2630,7 +2634,11 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
   }
 
   if( $toleranzmenge >= 0 ) {
-    sql_delete_bestellzuordnungen( $keys + array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ ) );
+    sql_delete_bestellzuordnungen( array(
+      'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ
+    , 'gruppen_id' => $gruppen_id
+    , 'produkt_id' => $produkt_id
+    ) );
     $toleranzmenge_alt = sql_bestellzuordnung_menge( $keys + array( 'art' => BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG ) );
     if( $toleranzmenge_alt != $toleranzmenge ) {
       // toleranzmenge: zeitliche Reihenfolge ist hier (fast) egal, wir schreiben einfach neu:
