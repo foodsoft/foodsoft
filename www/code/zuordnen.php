@@ -776,7 +776,7 @@ function possible_areas(){
     "hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
     "title" => "Dienstkontrollblatt");
 
-  if( hat_dienst(1,3,4) ) {
+  if( false ) {
     $areas[] = array("area" => "updownload",
     "hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
     "title" => "Up/Download");
@@ -1839,7 +1839,7 @@ function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestel
 /**
  *  Bestellvorschlag einfuegen
  */
-function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis_id = 0 ) {
+function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis_id = 0, $gruppen_id = 0 ) {
   fail_if_readonly();
   need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
 
@@ -4539,6 +4539,7 @@ function update_database( $version ) {
 
       doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
       doSql( "ALTER TABLE `sessions` ADD COLUMN `session_timestamp` timestamp not null default CURRENT_TIMESTAMP " );
+      doSql( "ALTER TABLE `bestellvorschlaege` ADD COLUMN `vorschlag_gruppen_id` int(11) not null default 0 " );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
       logger( 'update_database: update to version 18 successful' );
