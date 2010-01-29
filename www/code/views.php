@@ -289,7 +289,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "right $class" );
         // smallskip();
         if( $show_buttons ) {
-          echo fc_action( 'update,class=button smalll,text=uebernehmen,confirm=Diesen offenen Dienst uebernehmen?'
+          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Diesen offenen Dienst &uuml;bernehmen?'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
           smallskip();
@@ -319,8 +319,8 @@ function dienstplan_eintrag_view( $dienst_id ) {
           open_td( "left $class", '', 'vorgeschlagen' );
           open_td( "right $class" );
           // smallskip();
-          if( $dienst['soon'] and $show_buttons ) {
-            echo fc_action( 'update,class=button smalll,text=uebernehmen,confirm=Dieser Dienst ist fuer andere Gruppe vorgeschlagen --- uebernehmen?'
+          if( $show_buttons ) {
+            echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Dieser Dienst ist fuer andere Gruppe vorgeschlagen --- &uuml;bernehmen?'
                           , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
           }
         }
@@ -337,22 +337,22 @@ function dienstplan_eintrag_view( $dienst_id ) {
         }
         open_td( "right $class" );
         // smallskip();
-        if( $show_buttons and $dienst['soon'] and ( $login_gruppen_id != $dienst['gruppen_id'] ) ) {
-          echo fc_action( 'update,class=button smalll,text=uebernehmen,confirm=Bereis akzeptierten Dienst von andere Gruppe uebernehmen: ist das mit der anderen Gruppe abgesprochen?'
+        if( $show_buttons and ( $login_gruppen_id != $dienst['gruppen_id'] ) ) {
+          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Bereits akzeptierten Dienst von andere Gruppe &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
-        if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {
-          echo fc_action( 'update,class=button smalll,text=geht doch nicht,confirm=Diesen bereits akzeptierten Dienst wieder ablehnen?', sprintf( 'action=wirdOffen_%u', $dienst_id ) );
-        }
+        // if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {
+        //  echo fc_action( 'update,class=button smalll,text=geht doch nicht,confirm=Diesen bereits akzeptierten Dienst wieder ablehnen?', sprintf( 'action=wirdOffen_%u', $dienst_id ) );
+        // }
         break;
       case "Bestaetigt":
         open_td( "left $class", '', 'bestaetigt' );
         open_td( "right $class" );
         // smallskip();
-        if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {
-          echo fc_action( 'update,class=button smalll,text=geht doch nicht,confirm=Diesen bereits BESTAETIGTEN Dienst wieder ablehnen? (bitte unbedingt Ersatz suchen!)'
-                        , sprintf( 'action=wirdOffen_%u', $dienst_id ) );
-        }
+        // if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {
+        //   echo fc_action( 'update,class=button smalll,text=geht doch nicht,confirm=Diesen bereits BESTAETIGTEN Dienst wieder ablehnen? (bitte unbedingt Ersatz suchen!)'
+        //                 , sprintf( 'action=wirdOffen_%u', $dienst_id ) );
+        // }
         break;
     }
     // if( $geleistet_button ) {
