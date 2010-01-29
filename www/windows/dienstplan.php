@@ -43,9 +43,9 @@ switch( $action ) {
     need( $startdatum );
     need( $dienstinterval );
     need( $dienstanzahl );
-    need( $personen_1 );
-    need( $personen_3 );
-    need( $personen_4 );
+    need( $personen_1 >= 0 );
+    need( $personen_3 >= 0 );
+    need( $personen_4 >= 0 );
     $personenzahlen = array( '1/2' => $personen_1, '3' => $personen_3, '4' => $personen_4 );
     create_dienste( $startdatum, $dienstinterval, $dienstanzahl, $personenzahlen );
     break;
@@ -90,10 +90,10 @@ switch( $action ) {
       smallskip();
     }
     break;
-  case 'wirdOffen':
-    need( $id );
-    sql_dienst_wird_offen( $id );
-    break;
+  // case 'wirdOffen':
+  //  need( $id );
+  //  sql_dienst_wird_offen( $id );
+  //  break;
   case 'abtauschen':
     need( $id );
     $dienst = sql_dienst( $id );
@@ -210,9 +210,9 @@ if( hat_dienst(5) ) {
 ?> <h1>Dienstliste</h1> <?
 
 open_div( 'kommentar' );
-  open_span( '', '',
-    "Zum Abtauschen von Diensten: Beide Gruppen klicken auf <code>kann doch nicht</code>
-     und übernehmen anschliessend den von der andern Gruppe entstandenen offen Dienst." );
+  // open_span( '', '',
+  //  "Zum Abtauschen von Diensten: Beide Gruppen klicken auf <code>kann doch nicht</code>
+  //   und übernehmen anschliessend den von der andern Gruppe entstandenen offen Dienst." );
   open_span( '', '', wikiLink("foodsoft:dienstplan", "Mehr Infos im Wiki..." ) );
 close_div();
 
