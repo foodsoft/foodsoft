@@ -479,7 +479,11 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
       }
     }
   } else {
-    $show_dienste = $dienste;
+    foreach( $dienste as $dienst ) {
+      if( ! $dienst['over'] ) {
+        $show_dienste[] = $dienst;
+      }
+    }
   }
   if( ! $show_dienste )
     return false;
