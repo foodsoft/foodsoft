@@ -87,7 +87,8 @@ function verlust_aufschlag( $detail = false ) {
     ?> <h2>Aufschlaege auf Bestellungen:</h2> <?
     open_table( 'list', "width='98%'" );
       open_th('','','Bestellung');
-      open_th('','','Aufschlag');
+      open_th('','','Aufschlag Prozent');
+      open_th('','','Aufschlag Betrag');
       open_th('','','Haben FC');
   }
 
@@ -108,6 +109,7 @@ function verlust_aufschlag( $detail = false ) {
       open_tr();
       open_td( '', '', fc_link( 'abrechnung', array( 'class' => 'href', 'abrechnung_id' => $b['abrechnung_id']
                                                    , 'text' => $b['name'] ) ) );
+      open_td( 'number', '', price_view( $b['aufschlag_prozent'] ) );
       open_td( 'number', '', price_view( - $soll ) );
       open_td( 'number', '', price_view( - $soll_summe ) );
     }
@@ -115,7 +117,7 @@ function verlust_aufschlag( $detail = false ) {
 
   if( $detail ) {
     open_tr( 'summe' );
-      open_td('', "colspan='2'",'Summe:');
+      open_td('', "colspan='3'",'Summe:');
       open_td( 'number', '', price_view( - $soll_summe ) );
     close_table();
   }
