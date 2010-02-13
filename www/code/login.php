@@ -160,14 +160,11 @@ logout();  // nicht korrekt angemeldet: alles zuruecksetzen...
 require_once("head.php");
 setWikiHelpTopic( ':' );
 
-if( isset( $from_dokuwiki ) && $from_dokuwiki ) {
-  $form_action="$foodsoftdir/index.php?window=wiki";
-} else {
-  $form_action="$foodsoftdir/index.php";
-}
-
 open_div( 'kommentar', '', $motd );
-open_form( "url=$form_action", 'login=login' );
+
+// we need $foodsoftdir in form action to allow login from DokuWiki:
+//
+open_form( "url=$foodsoftdir/index.php", 'login=login' );
   open_fieldset( 'small_form', "style='padding:2em;width:800px;'", 'Anmelden' );
     if( "$problems" )
       echo "$problems";

@@ -8,7 +8,7 @@
 // - (these are really constants, but php doesn't not support array-valued constants)
 // - this file may be included from inside a function (from doku-wiki!), so we need `global':
 //
-global $large_window_options, $small_window_options;
+global $large_window_options, $small_window_options, $pseudo_parameters;
 $large_window_options = array(
     'dependent' => 'yes'
   , 'toolbar' => 'yes'
@@ -68,6 +68,13 @@ function fc_window_defaults( $name ) {
       $parameters['window_id'] = 'main';
       $parameters['text'] = 'Beenden';
       $parameters['title'] = 'zur&uuml;ck zum Hauptmen&uuml;';
+      $options = $large_window_options;
+      break;
+    case 'wiki':
+      $parameters['window'] = 'wiki';
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'Doku-Wiki';
+      $parameters['title'] = 'zum Doku-Wiki';
       $options = $large_window_options;
       break;
     case 'meinkonto':
