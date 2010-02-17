@@ -1744,7 +1744,7 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
       verteilmengenLoeschen( $bestell_id );
       break;
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
-      $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
+      // $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
     case STATUS_VERTEILT . "," . STATUS_ABGERECHNET:
       nur_fuer_dienst(4);
