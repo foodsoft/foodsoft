@@ -299,8 +299,9 @@ function formular_buchung_gruppe_gruppe( $notiz_initial = 'Umbuchung' ) {
   close_form();
 }
 
-function buchung_gruppe_gruppe() {
+function action_buchung_gruppe_gruppe() {
   global $betrag, $gruppen_id, $nach_gruppen_id, $notiz, $valuta_day, $valuta_month, $valuta_year;
+  logger( "buchung_gruppe_gruppe: $betrag, $gruppen_id -> $nach_gruppen_id" );
   need_http_var( 'betrag', 'f' );
   need_http_var( 'gruppen_id', 'U' );
   need_http_var( 'nach_gruppen_id', 'U' );
@@ -314,7 +315,7 @@ function buchung_gruppe_gruppe() {
     array( 'konto_id' => -1, 'gruppen_id' => $nach_gruppen_id )
   , array( 'konto_id' => -1, 'gruppen_id' => $gruppen_id )
   , $betrag
-  , "$year-$month-$day"
+  , "$valuta_year-$valuta_month-$valuta_day"
   , "$notiz"
   );
 }

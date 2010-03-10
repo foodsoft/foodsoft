@@ -87,7 +87,7 @@ if( $meinkonto ) {
       case 'buchung_gruppe_lieferant':
         action_buchung_gruppe_lieferant();
         break;
-      case 'umbuchung_gruppe_gruppe':
+      case 'buchung_gruppe_gruppe':
         action_buchung_gruppe_gruppe();
         break;
       case 'buchung_gruppe_anfangsguthaben':
