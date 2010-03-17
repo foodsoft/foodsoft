@@ -225,9 +225,11 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
           if( ! $produkt_id ) {
             open_td( 'center' );
-            $p = sql_produkt( array( 'artikelnummer' => $row['artikelnummer'], 'lieferanten_id' => $lieferanten_id ), true );
-            if( $p ) {
-              echo fc_link( 'produktpreise', "text=,produkt_id={$p['produkt_id']}" );
+            $fc_produkte = sql_produkte( array( 'artikelnummer' => $row['artikelnummer'], 'lieferanten_id' => $lieferanten_id ) );
+            if( $fc_produkte ) {
+              foreach( $fc_produkte as $p ) {
+                open_div( '', '', fc_link( 'produktpreise', "text=,produkt_id={$p['produkt_id']}" ) );
+              }
             } else {
               if( hat_dienst(4) ) {
                 echo fc_action(
