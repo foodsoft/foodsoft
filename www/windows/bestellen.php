@@ -305,7 +305,7 @@ if( ! $readonly ) {
       if( ( fest[produkt] + toleranz[produkt] ) > 0 ) {
         document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
         // document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
-        if( gebinde > 0 ) {
+        if( <? printf( hat_dienst(4) ? "gebinde" : "zuteilung" ); ?> > 0 ) {
           tag = 'highlight';
         } else {
           tag = 'crit';
