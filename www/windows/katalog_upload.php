@@ -137,9 +137,10 @@ function upload_terra() {
 
       if( preg_match( '&^Preisliste\s+Trockensortiment&', $line ) ) {
         // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Liefera@Land@IK@Netto-Preis@@@MwSt.%@EAN- Code@
+        // ab 2010: 402912@34 69 @Granatapfel, pur 0,75Ltr@@6 FL@VOE@DE@C%@4.97[$ 407]@@J@19@4015533015762@
         $tag = 'Tr';
         $splitat = '@';
-        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
       if( $tag ) {
