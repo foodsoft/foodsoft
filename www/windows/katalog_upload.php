@@ -102,17 +102,23 @@ function upload_terra() {
         $pattern = '/^[\d\s]+@@[\d\s]+@/';
       }
       // Art.Nr.@Bestell-Nr.@Milch@Inhalt@Einh.@Land@IK@Verband@Netto-Preis @/Einh.@empf. VK@MwSt. %@EAN-Code@
+      //
+      // 130002 @300 @ 0,5l Vollmilch im Milchbeutel 3,7% Brodowin @ BW @REG @DD @6@ST @0.54@7@4022894000054@
+      // 130609 @609 @ S Haselnuss Joghurt 150g                    @ SB   @DE   @DB @ 10    @ BE  @0.42        @7      @4008471506812@
+      // Art.Nr.@Bestell-Nr.@Milch                                 @Herst.@Herk.@IK @ Inhalt@Einh.@Netto-Preis @MwSt. %@EAN-Code@
+      //
       if( preg_match( '&^Art.Nr. *@+Bestell-Nr. *@+Milch *@+Inhalt *@Einh. *@+Land *@+IK *@+Verband *@+ *Netto-Preis *@+/Einh. *@empf. VK@+MwSt. % *@+EAN-Code *@+&' , $line ) ) {
         $tag = "Fr";
         $splitat = '@+';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
+        // $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', 'mwst', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
       if( preg_match( '&^Preisliste:\s+Mopro&', $line ) ) {
         $tag='Fr';
         $splitat = '@+';
         $fields = array( 'anummer', 'bnummer', 'name', '', 'herkunft', 'verband', 'gebinde', 'einheit', 'netto', 'mwst', '', '' );
-        $pattern = '/^[\d\s]+@@[\d\s]+@/';
+        $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
 
       if( preg_match( '&^Art.Nr.@Bestell-Nr.@ZITRUS-FRÜCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
