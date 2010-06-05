@@ -943,7 +943,8 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         verteilmult = 0.01;
       if( liefereinheit == verteileinheit )
         lv_faktor = liefermult / verteilmult;
-      if( lv_faktor < 1 )
+      // init lv_faktor; kludge alert - we really need Q-numbers here!
+      if( lv_faktor < 0.001 )
         lv_faktor = 1;
     }
 
@@ -959,7 +960,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       document.forms[preisform].newliefermult.value = liefermult;
       document.forms[preisform].newliefereinheit.value = liefereinheit;
       document.forms[preisform].newlieferpreis.value = lieferpreis;
-      document.forms[preisform].newlv_faktor.value = lv_faktor;
+      document.forms[preisform].newlv_faktor.value = ( lv_faktor.toPrecision(3) );
       document.getElementById("gebindegroesse_liefereinheit").firstChild.nodeValue = liefermult + ' ' + liefereinheit;
       document.getElementById("umrechnung_liefereinheit").firstChild.nodeValue = liefermult + ' ' + liefereinheit;
       document.getElementById("umrechnung_verteileinheit").firstChild.nodeValue = verteilmult + ' ' + verteileinheit;
@@ -1033,6 +1034,9 @@ function action_form_produktpreis() {
   need_http_var('notiz','H');
 
   $gebindegroesse *= $lv_faktor;
+  // kludge alert: rundungsfehler korrigieren (gebindegroesse muss ganzzahlig und >= 1 sein!)
+  // (eigentlich brauchen wir Q-arithnetik fuer den lv_faktor)
+  $gebindegroesse = floor( $gebindegroesse + 0.002 );
 
   $produkt = sql_produkt( $produkt_id );
 
