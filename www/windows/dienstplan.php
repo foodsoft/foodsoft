@@ -97,6 +97,7 @@ switch( $action ) {
   case 'abtauschen':
     need( $id );
     $dienst = sql_dienst( $id );
+    need( ! $dienst['soon'] );
     get_http_var( 'tausch_id', 'U', false );
     if( ! $tausch_id ){
       $tauschmoeglichkeiten = sql_dienste_tauschmoeglichkeiten( $id );

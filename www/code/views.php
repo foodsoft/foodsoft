@@ -307,7 +307,9 @@ function dienstplan_eintrag_view( $dienst_id ) {
                 echo fc_action( 'update,class=button,text=bestaetigen', sprintf( 'action=bestaetigen_%u', $dienst_id ) );
               else
                 echo fc_action( 'update,class=button,text=akzeptieren', sprintf( 'action=akzeptieren_%u', $dienst_id ) );
-              open_td( "right $class", '', fc_action( 'update,class=button,text=geht nicht', sprintf( 'action=abtauschen_%u', $dienst_id ) ) );
+              open_td( "right $class" );
+              if( ! $dienst['soon'] )
+                echo fc_action( 'update,class=button,text=geht nicht', sprintf( 'action=abtauschen_%u', $dienst_id ) );
              open_tr();
                open_td( "$class", "colspan='2'", '&nbsp;' );
           } else {
@@ -348,6 +350,10 @@ function dienstplan_eintrag_view( $dienst_id ) {
       case "Bestaetigt":
         open_td( "left $class", '', 'bestaetigt' );
         open_td( "right $class" );
+        if( $show_buttons and ( $login_gruppen_id != $dienst['gruppen_id'] ) and ( ! $dienst['over'] ) ) {
+          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Diesen bereits BESTAETIGTEN Dienst von andere Gruppe &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?'
+                         , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
+        }
         // smallskip();
         // if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {
         //   echo fc_action( 'update,class=button smalll,text=geht doch nicht,confirm=Diesen bereits BESTAETIGTEN Dienst wieder ablehnen? (bitte unbedingt Ersatz suchen!)'
