@@ -288,6 +288,19 @@ function get_latest_dienst( $add_days = 0 ) {
   );
 }
 
+/**
+ *  giebt daten mit bestimmten Diensten und Status
+ *  (benutzt beim dienstabtausch)
+ */
+function sql_dates_dienst( $dienst, $status ) {
+  return mysql2array( doSql( "
+    SELECT DISTINCT lieferdatum as datum 
+    FROM dienste
+    WHERE ( dienst = '$dienst' )
+      AND ( status = '$status' )
+  ", LEVEL_ALL, "Error while reading Dienstplan" ) );
+}
+
 
 /**
  *  Dienst Akzeptieren (oder auch bestaetigen)
@@ -422,6 +435,42 @@ function sql_dienste_nicht_bestaetigt( $datum ) {
   return sql_dienste( " ( lieferdatum = '$datum' ) and not status = 'Bestaetigt' " );
 }
 
+/** Fuegt einen neuen Dienst in die Diensttabelle
+ * - mit mitglied_id: dienst wird 'Vorgeschlagen'
+ * - ohne mitglied_id: diest wird 'Offen'
+ */
+function sql_create_dienst( $datum, $dienst, $mitglied_id = 0 ) {
+  nur_fuer_dienst(5);
+  if( $mitglied_id ) {
+    $mitglied = sql_gruppenmitglied( $mitglied_id );
+    need( $mitglied['aktiv'] );
+    sql_insert( 'dienste', array(
+      'gruppenmitglieder_id' => $mitglied_id
+    , 'gruppen_id' => $mitglied['gruppen_id'] // falls mitglied ausscheidet: dienst bleibt bei gruppe!
+    , 'dienst' => $dienst
+    , 'lieferdatum' => $datum
+    , 'status' => 'Vorgeschlagen'
+    ) );
+  } else {
+    sql_insert( 'dienste', array(
+      'gruppenmitglieder_id' => 0
+    , 'gruppen_id' => 0
+    , 'dienst' => $dienst
+    , 'lieferdatum' => $datum
+    , 'status' => 'Offen'
+    ) );
+  }
+}
+
+function sql_delete_dienst( $dienst_id ) {
+  nur_fuer_dienst(5);
+  return doSql(
+    "DELETE FROM dienste WHERE id=$dienst_id"
+  , LEVEL_IMPORTANT, "Dienst loeschen fehlgeschlagen"
+  );
+}
+
+
 ////////////////////////////////////
 //
 // rotationsplan-funktionen:
@@ -551,51 +600,6 @@ function sql_change_rotationsplan( $mitglied_id, $dienst, $move_down ) {
   sql_update( 'gruppenmitglieder', $mitglied_id, array( 'rotationsplanposition' => $newpos ) );
 }
 
-
-////////////////////////////////////
-//
-// dienstplan-funktionen:
-//
-////////////////////////////////////
-
-
-
-/** Fuegt einen neuen Dienstin die Diensttabelle
- * - mit mitglied_id: dienst wird 'Vorgeschlagen'
- * - ohne mitglied_id: diest wird 'Offen'
- */
-function sql_create_dienst( $datum, $dienst, $mitglied_id = 0 ) {
-  nur_fuer_dienst(5);
-  if( $mitglied_id ) {
-    $mitglied = sql_gruppenmitglied( $mitglied_id );
-    need( $mitglied['aktiv'] );
-    sql_insert( 'dienste', array(
-      'gruppenmitglieder_id' => $mitglied_id
-    , 'gruppen_id' => $mitglied['gruppen_id'] // falls mitglied ausscheidet: dienst bleibt bei gruppe!
-    , 'dienst' => $dienst
-    , 'lieferdatum' => $datum
-    , 'status' => 'Vorgeschlagen'
-    ) );
-  } else {
-    sql_insert( 'dienste', array(
-      'gruppenmitglieder_id' => 0
-    , 'gruppen_id' => 0
-    , 'dienst' => $dienst
-    , 'lieferdatum' => $datum
-    , 'status' => 'Offen'
-    ) );
-  }
-}
-
-function sql_delete_dienst( $dienst_id ) {
-  nur_fuer_dienst(5);
-  return doSql(
-    "DELETE FROM dienste WHERE id=$dienst_id"
-  , LEVEL_IMPORTANT, "Dienst loeschen fehlgeschlagen"
-  );
-}
-
-
 /**
  *  Erzeugt Dienste für einen Zeitraum
  */
@@ -622,20 +626,12 @@ function create_dienste( $start, $spacing, $zahl, $personenzahlen ) {
 }
 
 
-/**
- *  Wählt Datum aus, mit bestimmtem Dienst und Status
- *  verwendet für Dienstabtausch
- */
-function sql_dates_dienst( $dienst, $status ) {
-  return mysql2array( doSql( "
-    SELECT DISTINCT lieferdatum as datum 
-    FROM dienste
-    WHERE ( dienst = '$dienst' )
-      AND ( status = '$status' )
-  ", LEVEL_ALL, "Error while reading Dienstplan" ) );
-}
-
-
+//////////////////////////////
+//
+// Funktionen fuer Hauptmenue
+// (todo: nach views verschieben?)
+//
+//////////////////////////////
 
 
 /**
@@ -862,12 +858,13 @@ function sql_dienstkontrollblatt_name( $id ) {
 //
 ////////////////////////////////////
 
+// gruppen_id der basar und der bad-bank gruppe sind in den leitvariablen definiert:
+//
 function sql_basar_id() {
   global $basar_id;
   need( $basar_id, "Spezielle Basar-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
   return $basar_id;
 }
-
 function sql_muell_id() {
   global $muell_id;
   need( $muell_id, "Spezielle Muell-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
@@ -1472,22 +1469,22 @@ function select_gesamtbestellungen_unverbindlich() {
 /**
  *  Gesamtbestellung einfügen
  */
-function sql_insert_bestellung($name, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag ){
+function sql_insert_bestellung( $name, $startzeit, $endzeit, $lieferung, $lieferanten_id, $aufschlag_prozent ) {
   nur_fuer_dienst(4);
   return sql_insert( 'gesamtbestellungen', array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit
   , 'lieferung' => $lieferung, 'lieferanten_id' => $lieferanten_id
-  , 'aufschlag' => $aufschlag
+  , 'aufschlag_prozent' => $aufschlag_prozent
   , 'rechnungsstatus' => STATUS_BESTELLEN
   ) );
 }
 
-function sql_update_bestellung($name, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag ){
+function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag_prozent ) {
   nur_fuer_dienst(4);
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
-  , 'aufschlag' => $aufschlag
+  , 'aufschlag_prozent' => $aufschlag_prozent
   ) );
 }
 
@@ -1542,7 +1539,7 @@ function sql_bestellvorschlag( $bestell_id, $produkt_id ) {
                , produkte.name as produkt_name
                , produktgruppen.name as produktgruppen_name
                , gesamtbestellungen.name as name
-               , gesamtbestellungen.aufschlag as aufschlag
+               , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
       FROM gesamtbestellungen
       INNER JOIN bestellvorschlaege
               ON bestellvorschlaege.gesamtbestellung_id=gesamtbestellungen.id
@@ -1588,7 +1585,8 @@ function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
 
 // werte fuer feld `art' in bestellzuordnung:
 //
-define( 'BESTELLZUORDNUNG_ART_VORMERKUNG', 10 );
+define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_FEST', 10 );
+define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ', 11 );
 define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 20 );
 define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 21 );
 define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 30 );
@@ -1616,23 +1614,61 @@ function sql_bestellung_produkt_zuordnungen( $bestell_id, $produkt_id, $art, $or
   return mysql2array( doSql($query, LEVEL_ALL, "Konnte Bestellmengen nich aus DB laden..") );
 }
 
-function sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $gruppen_id, $art ) {
-  return sql_select_single_field( "
-    SELECT IFNULL( SUM( menge ), 0 ) as summe
+function select_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $art, $gruppen_id = 0 ) {
+  $muell_id = sql_muell_id();
+  $basar_id = sql_basar_id();
+  $filter = " ( gruppenbestellungen.gesamtbestellung_id = $bestell_id ) AND (bestellzuordnung.produkt_id = $produkt_id )";
+  if( $gruppen_id ) {
+    $filter .= " AND (gruppenbestellungen.bestellgruppen_id = $gruppen_id )";
+  } else {
+    $filter .= " AND (gruppenbestellungen.bestellgruppen_id != $muell_id) AND (gruppenbestellungen.bestellgruppen_id != $basar_id)";
+  }
+  if( is_numeric( $art ) ) {
+    $filter .= " AND (bestellzuordnung.art = $art)";
+  } else {
+    $filter .= " AND (bestellzuordnung.art $art)";  // should be one of the 'BETWEEN...'-expressions defined above!
+  }
+  return "
+    SELECT IFNULL( SUM( menge ), 0 ) as menge
     FROM gruppenbestellungen
     INNER JOIN bestellzuordnung
        ON ( bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)
-    WHERE gruppenbestellungen.gesamtbestellung_id = $bestell_id 
-      AND bestellzuordnung.produkt_id = $produkt_id
-      AND gruppenbestellungen.bestellgruppen_id = $gruppen_id
-      AND bestellzuordnung.art = $art
-  ", 'summe'
+    WHERE $filter
+  ";
+}
+
+function sql_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $art, $gruppen_id = 0 ) {
+  return sql_select_single_field(
+    select_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, $art, $gruppen_id )
+  , 'menge'
   );
 }
 
-// select_bestellung_produkte(): liefert fuer ein oder alle produkte einer bestellung
+function select_produkt_vormerkungen_menge( $produkt_id, $art = BESTELLZUORDNUNG_ART_VORMERKUNGEN ) {
+  $filter = "( bestellzuordnung.produkt_id = $produkt_id )";
+  if( is_numeric( $art ) ) {
+    $filter .= " AND (bestellzuordnung.art = $art)";
+  } else {
+    $filter .= " AND (bestellzuordnung.art $art)";  // should be one of the 'BETWEEN...'-expressions defined above!
+  }
+  return "
+    SELECT IFNULL( SUM( menge ), 0 ) as menge
+    FROM bestellzuordnung
+    INNER JOIN gruppenbestellungen
+       ON ( bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id )
+    WHERE $filter
+  ";
+}
+
+function sql_produkt_vormerkungen_menge( $produkt_id, $art = BESTELLZUORDNUNG_ART_VORMERKUNGEN ) {
+  return sql_select_single_field( select_produkt_vormerkungen( $produkt_id, $art ), 'menge' );
+}
+
+// select_bestellung_produkte():
+// liefert fuer ein oder alle produkte einer bestellung (group by produkt):
 // - produktdaten und preise (preisdatenSetzen() sollte zusaetzlich aufgerufen werden)
 // - gesamtbestellmenge
+// - festbestellmenge (gruppen _und_ basar)
 // - toleranzbestellmenge: alle toleranzebestellungen _ohne_ basar
 // - basarbestellmenge: _toleranzbestellungen_ des basars
 // - verteilmenge _ohne_ muellgruppe (nicht sinnvoll fuer basar: liefert nicht den basarbestand!)
@@ -1649,6 +1685,10 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
   $gesamtbestellmenge_expr = "
     ifnull( sum(bestellzuordnung.menge * IF( bestellzuordnung.art ". BESTELLZUORDNUNG_ART_BESTELLUNGEN .", 1, 0 ) ), 0.0 )
   ";
+
+  $festbestellmenge_expr = "
+    ifnull( sum(bestellzuordnung.menge * IF( bestellzuordnung.art=". BESTELLZUORDNUNG_ART_FESTBESTELLUNG .", 1, 0 ) ), 0.0 )
+  ";
   // basarbestellmenge: _eigentliche_ basarbestellungen sind TOLERANZBESTELLUNG,
   // basar mit FESTBESTELLUNG zaehlt wie gewoehnliche festmenge!
   $basarbestellmenge_expr = "
@@ -1661,7 +1701,7 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
   ";
   if( $gruppen_id != $basar_id ) {
     $verteilmenge_expr = "
-      ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0)
+      ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art ".BESTELLZUORDNUNG_ART_ZUTEILUNGEN.",1,0)
                                          * IF( gruppenbestellungen.bestellgruppen_id=$muell_id, 0, 1) ), 0.0 )
     ";
   } else {
@@ -1669,12 +1709,12 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     $verteilmenge_expr = 999999;  // nur als Warnung: Wert nicht benutzen!
   }
   $muellmenge_expr = "
-    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art=".BESTELLZUORDNUNG_ART_ZUTEILUNG.",1,0)
+    ifnull( sum(bestellzuordnung.menge * IF(bestellzuordnung.art ".BESTELLZUORDNUNG_ART_ZUTEILUNGEN.",1,0)
                                        * IF( gruppenbestellungen.bestellgruppen_id=$muell_id, 1 , 0) ), 0.0 )
   ";
 
   if( $orderby == '' )
-    $orderby = "menge_ist_null, produktgruppen_id, produkte.name";
+    $orderby = "menge_ist_null, produktgruppen.name, produkte.name";
 
   // tatsaechlich bestellte oder gelieferte produkte werden vor solchen mit
   // menge 0 angezeigt; dafuer einen sortierbaren ausdruck definieren:
@@ -1711,13 +1751,12 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     , produkte.notiz as notiz
     , bestellvorschlaege.liefermenge as liefermenge
     , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
-    , gesamtbestellungen.aufschlag as aufschlag
+    , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
     , produktpreise.liefereinheit as liefereinheit
     , produktpreise.verteileinheit as verteileinheit
     , produktpreise.lv_faktor as lv_faktor
     , produktpreise.gebindegroesse as gebindegroesse
     , produktpreise.lieferpreis as lieferpreis
-    , produktpreise.lieferpreis * gesamtbestellungen.aufschlag / 100.0 as preisaufschlag
     , produktpreise.id as preis_id
     , produktpreise.pfand as pfand
     , produktpreise.mwst as mwst
@@ -1725,6 +1764,7 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
     , produktpreise.bestellnummer as bestellnummer
     , produktpreise.lieferpreis as lieferpreis
     , $gesamtbestellmenge_expr as gesamtbestellmenge
+    , $festbestellmenge_expr as festbestellmenge
     , $basarbestellmenge_expr  as basarbestellmenge
     , $toleranzbestellmenge_expr as toleranzbestellmenge
     , $verteilmenge_expr as verteilmenge
@@ -1761,11 +1801,95 @@ function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0,
   return $r;
 }
 
+/*  preisdaten setzen:
+ *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
+ *   - kan_verteileinheit, kan_verteilmult, kan_liefereinheit, kan_liefermult:
+ *     kanonische einheiten (masszahl abgespalten, einheit wie in global $masseinheiten)
+ *   - liefereinheit_anzeige, verteileinheit_anzeige:
+ *     alternative darstellung fuer bildschirmanzeige (kg und L statt g und ml bei grossen masszahlen)
+ *   - kan_{liefer,verteil}einheit_anzeige, kan_{liefer,verteil}mult_anzeige:
+ *     dito, zerlegt in masszahl und einheit
+ *   - nettolieferpreis, bruttolieferpreis: preise pro L-Einheit
+ *   - nettopreis, bruttopreis: preise pro V-Einheit
+ *   - endpreis:  bruttopreis plus pfand
+ *   - lv_faktor (wird berechnet wenn moeglich, sonst aus datenbank entnommen)
+ *   - preisaufschlag: aufschlag pro V-Einheit (berechnet als prozentsatz vom nettolieferpreis)
+ */
+function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
+
+  // kanonische masseinheiten setzen (gross/kleinschreibung, 1 space zwischenraum, kg -> g, ...)
+  //
+  kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
+  $m = $pr['kan_verteilmult'];
+  $e = $pr['kan_verteileinheit'];
+  $pr['verteileinheit'] = "$m $e";
+  // fuer anzeige ggf groessere einheiten waehlen:
+  switch( $e ) {
+    case 'g':
+      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
+        $e = 'kg';
+        $m /= 1000.0;
+      }
+      break;
+    case 'ml':
+      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
+        $e = 'l';
+        $m /= 1000.0;
+      }
+      break;
+    default:
+  }
+  $pr['verteileinheit_anzeige'] = mult2string( $m ) . " $e";
+  $pr['kan_verteileinheit_anzeige'] = $e;
+  $pr['kan_verteilmult_anzeige'] = $m;
+
+  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
+  $m = $pr['kan_liefermult'];
+  $e = $pr['kan_liefereinheit'];
+  $pr['liefereinheit'] = "$m $e";
+  switch( $e ) {
+    case 'g':
+      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
+        $e = 'kg';
+        $m /= 1000.0;
+      }
+      break;
+    case 'ml':
+      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
+        $e = 'l';
+        $m /= 1000.0;
+      }
+      break;
+    default:
+  }
+  $pr['liefereinheit_anzeige'] = mult2string( $m ) ." $e";
+  $pr['kan_liefereinheit_anzeige'] = $e;
+  $pr['kan_liefermult_anzeige'] = $m;
+
+  if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
+    $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
+  } else {
+    need( $pr['lv_faktor'] > 0, "L-V-Faktor unbekannt: kann nicht zwischen verteileinheit und Liefereinheit umrechnen" );
+  }
+
+  $pr['nettolieferpreis'] = $pr['lieferpreis'];
+  $pr['bruttolieferpreis'] = $pr['lieferpreis'] * ( 1.0 + $pr['mwst'] / 100.0 );
+
+  // Preise je V-Einheit:
+  $pr['nettopreis'] = $pr['nettolieferpreis'] / $pr['lv_faktor'];
+  $pr['bruttopreis'] = $pr['bruttolieferpreis'] / $pr['lv_faktor'];
+  $pr['endpreis'] = $pr['bruttopreis'] + $pr['pfand'];
+  if( isset( $pr['aufschlag_prozent'] ) ) { // needs JOIN gesamtbestellungen
+    $pr['lieferpreisaufschlag'] = $pr['nettolieferpreis'] * $pr['aufschlag_prozent'] / 100.0;
+    $pr['preisaufschlag'] = $pr['lieferpreisaufschlag'] / $pr['lv_faktor'];
+  }
+}
+
 // zuteilungen_berechnen():
 // wo benoetigt, ist sql_bestellung_produkte() schon aufgerufen; zwecks effizienz uebergeben wir der funktion
 // eine Ergebniszeile, um den komplexen query in sql_bestellung_produkte() nicht wiederholen zu muessen:
 //
-function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte */ ) {
+function zuteilungen_berechnen( $mengen /* one row from sql_bestellung_produkte */ ) {
   $produkt_id = $mengen['produkt_id'];
   $bestell_id = $mengen['gesamtbestellung_id'];
   $gebindegroesse = $mengen['gebindegroesse'];
@@ -1855,43 +1979,22 @@ function zuteilungen_berechnen( $mengen  /* a row from sql_bestellung_produkte *
 
   // jetzt sollte nix mehr da sein:  :-)
   //
-  need( $restmenge == 0, "Fehler beim Verteilen: Rest: $restmenge Rest bei Produkt {$mengen['produkt_name']}" );
+  need( $restmenge == 0, "Fehler beim Verteilen: Rest: $restmenge bei Produkt {$mengen['produkt_name']}" );
 
   return array( 'bestellmenge' => $bestellmenge, 'gebinde' => $gebinde, 'festzuteilungen' => $festzuteilungen, 'toleranzzuteilungen' => $toleranzzuteilungen );
 }
 
 
 function select_liefermenge( $bestell_id, $produkt_id ) {
-  return "( SELECT bestellvorschlaege.liefermenge
+  return "SELECT bestellvorschlaege.liefermenge
     FROM bestellvorschlaege
     WHERE bestellvorschlaege.gesamtbestellung_id = $bestell_id
       AND bestellvorschlaege.produkt_id = $produkt_id
-  )";
-}
-
-function sql_liefermenge( $bestell_id, $produkt_id ) {
-  return sql_select_single_field( "SELECT ".select_liefermenge( $bestell_id, $produkt_id )." AS liefermenge", 'liefermenge' );
+  ";
 }
 
 function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
-  $muell_id = sql_muell_id();
-  $basar_id = sql_basar_id();
-  if( $gruppen_id ) {
-    $more_where = " AND (gruppenbestellungen.bestellgruppen_id = $gruppen_id )";
-  } else {
-    $more_where = " AND (gruppenbestellungen.bestellgruppen_id != $muell_id) AND (gruppenbestellungen.bestellgruppen_id != $basar_id)";
-  }
-  $muell_id = sql_muell_id();
-  $basar_id = sql_basar_id();
-  return "( SELECT IFNULL( sum( bestellzuordnung.menge ), 0.0 ) as verteilmenge
-    FROM bestellzuordnung
-    JOIN gruppenbestellungen
-      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-    WHERE ( bestellzuordnung.art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG." )
-          AND ( bestellzuordnung.produkt_id = $produkt_id )
-          AND ( gruppenbestellungen.gesamtbestellung_id = $bestell_id )
-         $more_where
-  ) ";
+  return select_bestellung_produkt_gruppe_menge( $bestell_id, $produkt_id, BESTELLZUORDNUNG_ART_ZUTEILUNGEN, $gruppen_id );
 }
 
 function select_muellmenge( $bestell_id, $produkt_id ) {
@@ -1899,32 +2002,65 @@ function select_muellmenge( $bestell_id, $produkt_id ) {
 }
 
 function select_basarmenge( $bestell_id, $produkt_id ) {
-  return "( SELECT ("
-           . select_liefermenge( $bestell_id, $produkt_id ).
-      " - " .select_verteilmenge( $bestell_id, $produkt_id ).
-      " - " .select_muellmenge( $bestell_id, $produkt_id ).
-    ") AS basarmenge )";
+  return "( SELECT (
+               (". select_liefermenge( $bestell_id, $produkt_id ). ")
+             - (" .select_verteilmenge( $bestell_id, $produkt_id ). ")
+             - (" .select_muellmenge( $bestell_id, $produkt_id ). ")
+         ) AS menge )";
 }
 
+
+function sql_liefermenge( $bestell_id, $produkt_id ) {
+  return sql_select_single_field( select_liefermenge( $bestell_id, $produkt_id ), 'menge' );
+}
 
 function sql_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
-  return sql_select_single_field( "SELECT ".select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id )." AS verteilmenge", 'verteilmenge' );
-}
-
-function sql_basarmenge( $bestell_id, $produkt_id ) {
-  return sql_select_single_field( "SELECT ".select_basarmenge( $bestell_id, $produkt_id )." AS basarmenge", 'basarmenge' );
+  return sql_select_single_field( select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id ), 'menge' );
 }
 
 function sql_muellmenge( $bestell_id, $produkt_id ) {
-  return sql_select_single_field( "SELECT ".select_muellmenge( $bestell_id, $produkt_id )." AS muellmenge", 'muellmenge' );
+  return sql_select_single_field( select_muellmenge( $bestell_id, $produkt_id ), 'menge' );
+}
+
+function sql_basarmenge( $bestell_id, $produkt_id ) {
+  return sql_select_single_field( select_basarmenge( $bestell_id, $produkt_id ), 'menge' );
 }
 
 
 
 /**
- *  sql_basar:
- *  produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
+ * select_basar:
+ * produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
  */
+function select_basar( $bestell_id = 0 ) {
+  $where = '';
+  if( $bestell_id )
+    $where = "WHERE gesamtbestellungen.id = $bestell_id";
+  return "
+    SELECT produkte.name as produkt_name
+         , gesamtbestellungen.name as bestellung_name
+         , gesamtbestellungen.lieferung as lieferung
+         , gesamtbestellungen.id as gesamtbestellung_id
+         , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
+         , produktpreise.lieferpreis
+         , produktpreise.mwst
+         , produktpreise.pfand
+         , produktpreise.lv_faktor
+         , produktpreise.verteileinheit
+         , produktpreise.liefereinheit
+         , bestellvorschlaege.produkt_id
+         , bestellvorschlaege.produktpreise_id
+         , bestellvorschlaege.liefermenge
+         , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basarmenge
+    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
+    JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
+    JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
+    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
+    $where
+    HAVING ( basarmenge <> 0 )
+  " ;
+}
+
 function sql_basar( $bestell_id = 0, $order='produktname' ) {
   switch( $order ) {
     case 'datum':
@@ -1938,53 +2074,24 @@ function sql_basar( $bestell_id = 0, $order='produktname' ) {
       $order_by = 'produkt_name';
       break;
   }
-  return mysql2array( doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" ) );
+  $basar = mysql2array( doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" ) );
+  foreach( $basar as & $r ) {
+    preisdatenSetzen( & $r );
+  }
+  return $basar;
 }
 
-/**
- *
- */
-function select_basar( $bestell_id = 0 ) {
-  $where = '';
-  if( $bestell_id )
-    $where = "WHERE gesamtbestellungen.id = $bestell_id";
-  return "
-    SELECT produkte.name as produkt_name
-         , gesamtbestellungen.name as bestellung_name
-         , gesamtbestellungen.lieferung as lieferung
-         , gesamtbestellungen.id as gesamtbestellung_id
-         , gesamtbestellungen.aufschlag as aufschlag
-         , produktpreise.lieferpreis
-         , produktpreise.lv_faktor
-         , produktpreise.lieferpreis / produktpreise.lv_faktor as nettopreis
-         , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) as bruttopreis
-         , ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( 1.0 + produktpreise.mwst / 100.0 ) + produktpreise.pfand as vpreis
-         , produktpreise.lieferpreis / produktpreise.lv_faktor * ( gesamtbestellungen.aufschlag / 100.0 ) as preisaufschlag
-         , ( produktpreise.lieferpreis / produktpreise.lv_faktor )
-            * ( 1.0 + ( produktpreise.mwst + gesamtbestellungen.aufschlag ) / 100.0 )
-            + produktpreise.pfand as endpreis
-         , produktpreise.verteileinheit
-         , bestellvorschlaege.produkt_id
-         , bestellvorschlaege.produktpreise_id
-         , bestellvorschlaege.liefermenge
-         , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basar
-    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
-    JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
-    JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
-    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
-    $where
-    HAVING (basar <> 0)
-  " ;
+// in der bilanz: wert der basarwaren entspricht dem, was wir den gruppen beim verkauf abziehen
+// (inclusive pfand, aufschlag, und mwst (solange wir letztere nicht abfuehren muessen))
+//
+function basar_wert_bilanz( $bestell_id = 0 ) {
+  $basar = sql_basar( $bestell_id );
+  $wert = 0.0;
+  foreach( $basar as $r ) {
+    $wert += ( $r['basarmenge'] * ( $r['endpreis'] + $r['preisaufschlag'] ) );
+  }
+  return $wert;
 }
-
-function basar_wert_brutto( $bestell_id = 0 ) {
-  return sql_select_single_field(
-    " SELECT IFNULL(sum( basar.basar * basar.bruttopreis ), 0.0 ) as wert
-      FROM ( " .select_basar( $bestell_id ). " ) as basar "
-  , 'wert'
-  );
-}
-
 
 
 /**
@@ -1999,7 +2106,7 @@ function verteilmengenLoeschen( $bestell_id ) {
            FROM bestellzuordnung
            INNER JOIN gruppenbestellungen
              ON (gruppenbestellungen.id = gruppenbestellung_id)
-           WHERE art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG." AND gesamtbestellung_id = $bestell_id "
+           WHERE ( art ".BESTELLZUORDNUNG_ART_ZUTEILUNGEN." ) AND ( gesamtbestellung_id = $bestell_id )"
   , LEVEL_ALL, "Konnte Verteilmengen nicht aus bestellzuordnung löschen."
   );
 
@@ -2048,7 +2155,7 @@ function verteilmengenZuweisen($bestell_id){
   }
 }
 
-function changeLiefermengen_sql($menge, $produkt_id, $bestell_id){
+function changeLiefermengen_sql( $menge, $produkt_id, $bestell_id ) {
   nur_fuer_dienst(1,3,4);
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'bestellvorschlaege'
@@ -2063,7 +2170,7 @@ function nichtGeliefert( $bestell_id, $produkt_id ) {
     INNER JOIN gruppenbestellungen
        ON gruppenbestellung_id = gruppenbestellungen.id
     SET menge =0
-    WHERE art=".BESTELLZUORDNUNG_ART_ZUTEILUNG."
+    WHERE ( art ".BESTELLZUORDNUNG_ART_ZUTEILUNGEN." )
       AND produkt_id = $produkt_id
       AND gesamtbestellung_id = $bestell_id
   ", LEVEL_IMPORTANT, "Konnte Verteilmengen nicht in DB ändern..."
@@ -2085,7 +2192,7 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
              ON bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id
            WHERE produkt_id = $produkt_id
              AND bestellgruppen_id = $gruppen_id 
-             AND art = ".BESTELLZUORDNUNG_ART_VORMERKUNG );
+             AND art ". BESTELLZUORDNUNG_ART_VORMERKUNGEN );
 
   if( $festmenge >= 0 ) {
     $festmenge_alt = sql_select_single_field(
@@ -2112,13 +2219,13 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
         , 'menge' => $festmenge, 'art' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG
         ) );
       }
-    } // else: ( $ festmenge == $festmenge_alt ): nix zu tun...
-   if( $vormerken ) {
-     sql_insert( 'bestellzuordnung', array(
-       'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
-     , 'menge' => $festmenge, 'art' => BESTELLZUORDNUNG_ART_VORMERKUNG
-     ) );
-   }
+    } // else: ( $festmenge == $festmenge_alt ): nix zu tun...
+    if( $vormerken and ( $festmenge > 0 ) ) {
+      sql_insert( 'bestellzuordnung', array(
+        'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
+      , 'menge' => $festmenge, 'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_FEST
+      ) );
+    }
   }
 
   if( $toleranzmenge >= 0 ) {
@@ -2140,6 +2247,12 @@ function change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $festmenge
         , 'menge' => $toleranzmenge, 'art' => BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG
         ) );
       }
+    }
+    if( $vormerken and ( $toleranzmenge > 0 ) ) {
+      sql_insert( 'bestellzuordnung', array(
+        'produkt_id' => $produkt_id, 'gruppenbestellung_id' => $gruppenbestellung_id
+      , 'menge' => $toleranzmenge, 'art' => BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ
+      ) );
     }
   }
 }
@@ -2168,26 +2281,6 @@ function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
   , LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen"
   );
 }
-
-
-/**
- *  zusaetzlicheBestellung:
- *    um nachtraeglich (insbesondere nach Lieferung) ein Produkt zu einer Bestellung hinzuzufuegen.
- *    - eine entsprechende Basarbestellung wird erzeugt
- *    - liefermenge wird noch _nicht_ gesetzt
- */
-// function zusaetzlicheBestellung( $produkt_id, $bestell_id ) {
-  // need( getState( $bestell_id ) < STATUS_ABGERECHNET, "Aenderung nicht mehr moeglich: Bestellung ist abgerechnet!" );
-  // sql_insert_bestellvorschlag( $produkt_id, $bestell_id );
-  // $gruppenbestellung_id = sql_insert_gruppenbestellung( sql_basar_id(), $bestell_id );
-   // return sql_insert( 'bestellzuordnung', array(
-   //  'produkt_id' => $produkt_id
-   // , 'gruppenbestellung_id' => $gruppenbestellung_id
-   // , 'menge' => 0 // TODO: brauchen wir die?
-   // , 'art' => 1
-   // ) );
-// }
-
 
 
 ////////////////////////////////////
@@ -2537,6 +2630,8 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 //
 ////////////////////////////////////////////
 
+// TRANSAKTION_TYP_xxx: dienen zur Klassifikation der BadBank-Buchungen:
+//
 define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );      // noch nicht zugeordnet
 define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben: gruppen, lieferanten und bank
 define( 'TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN', 2 ); // Ausgleich/Umlage Differenz Anfangsguthaben
@@ -2603,8 +2698,8 @@ function transaktion_typ_string( $typ ) {
 // betraege werden immer als 'soll' der fc, also schuld der fc
 // (an gruppen, lieferanten oder bank) zurueckgegeben (ggf. also negativ)
 //
-define( 'OPTION_WAREN_NETTO_SOLL', 1 );         /* waren ohne pfand */
-define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );
+define( 'OPTION_WAREN_NETTO_SOLL', 1 );       /* waren ohne pfand */
+define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );      /* mit mwst, ohne pfand */
 define( 'OPTION_WAREN_AUFSCHLAG_SOLL', 3 );   /* Aufschlag zur Kostendeckung der FC */
 define( 'OPTION_ENDPREIS_SOLL', 4 );          /* waren brutto inclusive pfand, aber _ohne_ aufschlag (nur gruppenseitig sinnvoll) */
 define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 );   /* schuld aus kauf voller pfandverpackungen */
@@ -2633,7 +2728,8 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
       $query = 'waren';
       break;
     case OPTION_WAREN_AUFSCHLAG_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) * ( gesamtbestellungen.aufschlag / 100.0 ) )";
+      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor )
+                 * ( gesamtbestellungen.aufschlag_prozent / 100.0 ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_BRUTTO_SOLL:
@@ -3491,84 +3587,6 @@ function mult2string( $mult ) {
   return preg_replace( '/\.$/', '', $mult );
 }
 
-/*  preisdaten setzen:
- *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
- *   - kan_verteileinheit, kan_verteilmult, kan_liefereinheit, kan_liefermult:
- *     kanonische einheiten (masszahl abgespalten, einheit wie in global $masseinheiten)
- *   - liefereinheit_anzeige, verteileinheit_anzeige:
- *     alternative darstellung fuer bildschirmanzeige (kg und L statt g und ml bei grossen masszahlen)
- *   - kan_{liefer,verteil}einheit_anzeige, kan_{liefer,verteil}mult_anzeige:
- *     dito, zerlegt in masszahl und einheit
- *   - nettolieferpreis, bruttolieferpreis: preise pro L-Einheit
- *   - nettopreis, bruttopreis: preise pro V-Einheit
- *   - endpreis:  bruttopreis plus pfand
- *   - lv_faktor (wird berechnet wenn moeglich, sonst aus datenbank entnommen)
- */
-function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
-
-  // kanonische masseinheiten setzen (gross/kleinschreibung, 1 space zwischenraum, kg -> g, ...)
-  //
-  kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
-  $m = $pr['kan_verteilmult'];
-  $e = $pr['kan_verteileinheit'];
-  $pr['verteileinheit'] = "$m $e";
-  // fuer anzeige ggf groessere einheiten waehlen:
-  switch( $e ) {
-    case 'g':
-      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
-        $e = 'kg';
-        $m /= 1000.0;
-      }
-      break;
-    case 'ml':
-      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
-        $e = 'l';
-        $m /= 1000.0;
-      }
-      break;
-    default:
-  }
-  $pr['verteileinheit_anzeige'] = mult2string( $m ) . " $e";
-  $pr['kan_verteileinheit_anzeige'] = $e;
-  $pr['kan_verteilmult_anzeige'] = $m;
-
-  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
-  $m = $pr['kan_liefermult'];
-  $e = $pr['kan_liefereinheit'];
-  $pr['liefereinheit'] = "$m $e";
-  switch( $e ) {
-    case 'g':
-      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
-        $e = 'kg';
-        $m /= 1000.0;
-      }
-      break;
-    case 'ml':
-      if( $m >= 1000 and ( $m % 100 == 0 ) ) {
-        $e = 'l';
-        $m /= 1000.0;
-      }
-      break;
-    default:
-  }
-  $pr['liefereinheit_anzeige'] = mult2string( $m ) ." $e";
-  $pr['kan_liefereinheit_anzeige'] = $e;
-  $pr['kan_liefermult_anzeige'] = $m;
-
-  if( $pr['kan_liefereinheit'] == $pr['kan_verteileinheit'] ) {
-    $pr['lv_faktor'] = $pr['kan_liefermult'] / $pr['kan_verteilmult'];
-  } else {
-    need( $pr['lv_faktor'] > 0, "kann nicht zwischen verteileinheit und Liefereinheit umrechnen" );
-  }
-
-  $pr['nettolieferpreis'] = $pr['lieferpreis'];
-  $pr['bruttolieferpreis'] = $pr['lieferpreis'] * ( 1.0 + $pr['mwst'] / 100.0 );
-
-  // Preise je V-Einheit:
-  $pr['nettopreis'] = $pr['nettolieferpreis'] / $pr['lv_faktor'];
-  $pr['bruttopreis'] = $pr['bruttolieferpreis'] / $pr['lv_faktor'];
-  $pr['endpreis'] = $pr['bruttopreis'] + $pr['pfand'];
-}
 
 /**
  *  Produktgruppen abfragen
@@ -4189,7 +4207,7 @@ function update_database($version){
       sql_insert( 'leitvariable', array( 'name' => 'sockelbetrag_gruppe', 'value' => 0.0 ) );
       doSql( "DELETE FROM leitvariable WHERE name = 'sockelbetrag'" );
 
-      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag` decimal(4,2) NOT NULL default '0.00'" );
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD column `aufschlag_prozent` decimal(4,2) NOT NULL default '0.00'" );
       sql_insert( 'leitvariable', array( 'name' => 'aufschlag_default', 'value' => 0.0 ) );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
