@@ -127,7 +127,8 @@ function upload_terra() {
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
-      if( preg_match( '&^Art.Nr.@Bestell-Nr.@Zitrus-Früchte *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
+      if( preg_match( '&^Art.Nr.@Bestell-Nr.@Zitrus-Fr.*chte *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
+        /// lyzing line: Art.Nr.@Bestell-Nr.@Zitrus-Früchte  @Inhalt  @Einh.  @Herk.  @HKL@IK@Verband@Netto-Preis    @/Einh.@MwSt.%@Bemerkung@
         $tag='OG';
         $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
@@ -135,18 +136,22 @@ function upload_terra() {
       }
 
       if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
+        // 705022  @ 45 01 2  @  Babyflasche 2x125ml @  1 SET @ MLL @DE @ @ 5.46[$ 407] @ @ J @ 19 @4031075402211@
         $tag='drog';
         $splitat = '@';
-        $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        $fields = array( 'anummer', 'bnummer', 'name',  'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
 
       if( preg_match( '&^Preisliste\s+Trockensortiment&', $line ) ) {
         // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Liefera@Land@IK@Netto-Preis@@@MwSt.%@EAN- Code@
-        // ab 2010: 402912@34 69 @Granatapfel, pur 0,75Ltr@@6 FL@VOE@DE@C%@4.97[$ 407]@@J@19@4015533015762@
+        // ab 2010: 402912 @ 34 69 @Granatapfel, pur 0,75Ltr@ @6 FL @VOE @DE @C% @4.97[$ 407]@@J@19@4015533015762@
+        // ...und nun: 129210 @ 26 4  @Volvic Wasser PET 1,5Ltr@  6 FL @VOL @FR @## @0.83[$ 407]@@J@19@3057640108433@
         $tag = 'Tr';
         $splitat = '@';
-        $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
       if( $tag ) {

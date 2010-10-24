@@ -10,12 +10,12 @@ if( ! $angemeldet ) {
   exit();
 }
 
-// if( get_http_var( 'download','W' ) ) {  // Spezialfall: Datei-Download (.pdf, ...): ohne HTTP-header!
-//   $window = $download;
-//   $self_fields['download'] = $window;
-//   include( "windows/$download.php" );
-//   exit();
-// }
+if( get_http_var( 'download','W' ) ) {  // Spezialfall: Datei-Download (.pdf, ...): ohne HTTP-header!
+  $window = $download;
+  $self_fields['download'] = $window;
+  include( "windows/$download.php" );
+  exit();
+}
 
 get_http_var( 'window', 'w', 'menu', true );         // eigentlich: name des skriptes
 get_http_var( 'window_id', 'w', 'main', true );   // ID des browserfensters
@@ -42,7 +42,7 @@ switch( $window_id ) {
         }
     }
     open_table( 'footer', "width='100%'" );
-      open_td( '', '', "aktueller Server: <kbd>$foodsoftserver</kbd>" );
+      open_td( '', '', "aktueller Server: <kbd>" .getenv('HOSTNAME'). "</kbd>" );
       open_td( 'right' );
         echo $mysqljetzt;
         if( $readonly ) {

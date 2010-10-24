@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: tooltip.js,v 1.1.1.1 2007-04-04 11:49:48 dreusser Exp $ */
 
 
 /**

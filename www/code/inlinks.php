@@ -149,13 +149,13 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'browse';
       $options = $large_window_options;
       break;
-    // case 'updownload':
-    //  $parameters['window'] = 'updownload';
-    //  $parameters['window_id'] = 'main';
-    //  $parameters['text'] = 'Up/Download';
-    //  $parameters['title'] = 'zum Upload / Download der Datenbank...';
-    //  $options = $large_window_options;
-    //  break;
+     case 'updownload':
+      $parameters['window'] = 'updownload';
+      $parameters['window_id'] = 'main';
+      $parameters['text'] = 'Up/Download';
+      $parameters['title'] = 'zum Upload / Download der Datenbank...';
+      $options = $large_window_options;
+      break;
     case 'dienstplan':
       $parameters['window'] = 'dienstplan';
       $parameters['window_id'] = 'main';
