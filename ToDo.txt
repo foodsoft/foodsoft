@@ -1,0 +1,15 @@
+Update INSTALL covering:
+
+apache:
+need mod_rewrite
+
+mod_php5:
+need short_open_tag
+need register_long_arrays
+need php5_mysql
+need php5_posix
+
+perl:
+need Spreadsheet::ParseExcel for antixls
+
+
