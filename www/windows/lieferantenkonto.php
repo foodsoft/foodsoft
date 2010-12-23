@@ -97,7 +97,7 @@ open_table('list');
   while( $konto_row or $vert_row ) {
     open_tr();
     if( ( $vert_row ? $vert_row['valuta_kan'] : '0' ) > ( $konto_row ? $konto_row['valuta_kan'] : '0' ) ) {
-      //Eintrag in Konto ist Älter -> Verteil ausgeben
+      //Eintrag in Konto ist Ã„lter -> Verteil ausgeben
       $bestell_id = $vert_row['gesamtbestellung_id'];
       $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
       $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];

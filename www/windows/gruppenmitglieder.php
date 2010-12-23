@@ -24,7 +24,7 @@ if( hat_dienst(5) and ! $readonly ) {
 
 $pwmsg = '';
 
-// ggf. Aktionen durchführen (z.B. Gruppe löschen...)
+// ggf. Aktionen durchfÃ¼hren (z.B. Gruppe lÃ¶schen...)
 get_http_var('action','w','');
 switch( $action ) {
   case 'new_pwd':
@@ -32,9 +32,9 @@ switch( $action ) {
     need_http_var('newPass', 'R');
     need_http_var('newPass2', 'R');
     if($newPass!=$newPass2){
-      $pwmsg = "<div class='warn' style='padding:1em;'>Eingaben nicht identisch! (Gruppenpasswort wurde nicht geändert)</div>";
+      $pwmsg = "<div class='warn' style='padding:1em;'>Eingaben nicht identisch! (Gruppenpasswort wurde nicht geÃ¤ndert)</div>";
     } else if( strlen( $newPass ) < 4 ) {
-      $pwmsg = "<div class='warn' style='padding:1em;'>Passwort zu kurz! (Gruppenpasswort wurde nicht geändert)</div>";
+      $pwmsg = "<div class='warn' style='padding:1em;'>Passwort zu kurz! (Gruppenpasswort wurde nicht geÃ¤ndert)</div>";
     } else {
       set_password( $gruppen_id, $newPass );
       $pwmsg = "<div class='ok' style='padding:1em;'>Das Gruppenpasswort wurde neu gesetzt</div>";

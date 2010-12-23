@@ -40,7 +40,7 @@ require_once('code/html.php');
 // verbindung gleich aufbauen:
 global $db_handle;
 if( ! ( $db_handle = mysql_connect($db_server,$db_user,$db_pwd ) ) || !mysql_select_db( $db_name ) ) {
-  echo "<html><body><h1>Datenbankfehler!</h1>Konnte keine Verbindung zur Datenbank herstellen... Bitte sp‰ter nochmal versuchen.</body></html>";
+  echo "<html><body><h1>Datenbankfehler!</h1>Konnte keine Verbindung zur Datenbank herstellen... Bitte sp√§ter nochmal versuchen.</body></html>";
   exit();
 }
 

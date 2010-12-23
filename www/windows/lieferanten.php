@@ -8,7 +8,7 @@ setWikiHelpTopic( 'foodsoft:lieferanten' );
 
 $editable = ( hat_dienst(4,5) and ! $readonly );
  
-// ggf. Aktionen durchführen (z.B. Lieferant löschen...)
+// ggf. Aktionen durchfÃ¼hren (z.B. Lieferant lÃ¶schen...)
 get_http_var('action','w','');
 $editable or $action = '';
 

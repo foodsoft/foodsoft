@@ -47,7 +47,7 @@ if( ! $readonly and hat_dienst(5) ) {
   close_fieldset();
 }
 
-// ggf. Aktionen durchführen (z.B. Gruppe löschen...)
+// ggf. Aktionen durchfÃ¼hren (z.B. Gruppe lÃ¶schen...)
 get_http_var('action','w','');
 $readonly and $action = '';
 switch( $action ) {
@@ -74,7 +74,7 @@ switch( $action ) {
     nur_fuer_dienst(5);
     need_http_var('newNumber', 'u');
     need_http_var('newName','H');
-    // vorläufiges Passwort für die Bestellgruppe erzeugen...
+    // vorlÃ¤ufiges Passwort fÃ¼r die Bestellgruppe erzeugen...
     $pwd = strval(rand(1010,9999));
 
     $gruppen_id = sql_insert_group( $newNumber, $newName, $pwd );

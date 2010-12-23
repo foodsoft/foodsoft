@@ -121,14 +121,14 @@ function upload_terra() {
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
 
-      if( preg_match( '&^Art.Nr.@Bestell-Nr.@ZITRUS-FR‹CHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
+      if( preg_match( "&^Art.Nr.@Bestell-Nr.@ZITRUS-FR\xdcCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&", $line ) ) {
         $tag='OG';
         $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
       if( preg_match( '&^Art.Nr.@Bestell-Nr.@Zitrus-Fr.*chte *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
-        /// lyzing line: Art.Nr.@Bestell-Nr.@Zitrus-Fr¸chte  @Inhalt  @Einh.  @Herk.  @HKL@IK@Verband@Netto-Preis    @/Einh.@MwSt.%@Bemerkung@
+        /// lyzing line: Art.Nr.@Bestell-Nr.@Zitrus-Fr√ºchte  @Inhalt  @Einh.  @Herk.  @HKL@IK@Verband@Netto-Preis    @/Einh.@MwSt.%@Bemerkung@
         $tag='OG';
         $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
@@ -358,7 +358,7 @@ function upload_bode() {
 // format midgard.bnn:
 //
 // 30503  ;X ;20060410 ; ; ; ;Naturata Dinkel Bandnudeln  ; ; ; ;Na ; ;D ;DEM  ; ;     ;1000;13 ;43 ;  ;1 ; 10 x 500g; 10 ; 500g  ; 1 ; ; ; ; ;      ; ; ; ;1 ; ;      ; ; 1,86  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
-// 25540  ;A ;20090901 ; ; ; ;Schoko-MÅsli               ; ; ; ;Rg ; ;D ;kbA  ; ;     ;900 ;9  ;51 ;  ;1 ; 6 x 750g ;  6 ; 750g  ; 1 ; ; ; ; ;4,73  ; ; ; ;1 ; ; 4,49 ; ; 3,07  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
+// 25540  ;A ;20090901 ; ; ; ;Schoko-M√ºsli               ; ; ; ;Rg ; ;D ;kbA  ; ;     ;900 ;9  ;51 ;  ;1 ; 6 x 750g ;  6 ; 750g  ; 1 ; ; ; ; ;4,73  ; ; ; ;1 ; ; 4,49 ; ; 3,07  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
 // 353555 ;A ;20090402 ; ; ; ;Kichererbsen, gekocht       ; ; ; ;LS ; ;I ;kbA  ; ;     ;300 ;3  ;35 ;  ;1 ; 6 x 340g ;  6 ; 340g  ; 1 ; ; ; ; ;3,348 ; ; ; ;1 ; ; 2,45 ; ; 1,67  ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
 // 424902 ;A ;20090403 ; ; ; ;Bio-Hirse aus dem Spreewald ; ; ; ;SH ; ;D ;kbA  ; ;     ;    ;   ;57 ;  ;1 ; 6 x 1 kg ;  6 ; 1 kg  ; 1 ; ; ; ; ;6     ; ; ; ;1 ; ;      ; ; 2,4   ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;1kg;1;;
 // 424903 ;A ;20090402 ; ; ; ;Bio-Hirse aus dem Spreewald ; ; ; ;SH ; ;D ;kbA  ; ;     ;    ;   ;57 ;  ;1 ; 1 x 25kg ;  1 ; 25kg  ; 1 ; ; ; ; ;25    ; ; ; ;1 ; ;      ; ; 46,42 ;J;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;

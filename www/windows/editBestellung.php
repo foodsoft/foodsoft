@@ -62,7 +62,7 @@ if( $action == 'save' ) {
   $lieferung = "$lieferung_year-$lieferung_month-$lieferung_day";
 
   if( $bestellname == "" )
-    $problems  .= "<div class='warn'>Die Bestellung muﬂ einen Namen bekommen!</div>";
+    $problems  .= "<div class='warn'>Die Bestellung mu√ü einen Namen bekommen!</div>";
 
   if( $problems == '' ) {
     if( $bestell_id ) {

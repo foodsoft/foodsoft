@@ -44,10 +44,10 @@ if( $action == 'save' ) {
   , 'dauerbrenner' => $dauerbrenner
   );
 
-  if( ! $name ) $problems .= "<div class='warn'>Das neue Produkt mu� einen Name haben!</div>";
+  if( ! $name ) $problems .= "<div class='warn'>Das neue Produkt muß einen Name haben!</div>";
   if( ! $produktgruppen_id ) $problems .= "<div class='warn'>Das neue Produkt muß zu einer Produktgruppe gehören!</div>";
 
-  // Wenn keine Fehler, dann einf�gen...
+  // Wenn keine Fehler, dann einfügen...
   if( ! $problems ) {
     if( $produkt_id ) {
       if( sql_update( 'produkte', $produkt_id, $values ) ) {
