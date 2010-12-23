@@ -233,7 +233,7 @@ if( $bestellung['aufschlag_prozent'] > 0 ) {
       echo "Lieferant: $lieferant_name";
       if( ! $teil_abrechnung ) {
         open_div( 'oneline' );
-          ?> Rechnungsnummer des Lieferanten: <?  qquad();
+          ?> Rechnungsnummer des Lieferanten: <?php  qquad();
           echo string_view( $bestellung['rechnungsnummer'], 40, ( $editable ? 'rechnungsnummer' : false ) );
         close_div();
       }
@@ -283,7 +283,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
       open_td( 'italic small', "colspan='5'", 'Extras bitte in Gesamtabrechnung erfassen' );
     } else {
       open_td( '', "colspan='3'" );
-        ?> Sonstiges: <? qquad();
+        ?> Sonstiges: <?php qquad();
         echo string_view( $bestellung['extra_text'], 40, ( $editable ? 'extra_text' : false ) );
       open_td( 'number bottom', ''
         , price_view( $bestellung['extra_soll'], ( $editable ? 'extra_soll' : false ) ) );
@@ -297,7 +297,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
   open_tr();
     if( $status >= STATUS_ABGERECHNET ) {
       open_td( 'right medskip', "colspan='5'" );
-        ?> Abrechnung durchgeführt: <?
+        ?> Abrechnung durchgeführt: <?php
          echo sql_dienstkontrollblatt_name( $bestellung['abrechnung_dienstkontrollblatt_id'] ) .", "
               . $bestellung['abrechnung_datum'];
         if( hat_dienst(4) && ( $status == STATUS_ABGERECHNET ) && ! $teil_abrechnung ) {

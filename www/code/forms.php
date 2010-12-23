@@ -1,4 +1,4 @@
-<?
+<?php
 
 ////////////////////////////////////////
 //
@@ -456,7 +456,7 @@ function formular_buchung_gruppe_anfangsguthaben() {
             <em>nur bei Umstellung einer Foodcoop auf die Foodsoft</em> zur Erfassung der
             <em>schon vorhandenen Guthaben schon vorhandener Gruppen</em>
             benutzt werden, <em>nicht</em> im normalen Betrieb!
-          <?
+          <?php
         form_row_gruppe();
         form_row_date( 'Valuta:', 'valuta' );
         tr_title( 'positiv: Guthaben der Gruppe / negativ: Schulden der Gruppe' );
@@ -507,7 +507,7 @@ function formular_buchung_lieferant_anfangsguthaben() {
             <em>nur bei Umstellung einer Foodcoop auf die Foodsoft</em> zur Erfassung
             noch offener Rechnungen (Forderungen von Lieferanten an die FC)
             benutzt werden, <em>nicht</em> im laufenden Betrieb!
-          <?
+          <?php
         form_row_lieferant();
         form_row_date( 'Valuta:', 'valuta' );
         tr_title( 'positiv: offene Forderung des Lieferanten an die FC / negativ: Forderung der FC an Lieferant' );
@@ -556,7 +556,7 @@ function formular_buchung_bank_anfangsguthaben() {
             <em>nur bei Umstellung einer Foodcoop auf die Foodsoft</em> zur Erfassung
             <em>des Anfangskontostands bei Umstellung</em>
             benutzt werden, <em>nicht</em> im laufenden Betrieb!
-          <?
+          <?php
         form_row_konto( 'von Konto:', 'konto_id' );
         form_row_kontoauszug( "<div class='right'>Auszug:</div>", 'auszug' );
         form_row_date( 'Valuta:', 'valuta' );
@@ -604,9 +604,9 @@ function formular_umbuchung_verlust( $typ = 0 ) {
               hidden_input( 'von_typ', $typ );
             } else {
               open_select( 'von_typ' );
-                ?> <option value=''>(bitte Quelle w&auml;hlen)</option> <?
+                ?> <option value=''>(bitte Quelle w&auml;hlen)</option> <?php
                 foreach( array( TRANSAKTION_TYP_SPENDE , TRANSAKTION_TYP_UMLAGE ) as $t ) {
-                   ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
+                   ?> <option value='<?php echo $t; ?>'><?php echo transaktion_typ_string($t); ?></option> <?php
                  }
               close_select();
             }
@@ -614,11 +614,11 @@ function formular_umbuchung_verlust( $typ = 0 ) {
           open_td( 'label', '', 'nach:' );
           open_td( 'kbd' );
             open_select( 'nach_typ' );
-              ?> <option value=''>(bitte Ziel w&auml;hlen)</option> <?
+              ?> <option value=''>(bitte Ziel w&auml;hlen)</option> <?php
               foreach( array( TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN
                             , TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN
                             , TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE ) as $t ) {
-                ?> <option value='<? echo $t; ?>'><? echo transaktion_typ_string($t); ?></option> <?
+                ?> <option value='<?php echo $t; ?>'><?php echo transaktion_typ_string($t); ?></option> <?php
               }
             close_select();
         form_row_date( 'Valuta:', 'valuta' );
@@ -723,14 +723,14 @@ function formular_artikelnummer( $produkt_id, $toggle = false, $bestell_id = 0 )
     open_table( 'layout' );
         open_td( '', '' );
           open_form( '', 'action=artikelnummer_setzen' );
-            ?> neue Artikel-Nr. setzen: <?
+            ?> neue Artikel-Nr. setzen: <?php
             echo string_view( $anummer, 20, 'anummer' );
             quad(); submission_button( 'Speichern', true );
           close_form();
       open_tr();
         open_td();
           open_form( "window=artikelsuche,produkt_id=$produkt_id,lieferanten_id=$lieferanten_id,bestell_id=$bestell_id", 'action=search' );
-            ?>...oder: Katalogsuche nach: <?
+            ?>...oder: Katalogsuche nach: <?php
             echo string_view( $produkt['name'], 40, 'name' );
             quad(); submission_button( 'Los!' );
           close_form();
@@ -801,15 +801,15 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         ?>
         <label class='qquad'>MWSt:</label>
            <input type='text' size='4' class='number' name='mwst' id='newmwst'
-            value='<? echo $vorschlag['mwst']; ?>' title='Mehrwertsteuer-Satz in Prozent'
+            value='<?php echo $vorschlag['mwst']; ?>' title='Mehrwertsteuer-Satz in Prozent'
             onchange='preisberechnung_vorwaerts();'>
 
         <label class='qquad'>Pfand:</label>
            <input type='text' class='number' size='4' name='pfand' id='newpfand'
-            value='<? printf( "%.2lf", $vorschlag['pfand'] ); ?>'
+            value='<?php printf( "%.2lf", $vorschlag['pfand'] ); ?>'
             title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
             onchange='preisberechnung_vorwaerts();'>
-        <?
+        <?php
 
       open_tr();  // lieferpreis und liefereinheit
 
@@ -819,7 +819,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('L-Preis: Netto: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
                  onmouseout="help(' ');" >
            <input title='Nettopreis' class='number' type='text' size='8' id='newlieferpreis' name='lieferpreis'
-             value='<? printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
+             value='<?php printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
@@ -827,15 +827,15 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('Liefer-Einheit: die Menge, für die der Einzelpreis aus dem Katalog gilt');"
                  onmouseout="help(' ');" >
            <input type='text' size='4' class='number' name='liefermult' id='newliefermult'
-             value='<? echo $vorschlag['kan_liefermult']; ?>'
+             value='<?php echo $vorschlag['kan_liefermult']; ?>'
              title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
              onchange='preisberechnung_vorwaerts();'>
            <select size='1' name='liefereinheit' id='newliefereinheit'
              onchange='preisberechnung_vorwaerts();'>
-               <? echo optionen_einheiten( $vorschlag['kan_liefereinheit'] ); ?>
+               <?php echo optionen_einheiten( $vorschlag['kan_liefereinheit'] ); ?>
            </select>
            </span>
-         <?
+         <?php
 
       open_tr();  // vpreis und verteileinheit
 
@@ -845,7 +845,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('Verbraucher-Preis: der Preis für die Gruppen (mit MWSt und Pfand) je Verteileinheit');"
                  onmouseout="help(' ');" >
            <input title='Preis incl. MWSt und Pfand' class='number' type='text' size='8' id='newvpreis' name='vpreis'
-             value='<? printf( '%.4lf', $vorschlag['vpreis'] ); ?>'
+             value='<?php printf( '%.4lf', $vorschlag['vpreis'] ); ?>'
              onchange='preisberechnung_rueckwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
@@ -853,15 +853,15 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('Verteileinheit: Vielfache davon können die Gruppen bestellen - wählt hier eine sinnvolle Größe, etwa 1 ST bei abgepackten Sachen, 500g bei Gemüse, 100g bei Käse');"
                  onmouseout="help(' ');" >
            <input type='text' size='4' class='number' name='verteilmult' id='newverteilmult'
-             value='<? echo $vorschlag['kan_verteilmult']; ?>'
+             value='<?php echo $vorschlag['kan_verteilmult']; ?>'
              title='Vielfache der Einheit: meist 1, ausser bei g, z.B. 1000 fuer 1kg'
              onchange='preisberechnung_vorwaerts();'>
            <select size='1' name='verteileinheit' id='newverteileinheit'
              onchange='preisberechnung_vorwaerts();'>
-               <? echo optionen_einheiten( $vorschlag['kan_verteileinheit'] ); ?>
+               <?php echo optionen_einheiten( $vorschlag['kan_verteileinheit'] ); ?>
            </select>
            </span>
-        <?
+        <?php
 
       open_tr(); // gebinde
            open_td( 'label', '', 'Gebindegr&ouml;&szlig;e:' );
@@ -870,14 +870,14 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('Gebindegroesse: wieviel von diesem Produkt muessen wir auf einmal bestellen --- muss ein Vielfaches fer V-Einheit sein!');"
                  onmouseout="help(' ');" >
            <input type='text' size='4' class='number' name='gebindegroesse' id='newgebindegroesse'
-             value='<? echo mult2string( $vorschlag['gebindegroesse'] / $vorschlag['lv_faktor'] ) ; ?>'
+             value='<?php echo mult2string( $vorschlag['gebindegroesse'] / $vorschlag['lv_faktor'] ) ; ?>'
              onchange='preisberechnung_vorwaerts();'>
            * <span id='gebindegroesse_liefereinheit']>
-               <? echo $vorschlag['kan_liefermult']; ?>
-               <? echo $vorschlag['kan_liefereinheit']; ?>
+               <?php echo $vorschlag['kan_liefermult']; ?>
+               <?php echo $vorschlag['kan_liefereinheit']; ?>
              </span>
            </span>
-         <?
+         <?php
 
         if( $vorschlag['kan_verteileinheit'] != $vorschlag['kan_liefereinheit'] )
           $display = 'inline';
@@ -888,13 +888,13 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('Umrechnung: hier müsst ihr der Software helfen, die Liefereinheit in die Verteileinheit umzurechnen!');"
                  onmouseout="help(' ');" >
           Umrechnung der Einheiten:
-            <span id='umrechnung_liefereinheit'><? echo "{$vorschlag['kan_liefermult']} {$vorschlag['kan_liefereinheit']}"; ?></span>
+            <span id='umrechnung_liefereinheit'><?php echo "{$vorschlag['kan_liefermult']} {$vorschlag['kan_liefereinheit']}"; ?></span>
             =
-            <input type='text' size='6' class='number' name='lv_faktor' id='newlv_faktor' value='<? echo mult2string( $vorschlag['lv_faktor'] ); ?>'
+            <input type='text' size='6' class='number' name='lv_faktor' id='newlv_faktor' value='<?php echo mult2string( $vorschlag['lv_faktor'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
-            *  <span id='umrechnung_verteileinheit'><? echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></span>
+            *  <span id='umrechnung_verteileinheit'><?php echo "{$vorschlag['kan_verteilmult']} {$vorschlag['kan_verteileinheit']}"; ?></span>
            </span>
-          <?
+          <?php
         close_span();
 
       open_tr();
@@ -908,7 +908,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
             ?> <label>Dynamische Neuberechnung:</label>
                <input name='dynamischberechnen' type='checkbox' value='yes'
                  title='Dynamische Berechnung anderer Felder bei Änderung eines Eintrags' checked>
-            <?
+            <?php
        }
     close_table();
     open_div( 'kommentar bottom', "id='preisform_hinweise' style='height:1em;padding:1em;'", ' ' );
@@ -920,7 +920,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     var mwst, pfand, verteilmult, verteileinheit, preis, gebindegroesse_in_liefereinheiten,
       liefermult, liefereinheit, lieferpreis, lv_faktor;
 
-    var preisform = '<? echo "form_$form_id"; ?>';
+    var preisform = '<?php echo "form_$form_id"; ?>';
 
     // vorwaerts: lieferpreis berechnen
     //
@@ -1004,7 +1004,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     }
 
   </script>
-  <?
+  <?php
 }
 
 function action_form_produktpreis() {

@@ -227,14 +227,14 @@ function dienst_view3($row){
   ?>
        <select name="kontrollblatt" >
      <option value='new'>Kein passender Eintrag</option>
-  <?
+  <?php
 	foreach($kontrollblatt as $eintrag){
 		printf( "<option value='%u'>%s %s</option>", $eintrag['id'], $eintrag['datum'], $eintrag['notiz'] );
 	}	
   ?>
                </select>
 	       <br> Notiz: <input type="text"  size="30" name="notiz">  
-  <?
+  <?php
   submission_button( 'Dienst abschliessen' );
   close_form();
 }
@@ -407,7 +407,7 @@ function dienst_view( $dienst_id, $editable = false ) {
   if( $edit_gruppe ) {
     open_div( 'oneline smallskip' );
     if( $gruppenmitglieder_id || ! $gruppen_id ) {
-      ?> Gruppe: <?
+      ?> Gruppe: <?php
     } else {
       echo fc_link( 'gruppenmitglieder'
                  , array( 'gruppen_id' => $gruppen_id, 'img' => false, 'class' => 'href'
@@ -1148,8 +1148,8 @@ function bestellschein_view(
             if( $editAmounts ) {
               open_td( '', "style='border-left-style:none;border-right-style:none;'" );
                 //Checkbox für fehlende Lieferung. Löscht auch gleich Einträge in der Verteiltabelle
-                ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<? echo $produkt_id; ?>'
-                     <? echo $input_event_handlers; ?> > <?
+                ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<?php echo $produkt_id; ?>'
+                     <?php echo $input_event_handlers; ?> > <?php
             }
             open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
           }
@@ -1207,7 +1207,7 @@ function select_products_not_in_list( $bestell_id ) {
   $lieferanten_id = $bestellung['lieferanten_id'];
   $produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
 
-  ?> Produkt: <?
+  ?> Produkt: <?php
   open_select( 'produkt_id' );
     echo "<option value='0' selected>(Bitte Produkt wählen)</option>";
     foreach( $produkte as $p ) {
@@ -1591,9 +1591,9 @@ function auswahl_lieferant( $selected = 0 ) {
     div_msg( 'warn left', "noch keine " . fc_link( 'lieferanten', 'text=Lieferanten,window_id=main,class=href' ). ' eingetragen!' );
     return;
   } else if( ! $selected ) {
-    ?> <h4> Bitte Lieferant auswählen: </h4> <?
+    ?> <h4> Bitte Lieferant auswählen: </h4> <?php
   } else {
-    ?> <h4> Lieferanten der Foodcoop: </h4> <?
+    ?> <h4> Lieferanten der Foodcoop: </h4> <?php
   }
   open_table('list',"width:600px;");
       open_th( '', '', 'Lieferanten' );
@@ -1614,9 +1614,9 @@ function auswahl_konto( $selected = 0 ) {
     div_msg( 'warn left', 'noch keine Konten eingetragen!' );
     return;
   } else if( ! $selected ) {
-    ?> <h4> Bitte Bankkonto auswählen: </h4> <?
+    ?> <h4> Bitte Bankkonto auswählen: </h4> <?php
   } else {
-    ?> <h4> Bankkonten der Foodcoop: </h4> <?
+    ?> <h4> Bankkonten der Foodcoop: </h4> <?php
   }
   open_table('list');
     open_th('','','Name');

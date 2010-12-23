@@ -19,7 +19,7 @@ $muell_id = sql_muell_id();
 function verlust_bestellungen( $detail = false ) {
   global $muell_id;
   if( $detail ) {
-    ?> <h2>Differenzen aus Bestellungen:</h2> <?
+    ?> <h2>Differenzen aus Bestellungen:</h2> <?php
     open_table( 'list', "width='98%'" );
       open_th('','','Bestellung');
       open_th('','','Schwund/Müll');
@@ -84,7 +84,7 @@ function verlust_bestellungen( $detail = false ) {
 function verlust_aufschlag( $detail = false ) {
   global $muell_id;
   if( $detail ) {
-    ?> <h2>Aufschlaege auf Bestellungen:</h2> <?
+    ?> <h2>Aufschlaege auf Bestellungen:</h2> <?php
     open_table( 'list', "width='98%'" );
       open_th('','','Bestellung');
       open_th('','','Aufschlag Prozent');
@@ -184,12 +184,12 @@ if( $detail ) {
 $verluste_summe = 0.0;
 $ausgleich_summe = 0.0;
 
-?> <h1>Verlustaufstellung --- &Uuml;bersicht</h1> <?
+?> <h1>Verlustaufstellung --- &Uuml;bersicht</h1> <?php
 
 if( $editable ) {
 
   open_fieldset( 'small_form', '', 'Transaktionen', 'off' );
-    ?> <h4>Art der Transaktion:</h4> <?
+    ?> <h4>Art der Transaktion:</h4> <?php
     alternatives_radio( array(
       'umbuchung_form' => array( 'Umbuchung Verlustausgleich'
                                , 'Umbuchung von Spenden oder Umlagen zur Schuldentilgung' )

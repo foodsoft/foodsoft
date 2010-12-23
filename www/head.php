@@ -13,11 +13,11 @@ echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
 open_tag( 'html' );
 open_tag( 'head' );
 ?>
-  <title>Food Coop <? echo $foodcoop_name; ?>  - Foodsoft</title>
+  <title>Food Coop <?php echo $foodcoop_name; ?>  - Foodsoft</title>
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-  <link rel='stylesheet' type='text/css' href='<? echo $foodsoftdir; ?>/css/foodsoft.css'>
-  <script type='text/javascript' src='<? echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
-<?
+  <link rel='stylesheet' type='text/css' href='<?php echo $foodsoftdir; ?>/css/foodsoft.css'>
+  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
+<?php
 close_tag( 'head' );
 open_tag( 'body' );
 
@@ -25,7 +25,7 @@ open_div( $headclass, "id='header'" );
   open_table( '', "width='100%'" );
     open_td();
       ?><a class='logo' href='index.php'>
-          <span class='logoinvers'>FC</span><span class='logo'><? echo $foodcoop_name; ?>... Foodsoft</span></a> <?
+          <span class='logoinvers'>FC</span><span class='logo'><?php echo $foodcoop_name; ?>... Foodsoft</span></a> <?php
     open_td( '', "style='padding-top:1em;'" );
       if( $angemeldet ) {
         if( $login_dienst > 0 ) {

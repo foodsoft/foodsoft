@@ -1,6 +1,6 @@
 <?PHP
 
-?> <h1>Produktdatenbank ....</h1> <?
+?> <h1>Produktdatenbank ....</h1> <?php
 
 assert( $angemeldet ) or exit();
 

@@ -201,14 +201,14 @@ if( $action == 'download' ) {
 }
 
 
-?> <h1>Up/Download der Datenbank...</h1> <?
+?> <h1>Up/Download der Datenbank...</h1> <?php
 
 open_table( 'layout' );
   global $usb_device;
   // if( $readonly ) {
   if( false ) { /* momentan ausser betrieb! */
       open_td();
-        ?> Datenbank hochladen und anschliessend freigeben: <?
+        ?> Datenbank hochladen und anschliessend freigeben: <?php
           qquad(); wikiLink("foodsoft:daten_auf_den_server_hochladen", "Wiki...");
       open_td();
         if( $usb_device ) {
@@ -232,7 +232,7 @@ open_table( 'layout' );
           }
         } else {
           open_form( "enctype=multipart/form-data", 'action=upload' );
-            ?> <input name='userfile' type='file'> <?
+            ?> <input name='userfile' type='file'> <?php
             qquad(); submission_button( 'Hochladen' );
           close_form();
         }
@@ -244,7 +244,7 @@ open_table( 'layout' );
 
   } else {
       open_td();
-          ?> Datenbank <!-- sperren und --> runterladen: <?
+          ?> Datenbank <!-- sperren und --> runterladen: <?php
           wikiLink("foodsoft:daten_vom_server_runterladen", "Wiki...");
       open_td();
         if( $usb_device )

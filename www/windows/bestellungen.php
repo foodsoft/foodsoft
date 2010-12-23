@@ -315,7 +315,7 @@ open_javascript();
         post_action( 'nop', 0 );
       }
     }
-  <?
+  <?php
 close_javascript();
 
 ?>

@@ -1,4 +1,4 @@
-<?
+<?php
 
 assert( $angemeldet ) or exit();
 

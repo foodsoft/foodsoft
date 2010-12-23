@@ -24,11 +24,11 @@ echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
 open_tag( 'html' );
 open_tag( 'head' );
 ?>
-  <title id='title'><? echo $title; ?></title>
+  <title id='title'><?php echo $title; ?></title>
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-  <link rel='stylesheet' type='text/css' href='<? echo $foodsoftdir; ?>/css/foodsoft.css'>
-  <script type='text/javascript' src='<? echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
-<?
+  <link rel='stylesheet' type='text/css' href='<?php echo $foodsoftdir; ?>/css/foodsoft.css'>
+  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
+<?php
 close_tag( 'head' );
 
 open_tag( 'body' );

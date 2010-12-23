@@ -1,4 +1,4 @@
-<?
+<?php
 
 // db version 12
 

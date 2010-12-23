@@ -14,7 +14,7 @@ if( $meinkonto ) {
   $gruppen_id = $login_gruppen_id;
   $self_fields['gruppen_id'] = $gruppen_id;
   $gruppen_name = sql_gruppenname( $gruppen_id );
-  ?> <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <? echo $gruppen_name; ?></h1> <?
+  ?> <h1>Mein Konto: Kontoausz&uuml;ge von Gruppe <?php echo $gruppen_name; ?></h1> <?php
 
   if( ! $readonly ) {
 
@@ -70,7 +70,7 @@ if( $meinkonto ) {
 } else { // kontoblatt-anzeige fuer dienste
   nur_fuer_dienst(4,5);
   setWikiHelpTopic( 'foodsoft:kontoblatt' );
-  ?> <h1>Kontoblatt</h1> <?
+  ?> <h1>Kontoblatt</h1> <?php
 
   if( ! $readonly ) {
     get_http_var( 'action', 'w', '' );
@@ -115,7 +115,7 @@ if( $meinkonto ) {
   if( ! $readonly ) {
     open_fieldset( 'small_form', '', 'Transaktionen', 'off' );
 
-      ?> <h4>Art der Transaktion:</h4> <?
+      ?> <h4>Art der Transaktion:</h4> <?php
 
       alternatives_radio( array(
         'gruppe_bank_form' => array( 'Einzahlung oder Auszahlung'

@@ -84,7 +84,7 @@ switch( $action ) {
       open_div( 'warn' );
       ?> Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren
          Versuchen (Telefon und Email) nicht erreichbar 
-      <?
+      <?php
       echo fc_action( 'class=button,text=Klar', sprintf( 'action=uebernehmen_%u,message=1', $id ) );
       close_div();
       smallskip();
@@ -150,7 +150,7 @@ switch( $action ) {
 if( hat_dienst(5) ) {
   open_div( '', 'id=Zusatz' );
 
-    ?> <h1>Dienste erstellen</h1> <?
+    ?> <h1>Dienste erstellen</h1> <?php
 
     $startdatum = get_latest_dienst( $dienstinterval );
     open_form( '', 'action=diensteErstellen' );
@@ -178,16 +178,16 @@ if( hat_dienst(5) ) {
     close_form();
     smallskip();
 
-    ?> <h1>Rotationsplan</h1> <?
+    ?> <h1>Rotationsplan</h1> <?php
 
-    ?> Rotationsplan für <?
+    ?> Rotationsplan für <?php
      open_select( 'plan_dienst', 'autoreload' );
        foreach( array( '1/2', '3', '4' ) as $dienst ) {
          $selected = ( $plan_dienst == $dienst ? 'selected' : '' );
          echo "<option value='$dienst' $selected>Dienst $dienst</option>";
        }
      close_select();
-    ?> bearbeiten: <?
+    ?> bearbeiten: <?php
 
     open_table( 'smallskip' );
       foreach( sql_rotationsplan( $plan_dienst ) as $mitglied ) {
@@ -208,7 +208,7 @@ if( hat_dienst(5) ) {
 }
 
 
-?> <h1>Dienstliste</h1> <?
+?> <h1>Dienstliste</h1> <?php
 
 open_div( 'kommentar' );
   // open_span( '', '',

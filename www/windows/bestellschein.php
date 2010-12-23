@@ -170,7 +170,7 @@ switch( $status ) {
       open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
         open_form( '', 'action=insert' );
           open_div( 'kommentar' )
-            ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?
+            ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
             open_ul();
               open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
               open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
@@ -179,7 +179,7 @@ switch( $status ) {
           select_products_not_in_list($bestell_id);
           // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
           // (die haengt von der auswahl in obiger Produktliste ab!)
-          // ?> <label>Menge:</label> <?
+          // ?> <label>Menge:</label> <?php
           // echo int_view( 1, 'menge' );
           submission_button();
         close_form();

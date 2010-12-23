@@ -1,4 +1,4 @@
-<?
+<?php
 
 setWikiHelpTopic( 'foodsoft:' );
 
@@ -35,7 +35,7 @@ open_table( 'layout hfill' );
     if( $action == 'edit' ) {
       open_form( '', 'action=save' );
         open_div( 'board' );
-          ?><textarea id='news' wrap='hard' name='bulletinboard' class='board' cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
+          ?><textarea id='news' wrap='hard' name='bulletinboard' class='board' cols='38' rows='8'><?php echo $bulletinboard; ?></textarea><?php
           open_div( 'chalk' );
             submission_button();
           close_div();
@@ -45,10 +45,10 @@ open_table( 'layout hfill' );
     } else {
       $form_id = open_form( '', 'action=edit' );
         open_div( 'board' );
-          ?><textarea class='board' name='news' readonly cols='38' rows='8'><? echo $bulletinboard; ?></textarea><?
+          ?><textarea class='board' name='news' readonly cols='38' rows='8'><?php echo $bulletinboard; ?></textarea><?php
           open_div( 'chalk' );
-            ?><a href='#' onclick="document.forms.form_<? echo $form_id; ?>.submit();"
-                title='Tafel beschreiben...'><img src='img/chalk_trans.gif' alt='Kreide'></a><?
+            ?><a href='#' onclick="document.forms.form_<?php echo $form_id; ?>.submit();"
+                title='Tafel beschreiben...'><img src='img/chalk_trans.gif' alt='Kreide'></a><?php
           close_div();
         close_div();
       close_form();
@@ -64,7 +64,7 @@ open_table( 'layout hfill' );
     }
 
     open_div( 'bigskip' );
-      ?> <h4> Laufende Bestellungen: </h4> <?
+      ?> <h4> Laufende Bestellungen: </h4> <?php
       auswahl_bestellung();
     close_div();
 
@@ -74,7 +74,7 @@ open_table( 'layout hfill' );
 
     if( false ) {
       open_div( 'bigskip' );
-        ?> <h4> Letzte Dienste: </h4> <?
+        ?> <h4> Letzte Dienste: </h4> <?php
         foreach( sql_dienste( " ( gruppen_id = $login_gruppen_id ) and ( lieferdatum < $mysqlheute ) " ) as $row ) {
           if($row['dienstkontrollblatt_id']!="NULL"){
             dienst_view3($row);

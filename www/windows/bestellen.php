@@ -40,7 +40,7 @@ if( $bestell_id ) {
 }
 
 open_td( 'qquad smallskip floatright', "id='auswahl_bestellung'" );
-  ?> <h4> Zur Zeit laufende Bestellungen: </h4> <?
+  ?> <h4> Zur Zeit laufende Bestellungen: </h4> <?php
   auswahl_bestellung( $bestell_id );
 
 close_table();
@@ -141,10 +141,10 @@ if( ! $readonly ) {
 
   ?>
   <script type="text/javascript">
-    var anzahl_produkte = <? echo count( $produkte ); ?>;
-    var kontostand = <? printf( "%.2lf", $kontostand ); ?>;
+    var anzahl_produkte = <?php echo count( $produkte ); ?>;
+    var kontostand = <?php printf( "%.2lf", $kontostand ); ?>;
     var gesamtpreis = 0.00;
-    var aufschlag = <? printf( "%.2lf", $gesamtbestellung['aufschlag'] ); ?>;
+    var aufschlag = <?php printf( "%.2lf", $gesamtbestellung['aufschlag'] ); ?>;
     var gebindegroesse     = new Array();
     var preis              = new Array();
     var kosten             = new Array();
@@ -282,7 +282,7 @@ if( ! $readonly ) {
       document.getElementById('fest_'+produkt).value = fest[produkt];
       document.getElementById('toleranz_'+produkt).value = toleranz[produkt];
 
-      <? if( ! hat_dienst(4) ) { ?>
+      <?php if( ! hat_dienst(4) ) { ?>
       zuteilung = zuteilung_fest + zuteilung_toleranz;
       if( zuteilung > 0 ) {
         document.getElementById('z_'+produkt).firstChild.nodeValue = zuteilung * verteilmult[produkt];
@@ -295,7 +295,7 @@ if( ! $readonly ) {
           document.getElementById('zt_'+produkt).className = 'center';
         }
       }
-      <? } ?>
+      <?php } ?>
 
       // kosten und neuen kontostand berechnen und anzeigen:
       //
@@ -305,7 +305,7 @@ if( ! $readonly ) {
       if( ( fest[produkt] + toleranz[produkt] ) > 0 ) {
         document.getElementById('k_'+produkt).firstChild.nodeValue = kosten_neu.toFixed(2);
         // document.getElementById('m_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] );
-        if( <? printf( hat_dienst(4) ? "gebinde" : "zuteilung" ); ?> > 0 ) {
+        if( <?php printf( hat_dienst(4) ? "gebinde" : "zuteilung" ); ?> > 0 ) {
           tag = 'highlight';
         } else {
           tag = 'crit';
@@ -343,7 +343,7 @@ if( ! $readonly ) {
     }
 
     function reminder_on() {
-      reminder = document.getElementById('floating_submit_button_<? echo $bestellform_id; ?>');
+      reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
       reminder.style.display = 'inline';
 
       id = document.getElementById('hinzufuegen');
@@ -409,11 +409,11 @@ if( ! $readonly ) {
       if( gesamtpreis > kontostand ) {
         alert( 'Kontostand nicht ausreichend!' );
       } else {
-        document.forms['form_<? echo $bestellform_id; ?>'].submit();
+        document.forms['form_<?php echo $bestellform_id; ?>'].submit();
       }
     }
   </script>
-  <?
+  <?php
 
   open_div( 'alert floatingbuttons', "id='floating_submit_button_$bestellform_id'" );
     open_table('layout');
@@ -451,10 +451,10 @@ open_table( 'list hfill' );  // bestelltabelle
       <col width='3*'>
       <col width='3*'>
       <col width='1*'>
-      <? if( hat_dienst(4) ) echo "<col width='1*'>"; ?>
+      <?php if( hat_dienst(4) ) echo "<col width='1*'>"; ?>
     </colgroup>
     -->
-  <?
+  <?php
   open_tr( 'groupofrows_top' );
     open_th( '', '', 'Produktgruppe' );
     open_th( '', '', 'Bezeichnung' );
@@ -617,9 +617,9 @@ foreach( $produkte as $produkt ) {
       open_div('oneline center smallskip');
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='--' onclick='fest_minusminus($n);' >";
-        ?> <span onclick='fest_minus(<? echo $n; ?>);' ><img alt='-' src='img/minus.png'></span>
+        ?> <span onclick='fest_minus(<?php echo $n; ?>);' ><img alt='-' src='img/minus.png'></span>
             <span class='quad'>&nbsp;</span>
-            <span onclick='fest_plus(<? echo $n; ?>);' ><img alt='+' src='img/plus.png'></span> <?
+            <span onclick='fest_plus(<?php echo $n; ?>);' ><img alt='+' src='img/plus.png'></span> <?php
         // if( $gebindegroesse > 1 )
         //  echo "<input type='button' value='++' onclick='fest_plusplus($n);' >";
         qquad();
@@ -641,14 +641,14 @@ foreach( $produkte as $produkt ) {
       if( ! $readonly ) {
         open_div('oneline center smallskip');
           qquad();
-          ?> <span onclick='toleranz_minus(<? echo $n; ?>);' ><img alt='-' src='img/minus.png'></span>
+          ?> <span onclick='toleranz_minus(<?php echo $n; ?>);' ><img alt='-' src='img/minus.png'></span>
              <span class='quad'>&nbsp;</span>
-             <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<? echo $n; ?>);' > -->
-             <span onclick='toleranz_plus(<? echo $n; ?>);' ><img alt='+' src='img/plus.png'></span> <?
+             <!-- <input type='button' value='G' onclick='toleranz_auffuellen(<?php echo $n; ?>);' > -->
+             <span onclick='toleranz_plus(<?php echo $n; ?>);' ><img alt='+' src='img/plus.png'></span> <?php
         close_div();
       }
     } else {
-      ?> &nbsp; <?
+      ?> &nbsp; <?php
     }
 
   open_td( 'center bottom noleft' );

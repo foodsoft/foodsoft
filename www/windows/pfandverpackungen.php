@@ -49,7 +49,7 @@ open_table( 'layout hfill' );
              ) ) . "</h3>";
       }
     } else {
-      ?> <h3>Pfandverpackungen</h3> <?
+      ?> <h3>Pfandverpackungen</h3> <?php
       auswahl_lieferant( $lieferanten_id );
    }
 close_table();

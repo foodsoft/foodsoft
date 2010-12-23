@@ -49,11 +49,11 @@ open_table( 'layout hfill' );
     close_table();
   open_td();
     if( $bestell_id ) {
-      ?> <h3>Gruppenpfand: Bestellung <? echo "$bestellung_name ({$lieferant_name})"; ?></h3> <?
+      ?> <h3>Gruppenpfand: Bestellung <?php echo "$bestellung_name ({$lieferant_name})"; ?></h3> <?php
     } else if( $lieferanten_id ) {
-      ?> <h3>Gruppenpfand: alle Bestellungen bei <? echo "$lieferant_name"; ?></h3> <?
+      ?> <h3>Gruppenpfand: alle Bestellungen bei <?php echo "$lieferant_name"; ?></h3> <?php
     } else {
-      ?> <h3>Gruppenpfand: alle Bestellungen </h3> <?
+      ?> <h3>Gruppenpfand: alle Bestellungen </h3> <?php
     }
 close_table();
 

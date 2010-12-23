@@ -12,7 +12,7 @@ if( ! isset( $foodsoftdir ) ) {
 
 require_once('code/config.php');
 if( $allow_setup_from ) {
-  ?><html><body> Fehler: bitte <code>setup.php</code> deaktivieren in <code>code/config.php</code>!</body></html><?
+  ?><html><body> Fehler: bitte <code>setup.php</code> deaktivieren in <code>code/config.php</code>!</body></html><?php
   exit(1);
 }
 

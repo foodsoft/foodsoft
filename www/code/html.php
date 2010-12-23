@@ -1,4 +1,4 @@
-<?
+<?php
 
 global $open_tags      /* keep track of open tags */
      , $print_on_exit  /* print this just before </body> */
@@ -391,7 +391,7 @@ function floating_submission_button() {
     open_table('layout');
       open_td('alert left');
         ?> <a class='close' title='Schließen' href='javascript:true;'
-          onclick='document.getElementById("floating_submit_button_<? echo $form_id; ?>").style.display = "none";'> <?
+          onclick='document.getElementById("floating_submit_button_<?php echo $form_id; ?>").style.display = "none";'> <?php
       open_td('alert center quad', '', "&Auml;nderungen sind noch nicht gespeichert!" );
     open_tr();
       open_td( 'alert center oneline smallskip', "colspan='2'" );

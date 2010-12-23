@@ -182,31 +182,31 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
         open_td();
           ?> <input class='checkbox' type='radio' name='dienst' value='0'
               onclick='dienstform_off();'
-              <? if (!$login_dienst) echo ' checked'; ?> >
-              <label>keinen Dienst</label> <?
+              <?php if (!$login_dienst) echo ' checked'; ?> >
+              <label>keinen Dienst</label> <?php
         open_td();
           ?> <input class='checkbox' type='radio' name='dienst' value='1'
               onclick='dienstform_on();'
-              <? if ($login_dienst==1) echo ' checked'; ?> >
-              <label title='Verteiler'>Dienst I/II</label> <?
+              <?php if ($login_dienst==1) echo ' checked'; ?> >
+              <label title='Verteiler'>Dienst I/II</label> <?php
         open_td();
           ?> <input class='checkbox' type='radio' name='dienst' value='3'
                onclick='dienstform_on();'
-               <? if ($login_dienst==3) echo ' checked'; ?> >
-               <label title='Kellerdienst'>Dienst III</label> <?
+               <?php if ($login_dienst==3) echo ' checked'; ?> >
+               <label title='Kellerdienst'>Dienst III</label> <?php
         open_td();
           ?> <input class='checkbox' type='radio' name='dienst' value='4'
               onclick='dienstform_on();'
-              <? if ($login_dienst==4) echo ' checked'; ?> >
-              <label title='Abrechnung'>Dienst IV</label> <?
+              <?php if ($login_dienst==4) echo ' checked'; ?> >
+              <label title='Abrechnung'>Dienst IV</label> <?php
         open_td();
           ?> <input class='checkbox' type='radio' name='dienst' value='5'
               onclick='dienstform_on();'
-              <? if ($login_dienst==5) echo ' checked'; ?> >
-              <label title='Mitgliederverwaltung'>Dienst V</label> <?
+              <?php if ($login_dienst==5) echo ' checked'; ?> >
+              <label title='Mitgliederverwaltung'>Dienst V</label> <?php
     close_table();
     open_div( 'kommentar', "id='nodienstform' style='display:" . ( $login_dienst ? 'none' : 'block' ) .";'" );
-      ?> Wenn du nur bestellen oder dein Gruppenkonto einsehen möchtest, brauchst Du hier keinen Dienst auszuwählen. <?
+      ?> Wenn du nur bestellen oder dein Gruppenkonto einsehen möchtest, brauchst Du hier keinen Dienst auszuwählen. <?php
     close_div();
     open_div( '', "id='dienstform' style='display:" . ( $login_dienst ? 'block' : 'none' ) .";'" );
       open_div( 'kommentar', '', "
@@ -217,14 +217,14 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
       open_fieldset( 'small_form', '', 'Dienstkontrollblatt' );
         open_div( 'newfield' );
           ?> <label>Dein Name:</label>
-             <input type='text' size='20' name='coopie_name' value='<? echo $coopie_name; ?>'>
+             <input type='text' size='20' name='coopie_name' value='<?php echo $coopie_name; ?>'>
              <label style='padding-left:4em;'>Telefon:</label>
-             <input type='text' size='20' name='telefon' value='<? $telefon; ?>'> <?
+             <input type='text' size='20' name='telefon' value='<?php $telefon; ?>'> <?php
         close_div();
         open_div( 'newfield' );
           ?> <label>Notiz fuers Dienstkontrollblatt:</label>
              <br>
-             <textarea cols='80' rows='3' name='notiz'><? echo $notiz; ?></textarea> <?
+             <textarea cols='80' rows='3' name='notiz'><?php echo $notiz; ?></textarea> <?php
         close_div();
       close_fieldset();
     close_div();

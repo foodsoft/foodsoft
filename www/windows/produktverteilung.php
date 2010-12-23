@@ -20,9 +20,9 @@ nur_fuer_dienst(1,3,4,5);
 setWikiHelpTopic( "foodsoft:verteilung" );
 
 if( $produkt_id ) {
-  ?> <h1>Produktverteilung</h1> <?
+  ?> <h1>Produktverteilung</h1> <?php
 } else {
-  ?> <h1>Verteilliste</h1> <?
+  ?> <h1>Verteilliste</h1> <?php
 }
 bestellung_overview( $bestell_id );
 

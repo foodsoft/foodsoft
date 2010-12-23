@@ -1,4 +1,4 @@
-<?
+<?php
 $leitvariable = array(
   'foodcoop_name' => array(
     'meaning' => 'Name der Foodcoop'

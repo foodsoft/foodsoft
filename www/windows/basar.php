@@ -33,7 +33,7 @@ if( $action == 'basarzuteilung' ) {
   }
 }
 
-?> <h1>Basar</h1> <?
+?> <h1>Basar</h1> <?php
 
 basar_view( $bestell_id, $orderby, $editable );
 

@@ -7,7 +7,7 @@ assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( 'foodsoft:Bilanz' );
 
-?> <h1>Bilanz </h1> <?
+?> <h1>Bilanz </h1> <?php
 
 $gruppen_einzahlungen_ungebucht = sql_ungebuchte_einzahlungen_summe();
 
@@ -29,7 +29,7 @@ function posten( $name, $wert ) {
 }
 
 open_table( 'layout hfill' );
-  ?> <colgroup><col width='*'><col width='*'></colgroup> <?
+  ?> <colgroup><col width='*'><col width='*'></colgroup> <?php
   open_th( '', "style='padding:4px;'", 'Aktiva' ); open_th( '', "style='padding:4px;'", 'Passiva' );
   open_tr();
 

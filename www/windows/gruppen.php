@@ -196,7 +196,7 @@ open_table('list');
                         , array( 'action' => 'delete', 'gruppen_id' => $gruppe['id'] ) );
         }
       } else {
-        ?>(inaktiv)<?
+        ?>(inaktiv)<?php
       }
 
     if($show_member_details) {

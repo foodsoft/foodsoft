@@ -1,4 +1,4 @@
-<?
+<?php
 // dump.php --- dump database structure
 //
 // This script must _not_ be accessible over the net during normal

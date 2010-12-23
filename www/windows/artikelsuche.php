@@ -16,7 +16,7 @@ $lieferant = sql_lieferant( $lieferanten_id );
 $lieferant_name = $lieferant['name'];
 $katalogformat = $lieferant['katalogformat'];
 
-?> <h1>Lieferantenkatalog </h1> <?
+?> <h1>Lieferantenkatalog </h1> <?php
 
 open_div( 'oneline' );
   echo "Lieferant auswaehlen: ";
@@ -107,7 +107,7 @@ if( $editable and ( ! $produkt_id ) ) {
   open_form( array( 'window' => 'katalog_upload', 'attr' => "enctype='multipart/form-data'", 'action' => 'upload', 'lieferanten_id' => $lieferanten_id ) );
     open_fieldset( 'small_form', '', "Kataloge von $lieferant_name" );
 
-      ?><h4>erfasste Kataloge (insgesamt <? echo sql_lieferant_katalogeintraege( $lieferanten_id ); ?> Einträge):</h4> <?
+      ?><h4>erfasste Kataloge (insgesamt <?php echo sql_lieferant_katalogeintraege( $lieferanten_id ); ?> Einträge):</h4> <?php
       open_table( 'list' );
         open_th( '', '', 'Katalog' );
         open_th( '', '', 'Typ' );
@@ -125,7 +125,7 @@ if( $editable and ( ! $produkt_id ) ) {
       close_table();
 
       medskip();
-      ?> <h3> Neuen Katalog einlesen: </h3> <?
+      ?> <h3> Neuen Katalog einlesen: </h3> <?php
       open_table('layout');
         open_td( '', '', "Datei (Format: .xls): <input type='file' name='katalog'>" );
         open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='katalogkw' size='8'>" );
@@ -144,7 +144,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           echo string_view( $bnummer, 10, 'bnummer' );
           open_span( 'qquad', '', "<label>Artikelnummer:</label>". string_view( $anummer, 10, 'anummer' ) );
           open_span( 'qquad' );
-            ?> <label>Katalog:</label> <?
+            ?> <label>Katalog:</label> <?php
             open_select( 'katalogtyp' );
               echo optionen( array( '', 'OG', 'Fr', 'Tr', 'drog' ), $katalogtyp );
             close_select();
@@ -156,12 +156,12 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       open_tr();
         open_td( '', '', 'Preis (netto):' );
         open_td();
-          ?> &nbsp; von: <? echo price_view( $minpreis, 'minpreis' );
-          ?> &nbsp; bis: <? echo price_view( $maxpreis, 'maxpreis' );
+          ?> &nbsp; von: <?php echo price_view( $minpreis, 'minpreis' );
+          ?> &nbsp; bis: <?php echo price_view( $maxpreis, 'maxpreis' );
       open_tr();
         open_td( 'label', '', 'Limit:' );
         open_td();
-          ?> maximal <? echo int_view( $limit, 'limit' ); ?> Treffer anzeigen <?
+          ?> maximal <?php echo int_view( $limit, 'limit' ); ?> Treffer anzeigen <?php
           submission_button( 'Suche starten', true );
     close_table();
   close_form();
@@ -179,7 +179,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       div_msg( 'bold', 'Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!' );
     }
 
-    ?> <h3> <? echo mysql_num_rows($result); ?> Treffer (Limit: <? echo $limit; ?>) </h3><?
+    ?> <h3> <?php echo mysql_num_rows($result); ?> Treffer (Limit: <?php echo $limit; ?>) </h3><?php
     open_table( 'list' );
       open_th( '', '', 'A-Nr.' );
       open_th( '', '', 'B-Nr.' );

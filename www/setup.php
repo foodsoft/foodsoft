@@ -1,4 +1,4 @@
-<?
+<?php
 //
 // setup.php --- setup tool for Foodsoft
 //
@@ -14,7 +14,7 @@
 </head>
 <body>
 <h1>Foodsoft --- Setup Tool</h1>
-<?
+<?php
 
 require_once('code/config.php');
 
@@ -24,16 +24,16 @@ if( $allow_setup_from and ereg( '^'.$allow_setup_from, $remote_ip ) ) {
 } else {
   ?>
     <div class='warn'>
-      setup.php cannot be called from your IP, <? echo $remote_ip; ?>.
+      setup.php cannot be called from your IP, <?php echo $remote_ip; ?>.
       this can be configured in <code>code/config.php</code>!
     </div>
-  <?
+  <?php
   exit(1);
 }
 
 ?>
 <form name='setup_form' action='setup.php' method='post'>
-<?
+<?php
 
 $details = 'check_5'; // default: zeige leitvariable (wenn bis dahin alles OK)
 if( isset( $HTTP_GET_VARS['details'] ) )
@@ -67,26 +67,26 @@ function check_1() {
     <table class='list'>
       <tr>
         <th>Name / Port:</th>
-        <td><? echo getenv( 'SERVER_NAME' ) . ' / ' . getenv( 'SERVER_PORT' );  ?></td>
+        <td><?php echo getenv( 'SERVER_NAME' ) . ' / ' . getenv( 'SERVER_PORT' );  ?></td>
       </tr>
       <tr>
         <th>Software:</th>
-        <td><? echo getenv( 'SERVER_SOFTWARE' ); ?></td>
+        <td><?php echo getenv( 'SERVER_SOFTWARE' ); ?></td>
       </tr>
       <tr>
         <th>Foodsoft Pfad:</th>
-        <td><? echo $foodsoft_path; ?></td>
+        <td><?php echo $foodsoft_path; ?></td>
       </tr>
       <tr>
         <th>ruid / euid:</th>
-        <td><? echo $ruid . ' / ' . $euid; ?></td>
+        <td><?php echo $ruid . ' / ' . $euid; ?></td>
       </tr>
       <tr>
         <th>rgid / egid:</th>
-        <td><? echo $rgid . ' / ' . $egid; ?></td>
+        <td><?php echo $rgid . ' / ' . $egid; ?></td>
       </tr>
     </table>
-  <?
+  <?php
   return 0;
 }
 
@@ -119,16 +119,16 @@ function check_2() {
           <th class='warn'>
             Problem: cannot access directory
           </th>
-          <td><kbd><? echo $path; ?></kbd></td>
+          <td><kbd><?php echo $path; ?></kbd></td>
         </tr>
         <tr>
           <td colspan='2' class='alert'>
             Suggestion:
-                <? echo $foodsoftdir; ?> and all subdirectories below should have read and execute permission,
+                <?php echo $foodsoftdir; ?> and all subdirectories below should have read and execute permission,
                 but no write permissions, for the apache server process.
           </td>
         </tr>
-      <?
+      <?php
       return false;
     }
     echo "hello";
@@ -166,82 +166,82 @@ function check_3() {
       <table class='list'>
         <tr>
           <th>Server:</th>
-            <? if( isset( $db_server ) ) { ?>
-              <td class='ok'><? echo $db_server; ?></td>
-            <? } else { $problems = true; ?>
+            <?php if( isset( $db_server ) ) { ?>
+              <td class='ok'><?php echo $db_server; ?></td>
+            <?php } else { $problems = true; ?>
               <td class='warn'>$db_server nicht gesetzt</td>
-            <? } ?>
+            <?php } ?>
           </td>
         </tr>
         <tr>
           <th>Datenbank:</th>
-            <? if( isset( $db_name ) ) { ?>
-              <td class='ok'><? echo $db_name; ?></td>
-            <? } else { $problems = true; ?>
+            <?php if( isset( $db_name ) ) { ?>
+              <td class='ok'><?php echo $db_name; ?></td>
+            <?php } else { $problems = true; ?>
               <td class='warn'>$db_ name nicht gesetzt</td>
-            <? } ?>
+            <?php } ?>
           </td>
         </tr>
         <tr>
           <th>Benutzer:</th>
-            <? if( isset( $db_user ) ) { ?>
-              <td class='ok'><? echo $db_user; ?></td>
-            <? } else { $problems = true; ?>
+            <?php if( isset( $db_user ) ) { ?>
+              <td class='ok'><?php echo $db_user; ?></td>
+            <?php } else { $problems = true; ?>
               <td class='warn'>$db_user nicht gesetzt</td>
-            <? } ?>
+            <?php } ?>
           </td>
         </tr>
         <tr>
           <th>Password:</th>
-          <? if( isset( $db_pwd ) ) { ?>
+          <?php if( isset( $db_pwd ) ) { ?>
             <td class='ok'>(ein password ist gesetzt)</td>
-          <? } else { $problems = true; ?>
+          <?php } else { $problems = true; ?>
             <td class='warn'>$db_pwd nicht gesetzt</td>
-          <? } ?>
+          <?php } ?>
         </tr>
-    <?
+    <?php
     if( $problems )
       break;
     ?>
       <tr>
         <th>mysql_connect():</th>
-    <?
+    <?php
     $db = mysql_connect($db_server,$db_user,$db_pwd);
     if( $db ) {
-      ?> <td class='ok'>Verbindung zum MySQL Server OK </td></tr> <?
+      ?> <td class='ok'>Verbindung zum MySQL Server OK </td></tr> <?php
     } else {
       ?>
         <td class='warn'>
           Verbindung zum MySQL Server fehlgeschlagen:
-          <div class='warn'><? echo mysql_error(); ?></div>
+          <div class='warn'><?php echo mysql_error(); ?></div>
         </dt>
-      <?
+      <?php
       $problems = true;
     }
-    ?> </tr> <?
+    ?> </tr> <?php
     if( $problems )
       break;
 
     ?>
       <tr>
         <th>mysql_select_db():</th>
-    <?
+    <?php
     $db_selected = mysql_select_db( $db_name, $db );
     if( $db_selected ) {
-      ?> <td class='ok'>Verbindung zur Datenbank OK </td></tr> <?
+      ?> <td class='ok'>Verbindung zur Datenbank OK </td></tr> <?php
     } else {
       ?>
         <td class='warn'>
           Verbindung zur Datenbank fehlgeschlagen:
-          <div class='warn'><? echo mysql_error(); ?></div>
+          <div class='warn'><?php echo mysql_error(); ?></div>
         </dt>
-      <?
+      <?php
       $problems = true;
     }
-    ?> </tr> <?
+    ?> </tr> <?php
   } while( 0 );
 
-  ?> </table> <?
+  ?> </table> <?php
 
   if( $problems ) {
     ?>
@@ -249,7 +249,7 @@ function check_3() {
         Zugriff auf die Datenbank funktioniert nicht richtig.
         Bitte überprüfe die Einstellungen in code/config.php!
       </div>
-    <?
+    <?php
   }
 
   return $problems;
@@ -393,7 +393,7 @@ function check_4() {
   if( count( $changes ) > 0 )
     return 0;
 
-  ?> <table class='list'> <?
+  ?> <table class='list'> <?php
 
   $thead = "
     <tr>
@@ -416,7 +416,7 @@ function check_4() {
 
   $id = 0;
   foreach( $tables as $table => $want ) {
-    ?><tr><th colspan='6' style='padding-top:1em;text-align:center;'>table: <? echo $table; ?></th></tr><?
+    ?><tr><th colspan='6' style='padding-top:1em;text-align:center;'>table: <?php echo $table; ?></th></tr><?php
 
     $sql = "SHOW COLUMNS FROM $table; ";
     $result = mysql_query( $sql );
@@ -424,14 +424,14 @@ function check_4() {
       ?>
         <tr>
           <td class='warn' colspan='5'>
-            fehlgeschlagen: <code><? echo $sql; ?></code>
+            fehlgeschlagen: <code><?php echo $sql; ?></code>
           </td>
           <td class='warn' style='text-align:right;'>
-            Tabelle anlegen? <input type='checkbox' name='add_table_<? echo $id; ?>'>
-            <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
+            Tabelle anlegen? <input type='checkbox' name='add_table_<?php echo $id; ?>'>
+            <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
           </td>
         </tr>
-      <?
+      <?php
       $problems = true;
       $id++;
       continue;
@@ -443,12 +443,12 @@ function check_4() {
       $field = $row['Field'];
       ?>
         <tr>
-          <td><? echo $field; ?></td>
-          <td><? echo $row['Type']; ?></td>
-          <td><? echo $row['Null']; ?></td>
-          <td><? echo $row['Default']; ?></td>
-          <td><? echo $row['Extra']; ?></td>
-      <?
+          <td><?php echo $field; ?></td>
+          <td><?php echo $row['Type']; ?></td>
+          <td><?php echo $row['Null']; ?></td>
+          <td><?php echo $row['Default']; ?></td>
+          <td><?php echo $row['Extra']; ?></td>
+      <?php
       if( isset( $want_cols[$field] ) ) {
         $want_col = $want_cols[$field];
         $s = '';
@@ -483,55 +483,55 @@ function check_4() {
             </tr>
             <tr>
               <td class='alert' style='text-align:right;'>Sollwert:</td>
-              <? echo $s; ?>
+              <?php echo $s; ?>
               <td class='alert' style='text-align:right;'>
-                Spalte korrigieren? <input type='checkbox' name='fix_col_<? echo $id; ?>'>
-              <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-              <input type='hidden' name='col_<? echo $id; ?>' value='<? echo $field; ?>'>
+                Spalte korrigieren? <input type='checkbox' name='fix_col_<?php echo $id; ?>'>
+              <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
+              <input type='hidden' name='col_<?php echo $id; ?>' value='<?php echo $field; ?>'>
               </td>
             </tr>
-          <?
+          <?php
           $problems = true;
           $id++;
         } else {
           ?>
             <td class='ok'>OK</td>
             </tr>
-          <?
+          <?php
         }
         unset( $want_cols[$field] );
       } else {
         ?>
             <td class='alert' style='text-align:right;'>
-              Spalte nicht benötigt; löschen? <input type='checkbox' name='delete_col_<? echo $id; ?>'>
-              <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-              <input type='hidden' name='col_<? echo $id; ?>' value='<? echo $field; ?>'>
+              Spalte nicht benötigt; löschen? <input type='checkbox' name='delete_col_<?php echo $id; ?>'>
+              <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
+              <input type='hidden' name='col_<?php echo $id; ?>' value='<?php echo $field; ?>'>
             </td>
           </tr>
-        <?
+        <?php
         $id++;
       }
     }
     foreach( $want_cols as $want_col => $want_props ) {
       ?>
         <tr>
-          <td class='warn'><? echo $want_col; ?></td>
-          <td class='warn'><? echo $want_props['type']; ?></td>
-          <td class='warn'><? echo $want_props['null']; ?></td>
-          <td class='warn'><? echo $want_props['default']; ?></td>
-          <td class='warn'><? echo $want_props['extra']; ?></td>
+          <td class='warn'><?php echo $want_col; ?></td>
+          <td class='warn'><?php echo $want_props['type']; ?></td>
+          <td class='warn'><?php echo $want_props['null']; ?></td>
+          <td class='warn'><?php echo $want_props['default']; ?></td>
+          <td class='warn'><?php echo $want_props['extra']; ?></td>
           <td class='alert' style='text-align:right;'>
-            fehlende Spalte; hinzufügen? <input type='checkbox' name='add_col_<? echo $id; ?>'>
-            <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-            <input type='hidden' name='col_<? echo $id; ?>' value='<? echo $want_col; ?>'>
+            fehlende Spalte; hinzufügen? <input type='checkbox' name='add_col_<?php echo $id; ?>'>
+            <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
+            <input type='hidden' name='col_<?php echo $id; ?>' value='<?php echo $want_col; ?>'>
           </td>
         </tr>
-      <?
+      <?php
       $problems = true;
       $id++;
     }
 
-    ?><tr><th colspan='6' style='text-align:left;'>indices:</th></tr><?
+    ?><tr><th colspan='6' style='text-align:left;'>indices:</th></tr><?php
     echo $ihead;
     $result = mysql_query( "SHOW INDEX FROM $table; " );
     $iname = '';
@@ -543,10 +543,10 @@ function check_4() {
         if( $iname ) {
           ?>
             <tr>
-              <td><? echo $iname; ?></td>
-              <td colspan='3'><? echo $icols; ?></td>
-              <td><? echo $iunique; ?></td>
-          <?
+              <td><?php echo $iname; ?></td>
+              <td colspan='3'><?php echo $icols; ?></td>
+              <td><?php echo $iunique; ?></td>
+          <?php
           if( isset( $want_indices[$iname] ) ) {
             $want_index = $want_indices[$iname];
             $s = '';
@@ -569,32 +569,32 @@ function check_4() {
                 </tr>
                 <tr>
                   <td class='alert' style='text-align:right;'>Sollwert:</td>
-                  <? echo $s; ?>
+                  <?php echo $s; ?>
                   <td class='alert' style='text-align:right;'>
-                    fix index?  <input type='checkbox' name='fix_index_<? echo $id; ?>'>
-                  <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-                  <input type='hidden' name='index_<? echo $id; ?>' value='<? echo $iname; ?>'>
+                    fix index?  <input type='checkbox' name='fix_index_<?php echo $id; ?>'>
+                  <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
+                  <input type='hidden' name='index_<?php echo $id; ?>' value='<?php echo $iname; ?>'>
                   </td>
                 </tr>
-              <?
+              <?php
               $problems = true;
               $id++;
             } else {
               ?>
                 <td class='ok'>OK</td>
                 </tr>
-              <?
+              <?php
             }
             unset( $want_indices[$iname] );
           } else {
             ?>
                 <td class='alert' style='text-align:right;'>
-                  Index nicht benötigt; löschen? <input type='checkbox' name='delete_index_<? echo $id; ?>'>
-                  <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-                  <input type='hidden' name='index_<? echo $id; ?>' value='<? echo $iname; ?>'>
+                  Index nicht benötigt; löschen? <input type='checkbox' name='delete_index_<?php echo $id; ?>'>
+                  <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
+                  <input type='hidden' name='index_<?php echo $id; ?>' value='<?php echo $iname; ?>'>
                 </td>
               </tr>
-            <?
+            <?php
             $id++;
           }
         }
@@ -610,23 +610,23 @@ function check_4() {
     foreach( $want_indices as $want_index => $want_props ) {
       ?>
         <tr>
-          <td class='warn'><? echo $want_index; ?></td>
-          <td class='warn' colspan='3'><? echo $want_props['collist']; ?></td>
-          <td class='warn'><? echo $want_props['unique']; ?></td>
+          <td class='warn'><?php echo $want_index; ?></td>
+          <td class='warn' colspan='3'><?php echo $want_props['collist']; ?></td>
+          <td class='warn'><?php echo $want_props['unique']; ?></td>
           <td class='alert' style='text-align:right;'>
-            fehlender Index; hinzufügen? <input type='checkbox' name='add_index_<? echo $id; ?>'>
-            <input type='hidden' name='table_<? echo $id; ?>' value='<? echo $table; ?>'>
-            <input type='hidden' name='index_<? echo $id; ?>' value='<? echo $want_index; ?>'>
+            fehlender Index; hinzufügen? <input type='checkbox' name='add_index_<?php echo $id; ?>'>
+            <input type='hidden' name='table_<?php echo $id; ?>' value='<?php echo $table; ?>'>
+            <input type='hidden' name='index_<?php echo $id; ?>' value='<?php echo $want_index; ?>'>
           </td>
         </tr>
-      <?
+      <?php
       $problems = true;
       $id++;
     }
-    ?><tr><td colspan='6' style='text-align:left;'>&nbsp;</td></tr><?
+    ?><tr><td colspan='6' style='text-align:left;'>&nbsp;</td></tr><?php
   }
 
-  ?> </table> <?
+  ?> </table> <?php
 
   return $problems;
 }
@@ -678,7 +678,7 @@ function check_5() {
       <th>Wert</th>
       <th>Aktion</th>
     </tr>
-  <?
+  <?php
 
   for( $runtime_editable = 0; $runtime_editable <= 1; ++$runtime_editable ) {
     if( $runtime_editable ) {
@@ -686,13 +686,13 @@ function check_5() {
         <th colspan='4'>Laufzeit-Konfiguration in der Datenbank:
           <div class='small'>Diese Variablen k&ouml;nnen jederzeit angepasst werden</div>
         </th>
-      <?
+      <?php
     } else {
       ?>
         <th colspan='4'>Installations-Konfiguration in der Datenbank:
           <div class='small'>Diese Variablen bitte nur bei Neuinstallation setzen, danach nicht mehr &auml;ndern!</div>
         </th>
-      <?
+      <?php
     }
     foreach( $leitvariable as $name => $props ) {
       if( $props['runtime_editable'] != $runtime_editable )
@@ -701,9 +701,9 @@ function check_5() {
       $cols = ( isset($props['cols']) ? $props['cols'] : 20 );
       ?>
         <tr>
-          <th><? echo $name; ?></th>
+          <th><?php echo $name; ?></th>
           <td>
-          <?
+          <?php
             echo $props['meaning'];
             if( isset( $props['comment'] ) )
               echo "<div class='small'>".$props['comment']."</div>";
@@ -713,28 +713,28 @@ function check_5() {
               $checked = '';
             } else {
               $value = $props['default'];
-              ?><div class='warn'>Noch nicht in der Datenbank!</div><?
+              ?><div class='warn'>Noch nicht in der Datenbank!</div><?php
               $checked = 'checked';
               $problems = true;
             }
           ?>
           </td><td>
-            <? if( $rows > 1 ) { ?>
-              <textarea name='leit_value_<? echo $id; ?>' rows='<? echo $rows; ?>' cols='<? echo $cols; ?>'
-                onchange="document.getElementById('checkbox_<? echo $id; ?>').checked = true;"
-              ><? echo $value; ?></textarea>
-            <? } else { ?>
-              <input type='text' name='leit_value_<? echo $id; ?>' size='<? echo $cols; ?>' value='<? echo $value; ?>'
-                onchange="document.getElementById('checkbox_<? echo $id; ?>').checked = true;"
+            <?php if( $rows > 1 ) { ?>
+              <textarea name='leit_value_<?php echo $id; ?>' rows='<?php echo $rows; ?>' cols='<?php echo $cols; ?>'
+                onchange="document.getElementById('checkbox_<?php echo $id; ?>').checked = true;"
+              ><?php echo $value; ?></textarea>
+            <?php } else { ?>
+              <input type='text' name='leit_value_<?php echo $id; ?>' size='<?php echo $cols; ?>' value='<?php echo $value; ?>'
+                onchange="document.getElementById('checkbox_<?php echo $id; ?>').checked = true;"
               />
-            <? } ?>
-            <input type='hidden' name='leit_name_<? echo $id; ?>' value='<? echo $name; ?>'>
+            <?php } ?>
+            <input type='hidden' name='leit_name_<?php echo $id; ?>' value='<?php echo $name; ?>'>
           </td><td>
-            <? echo $checked ? "eintragen?" : "ändern?"; ?>
-            <input id='checkbox_<? echo $id; ?>' type='checkbox' name='leit_set_<? echo $id; ?>' value='set' <? echo $checked; ?>>
+            <?php echo $checked ? "eintragen?" : "ändern?"; ?>
+            <input id='checkbox_<?php echo $id; ?>' type='checkbox' name='leit_set_<?php echo $id; ?>' value='set' <?php echo $checked; ?>>
           </td>
         </tr>
-      <?
+      <?php
       $id++;
     }
   }
@@ -747,26 +747,26 @@ function check_5() {
     if( ! $header_written ) {
       ?><th colspan='3' class='alert'>unerwartete Variable in der Datenbank:
           <div class='small'>(sollten gelöscht werden, um Nebeneffekte zu vermeiden)</div>
-        </th><?
+        </th><?php
       $header_written = true;
     }
     ?>
       <tr>
-        <th><? echo $row['name']; ?></th>
+        <th><?php echo $row['name']; ?></th>
         <td class='alert'>undefinierte Variable</td>
-        <td><? echo $row['value']; ?></td>
+        <td><?php echo $row['value']; ?></td>
         <td>
           löschen?
-          <input type='checkbox' name='leit_delete_<? echo $id; ?>' value='delete'>
-          <input type='hidden' name='leit_name_<? echo $id; ?>' value='<? echo $row['name']; ?>'>
+          <input type='checkbox' name='leit_delete_<?php echo $id; ?>' value='delete'>
+          <input type='hidden' name='leit_name_<?php echo $id; ?>' value='<?php echo $row['name']; ?>'>
         </td>
       </tr>
-    <?
+    <?php
     $problems = true;
     $id++;
   }
 
-  ?> </table> <?
+  ?> </table> <?php
 
   return $problems;
 }
@@ -824,8 +824,8 @@ function check_6() {
         <th>Aktion</th>
       </tr>
       <tr>
-        <td>Bad-Bank (Nr. <? echo $muell_id; ?>)</td>
-  <?
+        <td>Bad-Bank (Nr. <?php echo $muell_id; ?>)</td>
+  <?php
 
   $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$muell_id; " );
   $row = mysql_fetch_array( $result );
@@ -833,7 +833,7 @@ function check_6() {
     ?>
       <td class='ok'>eingetragen</td>
       <td>&nbsp;</td>
-    <?
+    <?php
   } else {
     $problems = true;
     ?>
@@ -841,13 +841,13 @@ function check_6() {
       <td class='alert'>
         eintragen? <input type='checkbox' name='add_group_muell' value='add_group_muell'>
       </td>
-    <?
+    <?php
   }
   ?>
       </tr>
       <tr>
-        <td>'Basar'-Gruppe (Nr. <? echo $basar_id; ?>)</td>
-  <?
+        <td>'Basar'-Gruppe (Nr. <?php echo $basar_id; ?>)</td>
+  <?php
 
   $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$basar_id; " );
   $row = mysql_fetch_array( $result );
@@ -855,7 +855,7 @@ function check_6() {
     ?>
       <td class='ok'>eingetragen</td>
       <td>&nbsp;</td>
-    <?
+    <?php
   } else {
     $problems = true;
     ?>
@@ -863,20 +863,20 @@ function check_6() {
       <td class='alert'>
         eintragen? <input type='checkbox' name='add_group_basar' value='add_group_muell'>
       </td>
-    <?
+    <?php
   }
   ?>
       </tr>
       <tr>
         <td>Sonstige Gruppen</td>
-  <?
+  <?php
   $result = mysql_query( "SELECT * FROM bestellgruppen " );
   $num = mysql_num_rows( $result ) - 2;
   if( $num > 0 ) {
     ?>
-      <td class='ok'><? echo $num; ?> Gruppen eingetragen</td>
+      <td class='ok'><?php echo $num; ?> Gruppen eingetragen</td>
       <td>&nbsp;</td>
-    <?
+    <?php
   } else {
     $problems = true;
     ?>
@@ -888,7 +888,7 @@ function check_6() {
       </td>
       <td>&nbsp;</td>
       </tr>
-    <?
+    <?php
   }
   ?>
   </table>
@@ -917,7 +917,7 @@ function check_6() {
   eintragen? <input type='checkbox' name='add_group_regular' value='add_group_regular'>
   </div>
 
-  <?
+  <?php
   return $problems;
 }
 
@@ -933,23 +933,23 @@ $checks = array(
 
 foreach( $checks as $f => $title ) {
   ?>
-    <h2 style='padding:1em 0em 0ex 0em;'><? echo $title; ?>:</h2>
-    <div id='details_<? echo $f; ?>' style='display:none;'>
-      <?  $result = $f(); ?>
+    <h2 style='padding:1em 0em 0ex 0em;'><?php echo $title; ?>:</h2>
+    <div id='details_<?php echo $f; ?>' style='display:none;'>
+      <?php  $result = $f(); ?>
     </div>
-    <div id='nodetails_<? echo $f; ?>' style='display:block;'>
-      <?
+    <div id='nodetails_<?php echo $f; ?>' style='display:block;'>
+      <?php
         if( $result ) {
-          ?> <div class='warn' style='padding:1ex;'> Fehler! <?
+          ?> <div class='warn' style='padding:1ex;'> Fehler! <?php
         } elseif( $changes ) {
-          ?> <div class='alert' style='padding:1ex;'> Korrekturen werden ausgef&uuml;hrt... <?
+          ?> <div class='alert' style='padding:1ex;'> Korrekturen werden ausgef&uuml;hrt... <?php
         } else {
-          ?> <div class='ok' style='padding:1ex;'> keine Fehler gefunden! <?
+          ?> <div class='ok' style='padding:1ex;'> keine Fehler gefunden! <?php
         }
       ?>
-      <a href='setup.php?details=<? echo $f; ?>' style='margin:1ex;'>Details...</a></div>
+      <a href='setup.php?details=<?php echo $f; ?>' style='margin:1ex;'>Details...</a></div>
     </div>
-  <?
+  <?php
   if( $result or ( $f == $details ) ) {
     $js .= "
       document.getElementById('details_$f').style.display = 'block';
@@ -978,32 +978,32 @@ if( count( $changes ) > 0 ) {
         <th>SQL Befehl:</th>
         <th>Ergebnis:</th>
       </tr>
-  <?
+  <?php
   foreach( $changes as $s ) {
     ?>
       <tr>
-        <td><pre> <? echo htmlspecialchars("$s\n"); ?></pre></td>
-    <?
+        <td><pre> <?php echo htmlspecialchars("$s\n"); ?></pre></td>
+    <?php
     $result = false;
     $result = mysql_query( $s );
     if( $result ) {
       ?>
         <td class='ok'>OK</td>
         </tr>
-      <?
+      <?php
     } else {
       ?>
         <td class='warn'>
           fehlgeschlagen:
-          <div><? echo mysql_error(); ?></div>
+          <div><?php echo mysql_error(); ?></div>
         </td>
         </tr>
-      <?
+      <?php
       $problems = true;
       break;
     }
   }
-  ?> </table> <?
+  ?> </table> <?php
 }
 
 if( count( $changes ) == 0 ) {
@@ -1012,20 +1012,20 @@ if( count( $changes ) == 0 ) {
   <div style='text-align:left;padding:1em 1em 2em 1em;'>
     <input type='submit' style='padding:1ex;' value='Abschicken' title='Abspeichern und/oder &Auml;nderungen vornehmen'>
   </div>
-  <?
+  <?php
 } else {
   ?>
   <div style='text-align:left;padding:1em 1em 2em 1em;'>
     <input type='submit' style='padding:1ex;' value='Neu laden'>
   </div>
-  <?
+  <?php
 }
 
 ?>
 
 </form>
 <script type='text/javascript'>
-  <? echo $js; ?>
+  <?php echo $js; ?>
 </script>
 </body>
 </html>

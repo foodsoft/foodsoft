@@ -8,7 +8,7 @@ $editable = ( hat_dienst(4) and ! $readonly );
 
 setWikiHelpTopic( 'foodsoft:kontoverwaltung' );
 
-?> <h1>Bankkonten</h1> <?
+?> <h1>Bankkonten</h1> <?php
 
 $konten = sql_konten();
 
@@ -92,7 +92,7 @@ switch( $action ) { // aktionen die keinen auszug brauchen
 open_table('layout hfill' );
 
   open_td();
-    ?> <h3>Kontouszüge von Konto <? echo sql_kontoname($konto_id); ?>:</h3> <?
+    ?> <h3>Kontouszüge von Konto <?php echo sql_kontoname($konto_id); ?>:</h3> <?php
 
     open_select( 'auszug', 'autoreload' );
       $selected = false;
@@ -133,7 +133,7 @@ open_table('layout hfill' );
   $ungebuchte_einzahlungen = sql_ungebuchte_einzahlungen();
   if( $editable and $ungebuchte_einzahlungen and $auszug_jahr and $auszug_nr ) {
     open_td( 'floatright' );
-      ?> <h4>ungebuchte Einzahlungen:</h4> <?
+      ?> <h4>ungebuchte Einzahlungen:</h4> <?php
 
       // open_div( 'kommentar left', '', 'Hier könnt ihr den Geldeingang von Einzahlungen, die von den Gruppen selbst eingetragen wurden,
       //                      bestätigen, oder die Einzahlung stornieren:' );
