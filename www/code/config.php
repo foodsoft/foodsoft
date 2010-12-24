@@ -10,6 +10,9 @@ $db_name   =  getenv( 'mysql_db_name' );     // name of MySQL database
 $db_user   =  getenv( 'mysql_db_user' );     // user to connect as
 $db_pwd    =  getenv( 'mysql_db_password' ); // password to authenticate with
 
+// set time zone
+date_default_timezone_set("Europe/Berlin");
+
 // alternatively, store the information in the following lines:
 //
 // $db_server = "127.0.0.1";
