@@ -36,8 +36,8 @@ if( $allow_setup_from and ereg( '^'.$allow_setup_from, $remote_ip ) ) {
 <?php
 
 $details = 'check_5'; // default: zeige leitvariable (wenn bis dahin alles OK)
-if( isset( $HTTP_GET_VARS['details'] ) )
-  $details = $HTTP_GET_VARS['details'];
+if( isset( $_GET['details'] ) )
+  $details = $_GET['details'];
 
 $changes = array();
 $js = '';
@@ -256,7 +256,7 @@ function check_3() {
 }
 
 function check_4() {
-  global $tables, $changes, $HTTP_POST_VARS;
+  global $tables, $changes;
   //
   // (4) database connection established: check tables, columns, indices:
   //
@@ -347,43 +347,43 @@ function check_4() {
     add_index( $table, $index );
   }
 
-  if( $HTTP_POST_VARS['action'] == 'repair' ) {
-    foreach( $HTTP_POST_VARS as $name => $value ) {
+  if( $_POST['action'] == 'repair' ) {
+    foreach( $_POST as $name => $value ) {
       $v = explode( '_', $name );
       switch( $v[0] ) {
         case 'add':
           switch( $v[1] ) {
             case 'table':
-              add_table( $HTTP_POST_VARS['table_'.$v[2]] );
+              add_table( $_POST['table_'.$v[2]] );
               break;
             case 'col':
-              add_col( $HTTP_POST_VARS['table_'.$v[2] ], $HTTP_POST_VARS['col_'.$v[2]] );
+              add_col( $_POST['table_'.$v[2] ], $_POST['col_'.$v[2]] );
               break;
             case 'index':
-              add_index( $HTTP_POST_VARS['table_'.$v[2] ], $HTTP_POST_VARS['index_'.$v[2]] );
+              add_index( $_POST['table_'.$v[2] ], $_POST['index_'.$v[2]] );
               break;
           }
           break;
         case 'delete':
           switch( $v[1] ) {
             case 'table':
-              delete_table( $HTTP_POST_VARS['table_'.$v[2]] );
+              delete_table( $_POST['table_'.$v[2]] );
               break;
             case 'col':
-              delete_col( $HTTP_POST_VARS['table_'.$v[2] ], $HTTP_POST_VARS['col_'.$v[2]] );
+              delete_col( $_POST['table_'.$v[2] ], $_POST['col_'.$v[2]] );
               break;
             case 'index':
-              delete_index( $HTTP_POST_VARS['table_'.$v[2] ], $HTTP_POST_VARS['index_'.$v[2]] );
+              delete_index( $_POST['table_'.$v[2] ], $_POST['index_'.$v[2]] );
               break;
           }
           break;
         case 'fix':
           switch( $v[1] ) {
             case 'col':
-              fix_col( $HTTP_POST_VARS['table_'.$v[2] ], $HTTP_POST_VARS['col_'.$v[2]] );
+              fix_col( $_POST['table_'.$v[2] ], $_POST['col_'.$v[2]] );
               break;
             case 'index':
-              fix_index( $HTTP_POST_VARS['table_'.$v[2] ], $HTTP_POST_VARS['index_'.$v[2]] );
+              fix_index( $_POST['table_'.$v[2] ], $_POST['index_'.$v[2]] );
               break;
           }
           break;
@@ -632,7 +632,7 @@ function check_4() {
 }
 
 function check_5() {
-  global $leitvariable, $changes, $HTTP_POST_VARS;
+  global $leitvariable, $changes;
   //
   // (5) setup leitvariable database:
   //
@@ -641,17 +641,17 @@ function check_5() {
   require_once('leitvariable.php');
   $id = 1;
 
-  if( $HTTP_POST_VARS['action'] == 'repair' ) {
-    foreach( $HTTP_POST_VARS as $name => $value ) {
+  if( $_POST['action'] == 'repair' ) {
+    foreach( $_POST as $name => $value ) {
       $v = explode( '_', $name );
       if( $v[0] != 'leit' )
         continue;
       $action = $v[1];
       $id = $v[2];
-      $name = $HTTP_POST_VARS['leit_name_'.$id];
+      $name = $_POST['leit_name_'.$id];
       switch( $action ) {
         case 'set':
-          $value = $HTTP_POST_VARS['leit_value_'.$id];
+          $value = $_POST['leit_value_'.$id];
           $props = $leitvariable['name'];
           $local = $props['local'];
           $runtime_editable = $props['runtime_editable'];
@@ -662,7 +662,7 @@ function check_5() {
           ";
           break;
         case 'delete':
-          $name = $HTTP_POST_VARS['leit_name_'.$id];
+          $name = $_POST['leit_name_'.$id];
           $changes[] = "DELETE FROM leitvariable WHERE name='$name';";
       }
     }
@@ -772,7 +772,7 @@ function check_5() {
 }
 
 function check_6() {
-  global $changes, $HTTP_POST_VARS;
+  global $changes;
   $problems = false;
 
   $result = mysql_query( "SELECT * FROM leitvariable WHERE name = 'muell_id'; " );
@@ -790,18 +790,18 @@ function check_6() {
     $basar_id = false;
   }
 
-  if( $muell_id and isset( $HTTP_POST_VARS['add_group_muell'] ) ) {
+  if( $muell_id and isset( $_POST['add_group_muell'] ) ) {
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
                   VALUES ( $muell_id, 'Bad Bank', 0, '*' )";
   }
-  if( $basar_id and isset( $HTTP_POST_VARS['add_group_basar'] ) ) {
+  if( $basar_id and isset( $_POST['add_group_basar'] ) ) {
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
                   VALUES ( $basar_id, 'Basargruppe', 0, '*' )";
   }
-  if( isset( $HTTP_POST_VARS['add_group_regular'] ) ) {
-    $group_id = $HTTP_POST_VARS['group_id'];
-    $group_name = $HTTP_POST_VARS['group_name'];
-    $password = $HTTP_POST_VARS['group_password'];
+  if( isset( $_POST['add_group_regular'] ) ) {
+    $group_id = $_POST['group_id'];
+    $group_name = $_POST['group_name'];
+    $password = $_POST['group_password'];
     $urandom_handle = fopen( '/dev/urandom', 'r' );
     $bytes = 4;
     $salt = '';

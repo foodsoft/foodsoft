@@ -4080,23 +4080,23 @@ $foodsoft_get_vars = array(
 
 $http_input_sanitized = false;
 function sanitize_http_input() {
-  global $HTTP_GET_VARS, $HTTP_POST_VARS, $from_dokuwiki
+  global $from_dokuwiki
        , $foodsoft_get_vars, $http_input_sanitized, $session_id;
 
   if( ! $from_dokuwiki ) {
-    foreach( $HTTP_GET_VARS as $key => $val ) {
+    foreach( $_GET as $key => $val ) {
       need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
       need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert fuer Variable $key in URL" );
     }
     if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
-      need( isset( $HTTP_POST_VARS['itan'] ), 'foodsoft: fehlerhaftes Formular uebergeben' );
-      sscanf( $HTTP_POST_VARS['itan'], "%u_%s", &$t_id, &$itan );
+      need( isset( $_POST['itan'] ), 'foodsoft: fehlerhaftes Formular uebergeben' );
+      sscanf( $_POST['itan'], "%u_%s", &$t_id, &$itan );
       need( $t_id, 'fehlerhaftes Formular uebergeben' );
       $row = sql_select_single_row( "SELECT * FROM transactions WHERE id=$t_id", true );
       need( $row, 'fehlerhaftes Formular uebergeben' );
       if( $row['used'] ) {
         // formular wurde mehr als einmal abgeschickt: POST-daten verwerfen:
-        $HTTP_POST_VARS = array();
+        $_POST = array();
         echo "<div class='warn'>Warnung: mehrfach abgeschicktes Formular detektiert! (wurde nicht ausgewertet)</div>";
       } else {
         need( $row['itan'] == $itan, 'ungueltige iTAN uebergeben' );
@@ -4106,7 +4106,7 @@ function sanitize_http_input() {
         sql_update( 'transactions', $t_id, array( 'used' => 1 ) );
       }
     } else {
-      $HTTP_POST_VARS = array();
+      $_POST = array();
     }
     $http_input_sanitized = true;
   }
@@ -4194,7 +4194,7 @@ function checkvalue( $val, $typ){
 // gegen mehrfache Absendung desselben Formulars per "Reload" Knopfs des Browsers)
 //
 function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
-  global $HTTP_GET_VARS, $HTTP_POST_VARS, $self_fields, $self_post_fields;
+  global $self_fields, $self_post_fields;
   global $http_input_sanitized;
 
   if( ! $http_input_sanitized )
@@ -4207,10 +4207,10 @@ function get_http_var( $name, $typ, $default = NULL, $is_self_field = false ) {
   } else {
     $want_array = false;
   }
-  if( isset( $HTTP_GET_VARS[$name] ) ) {
-    $arry = $HTTP_GET_VARS[$name];
-  } elseif( isset( $HTTP_POST_VARS[$name] ) ) {
-    $arry = $HTTP_POST_VARS[$name];
+  if( isset( $_GET[$name] ) ) {
+    $arry = $_GET[$name];
+  } elseif( isset( $_POST[$name] ) ) {
+    $arry = $_POST[$name];
   } else {
     if( isset( $default ) ) {
       if( is_array( $default ) ) {

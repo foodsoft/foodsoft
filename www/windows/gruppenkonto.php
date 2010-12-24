@@ -160,7 +160,7 @@ $pfandkontostand = pfandkontostand($gruppen_id);
 
 
 // wieviele Kontenbewegungen werden ab wo angezeigt...
-if (isset($HTTP_GET_VARS['start_pos'])) $start_pos = $HTTP_GET_VARS['start_pos']; else $start_pos = 0;
+if (isset($_GET['start_pos'])) $start_pos = $_GET['start_pos']; else $start_pos = 0;
 //Funktioniert erstmal mit der Mischung aus Automatischer Berechung und manuellen Einträgen nicht
 //FIXME: vielleicht ggf. start/enddatum waehlbar machen? oder immer ganze jahre?
 $size          = 2000;
