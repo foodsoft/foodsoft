@@ -149,7 +149,7 @@ close_fieldset();
 // Artikeldaten im Katalog suchen und ggf. anzeigen:
 //
 
-$result = katalogabgleich( $produkt_id, 2, $editable, & $preiseintrag_neu );
+$result = katalogabgleich( $produkt_id, 2, $editable, $preiseintrag_neu );
 switch( $result ) {
   case 0:
     // alles ok!

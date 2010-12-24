@@ -563,7 +563,7 @@ foreach( $produkte as $produkt ) {
       $title = 'Preis nicht aktuell!';
     } else {
       $katalogdaten = array();
-      switch( katalogabgleich( $produkt_id, 0, 0, & $katalogdaten ) ) {
+      switch( katalogabgleich( $produkt_id, 0, 0, $katalogdaten ) ) {
         case 0:
           $class .= 'ok';
           $title = 'Preis aktuell und konsistent mit Lieferantenkatalog '. $katalogdaten['katalogname'];

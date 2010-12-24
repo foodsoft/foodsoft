@@ -47,7 +47,7 @@ $notiz ='';
 // pruefen, ob schon eingeloggt:
 //
 if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
-  sscanf( $_COOKIE['foodsoftkeks'], "%u_%s", &$session_id, &$cookie );
+  sscanf( $_COOKIE['foodsoftkeks'], "%u_%s", $session_id, $cookie );
   $row = sql_select_single_row( "SELECT * FROM sessions WHERE id=$session_id", true );
   if( ! $row ) {
     $problems .= "<div class='warn'>nicht angemeldet</div>";

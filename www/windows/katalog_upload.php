@@ -259,15 +259,15 @@ function upload_rapunzel() {
 
     $gebinde = $splitline[9];
 
-    sscanf( $splitline[9], '%d x %s', & $gebinde, & $einheit );
+    sscanf( $splitline[9], '%d x %s', $gebinde, $einheit );
     $einheit = preg_replace( '/,/', '.', $einheit );
 
-    sscanf( $splitline[11], '%f ', & $netto );
+    sscanf( $splitline[11], '%f ', $netto );
 
     if( preg_match( '&^[\d\s]*$&', $einheit ) )
       $einheit = "$einheit ST";
 
-    if( $netto < 0.01 or !  kanonische_einheit( $einheit, &$e, &$m, false ) ) {
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, $e, $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
@@ -325,9 +325,9 @@ function upload_bode() {
     $gebinde = preg_replace( '/,/', '.', $gebinde );
 
     if( preg_match( '&^\s*\d+\s*/&', $gebinde ) ) {
-      sscanf( $gebinde, '%u/%s', &$gebinde, &$einheit );
+      sscanf( $gebinde, '%u/%s', $gebinde, $einheit );
     } else if( preg_match( '&^\s*\d+\s*x&', $gebinde ) ) {
-      sscanf( $gebinde, '%ux%s', &$gebinde, &$einheit );
+      sscanf( $gebinde, '%ux%s', $gebinde, $einheit );
     } else {
       $einheit = $gebinde;
       $gebinde = 1;
@@ -338,7 +338,7 @@ function upload_bode() {
     if( preg_match( '&^[\d\s]*$&', $einheit ) )
       $einheit = "$einheit ST";
 
-    if( $netto < 0.01 or !  kanonische_einheit( $einheit, &$e, &$m, false ) ) {
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, $e, $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
@@ -454,7 +454,7 @@ function upload_midgard() {
     $netto = $splitline[37];
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
 
-    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, &$e, &$m, false ) ) {
+    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, $e, $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }

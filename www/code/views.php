@@ -130,7 +130,7 @@ function date_time_view( $datetime, $fieldname = '' ) {
   if( ! $datetime )
     $datetime = $mysqljetzt;
   if( $fieldname ) {
-    sscanf( $datetime, '%u-%u-%u %u:%u', &$year, &$month, &$day, &$hour, &$minute );
+    sscanf( $datetime, '%u-%u-%u %u:%u', $year, $month, $day, $hour, $minute );
     return date_selector( $fieldname.'_day', $day, $fieldname.'_month', $month, $fieldname.'_year', $year, false )
            .' '. time_selector( $fieldname.'_hour', $hour, $fieldname.'_minute', $minute, false );
   } else {
@@ -142,7 +142,7 @@ function date_view( $date, $fieldname = '' ) {
   if( ! $date )
     $date = $mysqlheute;
   if( $fieldname ) {
-    sscanf( $date, '%u-%u-%u', &$year, &$month, &$day );
+    sscanf( $date, '%u-%u-%u', $year, $month, $day );
     return date_selector( $fieldname.'_day', $day, $fieldname.'_month', $month, $fieldname.'_year', $year, false );
   } else {
     return "<span class='date'>$date</span>";
@@ -608,7 +608,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   $gesamtwert = 0;
   $output = '';
   foreach( $basar as $basar_row ) {
-    kanonische_einheit( $basar_row['verteileinheit'], & $kan_verteileinheit, & $kan_verteilmult );
+    kanonische_einheit( $basar_row['verteileinheit'], $kan_verteileinheit, $kan_verteilmult );
     $menge = $basar_row['basarmenge'];
 
     // wir geben den brutto-wert an (wie im basar!)
@@ -1286,7 +1286,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     $gruppen_id = $gruppe['id'];
     $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
     if( $mengen ) {
-      preisdatenSetzen( & $mengen );
+      preisdatenSetzen( $mengen );
       $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
       $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
       $verteilmenge = $mengen['verteilmenge'] * $verteilmult;

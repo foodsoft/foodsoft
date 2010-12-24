@@ -22,7 +22,7 @@ get_http_var( 'konto_id', 'u', $konto_id, true );
 
 get_http_var( 'auszug', '/^\d+-\d+$/', 0, false );  // kompakt-format (aus <select> unten!)
 if( $auszug ) {
-  sscanf( $auszug, "%u-%u", & $auszug_jahr, & $auszug_nr );
+  sscanf( $auszug, "%u-%u", $auszug_jahr, $auszug_nr );
   $self_fields['auszug_jahr'] = $auszug_jahr;
   $self_fields['auszug_nr'] = $auszug_nr;
 } else {

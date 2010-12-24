@@ -13,7 +13,7 @@ $path = array_merge(
 $mysqldump = false;
 foreach( $path as $d ) {
   // if( is_executable( $d . '/mysqldump' ) ) {
-  system( "test -x $d/mysqldump", &$rv );
+  system( "test -x $d/mysqldump", $rv );
   if( $rv == 0 ) {
     $mysqldump = $d . '/mysqldump';
     break;
@@ -22,7 +22,7 @@ foreach( $path as $d ) {
 $mysql = false;
 foreach( $path as $d ) {
   // if( is_executable( $d . '/mysql' ) ) {
-  system( "test -x $d/mysql", &$rv );
+  system( "test -x $d/mysql", $rv );
   if( $rv == 0 ) {
     $mysql = $d . '/mysql';
     break;
@@ -31,7 +31,7 @@ foreach( $path as $d ) {
 $gzip = false;
 foreach( $path as $d ) {
   // if( is_executable( $d . '/gzip' ) ) {
-  system( "test -x $d/gzip", &$rv );
+  system( "test -x $d/gzip", $rv );
   if( $rv == 0 ) {
     $gzip = $d . '/gzip';
     break;
@@ -121,10 +121,10 @@ if( $action == 'lock' ) {
 //   $parts = preg_split( '/^-- :/m', $input );
 //   need( isset( $parts[5] ) and ( $parts[5] == "end\n" ) , "Hochladen fehlgeschlagen (test 1)" );
 //   $size = 0;
-//   sscanf( $parts[2], "size: %u", & $size );
+//   sscanf( $parts[2], "size: %u", $size );
 //   need( $size > 1, "Hochladen fehlgeschlagen (test 2)" );
 //   $md5 = false;
-//   sscanf( $parts[3], "md5: %s", & $md5 );
+//   sscanf( $parts[3], "md5: %s", $md5 );
 //   need( $md5, "Hochladen fehlgeschlagen (test 3)" );
 //   $sql = $parts[4];
 //   $s = strlen( $sql );

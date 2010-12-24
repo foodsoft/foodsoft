@@ -89,7 +89,7 @@ function katalogabgleich(
 
   $kgueltig = $katalogeintrag['gueltig'];
 
-  if( ! kanonische_einheit( $katalog_einheit, &$kan_liefereinheit, &$kan_liefermult, false ) ) {
+  if( ! kanonische_einheit( $katalog_einheit, $kan_liefereinheit, $kan_liefermult, false ) ) {
     div_msg( 'warn', "Katalogsuche: unbekannte Einheit: $katalog_einheit" );
     return 2;
   }
@@ -300,7 +300,7 @@ function katalogabgleich(
         }
     }
 
-    kanonische_einheit( $preiseintrag_neu['verteileinheit'], &$kan_verteileinheit_neu, &$kan_verteilmult_neu );
+    kanonische_einheit( $preiseintrag_neu['verteileinheit'], $kan_verteileinheit_neu, $kan_verteilmult_neu );
 
     if( $kan_liefereinheit !== $kan_verteileinheit_neu ) {
       // keine automatische umrechnung moeglich; wir uebernehmen die alten werte, die
@@ -424,7 +424,7 @@ function katalogabgleich(
 function update_preis( $produkt_id ) {
   global $mysqlheute;
   $preiseintrag_neu = array();
-  $r = katalogabgleich( $produkt_id, 0, 0, & $preiseintrag_neu );
+  $r = katalogabgleich( $produkt_id, 0, 0, $preiseintrag_neu );
   switch( $r ) {
     case 0:
       return -1;

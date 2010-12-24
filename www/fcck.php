@@ -174,7 +174,7 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
         </tr>
     ";
     while( $zuordnung = mysql_fetch_array( $zuordnungen ) ) {
-      preisdatenSetzen( & $zuordnung );
+      preisdatenSetzen( $zuordnung );
       echo "
         <tr>
           <td>{$zuordnung['bestellguppen_id']} ({$zuordnung['name']})</td>

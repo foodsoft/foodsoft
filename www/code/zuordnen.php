@@ -1348,7 +1348,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
 function sql_insert_group($newNumber, $newName, $pwd) {
   global $problems, $msg;
 
-  $new_id = check_new_group_nr( $newNumber, & $problems ) ;
+  $new_id = check_new_group_nr( $newNumber, $problems ) ;
 
   if ($newName == "")
     $problems = $problems . "<div class='warn'>Die neue Bestellgruppe muss einen Name haben!</div>";
@@ -1595,7 +1595,7 @@ function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produkt
   $r = mysql2array( doSql( select_produkte( $keys, array(), $orderby ) ) );
   foreach( $r as & $p ) {
     if( isset( $p['preis_id'] ) ) {
-      preisdatenSetzen( & $p );
+      preisdatenSetzen( $p );
     }
   }
   return $r;
@@ -1605,7 +1605,7 @@ function sql_produkt( $keys = array(), $allow_null = false ) {
     $keys = array( 'produkt_id' => $keys );
   $p = sql_select_single_row( select_produkte( $keys ), $allow_null );
   if( $p and isset( $p['preis_id'] ) ) {
-    preisdatenSetzen( & $p );
+    preisdatenSetzen( $p );
   }
   // foreach( $p as $k => $v ) {
   //  open_div( '', '', "$k: [$v]" );
@@ -2162,7 +2162,7 @@ function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0,
   $result = doSql( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id, $orderby ), LEVEL_KEY );
   $r = mysql2array( $result );
   foreach( $r as & $val )
-    preisdatenSetzen( & $val );
+    preisdatenSetzen( $val );
   return $r;
 }
 
@@ -2187,7 +2187,7 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 
   // kanonische masseinheiten setzen (gross/kleinschreibung, 1 space zwischenraum, kg -> g, ...)
   //
-  kanonische_einheit( $pr['verteileinheit'], &$pr['kan_verteileinheit'], &$pr['kan_verteilmult'] );
+  kanonische_einheit( $pr['verteileinheit'], $pr['kan_verteileinheit'], $pr['kan_verteilmult'] );
   $m = $pr['kan_verteilmult'];
   $e = $pr['kan_verteileinheit'];
   $pr['verteileinheit'] = "$m $e";
@@ -2211,7 +2211,7 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   $pr['kan_verteileinheit_anzeige'] = $e;
   $pr['kan_verteilmult_anzeige'] = $m;
 
-  kanonische_einheit( $pr['liefereinheit'], &$pr['kan_liefereinheit'], &$pr['kan_liefermult'] );
+  kanonische_einheit( $pr['liefereinheit'], $pr['kan_liefereinheit'], $pr['kan_liefermult'] );
   $m = $pr['kan_liefermult'];
   $e = $pr['kan_liefereinheit'];
   $pr['liefereinheit'] = "$m $e";
@@ -2447,7 +2447,7 @@ function sql_basar( $bestell_id = 0, $order='produktname' ) {
   }
   $basar = mysql2array( doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" ) );
   foreach( $basar as & $r ) {
-    preisdatenSetzen( & $r );
+    preisdatenSetzen( $r );
   }
   return $basar;
 }
@@ -3802,7 +3802,7 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
   //  ORDER BY IFNULL(zeitende,'9999-12-31'), id";
   $result = mysql2array( doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..") );
   foreach( $result as & $r ) {
-    preisdatenSetzen( & $r );
+    preisdatenSetzen( $r );
   }
   return $result;
 }
@@ -3882,8 +3882,8 @@ function sql_insert_produktpreis (
   need( $gebindegroesse >= 1, "keine gueltige Gebindegroesse" );
   need( $mwst > 0, "kein gueltiger Mehrwertsteuersatz" );
   need( $pfand >= 0, "kein gueltiges Pfand" );
-  need( kanonische_einheit( $liefereinheit, & $le, & $lm, false ), "keine gueltige L-Einheit" );
-  need( kanonische_einheit( $verteileinheit, & $ve, & $vm, false ), "keine gueltige V-Einheit" );
+  need( kanonische_einheit( $liefereinheit, $le, $lm, false ), "keine gueltige L-Einheit" );
+  need( kanonische_einheit( $verteileinheit, $ve, $vm, false ), "keine gueltige V-Einheit" );
   need( $lm >= 0.001, "keine gueltige Masszahl bei L-Einheit" );
   need( $vm >= 0.001, "keine gueltige Masszahl bei V-Einheit" );
   if( $le == $ve ) {
@@ -3934,10 +3934,10 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult, $die_on_error 
   global $masseinheiten;
   $kan_einheit = NULL;
   $kan_mult = NULL;
-  sscanf( $einheit, "%f", &$kan_mult );
+  sscanf( $einheit, "%f", $kan_mult );
   if( $kan_mult ) {
     // masszahl vorhanden, also abspalten:
-    sscanf( $einheit, "%f%s", &$kan_mult, &$einheit );
+    sscanf( $einheit, "%f%s", $kan_mult, $einheit );
   } else {
     // keine masszahl, also eine einheit:
     $kan_mult = 1;
@@ -4090,7 +4090,7 @@ function sanitize_http_input() {
     }
     if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {
       need( isset( $_POST['itan'] ), 'foodsoft: fehlerhaftes Formular uebergeben' );
-      sscanf( $_POST['itan'], "%u_%s", &$t_id, &$itan );
+      sscanf( $_POST['itan'], "%u_%s", $t_id, $itan );
       need( $t_id, 'fehlerhaftes Formular uebergeben' );
       $row = sql_select_single_row( "SELECT * FROM transactions WHERE id=$t_id", true );
       need( $row, 'fehlerhaftes Formular uebergeben' );
@@ -4168,7 +4168,7 @@ function checkvalue( $val, $typ){
       }
     }
     if( $format ) {
-      sscanf( $val, $format, & $val );
+      sscanf( $val, $format, $val );
     }
   return $val;
 }
@@ -4335,12 +4335,12 @@ function update_database( $version ) {
             $lv_faktor = $gebindegroesse;
             break;
           default:
-            if( ! kanonische_einheit( $liefereinheit, &$le, &$lm, false ) ) {
+            if( ! kanonische_einheit( $liefereinheit, $le, $lm, false ) ) {
               $le = 'EA';
               $lm = 1;
               $liefereinheit = "$lm $le";
             }
-            if( ! kanonische_einheit( $verteileinheit, &$ve, &$vm, false ) ) {;
+            if( ! kanonische_einheit( $verteileinheit, $ve, $vm, false ) ) {;
               $ve = $le;
               $vm = $lm;
               $verteileinheit = "$vm $ve";
@@ -4380,7 +4380,7 @@ function update_database( $version ) {
       foreach( $preise as $p ) {
         $id = $p['id'];
         $preis = $p['preis'];
-        preisdatenSetzen( & $p );
+        preisdatenSetzen( $p );
         $lv_faktor = $p['lv_faktor'];
         $lieferpreis = ( $preis - $p['pfand'] ) * $lv_faktor / ( 1.0 + $p['mwst'] / 100.0 );
         /// $gebindegroesse = mult2string( $p['gebindegroesse'] / $p['lv_faktor'] );
