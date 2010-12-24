@@ -5,9 +5,9 @@
 // }
 global $foodsoftdir;   // noetig wenn aufruf aus wiki
 if( ! isset( $foodsoftdir ) ) {
-  $foodsoftdir = ereg_replace( '/[^/]+$', '', $_SERVER['SCRIPT_NAME'] );
+  $foodsoftdir = preg_replace( '#/[^/]+$#', '', $_SERVER['SCRIPT_NAME'] );
   // ausnahme: aufruf aus dem wiki heraus:
-  $foodsoftdir = ereg_replace( '/wiki$', '/foodsoft', $foodsoftdir );
+  $foodsoftdir = preg_replace( '#/wiki$#', '/foodsoft', $foodsoftdir );
 }
 
 require_once('code/config.php');
