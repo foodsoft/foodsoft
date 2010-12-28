@@ -202,8 +202,10 @@ foreach( $bestellungen as $bestellung ) {
   
       case STATUS_VERTEILT:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
-        if( $login_dienst > 0 )
+        if( $login_dienst > 0 ) {
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
+          $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id,ro=1,text=Produktverteilung (Druck)" );
+        }
         if( hat_dienst(4) ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
           if( $abrechnung_set_count > 1 ) {

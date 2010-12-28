@@ -13,9 +13,13 @@ get_http_var('produkt_id','u',0, true);
 
 $status = sql_bestellung_status( $bestell_id );
 
-$editable = ( $status == STATUS_VERTEILT and hat_dienst(1,3,4,5) and ! $readonly );
+$editable = ( $status == STATUS_VERTEILT and hat_dienst(1,3,4,5) );
 
 nur_fuer_dienst(1,3,4,5);
+
+get_http_var( 'ro', 'u', 0, true );
+if( $ro or $readonly )
+  $editable = false;
 
 setWikiHelpTopic( "foodsoft:verteilung" );
 
