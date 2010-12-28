@@ -1,3 +1,7 @@
+Gruppenkontostand / Daten jede Woche einmal in Archiv mailen
+
+Wunderrechner: Verteilmengen an gegebenen bekannten Basarbestand anpassen.
+
 Update INSTALL covering:
 
 apache:
