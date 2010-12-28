@@ -1250,6 +1250,9 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
       close_div();
       open_div('small');
+        echo "Notiz: ", $produkt['notiz'];
+      close_div();
+      open_div('small');
         printf( "Produktgruppe %s,  Nettopreis: %.2lf/%s / Endpreis: %.2lf/%s"
           , $produkt['produktgruppen_name']
           , $produkt['nettopreis']
