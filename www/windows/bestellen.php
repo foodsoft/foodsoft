@@ -436,7 +436,7 @@ if( ! $readonly ) {
         close_div();
         open_div( 'alert right td' );
           echo "<a class='button' id='submit' href='javascript:bestellung_submit();'>Speichern</a>";
-          echo " ", fc_link( 'self', 'bestell_id=0,class=button,text=Abbrechen' );
+          echo " ", fc_link( 'self', 'class=button,text=Abbrechen' );
         close_div();
       close_div(); // tr
     close_div(); // table
