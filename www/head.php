@@ -21,6 +21,8 @@ open_tag( 'head' );
 close_tag( 'head' );
 open_tag( 'body' );
 
+open_div( 'layout_master', 'id="layout_master"' );
+open_div( 'layout', 'id="main" style="height: 100%"' );
 open_div( $headclass, "id='header'" );
   open_table( '', "width='100%'" );
     open_td();
