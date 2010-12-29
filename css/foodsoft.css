@@ -4,6 +4,11 @@
  *
 */
 
+html, body {
+  height: 100%;
+  margin: 0px;
+}
+
 body {
   color:#000000;
   background:#ffffff;
@@ -12,6 +17,21 @@ body {
   font-size:11pt;
   font-family:verdana,arial,sans-serif;
 }
+
+div.layout {
+  width: 100%;
+  overflow: auto;
+  border-bottom-style: solid;
+  border-width: thin;
+  display: block;
+}
+
+div.layout_master {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 img {
   border-style:none;
 }
@@ -872,4 +892,18 @@ div.board textarea {
   text-align:right;
   height:1em;
   vertical-align:middle;
+}
+
+.inline {
+  display:inline;
+}
+
+.table {
+  display: table;
+}
+.tr {
+  display: table-row;
+}
+.td {
+  display: table-cell;
 }

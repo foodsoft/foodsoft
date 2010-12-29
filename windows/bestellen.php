@@ -326,12 +326,12 @@ if( ! $readonly ) {
 
       if( ( gesamtpreis > 0.005 ) && ( gesamtpreis > kontostand ) ) {
         konto_rest.style.color = '#c00000';
-        document.getElementById('submit').className = 'bigbutton warn';
+        document.getElementById('submit').className = 'button warn';
         document.getElementById('submit').firstChild.nodeValue = 'Konto überzogen';
       } else {
         konto_rest.style.color = '#000000';
         document.getElementById('submit').style.color = '#000000';
-        document.getElementById('submit').className = 'bigbutton';
+        document.getElementById('submit').className = 'button';
         document.getElementById('submit').firstChild.nodeValue = 'Bestellung Speichern';
       }
 
@@ -344,8 +344,15 @@ if( ! $readonly ) {
 
     function reminder_on() {
       reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
-      reminder.style.display = 'inline';
-
+      footbar = document.getElementById('footbar');
+      while (footbar.firstChild) {
+        footbar.removeChild(footbar.firstChild);
+      }
+      reminder.style.display = "inline";
+      footbar.appendChild(reminder);
+      
+      set_footbar(5);
+      
       id = document.getElementById('hinzufuegen');
       while( id.firstChild ) {
         id.removeChild( id.firstChild );
@@ -415,30 +422,25 @@ if( ! $readonly ) {
   </script>
   <?php
 
-  open_div( 'alert floatingbuttons', "id='floating_submit_button_$bestellform_id'" );
-    open_table('layout');
-        open_td('alert left');
-          fc_link( 'self', array( 'class' => 'close'
-           , 'url' => "javascript:document.getElementById('floating_submit_button_$bestellform_id').style.display = 'none';" 
-          ) );
-        open_td('alert center', "colspan='2'", "&Auml;nderungen sind noch nicht gespeichert!" );
-      open_tr();
-        open_td('alert smallskip');
-      open_tr();
-        open_td('alert', "colspan='2'", 'Gesamtpreis:' );
-        open_td('alert right', "id='gesamtpreis1'", '-' );
-      open_tr();
-        open_td('alert', "colspan='2'", 'noch verf&uuml;gbar:' );
-        open_td('alert right', "id='konto_rest'", sprintf( '%.2lf', $kontostand ) );
-      open_tr();
-        open_td('alert smallskip');
-      open_tr();
-        open_td('alert');
-        open_td('center alert', '', "<a class='bigbutton' id='submit' href='javascript:bestellung_submit();'>Speichern</a>" );
-        open_td('center alert', '', fc_link( 'self', 'bestell_id=0,class=bigbutton,text=Abbrechen' ) );
-    close_table();
-  close_div();
-
+  open_div( 'alert nodisplay', "id='floating_submit_button_$bestellform_id' style='width:100%'" );
+    fc_link( 'self', array( 'class' => 'close'
+           , 'url' => "javascript:set_footbar(0);") );
+    open_div( 'table', 'style="width:100%;"' );
+      open_div( 'tr' );
+        open_div( 'alert left td', '', "&Auml;nderungen sind noch nicht gespeichert!" );
+        open_div( 'alert center td');
+          echo "Gesamtpreis: ";
+          open_div( '', 'id="gesamtpreis1" style="display:inline"', '-' );
+          echo ", übrig: ";
+          open_div( '', 'id="konto_rest" style="display:inline"', sprintf( '%.2lf', $kontostand ) );
+        close_div();
+        open_div( 'alert right td' );
+          echo "<a class='button' id='submit' href='javascript:bestellung_submit();'>Speichern</a>";
+          echo " ", fc_link( 'self', 'bestell_id=0,class=button,text=Abbrechen' );
+        close_div();
+      close_div(); // tr
+    close_div(); // table
+  close_div(); // submit div
 }
 
 open_table( 'list hfill' );  // bestelltabelle

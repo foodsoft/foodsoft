@@ -49,6 +49,11 @@ switch( $window_id ) {
           echo "<span style='font-weight:bold;color:440000;'> --- !!! Datenbank ist schreibgeschuetzt !!!</span>";
         }
     close_table();
+    close_div(); // payload
+    close_div(); // layout: main
+    open_div('layout', 'id="footbar" style="height: 0%; display: none;"');
+    close_div(); // layout: footbar
+
     break;
   default:   // anzeige in einem unterfenster
     require_once( 'windows/head.php' );

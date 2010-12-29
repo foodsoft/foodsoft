@@ -96,6 +96,21 @@ function post_action( action, message ) {
   f.submit();
 }
 
+function set_footbar( percentage ) {
+  var main = document.getElementById( 'main' );
+  var footbar = document.getElementById( 'footbar' );
+  main.style.height=(100-percentage)+"%";
+  footbar.style.height=percentage+"%";
+  if (percentage)
+  {
+    footbar.style.display="block";
+  }
+  else
+  {
+    footbar.style.display="none";
+  }
+}
+
 // experimenteller code - funktioniert noch nicht richtig...
 // 
 // var child_windows = new Array();
