@@ -152,6 +152,7 @@ if( ! $readonly ) {
     var fest               = new Array();   // festbestellmenge der gruppe aktuell
     var fest_andere        = new Array();   // festbestellmenge anderer gruppen
     var zuteilung_fest_alt = new Array();
+    var toleranz_alt       = new Array();
     var toleranz           = new Array();
     var toleranz_andere    = new Array();
     var verteilmult        = new Array();
@@ -163,7 +164,8 @@ if( ! $readonly ) {
       fest[produkt] = fest_alt[produkt];
       fest_andere[produkt] = _fest_andere;
       zuteilung_fest_alt[produkt] = zuteilung_fest;
-      toleranz[produkt] = _toleranz;
+      toleranz_alt[produkt] = _toleranz;
+      toleranz[produkt] = toleranz_alt[produkt];
       toleranz_andere[produkt] = _toleranz_andere;
       kosten[produkt] = _preis * ( _fest + _toleranz );
       verteilmult[produkt] = _verteilmult;
@@ -271,14 +273,29 @@ if( ! $readonly ) {
       // anzeige gruppe aktualisieren:
       //
       s = fest[produkt] * verteilmult[produkt];
-      if( toleranz[produkt] > 0 ) {
+      var toleranzNode = document.getElementById('t_'+produkt);
+      
+      // also show when tolerance changed for marking change by color
+      if( toleranz[produkt] > 0 || toleranz_alt[produkt] != toleranz[produkt] ) {
         s = s + ' ... ';
-        document.getElementById('t_'+produkt).firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] ) * verteilmult[produkt];
+        toleranzNode.firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] ) * verteilmult[produkt];
       } else {
-        document.getElementById('t_'+produkt).firstChild.nodeValue = ' ';
+        toleranzNode.firstChild.nodeValue = ' ';
       }
-      document.getElementById('f_'+produkt).firstChild.nodeValue = s;
+      
+      var festNode = document.getElementById('f_'+produkt);
+      festNode.firstChild.nodeValue = s;
+      
+      // highlight changes
+      if (!init) {
+        set_class(festNode, 'changed', fest[produkt] != fest_alt[produkt]);
+        set_class(
+            toleranzNode, 
+            'changed', 
+            fest[produkt] + toleranz[produkt] != fest_alt[produkt] + toleranz_alt[produkt]);
+      }
 
+      // update order form fields
       document.getElementById('fest_'+produkt).value = fest[produkt];
       document.getElementById('toleranz_'+produkt).value = toleranz[produkt];
 
