@@ -907,3 +907,7 @@ div.board textarea {
 .td {
   display: table-cell;
 }
+
+.changed {
+  color: #c00000;
+}

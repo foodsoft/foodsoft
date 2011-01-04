@@ -111,6 +111,17 @@ function set_footbar( percentage ) {
   }
 }
 
+function set_class( node, className, enabled ) {
+  if (enabled) {
+    if (node.className.match(RegExp('\\b'+className+'\\b')))
+      return;
+    node.className += ' ' + className;
+    return;
+  }
+  // removal
+  node.className = node.className.replace(RegExp(' *\\b'+className+'\\b *'), ' ');
+}
+
 // experimenteller code - funktioniert noch nicht richtig...
 // 
 // var child_windows = new Array();
