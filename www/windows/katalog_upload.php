@@ -134,7 +134,14 @@ function upload_terra() {
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
-
+      if( preg_match( "#^Art\\.Nr\\.@Bestell-Nr\\.@Obst & Gemüse@Inhalt@Einh\\.@Herk.@HKL@IK@Zertifizierung@@Netto-Preis *@/Einh\\.@MwSt\\.%@Bemerkung@#", $line ) ) {
+        /// Art.Nr.@Bestell-Nr.@Obst & Gemüse@Inhalt@Einh.@Herk.@HKL@IK@Zertifizierung@@Netto-Preis @/Einh.@MwSt.%@Bemerkung@@
+        $tag='OG';
+        $splitat = '@';
+        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', '',  'netto', '', 'mwst', '' );
+        $pattern = '/^[\d\s]+@[\d\s]+@/';
+      }
+      
       if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
         // 705022  @ 45 01 2  @  Babyflasche 2x125ml @  1 SET @ MLL @DE @ @ 5.46[$ 407] @ @ J @ 19 @4031075402211@
         $tag='drog';
