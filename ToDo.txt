@@ -1,3 +1,7 @@
+Dienste bestätigen: 
+Im Capture-Screen auch die Möglichkeit "weiß noch nicht" anbieten:
+reduziert falsch-positive Antworten
+
 Preishistorie in Scrollbox
 
 Neuen Preiseintrag sofort aktivieren
