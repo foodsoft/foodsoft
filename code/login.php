@@ -162,6 +162,32 @@ setWikiHelpTopic( ':' );
 
 open_div( 'kommentar', '', $motd );
 
+open_javascript();
+?>
+function pick_login_dropdown() {
+  var source = $('login_gruppen_id');
+  var text = $('login_gruppen_id_text');
+  
+  text.value = source.value % 1000;
+}
+
+function pick_login_text() {
+  var source = $('login_gruppen_id_text');
+  var dropdown = $('login_gruppen_id');
+  
+  var options = dropdown.options;
+  var group_id = 0;
+  for (var i = 0; i < options.length; ++i) {
+    if (options.item(i).value % 1000 == source.value) {
+      group_id = options.item(i).value;
+      break;
+    }
+  }
+  dropdown.value = group_id;
+}
+<?php
+close_javascript();
+
 // we need $foodsoftdir in form action to allow login from DokuWiki:
 //
 open_form( "url=$foodsoftdir/index.php", 'login=login' );
@@ -171,7 +197,10 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
     open_div( 'kommentar', "style='padding:1em;'", 'Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:' );
     open_div( 'newfield', '', "
       <label>Gruppe:</label>
-      <select size='1' name='login_gruppen_id'>
+      <input type='text' size='4' name='login_gruppen_id_text' id='login_gruppen_id_text' value='' 
+          onkeyup='pick_login_text();'>
+      <select size='1' name='login_gruppen_id' id='login_gruppen_id' 
+          onchange='pick_login_dropdown();'>
         ". optionen_gruppen() ."
       </select>
       <label style='padding-left:4em;'>Passwort:</label>
@@ -232,6 +261,7 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
       submission_button('OK');
     close_div();
   close_fieldset();
+  $login_form_id = "form_$form_id";
 close_form();
 
 open_javascript( "
@@ -243,6 +273,8 @@ open_javascript( "
     document.getElementById('dienstform').style.display = 'none';
     document.getElementById('nodienstform').style.display = 'block';
   }
+  \$('$login_form_id').onsubmit = pick_login_text;
+  document.observe('dom:loaded', pick_login_text);
 " );
 
 function nur_fuer_dienst() {
