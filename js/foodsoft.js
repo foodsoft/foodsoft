@@ -163,3 +163,61 @@ function set_class( node, className, enabled ) {
 //     notify_down();
 //   }
 // }
+
+
+var MagicCalculator = Class.create(
+{
+  initialize: function(orderId, productId) 
+  {
+    this.mOrderId = orderId;
+    this.mProductId = productId;
+    this.mGroupFields = new Array();
+    this.mGroupValues = new Array();
+    this.mTrashField = '';
+    this.mTrashValue = 0;
+    this.mBazaarField = '';
+    this.mBazaarValue = 0;
+    this.mTotal = 0;
+  },
+  addGroupField: function(id) 
+  {
+    this.mGroupFields.push(id);
+  },
+  setTrashField: function(id)
+  {
+    this.mTrashField = id;
+  },
+  setBazaarField: function(id)
+  {
+    this.mBazaarField = id;
+  },
+  fetchValues: function()
+  {
+    this.mTotal = 0;
+    this.mGroupValues.length = this.mGroupFields.length;
+    for (var i = 0; i < this.mGroupFields.length; ++i)
+    {
+      this.mGroupValues[i] = parseInt($(this.mGroupFields[i]).value);
+      this.mTotal += this.mGroupValues[i];
+    }
+    this.mTrashValue = parseInt($(this.mTrashField).value);
+    this.mTotal += this.mTrashValue;
+    this.mBazaarValue = parseInt($(this.mBazaarField).textContent);
+    this.mTotal += this.mBazaarValue;
+  },
+  calculate: function(bazaarTarget)
+  {
+    var groupsSum = 0;
+    this.mGroupValues.each(function(x) { groupsSum += x });
+    var groupsTarget = this.mTotal - bazaarTarget - this.mTrashValue;
+    var ratio = groupsTarget / groupsSum;
+    groupsSum = 0;
+    this.mGroupValues = this.mGroupValues.collect(function(x) { 
+      var newX = Math.round(x * ratio); 
+      groupsSum += newX;
+      return newX; 
+    });
+    this.mBazaarValue = this.mTotal - this.mTrashValue - groupsSum;
+  },
+});
+
