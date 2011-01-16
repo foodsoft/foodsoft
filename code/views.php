@@ -1343,7 +1343,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $js_on_exit[] = "document.write('fields: ' + magicCalculator.mGroupFields + '<br>'); "
       . "magicCalculator.fetchValues();"
       . "document.write('values: ' + magicCalculator.toSource() + '<br>');"
-      . "magicCalculator.calculate(1000);"
+      . "magicCalculator.calculate(0);"
       . "document.write('values: ' + magicCalculator.toSource() + '<br>');";
 }
 

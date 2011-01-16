@@ -218,6 +218,37 @@ var MagicCalculator = Class.create(
       return newX; 
     });
     this.mBazaarValue = this.mTotal - this.mTrashValue - groupsSum;
+    
+    // rounding fix-up: make array with same length initialized to zero
+    var roundingDistribution = this.mGroupValues.collect(function(x) { return 0; });
+    while (this.mBazaarValue != bazaarTarget) {
+      // bazaar rest from rounding
+      // direction +1: need to distribute more to groups
+      var direction = (this.mBazaarValue - bazaarTarget > 0) ? 1 : -1;
+      var minBadness;
+      var iMinBadness = 0;
+      for (var i = 0; i < this.mGroupValues.length; ++i) {
+        if (this.mGroupValues[i] == 0) {
+          // do not involve new groups
+          continue;
+        }
+        var badness = Math.abs((roundingDistribution[i] + direction) / this.mGroupValues[i]);
+        if (i == 0) {
+          minBadness = badness;
+          continue;
+        }
+        if (badness < minBadness) {
+          iMinBadness = i;
+          minBadness = badness;
+        }
+      }
+      roundingDistribution[iMinBadness] += direction;
+      this.mBazaarValue -= direction;
+    }
+    
+    for (var i = 0; i < this.mGroupValues.length; ++i) {
+      this.mGroupValues[i] += roundingDistribution[i];
+    }
   },
 });
 
