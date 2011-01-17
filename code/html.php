@@ -609,4 +609,23 @@ function close_option_menu_row() {
   $js_on_exit[] = move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' );
 }
 
+/**
+ * Generate event handler attributes for handling changes and capturing ENTER key
+ * 
+ * @author Tilman Vogel
+ * 
+ * @param[in]   handler
+ *              JS code to execute on field change or ENTER
+ * @param[in]   capture_enter
+ *              whether to capture ENTER key press
+ * @returns     corresponding "onchange" and "onkeypress" attributes
+ */
+function textfield_on_change_handler( $handler, $capture_enter = true ) {
+  $result = " onchange='$handler'";
+  if ($capture_enter) {
+    $result .= " onkeypress='handleTextFieldKeyPress(event, function() { $handler });'";
+  }
+  return $result;
+}
+
 ?>

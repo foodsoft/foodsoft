@@ -122,6 +122,15 @@ function set_class( node, className, enabled ) {
   node.className = node.className.replace(RegExp(' *\\b'+className+'\\b *'), ' ');
 }
 
+function handleTextFieldKeyPress(event, onEnter) {
+    if (event.keyCode != Event.KEY_RETURN) {
+      return;
+    }
+    event.stop(); // no submit
+    onEnter();
+    event.findElement().select();
+}
+
 // experimenteller code - funktioniert noch nicht richtig...
 // 
 // var child_windows = new Array();
@@ -167,17 +176,23 @@ function set_class( node, className, enabled ) {
 
 var MagicCalculator = Class.create(
 {
-  initialize: function(orderId, productId) 
+  initialize: function(orderId, productId, distMult, endPrice) 
   {
     this.mOrderId = orderId;
     this.mProductId = productId;
+    this.mDistMult = distMult;
+    this.mEndPrice = endPrice;
     this.mGroupFields = new Array();
     this.mGroupValues = new Array();
+    this.mResultGroupValues = new Array();
     this.mTrashField = '';
     this.mTrashValue = 0;
     this.mBazaarField = '';
     this.mBazaarValue = 0;
+    this.mBazaarTarget = 0;
     this.mTotal = 0;
+    this.mUiEnabled = false;
+    
   },
   addGroupField: function(id) 
   {
@@ -193,38 +208,55 @@ var MagicCalculator = Class.create(
   },
   fetchValues: function()
   {
-    this.mTotal = 0;
+    this.mTotal = parseInt($('liefermenge_' + this.mOrderId + '_' + this.mProductId).value, 10);
     this.mGroupValues.length = this.mGroupFields.length;
     for (var i = 0; i < this.mGroupFields.length; ++i)
     {
-      this.mGroupValues[i] = parseInt($(this.mGroupFields[i]).value);
-      this.mTotal += this.mGroupValues[i];
+      this.mGroupValues[i] = parseInt($('menge_' + this.mGroupFields[i]).value, 10);
     }
-    this.mTrashValue = parseInt($(this.mTrashField).value);
-    this.mTotal += this.mTrashValue;
-    this.mBazaarValue = parseInt($(this.mBazaarField).textContent);
-    this.mTotal += this.mBazaarValue;
+    this.mResultGroupValues = this.mGroupValues;
+    this.mTrashValue = parseInt($('menge_' + this.mTrashField).value, 10);
+    this.mBazaarValue = parseInt($('menge_' + this.mBazaarField).textContent, 10);
+    this.mBazaarTarget = parseInt($('magic_' + this.mBazaarField).value, 10);
   },
-  calculate: function(bazaarTarget)
+  recalcCurrentBazaar: function() {
+    this.mBazaarValue = this.mTotal;
+    for (var i = 0; i < this.mGroupValues.length; ++i)
+    {
+      this.mBazaarValue -= this.mGroupValues[i];
+    }
+    this.mBazaarValue -= this.mTrashValue;
+  },
+  publishCurrentBazaar: function() {
+    $('menge_' + this.mBazaarField).textContent = this.mBazaarValue;
+  },
+  calculate: function()
   {
+    if (isNaN(this.mBazaarTarget)) {
+      return;
+    }
     var groupsSum = 0;
     this.mGroupValues.each(function(x) { groupsSum += x });
-    var groupsTarget = this.mTotal - bazaarTarget - this.mTrashValue;
+    var groupsTarget = this.mTotal - this.mBazaarTarget - this.mTrashValue;
     var ratio = groupsTarget / groupsSum;
     groupsSum = 0;
-    this.mGroupValues = this.mGroupValues.collect(function(x) { 
-      var newX = Math.round(x * ratio); 
+    var groupValuesExact = this.mGroupValues.collect(function(x) {
+      return x * ratio;
+    });
+    this.mResultGroupValues = groupValuesExact.collect(function(x) { 
+      var newX = Math.round(x); 
       groupsSum += newX;
       return newX; 
     });
+    
     this.mBazaarValue = this.mTotal - this.mTrashValue - groupsSum;
     
     // rounding fix-up: make array with same length initialized to zero
     var roundingDistribution = this.mGroupValues.collect(function(x) { return 0; });
-    while (this.mBazaarValue != bazaarTarget) {
+    while (this.mBazaarValue != this.mBazaarTarget) {
       // bazaar rest from rounding
       // direction +1: need to distribute more to groups
-      var direction = (this.mBazaarValue - bazaarTarget > 0) ? 1 : -1;
+      var direction = (this.mBazaarValue - this.mBazaarTarget > 0) ? 1 : -1;
       var minBadness;
       var iMinBadness = 0;
       for (var i = 0; i < this.mGroupValues.length; ++i) {
@@ -232,7 +264,7 @@ var MagicCalculator = Class.create(
           // do not involve new groups
           continue;
         }
-        var badness = Math.abs((roundingDistribution[i] + direction) / this.mGroupValues[i]);
+        var badness = Math.abs((this.mResultGroupValues[i] + roundingDistribution[i] + direction - groupValuesExact[i]) / this.mResultGroupValues[i]);
         if (i == 0) {
           minBadness = badness;
           continue;
@@ -247,7 +279,63 @@ var MagicCalculator = Class.create(
     }
     
     for (var i = 0; i < this.mGroupValues.length; ++i) {
-      this.mGroupValues[i] += roundingDistribution[i];
+      this.mResultGroupValues[i] += roundingDistribution[i];
+    }
+  },
+  setUi: function(enabled) {
+    $('magic_' + this.mOrderId + '_' + this.mProductId + '_style').sheet.cssRules[0].style.display = enabled ? '' : 'none';
+    this.mUiEnabled = enabled;
+  },
+  displayResult: function() {
+    for (var i = 0; i < this.mGroupFields.length; ++i) {
+      $('magic_' + this.mGroupFields[i]).textContent = this.mResultGroupValues[i];
+    }
+    $('magic_' + this.mTrashField).textContent = this.mTrashValue;
+  },
+  applyResult: function() {
+    this.setUi(false);
+    for (var i = 0; i < this.mGroupFields.length; ++i) {
+      $('menge_' + this.mGroupFields[i]).value = this.mResultGroupValues[i];
+    }
+    this.handleChangedDistribution();
+  },
+  initUi: function() {
+    this.fetchValues();
+    this.recalcCurrentBazaar();
+    this.publishCurrentBazaar();
+    this.mBazaarTarget = this.mBazaarValue;
+    $('magic_' + this.mBazaarField).value = this.mBazaarTarget;
+    this.calculate();
+    this.displayResult();
+    this.setUi(true);
+  },
+  updateUi: function() {
+    this.fetchValues();
+    this.calculate();
+    this.displayResult();
+  },
+  calcPrice: function(amount) {
+    return this.mEndPrice * amount / this.mDistMult;
+  },
+  formatPrice: function(price) {
+    return price.toFixed(2);
+  },
+  recalcAndShowPrices: function() {
+    $('preis_' + this.mOrderId + '_' + this.mProductId).textContent = this.formatPrice(this.calcPrice(this.mTotal));
+    for (var i = 0; i < this.mGroupFields.length; ++i) {
+      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mGroupValues[i]));
+    }
+    $('preis_' + this.mTrashField).textContent = this.formatPrice(this.calcPrice(this.mTrashValue));
+    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mBazaarValue));
+  },
+  handleChangedDistribution: function() {
+    this.fetchValues();
+    this.recalcCurrentBazaar();
+    this.publishCurrentBazaar();
+    this.recalcAndShowPrices();
+    if (this.mUiEnabled) {
+      this.calculate();
+      this.displayResult();
     }
   },
 });

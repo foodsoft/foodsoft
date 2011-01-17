@@ -80,33 +80,39 @@ function time_selector($stunde_feld, $stunde, $minute_feld, $minute, $to_stdout 
 // they will return a suitable string, not print to stdout directly!
 //
 
-function int_view( $num, $fieldname = false, $size = 6 ) {
+function int_view( $num, $fieldname = false, $size = 6, $transmit = true, $edit_if_fieldname = true ) {
   global $input_event_handlers;
   $num = sprintf( "%d", $num );
-  if( $fieldname )
-    return "<input type='text' class='int number' size='$size' name='$fieldname' value='$num' $input_event_handlers>";
+  $transmit = $transmit ? "name='$fieldname'" : '';
+  $id = $fieldname ? "id='$fieldname'" : '';
+  if( $fieldname && $edit_if_fieldname)
+    return "<input type='text' class='int number' size='$size' $transmit $id value='$num' $input_event_handlers>";
   else
-    return "<span class='int number'>$num</span>";
+    return "<span class='int number' $id>$num</span>";
 }
 
-function price_view( $price, $fieldname = false ) {
+function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true ) {
   global $input_event_handlers;
   $price = sprintf( "%.2lf", $price );
-  if( $fieldname )
-    return "<input type='text' class='price number' size='8' name='$fieldname' value='$price' $input_event_handlers>";
+  $transmit = $transmit ? "name='$fieldname'" : '';
+  $id = $fieldname ? "id='$fieldname'" : '';
+  if( $fieldname && $edit_if_fieldname )
+    return "<input type='text' class='price number' size='8' $transmit $id value='$price' $input_event_handlers>";
   else
-    return "<span class='price number'>$price</span>";
+    return "<span class='price number' $id>$price</span>";
 }
 
 // mult_view: erlaube bis zu 3 nachkommastellen; aber nur anzeigen, wenn noetig:
 //
-function mult_view( $mult, $fieldname = false ) {
+function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldname = true ) {
   global $input_event_handlers;
   $mult = mult2string( $mult );
-  if( $fieldname )
-    return "<input type='text' class='number' size='8' id='$fieldname' name='$fieldname' value='$mult' $input_event_handlers>";
+  $transmit = $transmit ? "name='$fieldname'" : '';
+  $id = $fieldname ? "id='$fieldname'" : '';
+  if( $fieldname && $edit_if_fieldname )
+    return "<input type='text' class='number' size='8' $transmit $id value='$mult' $input_event_handlers>";
   else
-    return "<span class='number'>$mult</span>";
+    return "<span class='number' $id>$mult</span>";
 }
 
 function gebindegroesse_view( $pr /* a row from table produktpreise */ ) {
@@ -1266,17 +1272,35 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
 
 function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   global $js_on_exit;
+  global $input_event_handlers;
+  global $form_id;
+  
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   $verteilmult = $produkt['kan_verteilmult'];
   $verteileinheit = $produkt['kan_verteileinheit'];
   $endpreis = $produkt['endpreis'];
   $liefermenge = $produkt['liefermenge'] * $verteilmult;
 
+  $magicCalculator = "window.magicCalculator_{$bestell_id}_{$produkt_id}";
+  $js_on_exit[] = "$magicCalculator = new MagicCalculator($bestell_id, $produkt_id, $verteilmult, $endpreis);";
+  $js_on_exit[] = "\$('form_$form_id').observe('form:afterReset', function(event) { $magicCalculator.handleChangedDistribution(); });";
+  
+  $magic_style = "magic_{$bestell_id}_{$produkt_id}";
+  
+  open_tag('style', '', "id='${magic_style}_style' type='text/css'");
+  echo(".$magic_style { display: none; }");
+  close_tag('style');
+  
+  $input_event_handlers = textfield_on_change_handler("on_change($form_id); $magicCalculator.handleChangedDistribution();");
   open_tr('summe');
     open_th('', "colspan='3'", 'Liefermenge:' );
     open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
     open_td('unit','',$verteileinheit );
-    open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult ) );
+    open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
+    if ($editable) {
+      open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'", 
+          alink("javascript:$magicCalculator.applyResult(); on_change($form_id);", 'button', '&larr; OK' )); 
+    }
   close_tr();
 
   $basar_id = sql_basar_id();
@@ -1285,8 +1309,6 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   $basar_toleranzmenge = 0;
   $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult;
   $muellmenge = 0;
-
-  $js_on_exit[] = "var magicCalculator = new MagicCalculator($bestell_id, $produkt_id);";
   
   foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
@@ -1316,35 +1338,50 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
       open_td( 'unit', '', $verteileinheit );
       open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult ) );
-    $js_on_exit[] = "magicCalculator.addGroupField('menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}');";
+      open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
+      if ($editable) {
+        open_td( "mult $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
+        open_td( "unit $magic_style", '', $verteileinheit );
+        $js_on_exit[] = "$magicCalculator.addGroupField('{$bestell_id}_{$produkt_id}_{$gruppen_id}');";
+      }
   }
+
   open_tr('summe');
     open_td('', "colspan='3'", "M&uuml;ll:" );
     open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult ) );
-    $js_on_exit[] = "magicCalculator.setTrashField('menge_{$bestell_id}_{$produkt_id}_{$muell_id}');";
+    open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
+    if ($editable) {
+      open_td( "mult $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
+      open_td( "unit $magic_style", '', $verteileinheit );
+      $js_on_exit[] = "$magicCalculator.setTrashField('{$bestell_id}_{$produkt_id}_{$muell_id}');";
+    }
+
   close_tr();
   open_tr('summe');
     open_td('', '', fc_link( 'basar', 'class=href,text=Basar:' ) );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
     open_td( 'mult', '');
-      if ($editable) {
-        echo alink("javascript:magic_calculator($bestell_id, $produkt_id);", '', 'Magic').' ';
-      }
-      open_span('', "id='menge_{$bestell_id}_{$produkt_id}_{$basar_id}'", $basar_verteilmenge );
+    if ($editable) {
+      echo alink("javascript:$magicCalculator.initUi();", 'magic').' ';
+    }
+    open_span('', "id='menge_{$bestell_id}_{$produkt_id}_{$basar_id}'", $basar_verteilmenge );
     close_td();
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult ) );
-    $js_on_exit[] = "magicCalculator.setBazaarField('menge_{$bestell_id}_{$produkt_id}_{$basar_id}');";
+    open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+    if ($editable) {
+      $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
+      open_td( "mult $magic_style" );
+      echo alink("javascript:\$('magic_{$bestell_id}_{$produkt_id}_{$basar_id}').value = 0; $magicCalculator.updateUi();", 'button', '0 &rarr;').' ';
+      echo(mult_view( $basar_verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$basar_id}", false ) );
+      close_td();
+      open_td( "unit $magic_style", '', $verteileinheit );
+      $js_on_exit[] = "$magicCalculator.setBazaarField('{$bestell_id}_{$produkt_id}_{$basar_id}');";
+      $input_event_handlers = $form_event_handlers;
+    }
+    
   close_tr();
-  $js_on_exit[] = "document.write('fields: ' + magicCalculator.mGroupFields + '<br>'); "
-      . "magicCalculator.fetchValues();"
-      . "document.write('values: ' + magicCalculator.toSource() + '<br>');"
-      . "magicCalculator.calculate(0);"
-      . "document.write('values: ' + magicCalculator.toSource() + '<br>');";
 }
 
 function abrechnung_overview( $abrechnung_id, $bestell_id_current = 0 ) {
