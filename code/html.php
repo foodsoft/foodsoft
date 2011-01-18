@@ -414,7 +414,7 @@ function submission_button( $text = '', $active = true, $confirm = '' ) {
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
   global $form_id;
   open_span( 'qquad', '', "<a class='button inactive' href='javascript:true;' id='reset_button_$form_id' title='Änderungen zurücknehmen'
-                              onClick=\"document.getElementById('form_$form_id').reset(); on_reset($form_id); return false;\">$text</a>" );
+                              onClick=\"var form = $('form_$form_id'); form.reset(); form.fire('form:afterReset'); on_reset($form_id); return false;\">$text</a>" );
 }
 
 function check_all_button( $text = 'Alle ausw&auml;hlen', $title = '' ) {
