@@ -1275,6 +1275,9 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   global $input_event_handlers;
   global $form_id;
   
+
+  $form_event_handlers = $input_event_handlers;
+
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   $verteilmult = $produkt['kan_verteilmult'];
   $verteileinheit = $produkt['kan_verteileinheit'];
