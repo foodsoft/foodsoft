@@ -391,7 +391,7 @@ function floating_submission_button() {
     open_table('layout');
       open_td('alert left');
         ?> <a class='close' title='Schließen' href='javascript:true;'
-          onclick='document.getElementById("floating_submit_button_<?php echo $form_id; ?>").style.display = "none";'> <?php
+          onclick='document.getElementById("floating_submit_button_<?php echo $form_id; ?>").style.display = "none"; return false;'></a> <?php
       open_td('alert center quad', '', "&Auml;nderungen sind noch nicht gespeichert!" );
     open_tr();
       open_td( 'alert center oneline smallskip', "colspan='2'" );
@@ -413,8 +413,8 @@ function submission_button( $text = '', $active = true, $confirm = '' ) {
 
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
   global $form_id;
-  open_span( 'qquad', '', "<a class='button inactive' href='javascript:return true;' id='reset_button_$form_id' title='Änderungen zurücknehmen'
-                              onClick=\"document.getElementById('form_$form_id').reset(); on_reset($form_id); \">$text</a>" );
+  open_span( 'qquad', '', "<a class='button inactive' href='javascript:true;' id='reset_button_$form_id' title='Änderungen zurücknehmen'
+                              onClick=\"document.getElementById('form_$form_id').reset(); on_reset($form_id); return false;\">$text</a>" );
 }
 
 function check_all_button( $text = 'Alle ausw&auml;hlen', $title = '' ) {
