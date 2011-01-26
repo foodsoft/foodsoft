@@ -192,7 +192,7 @@ var MagicCalculator = Class.create(
     this.mBazaarTarget = 0;
     this.mTotal = 0;
     this.mUiEnabled = false;
-    
+    this.mNotInteger = false;
   },
   addGroupField: function(id) 
   {
@@ -206,18 +206,28 @@ var MagicCalculator = Class.create(
   {
     this.mBazaarField = id;
   },
+  parseValue: function(string) {
+    var resultInt = parseInt(string, 10);
+    var resultFloat = parseFloat(string);
+    if (isNaN(resultInt) || resultInt !== resultFloat || string.indexOf('.') >= 0) {
+      this.mNotInteger = true;
+      return Math.round(resultFloat*1000)/1000;
+    }
+    return resultInt;
+  }, 
   fetchValues: function()
   {
-    this.mTotal = parseInt($('liefermenge_' + this.mOrderId + '_' + this.mProductId).value, 10);
+    this.mNotInteger = false;
+    this.mTotal = this.parseValue($('liefermenge_' + this.mOrderId + '_' + this.mProductId).value);
     this.mGroupValues.length = this.mGroupFields.length;
     for (var i = 0; i < this.mGroupFields.length; ++i)
     {
-      this.mGroupValues[i] = parseInt($('menge_' + this.mGroupFields[i]).value, 10);
+      this.mGroupValues[i] = this.parseValue($('menge_' + this.mGroupFields[i]).value);
     }
     this.mResultGroupValues = this.mGroupValues;
-    this.mTrashValue = parseInt($('menge_' + this.mTrashField).value, 10);
-    this.mBazaarValue = parseInt($('menge_' + this.mBazaarField).textContent, 10);
-    this.mBazaarTarget = parseInt($('magic_' + this.mBazaarField).value, 10);
+    this.mTrashValue = this.parseValue($('menge_' + this.mTrashField).value);
+    this.mBazaarValue = parseFloat($('menge_' + this.mBazaarField).textContent);
+    this.mBazaarTarget = this.parseValue($('magic_' + this.mBazaarField).value);
   },
   recalcCurrentBazaar: function() {
     this.mBazaarValue = this.mTotal;
@@ -227,14 +237,21 @@ var MagicCalculator = Class.create(
     }
     this.mBazaarValue -= this.mTrashValue;
   },
+  formatNumber: function(number, precision) {
+    var string = number.toFixed(precision);
+    return string.replace(/\.?0+$/, '');
+  },
   publishCurrentBazaar: function() {
-    $('menge_' + this.mBazaarField).textContent = this.mBazaarValue;
+    $('menge_' + this.mBazaarField).textContent = this.formatNumber(this.mBazaarValue, 3);
   },
   calculate: function()
   {
     if (isNaN(this.mBazaarTarget)) {
       return;
     }
+    
+    var fixPointFactor = (this.mNotInteger) ? 1000 : 1;
+    
     var groupsSum = 0;
     this.mGroupValues.each(function(x) { groupsSum += x });
     var groupsTarget = this.mTotal - this.mBazaarTarget - this.mTrashValue;
@@ -244,13 +261,15 @@ var MagicCalculator = Class.create(
       return x * ratio;
     });
     this.mResultGroupValues = groupValuesExact.collect(function(x) { 
-      var newX = Math.round(x); 
+      var newX = Math.round(x*fixPointFactor) / fixPointFactor; 
       groupsSum += newX;
       return newX; 
     });
     
-    this.mBazaarValue = this.mTotal - this.mTrashValue - groupsSum;
     
+    // in case of decimals, do the rounding on 1e-3, scale up, do it in integer, then scale down
+    this.mBazaarValue = Math.round((this.mTotal - this.mTrashValue - groupsSum) * fixPointFactor);
+    this.mBazaarTarget = Math.round(this.mBazaarTarget * fixPointFactor);
     // rounding fix-up: make array with same length initialized to zero
     var roundingDistribution = this.mGroupValues.collect(function(x) { return 0; });
     while (this.mBazaarValue != this.mBazaarTarget) {
@@ -264,7 +283,9 @@ var MagicCalculator = Class.create(
           // do not involve new groups
           continue;
         }
-        var badness = Math.abs((this.mResultGroupValues[i] + roundingDistribution[i] + direction - groupValuesExact[i]) / this.mResultGroupValues[i]);
+        var badness = Math.abs(
+            (this.mResultGroupValues[i] + (roundingDistribution[i] + direction)/fixPointFactor - groupValuesExact[i]) 
+                / groupValuesExact[i]);
         if (i == 0) {
           minBadness = badness;
           continue;
@@ -279,8 +300,10 @@ var MagicCalculator = Class.create(
     }
     
     for (var i = 0; i < this.mGroupValues.length; ++i) {
-      this.mResultGroupValues[i] += roundingDistribution[i];
+      this.mResultGroupValues[i] += roundingDistribution[i] / fixPointFactor;
     }
+    this.mBazaarTarget /= fixPointFactor;
+    this.mBazaarValue /= fixPointFactor;
   },
   setUi: function(enabled) {
     $('magic_' + this.mOrderId + '_' + this.mProductId + '_style').sheet.cssRules[0].style.display = enabled ? '' : 'none';
@@ -288,14 +311,14 @@ var MagicCalculator = Class.create(
   },
   displayResult: function() {
     for (var i = 0; i < this.mGroupFields.length; ++i) {
-      $('magic_' + this.mGroupFields[i]).textContent = this.mResultGroupValues[i];
+      $('magic_' + this.mGroupFields[i]).textContent = this.formatNumber(this.mResultGroupValues[i], 3);
     }
-    $('magic_' + this.mTrashField).textContent = this.mTrashValue;
+    $('magic_' + this.mTrashField).textContent = this.formatNumber(this.mTrashValue, 3);
   },
   applyResult: function() {
     this.setUi(false);
     for (var i = 0; i < this.mGroupFields.length; ++i) {
-      $('menge_' + this.mGroupFields[i]).value = this.mResultGroupValues[i];
+      $('menge_' + this.mGroupFields[i]).value = this.formatNumber(this.mResultGroupValues[i], 3);
     }
     this.handleChangedDistribution();
   },
@@ -304,7 +327,7 @@ var MagicCalculator = Class.create(
     this.recalcCurrentBazaar();
     this.publishCurrentBazaar();
     this.mBazaarTarget = this.mBazaarValue;
-    $('magic_' + this.mBazaarField).value = this.mBazaarTarget;
+    $('magic_' + this.mBazaarField).value = this.formatNumber(this.mBazaarTarget, 3);
     this.calculate();
     this.displayResult();
     this.setUi(true);
