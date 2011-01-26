@@ -1,3 +1,7 @@
+Abrechnung:
+mehrere Sonstiges nach Schema:
+Titel, MwSt (7%, 19%, 0%), Netto, Brutto errechnet
+
 Dienste bestätigen: 
 Im Capture-Screen auch die Möglichkeit "weiß noch nicht" anbieten:
 reduziert falsch-positive Antworten
