@@ -50,8 +50,7 @@ switch( $window_id ) {
         }
     close_table();
     close_div(); // payload
-    close_div(); // layout: main
-    open_div('layout', 'id="footbar" style="height: 0%; display: none;"');
+    open_div('layout', 'id="footbar" style="display: none;"');
     close_div(); // layout: footbar
 
     break;
@@ -64,6 +63,9 @@ switch( $window_id ) {
     }
     break;
 }
+
+$js_on_exit[] = "Event.observe(window, 'resize', function () { window.updateWindowHeight(); } );";
+$js_on_exit[] = "window.scroller.register(document);";
 
 // force new iTAN (this form must still be submittable after any other):
 //

@@ -22,8 +22,6 @@ open_tag( 'head' );
 close_tag( 'head' );
 open_tag( 'body' );
 
-open_div( 'layout_master', 'id="layout_master"' );
-open_div( 'layout', 'id="main" style="height: 100%"' );
 open_div( $headclass, "id='header'" );
   open_table( '', "width='100%'" );
     open_td();
@@ -59,7 +57,7 @@ open_div( $headclass, "id='header'" );
         open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "Hilfe-Wiki der Food Coop...", true );
       close_ul();
   close_table();
-close_div();
+close_div(); // header
 
 open_div( $payloadclass, "id='payload'" );
 
