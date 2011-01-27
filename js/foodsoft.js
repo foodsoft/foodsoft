@@ -360,6 +360,6 @@ var MagicCalculator = Class.create(
       this.calculate();
       this.displayResult();
     }
-  },
+  }
 });
 
