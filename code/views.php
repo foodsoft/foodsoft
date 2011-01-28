@@ -559,6 +559,9 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   $basar = sql_basar( $bestell_id, $order );
   if( count( $basar ) < 1 ) {
     open_div( 'alert', '', 'Basar ist leer!' );
+    if ( $editAmounts ) {
+      close_form();
+    }
     return;
   }
   $have_aufschlag = false;
