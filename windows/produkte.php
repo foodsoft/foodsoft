@@ -94,6 +94,7 @@ $produktgruppen_id_alt = -1;
 
 $cols = ( $editable ? 9 : 8 );
 open_table('list hfill');
+  open_tr();
     open_th( '', "colspan='$cols'", "<h3>Produktübersicht von $lieferant_name </h3>" );
   open_tr();
     open_th( '', '', 'Produktgruppe' );

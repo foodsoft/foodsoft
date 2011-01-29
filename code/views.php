@@ -927,7 +927,7 @@ function bestellschein_view(
     floating_submission_button();
   }
 
-  open_table( 'list hfill' );
+  open_table( 'list hfill greywhite' );
 
     open_tr('legende');
       $cols = 0;
