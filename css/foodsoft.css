@@ -503,6 +503,13 @@ table.list tr.active td {
   background-color:#ccffcc;
 }
 
+table.greywhite tr.odd td {
+  background-color:#dddddd;
+}
+table.greywhite tr.even td {
+  background-color:#ffffff;
+}
+
 
 /*
  *

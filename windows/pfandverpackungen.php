@@ -123,7 +123,7 @@ if( $action == 'movedown' ) {
 if( $abrechnung_id && $editable )
   open_form( '', 'action=save' );
 
-open_table('list');
+open_table('list greywhite');
   open_th( '', '', 'Bezeichnung' );
   open_th( '', '', 'Einzelwert' );
   open_th( '', '', 'MWSt' );
