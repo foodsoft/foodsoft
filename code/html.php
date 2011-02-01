@@ -7,6 +7,8 @@ global $open_tags      /* keep track of open tags */
      , $form_id        /* id of the currently open form (if any) */
      , $input_event_handlers  /* insert into <input> and similar inside a form */
      , $html_hints     /* online hints to display for fields */
+     , $table_level      /* nesting level for tables */
+     , $table_row_number /* stack of table row counters */
 ;
 $open_tags = array();
 $print_on_exit = array();
@@ -102,11 +104,14 @@ function close_span() {
 //   will rarely be needed
 //
 function open_table( $class = '', $attr = '' ) {
+  global $table_level, $table_row_number;
+  $table_row_number[ ++$table_level ] = 1;
   open_tag( 'table', $class, $attr );
 }
 
 function close_table() {
-  global $open_tags;
+  global $table_level, $open_tags;
+  $table_level--;
   $n = count( $open_tags );
   switch( $open_tags[$n] ) {
     case 'td':
@@ -123,7 +128,8 @@ function close_table() {
 }
 
 function open_tr( $class = '', $attr = '' ) {
-  global $open_tags, $tr_title;
+  global $open_tags, $tr_title, $table_level, $table_row_number;
+  $class .= ( ( $table_row_number[ $table_level ]++ % 2 ) ? ' odd' : ' even' );
   $n = count( $open_tags );
   switch( $open_tags[$n] ) {
     case 'td':
