@@ -360,8 +360,8 @@ if( ! $readonly ) {
     }
 
     function reminder_on() {
-      reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
-      footbar = document.getElementById('footbar');
+      var reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
+      var footbar = document.getElementById('footbar');
       while (footbar.firstChild) {
         footbar.removeChild(footbar.firstChild);
       }
