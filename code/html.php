@@ -71,7 +71,7 @@ function close_tag( $tag ) {
     echo "</$tag>";
     unset( $open_tags[$n--] );
   } else {
-    error( "unmatched close_tag(got:$tag / exptected:{$open_tags[$n]})" );
+    error( "unmatched close_tag(got:$tag / expected:{$open_tags[$n]})" );
   }
 }
 
