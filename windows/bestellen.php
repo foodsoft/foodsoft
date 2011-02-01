@@ -368,7 +368,7 @@ if( ! $readonly ) {
       reminder.style.display = "inline";
       footbar.appendChild(reminder);
       
-      set_footbar(5);
+      set_footbar(true);
       
       id = document.getElementById('hinzufuegen');
       while( id.firstChild ) {
@@ -439,11 +439,10 @@ if( ! $readonly ) {
   </script>
   <?php
 
-  open_div( 'alert nodisplay', "id='floating_submit_button_$bestellform_id' style='width:100%'" );
-    fc_link( 'self', array( 'class' => 'close'
-           , 'url' => "javascript:set_footbar(0);") );
+  open_div( 'alert nodisplay tight', "id='floating_submit_button_$bestellform_id' style='width:100%'" );
     open_div( 'table', 'style="width:100%;"' );
       open_div( 'tr' );
+        open_div( 'alert left td', '', fc_link( 'self', array( 'class' => 'close', 'url' => "javascript:set_footbar(0);") ) );
         open_div( 'alert left td', '', "&Auml;nderungen sind noch nicht gespeichert!" );
         open_div( 'alert center td');
           echo "Gesamtpreis: ";
@@ -741,8 +740,8 @@ if( ! $readonly ) {
       $js_on_exit[] = "document.getElementById('preise_warnung').className = 'alert';";
     }
   }
-
-  open_div( 'middle', "id='hinzufuegen'" );
+  smallskip();
+  open_div( 'middle', "id='hinzufuegen' style='display:block;'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen' );
         select_products_not_in_list( $bestell_id );

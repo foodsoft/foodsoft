@@ -114,7 +114,7 @@ function updateWindowHeight() {
   var overlap = 0.05;
   var footbar = $('footbar');
   var footbarHeight = footbar.offsetHeight;
-  var windowHeight = window.innerHeight;
+  var windowHeight = document.viewport.getHeight();
   
   scroller.setPageHeight((1-overlap) * (windowHeight - footbarHeight - spaceForScrollbar));
 }
@@ -200,23 +200,16 @@ var Scroller = Class.create({
     window.scrollBy(0, direction * this.mPageHeight);
   },
   handleKey: function(event, what) {
-    
     // capture only page up / down
     if (event.keyCode !== Event.KEY_PAGEUP && event.keyCode !== Event.KEY_PAGEDOWN) {
       return;
     }
     
     // check target, only want top-level scrolls
-    switch (event.target) {
-      case document.documentElement: // firefox
-      case document.body: // webkit
-        // global focus
-        break;
-      default:
-        // other element focussed
-        return; // also falls back to browser default pgup/down just in case...
+    if (this.isInNestedScrollview(event.target)) {
+      return;
     }
-    
+
     event.stop();
     
     if (this.mKeyCode === event.keyCode 
@@ -253,6 +246,24 @@ var Scroller = Class.create({
     Event.stopObserving(element, 'keypress', this.mKeyPressHandler);
     Event.stopObserving(element, 'keydown', this.mKeyDownHandler);
     Event.stopObserving(element, 'keyup', this.mKeyUpHandler);
+  },
+  isInNestedScrollview: function(node) {
+    switch(node) {
+      case null:
+      case document.documentElement: // firefox
+      case document.body: // webkit
+        // top-level element: not nested
+        return false;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.nodeName === "FORM") { // have bogus sizes on IE
+        return this.isInNestedScrollview(node.parentNode);
+      }
+      if (node.scrollHeight > node.offsetHeight) {
+        return true;
+      }
+    }
+    return this.isInNestedScrollview(node.parentNode);
   }
 });
 

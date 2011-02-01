@@ -64,7 +64,8 @@ switch( $window_id ) {
     break;
 }
 
-$js_on_exit[] = "Event.observe(window, 'resize', function () { window.updateWindowHeight(); } );";
+$js_on_exit[] = "document.observe('dom:loaded', window.updateWindowHeight );";
+$js_on_exit[] = "Event.observe(window, 'resize', window.updateWindowHeight );";
 $js_on_exit[] = "window.scroller.register(document);";
 
 // force new iTAN (this form must still be submittable after any other):
