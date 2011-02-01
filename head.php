@@ -9,7 +9,7 @@ if( $readonly ) {
   $payloadclass='ro';
 }
 
-echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
+echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n";
 open_tag( 'html' );
 open_tag( 'head' );
 ?>

@@ -343,7 +343,7 @@ if( ! $readonly ) {
     }
 
     function reminder_on() {
-      reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
+      var reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
       reminder.style.display = 'inline';
 
       id = document.getElementById('hinzufuegen');
