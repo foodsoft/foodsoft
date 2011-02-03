@@ -43,6 +43,11 @@ switch( $window_id ) {
     }
     open_table( 'footer', "width='100%'" );
       open_td( '', '', "aktueller Server: <kbd>" .getenv('HOSTNAME'). "</kbd>" );
+      $version = "unknown";
+      if (file_exists("version.txt")) {
+        $version = file_get_contents("version.txt");
+      }
+      open_td( '', '', "Version: <kbd>$version</kbd>");
       open_td( 'right' );
         echo $mysqljetzt;
         if( $readonly ) {
