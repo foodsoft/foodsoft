@@ -1,0 +1,20 @@
+=======================================================================
+Recommended git hooks
+=======================================================================
+
+.git/hooks/post-checkout
+
+The following script will run the deploy.sh script for updating 
+version.txt and will make files readable/executable for anybody.
+
+#!/bin/sh
+[ -x ./deploy.sh ] && ./deploy.sh
+find . -path './.git/*' -o -print0 | xargs -r -0 chmod -c go=u-wst
+
+.git/hooks/post-commit
+
+The following script will run the deploy.sh script for updating 
+version.txt.
+
+#!/bin/sh
+[ -x ./deploy.sh ] && ./deploy.sh
