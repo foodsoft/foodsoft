@@ -185,7 +185,7 @@ function upload_terra() {
     $netto = "0.00";
     $vpe = "";
 
-    $splitline = split( $splitat, $line );
+    $splitline = preg_split( '/'.$splitat.'/', $line );
     $i=0;
     foreach( $splitline as $field ) {
       if( isset( $fields[$i] ) and $fields[$i] ) {
