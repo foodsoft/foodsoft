@@ -503,6 +503,13 @@ table.list tr.active td {
   background-color:#ccffcc;
 }
 
+table.greywhite tr.odd td {
+  background-color:#dddddd;
+}
+table.greywhite tr.even td {
+  background-color:#ffffff;
+}
+
 
 /*
  *
@@ -683,7 +690,7 @@ a + a , .link + .link {
 }
 
 
-.drop, .edit, .record, .browse, .people, .cash, .chart, .fant, .question {
+.drop, .edit, .record, .browse, .people, .cash, .chart, .fant, .question, .magic {
   background-repeat:no-repeat;
   background-position:8px 0px;
   white-space:nowrap;
@@ -732,6 +739,11 @@ a + a , .link + .link {
 
 .fant {
   background-image:url(../img/fant.gif);
+}
+
+.magic {
+  padding:0px 1ex 15px 36px;
+  background-image:url(../img/magic_wand.png);
 }
 
 .open {

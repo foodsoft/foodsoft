@@ -7,6 +7,8 @@ global $open_tags      /* keep track of open tags */
      , $form_id        /* id of the currently open form (if any) */
      , $input_event_handlers  /* insert into <input> and similar inside a form */
      , $html_hints     /* online hints to display for fields */
+     , $table_level      /* nesting level for tables */
+     , $table_row_number /* stack of table row counters */
 ;
 $open_tags = array();
 $print_on_exit = array();
@@ -102,11 +104,14 @@ function close_span() {
 //   will rarely be needed
 //
 function open_table( $class = '', $attr = '' ) {
+  global $table_level, $table_row_number;
+  $table_row_number[ ++$table_level ] = 1;
   open_tag( 'table', $class, $attr );
 }
 
 function close_table() {
-  global $open_tags;
+  global $table_level, $open_tags;
+  $table_level--;
   $n = count( $open_tags );
   switch( $open_tags[$n] ) {
     case 'td':
@@ -123,7 +128,8 @@ function close_table() {
 }
 
 function open_tr( $class = '', $attr = '' ) {
-  global $open_tags, $tr_title;
+  global $open_tags, $tr_title, $table_level, $table_row_number;
+  $class .= ( ( $table_row_number[ $table_level ]++ % 2 ) ? ' odd' : ' even' );
   $n = count( $open_tags );
   switch( $open_tags[$n] ) {
     case 'td':
@@ -414,7 +420,7 @@ function submission_button( $text = '', $active = true, $confirm = '' ) {
 function reset_button( $text = 'Zur&uuml;cksetzen' ) {
   global $form_id;
   open_span( 'qquad', '', "<a class='button inactive' href='javascript:true;' id='reset_button_$form_id' title='Änderungen zurücknehmen'
-                              onClick=\"document.getElementById('form_$form_id').reset(); on_reset($form_id); return false;\">$text</a>" );
+                              onClick=\"var form = $('form_$form_id'); form.reset(); form.fire('form:afterReset'); on_reset($form_id); return false;\">$text</a>" );
 }
 
 function check_all_button( $text = 'Alle ausw&auml;hlen', $title = '' ) {
@@ -607,6 +613,25 @@ function close_option_menu_row() {
   global $option_menu_counter, $js_on_exit;
   close_table();
   $js_on_exit[] = move_html( 'option_entry_' . $option_menu_counter, 'option_menu_table' );
+}
+
+/**
+ * Generate event handler attributes for handling changes and capturing ENTER key
+ * 
+ * @author Tilman Vogel
+ * 
+ * @param[in]   handler
+ *              JS code to execute on field change or ENTER
+ * @param[in]   capture_enter
+ *              whether to capture ENTER key press
+ * @returns     corresponding "onchange" and "onkeypress" attributes
+ */
+function textfield_on_change_handler( $handler, $capture_enter = true ) {
+  $result = " onchange='$handler'";
+  if ($capture_enter) {
+    $result .= " onkeypress='handleTextFieldKeyPress(event, function() { $handler });'";
+  }
+  return $result;
 }
 
 ?>
