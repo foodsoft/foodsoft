@@ -11,7 +11,8 @@ version.txt and will make files readable/executable for anybody.
 [ -x ./deploy.sh ] && ./deploy.sh
 find . -path './.git/*' -o -print0 | xargs -r -0 chmod -c go=u-wst
 
-.git/hooks/post-commit
+.git/hooks/post-commit 
+and .git/hooks/post-merge
 
 The following script will run the deploy.sh script for updating 
 version.txt.
