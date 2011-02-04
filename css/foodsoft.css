@@ -923,3 +923,14 @@ div.board textarea {
 .changed {
   color: #c00000;
 }
+
+div#footbar {
+  border-top-style: solid;
+  border-width: thin;
+  position:fixed;
+  bottom:0px;
+  left:0px;
+  z-index:999;
+  background-color:white;
+  padding:2px;
+}

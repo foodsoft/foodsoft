@@ -96,12 +96,9 @@ function post_action( action, message ) {
   f.submit();
 }
 
-function set_footbar( percentage ) {
-  var main = document.getElementById( 'main' );
+function set_footbar( enabled ) {
   var footbar = document.getElementById( 'footbar' );
-  main.style.height=(100-percentage)+"%";
-  footbar.style.height=percentage+"%";
-  if (percentage)
+  if (enabled)
   {
     footbar.style.display="block";
   }
@@ -109,6 +106,17 @@ function set_footbar( percentage ) {
   {
     footbar.style.display="none";
   }
+  updateWindowHeight();
+}
+
+function updateWindowHeight() {
+  var spaceForScrollbar = 16;
+  var overlap = 0.05;
+  var footbar = $('footbar');
+  var footbarHeight = footbar.offsetHeight;
+  var windowHeight = document.viewport.getHeight();
+  
+  scroller.setPageHeight((1-overlap) * (windowHeight - footbarHeight - spaceForScrollbar));
 }
 
 function set_class( node, className, enabled ) {
@@ -172,6 +180,96 @@ function handleTextFieldKeyPress(event, onEnter) {
 //     notify_down();
 //   }
 // }
+
+
+var Scroller = Class.create({
+  initialize: function() {
+    this.mPageHeight = window.innerHeight;
+    this.mKeyState = Scroller.UP;
+    this.mKeyCode = 0;
+    // generate closures
+    var self = this;
+    this.mKeyPressHandler = function(event) { self.handleKey(event, Scroller.PRESS); };
+    this.mKeyDownHandler = function(event) { self.handleKey(event, Scroller.DOWN); };
+    this.mKeyUpHandler = function(event) { self.handleKey(event, Scroller.UP); };
+  },
+  setPageHeight: function(pageHeight) {
+    this.mPageHeight = pageHeight;
+  },
+  scrollPage: function(direction) {
+    window.scrollBy(0, direction * this.mPageHeight);
+  },
+  handleKey: function(event, what) {
+    // capture only page up / down
+    if (event.keyCode !== Event.KEY_PAGEUP && event.keyCode !== Event.KEY_PAGEDOWN) {
+      return;
+    }
+    
+    // check target, only want top-level scrolls
+    if (this.isInNestedScrollview(event.target)) {
+      return;
+    }
+
+    event.stop();
+    
+    if (this.mKeyCode === event.keyCode 
+        && this.mKeyState === Scroller.DOWN
+        && what === Scroller.PRESS) {
+      // discard first press after down:
+      // firefox fires: "down, press, up" on single press, "down, press, press, ... , up" on auto-repeat
+      // webkit fires: "down" on single press, "down, down, ..." on auto-repeat
+      this.mKeyState = what;
+      return;
+    }
+    
+    this.mKeyState = what;
+    this.mKeyCode = event.keyCode;
+    
+    if (what === Scroller.UP) {
+      return;
+    }
+
+    this.scrollPage(event.keyCode === Event.KEY_PAGEUP ? -1 : 1);
+  },
+  register: function(element) {
+    if (element === null) {
+      element = document;
+    }
+    Event.observe(element, 'keypress', this.mKeyPressHandler);
+    Event.observe(element, 'keydown', this.mKeyDownHandler);
+    Event.observe(element, 'keyup', this.mKeyUpHandler);
+  },
+  unregister: function(element) {
+    if (element === null) {
+      element = document;
+    }
+    Event.stopObserving(element, 'keypress', this.mKeyPressHandler);
+    Event.stopObserving(element, 'keydown', this.mKeyDownHandler);
+    Event.stopObserving(element, 'keyup', this.mKeyUpHandler);
+  },
+  isInNestedScrollview: function(node) {
+    switch(node) {
+      case null:
+      case document.documentElement: // firefox
+      case document.body: // webkit
+        // top-level element: not nested
+        return false;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.nodeName === "FORM") { // have bogus sizes on IE
+        return this.isInNestedScrollview(node.parentNode);
+      }
+      if (node.scrollHeight > node.offsetHeight) {
+        return true;
+      }
+    }
+    return this.isInNestedScrollview(node.parentNode);
+  }
+});
+
+Scroller.UP = 0;
+Scroller.DOWN = 1;
+Scroller.PRESS = 2;
 
 
 var MagicCalculator = Class.create(
@@ -363,3 +461,4 @@ var MagicCalculator = Class.create(
   }
 });
 
+window.scroller = new Scroller();
