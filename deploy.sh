@@ -150,5 +150,5 @@ chmod 644 ./files_und_skripte
 chmod 644 ./.gitattributes 
 chmod 700 ./deploy.sh 
 chmod 644 ./version.txt
-chmod 700 ./git 
+chmod 700 ./.git 
 
