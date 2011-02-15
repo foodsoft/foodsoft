@@ -28,4 +28,5 @@ need php5_posix
 perl:
 need Spreadsheet::ParseExcel for antixls
 
+git: testing...
 
