@@ -12,7 +12,7 @@ chmod 755 ./css
 chmod 644 ./css/readonly.gif
 chmod 644 ./css/print.css
 chmod 644 ./css/modified.gif
-chmod 600 ./css/foodsoft.css
+chmod 644 ./css/foodsoft.css
 chmod 600 ./ToDo.txt
 chmod 755 ./antixls.modif
 chmod 644 ./leitvariable.php
