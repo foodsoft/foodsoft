@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# this file is generated - do not modify!
+#
 
 export LANG=C
 BRANCH=`git branch | sed -e '/^[^*]/d' -e 's/^\* \(.*\)/\1/'`
