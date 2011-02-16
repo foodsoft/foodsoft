@@ -72,12 +72,12 @@ chmod 644 ./code/common.php
 chmod 644 ./code/katalogsuche.php
 chmod 644 ./code/views.php
 chmod 644 ./code/forms.php
-chmod 600 ./code/html.php
+chmod 644 ./code/html.php
 chmod 644 ./foodsoft.class.php
 chmod 644 ./fcck.php
 chmod 755 ./js
 chmod 644 ./js/tooltip.js
-chmod 600 ./js/foodsoft.js
+chmod 644 ./js/foodsoft.js
 chmod 755 ./js/lib
 chmod 644 ./js/lib/prototype.js
 chmod 644 ./.gitignore
@@ -137,7 +137,7 @@ chmod 644 ./windows/dienstplan.php
 chmod 755 ./windows/produktpreise.php
 chmod 644 ./windows/verluste.php
 chmod 644 ./windows/gruppenpfand.php
-chmod 600 ./windows/bestellen.php
+chmod 644 ./windows/bestellen.php
 chmod 644 ./windows/svn-commit.tmp
 chmod 644 ./windows/editBuchung.php
 chmod 644 ./windows/abrechnung.php
