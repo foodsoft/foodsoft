@@ -84,7 +84,7 @@ chmod 644 ./.gitignore
 chmod 644 ./dump.php
 chmod 644 ./apache.sample.conf
 chmod 700 ./pre-commit
-chmod 600 ./head.php
+chmod 644 ./head.php
 chmod 755 ./img
 chmod 644 ./img/chart.png
 chmod 644 ./img/reload_black.gif
