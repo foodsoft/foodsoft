@@ -58,7 +58,7 @@ chmod 644 ./wiki/nahrungskette/allgemeines.txt
 chmod 644 ./wiki/nahrungskette/warenannahmeverteilung.txt
 chmod 644 ./wiki/nahrungskette/papierkontoblatt.txt
 chmod 644 ./wiki/nahrungskette/leitfaden.txt
-chmod 700 ./index.php
+chmod 644 ./index.php
 chmod 644 ./GITHOOKS
 chmod 755 ./setup.php
 chmod 644 ./INSTALL
