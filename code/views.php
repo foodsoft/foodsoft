@@ -435,7 +435,7 @@ function dienst_view( $dienst_id, $editable = false ) {
             $selected = 'selected';
             $option_0 = '';
           }
-          $s .= "<option value='{$mitglied['gruppenmitglieder_id']}' $selected>{$mitglied['vorname']} {$member['name']}</option>";
+          $s .= "<option value='{$mitglied['gruppenmitglieder_id']}' $selected>{$mitglied['vorname']} {$mitglied['name']}</option>";
         }
         echo $option_0 . $s;
       close_select();
