@@ -165,6 +165,8 @@ function katalogabgleich(
       break;
 
     case 'midgard':
+    case 'grell':
+    case 'bnn':
       $have_mwst = true;
 
       $liefergebinde = $katalog_gebindegroesse;

@@ -289,7 +289,7 @@ function upload_rapunzel() {
     if( preg_match( '&^[\d\s]*$&', $einheit ) )
       $einheit = "$einheit ST";
 
-    if( $netto < 0.01 or !  kanonische_einheit( $einheit, $e, $m, false ) ) {
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
@@ -360,7 +360,7 @@ function upload_bode() {
     if( preg_match( '&^[\d\s]*$&', $einheit ) )
       $einheit = "$einheit ST";
 
-    if( $netto < 0.01 or !  kanonische_einheit( $einheit, $e, $m, false ) ) {
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
@@ -376,6 +376,35 @@ function upload_bode() {
   open_div( 'ok', '', 'finis.' );
 }
 
+
+//
+//  0 anummer
+//       1?
+//         2 datum
+//                  3?
+//                       4 ean?
+//                                     5 ?
+//                                      6 name
+//                                                             7 8 9 ?
+//                                                                   10 hersteller
+//                                                                    11?
+//                                                                     12 land
+//                                                                       13 verband
+//                                                                             14 ...                20  ?
+//                                                                                                       21 geb*einh
+//                                                                                                                  23 gebinde
+//                                                                                                                        23 ; Leinheit
+//                                                                                                                               24..28?
+//                                                                                                                                          29 bruttogewicht
+//                                                                                                                                                30..32 ?
+//                                                                                                                                                     33: mwst: 1=7, 2=19?
+//                                                                                                                                                       34 ?
+//                                                                                                                                                              35 evp
+//                                                                                                                                                               36 ?
+//                                                                                                                                                                 37 nettopreis
+
+
+
 //
 // format midgard.bnn:
 //
@@ -388,15 +417,22 @@ function upload_bode() {
 // 323660 ;A ;20090902 ; ; ; ;Zwiebelschmelz              ; ; ; ;ZG ; ;D ;kbA  ; ;     ;700 ;7  ;29 ;  ;1 ; 6 x 150g ;  6 ; 150g  ; 1 ; ; ; ; ;1,9   ; ; ; ;1 ; ; 2,89 ; ; 1,89  ;N;;;;;;;;;;;;;;;;;;;;;;T;;;;;;;;
 // 101152 ;A ;20090402 ; ; ; ;BGL Vollmilch Flasche 3,8%  ; ; ; ;Pi ; ;D ;DEM  ; ;     ;200 ;2  ;10 ;  ;1 ; 6 x 1 Ltr;  6 ; 1 Ltr ; 1 ; ; ; ; ;10,01 ; ; ; ;1 ; ; 1,55 ; ; 1,17  ;J;;;;;;;;;;;;;;;;;;;;;;F;;;;;;;;
 //
+// format grell.bnn:
+//
+//  36807;A;20101018;0000;4019736002475;;Brot-Salat 'Gutsherren'          ;;;--;ZWE;;DE;C%;;;0701;;36;;;6 x 200 g;6,00;200 g;1;N;;;;0,20;;;;1;;2,69;;1,63;J;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;T;;;;;kg;5,000000;;
+//
+//  01266;A;20100318;0000;4009233002948;;TK Steinofen Pizzies Salami (2er);(Unsere Natur);St.Pz.Salami2er;--;WGP;;DE;C%;;;1031;;1;;;10 x 2x 150 g;10,00;2x 150 g;1;N;;;;0,30;;;;1;;3,79;;2,45;N;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;F;;;;;kg;3,333000;; 
+//
 // vermutliche semantik:
 //
 //  0 anummer
-//        1?
-//           2datum    
-//                     4 5 ean?
-//                           6 name
-//                                                        7 8 9 ?
-//                                                             10 hersteller
+//       1?
+//         2 datum
+//                  3?
+//                       4 ean?
+//                                     5 ?
+//                                      6 name
+//                                                             7 8 9 ?
 //                                                                  11?
 //                                                                     12 land
 //                                                                       13 verband
@@ -413,12 +449,16 @@ function upload_bode() {
 //                                                                                                                                                               36 ?
 //                                                                                                                                                                 37 nettopreis
 
-function upload_midgard() {
+// upload_bnn: fuer midgard, grell, und vielleicht noch andere
+// $katalogformat: koennte immer 'bnn' sein, aber wir lassen das parametrisierbar, falls es sich mal aendert,
+// und um mit der existierenden datenbank kompatibel zu bleiben:
+//
+function upload_bnn( $katalogformat ) {
   global $katalogkw, $lieferanten_id;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
-  $pattern = '/^\d+;[AX];/';
+  $pattern = '/^\d+;[ANWRXV];/';
   $splitat = ';';
 
   $n = 0;
@@ -432,6 +472,14 @@ function upload_midgard() {
       continue;
     }
 
+    $splitline = split( $splitat, $line );
+    switch( $splitline[1] ) {
+      case 'X':
+      case 'V':
+        open_div( 'alert', '', "Artikel nicht lieferbar - wird nicht erfasst: $line" );
+        continue;
+    }
+
     $anummer = "";
     $bnummer = "";
     $name = "";
@@ -443,10 +491,6 @@ function upload_midgard() {
     $herkunft = "";
     $netto = "0.00";
 
-    $splitline = split( $splitat, $line );
-
-    // var_dump( $splitline );
-    
     $bnummer = $splitline[0];
     $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
@@ -462,6 +506,14 @@ function upload_midgard() {
     $einheit = $splitline[23];
     $einheit = preg_replace( '/,/', '.', trim( $einheit ) );
 
+    // bnn: gelegentlich einheiten wie: 3 x 100g:
+    if( preg_match( '/\d *x *\d/', $einheit ) ) {
+      $extra_mult = sprintf( '%d', $einheit );
+      $einheit = preg_replace( '/^.*\d *x *(\d.*)$/', '${1}', $einheit ); 
+    } else {
+      $extra_mult = 1;
+    }
+
     switch( trim( $splitline[33] ) ) {
       case '1':
         $mwst = "7.00";
@@ -476,19 +528,20 @@ function upload_midgard() {
     $netto = $splitline[37];
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
 
-    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, $e, $m, false ) ) {
-      open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
+    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
+      open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit] $line " );
       continue;
     }
+    $m *= $extra_mult;
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'midgard'
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, $katalogformat
     );
     $success++;
   }
 
-  logger( "Midgard-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $n" );
+  logger( "$katalogformat-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $n" );
   open_div( 'ok', '', 'finis.' );
 }
 
@@ -505,7 +558,9 @@ switch( $lieferant['katalogformat'] ) {
     upload_rapunzel();
     break;
   case 'midgard':
-    upload_midgard();
+  case 'grell':
+  case 'bnn':
+    upload_bnn( $lieferant['katalogformat'] );
     break;
   case 'keins':
   default:

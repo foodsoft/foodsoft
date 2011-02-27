@@ -30,7 +30,9 @@ $have_mwst = false;
 switch( $katalogformat ) {
   case 'terra':
   case 'midgard':
-    $have_mwst = true;  // terra, midgard listen die MWSt im Katalog; andere nicht!
+  case 'bnn':
+  case 'grell':
+    $have_mwst = true;  // terra und BNN-kompatible (midgard, grell, ...) listen die MWSt im Katalog; andere nicht!
     break;
   case 'bode':
   case 'rapunzel':
