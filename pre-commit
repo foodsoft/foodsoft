@@ -13,7 +13,7 @@ COMMIT=`git rev-parse --short HEAD`
 COMMIT_FULL=`git rev-parse HEAD`
 DIRTY=""
 git status | grep -qF 'working directory clean' || DIRTY='-dirty'
-echo "<a href='http://github.com/foodsoft/foodsoft/commits/$BRANCH/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
+echo "<a href='http://github.com/foodsoft/foodsoft/commits/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
 
 EOF
   find . -path ./.git -prune -o -exec stat -c "chmod %a %n" \{} \;
