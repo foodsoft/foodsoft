@@ -6,9 +6,10 @@
 export LANG=C
 BRANCH=`git branch | sed -e '/^[^*]/d' -e 's/^\* \(.*\)/\1/'`
 COMMIT=`git rev-parse --short HEAD`
+COMMIT_FULL=`git rev-parse HEAD`
 DIRTY=""
 git status | grep -qF 'working directory clean' || DIRTY='-dirty'
-echo "<a href='http://github.com/foodsoft/foodsoft/commits/$BRANCH'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
+echo "<a href='http://github.com/foodsoft/foodsoft/commits/$BRANCH/$COMMIT'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
 
 chmod 755 .
 chmod 755 ./css
