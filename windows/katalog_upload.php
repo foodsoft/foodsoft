@@ -92,6 +92,17 @@ function upload_terra() {
     if( $n++ > 99999 )
       break;
 
+
+    // neu ab 2011kw09:
+    //  - komische Waehrungscodes, und
+    //  - jetzt nicht nur spaces, sondern auch punkte und kommata in den B-nummern:
+    //  - tr: MWSt in einzelnen Zeilen(!) um eine Spalte verrutscht
+    //  - und: komma statt punkt in der vpe (= gebindegroesse mit einheit)
+    // nicht ausgewertet: 12923117@27 7, 00@Adelholzener Classic PET  1Ltr@12,00 FL@AHZ@DE@##@0.67[$ €407]@@J@@19@4005906002079@
+    // nicht ausgewertet: 759582@54 .2 42@basis sensitiv Zahncreme 75ml@1,00 ST@LAV@DE@@1.16@@J@1.99@19@4021457470334@
+    //
+    $line = preg_replace( '/\[\$ €407\]/', '', $line );
+
     if( ! $tag ) {
       echo "analyzing line: $line<br>";
       // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
@@ -143,23 +154,26 @@ function upload_terra() {
       }
       
       if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
-        // 705022  @ 45 01 2  @  Babyflasche 2x125ml @  1 SET @ MLL @DE @ @ 5.46[$ 407] @ @ J @ 19 @4031075402211@
+        // 705022  @ 45 01 2  @  Babyflasche 2x125ml @  1 SET @ MLL @ DE @ @ 5.46[$ 407] @ @ J @ 19 @4031075402211@
+        // 759582  @ 54 .2 42 @  basis sensitiv Zahncreme 75ml @ 1,00 ST @LAV @DE@@1.16@@J@1.99@19@4021457470334@
+
         $tag='drog';
         $splitat = '@';
         $fields = array( 'anummer', 'bnummer', 'name',  'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
-        $pattern = '/^[\d\s]+@[\d\s]+@/';
+        $pattern = '/^[\d\s]+@[\d\s,.]+@/';
       }
 
       if( preg_match( '&^Preisliste\s+Trockensortiment&', $line ) ) {
         // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Liefera@Land@IK@Netto-Preis@@@MwSt.%@EAN- Code@
         // ab 2010: 402912 @ 34 69 @Granatapfel, pur 0,75Ltr@ @6 FL @VOE @DE @C% @4.97[$ 407]@@J@19@4015533015762@
-        // ...und nun: 129210 @ 26 4  @Volvic Wasser PET 1,5Ltr@  6 FL @VOL @FR @## @0.83[$ 407]@@J@19@3057640108433@
+        // ...und nun: 129210 @ 26 4   @Volvic Wasser PET 1,5Ltr    @  6 FL @ VOL @FR @## @0.83[$ 407]@@J@19@3057640108433@
+        //             402202 @3. 32 5,@Heimische Apfelschorle 1Ltr@6,00 FL @ VOE @DE @DD @1.02       @@J@@19@4015533018053@
         $tag = 'Tr';
         $splitat = '@';
-        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst', 'mwst2' );
         // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
-        $pattern = '/^[\d\s]+@[\d\s]+@/';
+        $pattern = '/^[\d\s]+@[\d\s,.]+@/';
       }
       if( $tag ) {
         open_div( 'ok', '', "Katalog: detektiertes Format: $tag" );
@@ -179,6 +193,7 @@ function upload_terra() {
     $einheit = "";
     $gebinde = "";
     $mwst = "7.00";
+    $mwst2 = '';
     $pfand = "0.00";
     $verband = "";
     $herkunft = "";
@@ -195,17 +210,17 @@ function upload_terra() {
     }
     // drop trailing garbage in $netto:
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', $netto ) );
-    $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.', $mwst ) );
+    $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.',  $mwst.$mwst2 ) );
     $pfand = sprintf( "%.2lf", preg_replace( '/,/', '.', $pfand ) );
     $name = mysql_real_escape_string( $name );
 
     // drop spurious whitespace from numbers:
     $anummer = preg_replace( '/\s/', '', $anummer );
-    $bnummer = preg_replace( '/\s/', '', $bnummer );
+    $bnummer = preg_replace( '/[\s.,]/', '', $bnummer );
 
     if( $vpe ) {
       $gebinde = sprintf( "%.2lf", preg_replace( '/,/', '.', $vpe ) );
-      $einheit =  preg_replace( '/^[[:digit:]. ]*([[:alpha:]]*)$/', '${1}', $vpe );
+      $einheit =  preg_replace( '/^[[:digit:]., ]*([[:alpha:]]*)$/', '${1}', $vpe );
     } else {
       $gebinde = sprintf( "%.2lf", preg_replace( '/,/', '.', $gebinde ) );
     }
