@@ -33,6 +33,14 @@ $leitvariable = array(
   , 'runtime_editable' => 1
   , 'cols' => '1'
   )
+, 'demoserver' => array(
+    'meaning' => 'oeffentlicher Demo-Server (mit eingeschraenkten Funktionen)'
+  , 'default' => '0'
+  , 'local' => false
+  , 'comment' => 'Flag (1 oder 0): unterbindet auf oeffentlichen Servern die Unterstuetzung fuer Lieferanten-Kataloge (aus rechtlichen Gruenden)'
+  , 'runtime_editable' => 1
+  , 'cols' => '1'
+  )
 , 'foodsoftserver' => array(
     'meaning' => 'Spitzname des Servers'
   , 'default' => '(noch namenlos)'

@@ -139,6 +139,15 @@ if( $editable and ( ! $produkt_id ) ) {
 
 open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer fuer <i>$produktname</i>" : "Artikelsuche im Katalog" );
 
+  if( $demoserver ) {
+    open_div( 'warn', '', "
+      Die Katalogsuche in den Lieferantenkatalogen ist auf diesem &ouml;ffentlichen Demo-Server leider
+      nicht zul&auml;ssig!
+    " );
+    close_fieldset();
+    return;
+  }
+
   open_form( '', 'action=search' );
     open_table();
         open_td( '', '', '<label>Bestellnummer:</label>' );
