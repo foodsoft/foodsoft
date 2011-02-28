@@ -120,7 +120,7 @@ chmod 644 ./windows/gruppen.php
 chmod 644 ./windows/bestellschein.php
 chmod 644 ./windows/editProduktgruppe.php
 chmod 644 ./windows/editBestellung.php
-chmod 755 ./windows/artikelsuche.php
+chmod 644 ./windows/artikelsuche.php
 chmod 644 ./windows/produktverteilung.php
 chmod 644 ./windows/konto.php
 chmod 644 ./windows/editVerpackung.php
@@ -129,7 +129,7 @@ chmod 644 ./windows/abschluss.php
 chmod 644 ./windows/bestellungen.php
 chmod 644 ./windows/gruppenkonto.php
 chmod 644 ./windows/basar.php
-chmod 755 ./windows/updownload.php
+chmod 644 ./windows/updownload.php
 chmod 644 ./windows/lieferantenkonto.php
 chmod 644 ./windows/produkte.php
 chmod 644 ./windows/editProdukt.php
@@ -138,16 +138,15 @@ chmod 644 ./windows/pfandverpackungen.php
 chmod 644 ./windows/gruppenmitglieder.php
 chmod 644 ./windows/gesamtlieferschein.php
 chmod 644 ./windows/dienstplan.php
-chmod 755 ./windows/produktpreise.php
+chmod 644 ./windows/produktpreise.php
 chmod 644 ./windows/verluste.php
 chmod 644 ./windows/gruppenpfand.php
 chmod 644 ./windows/bestellen.php
-chmod 644 ./windows/svn-commit.tmp
 chmod 644 ./windows/editBuchung.php
 chmod 644 ./windows/abrechnung.php
 chmod 644 ./windows/head.php
 chmod 644 ./windows/editLieferant.php
-chmod 755 ./windows/katalog_upload.php
+chmod 644 ./windows/katalog_upload.php
 chmod 644 ./windows/bestellen.php.neu
 chmod 644 ./windows/dienstkontrollblatt.php
 chmod 644 ./windows/editKonto.php
