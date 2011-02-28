@@ -85,6 +85,10 @@ function upload_terra() {
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
   $tag = false;
+  $fields = false;
+  $pattern = false;
+  $splitat = false;
+  $splitline = false;
 
   $n = 0;
   $success = 0;
@@ -92,18 +96,20 @@ function upload_terra() {
     if( $n++ > 99999 )
       break;
 
-
     // neu ab 2011kw09:
     //  - komische Waehrungscodes, und
     //  - jetzt nicht nur spaces, sondern auch punkte und kommata in den B-nummern:
-    //  - tr: MWSt in einzelnen Zeilen(!) um eine Spalte verrutscht
+    //  - Kataloge tr und drog (und andere?) koennen zusaetzliche Spalte "empf.VK" vor der MWSt enthalten
     //  - und: komma statt punkt in der vpe (= gebindegroesse mit einheit)
     // nicht ausgewertet: 12923117@27 7, 00@Adelholzener Classic PET  1Ltr@12,00 FL@AHZ@DE@##@0.67[$ €407]@@J@@19@4005906002079@
     // nicht ausgewertet: 759582@54 .2 42@basis sensitiv Zahncreme 75ml@1,00 ST@LAV@DE@@1.16@@J@1.99@19@4021457470334@
     //
     $line = preg_replace( '/\[\$ €407\]/', '', $line );
 
-    if( ! $tag ) {
+    if( $splitat )
+      $splitline = preg_split( '/'.$splitat.'/', $line );
+
+    if( ! $tag || ! $fields || ! $splitat || ! $pattern ) {
       echo "analyzing line: $line<br>";
       // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
       if( preg_match( '&^Art.Nr. *@@Bestell-Nr.@@Milch *@@@@@@Inhalt *@Einh. *@Land *@@IK *@Verband *@@ *Netto-Preis *@@/Einh. *@empf. VK@@MwSt. % *@@EAN-Code *@@@&' , $line ) ) {
@@ -152,16 +158,21 @@ function upload_terra() {
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', '',  'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
-      
+
       if( preg_match( '&^Preisliste\s+Drogeriewaren&', $line ) ) {
         // 705022  @ 45 01 2  @  Babyflasche 2x125ml @  1 SET @ MLL @ DE @ @ 5.46[$ 407] @ @ J @ 19 @4031075402211@
         // 759582  @ 54 .2 42 @  basis sensitiv Zahncreme 75ml @ 1,00 ST @LAV @DE@@1.16@@J@1.99@19@4021457470334@
 
         $tag='drog';
         $splitat = '@';
-        $fields = array( 'anummer', 'bnummer', 'name',  'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
-        // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s,.]+@/';
+      }
+      if( $splitline && ( $tag == 'drog' ) ) {
+        if( preg_match( '/mwst/i', $splitline[10] ) ) {          // ohne 'empf.VK'-Spalte
+          $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        } else if( preg_match( '/mwst/i', $splitline[11] ) ) {   // mit 'empf.VK'-Spalte
+          $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', '', 'mwst' );
+        }
       }
 
       if( preg_match( '&^Preisliste\s+Trockensortiment&', $line ) ) {
@@ -171,11 +182,19 @@ function upload_terra() {
         //             402202 @3. 32 5,@Heimische Apfelschorle 1Ltr@6,00 FL @ VOE @DE @DD @1.02       @@J@@19@4015533018053@
         $tag = 'Tr';
         $splitat = '@';
-        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst', 'mwst2' );
+        // $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst', 'mwst2' );
         // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s,.]+@/';
       }
-      if( $tag ) {
+      if( $splitline && ( $tag == 'Tr' ) ) {
+        if( preg_match( '/mwst/i', $splitline[10] ) ) {          // ohne 'empf.VK'-Spalte
+          $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
+        } else if( preg_match( '/mwst/i', $splitline[11] ) ) {   // mit 'empf.VK'-Spalte
+          $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', '', 'mwst' );
+        }
+      }
+
+      if( $tag && $fields && $splitat && $pattern ) {
         open_div( 'ok', '', "Katalog: detektiertes Format: $tag" );
         // echo "pattern: $pattern<br>";
       }
@@ -193,14 +212,12 @@ function upload_terra() {
     $einheit = "";
     $gebinde = "";
     $mwst = "7.00";
-    $mwst2 = '';
     $pfand = "0.00";
     $verband = "";
     $herkunft = "";
     $netto = "0.00";
     $vpe = "";
 
-    $splitline = preg_split( '/'.$splitat.'/', $line );
     $i=0;
     foreach( $splitline as $field ) {
       if( isset( $fields[$i] ) and $fields[$i] ) {
@@ -210,7 +227,7 @@ function upload_terra() {
     }
     // drop trailing garbage in $netto:
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', $netto ) );
-    $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.',  $mwst.$mwst2 ) );
+    $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.',  $mwst ) );
     $pfand = sprintf( "%.2lf", preg_replace( '/,/', '.', $pfand ) );
     $name = mysql_real_escape_string( $name );
 
