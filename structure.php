@@ -842,7 +842,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'gebinde' => array(
-        'type' =>  "int(11)"
+        'type' =>  "decimal(8,3)"
       , 'null' => 'YES'
       , 'default' => ''
       , 'extra' => ''

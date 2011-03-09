@@ -222,7 +222,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
             }
           open_td( 'number', '', $row['bestellnummer'] );
           open_td( '', '', $row['name'] );
-          open_td( '', '', $row['gebinde'] );
+          open_td( '', '', mult_view( $row['gebinde'] ) );
           open_td( 'unit', '', $row['liefereinheit'] );
           open_td( '', '', $row['herkunft'] );
           open_td( '', '', $row['verband'] );

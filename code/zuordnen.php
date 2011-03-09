@@ -4543,6 +4543,15 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
       logger( 'update_database: update to version 18 successful' );
+
+  case 18:
+      logger( 'starting update_database: from version 18' );
+
+      doSql( "ALTER TABLE `lieferantenkatalog` MODIFY COLUMN `gebinde` decimal(8,3) not null default 1.0 " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 19 ) );
+      logger( 'update_database: update to version 19 successful' );
+
 /*
 	case n:
 		$sql = "

@@ -100,7 +100,7 @@ $leitvariable = array(
   )
 , 'database_version' => array(
     'meaning' => 'Version der Datenbank'
-  , 'default' => '18'
+  , 'default' => '19'
   , 'comment' => 'Bitte den vorgeschlagenen Wert &uuml;bernehmen und nicht manuell &auml;ndern: diese Variable wird bei Upgrades automatisch hochgesetzt!'
   , 'local' => false
   , 'runtime_editable' => 0
