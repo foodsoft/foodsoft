@@ -306,7 +306,7 @@ function upload_rapunzel() {
     if( preg_match( '&^[\d\s]*$&', $einheit ) )
       $einheit = "$einheit ST";
 
-    if( $netto < 0.01 or !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, $e, $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
@@ -377,7 +377,7 @@ function upload_bode() {
     if( preg_match( '&^[\d\s]*$&', $einheit ) )
       $einheit = "$einheit ST";
 
-    if( $netto < 0.01 or !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
+    if( $netto < 0.01 or !  kanonische_einheit( $einheit, $e, $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: $line" );
       continue;
     }
@@ -601,7 +601,7 @@ function upload_bnn( $katalogformat ) {
     $netto = $splitline[37];
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
 
-    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
+    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, $e, $m, false ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit,netto:$netto,mwst:$mwst] $line " );
       continue;
     }
