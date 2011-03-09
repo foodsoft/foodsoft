@@ -107,14 +107,14 @@ function upload_terra() {
     $line = preg_replace( '/\[\$ €407\]/', '', $line );
 
     if( $splitat )
-      $splitline = preg_split( '/'.$splitat.'/', $line );
+      $splitline = preg_split( $splitat, $line );
 
     if( ! $tag || ! $fields || ! $splitat || ! $pattern ) {
       echo "analyzing line: $line<br>";
       // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
       if( preg_match( '&^Art.Nr. *@@Bestell-Nr.@@Milch *@@@@@@Inhalt *@Einh. *@Land *@@IK *@Verband *@@ *Netto-Preis *@@/Einh. *@empf. VK@@MwSt. % *@@EAN-Code *@@@&' , $line ) ) {
         $tag = "Fr";
-        $splitat = '@+';
+        $splitat = '/@+/';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@@[\d\s]+@/';
       }
@@ -126,35 +126,35 @@ function upload_terra() {
       //
       if( preg_match( '&^Art.Nr. *@+Bestell-Nr. *@+Milch *@+Inhalt *@Einh. *@+Land *@+IK *@+Verband *@+ *Netto-Preis *@+/Einh. *@empf. VK@+MwSt. % *@+EAN-Code *@+&' , $line ) ) {
         $tag = "Fr";
-        $splitat = '@+';
+        $splitat = '/@+/';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
         // $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', 'mwst', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
       if( preg_match( '&^Preisliste:\s+Mopro&', $line ) ) {
         $tag='Fr';
-        $splitat = '@+';
+        $splitat = '/@+/';
         $fields = array( 'anummer', 'bnummer', 'name', '', 'herkunft', 'verband', 'gebinde', 'einheit', 'netto', 'mwst', '', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
 
       if( preg_match( "&^Art.Nr.@Bestell-Nr.@ZITRUS-FR\xdcCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&", $line ) ) {
         $tag='OG';
-        $splitat = '@';
+        $splitat = '/@/';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
       if( preg_match( '&^Art.Nr.@Bestell-Nr.@Zitrus-Fr.*chte *@Inhalt *@Einh. *@Herk. *@H?KL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&', $line ) ) {
         /// lyzing line: Art.Nr.@Bestell-Nr.@Zitrus-Früchte  @Inhalt  @Einh.  @Herk.  @HKL@IK@Verband@Netto-Preis    @/Einh.@MwSt.%@Bemerkung@
         $tag='OG';
-        $splitat = '@';
+        $splitat = '/@/';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', 'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
       if( preg_match( "#^Art\\.Nr\\.@Bestell-Nr\\.@Obst & Gemüse@Inhalt@Einh\\.@Herk.@HKL@IK@Zertifizierung@@Netto-Preis *@/Einh\\.@MwSt\\.%@Bemerkung@#", $line ) ) {
         /// Art.Nr.@Bestell-Nr.@Obst & Gemüse@Inhalt@Einh.@Herk.@HKL@IK@Zertifizierung@@Netto-Preis @/Einh.@MwSt.%@Bemerkung@@
         $tag='OG';
-        $splitat = '@';
+        $splitat = '/@/';
         $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', '', 'verband', '',  'netto', '', 'mwst', '' );
         $pattern = '/^[\d\s]+@[\d\s]+@/';
       }
@@ -164,7 +164,7 @@ function upload_terra() {
         // 759582  @ 54 .2 42 @  basis sensitiv Zahncreme 75ml @ 1,00 ST @LAV @DE@@1.16@@J@1.99@19@4021457470334@
 
         $tag='drog';
-        $splitat = '@';
+        $splitat = '/@/';
         $pattern = '/^[\d\s]+@[\d\s,.]+@/';
       }
       if( $splitline && ( $tag == 'drog' ) ) {
@@ -181,7 +181,7 @@ function upload_terra() {
         // ...und nun: 129210 @ 26 4   @Volvic Wasser PET 1,5Ltr    @  6 FL @ VOL @FR @## @0.83[$ 407]@@J@19@3057640108433@
         //             402202 @3. 32 5,@Heimische Apfelschorle 1Ltr@6,00 FL @ VOE @DE @DD @1.02       @@J@@19@4015533018053@
         $tag = 'Tr';
-        $splitat = '@';
+        $splitat = '/@/';
         // $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst', 'mwst2' );
         // $fields = array( 'anummer', 'bnummer', 'name', '', 'vpe', 'verband', 'herkunft', '', 'netto', '', '', 'mwst' );
         $pattern = '/^[\d\s]+@[\d\s,.]+@/';
@@ -264,7 +264,7 @@ function upload_rapunzel() {
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Rapunzel: nur ein Katalog, entspricht "Trocken" bei Terra
   $pattern = '/^[^@]*@\d+@/';
-  $splitat = '@';
+  $splitat = '/@/';
 
   $n = 0;
   $success = 0;
@@ -288,7 +288,7 @@ function upload_rapunzel() {
     $herkunft = "";
     $netto = "0.00";
 
-    $splitline = split( $splitat, $line );
+    $splitline = preg_split( $splitat, $line );
 
     $bnummer = $splitline[1]; // if $pattern matches, this is purely numerical
     $anummer = $bnummer;
@@ -329,7 +329,7 @@ function upload_bode() {
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
   $pattern = '/^@\d+\s+@/';
-  $splitat = '@';
+  $splitat = '/@/';
 
   $n = 0;
   $success = 0;
@@ -353,7 +353,7 @@ function upload_bode() {
     $herkunft = "";
     $netto = "0.00";
 
-    $splitline = split( $splitat, $line );
+    $splitline = preg_split( $splitat, $line );
     $bnummer = $splitline[1];
     $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
@@ -498,7 +498,7 @@ function upload_bnn( $katalogformat ) {
   }
 
   $pattern = '/^\d+;[ANWRXV];/';
-  $splitat = ';';
+  $splitat = '/;/';
 
   $n = 0;
   $success = 0;
@@ -511,7 +511,7 @@ function upload_bnn( $katalogformat ) {
       continue;
     }
 
-    $splitline_quoted = split( $splitat, $line );
+    $splitline_quoted = preg_split( $splitat, $line );
 
     // remove quoting and fix erroneously split strings:
     //
