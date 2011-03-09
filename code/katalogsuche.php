@@ -89,7 +89,7 @@ function katalogabgleich(
 
   $kgueltig = $katalogeintrag['gueltig'];
 
-  if( ! kanonische_einheit( $katalog_einheit, $kan_liefereinheit, $kan_liefermult, false ) ) {
+  if( ! ( list( $kan_liefermult, $kan_liefereinheit ) = kanonische_einheit( $katalog_einheit, false ) ) ) {
     div_msg( 'warn', "Katalogsuche: unbekannte Einheit: $katalog_einheit" );
     return 2;
   }
@@ -302,7 +302,7 @@ function katalogabgleich(
         }
     }
 
-    kanonische_einheit( $preiseintrag_neu['verteileinheit'], $kan_verteileinheit_neu, $kan_verteilmult_neu );
+    list( $kan_verteilmult_neu, $kan_verteileinheit_neu ) = kanonische_einheit( $preiseintrag_neu['verteileinheit'] );
 
     if( $kan_liefereinheit !== $kan_verteileinheit_neu ) {
       // keine automatische umrechnung moeglich; wir uebernehmen die alten werte, die

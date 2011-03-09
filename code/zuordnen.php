@@ -2187,9 +2187,9 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
 
   // kanonische masseinheiten setzen (gross/kleinschreibung, 1 space zwischenraum, kg -> g, ...)
   //
-  kanonische_einheit( $pr['verteileinheit'], $pr['kan_verteileinheit'], $pr['kan_verteilmult'] );
-  $m = $pr['kan_verteilmult'];
-  $e = $pr['kan_verteileinheit'];
+  list( $m, $e ) = kanonische_einheit( $pr['verteileinheit'] );
+  $pr['kan_verteilmult'] = $m;
+  $pr['kan_verteileinheit'] = $e;
   $pr['verteileinheit'] = "$m $e";
   // fuer anzeige ggf groessere einheiten waehlen:
   switch( $e ) {
@@ -2211,9 +2211,9 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
   $pr['kan_verteileinheit_anzeige'] = $e;
   $pr['kan_verteilmult_anzeige'] = $m;
 
-  kanonische_einheit( $pr['liefereinheit'], $pr['kan_liefereinheit'], $pr['kan_liefermult'] );
-  $m = $pr['kan_liefermult'];
-  $e = $pr['kan_liefereinheit'];
+  list( $m, $e ) = kanonische_einheit( $pr['liefereinheit'] );
+  $pr['kan_liefermult'] = $m;
+  $pr['kan_liefereinheit'] = $e;
   $pr['liefereinheit'] = "$m $e";
   switch( $e ) {
     case 'g':
@@ -3882,8 +3882,8 @@ function sql_insert_produktpreis (
   need( $gebindegroesse >= 1, "keine gueltige Gebindegroesse" );
   need( $mwst > 0, "kein gueltiger Mehrwertsteuersatz" );
   need( $pfand >= 0, "kein gueltiges Pfand" );
-  need( kanonische_einheit( $liefereinheit, $le, $lm, false ), "keine gueltige L-Einheit" );
-  need( kanonische_einheit( $verteileinheit, $ve, $vm, false ), "keine gueltige V-Einheit" );
+  need( list( $lm, $le ) = kanonische_einheit( $liefereinheit, false ), "keine gueltige L-Einheit" );
+  need( list( $vm, $ve ) = kanonische_einheit( $verteileinheit, false ), "keine gueltige V-Einheit" );
   need( $lm >= 0.001, "keine gueltige Masszahl bei L-Einheit" );
   need( $vm >= 0.001, "keine gueltige Masszahl bei V-Einheit" );
   if( $le == $ve ) {
@@ -3930,7 +3930,7 @@ $masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
-function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult, $die_on_error = true ) {
+function kanonische_einheit( $einheit, $die_on_error = true ) {
   global $masseinheiten;
   $kan_einheit = NULL;
   $kan_mult = NULL;
@@ -3982,9 +3982,8 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult, $die_on_error 
       }
       if( $die_on_error )
         error( "Einheit unbekannt: $einheit" );
-      return false;
   }
-  return true;
+  return ( $kan_mult && $kan_einheit ) ? array( $kan_mult, $kan_einheit ) : NULL;
 }
 
 function optionen_einheiten( $selected ) {
@@ -4335,12 +4334,12 @@ function update_database( $version ) {
             $lv_faktor = $gebindegroesse;
             break;
           default:
-            if( ! kanonische_einheit( $liefereinheit, $le, $lm, false ) ) {
+            if( ! ( list( $lm, $le ) = kanonische_einheit( $liefereinheit, false ) ) ) {
               $le = 'EA';
               $lm = 1;
               $liefereinheit = "$lm $le";
             }
-            if( ! kanonische_einheit( $verteileinheit, $ve, $vm, false ) ) {;
+            if( ! ( list( $vm, $ve ) = kanonische_einheit( $verteileinheit, false ) ) ) {
               $ve = $le;
               $vm = $lm;
               $verteileinheit = "$vm $ve";

@@ -617,7 +617,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   $gesamtwert = 0;
   $output = '';
   foreach( $basar as $basar_row ) {
-    kanonische_einheit( $basar_row['verteileinheit'], $kan_verteileinheit, $kan_verteilmult );
+    list( $kan_verteilmult, $kan_verteileinheit ) = kanonische_einheit( $basar_row['verteileinheit'] );
     $menge = $basar_row['basarmenge'];
 
     // wir geben den brutto-wert an (wie im basar!)
