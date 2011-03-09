@@ -474,7 +474,29 @@ function upload_bnn( $katalogformat ) {
   global $katalogkw, $lieferanten_id;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
-  $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
+
+  $fuehrungssatz = $klines[0];
+  unset( $klines[0] );
+
+  need( preg_match( '/^BNN;3;/', $fuehrungssatz ), 'kein oder falsches BNN format' );
+
+  $tag = 'Tr'; // Bode, Grell: nur ein Katalog, entspricht "Trocken" bei Terra
+
+  if( preg_match( '/;"Terra Naturkost /', $fuehrungssatz ) ) {
+    // Terra: unterscheidet 4 Kataloge:
+    if( preg_match( '/;"Obst /', $fuehrungssatz ) )
+      $tag = 'OG';
+    else if( preg_match( '/;"Drog/', $fuehrungssatz ) )
+      $tag = 'drog';
+    else if( preg_match( '/;"Trocken/', $fuehrungssatz ) )
+      $tag = 'Tr';
+    else if( preg_match( '/;"Frisch/', $fuehrungssatz ) )
+      $tag = 'Fr';
+    else
+      error( 'Terra: Katalogformat nicht erkannt' );
+    open_div( 'ok', '', "Terra: detektierter Teilkatalog: $tag" );
+  }
+
   $pattern = '/^\d+;[ANWRXV];/';
   $splitat = ';';
 
@@ -489,12 +511,36 @@ function upload_bnn( $katalogformat ) {
       continue;
     }
 
-    $splitline = split( $splitat, $line );
+    $splitline_quoted = split( $splitat, $line );
+
+    // remove quoting and fix erroneously split strings:
+    //
+    $splitline = array();
+    $n = 0;
+    while( isset( $splitline_quoted[$n] ) ) {
+      $field = $splitline_quoted[$n];
+      if( substr( $field, 0, 1 ) !== '"' ) {
+        $splitline[] = $field;
+        $n++;
+        continue;
+      }
+      while( substr( $field, -1, 1 ) !== '"' ) {
+        $n++;
+        if( ! isset( $splitline_quoted[$n] ) ) {
+          open_div( 'warn', '', 'unmatched open quote' );
+          break;
+        }
+        $field .=  ';' . $splitline_quoted[$n];
+      }
+      $splitline[] = substr( $field, 1, strlen( $field ) - 2 );
+      $n++;
+    }
+
     switch( $splitline[1] ) {
       case 'X':
       case 'V':
         open_div( 'alert', '', "Artikel nicht lieferbar - wird nicht erfasst: $line" );
-        continue;
+        continue 2; // "switch" counts as a loop in php!
     }
 
     $anummer = "";
@@ -546,7 +592,7 @@ function upload_bnn( $katalogformat ) {
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
 
     if( ( $netto < 0.01 ) || ( $mwst < 0 ) || !  kanonische_einheit( $einheit, & $e, & $m, false ) ) {
-      open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit] $line " );
+      open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit,netto:$netto,mwst:$mwst] $line " );
       continue;
     }
     $m *= $extra_mult;
