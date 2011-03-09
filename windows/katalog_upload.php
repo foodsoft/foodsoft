@@ -473,11 +473,7 @@ function upload_bode() {
 function upload_bnn( $katalogformat ) {
   global $katalogkw, $lieferanten_id;
 
-  $klines = array_map(
-      function($string) {
-        return iconv("CP850", "UTF-8", $string);
-      }, 
-      file( $_FILES['katalog']['tmp_name'] ));
+  $klines = file( $_FILES['katalog']['tmp_name'] );
 
   $fuehrungssatz = $klines[0];
   unset( $klines[0] );
@@ -509,13 +505,13 @@ function upload_bnn( $katalogformat ) {
   foreach ( $klines as $line ) {
     if( $n++ > 9999 )
       break;
+    $line = iconv( "CP850", "UTF-8", $line );
 
-    if( preg_match('/^;;99/', $line) )
-    {
+    if( preg_match('/^;;99/', $line) ) {
       open_div( 'ok', '', "Ende-Marke: $line" );
-      continue;
+      break;
     }
-    
+
     if( ! preg_match( $pattern, $line ) ) {
       open_div( 'alert', '', "Zeile nicht ausgewertet: $line" );
       continue;
