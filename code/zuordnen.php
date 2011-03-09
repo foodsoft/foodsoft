@@ -3926,7 +3926,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -3942,7 +3942,7 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult, $die_on_error 
     // keine masszahl, also eine einheit:
     $kan_mult = 1;
   }
-  $einheit = substr( str_replace( ' ', '', strtolower($einheit) ), 0, 2);
+  $einheit = str_replace( ' ', '', strtolower($einheit) );
   switch( $einheit ) {
     //
     // gewicht immer in gramm:
@@ -3975,7 +3975,7 @@ function kanonische_einheit( $einheit, &$kan_einheit, &$kan_mult, $die_on_error 
       // der rest sind zaehleinheiten (STueck und aequivalent)
       //
       foreach( $masseinheiten as $e ) {
-        if( strtolower( $e ) == $einheit ) {
+        if( 0 === strpos($einheit, strtolower($e)) ) {
           $kan_einheit = $e;
           break 2;
         }
