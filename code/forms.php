@@ -787,7 +787,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
   // restliche felder automatisch berechnen:
   //
-  preisdatenSetzen( $vorschlag );
+  $vorschlag = preisdatenSetzen( $vorschlag );
 
   $form_id = open_form( '', 'action=neuer_preiseintrag' );
 

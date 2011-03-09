@@ -1322,7 +1322,7 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
     $gruppen_id = $gruppe['id'];
     $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
     if( $mengen ) {
-      preisdatenSetzen( $mengen );
+      $mengen = preisdatenSetzen( $mengen );
       $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
       $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
       $verteilmenge = $mengen['verteilmenge'] * $verteilmult;

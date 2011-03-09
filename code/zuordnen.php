@@ -1595,7 +1595,7 @@ function sql_produkte( $keys = array(), $orderby = 'produktgruppen.name, produkt
   $r = mysql2array( doSql( select_produkte( $keys, array(), $orderby ) ) );
   foreach( $r as & $p ) {
     if( isset( $p['preis_id'] ) ) {
-      preisdatenSetzen( $p );
+      $p = preisdatenSetzen( $p );
     }
   }
   return $r;
@@ -1605,7 +1605,7 @@ function sql_produkt( $keys = array(), $allow_null = false ) {
     $keys = array( 'produkt_id' => $keys );
   $p = sql_select_single_row( select_produkte( $keys ), $allow_null );
   if( $p and isset( $p['preis_id'] ) ) {
-    preisdatenSetzen( $p );
+    $p = preisdatenSetzen( $p );
   }
   // foreach( $p as $k => $v ) {
   //  open_div( '', '', "$k: [$v]" );
@@ -2161,8 +2161,8 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
 function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
   $result = doSql( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id, $orderby ), LEVEL_KEY );
   $r = mysql2array( $result );
-  foreach( $r as & $val )
-    preisdatenSetzen( $val );
+  foreach( $r as $key => $val )
+    $r[ $key ] = preisdatenSetzen( $val );
   return $r;
 }
 
@@ -2183,7 +2183,7 @@ function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0,
  *   - lv_faktor (wird berechnet wenn moeglich, sonst aus datenbank entnommen)
  *   - preisaufschlag: aufschlag pro V-Einheit (berechnet als prozentsatz vom nettolieferpreis)
  */
-function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
+function preisdatenSetzen( $pr /* a row from produktpreise */ ) {
 
   // kanonische masseinheiten setzen (gross/kleinschreibung, 1 space zwischenraum, kg -> g, ...)
   //
@@ -2252,6 +2252,8 @@ function preisdatenSetzen( &$pr /* a row from produktpreise */ ) {
     $pr['preisaufschlag'] = $pr['lieferpreisaufschlag'] / $pr['lv_faktor'];
     $pr['endpreis'] = $pr['vpreis'] + $pr['preisaufschlag'];
   }
+
+  return $pr;
 }
 
 // zuteilungen_berechnen():
@@ -2446,8 +2448,8 @@ function sql_basar( $bestell_id = 0, $order='produktname' ) {
       break;
   }
   $basar = mysql2array( doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" ) );
-  foreach( $basar as & $r ) {
-    preisdatenSetzen( $r );
+  foreach( $basar as $key => $r ) {
+    $basar[ $key ] = preisdatenSetzen( $r );
   }
   return $basar;
 }
@@ -3801,8 +3803,8 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
     ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31'), id";
   //  ORDER BY IFNULL(zeitende,'9999-12-31'), id";
   $result = mysql2array( doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..") );
-  foreach( $result as & $r ) {
-    preisdatenSetzen( $r );
+  foreach( $result as $key => $r ) {
+    $result[ $key ] = preisdatenSetzen( $r );
   }
   return $result;
 }
@@ -4379,7 +4381,7 @@ function update_database( $version ) {
       foreach( $preise as $p ) {
         $id = $p['id'];
         $preis = $p['preis'];
-        preisdatenSetzen( $p );
+        $p = preisdatenSetzen( $p );
         $lv_faktor = $p['lv_faktor'];
         $lieferpreis = ( $preis - $p['pfand'] ) * $lv_faktor / ( 1.0 + $p['mwst'] / 100.0 );
         /// $gebindegroesse = mult2string( $p['gebindegroesse'] / $p['lv_faktor'] );
