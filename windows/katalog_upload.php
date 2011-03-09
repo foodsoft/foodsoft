@@ -558,7 +558,7 @@ function upload_bnn( $katalogformat ) {
     $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
 
-    $name = mysql_real_escape_string( $splitline[6] );
+    $name = mysql_real_escape_string( iconv( 'CP850', 'UTF-8', $splitline[6] ) );
     $herkunft = mysql_real_escape_string( $splitline[12] );
     $verband = mysql_real_escape_string( $splitline[13] );
 
