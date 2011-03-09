@@ -28,7 +28,7 @@ bigskip();
 
 $have_mwst = false;
 switch( $katalogformat ) {
-  case 'terra':
+  case 'terra xls':
   case 'midgard':
   case 'bnn':
   case 'grell':
@@ -129,7 +129,7 @@ if( $editable and ( ! $produkt_id ) ) {
       medskip();
       ?> <h3> Neuen Katalog einlesen: </h3> <?php
       open_table('layout');
-        open_td( '', '', "Datei (Format: .xls): <input type='file' name='katalog'>" );
+        open_td( '', '', "Datei (Format: $katalogformat): <input type='file' name='katalog'>" );
         open_td( '', '', " &nbsp; gueltig ab (Format: JJJJkwWW): <input type='text' name='katalogkw' size='8'>" );
         open_td(); submission_button( 'Einlesen' );
       close_table();

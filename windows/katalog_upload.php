@@ -248,7 +248,7 @@ function upload_terra() {
     }
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'terra'
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'terra xls'
     );
     $success++;
   }
