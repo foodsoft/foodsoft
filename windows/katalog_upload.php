@@ -573,6 +573,7 @@ function upload_bnn( $katalogformat ) {
     $gebinde = sprintf( '%d', $gebinde );
 
     $einheit = $splitline[23];
+    $einheit = preg_replace( '/[(].*$/', '', $einheit ); // geklammerte anmerkungen wegschmeissen
     $einheit = preg_replace( '/,/', '.', trim( $einheit ) );
 
     // bnn: gelegentlich einheiten wie: 3 x 100g:
