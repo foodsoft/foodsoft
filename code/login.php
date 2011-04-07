@@ -236,7 +236,7 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
           echo "<label title='Mitgliederverwaltung'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " V</label>";
     close_table();
     open_div( 'kommentar', "id='nodienstform' style='display:" . ( $login_dienst ? 'none' : 'block' ) .";'" );
-      if( $FC_acronym == 'LS ' ) {
+      if( $FC_acronym == 'LS' ) {
         echo "Wenn du nur bestellen oder dein Konto einsehen m&ouml;chtest, brauchst Du hier keine Aktion auszuw&auml;hlen.";
       } else {
         echo "Wenn du nur bestellen oder dein Gruppenkonto einsehen m&ouml;chtest, brauchst Du hier keinen Dienst auszuw&auml;hlen.";

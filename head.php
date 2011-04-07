@@ -9,7 +9,7 @@ if( $readonly ) {
   $payloadclass='ro';
 }
 
-$FC_acronym = adefault( $_ENV, 'FC_acronym', 'FC' ); 
+$FC_acronym = adefault( $_SERVER, 'FC_acronym', 'FC' ); 
 
 echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n";
 open_tag( 'html' );
