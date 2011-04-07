@@ -53,9 +53,10 @@ open_div( $headclass, "id='header'" );
       }
   open_tr();
     open_td( '', "colspan='3' style='text-align:right;'" );
-      open_ul( ( $FC_acronym == 'LS' ? 'nodisplay' : '' ), "id='menu' style='margin-bottom:0.5ex;'" );
-        foreach( possible_areas() as $menu_area ) {
-          areas_in_head($menu_area);
+      open_ul( '' , "id='menu' style='margin-bottom:0.5ex;'" );
+        if( $angemeldet || ( $FC_acronym != 'LS' ) ) {
+          foreach( possible_areas() as $menu_area )
+            areas_in_head($menu_area);
         }
         open_li(); wikiLink( isset($window) ? "foodsoft:$window" : "", "zum Hilfe-Wiki...", true );
       close_ul();
