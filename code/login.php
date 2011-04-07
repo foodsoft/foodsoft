@@ -196,7 +196,7 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
       echo "$problems";
     open_div( 'kommentar', "style='padding:1em;'", 'Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:' );
     open_div( 'newfield', '', "
-      <label>Gruppe:</label>
+      <label> ". ( $FC_acronym == 'LS' ? 'Kunde:' : 'Gruppe:' ) ."</label>
       <input type='text' size='4' name='login_gruppen_id_text' id='login_gruppen_id_text' value='' 
           onkeyup='pick_login_text();'>
       <select size='1' name='login_gruppen_id' id='login_gruppen_id' 
@@ -208,42 +208,47 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
     " );
     open_div( 'newfield', '', 'Ich mache gerade...' );
     open_table();
+      open_tr();
         open_td();
-          ?> <input class='checkbox' type='radio' name='dienst' value='0'
-              onclick='dienstform_off();'
-              <?php if (!$login_dienst) echo ' checked'; ?> >
-              <label>keinen Dienst</label> <?php
+          echo " <input class='checkbox' type='radio' name='dienst' value='0'
+                 onclick='dienstform_off();' ";
+          echo ( $login_dienst ? '>' : 'checked>' );
+          echo ( $FC_acronym == 'LS' ? '<label>keine Aktion</label>' : '<label>keinen Dienst</label>' );
         open_td();
-          ?> <input class='checkbox' type='radio' name='dienst' value='1'
-              onclick='dienstform_on();'
-              <?php if ($login_dienst==1) echo ' checked'; ?> >
-              <label title='Verteiler'>Dienst I/II</label> <?php
+          echo " <input class='checkbox' type='radio' name='dienst' value='1'
+                 onclick='dienstform_on();' ";
+          echo ( $login_dienst == 1 ) ? ' checked>' : '>';
+          echo "<label title='Verteiler'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " I/II </label>";
         open_td();
-          ?> <input class='checkbox' type='radio' name='dienst' value='3'
-               onclick='dienstform_on();'
-               <?php if ($login_dienst==3) echo ' checked'; ?> >
-               <label title='Kellerdienst'>Dienst III</label> <?php
+          echo " <input class='checkbox' type='radio' name='dienst' value='3'
+                 onclick='dienstform_on();' ";
+          echo ( $login_dienst == 3 ) ? ' checked>' : '>';
+          echo "<label title='Kellerdienst'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " III</label>";
         open_td();
-          ?> <input class='checkbox' type='radio' name='dienst' value='4'
-              onclick='dienstform_on();'
-              <?php if ($login_dienst==4) echo ' checked'; ?> >
-              <label title='Abrechnung'>Dienst IV</label> <?php
+          echo " <input class='checkbox' type='radio' name='dienst' value='4'
+                 onclick='dienstform_on();' ";
+          echo ( $login_dienst == 4 ) ? ' checked>' : '>';
+          echo "<label title='Abrechnung'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " IV</label>";
         open_td();
-          ?> <input class='checkbox' type='radio' name='dienst' value='5'
-              onclick='dienstform_on();'
-              <?php if ($login_dienst==5) echo ' checked'; ?> >
-              <label title='Mitgliederverwaltung'>Dienst V</label> <?php
+          echo " <input class='checkbox' type='radio' name='dienst' value='5'
+              onclick='dienstform_on();' ";
+          echo ( $login_dienst == 5 ) ? ' checked>' : '>';
+          echo "<label title='Mitgliederverwaltung'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " V</label>";
     close_table();
     open_div( 'kommentar', "id='nodienstform' style='display:" . ( $login_dienst ? 'none' : 'block' ) .";'" );
-      ?> Wenn du nur bestellen oder dein Gruppenkonto einsehen möchtest, brauchst Du hier keinen Dienst auszuwählen. <?php
+      if( $FC_acronym == 'LS ' ) {
+        echo "Wenn du nur bestellen oder dein Konto einsehen m&ouml;chtest, brauchst Du hier keine Aktion auszuw&auml;hlen.";
+      } else {
+        echo "Wenn du nur bestellen oder dein Gruppenkonto einsehen m&ouml;chtest, brauchst Du hier keinen Dienst auszuw&auml;hlen.";
+      }
     close_div();
     open_div( '', "id='dienstform' style='display:" . ( $login_dienst ? 'block' : 'none' ) .";'" );
       open_div( 'kommentar', '', "
-        Wenn Du Dich für einen Dienst anmeldest, kannst Du zusätzliche
-        Funktionen der Foodsoft nutzen; außerdem wirst Du 
-        automatisch ins Dienstkontrollblatt eingetragen:
+        Wenn Du Dich f&uuml;r " . ( $FC_acronym == 'LS' ? 'eine Aktion' : 'einen Dienst' ) . " anmeldest,
+        kannst Du zus&auml;tzliche Funktionen der Foodsoft nutzen; au&szlig;rdem wirst Du 
+        automatisch ins " . ( $FC_acronym == 'LS' ? 'Kontrollblatt' : 'Dienstkontrollblatt' ) . " eingetragen:
       " );
-      open_fieldset( 'small_form', '', 'Dienstkontrollblatt' );
+      open_fieldset( 'small_form', '', ( $FC_acronym == 'LS' ? 'Kontrollblatt' : 'Dienstkontrollblatt' ) );
         open_div( 'newfield' );
           ?> <label>Dein Name:</label>
              <input type='text' size='20' name='coopie_name' value='<?php echo $coopie_name; ?>'>
