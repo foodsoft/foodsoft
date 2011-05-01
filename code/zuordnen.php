@@ -4026,7 +4026,7 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
   if( ! $k )
     return '';
   switch( $k['katalogformat'] ) {
-    case 'terra':
+    case 'terra xls':
     default:
       return $k['katalogtyp'] . '/' . $k['katalogdatum'];
   }
