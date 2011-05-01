@@ -25,7 +25,7 @@ get_http_var('liefertage','H',$row);
 get_http_var('bestellmodalitaeten','H',$row);
 get_http_var('kundennummer','H',$row);
 get_http_var('url','H',$row);
-get_http_var('katalogformat','w',$row);
+get_http_var('katalogformat','/[a-z ]+/',$row);
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';

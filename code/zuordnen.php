@@ -3895,6 +3895,7 @@ function sql_insert_produktpreis (
       case 'GB':
       case 'PA':
       case 'KI':
+      case 'KO':
         break;
       default:
         error( "L-Einheit und V-Einheit nicht kompatibel" );
@@ -3928,7 +3929,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -4026,7 +4027,7 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
   if( ! $k )
     return '';
   switch( $k['katalogformat'] ) {
-    case 'terra':
+    case 'terra xls':
     default:
       return $k['katalogtyp'] . '/' . $k['katalogdatum'];
   }

@@ -618,7 +618,7 @@ function upload_bnn( $katalogformat ) {
 
 
 switch( $lieferant['katalogformat'] ) {
-  case 'terra':
+  case 'terra xls':
     upload_terra();
     break;
   case 'bode':
