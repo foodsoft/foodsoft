@@ -248,7 +248,7 @@ function upload_terra() {
     }
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'terra xls'
+    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'terra_xls'
     );
     $success++;
   }
@@ -618,7 +618,7 @@ function upload_bnn( $katalogformat ) {
 
 
 switch( $lieferant['katalogformat'] ) {
-  case 'terra xls':
+  case 'terra_xls':
     upload_terra();
     break;
   case 'bode':

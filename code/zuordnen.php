@@ -4027,7 +4027,7 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
   if( ! $k )
     return '';
   switch( $k['katalogformat'] ) {
-    case 'terra xls':
+    case 'terra_xls':
     default:
       return $k['katalogtyp'] . '/' . $k['katalogdatum'];
   }
@@ -4553,6 +4553,21 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 19 ) );
       logger( 'update_database: update to version 19 successful' );
+
+  case 19:
+      logger( 'starting update_database: from version 19' );
+
+      sql_update( 'lieferanten', array( 'katalogformat' => 'terra' ), array( 'katalogformat' => 'terra_xls' ) );
+
+      sql_insert( 'leitvariable', array(
+          'name' => 'toleranz_default'
+        , 'value' => '0.00'
+        , 'comment' => 'automatischer Toleranzzuschlag in Prozent bei Bestellungen (kann im Einzelfall manuell runtergesetzt werden)'
+        )
+      );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 20 ) );
+      logger( 'update_database: update to version 20 successful' );
 
 /*
 	case n:

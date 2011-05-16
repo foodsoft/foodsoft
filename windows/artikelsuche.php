@@ -28,7 +28,7 @@ bigskip();
 
 $have_mwst = false;
 switch( $katalogformat ) {
-  case 'terra xls':
+  case 'terra_xls':
   case 'midgard':
   case 'bnn':
   case 'grell':

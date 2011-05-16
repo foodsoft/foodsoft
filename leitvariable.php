@@ -81,6 +81,14 @@ $leitvariable = array(
   , 'runtime_editable' => 1
   , 'cols' => '8'
   )
+, 'toleranz_default' => array(
+    'meaning' => 'Default-Toleranz-Satz'
+  , 'comment' => 'automatischer Toleranzzuschlag in Prozent bei Bestellungen (kann im Einzelfall manuell runtergesetzt werden)'
+  , 'default' => '0.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
 , 'muell_id' => array(
     'meaning' => 'Nummer der speziellen Bad-Bank-Gruppe (traditionell: 13)'
   , 'default' => '13'

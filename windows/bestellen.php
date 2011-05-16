@@ -145,6 +145,7 @@ if( ! $readonly ) {
     var kontostand = <?php printf( "%.2lf", $kontostand ); ?>;
     var gesamtpreis = 0.00;
     var aufschlag = <?php printf( "%.2lf", $gesamtbestellung['aufschlag'] ); ?>;
+    var toleranz_default_faktor = <?php printf( "%.3lf", 0.001 + $toleranz_default / 100.0 ); ?>;
     var gebindegroesse     = new Array();
     var preis              = new Array();
     var kosten             = new Array();
@@ -383,6 +384,11 @@ if( ! $readonly ) {
 
     function fest_plus( produkt ) {
       fest[produkt]++;
+      if( toleranz[produkt] < gebindegroesse[produkt] - 1 ) {
+        if( ( toleranz[produkt] + 1 ) <= fest[produkt] * toleranz_default_faktor ) {
+          toleranz[produkt]++;
+        }
+      }
       zuteilung_berechnen( produkt, false );
     }
     function fest_plusplus( produkt ) {

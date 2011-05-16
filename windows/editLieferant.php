@@ -25,7 +25,7 @@ get_http_var('liefertage','H',$row);
 get_http_var('bestellmodalitaeten','H',$row);
 get_http_var('kundennummer','H',$row);
 get_http_var('url','H',$row);
-get_http_var('katalogformat','/[a-z ]+/',$row);
+get_http_var('katalogformat','w',$row);
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
@@ -82,7 +82,7 @@ open_form( '', 'action=save' );
         open_select( 'katalogformat' );
           $selected = false;
           $options = '';
-          foreach( array( 'terra xls', 'bode', 'rapunzel', 'midgard', 'grell', 'bnn' ) as $parser ) {
+          foreach( array( 'terra_xls', 'bode', 'rapunzel', 'midgard', 'grell', 'bnn' ) as $parser ) {
             if( $katalogformat == $parser ) {
               $checked = 'selected';
               $selected = true;

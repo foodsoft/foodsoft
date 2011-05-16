@@ -96,7 +96,7 @@ function katalogabgleich(
 
   $have_mwst = false; // ist die mwst im katalog gelisted? (terra ja, andere nicht!)
   switch( $katalogeintrag['katalogformat'] ) {
-    case 'terra xls':
+    case 'terra_xls':
       $have_mwst = true;
 
       // setze:
