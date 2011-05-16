@@ -4569,6 +4569,14 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 20 ) );
       logger( 'update_database: update to version 20 successful' );
 
+  case 20:
+      logger( 'starting update_database: from version 20' );
+
+      sql_update( 'lieferantenkatalog', array( 'katalogformat' => 'terra' ), array( 'katalogformat' => 'terra_xls' ) );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 21 ) );
+      logger( 'update_database: update to version 21 successful' );
+
 /*
 	case n:
 		$sql = "
