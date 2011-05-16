@@ -1011,16 +1011,18 @@ function action_form_produktpreis() {
   global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
        , $gebindegroesse, $mwst, $pfand, $lieferpreis, $bestellnummer, $lv_faktor
        , $day, $month, $year, $notiz, $produkt_id;
+       
+  $unit_pattern = '/^[a-zA-ZÄäÖöÜüß]+$/';
 
   need_http_var('produkt_id','u');
 
   // get_http_var('name','H','');  // notwendig, sollte aber moeglichst nicht geaendert werden!
   need_http_var('verteilmult','f');
   $verteilmult = mult2string( $verteilmult ); // ...maximal 3 nachkommastellen, und nur wenn noetig!
-  need_http_var('verteileinheit','w');
+  need_http_var('verteileinheit',$unit_pattern);
   need_http_var('liefermult','f');
   $liefermult = mult2string( $liefermult );
-  need_http_var('liefereinheit','w');
+  need_http_var('liefereinheit',$unit_pattern);
 
   need_http_var('gebindegroesse','f'); // in liefereinheiten!
   need_http_var('mwst','f');
