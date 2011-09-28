@@ -73,13 +73,13 @@ if( $action == 'save' ) {
     need_http_var( 'extra_soll', 'f' );
     foreach( $bestell_id_set as $b_id ) {
       if( $b_id == $abrechnung_id ) {
-        sql_update( 'gesamtbestellungen', $bestell_id, array(
+        sql_update( 'gesamtbestellungen', $b_id, array(
           'rechnungsnummer' => $rechnungsnummer
         , 'extra_text' => $extra_text
         , 'extra_soll' => $extra_soll
         ) );
       } else {
-        sql_update( 'gesamtbestellungen', $bestell_id, array(
+        sql_update( 'gesamtbestellungen', $b_id, array(
           'rechnungsnummer' => $rechnungsnummer
         , 'extra_text' => ''
         , 'extra_soll' => 0
