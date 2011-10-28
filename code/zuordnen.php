@@ -1251,7 +1251,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
       $m_id = 0;
     }
     foreach( $bevorstehende_dienste as $dienst ) {
-      sql_update( 'dienste', $dienst['dienst_id'], array(
+      sql_update( 'dienste', $dienst['id'], array(
         'gruppenmitglieder_id' => $m_id
       , 'status' => 'Vorgeschlagen'
       ) );
