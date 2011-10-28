@@ -1757,7 +1757,7 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
       need( $dienstkontrollblatt_id > 0, "Kein Dienstkontrollblatt Eintrag" );
       $changes .= ", abrechnung_dienstkontrollblatt_id = 0 ";
       break;
-    case STATUS_ABRECHNET . "," . STATUS_ARCHIVIERT:
+    case STATUS_ABGERECHNET . "," . STATUS_ARCHIVIERT:
       // TODO: tests:
       //   - bezahlt?
       //   - basarreste?
