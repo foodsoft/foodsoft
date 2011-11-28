@@ -201,7 +201,9 @@ var Scroller = Class.create({
   },
   handleKey: function(event, what) {
     // capture only page up / down
-    if (event.keyCode !== Event.KEY_PAGEUP && event.keyCode !== Event.KEY_PAGEDOWN) {
+    if (event.keyCode !== Event.KEY_PAGEUP 
+        && event.keyCode !== Event.KEY_PAGEDOWN
+        || event.altKey || event.ctrlKey || event.shiftKey) {
       return;
     }
     
