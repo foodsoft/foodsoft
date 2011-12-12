@@ -137,6 +137,13 @@ function upload_terra() {
         $fields = array( 'anummer', 'bnummer', 'name', '', 'herkunft', 'verband', 'gebinde', 'einheit', 'netto', 'mwst', '', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
+      if( preg_match( '&^Preisliste\s+Frischesortiment&', $line ) ) {
+        $tag='Fr';
+        $splitat = '/@+/';
+        // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Lieferant@Land@IK@Netto-Preis@@@MwSt %@EAN- Code@
+        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
+        $pattern = '/^[\d\s]+@+[\d\s]+@/';
+      }
 
       if( preg_match( "&^Art.Nr.@Bestell-Nr.@ZITRUS-FR\xdcCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&", $line ) ) {
         $tag='OG';
