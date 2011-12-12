@@ -139,8 +139,8 @@ function upload_terra() {
       }
       if( preg_match( '&^Preisliste\s+Frischesortiment&', $line ) ) {
         $tag='Fr';
-        $splitat = '/@+/';
-        // Artikelnr.@Bestellnr.@ Beschreibung@VPE@Lieferant@Land@IK@Netto-Preis@@@MwSt %@EAN- Code@
+        $splitat = '/@/';
+        // Artikelnr.               @Bestellnr.@ Beschreibung@VPE@Lieferant @Land      @IK        @Netto-Preis@@@MwSt %@EAN- Code@
         $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
