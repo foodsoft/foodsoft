@@ -99,7 +99,7 @@ function upload_terra() {
     // neu ab 2011kw09:
     //  - komische Waehrungscodes, und
     //  - jetzt nicht nur spaces, sondern auch punkte und kommata in den B-nummern:
-    //  - Kataloge tr und drog (und andere?) koennen zusaetzliche Spalte "empf.VK" vor der MWSt enthalten
+    //  - Kataloge tr, Fr und drog (und andere?) koennen zusaetzliche Spalte "empf.VK" vor der MWSt enthalten
     //  - und: komma statt punkt in der vpe (= gebindegroesse mit einheit)
     // nicht ausgewertet: 12923117@27 7, 00@Adelholzener Classic PET  1Ltr@12,00 FL@AHZ@DE@##@0.67[$ €407]@@J@@19@4005906002079@
     // nicht ausgewertet: 759582@54 .2 42@basis sensitiv Zahncreme 75ml@1,00 ST@LAV@DE@@1.16@@J@1.99@19@4021457470334@
@@ -206,6 +206,14 @@ function upload_terra() {
         // echo "pattern: $pattern<br>";
       }
       continue;
+    }
+    
+    if( $splitline && ( $tag == 'Fr' ) ) {
+      if( preg_match( '/mwst/i', $splitline[10] ) ) {          // ohne 'empf.VK'-Spalte
+        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
+      } else if( preg_match( '/mwst/i', $splitline[11] ) ) {   // mit 'empf.VK'-Spalte
+        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', '', 'mwst', '', '' );
+      }
     }
 
     if( ! preg_match( $pattern, $line ) ) {
