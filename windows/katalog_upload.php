@@ -499,7 +499,7 @@ function upload_bnn( $katalogformat ) {
 
   if( preg_match( '/;"Terra Naturkost /', $fuehrungssatz ) ) {
     // Terra: unterscheidet 4 Kataloge:
-    if( preg_match( '/;"Obst /', $fuehrungssatz ) )
+    if( preg_match( '/;"Obst/', $fuehrungssatz ) )
       $tag = 'OG';
     else if( preg_match( '/;"Drog/', $fuehrungssatz ) )
       $tag = 'drog';
