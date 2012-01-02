@@ -112,37 +112,31 @@ function upload_terra() {
     if( ! $tag || ! $fields || ! $splitat || ! $pattern ) {
       echo "analyzing line: $line<br>";
       // Art.Nr.@@Bestell-Nr.@@Milch@@@@@@Inhalt@Einh.@Land@@IK@Verband@@Netto-Preis @@/Einh.@empf. VK@@MwSt. %@@EAN-Code@@@
-      if( preg_match( '&^Art.Nr. *@@Bestell-Nr.@@Milch *@@@@@@Inhalt *@Einh. *@Land *@@IK *@Verband *@@ *Netto-Preis *@@/Einh. *@empf. VK@@MwSt. % *@@EAN-Code *@@@&' , $line ) ) {
-        $tag = "Fr";
-        $splitat = '/@+/';
-        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
-        $pattern = '/^[\d\s]+@@[\d\s]+@/';
-      }
-      // Art.Nr.@Bestell-Nr.@Milch@Inhalt@Einh.@Land@IK@Verband@Netto-Preis @/Einh.@empf. VK@MwSt. %@EAN-Code@
+
+      // Fr: ganz alter stil:
       //
-      // 130002 @300 @ 0,5l Vollmilch im Milchbeutel 3,7% Brodowin @ BW @REG @DD @6@ST @0.54@7@4022894000054@
-      // 130609 @609 @ S Haselnuss Joghurt 150g                    @ SB   @DE   @DB @ 10    @ BE  @0.42        @7      @4008471506812@
-      // Art.Nr.@Bestell-Nr.@Milch                                 @Herst.@Herk.@IK @ Inhalt@Einh.@Netto-Preis @MwSt. %@EAN-Code@
-      //
-      if( preg_match( '&^Art.Nr. *@+Bestell-Nr. *@+Milch *@+Inhalt *@Einh. *@+Land *@+IK *@+Verband *@+ *Netto-Preis *@+/Einh. *@empf. VK@+MwSt. % *@+EAN-Code *@+&' , $line ) ) {
-        $tag = "Fr";
-        $splitat = '/@+/';
-        $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', '', '', 'mwst', '' );
-        // $fields = array( 'anummer', 'bnummer', 'name', 'gebinde', 'einheit', 'herkunft', '', 'verband', 'netto', 'mwst', '' );
-        $pattern = '/^[\d\s]+@+[\d\s]+@/';
-      }
       if( preg_match( '&^Preisliste:\s+Mopro&', $line ) ) {
         $tag='Fr';
         $splitat = '/@+/';
         $fields = array( 'anummer', 'bnummer', 'name', '', 'herkunft', 'verband', 'gebinde', 'einheit', 'netto', 'mwst', '', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
       }
+
+      // Fr: aktueller (2011) stil: gibt es mit und ohne empf.VK-spalte, wir warten also auf den Tabellenkopf, um $fields zu setzen:
+      //
       if( preg_match( '&^Preisliste\s+Frischesortiment&', $line ) ) {
         $tag='Fr';
         $splitat = '/@/';
         // Artikelnr.               @Bestellnr.@ Beschreibung@VPE@Lieferant @Land      @IK        @Netto-Preis@@@MwSt %@EAN- Code@
-        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
+        // $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
         $pattern = '/^[\d\s]+@+[\d\s]+@/';
+      }
+      if( $splitline && ( $tag == 'Fr' ) && ! $fields ) {
+        if( preg_match( '/mwst/i', $splitline[10] ) ) {          // ohne 'empf.VK'-Spalte
+          $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
+        } else if( preg_match( '/mwst/i', $splitline[11] ) ) {   // mit 'empf.VK'-Spalte
+          $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', '', 'mwst', '', '' );
+        }
       }
 
       if( preg_match( "&^Art.Nr.@Bestell-Nr.@ZITRUS-FR\xdcCHTE *@Inhalt *@Einh. *@Herk. *@HKL@IK@Verband@ *Netto-Preis *@/Einh.@MwSt.%@Bemerkung@&", $line ) ) {
@@ -208,14 +202,6 @@ function upload_terra() {
       continue;
     }
     
-    if( $splitline && ( $tag == 'Fr' ) ) {
-      if( preg_match( '/mwst/i', $splitline[10] ) ) {          // ohne 'empf.VK'-Spalte
-        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', 'mwst', '', '' );
-      } else if( preg_match( '/mwst/i', $splitline[11] ) ) {   // mit 'empf.VK'-Spalte
-        $fields = array( 'anummer', 'bnummer', 'name', 'vpe', 'lieferant', 'herkunft', 'verband', 'netto', '', '', '', 'mwst', '', '' );
-      }
-    }
-
     if( ! preg_match( $pattern, $line ) ) {
       open_div( 'alert', '', "Zeile nicht ausgewertet: $line" );
       continue;
