@@ -571,7 +571,7 @@ function upload_bnn( $katalogformat ) {
 
     $gebinde = $splitline[22];
     $gebinde = preg_replace( '/,/', '.', trim( $gebinde ) );
-    $gebinde = sprintf( '%d', $gebinde );
+    $gebinde = sprintf( '%.2f', $gebinde );
 
     $einheit = $splitline[23];
     $einheit = preg_replace( '/[(].*$/', '', $einheit ); // geklammerte anmerkungen wegschmeissen
