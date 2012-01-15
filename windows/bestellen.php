@@ -557,6 +557,11 @@ foreach( $produkte as $produkt ) {
   , $verteilmult
   );
   $produktgruppe = $produkt['produktgruppen_id'];
+  
+  $katalogeintrag = katalogsuche($produkt_id);
+  if (! is_array( $katalogeintrag ) ) // not found
+    $katalogeintrag = array();
+  
   if( $produktgruppe != $produktgruppe_alt ) {
     if( 0 * $activate_mozilla_kludges ) {
       // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
@@ -574,9 +579,10 @@ foreach( $produkte as $produkt ) {
   hidden_input( "toleranz_$n", "$toleranzmenge", "id='toleranz_$n'" );
 
   open_td();
-    open_div('oneline', '', $produkt['produkt_name']);
+    open_span('oneline', '', $produkt['produkt_name']);
+    open_span('small floatright', 'title="Quelle: Lieferantenkatalog"', catalogue_product_details($katalogeintrag) );
     open_div('small', '', $produkt['notiz']);
-
+    
   // preis:
   $class = '';
   $title = '';

@@ -1850,4 +1850,23 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
     close_form();
 }
 
+function join_details( &$details, $prefix, $value ) {
+  if ( $value )
+  {
+      $details[] = "$prefix$value";
+  }
+}
+
+
+function catalogue_product_details( $catalogue_record ) {
+  $details = array();
+
+  join_details( $details, '<span title="Herkunft">Hrk:</span> ', 
+          $catalogue_record['herkunft']);
+  join_details( $details, '<span title="Verband">Vbd:</span> ', 
+          $catalogue_record['verband']);
+
+  return join('; ', $details);
+}
+
 ?>
