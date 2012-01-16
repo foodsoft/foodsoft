@@ -594,7 +594,7 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   $img = adefault( $get_parameters, 'img', '' );
   $context = adefault( $get_parameters, 'context', 'a' );
 
-  if( $confirm = adefault( $get_parameters, 'confirm', '' ) )
+  if( ( $confirm = adefault( $get_parameters, 'confirm', '' ) ) )
     $confirm = " if( confirm( '$confirm' ) ) ";
 
   if( isset( $get_parameters['update'] ) ) {
