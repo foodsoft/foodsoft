@@ -21,11 +21,18 @@ open_div( '', '', "Katalog einlesen: Lieferant: {$lieferant['name']} / g&uuml;lt
 
 function katalog_update(
   $lieferant_id, $tag, $katalogkw
-, $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, $katalogformat
+, $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand
+, $hersteller, $verband, $herkunft
+, $netto
+, $ean_einzeln
+, $katalogformat
 ) {
 
   open_div( 'ok' );
-    open_div( 'ok qquad', '', "erfasst: $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, $katalogformat" );
+    open_div( 'ok qquad', '', 
+            "erfasst: $anummer, $bnummer, $name, $bemerkung, $einheit, "
+            . "$gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, "
+            . "$netto, $ean_einzeln, $katalogformat" );
   close_div();
 
   doSql( "
@@ -45,6 +52,9 @@ function katalog_update(
     , katalogtyp
     , katalogformat
     , gueltig
+    , hersteller
+    , bemerkung
+    , ean_einzeln
     ) VALUES (
       '$lieferant_id'
     , '$anummer'
@@ -61,6 +71,9 @@ function katalog_update(
     , '$tag'
     , '$katalogformat'
     , 1
+    , '$hersteller'
+    , '$bemerkung'
+    , '$ean_einzeln'
     ) ON DUPLICATE KEY UPDATE
       bestellnummer='$bnummer'
     , name='$name'
@@ -75,6 +88,9 @@ function katalog_update(
     , katalogtyp='$tag'
     , katalogformat='$katalogformat'
     , gueltig=1
+    , hersteller='$hersteller'
+    , bemerkung='$bemerkung'
+    , ean_einzeln='$ean_einzeln'
   " );
 }
 
@@ -210,14 +226,17 @@ function upload_terra() {
     $anummer = "";
     $bnummer = "";
     $name = "";
+    $bemerkung = "";
     $einheit = "";
     $gebinde = "";
     $mwst = "7.00";
     $pfand = "0.00";
+    $hersteller = "";
     $verband = "";
     $herkunft = "";
     $netto = "0.00";
     $vpe = "";
+    $ean_einzeln = "";
 
     $i=0;
     foreach( $splitline as $field ) {
@@ -249,7 +268,7 @@ function upload_terra() {
     }
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'terra_xls'
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'terra_xls'
     );
     $success++;
   }
@@ -281,13 +300,16 @@ function upload_rapunzel() {
     $anummer = "";
     $bnummer = "";
     $name = "";
+    $bemerkung = "";
     $einheit = "";
     $gebinde = "";
     $mwst = "-1";
     $pfand = "0.00";
+    $hersteller = "";
     $verband = "";
     $herkunft = "";
     $netto = "0.00";
+    $ean_einzeln = "";
 
     $splitline = preg_split( $splitat, $line );
 
@@ -314,7 +336,7 @@ function upload_rapunzel() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'rapunzel'
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'rapunzel'
     );
     $success++;
   }
@@ -346,13 +368,16 @@ function upload_bode() {
     $anummer = "";
     $bnummer = "";
     $name = "";
+    $bemerkung = "";
     $einheit = "";
     $gebinde = "";
     $mwst = "-1";
     $pfand = "0.00";
+    $hersteller = "";
     $verband = "";
     $herkunft = "";
     $netto = "0.00";
+    $ean_einzeln = "";
 
     $splitline = preg_split( $splitat, $line );
     $bnummer = $splitline[1];
@@ -385,7 +410,7 @@ function upload_bode() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, 'bode'
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'bode'
     );
     $success++;
   }
@@ -403,7 +428,8 @@ function upload_bode() {
 //                       4 ean?
 //                                     5 ?
 //                                      6 name
-//                                                             7 8 9 ?
+//                                                             7 bemerkung
+//                                                               8 9 ?
 //                                                                   10 hersteller
 //                                                                    11?
 //                                                                     12 land
@@ -451,7 +477,8 @@ function upload_bode() {
 //                                     5 ?
 //                                      6 name
 //                                                             7 8 9 ?
-//                                                                  11?
+//                                                                  10 hersteller
+//                                                                    11?
 //                                                                     12 land
 //                                                                       13 verband
 //                                                                             14 ...                20  ?
@@ -553,6 +580,8 @@ function upload_bnn( $katalogformat ) {
     $anummer = "";
     $bnummer = "";
     $name = "";
+    $bemerkung = "";
+    $handelsklasse = "";
     $einheit = "";
     $gebinde = "";
     $mwst = "-1";
@@ -560,15 +589,30 @@ function upload_bnn( $katalogformat ) {
     $verband = "";
     $herkunft = "";
     $netto = "0.00";
+    $hersteller = "";
+    $ean_einzeln = "";
 
     $bnummer = $splitline[0];
     $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
 
     $name = mysql_real_escape_string( $splitline[6] );
+    $bemerkung = mysql_real_escape_string( $splitline[7] );
+    $handelsklasse = mysql_real_escape_string( $splitline[9] );
     $herkunft = mysql_real_escape_string( $splitline[12] );
     $verband = mysql_real_escape_string( $splitline[13] );
-
+    $hersteller = mysql_real_escape_string( $splitline[10] );
+    $ean_einzeln = mysql_real_escape_string( $splitline[4] );
+    
+    if ( $handelsklasse )
+    {
+        $handelsklasse = "HK $handelsklasse";
+        if ( $bemerkung )
+            $bemerkung = "$handelsklasse; $bemerkung";
+        else
+            $bemerkung = $handelsklasse;
+    }
+    
     $gebinde = $splitline[22];
     $gebinde = preg_replace( '/,/', '.', trim( $gebinde ) );
     $gebinde = sprintf( '%.2f', $gebinde );
@@ -607,7 +651,7 @@ function upload_bnn( $katalogformat ) {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $einheit, $gebinde, $mwst, $pfand, $verband, $herkunft, $netto, $katalogformat
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat
     );
     $success++;
   }

@@ -195,15 +195,18 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       open_th( '', '', 'A-Nr.' );
       open_th( '', '', 'B-Nr.' );
       open_th( '', '', 'Bezeichnung' );
+      open_th( '', '', 'Bemerkung' );
       open_th( '', '', 'Gebinde' );
       open_th( '', '', 'Einheit' );
       open_th( '', '', 'Land' );
       open_th( '', '', 'Verband' );
+      open_th( '', '', 'Hersteller' );
       open_th( '', '', 'Netto' );
       if( $have_mwst ) {
         open_th( '', '', 'MWSt' );
         open_th( '', '', 'Brutto' );
       }
+      open_th( '', '', 'EAN einzeln');
       open_th( '', '', 'Katalog' );
       if( ! $produkt_id ) {
         open_th( '', '', 'Foodsoft-Datenbank' );
@@ -222,10 +225,12 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
             }
           open_td( 'number', '', $row['bestellnummer'] );
           open_td( '', '', $row['name'] );
+          open_td( '', '', $row['bemerkung'] );
           open_td( '', '', mult_view( $row['gebinde'] ) );
           open_td( 'unit', '', $row['liefereinheit'] );
           open_td( '', '', $row['herkunft'] );
           open_td( '', '', $row['verband'] );
+          open_td( '', '', $row['hersteller'] );
           open_td( '', '', price_view( $netto ) );
           if( $have_mwst ) {
             $mwst = $row['mwst'];
@@ -233,6 +238,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
             open_td( 'mult', '', price_view( $mwst ) );
             open_td( 'mult', '', price_view( $brutto ) );
           }
+          open_td( '', '', ean_view( $row['ean_einzeln']).ean_links($row['ean_einzeln']) );
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
           if( ! $produkt_id ) {
             open_td( 'center' );

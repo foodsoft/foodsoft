@@ -131,6 +131,28 @@ function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
     return "<span class='string'>$text</span>";
 }
 
+function ean_view( $ean, $length = 20, $fieldname = false, $attr = '', $with_links = false ) {
+  global $input_event_handlers;
+  if ( $fieldname )
+    return "<input type='text' class='ean' size='$length' name='$fieldname' value='$ean' $attr $input_event_handlers>";
+  
+  $s = "<span class='ean'>$ean</span> ";
+  if ($with_links)
+    $s .= ean_links ($ean);
+  return $s;
+}
+
+function ean_links( $ean ) {
+  if (!$ean)
+    return '';
+  $s = '';
+  $s .= "<a title='codecheck' target='_blank' href='http://www.codecheck.info/product.search?q=$ean'>[c]</a>";
+  $s .= "<a title='barcoo' target='_blank' href='http://barcoo.com/de/$ean'>[b]</a>";
+  $s .= "<a title='Google' target='_blank' href='http://google.de/search?q=$ean'>[g]</a>";
+  // $s .= "<a target='_blank' href='http://upcdatabase.com/item/$ean'>[u]</a>";
+  return $s;
+}
+
 function date_time_view( $datetime, $fieldname = '' ) {
   global $mysqljetzt;
   if( ! $datetime )
@@ -1848,6 +1870,33 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
 
   if( $editable or $super_edit )
     close_form();
+}
+
+function join_details( &$details, $prefix, $value ) {
+  if ( $value )
+  {
+      $details[] = "$prefix$value";
+  }
+}
+
+
+function catalogue_product_details( $catalogue_record ) {
+  if( !is_array($catalogue_record) || empty($catalogue_record) )
+    return '';
+  
+  $details = array();
+
+  join_details( $details, '', $catalogue_record['bemerkung']);
+  join_details( $details, '<span title="Herkunft">Hrk:</span> ', 
+          $catalogue_record['herkunft']);
+  join_details( $details, '<span title="Verband">Vbd:</span> ', 
+          $catalogue_record['verband']);
+  join_details( $details, '<span title="Hersteller">Hst:</span> ', 
+          $catalogue_record['hersteller']);
+  join_details( $details, '<span title="European Article Number">EAN</span> ', 
+          ean_links($catalogue_record['ean_einzeln']));
+
+  return join('; ', $details);
 }
 
 ?>
