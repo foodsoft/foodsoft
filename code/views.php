@@ -131,6 +131,28 @@ function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
     return "<span class='string'>$text</span>";
 }
 
+function ean_view( $ean, $length = 20, $fieldname = false, $attr = '', $with_links = false ) {
+  global $input_event_handlers;
+  if ( $fieldname )
+    return "<input type='text' class='ean' size='$length' name='$fieldname' value='$ean' $attr $input_event_handlers>";
+  
+  $s = "<span class='ean'>$ean</span> ";
+  if ($with_links)
+    $s .= ean_links ($ean);
+  return $s;
+}
+
+function ean_links( $ean ) {
+  if (!$ean)
+    return '';
+  $s = '';
+  $s .= "<a title='codecheck' target='_blank' href='http://www.codecheck.info/product.search?q=$ean'>[c]</a>";
+  $s .= "<a title='barcoo' target='_blank' href='http://barcoo.com/de/$ean'>[b]</a>";
+  $s .= "<a title='Google' target='_blank' href='http://google.de/search?q=$ean'>[g]</a>";
+  // $s .= "<a target='_blank' href='http://upcdatabase.com/item/$ean'>[u]</a>";
+  return $s;
+}
+
 function date_time_view( $datetime, $fieldname = '' ) {
   global $mysqljetzt;
   if( ! $datetime )
@@ -466,13 +488,17 @@ function dienst_view( $dienst_id, $editable = false ) {
 }
 
 function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
-  global $login_gruppen_id, $action, $dienst_id;
+  global $login_gruppen_id, $action, $dienst_id, $session_id
+    , $reconfirmation_muted;
 
   if( $rueckbestaetigen_lassen ) {
     get_http_var( 'action', 'w', '' );
     get_http_var( 'dienst_id', 'U', 0 );
     if( ( $action == 'dienstBestaetigen' ) and ( $dienst_id > 0 ) ) {
       sql_dienst_akzeptieren( $dienst_id, false, 'Bestaetigt' );
+    } else if ( $action == 'muteReconfirmation' ) {
+      sql_dienst_mute_reconfirmation( $session_id );
+      $reconfirmation_muted = TRUE;
     }
   }
 
@@ -524,6 +550,18 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
           }
     }
   close_table();
+
+  if( $rueckbestaetigen_lassen ) {
+    smallskip();
+    if( !$reconfirmation_muted )
+      open_div( '', '', fc_action( 'class=button,text=Kann ich leider nicht sagen!', "action=muteReconfirmation" ) );
+    else
+      open_div( 'warn', '', 'Bitte bald abklären!' );
+  }
+  
+  if( $reconfirmation_muted )
+    return false;
+  
   return true;
 }
 
@@ -1848,6 +1886,33 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
 
   if( $editable or $super_edit )
     close_form();
+}
+
+function join_details( &$details, $prefix, $value ) {
+  if ( $value )
+  {
+      $details[] = "$prefix$value";
+  }
+}
+
+
+function catalogue_product_details( $catalogue_record ) {
+  if( !is_array($catalogue_record) || empty($catalogue_record) )
+    return '';
+  
+  $details = array();
+
+  join_details( $details, '', $catalogue_record['bemerkung']);
+  join_details( $details, '<span title="Herkunft">Hrk:</span> ', 
+          $catalogue_record['herkunft']);
+  join_details( $details, '<span title="Verband">Vbd:</span> ', 
+          $catalogue_record['verband']);
+  join_details( $details, '<span title="Hersteller">Hst:</span> ', 
+          $catalogue_record['hersteller']);
+  join_details( $details, '<span title="European Article Number">EAN</span> ', 
+          ean_links($catalogue_record['ean_einzeln']));
+
+  return join('; ', $details);
 }
 
 ?>

@@ -21,7 +21,8 @@
 
 function init_login() {
   global $angemeldet, $session_id, $login_gruppen_id, $login_gruppen_name
-       , $login_dienst, $dienstkontrollblatt_id, $coopie_name;
+       , $login_dienst, $dienstkontrollblatt_id, $coopie_name
+       , $reconfirmation_muted;
   $angemeldet=FALSE;
   $session_id = 0;
   $login_gruppen_id = FALSE;
@@ -29,6 +30,7 @@ function init_login() {
   $login_dienst = 0;
   $dienstkontrollblatt_id = FALSE;
   $coopie_name= FALSE;
+  $reconfirmation_muted = FALSE;
 }
 
 function logout() {
@@ -48,7 +50,7 @@ $notiz ='';
 //
 if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
   sscanf( $_COOKIE['foodsoftkeks'], "%u_%s", $session_id, $cookie );
-  $row = sql_select_single_row( "SELECT * FROM sessions WHERE id=$session_id", true );
+  $row = sql_select_single_row( "SELECT *, TIMESTAMPDIFF(MINUTE, muteReconfirmation_timestamp, NOW()) AS muteReconfirmation_elapsed FROM sessions WHERE id=$session_id", true );
   if( ! $row ) {
     $problems .= "<div class='warn'>nicht angemeldet</div>";
   } elseif( $cookie != $row['cookie'] ) {
@@ -59,6 +61,8 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
     $login_dienst = $row['dienst'];
     $dienstkontrollblatt_id = $row['dienstkontrollblatt_id'];
     $login_gruppen_name = sql_gruppenname( $login_gruppen_id );
+    if (! is_null($row['muteReconfirmation_elapsed']) && $row['muteReconfirmation_elapsed'] < 60 )
+        $reconfirmation_muted = TRUE;
   }
   if( ! in_array( $login_dienst, array( 0, 1, 3, 4, 5 ) ) )
     $problems = $problems .  "<div class='warn'>interner fehler: ungueltiger dienst</div>";

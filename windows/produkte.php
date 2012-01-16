@@ -113,6 +113,8 @@ open_table('list hfill');
     $produkt = sql_produkt( array( 'produkt_id' => $id, 'preis_id' => $preis_id ) );
     $references = references_produkt( $id );
     $vormerkungen_menge = sql_bestellzuordnung_menge( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $id ) );
+    
+    $katalogeintrag = katalogsuche( $p );
 
     open_tr( 'groupofrows_top' );
       $produktgruppen_id = $produkt['produktgruppen_id'];
@@ -122,7 +124,8 @@ open_table('list hfill');
         $produktgruppen_id_alt = $produktgruppen_id;
       }
       open_td( 'top' );
-        open_div( 'bold', '', $produkt['name'] );
+        open_span( 'bold', '', $produkt['name'] );
+        open_span( 'small floatright', '', catalogue_product_details( $katalogeintrag ));
         open_div( 'small', '', $produkt['notiz'] );
       if( $editable ) {
         if( $preis_id ) {

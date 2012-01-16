@@ -902,6 +902,24 @@ $tables = array(
       , 'extra' => ''
       )
     )
+    , 'hersteller' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+    )
+    , 'bemerkung' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+    )
+    , 'ean_einzeln' => array(
+        'type' => "varchar(15)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => '' 
+    )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'secondary' => array( 'unique' => 1, 'collist' => 'lieferanten_id, artikelnummer' )
@@ -1211,6 +1229,12 @@ $tables = array(
         'type' =>  "timestamp"
       , 'null' => 'NO'
       , 'default' => 'CURRENT_TIMESTAMP'
+      , 'extra' => ''
+      )
+    , 'muteReconfirmation_timestamp' => array(
+        'type' => "timestamp"
+      , 'null' => 'YES'
+      , 'default' => 'NULL'
       , 'extra' => ''
       )
     )

@@ -548,6 +548,13 @@ function sql_delete_dienst( $dienst_id ) {
   );
 }
 
+function sql_dienst_mute_reconfirmation( $session_id ) {
+    sql_update( 'sessions' 
+      , $session_id
+      , array( 
+          'muteReconfirmation_timestamp' => 'NOW()' )
+      , false );
+}
 
 ////////////////////////////////////
 //
@@ -4576,6 +4583,24 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 21 ) );
       logger( 'update_database: update to version 21 successful' );
+      
+  case 21:
+      logger( 'starting update_database: from version 21' );
+
+      doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `hersteller` text not null default '' " );
+      doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `bemerkung` text not null default '' " );
+      doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `ean_einzeln` varchar(15) not null default '' " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 22 ) );
+      logger( 'update_database: update to version 22 successful' );
+  
+  case 22:
+      logger( 'starting update_database: from version 22' );
+
+      doSql( "ALTER TABLE `sessions` ADD COLUMN `muteReconfirmation_timestamp` timestamp null default null" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
+      logger( 'update_database: update to version 23 successful' );
 
 /*
 	case n:
