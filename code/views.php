@@ -1881,6 +1881,9 @@ function join_details( &$details, $prefix, $value ) {
 
 
 function catalogue_product_details( $catalogue_record ) {
+  if( !is_array($catalogue_record) || empty($catalogue_record) )
+    return '';
+  
   $details = array();
 
   join_details( $details, '', $catalogue_record['bemerkung']);

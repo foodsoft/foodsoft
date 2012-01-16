@@ -559,8 +559,6 @@ foreach( $produkte as $produkt ) {
   $produktgruppe = $produkt['produktgruppen_id'];
   
   $katalogeintrag = katalogsuche($produkt_id);
-  if (! is_array( $katalogeintrag ) ) // not found
-    $katalogeintrag = array();
   
   if( $produktgruppe != $produktgruppe_alt ) {
     if( 0 * $activate_mozilla_kludges ) {
