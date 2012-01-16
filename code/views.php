@@ -551,12 +551,13 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
     }
   close_table();
 
-  smallskip();
-  
-  if( !$reconfirmation_muted )
-    open_div( '', '', fc_action( 'class=button,text=weiss ich leider nicht!', "action=muteReconfirmation" ) );
-  else
-    open_div( 'warn', '', 'Bitte bald abklären!' );
+  if( $rueckbestaetigen_lassen ) {
+    smallskip();
+    if( !$reconfirmation_muted )
+      open_div( '', '', fc_action( 'class=button,text=Kann ich leider nicht sagen!', "action=muteReconfirmation" ) );
+    else
+      open_div( 'warn', '', 'Bitte bald abklären!' );
+  }
   
   if( $reconfirmation_muted )
     return false;
