@@ -1231,6 +1231,12 @@ $tables = array(
       , 'default' => 'CURRENT_TIMESTAMP'
       , 'extra' => ''
       )
+    , 'muteReconfirmation_timestamp' => array(
+        'type' => "timestamp"
+      , 'null' => 'YES'
+      , 'default' => 'NULL'
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

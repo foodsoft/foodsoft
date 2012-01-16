@@ -488,13 +488,17 @@ function dienst_view( $dienst_id, $editable = false ) {
 }
 
 function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
-  global $login_gruppen_id, $action, $dienst_id;
+  global $login_gruppen_id, $action, $dienst_id, $session_id
+    , $reconfirmation_muted;
 
   if( $rueckbestaetigen_lassen ) {
     get_http_var( 'action', 'w', '' );
     get_http_var( 'dienst_id', 'U', 0 );
     if( ( $action == 'dienstBestaetigen' ) and ( $dienst_id > 0 ) ) {
       sql_dienst_akzeptieren( $dienst_id, false, 'Bestaetigt' );
+    } else if ( $action == 'muteReconfirmation' ) {
+      sql_dienst_mute_reconfirmation( $session_id );
+      $reconfirmation_muted = TRUE;
     }
   }
 
@@ -546,6 +550,17 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
           }
     }
   close_table();
+
+  smallskip();
+  
+  if( !$reconfirmation_muted )
+    open_div( '', '', fc_action( 'class=button,text=weiss ich leider nicht!', "action=muteReconfirmation" ) );
+  else
+    open_div( 'warn', '', 'Bitte bald abklären!' );
+  
+  if( $reconfirmation_muted )
+    return false;
+  
   return true;
 }
 

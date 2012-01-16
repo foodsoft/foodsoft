@@ -548,6 +548,13 @@ function sql_delete_dienst( $dienst_id ) {
   );
 }
 
+function sql_dienst_mute_reconfirmation( $session_id ) {
+    sql_update( 'sessions' 
+      , $session_id
+      , array( 
+          'muteReconfirmation_timestamp' => 'NOW()' )
+      , false );
+}
 
 ////////////////////////////////////
 //
@@ -4586,7 +4593,14 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 22 ) );
       logger( 'update_database: update to version 22 successful' );
-      
+  
+  case 22:
+      logger( 'starting update_database: from version 22' );
+
+      doSql( "ALTER TABLE `sessions` ADD COLUMN `muteReconfirmation_timestamp` timestamp null default null" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
+      logger( 'update_database: update to version 23 successful' );
 
 /*
 	case n:
