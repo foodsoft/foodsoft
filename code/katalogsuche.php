@@ -78,10 +78,13 @@ function katalogabgleich(
   $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
   $katalog_bestellnummer = $katalogeintrag["bestellnummer"];
   $katalog_name = $katalogeintrag["name"];
+  $katalog_bemerkung = $katalogeintrag["bemerkung"];
   $katalog_einheit = str_replace( ',', '.' , $katalogeintrag["liefereinheit"] );
   $katalog_gebindegroesse = str_replace( ',', '.' , $katalogeintrag["gebinde"] );
   $katalog_herkunft =  $katalogeintrag["herkunft"];
   $katalog_verband = $katalogeintrag["verband"];
+  $katalog_hersteller = $katalogeintrag["hersteller"];
+  $katalog_ean = $katalogeintrag["ean_einzeln"];
   $katalog_netto = $katalogeintrag["preis"];
   $katalog_id = $katalogeintrag["id"];
 
@@ -217,6 +220,8 @@ function katalogabgleich(
           open_th( '', '', 'Gebinde' );
           open_th( '', '', 'Land' );
           open_th( '', '', 'Verband' );
+          open_th( '', '', 'Hersteller' );
+          open_th( '', "title='European Article Number'", 'EAN (einzeln)');
           open_th( '', '', 'L-Preis' );
           open_th( '', '', 'MWSt' );
           open_th( '', '', 'Brutto' );
@@ -224,11 +229,16 @@ function katalogabgleich(
         open_tr();
           open_td( '', '', $katalog_artikelnummer );
           open_td( '', '', $katalog_bestellnummer );
-          open_td( '', '', $katalog_name );
+          open_td();
+            open_div('', '', $katalog_name);
+            if ($katalog_bemerkung)
+              open_div('small', '', $katalog_bemerkung);
           open_td( '', '', $katalog_einheit );
           open_td( '', '', $katalog_gebindegroesse );
           open_td( '', '', $katalog_herkunft );
           open_td( '', '', $katalog_verband );
+          open_td( '', '', $katalog_hersteller );
+          open_td( '', '', ean_view($katalog_ean).ean_links($katalog_ean));
           open_td( '', '', $katalog_netto );
           open_td( '', '', $katalog_mwst );
           open_td( '', '', $katalog_brutto );
@@ -238,7 +248,7 @@ function katalogabgleich(
         open_tr();
           open_td( 'left small top', "colspan='3'", 'Interpretation der Foodsoft:' );
           open_td( 'center small top', "colspan='2'", "1 Gebinde = $liefergebinde * ($liefereinheit)" );
-          open_td( '', "colspan='2'", '');
+          open_td( '', "colspan='4'", '');
           open_td( 'center small top', "colspan='3'", "Preis gilt pro $liefereinheit" );
       close_table();
     close_fieldset();

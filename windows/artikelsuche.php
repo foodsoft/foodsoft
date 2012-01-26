@@ -194,8 +194,9 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
     open_table( 'list' );
       open_th( '', '', 'A-Nr.' );
       open_th( '', '', 'B-Nr.' );
-      open_th( '', '', 'Bezeichnung' );
-      open_th( '', '', 'Bemerkung' );
+      open_th();
+        open_div('', '', 'Bezeichnung');
+        open_div('small', '', 'Bemerkung');
       open_th( '', '', 'Gebinde' );
       open_th( '', '', 'Einheit' );
       open_th( '', '', 'Land' );
@@ -224,8 +225,10 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
               echo $anummer;
             }
           open_td( 'number', '', $row['bestellnummer'] );
-          open_td( '', '', $row['name'] );
-          open_td( '', '', $row['bemerkung'] );
+          open_td();
+            open_div('', '', $row['name']);
+            if ($row['bemerkung'])
+              open_div('small', '', $row['bemerkung']);
           open_td( '', '', mult_view( $row['gebinde'] ) );
           open_td( 'unit', '', $row['liefereinheit'] );
           open_td( '', '', $row['herkunft'] );
