@@ -514,7 +514,7 @@ function upload_bnn( $katalogformat ) {
     // Terra: unterscheidet 4 Kataloge:
     if( preg_match( '/;"Obst/', $fuehrungssatz ) )
       $tag = 'OG';
-    else if( preg_match( '/;"Drog/', $fuehrungssatz ) )
+    else if( preg_match( '/;"(Naturdrog|Drog)/', $fuehrungssatz ) )
       $tag = 'drog';
     else if( preg_match( '/;"Trocken/', $fuehrungssatz ) )
       $tag = 'Tr';
