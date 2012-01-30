@@ -3789,13 +3789,14 @@ function references_produktpreis( $preis_id ) {
   return sql_count( 'bestellvorschlaege', "produktpreise_id=$preis_id" );
 }
 
-function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
+function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
   if( $zeitpunkt ) {
     $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
                     AND (zeitstart <= '$zeitpunkt' OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = "";
   }
+  $order = $reverse ? "DESC" : "ASC";
   $query = "
     SELECT produktpreise.*
          , date(produktpreise.zeitstart) as datum_start
@@ -3807,7 +3808,7 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false ){
     FROM produktpreise 
     JOIN produkte ON produkte.id = produktpreise.produkt_id
     WHERE produkt_id= $produkt_id $zeitfilter
-    ORDER BY zeitstart, IFNULL(zeitende,'9999-12-31'), id";
+    ORDER BY zeitstart $order, IFNULL(zeitende,'9999-12-31') $order, id $order";
   //  ORDER BY IFNULL(zeitende,'9999-12-31'), id";
   $result = mysql2array( doSql($query, LEVEL_ALL, "Konnte Produktpreise nich aus DB laden..") );
   foreach( $result as $key => $r ) {

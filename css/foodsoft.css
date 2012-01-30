@@ -143,6 +143,11 @@ table.list tr th, table table.list tr th, table table table.list tr th {
   text-align:center;
 }
 
+div.price_history{
+    overflow: auto;
+    max-height: 30ex;
+}
+
 td {
   border-style:none;
   color:#000000;

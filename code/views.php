@@ -1617,7 +1617,10 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     $initial = 'on';
   }
   open_fieldset( 'big_form', '', $legend, $initial );
+  open_div( 'price_history' );
     open_table( 'list hfill' );
+      if( $bestell_id )
+        open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
       open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'id' );
       open_th( '', "title='Bestellnummer'", 'B-Nr' );
       open_th( '', "title='Preiseintrag gültig ab'", 'von' );
@@ -1628,12 +1631,24 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_th( '', "title='Gebindegröße'", 'Gebindegröße' );
       open_th( '', "title='Endpreis je V-Einheit' colspan='2'", 'V-Preis / V-Einheit' );
 
-  if( $bestell_id )
-    open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
-
-  foreach( sql_produktpreise( $produkt_id ) as $pr1 ) {
+  foreach( sql_produktpreise( $produkt_id, false, true ) as $pr1 ) {
     $references = references_produktpreis( $pr1['id'] );
     open_tr();
+      if( $bestell_id ) {
+        open_td( 'center', "style='padding:1ex 1em 1ex 1em;'" );
+        if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
+          echo fc_link( '', array( 'class' => 'buttondown', 'text' => ' aktiv ', 'url' => ''
+                               , 'title' => "gilt momentan f&uuml;r Bestellung $bestellung_name" ) );
+        } else {
+          if( $editable and ( $rechnungsstatus < STATUS_ABGERECHNET ) ) {
+            echo fc_action( array( 'class' => 'buttonup', 'text' => ' setzen '
+                                 , 'title' => "Preiseintrag für Bestellung $bestellung_name auswählen" )
+                          , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] ) );
+          } else {
+            echo " - ";
+          }
+        }
+      }
       open_td( 'oneline' );
         echo $pr1['id'];
         if( $editable and ( $references == 0 ) and $pr1['zeitende'] ) {
@@ -1663,24 +1678,9 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
       open_td( 'mult', '', price_view( $pr1['vpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
-
-    if( $bestell_id ) {
-      open_td( '', "style='padding:1ex 1em 1ex 1em;'" );
-      if( $pr1['id'] == $preisid_in_bestellvorschlag ) {
-        echo fc_link( '', array( 'class' => 'buttondown', 'text' => ' aktiv ', 'url' => ''
-                               , 'title' => "gilt momentan f&uuml;r Bestellung $bestellung_name" ) );
-      } else {
-        if( $editable and ( $rechnungsstatus < STATUS_ABGERECHNET ) ) {
-          echo fc_action( array( 'class' => 'buttonup', 'text' => ' setzen '
-                               , 'title' => "Preiseintrag für Bestellung $bestellung_name auswählen" )
-                        , array( 'action' => 'preiseintrag_waehlen', 'preis_id' => $pr1['id'] ) );
-        } else {
-          echo " - ";
-        }
-      }
-    }
   }
   close_table();
+  close_div();
 
   produktpreise_konsistenztest( $produkt_id, $editable, 0 );
 
