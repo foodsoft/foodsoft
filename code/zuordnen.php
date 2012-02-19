@@ -3791,8 +3791,8 @@ function references_produktpreis( $preis_id ) {
 
 function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
   if( $zeitpunkt ) {
-    $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
-                    AND (zeitstart <= '$zeitpunkt' OR ISNULL(zeitstart))";
+    $zeitfilter = " AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
+                    AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = "";
   }
@@ -3911,7 +3911,7 @@ function sql_insert_produktpreis (
   }
   need( $lv_faktor >= 0.001, "kein gueltiger Umrechnungsfaktor L-Einheit / V-Einheit" );
 
-  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
+  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, "'$start'" );
   if( $aktueller_preis ) {
     sql_update( 'produktpreise'
     , $aktueller_preis['id']

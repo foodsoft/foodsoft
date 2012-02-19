@@ -585,7 +585,7 @@ foreach( $produkte as $produkt ) {
   $class = '';
   $title = '';
   if( hat_dienst(4) ) {
-    if( sql_aktueller_produktpreis_id( $n, $gesamtbestellung['lieferung'] ) != $produkt['preis_id'] ) {
+    if( sql_aktueller_produktpreis_id( $n, "'{$gesamtbestellung['lieferung']}'" ) != $produkt['preis_id'] ) {
       $preise_falsch[] = $n;
       $class .= 'outdated';
       $title = 'Preis nicht aktuell!';
