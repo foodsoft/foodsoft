@@ -1274,6 +1274,51 @@ $tables = array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     )
   )
+, 'catalogue_acronyms' => array(
+    'updownload' => true
+  , 'cols'=> array(
+      'id' => array(
+        'type' => "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'context' => array(
+        'type' => "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'acronym' => array(
+        'type' => "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'definition' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'comment' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'url' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    )
+  , 'indices' => array(
+      'primary' => array( 'unique' => 1, 'collist' => 'id' )
+    , 'secondary' => array( 'unique' => 1, 'collist' => 'context, acronym')
+  )
+)
 );
 
 ?>

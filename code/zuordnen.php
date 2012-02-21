@@ -248,12 +248,12 @@ function adefault( $array, $index, $default ) {
     return $default;
 }
 
-function mysql2array( $result, $key = false, $val = false ) {
+function mysql2array( $result, $key = false, $val = false, $result_type = null ) {
   if( is_array( $result ) )  // temporary kludge: make me idempotent
     return $result;
   $r = array();
   $n = 1;
-  while( $row = mysql_fetch_array( $result ) ) {
+  while( $row = mysql_fetch_array( $result, $result_type ) ) {
     if( $key ) {
       need( isset( $row[$key] ) );
       need( isset( $row[$val] ) );
@@ -266,6 +266,9 @@ function mysql2array( $result, $key = false, $val = false ) {
   return $r;
 }
 
+function mysqlToAssocArray( $result ) {
+  return mysql2array($result, false, false, MYSQL_ASSOC);
+}
 
 /*
  * need_joins: fuer skalare subqueries wie in "SELECT x , ( SELECT ... ) as y, z":
@@ -4041,6 +4044,11 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
   }
 }
 
+function sql_catalogue_acronym( $context, $acronym ) {
+  return mysql2array( doSql( 
+            "SELECT * from `catalogue_acronyms` "
+          . "WHERE `context`='$context' AND `acronym`='$acronym'") );
+}
 
 ////////////////////////////////////
 //
@@ -4602,6 +4610,23 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
       logger( 'update_database: update to version 23 successful' );
+      
+ case 23:
+      logger( 'starting update_database: from version 23' );
+      
+      doSql( "CREATE TABLE `catalogue_acronyms` ("
+              . "  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY"
+              . ", `context` VARCHAR(10) NOT NULL"
+              . ", `acronym` VARCHAR(10) NOT NULL"
+              . ", `definition` TEXT NOT NULL"
+              . ", `comment` TEXT NOT NULL"
+              . ", `url` TEXT NOT NULL"
+              . ", UNIQUE INDEX `secondary` (`context`, `acronym`)"
+              . " ) ");
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
+      logger( 'update_database: update to version 24 successful' );
+   
 
 /*
 	case n:

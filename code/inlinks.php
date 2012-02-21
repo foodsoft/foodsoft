@@ -368,6 +368,14 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'browse';
       $options = array_merge( $small_window_options, array( 'width' => '420', 'height' => 600, 'scrollbars' => 'yes' ) );
       break;
+    case 'catalogue_acronyms':
+      $parameters['window'] = 'catalogue_acronyms';
+      $parameters['window_id'] = 'catalogueAcronyms';
+      $parameters['title'] = 'Katalog-Akronyme...';
+      $parameters['text'] = 'Katalog-Akronyme';
+      $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
+      $options = array_merge( $small_window_options, array( 'width' => '800', 'height' => '600', 'scrollbars' => 'yes' ) );
+      break;
     default:
       error( "undefiniertes Fenster: $name " );
   }

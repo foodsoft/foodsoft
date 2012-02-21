@@ -1253,7 +1253,7 @@ function select_products_not_in_list( $bestell_id ) {
   $bestellung = sql_bestellung( $bestell_id );
   $lieferanten_id = $bestellung['lieferanten_id'];
   $produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
-
+  
   ?> Produkt: <?php
   open_select( 'produkt_id' );
     echo "<option value='0' selected>(Bitte Produkt wählen)</option>";
@@ -1888,10 +1888,18 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
     close_form();
 }
 
-function join_details( &$details, $prefix, $value ) {
+function join_details( &$details, $prefix, $value, $context = false ) {
   if ( $value )
   {
-      $details[] = "$prefix$value";
+    if ( $context && $acronym_details = current(sql_catalogue_acronym($context, $value))) {
+      if ($acronym_details['url']) {
+        $value = "<a title='$value' "
+            . "href='{$acronym_details['url']}'>{$acronym_details['definition']}</a>";
+      } else {
+        $value = "<span title='$value'>{$acronym_details['definition']}</span>";
+      }
+    }
+    $details[] = "$prefix$value";
   }
 }
 
@@ -1903,16 +1911,247 @@ function catalogue_product_details( $catalogue_record ) {
   $details = array();
 
   join_details( $details, '', $catalogue_record['bemerkung']);
-  join_details( $details, '<span title="Herkunft">Hrk:</span> ', 
-          $catalogue_record['herkunft']);
-  join_details( $details, '<span title="Verband">Vbd:</span> ', 
-          $catalogue_record['verband']);
-  join_details( $details, '<span title="Hersteller">Hst:</span> ', 
-          $catalogue_record['hersteller']);
-  join_details( $details, '<span title="European Article Number">EAN</span> ', 
+  join_details( $details
+          , '<span title="Herkunft">Hrk:</span> '
+          , $catalogue_record['herkunft']
+          , 'hrk');
+  join_details( $details
+          , '<span title="Verband">Vbd:</span> '
+          , $catalogue_record['verband']
+          , 'vbd');
+  join_details( $details
+          , '<span title="Hersteller">Hst:</span> '
+          , $catalogue_record['hersteller']
+          , 'hst');
+  join_details( $details
+          , '<span title="European Article Number">EAN</span> ', 
           ean_links($catalogue_record['ean_einzeln']));
 
   return join('; ', $details);
 }
+
+function catalogue_acronym_view( $editable ) {
+  global $input_event_handlers, $foodsoftdir;
+  
+  $acronyms = mysqlToAssocArray( doSql ("SELECT * from catalogue_acronyms "
+          . "ORDER BY context, acronym") );
+  
+  open_javascript(toJavaScript("var acronymParameters", $acronyms));
+  
+  $ui_form = open_form();
+    $input_event_handlers = '';
+    open_fieldset('small_form', '', 'Auswahl');
+      open_table('small_form');
+        open_tr();
+          open_td('', '', 'Suche:');
+          open_td('', '', string_view('', 20, 'search', 'id=search'));
+        open_tr();
+          open_td('', '', 'Akronym:');
+          open_td('');
+            open_select('', 'size=8 id="acronymSelect"');
+            close_select();
+      close_table();
+    close_fieldset();
+    open_fieldset('small_form', 'id=edit', $editable ? 'Bearbeiten' : 'Details');
+      open_table('small_form');
+        open_tr();
+          open_td('', '', 'Akronym:');
+          open_td('', '', string_view('', 20, 'acronym', 'id=acronym tabindex=1'));
+          open_td('qquad right', '', 'Kontext:');
+          open_td('right', '', string_view('', 20, 'context', 'id=context tabindex=3'));
+        open_tr();
+          open_td('', '', 'Definition:');
+          open_td('', 'colspan=3', string_view('', 60, 'definition', 'id=definition tabindex=2'));
+        open_tr();
+          open_td('', '', 'Bemerkung:');
+          open_td('', 'colspan=3', string_view('', 60, 'comment', 'id=comment tabindex=4'));
+        open_tr();
+          open_td('', '', 'URL:');
+          open_td('', 'colspan=3', string_view('', 60, 'url', 'id=url tabindex=5'));
+      close_table();
+      if ($editable) {
+        medskip();
+        open_div();
+          html_button('Neu', 'addAcronym();');
+          html_button('Zurücksetzen', 'resetEditData();');
+          html_button('Löschen', 'deleteAcronym();');
+        close_div();
+      }
+    close_fieldset();
+  close_form();
+  
+  $update_form = open_form('action=update');
+    floating_submission_button();
+    hidden_input('changes', '', "id='changes'");
+    /* ?><textarea name='changes' id='changes' rows=10 cols=80></textarea> <?php */
+  close_form();
+  
+  ?><script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/Acronyms.js' language='javascript'></script><?php
+  open_javascript();
+  ?>
+
+  var acronyms;
+  var changes;
+  
+  var updateFormIndex = <?php echo $update_form; ?>;
+  var uiFormId = <?php echo $ui_form; ?>;
+  var editable = <?php echo $editable ? 'true' : 'false'; ?>;
+   
+  var acronymSelect = $('acronymSelect');
+  var searchableSelect = new SearchableSelect(acronymSelect, $('search'));
+  
+  var acronymInput = $('acronym');
+  var contextInput = $('context');
+  var definitionInput = $('definition');
+  var commentInput = $('comment');
+  var urlInput = $('url');
+  
+  var currentEditData = null;
+
+  function reset() {
+    acronyms = acronymParameters.collect(function(p) {
+      return new Acronym.fromParameters(p);
+    });
+    changes = new AcronymChanges($('changes'), updateFormIndex);
+    changes.setOriginalData(acronyms);
+    searchableSelect.setEntries(acronyms);
+    
+    currentEditData = null;
+    displayEditData();
+    changes.publish();
+  }
+
+  function readEditData() {
+    if (currentEditData === null)
+      return;
+      
+    currentEditData.set(
+        currentEditData.id,
+        contextInput.value,
+        acronymInput.value,
+        definitionInput.value,
+        commentInput.value,
+        urlInput.value);
+    
+    currentEditDataChanged();
+  }
+  
+  function currentEditDataChanged() {
+    searchableSelect.updateEntry(currentEditData);
+    changes.check(currentEditData);
+  }
+  
+  function selectAcronym(data) {
+    if (editable)
+      readEditData();
+
+    if (data.id === undefined)
+      data = null;
+    
+    currentEditData = data;
+    
+    displayEditData();
+  }
+  
+  function displayEditData() {
+    if (currentEditData !== null) {
+      acronymInput.value = currentEditData.acronym;
+      contextInput.value = currentEditData.context;
+      definitionInput.value = currentEditData.definition;
+      commentInput.value = currentEditData.comment;
+      urlInput.value = currentEditData.url;
+    } else {
+      acronymInput.value = '';
+      contextInput.value = '';
+      definitionInput.value = '';
+      commentInput.value = '';
+      urlInput.value = '';
+    }
+  }
+    
+  function addAcronym() {
+    var a = Acronym.makeNew();
+    if (currentEditData !== null)
+      a.context = currentEditData.context;
+    acronyms.push(a);
+    changes.check(a);
+    searchableSelect.appendEntry(a);
+    searchableSelect.select(a);
+    acronymInput.select();
+  }
+  
+  function deleteAcronym() {
+    if (currentEditData === null)
+      return;
+    if (currentEditData.isDeleted())
+      return;
+    if (currentEditData.isNew()) {
+      var oldData = currentEditData;
+      currentEditData = null;
+      changes.remove(oldData.id);
+      acronyms = acronyms.without(oldData);
+      searchableSelect.remove(oldData);
+    } else {
+      currentEditData.markDeleted();
+    }
+    currentEditDataChanged();
+    displayEditData();
+  }
+    
+  function resetEditData() {
+    if (currentEditData === null)
+      return;
+      
+    if (currentEditData.isDeleted()) {
+      changes.remove(currentEditData.id);
+      currentEditData.unmarkDeleted();
+    }
+    changes.revert(currentEditData);
+    currentEditDataChanged();
+    displayEditData();
+  }
+  
+  function onFieldChange(enterPressed) {
+    if (!editable)
+      return;
+    if (currentEditData === null) {
+      var a = Acronym.makeNew();
+      currentEditData = a;
+      acronyms.push(a);
+      searchableSelect.appendEntry(a);
+      searchableSelect.select(a); // will call readEditData()
+      return;
+    }
+    readEditData();
+    if (enterPressed)
+      addAcronym();
+  }
+  
+  function updownHandler(event) {
+    var delta = 0;
+    if (event.keyCode === Event.KEY_UP)
+      delta = -1;
+    else if (event.keyCode === Event.KEY_DOWN)
+      delta = 1;
+      
+    if (!delta)
+      return;
+      
+    event.stop();
+    searchableSelect.moveSelection(delta);
+  }
+
+  reset();
+  
+  $('edit').on('keypress', updownHandler);
+  acronymSelect.observe('option:selected', function(event) { selectAcronym(event.memo); });
+  installTextFieldChangeHandler($('edit'), onFieldChange);
+  $('form_'+updateFormIndex).on('form:afterReset', reset);  
+
+  <?php
+  close_javascript();
+  
+  return $update_form;
+}  
 
 ?>
