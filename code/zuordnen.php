@@ -294,7 +294,11 @@ function need_joins( $using, $rules ) {
   $joins_array = need_joins_array( $using, $rules );
   foreach( $joins_array as $table => $rule ) {
     if( is_numeric( $table ) ) {
-      $joins .= " JOIN $rule ";
+      if ( strstr( $rule, 'JOIN ') ) {
+        $joins .= " $rule ";
+      } else {
+        $joins .= " JOIN $rule ";
+      }
     } else {
       $joins .= " JOIN $table ON $rule ";
     }
@@ -1545,6 +1549,29 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
           $joins['produktpreise'] = 'produktpreise.produkt_id = produkte.id';
           $filters['produktpreise.id'] = $cond;
           $have_price = true;
+        }
+        break;
+      case 'price_on_date_or_null':
+        if ($cond) {
+          $price_select = select_current_productprice_id('produkte.id', $cond);
+          $joins[] = "LEFT OUTER JOIN produktpreise ON "
+              . 'produktpreise.produkt_id = produkte.id '
+              . "AND produktpreise.id = ($price_select)";
+          $have_price = true;
+        }
+        break;
+      case 'price_on_date':
+        if ($cond) {
+          $price_select = select_current_productprice_id('produkte.id', $cond);
+          $joins['produktpreise'] = 'produktpreise.produkt_id = produkte.id '
+              . "AND produktpreise.id = ($price_select)";
+          $have_price = true;
+        }
+        break;
+      case 'not_in_order':
+        if ($cond) {
+          $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = $cond";
+          $filters['produkte.id'] = "!= ALL ($order_products_select)";
         }
         break;
       default:
@@ -3835,6 +3862,20 @@ function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
 function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
   $row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
   return $row ? $row['id'] : 0;
+}
+
+function select_current_productprice_id( $product_id, $timestamp = "NOW()" ) {
+  if ($timestamp) {
+    $zeitfilter = "AND (zeitende >= $timestamp OR ISNULL(zeitende)) "
+        . "AND (zeitstart <= $timestamp OR ISNULL(zeitstart))";
+  } else {
+    $zeitfilter = '';
+  }
+
+  return "SELECT id FROM produktpreise "
+      . "WHERE produkt_id = $product_id $zeitfilter "
+      . "ORDER BY zeitstart DESC, IFNULL(zeitende,'9999-12-31') DESC, id DESC "
+      . "LIMIT 1";
 }
 
 // produktpreise_konsistenztest:
