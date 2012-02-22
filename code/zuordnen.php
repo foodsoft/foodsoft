@@ -3534,6 +3534,7 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = NULL ) 
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
+         , gesamtbestellungen.rechnungsnummer
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
