@@ -16,7 +16,8 @@ git status | grep -qF 'working directory clean' || DIRTY='-dirty'
 echo "<a href='http://github.com/foodsoft/foodsoft/commits/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
 
 EOF
-  find . -path ./.git -prune -o -exec stat -c "chmod %a %n" \{} \;
+  git ls-files | xargs stat -c "chmod %a %n"
+  # find . -path ./.git -prune -o -exec stat -c "chmod %a %n" \{} \;
   echo "chmod 700 .git"
 } > deploy.sh
 
