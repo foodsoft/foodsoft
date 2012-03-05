@@ -104,7 +104,8 @@ need_http_var( 'bestell_id', 'U', true );
 
 $bestellung = sql_bestellung( $bestell_id );
 $status = $bestellung['rechnungsstatus'];
-$lieferdatum = $bestellung['lieferung']; // todo: convert to traditional format
+$lieferdatum_trad = "{$wochentage[ $bestellung['lieferdatum_dayofweek'] ]}, {$bestellung['lieferdatum_trad']}";
+
 
 $lieferant = sql_lieferant( $bestellung['lieferanten_id'] );
 
@@ -249,7 +250,7 @@ if( isset( $download ) && ( $download == 'bestellschein' ) ) {
   foreach( array( 'lieferant_name', 'lieferant_strasse', 'lieferant_ort', 'lieferant_fax'
                 , 'lieferant_email' , 'lieferant_anrede', 'lieferant_grussformel'
                 , 'fc_kundennummer' , 'fc_name', 'fc_strasse', 'fc_ort'
-                , 'besteller_name', 'lieferdatum'
+                , 'besteller_name', 'lieferdatum_trad'
   ) as $field ) {
     $tex = preg_replace( "/@@$field@@/", tex_encode( $GLOBALS[ $field ] ) , $tex );
   }
@@ -346,7 +347,7 @@ if( ( $faxansicht = ( $spalten & PR_FAXANSICHT ) ) ) {
       open_tr();
         open_th( 'smallskip' );
         open_th( 'smallskip' );
-        open_td( 'quad smallskip', '', "zur Lieferung am $lieferdatum bestellen wir:" );
+        open_td( 'quad smallskip', '', "zur Lieferung am $lieferdatum_trad bestellen wir:" );
 
     close_table();
 
