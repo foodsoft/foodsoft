@@ -650,7 +650,7 @@ function textfield_on_change_handler( $handler, $capture_enter = true ) {
  * @returns     the correspoding JS code
  */
 function toJavaScript( $name, $value ) {
-  return "$name = ".json_encode($value, JSON_HEX_TAG).";";
+  return "$name = ".json_encode($value).";";
 }
 
 ?>
