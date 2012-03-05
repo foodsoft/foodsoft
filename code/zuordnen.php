@@ -3818,9 +3818,11 @@ function references_produktpreis( $preis_id ) {
 }
 
 function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
+  if( $zeitpunkt === true )
+    $zeitpunkt = $GLOBALS['mysqljetzt'];
   if( $zeitpunkt ) {
-    $zeitfilter = " AND (zeitende >= $zeitpunkt OR ISNULL(zeitende))
-                    AND (zeitstart <= $zeitpunkt OR ISNULL(zeitstart))";
+    $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
+                    AND (zeitstart <= '$zeitpunkt' OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = "";
   }
@@ -3849,7 +3851,7 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
  *  liefert aktuellsten preis zu $produkt_id,
  *  oder false falls es keinen gueltigen preis gibt:
  */
-function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
+function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = true ) {
   return end( sql_produktpreise( $produkt_id, $zeitpunkt ) );
 }
 
@@ -3857,7 +3859,7 @@ function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
  *  liefert id des aktuellsten preises zu $produkt_id,
  *  oder 0 falls es NOW() keinen gueltigen preis gibt:
  */
-function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
+function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = true ) {
   $row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
   return $row ? $row['id'] : 0;
 }
