@@ -3,12 +3,126 @@
 // bestellschein.php: detailanzeige bestellschein / lieferschein, abhaengig vom status der bestellung
 //
 
+ 
+// TODO: move the following into zuordnen.php:
+//
+function get_tmp_working_dir( $base = '/tmp' ) {
+  for( $retries = 0; $retries < 10; $retries++ ) {
+    $fqpath = $base . '/foodsoft.' . random_hex_string( 8 );
+    if( mkdir( $fqpath, 0700 ) )
+      return $fqpath;
+  }
+  return false;
+}
+
+function tex2pdf( $tex ) {
+  $cwd = getcwd();
+  need( $tmpdir = get_tmp_working_dir() );
+  need( chdir( $tmpdir ) );
+  file_put_contents( 'tex2pdf.tex', $tex );
+  exec( 'pdflatex tex2pdf.tex', & $output, & $rv );
+  if( ! $rv ) {
+    $pdf = file_get_contents( 'tex2pdf.pdf' );
+    // open_div( 'ok', '', 'ok: '.  implode( ' ', $output ) );
+  } else {
+    open_div( 'warn', '', 'error: '. file_get_contents( 'tex2pdf.log' ) );
+    $pdf = false;
+  }
+  @ unlink( 'tex2pdf.tex' );
+  @ unlink( 'tex2pdf.aux' );
+  @ unlink( 'tex2pdf.log' );
+  @ unlink( 'tex2pdf.pdf' );
+  chdir( $cwd );
+  rmdir( $tmpdir );
+
+  return $pdf;
+}
+
+function tex_encode( $s ) {
+  $maps = array(
+    '/\\\\/' => '\\backslash'
+  , '/([$%_&#~])/' => '\\$1'
+  , '/[}]/' => '$\}$'
+  , '/[{]/' => '$\{$'
+  , '/[ä]/' => '\"a{}'
+  , '/[Ä]/' => '\"A{}'
+  , '/[ö]/' => '\"o{}'
+  , '/[Ö]/' => '\"O{}'
+  , '/[ü]/' => '\"u{}'
+  , '/[Ü]/' => '\"U{}'
+  , '/[ß]/' => '\ss{}'
+  , '/\\\\backslash/' => '\\backslash{}'
+  );
+  foreach( $maps as $pattern => $to ) {
+    $s = preg_replace( $pattern, $to, $s );
+  }
+  $len = strlen( $s );
+  $i = 0;
+  $out = '';
+  while( $i < $len ) {
+    $c = $s[ $i ];
+    $n = ord( $c );
+    $bytes = 1;
+    if( $n < 128 ) {
+      // skip most control characters:
+      if( $n < 32 ) {
+        switch( $n ) {
+          case  9: // tab
+            $out .= ' ';
+            break;
+          case 10: // lf 
+            $out .= '\\newline{}';
+            break;
+          case 13: // cr
+            break;
+          default:
+            break;
+        }
+      } else {
+        $out .= $c;
+      }
+    } else {
+      // skip remaining utf-8 characters:
+      if( $n > 247 ) continue;
+      elseif( $n > 239 ) $bytes = 4;
+      elseif( $n > 223 ) $bytes = 3;
+      elseif( $n > 191 ) $bytes = 2;
+      else continue;
+    }
+    $i += $bytes;
+  }
+  return $out;
+}
+
+
 error_reporting(E_ALL);
 // $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
 assert( $angemeldet ) or exit();
 
 need_http_var( 'bestell_id', 'U', true );
+
+$bestellung = sql_bestellung( $bestell_id );
+$status = $bestellung['rechnungsstatus'];
+$lieferdatum = $bestellung['lieferung']; // todo: convert to traditional format
+
+$lieferant = sql_lieferant( $bestellung['lieferanten_id'] );
+
+get_http_var( 'lieferant_name', 'H', $lieferant['name'] );
+get_http_var( 'lieferant_anrede', 'H', 'Sehr geehrter '. $lieferant['name'] );
+get_http_var( 'lieferant_strasse', 'H', '' /* $lieferant['strasse'] */ );
+get_http_var( 'lieferant_ort', 'H', '' /* $lieferant['ort'] */ );
+get_http_var( 'lieferant_fax', 'H', $lieferant['fax'] );
+get_http_var( 'lieferant_email', 'H', '' /* $lieferant['email'] */ );
+
+get_http_var( 'lieferant_grussformel', 'H', 'Mit freundlichen Gruessen,' );
+
+get_http_var( 'fc_name', 'H', '' );
+get_http_var( 'fc_strasse', 'H', '' );
+get_http_var( 'fc_ort', 'H', '' );
+get_http_var( 'fc_kundennummer', 'H', $lieferant['kundennummer'] );
+
+get_http_var( 'besteller_name', 'H', $coopie_name );
 
 get_http_var( 'action', 'w', '' );
 $readonly and $action = '';
@@ -17,12 +131,12 @@ switch( $action ) {
 
   case 'insert':
     nur_fuer_dienst(1,3,4);
-    need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
+    need( $status < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     need_http_var( 'produkt_id', 'u' );
     // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
       if( sql_insert_bestellvorschlag( $produkt_id, $bestell_id ) ) {
-        if( sql_bestellung_status( $bestell_id ) < STATUS_VERTEILT ) {
+        if( $status < STATUS_VERTEILT ) {
           $msg = 'Produkt wurde aufgenommen, steht aber noch unter \"nicht bestellt\" (da Menge 0); bitte nach Lieferung die Menge nachtragen!'
                  . ' (das geht leider erst nach \"Lieferschein fertigmachen\"!)';
         } else {
@@ -33,10 +147,9 @@ switch( $action ) {
     }
     break;
 
-
   case 'update':
     nur_fuer_dienst(4);
-    need( sql_bestellung_status( $bestell_id ) == STATUS_VERTEILT );
+    need( $status == STATUS_VERTEILT );
     foreach( sql_bestellung_produkte($bestell_id ) as $produkt ) {
       $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
@@ -56,6 +169,19 @@ switch( $action ) {
     }
     break;
 
+  case 'faxansicht_save':
+//     sql_update( 'lieferanten', $lieferant['id'], array(
+//       'lieferant_strasse' => $lieferant_strasse
+//     , 'lieferant_ort' => $lieferant_ort
+//     , 'lieferant_fax' => $lieferant_fax
+//     , 'lieferant_email' => $lieferant_email
+//     , 'lieferant_anrede' => $lieferant_anrede
+//     , 'lieferant_grussformel' => $lieferant_grussformel
+//     ) );
+
+
+    break;
+
   default:
     break;
 }
@@ -68,8 +194,6 @@ if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
   $gruppen_name = sql_gruppenname($gruppen_id);
 }
 
-$bestellung = sql_bestellung( $bestell_id );
-$status = $bestellung['rechnungsstatus'];
 
 $default_spalten = PR_COL_NAME | PR_COL_LPREIS | PR_COL_ENDPREIS | PR_COL_MWST | PR_COL_PFAND | PR_COL_AUFSCHLAG;
 switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
@@ -117,15 +241,40 @@ if( hat_dienst(0) ) {
 
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
+
+if( isset( $download ) && ( $download == 'bestellschein' ) ) {
+  $fc_kundennummer = trim( $fc_kundennummer );
+
+  $tex = file_get_contents( 'templates/bestellschein.tex' );
+  foreach( array( 'lieferant_name', 'lieferant_strasse', 'lieferant_ort', 'lieferant_fax'
+                , 'lieferant_email' , 'lieferant_anrede', 'lieferant_grussformel'
+                , 'fc_kundennummer' , 'fc_name', 'fc_strasse', 'fc_ort'
+                , 'besteller_name', 'lieferdatum'
+  ) as $field ) {
+    $tex = preg_replace( "/@@$field@@/", tex_encode( $GLOBALS[ $field ] ) , $tex );
+  }
+  $tex = preg_replace( '/@@tabelle@@/', bestellfax_tex( $bestell_id, $spalten ), $tex );
+  // file_put_contents( '/tmp/b.tex', $tex );
+  if( ( $pdf = tex2pdf( $tex ) ) ) {
+    $downloadname = 'Bestellschein.pdf';
+    // header("Content-Type: text/plain");
+    // echo $tex;
+    header( 'Content-Type: application/pdf' );
+    header( "Content-Disposition: filename=$downloadname" );
+    echo $pdf;
+    return;
+  } else {
+    header( 'Content-Type: text/html' );
+    open_div( 'warn', '', 'Konvertierung nach PDF fehlgeschlagen' );
+  }
+}
+
+
 $abrechnung_id = $bestellung['abrechnung_id'];
 $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
 if( count( $bestell_id_set ) > 1 ) {
   abrechnung_overview( $abrechnung_id, $bestell_id );
 }
-medskip();
-
-echo "<h1>$title</h1>";
-
 
 
 open_table( 'layout hfill' );
@@ -136,58 +285,161 @@ open_table( 'layout hfill' );
       open_th( '', "colspan='2'", 'Anzeigeoptionen' );
     close_table();
 close_table();
-medskip();
 
-open_option_menu_row();
-  open_td( '', '', 'Gruppenansicht:' );
-  open_td();
-    open_select( 'gruppen_id', 'autoreload' );
-      $keys = array( 'bestell_id' => $bestell_id );
-      if( ! hat_dienst(4) )
-        $keys['where'] = "bestellgruppen.id in ( $login_gruppen_id, ".sql_muell_id().", ".sql_basar_id()." )";
-      echo optionen_gruppen( $gruppen_id, $keys, "Alle (Gesamtbestellung)" );
-    close_select();
-close_option_menu_row();
 
-medskip();
+if( ( $faxansicht = ( $spalten & PR_FAXANSICHT ) ) ) {
 
-bestellschein_view(
-  $bestell_id,
-  $editable,   // Liefermengen edieren zulassen?
-  $editable,   // Preise edieren zulassen?
-  $spalten,    // welche Tabellenspalten anzeigen
-  $gruppen_id, // Gruppenansichte (0: alle)
-  true,        // angezeigte Spalten auswaehlen lassen
-  true,        // Gruppenansicht auswaehlen lassen
-  true         // Option: Anzeige nichtgelieferte zulassen
-);
+  echo "<h1>$title - Faxansicht</h1>";
+  $gruppen_id = 0;
+  $editable = false;
 
-medskip();
-switch( $status ) {
-  case STATUS_LIEFERANT:
-  case STATUS_VERTEILT:
-    if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
-      open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
-        open_form( '', 'action=insert' );
-          open_div( 'kommentar' )
-            ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
-            open_ul();
-              open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
-              open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
-            close_ul();
-          close_div();
-          select_products_not_in_list($bestell_id);
-          // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
-          // (die haengt von der auswahl in obiger Produktliste ab!)
-          // ?> <label>Menge:</label> <?php
-          // echo int_view( 1, 'menge' );
-          submission_button();
-        close_form();
-      close_fieldset();
+  $faxspalten = $spalten & PR_FAXOPTIONS;
+
+  if( $lieferant['katalogformat'] == 'bnn' ) {
+    // die b-nummern sind eigentlich a-nummern (in zukunft besser gar nicht erfassen?):
+    if( $spalten & PR_COL_BNUMMER ) {
+      open_div( 'warn medskip', '', 'WARNUNG: Katalogformat BNN kennt keine Bestellnummern - die angezeigten B-Nummern sind eigentlich A-Nummern!' );
+      bigskip();
     }
-    break;
-  default:
-    break;
+  }
+
+  $faxform_id = open_form( '', 'action=faxansicht_save,download=' );
+
+    open_table();
+      open_tr();
+        open_th( 'medskip', '', 'Lieferanschrift: ' );
+        open_th( 'quad medskip', '', 'Name:' );
+        open_td( 'quad medskip', '', string_view( $fc_name, 40, 'fc_name' ) );
+      open_tr();
+        open_th();
+        open_th( 'quad smallskip', '', 'Strasse:' );
+        open_td( 'quad smallskip', '', string_view( $fc_strasse, 40, 'fc_strasse' ) );
+      open_tr();
+        open_th();
+        open_th( 'quad smallskip', '', 'Ort:' );
+        open_td( 'quad smallskip', '', string_view( $fc_ort, 40, 'fc_ort' ) );
+      open_tr();
+        open_th( 'bigskip', '', 'Lieferant:' );
+        open_th( 'quad bigskip', '', 'Name:' );
+        open_td( 'quad bigskip', '', string_view( $lieferant_name, 40, 'lieferant_name' ) );
+      open_tr( '' );
+        open_th();
+        open_th( 'quad smallskip', '', 'Strasse:' );
+        open_td( 'quad smallskip', '', string_view( $lieferant_strasse, 40, 'lieferant_strasse' ) );
+      open_tr( '' );
+        open_th();
+        open_th( 'quad smallskip', '', 'Ort:' );
+        open_td( 'quad smallskip', '', string_view( $lieferant_ort, 40, 'lieferant_ort' ) );
+      open_tr( '' );
+        open_th();
+        open_th( 'quad smallskip', '', 'Fax:' );
+        open_td( 'quad smallskip', '', string_view( $lieferant_fax, 40, 'lieferant_fax' ) );
+      open_tr( '' );
+        open_th();
+        open_th( 'quad smallskip', '', 'email:' );
+        open_td( 'quad smallskip', '', string_view( $lieferant_email, 40, 'lieferant_email' ) );
+      open_tr();
+        open_th();
+        open_th( 'bigskip', '', 'Anrede:' );
+        open_td( 'quad bigskip', "colspan='1'", string_view( $lieferant_anrede, 40, 'lieferant_anrede' ) );
+
+      open_tr();
+        open_th( 'smallskip' );
+        open_th( 'smallskip' );
+        open_td( 'quad smallskip', '', "zur Lieferung am $lieferdatum bestellen wir:" );
+
+    close_table();
+
+
+    bigskip();
+    bestellschein_view(
+      $bestell_id 
+    , false    // Mengen...
+    , false    // ... und Preise hier _nicht_ edieren lassen
+    , $faxspalten // nur teilmenge erlauben
+    , 0        // Gruppenansicht: alle
+    , true     // angezeigte Spalten auswaehlen lassen
+    , false    // nichtgelieferte nicht anzeigen
+    );
+
+    bigskip();
+    open_table();
+      open_tr();
+        open_th( 'medskip', '', 'Grußformel:' );
+        open_td( 'medskip qquad', '', string_view( $lieferant_grussformel, 40, 'lieferant_grussformel' ) );
+      open_tr();
+        open_th( 'bigskip', '', 'Name Besteller:' );
+        open_td( 'bigskip qquad', '', string_view( $besteller_name, 40, 'besteller_name' ) );
+    close_table();
+
+  close_form();
+
+  open_div( 'right medskip' );
+    echo fc_action( 'window=self,window_id=pdf,class=button,text=PDF erzeugen', 'download=bestellschein' );
+    open_span( 'qquad button', "onclick='document.forms.form_$faxform_id.submit();'", 'Speichern' );
+  close_div()    ;
+
+
+} else {
+
+  echo "<h1>$title</h1>";
+
+  open_option_menu_row();
+    open_td( '', '', 'Gruppenansicht:' );
+    open_td();
+      open_select( 'gruppen_id', 'autoreload' );
+        $keys = array( 'bestell_id' => $bestell_id );
+        if( ! hat_dienst(4) )
+          $keys['where'] = "bestellgruppen.id in ( $login_gruppen_id, ".sql_muell_id().", ".sql_basar_id()." )";
+        echo optionen_gruppen( $gruppen_id, $keys, "Alle (Gesamtbestellung)" );
+      close_select();
+  close_option_menu_row();
+
+  medskip();
+  bestellschein_view(
+    $bestell_id,
+    $editable,   // Liefermengen edieren zulassen?
+    $editable,   // Preise edieren zulassen?
+    $spalten,    // welche Tabellenspalten anzeigen
+    $gruppen_id, // Gruppenansicht (0: alle)
+    true,        // angezeigte Spalten auswaehlen lassen
+    true         // Option: Anzeige nichtgelieferte zulassen
+  );
+
+  medskip();
+  switch( $status ) {
+    case STATUS_LIEFERANT:
+    case STATUS_VERTEILT:
+      if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
+        open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
+          open_form( '', 'action=insert' );
+            open_div( 'kommentar' )
+              ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
+              open_ul();
+                open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
+                open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
+              close_ul();
+            close_div();
+            select_products_not_in_list($bestell_id);
+            // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
+            // (die haengt von der auswahl in obiger Produktliste ab!)
+            // ?> <label>Menge:</label> <?php
+            // echo int_view( 1, 'menge' );
+            submission_button();
+          close_form();
+        close_fieldset();
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+if( hat_dienst( 4 ) && ( $status > STATUS_BESTELLEN ) && ( $status < STATUS_ABGERECHNET ) ) {
+  open_option_menu_row();
+      open_td( '', "colspan='2'" );
+        option_checkbox( 'spalten', PR_FAXANSICHT, "Bestellfax Ansicht" );
+  close_option_menu_row();
 }
 
 ?>

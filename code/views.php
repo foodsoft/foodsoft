@@ -783,7 +783,15 @@ define( 'PR_COL_ENDSUMME', 0x10000 );   // Endsumme: V-summe mit aufschlag (1,3)
 //
 define( 'PR_ROWS_NICHTGELIEFERT', 0x20000 ); // nicht gelieferte Produkte auch anzeigen
 define( 'PR_ROWS_NICHTGEFUELLT', 0x40000 ); // nicht gefuellte gebinde auch anzeigen?
+
+define( 'PR_FAXANSICHT', 0x80000 ); // faxansicht: mehr eingabefelder / link .pdf download
+
+// FAXOPTIONS: optionen, die in der faxansicht verfuegbar sind:
 //
+define( 'PR_FAXOPTIONS'
+  , PR_COL_NAME | PR_COL_ANUMMER | PR_COL_BNUMMER | PR_COL_LPREIS | PR_COL_NETTOSUMME
+    | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE | PR_FAXANSICHT );
+
 // $select_columns: menue zur auswahl der (moeglichen) Tabellenspalten generieren.
 // $select_nichtgeliefert: option anzeigen, ob auch nichtgelieferte angezeigt werden
 //
@@ -798,19 +806,7 @@ function bestellschein_view(
 
   $produkte = sql_bestellung_produkte( $bestell_id, 0, $gruppen_id );
 
-//   if( is_array( $bestell_id ) ) {
-//     // gesamt-lieferschein anzeigen:
-//     $bestellung = sql_bestellung( $bestell_id[0] );
-//     // einiges macht hier keinen sinn:
-//     $editAmounts = false;
-//     $editPrice = false;
-//     $gruppen_id = 0;
-//     $select_nichtgeliefert = false;
-//     $select_columns = false;
-//     $spalten = PR_COL_NAME | PR_COL_ANUMMER | PR_COL_LIEFERMENGE | PR_COL_NETTOSUMME | PR_COL_BRUTTOSUMME;
-//   } else {
-    $bestellung = sql_bestellung( $bestell_id );
-//  }
+  $bestellung = sql_bestellung( $bestell_id );
 
   $status = $bestellung['rechnungsstatus'];
   $aufschlag_prozent = $bestellung['aufschlag_prozent'];
@@ -935,6 +931,9 @@ function bestellschein_view(
           $opts_drop .= "<option title='{$c['title']}' value='$n'>"
           . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
         } else {
+          if( $spalten & PR_FAXANSICHT )
+            if( ! ( $n & PR_FAXOPTIONS ) )
+              continue;
           $opts_insert .= "<option title='{$c['title']}' value='$n'>"
             . preg_replace( '/<br>/', ' ', $c['header'] ) . "</option>";
         }
@@ -1246,6 +1245,122 @@ function bestellschein_view(
     close_option_menu_row();
   }
 }
+
+
+function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
+  $produkte = sql_bestellung_produkte( $bestell_id );
+  $bestellung = sql_bestellung( $bestell_id );
+
+  $status = $bestellung['rechnungsstatus'];
+  need( $status >= STATUS_LIEFERANT );
+
+  $lieferant = sql_lieferant( $bestellung['lieferanten_id'] );
+  if( $lieferant['katalogformat'] == 'bnn' ) {
+    // die b-nummern sind eigentlich a-nummern (in zukunft besser gar nicht erfassen?):
+    if( $spalten & PR_COL_BNUMMER ) {
+      $spalten = ( ( $spalten || PR_COL_ANUMMER ) && ~ PR_COL_BNUMMER );
+    }
+  }
+
+  $format = '\vrule width0pt height5mm depth1mm #';
+  $header = '';
+
+  if( $spalten & PR_COL_NAME ) {
+    $format .= '&\hskip1ex #\hskip1ex plus1fil\vrule';
+    $header .= '& Artikel ';
+  }
+  if( $spalten & PR_COL_ANUMMER ) {
+    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule';
+    $header .= '& Artikel-Nr ';
+  }
+  if( $spalten & PR_COL_BNUMMER ) {
+    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule';
+    $header .= '& Bestell-Nr ';
+  }
+  if( $spalten & PR_COL_LIEFERMENGE ) {
+    $format .= '&\hskip1ex plus1fil#\hskip1pt&#\hskip1ex plus1fil\vrule';
+    $header .= '&\span Menge ';
+  }
+  if( $spalten & PR_COL_LIEFERGEBINDE ) {
+    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule';
+    $header .= '&\span Gebinde ';
+  }
+  if( $spalten & PR_COL_LPREIS ) {
+    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule';
+    $header .= '&\span Einzelpreis ';
+  };
+  if( $spalten & PR_COL_NETTOSUMME ) {
+    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule';
+    $header .= '& Gesamtpreis ';
+  };
+  $tabstart = '{\offinterlineskip\halign{'.$format.'\cr'.$header.'\cr\noalign{\hrule}';
+
+  $tex = $tabstart;
+
+  $netto_summe = 0;
+
+  foreach( $produkte as $produkte_row ) {
+    $produkt_id = $produkte_row['produkt_id'];
+
+    if( $produkte_row['menge_ist_null'] ) {
+      continue;
+    }
+
+    // preise je V-einheit:
+    $nettopreis = $produkte_row['nettopreis'];
+
+    $nettolieferpreis = $produkte_row['nettolieferpreis'];
+    $lv_faktor = $produkte_row['lv_faktor'];
+
+    $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
+
+    $gebindegroesse = $produkte_row['gebindegroesse'];
+    $kan_verteilmult = $produkte_row['kan_verteilmult'];
+
+    $liefermenge = $produkte_row['liefermenge'];
+    $gebinde = $liefermenge / $gebindegroesse;
+    $liefermenge_scaled = $liefermenge / $lv_faktor;
+
+    $nettogesamtpreis = $nettopreis * $liefermenge;
+
+    $netto_summe += $nettogesamtpreis;
+
+    $zeile = '';
+    if( $spalten & PR_COL_NAME ) {
+      $zeile .= '&' . tex_encode( $produkte_row['produkt_name'] );
+    }
+    if( $spalten & PR_COL_ANUMMER ) {
+      $zeile .= '&' . $produkte_row['artikelnummer'];
+    }
+    if( $spalten & PR_COL_BNUMMER ) {
+      $zeile .= '&' . $produkte_row['bestellnummer'];
+    }
+    if( $spalten & PR_COL_LIEFERMENGE ) {
+      $zeile .= '&' . mult2string( $liefermenge_scaled * $produkte_row['kan_liefermult'] )
+                    . '&' . tex_encode( $produkte_row['kan_liefereinheit'] );
+    }
+    if( $spalten & PR_COL_LIEFERGEBINDE ) {
+      $zeile .= '&' . mult2string( $gebinde )
+                    . '& * (' . mult2string( $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse'] ) 
+                              . '\,' . $produkte_row['kan_verteileinheit'] . ')' ;
+    }
+    if( $spalten & PR_COL_LPREIS ) {
+      $zeile .= '&' . sprintf( '%.2lf', $nettolieferpreis )
+                    . '& / ' . mult2string( $produkte_row['liefermult'] ) . tex_encode( $produkte_row['liefereinheit'] );
+    }
+    if( $spalten & PR_COL_NETTOSUMME ) {
+      $zeile .= '&' . sprintf( '%.2lf', $nettogesamtpreis );
+    }
+
+    $zeile .= '\cr\noalign{\hrule}';
+
+    $tex .= $zeile;
+  }
+
+  $tex .= '}}';
+  return $tex;
+}
+
 
 
 
