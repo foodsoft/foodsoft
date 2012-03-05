@@ -163,7 +163,7 @@ table.debug tr th, table.debug tr td {
 }
 
 table.tight {
-  width:100% !important;
+    width:100% !important;
 }
 table.tight tr th, table.tight tr td, td.tight, th.tight, div.tight {
   padding:0pt !important;
@@ -938,4 +938,12 @@ div#footbar {
   z-index:999;
   background-color:white;
   padding:2px;
+}
+
+.noleftmargin {
+  margin-left: 0px !important;
+}
+
+.norightmargin {
+  margin-right: 0px !important;
 }
