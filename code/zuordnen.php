@@ -1700,6 +1700,8 @@ function sql_produktgruppen_name( $id ) {
 //
 ////////////////////////////////////
 
+$wochentage = array( 'invalid', 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag' );
+
 define('STATUS_BESTELLEN', 10 );
 define('STATUS_LIEFERANT', 20 );
 define('STATUS_VERTEILT', 30 );
@@ -1817,7 +1819,10 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
 
 function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
   return mysql2array( doSql( "
-    SELECT gesamtbestellungen.*, lieferanten.name as lieferantenname FROM gesamtbestellungen
+    SELECT gesamtbestellungen.*
+         , dayofweek( lieferung ) as lieferdatum_dayofweek
+         , DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad
+         , lieferanten.name as lieferantenname FROM gesamtbestellungen
     JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
     WHERE $filter ORDER BY $orderby
   " ) );
