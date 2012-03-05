@@ -2048,7 +2048,7 @@ function catalogue_product_details( $catalogue_record ) {
 function catalogue_acronym_view( $editable ) {
   global $input_event_handlers, $foodsoftdir;
   
-  $acronyms = mysqlToAssocArray( doSql ("SELECT * from catalogue_acronyms "
+  $acronyms = mysql2array( doSql ("SELECT * from catalogue_acronyms "
           . "ORDER BY context, acronym") );
   
   open_javascript(toJavaScript("var acronymParameters", $acronyms));

@@ -248,7 +248,7 @@ function adefault( $array, $index, $default ) {
     return $default;
 }
 
-function mysql2array( $result, $key = false, $val = false, $result_type = null ) {
+function mysql2array( $result, $key = false, $val = false, $result_type = MYSQL_ASSOC ) {
   if( is_array( $result ) )  // temporary kludge: make me idempotent
     return $result;
   $r = array();
@@ -266,9 +266,6 @@ function mysql2array( $result, $key = false, $val = false, $result_type = null )
   return $r;
 }
 
-function mysqlToAssocArray( $result ) {
-  return mysql2array($result, false, false, MYSQL_ASSOC);
-}
 
 /*
  * need_joins: fuer skalare subqueries wie in "SELECT x , ( SELECT ... ) as y, z":
