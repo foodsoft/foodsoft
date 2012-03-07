@@ -731,7 +731,13 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'adresse' => array(
+    , 'strasse' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'ort' => array(
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
@@ -756,6 +762,36 @@ $tables = array(
       , 'extra' => ''
       )
     , 'mail' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'grussformel' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'anrede' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'fc_name' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'fc_strasse' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'fc_ort' => array(
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''

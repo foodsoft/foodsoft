@@ -4673,6 +4673,23 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
       logger( 'update_database: update to version 24 successful' );
    
+ case 24:
+      logger( 'starting update_database: from version 24' );
+
+      doSql( "ALTER TABLE `lieferanten`
+                CHANGE COLUMN `adresse` `strasse` text not null
+              , ADD COLUMN `ort` text not null
+              , ADD COLUMN `anrede` text not null
+              , ADD COLUMN `grussformel` text not null
+              , ADD COLUMN `fc_name` text not null
+              , ADD COLUMN `fc_strasse` text not null
+              , ADD COLUMN `fc_ort` text not null
+      " );
+
+      // doSql( "UPDATE `lieferanten` set fc_name='FoodCoop $foodcoop_name'" ); // not yet available!
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
+      logger( 'update_database: update to version 25 successful' );
 
 /*
 	case n:

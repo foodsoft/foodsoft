@@ -16,11 +16,13 @@ get_http_var( 'lieferanten_id', 'u', 0, true );
 
 $row = $lieferanten_id ? sql_lieferant( $lieferanten_id ) : false;
 get_http_var('name','H',$row);
-get_http_var('adresse','H',$row);
+get_http_var('strasse','H',$row);
+get_http_var('ort','H',$row);
 get_http_var('ansprechpartner','H',$row);
 get_http_var('telefon','H',$row);
 get_http_var('fax','H',$row);
 get_http_var('mail','H',$row);
+
 get_http_var('liefertage','H',$row);
 get_http_var('bestellmodalitaeten','H',$row);
 get_http_var('kundennummer','H',$row);
@@ -32,7 +34,8 @@ $editable or $action = '';
 if( $action == 'save' ) {
   $values = array(
     'name' => $name
-  , 'adresse' => $adresse
+  , 'strasse' => $strasse
+  , 'ort' => $ort
   , 'ansprechpartner' => $ansprechpartner
   , 'telefon' => $telefon
   , 'fax' => $fax
@@ -68,6 +71,8 @@ open_form( '', 'action=save' );
     echo $msg . $problems;
     open_table('small_form hfill');
       form_row_text( 'Name:', ( $editable ? 'name' : false ), 50, $name );
+      form_row_text( 'Strasse:', ( $editable ? 'strasse' : false ), 50, $strasse );
+      form_row_text( 'PLZ Ort:', ( $editable ? 'strasse' : false ), 50, $ort );
       form_row_text( 'AnsprechpartnerIn:', ( $editable ? 'ansprechpartner' : false ), 50, $ansprechpartner );
       form_row_text( 'Telefonnummer:', ( $editable ? 'telefon' : false ), 50, $telefon );
       form_row_text( 'Faxnummer:', ( $editable ? 'dax' : false ), 50, $fax );
