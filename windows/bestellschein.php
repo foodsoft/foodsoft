@@ -3,6 +3,8 @@
 // bestellschein.php: detailanzeige bestellschein / lieferschein, abhaengig vom status der bestellung
 //
 
+ 
+
 
 error_reporting(E_ALL);
 // $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
@@ -19,17 +21,23 @@ $lieferdatum_trad = "{$wochentage[ $bestellung['lieferdatum_dayofweek'] ]}, {$be
 $lieferant = sql_lieferant( $bestellung['lieferanten_id'] );
 
 get_http_var( 'lieferant_name', 'H', $lieferant['name'] );
-get_http_var( 'lieferant_anrede', 'H', 'Sehr geehrter '. $lieferant['name'] );
-get_http_var( 'lieferant_strasse', 'H', '' /* $lieferant['strasse'] */ );
-get_http_var( 'lieferant_ort', 'H', '' /* $lieferant['ort'] */ );
+get_http_var( 'lieferant_strasse', 'H', $lieferant['strasse'] );
+get_http_var( 'lieferant_ort', 'H', $lieferant['ort'] );
 get_http_var( 'lieferant_fax', 'H', $lieferant['fax'] );
-get_http_var( 'lieferant_email', 'H', '' /* $lieferant['email'] */ );
+get_http_var( 'lieferant_email', 'H', $lieferant['mail'] );
 
-get_http_var( 'lieferant_grussformel', 'H', 'Mit freundlichen Gruessen,' );
+get_http_var( 'lieferant_anrede', 'H', $lieferant['anrede'] );
+if( ! ( $lieferant_anrede = trim( $lieferant_anrede ) ) )
+  $lieferant_anrede = 'Sehr geehrte Damen und Herren,';
+get_http_var( 'lieferant_grussformel', 'H', $lieferant['grussformel'] );
+if( ! ( $lieferant_grussformel = trim( $lieferant_grussformel ) ) )
+  $lieferant_grussformel = 'Mit freundlichen Grüßen,';
 
-get_http_var( 'fc_name', 'H', '' );
-get_http_var( 'fc_strasse', 'H', '' );
-get_http_var( 'fc_ort', 'H', '' );
+get_http_var( 'fc_name', 'H', $lieferant['fc_name'] );
+if( ! ( $fc_name = trim( $fc_name ) ) )
+  $fc_name = $foodcoop_name;
+get_http_var( 'fc_strasse', 'H', $lieferant['fc_strasse'] );
+get_http_var( 'fc_ort', 'H', $lieferant['fc_ort'] );
 get_http_var( 'fc_kundennummer', 'H', $lieferant['kundennummer'] );
 
 get_http_var( 'besteller_name', 'H', $coopie_name );
@@ -80,15 +88,18 @@ switch( $action ) {
     break;
 
   case 'faxansicht_save':
-//     sql_update( 'lieferanten', $lieferant['id'], array(
-//       'lieferant_strasse' => $lieferant_strasse
-//     , 'lieferant_ort' => $lieferant_ort
-//     , 'lieferant_fax' => $lieferant_fax
-//     , 'lieferant_email' => $lieferant_email
-//     , 'lieferant_anrede' => $lieferant_anrede
-//     , 'lieferant_grussformel' => $lieferant_grussformel
-//     ) );
-
+    sql_update( 'lieferanten', $lieferant['id'], array(
+      'strasse' => $lieferant_strasse
+    , 'ort' => $lieferant_ort
+    , 'fax' => $lieferant_fax
+    , 'mail' => $lieferant_email
+    , 'anrede' => $lieferant_anrede
+    , 'grussformel' => $lieferant_grussformel
+    , 'fc_name' => $fc_name
+    , 'fc_strasse' => $fc_strasse
+    , 'fc_ort' => $fc_ort
+    , 'kundennummer' => $fc_kundennummer
+    ) );
 
     break;
 
@@ -152,6 +163,11 @@ if( hat_dienst(0) ) {
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
 
+get_http_var( 'export', 'w', '' );
+if( $export == 'bestellschein' ) {
+  fc_openwindow( 'self', 'window_id=pdf,download=bestellschein' );
+}
+
 if( isset( $download ) && ( $download == 'bestellschein' ) ) {
   $fc_kundennummer = trim( $fc_kundennummer );
 
@@ -213,13 +229,17 @@ if( ( $faxansicht = ( $spalten & PR_FAXANSICHT ) ) ) {
     }
   }
 
-  $faxform_id = open_form( '', 'action=faxansicht_save,download=' );
+  $faxform_id = open_form( '', 'action=faxansicht_save,export=' );
 
     open_table();
       open_tr();
         open_th( 'medskip', '', 'Lieferanschrift: ' );
         open_th( 'quad medskip', '', 'Name:' );
         open_td( 'quad medskip', '', string_view( $fc_name, 40, 'fc_name' ) );
+      open_tr();
+        open_th();
+        open_th( 'quad medskip', '', 'Kundennummer:' );
+        open_td( 'quad medskip', '', string_view( $fc_kundennummer, 40, 'fc_kundennummer' ) );
       open_tr();
         open_th();
         open_th( 'quad smallskip', '', 'Strasse:' );
@@ -285,7 +305,7 @@ if( ( $faxansicht = ( $spalten & PR_FAXANSICHT ) ) ) {
   close_form();
 
   open_div( 'right medskip' );
-    echo fc_action( 'window=self,window_id=pdf,class=button,text=PDF erzeugen', 'download=bestellschein' );
+    open_span( 'qquad button', "onclick=\"f=document.forms.form_$faxform_id;f.elements.export.value='bestellschein';f.submit();\"", 'PDF erzeugen' );
     open_span( 'qquad button', "onclick='document.forms.form_$faxform_id.submit();'", 'Speichern' );
   close_div()    ;
 
