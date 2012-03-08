@@ -1262,38 +1262,38 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
     }
   }
 
-  $format = '\vrule width0pt height5mm depth1mm #';
+  $format = '\vrule width0.3pt height5mm depth1mm #';
   $header = '';
 
   if( $spalten & PR_COL_NAME ) {
-    $format .= '&\hskip1ex #\hskip1ex plus1fil\vrule';
+    $format .= '&\hskip1ex #\hskip1ex plus1fil\vrule width0.3pt';
     $header .= '& Artikel ';
   }
   if( $spalten & PR_COL_ANUMMER ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule';
+    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule width0.3pt';
     $header .= '& Artikel-Nr ';
   }
   if( $spalten & PR_COL_BNUMMER ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule';
+    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule width0.3pt';
     $header .= '& Bestell-Nr ';
   }
   if( $spalten & PR_COL_LIEFERMENGE ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1pt&#\hskip1ex plus1fil\vrule';
+    $format .= '&\hskip1ex plus1fil#\hskip1pt&#\hskip1ex plus1fil\vrule width0.3pt';
     $header .= '&\span Menge ';
   }
   if( $spalten & PR_COL_LIEFERGEBINDE ) {
-    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule';
+    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule width0.3pt';
     $header .= '&\span Gebinde ';
   }
   if( $spalten & PR_COL_LPREIS ) {
-    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule';
+    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule width0.3pt';
     $header .= '&\span Einzelpreis ';
   };
   if( $spalten & PR_COL_NETTOSUMME ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule';
+    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule width0.3pt';
     $header .= '& Gesamtpreis ';
   };
-  $tabstart = '{\offinterlineskip\halign{'.$format.'\cr'.$header.'\cr\noalign{\hrule}';
+  $tabstart = '\halign{'.$format.'\cr'.$header.'\cr';
 
   $tex = $tabstart;
 
@@ -1336,8 +1336,8 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
       $zeile .= '&' . $produkte_row['bestellnummer'];
     }
     if( $spalten & PR_COL_LIEFERMENGE ) {
-      $zeile .= '&' . mult2string( $liefermenge_scaled * $produkte_row['kan_liefermult'] )
-                    . '&' . tex_encode( $produkte_row['kan_liefereinheit'] );
+      $zeile .= '&' . mult2string( $liefermenge_scaled * $produkte_row['kan_liefermult_anzeige'] )
+                    . '&' . tex_encode( $produkte_row['kan_liefereinheit_anzeige'] );
     }
     if( $spalten & PR_COL_LIEFERGEBINDE ) {
       $zeile .= '&' . mult2string( $gebinde )
@@ -1346,18 +1346,18 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
     }
     if( $spalten & PR_COL_LPREIS ) {
       $zeile .= '&' . sprintf( '%.2lf', $nettolieferpreis )
-                    . '& / ' . mult2string( $produkte_row['liefermult'] ) . tex_encode( $produkte_row['liefereinheit'] );
+                    . '& / ' . tex_encode( $produkte_row['liefereinheit_anzeige'] );
     }
     if( $spalten & PR_COL_NETTOSUMME ) {
       $zeile .= '&' . sprintf( '%.2lf', $nettogesamtpreis );
     }
 
-    $zeile .= '\cr\noalign{\hrule}';
+    $zeile .= '\cr';
 
     $tex .= $zeile;
   }
 
-  $tex .= '}}';
+  $tex .= '}';
   return $tex;
 }
 
