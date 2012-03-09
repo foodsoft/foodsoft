@@ -4791,6 +4791,7 @@ function get_tmp_working_dir( $base = '/tmp' ) {
 }
 
 function tex2pdf( $tex ) {
+  $tex = preg_replace( '/@@macros_prettytables@@/', file_get_contents( 'templates/prettytables.tex' ), $tex );
   $cwd = getcwd();
   need( $tmpdir = get_tmp_working_dir() );
   need( chdir( $tmpdir ) );

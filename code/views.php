@@ -1262,7 +1262,7 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
     }
   }
 
-  $format = '\vrule width0.3pt height5mm depth1mm #';
+  $format = '\vrule width0.3pt height6mm depth3mm #';
   $header = '';
 
   if( $spalten & PR_COL_NAME ) {

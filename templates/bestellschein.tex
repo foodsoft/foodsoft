@@ -19,8 +19,8 @@
 \hsize\textwidth%
 
 \pdfpageheight\paperheight%
-\topmargin-15mm%
-\textheight270mm%
+\topmargin-10mm%
+\textheight260mm%
 \vsize\textheight%
 %
 \headheight0mm%
@@ -29,154 +29,7 @@
 \leftskip0mm%
 \parindent0pt%
 
-
-
-\newbox\revertboxOut
-\newbox\revertboxLine
-
-\def\revertvboxGo{%
-  \setbox\revertboxLine\lastbox\unskip%
-  \let\next\revertvboxGo%
-  \ifhbox\revertboxLine%
-    \typeout{is horizontal box}%
-    \global\setbox\revertboxOut\vbox{\unvbox\revertboxOut\box\revertboxLine}%
-    \else\ifvbox\revertboxLine%
-      \typeout{is vertical box}%
-      \global\setbox\revertboxOut\vbox{\unvbox\revertboxOut\box\revertboxLine}%
-    \else%
-      \typeout{nope: is neither}%
-      \let\next\relax%
-  \fi\fi%
-  \next%
-}
-\def\revertvbox#1{%
-  \vbox to 0pt{%
-    \setbox\revertboxOut\vbox{}%
-    \unvbox#1%
-    \revertvboxGo%
-  }
-  % \copy\revbox%
-}
-
-
-\newbox\tabsplitPages
-\newbox\tabsplitChunk
-\newbox\tabsplitLine
-\newbox\tabsplitHeader
-\newcount\tabsplitCount
-\newdimen\tabsplitVremainder
-%
-\def\tabsplitSplitofheader{
-  \setbox\tabsplitLine\lastbox\unskip%
-  \global\setbox\tabsplitHeader\vbox{\unvbox\tabsplitHeader\box\tabsplitLine}%
-  \ifnum\tabsplitCount>1
-    \advance\tabsplitCount-1%
-    \let\next\tabsplitSplitofheader%
-  \else%
-    \global\setbox\tabsplitHeader\vbox{\unvbox\tabsplitHeader\hrule}%
-    \let\next\relax%
-  \fi%
-  \next%
-}
-
-\def\tabsplitGo{%
-  \typeout{tabsplitGo: start}%
-  \setbox\tabsplitLine\lastbox\unskip%
-  \ifvoid\tabsplitLine%
-    \global\setbox\tabsplitPages\vbox{\unvbox\tabsplitPages\box\tabsplitChunk}%
-    \let\next\relax%
-  \else
-    \ifdim\ht\tabsplitLine>\tabsplitVremainder%
-      \global\setbox\tabsplitPages\vbox{\unvbox\tabsplitPages\box\tabsplitChunk}%
-      % \box\onechunk\vskip 0pt plus1fill\newpage%
-      \tabsplitVremainder\vsize%
-      \setbox\tabsplitChunk\vbox{\copy\tabsplitHeader}%
-      \tabsplitCount0%
-      \advance\tabsplitVremainder-\ht\tabsplitHeader%
-    \fi%
-    \advance\tabsplitVremainder-\ht\tabsplitLine%
-    \advance\tabsplitCount1\relax%
-    \ifodd\tabsplitCount%
-      \setbox\tabsplitLine\hbox{%
-        \hbox to 0pt{%
-          \color{mygray}%
-          \vrule height\ht\tabsplitLine depth\dp\tabsplitLine width\wd\tabsplitLine%
-        }%
-        \unhbox\tabsplitLine%
-      }
-    \fi%
-    \setbox\tabsplitChunk\vbox{\unvbox\tabsplitChunk\box\tabsplitLine}%
-    \let\next\tabsplitGo%
-  \fi%
-  \next%
-}
-
-\def\tabsplit#1#2#3{%
-  \revertvbox{#3}%
-  \vbox to 0pt{%
-    \global\setbox\tabsplitPages\vbox{}
-    \global\setbox\tabsplitHeader\vbox{}
-    \tabsplitCount#1
-    \unvbox\revertboxOut%
-    \tabsplitSplitofheader%
-%
-    \tabsplitVremainder#2%
-    \setbox\tabsplitChunk\copy\tabsplitHeader%
-    \advance\tabsplitVremainder-\ht\tabsplitHeader%
-    \tabsplitCount0%
-    \tabsplitGo%
-  }
-}
-
-\newbox\Remaining
-\newbox\Onepage
-\newbox\Nextpage
-
-\def\shippagesGo{%
-  \typeout{shippagesGo: start}%
-  \global\setbox\Onepage\lastbox\unskip%
-  \global\setbox\Nextpage\lastbox\unskip%
-  \ifvbox\Nextpage% more pages to come
-    % \typeout{shippagesGo: A}%
-    \global\setbox\Remaining\vbox{\box\Onepage\unvbox\Remaining}%
-    \let\next\shippagesGo%
-    \box\Nextpage%
-    % \egroup\let\next\relax%
-  \else%
-    % [ nextpage: \box\Nextpage ]
-    % \typeout{shippagesGo: B}%
-    \egroup%
-    \ifvbox\Onepage%
-      \typeout{shippagesGo: C}%
-      [ one page: \box\Onepage ]%
-      \ifvbox\Remaining%
-        \vskip0pt plus1fill\newpage%
-        \let\next\shippagesGo%
-        \vbox\bgroup%
-        \hbox{BOS marker - should not be visible}%
-        \unvbox\Remaining%
-      \else
-        \let\next\relax%
-      \fi%
-    \else%
-      % [ onepage: \box\Onepage ]
-      \let\next\relax%
-    \fi%
-  \fi%
-  \next%
-}
-
-\def\shippages#1{%
-  \typeout{shippages: start}%
-  \vbox\bgroup%
-  \hbox{BOS marker - should not be visible}%
-  \unvbox#1%
-  \shippagesGo%
-}
-
-
-
-
+@@macros_prettytables@@
 
 \newbox\mytable
 \def\empty{}
@@ -184,53 +37,59 @@
 \begin{document}%
 \normalfont
 
-  \hbox to \hsize{%
-    @@fc_name@@
-    \hskip 1em plus1fil
-    \ifnum\day<10 0\fi\the\day.%
-    \hskip1pt%
-    \ifnum\month<10 0\fi\the\month.%
-    \number\year%
-  }%
-  \hbox{@@fc_strasse@@}%
-  \hbox{@@fc_ort@@}%
-  \def\kundennummer{@@fc_kundennummer@@}
-  \ifx\kundennummer\empty\relax\else
-    \hbox{Kd-Nr. \kundennummer}%
-  \fi
-%
-  \kern10mm%
-  \hbox{@@lieferant_name@@}%
-  \hbox{@@lieferant_strasse@@}%
-  \hbox{@@lieferant_ort@@}%
-  \def\lieferantEmail{@@lieferant_email@@}
-  \ifx\lieferantEmail\empty\else
-    \hbox{email: \lieferantEmail}%
-  \fi
-  \def\lieferantFax{@@lieferant_fax@@}
-  \ifx\lieferantFax\empty\else
-    \hbox{fax: \lieferantFax}%
-  \fi
-%
-  \kern10mm%
-
-  \hbox{@@lieferant_anrede@@}%
-  \kern4mm%
-  \hbox{zur Lieferung am {\bf\, @@lieferdatum_trad@@\,} bestellen wir:}%
-  \kern8mm%
+  \vbox{%
+    \hbox to \hsize{%
+      @@fc_name@@
+      \hskip 1em plus1fil
+      \ifnum\day<10 0\fi\the\day.%
+      \hskip1pt%
+      \ifnum\month<10 0\fi\the\month.%
+      \number\year%
+    }%
+    \hbox{@@fc_strasse@@}%
+    \hbox{@@fc_ort@@}%
+    \def\kundennummer{@@fc_kundennummer@@}
+    \ifx\kundennummer\empty\relax\else
+      \hbox{Kd-Nr. \kundennummer}%
+    \fi
   %
-  \setbox\mytable=\vbox{%
-    @@tabelle@@
+    \kern10mm%
+    \hbox{@@lieferant_name@@}%
+    \hbox{@@lieferant_strasse@@}%
+    \hbox{@@lieferant_ort@@}%
+    \def\lieferantEmail{@@lieferant_email@@}
+    \ifx\lieferantEmail\empty\else
+      \hbox{email: \lieferantEmail}%
+    \fi
+    \def\lieferantFax{@@lieferant_fax@@}
+    \ifx\lieferantFax\empty\else
+      \hbox{fax: \lieferantFax}%
+    \fi
+  %
+    \kern10mm%
+  
+    \hbox{@@lieferant_anrede@@}%
+    \kern4mm%
+    \hbox{zur Lieferung am {\bf\, @@lieferdatum_trad@@\,} bestellen wir:}%
+    \kern8mm%
+  }%
+  %
+  \setbox\mytable\vbox{%
+    @@tabelle@@%
   }
   %
-  \tabsplit{1}{50mm}{\mytable} 
+  \tabsplit{1}{0.7\vsize}{\mytable}%
   %
-  \shippages{\tabsplitPages}
+  \shippages{\tabsplitPages}%
   %
-  \kern8mm%
-  \hbox{@@lieferant_grussformel@@}
-  \kern4mm%
-  \hbox{@@besteller_name@@}
+  \vbox{%
+    %
+    \kern8mm%
+    \hbox{@@lieferant_grussformel@@}
+    \kern8mm%
+    \hbox{@@besteller_name@@}
+    \kern8mm%
+  }
 %
 %
   \vskip 0pt plus1fill%
