@@ -757,12 +757,12 @@ if( ! $readonly ) {
         open_table('small_form');
           open_tr();
             open_td('', '', 'Suche:');
-            open_td('', 'colspan=2', string_view('', 20, 'search', 'id=search'));
+            open_td('', 'colspan=2', string_view('', 20, 'search', 'id=search', true, 'hfill'));
           open_tr();
             open_td();
               open_div('', '', 'Produkt:');
             open_td('', 'colspan=2');
-              open_select('produkt_id', 'size=8 id="productSelect"');
+              open_select('produkt_id', 'size=8 id="productSelect" class="hfill"');
               close_select();
           open_tr();
             open_td('', '', 'Produktgruppe:');
