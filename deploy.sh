@@ -75,6 +75,7 @@ chmod 755 pre-commit
 chmod 755 setup.php
 chmod 644 structure.php
 chmod 644 templates/bestellschein.tex
+chmod 644 templates/prettytables.tex
 chmod 644 wiki/foodsoft/abrechnung.txt
 chmod 644 wiki/foodsoft/basar.txt
 chmod 644 wiki/foodsoft/basarbewegungen_eintragen.txt

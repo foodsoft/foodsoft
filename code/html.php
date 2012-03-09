@@ -49,13 +49,17 @@ function new_html_id() {
 
 // open_tag(), close_tag(): open and close html tag. wrong nesting will cause an error
 //
-function open_tag( $tag, $class = '', $attr = '' ) {
+function open_tag( $tag, $class = '', $attr = '', $payload = null ) {
   global $open_tags;
   if( $class )
     $class = "class='$class'";
   echo "<$tag $class $attr>\n";
   $n = count( $open_tags );
   $open_tags[$n+1] = $tag;
+  if (!is_null($payload)) {
+    echo $payload;
+    close_tag($tag);
+  }
 }
 
 function close_tag( $tag ) {

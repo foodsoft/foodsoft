@@ -123,12 +123,13 @@ function gebindegroesse_view( $pr /* a row from table produktpreise */ ) {
    return $s;
 }
 
-function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
+function string_view( $text, $length = 20, $fieldname = false, $attr = '', $edit_if_fieldname = true, $extra_class = '' ) {
   global $input_event_handlers;
-  if( $fieldname )
-    return "<input type='text' class='string' size='$length' name='$fieldname' value='$text' $attr $input_event_handlers>";
+  $id = $fieldname ? "id='$fieldname'" : '';
+  if( $fieldname && $edit_if_fieldname )
+    return "<input type='text' class='string $extra_class' size='$length' name='$fieldname' value='$text' $id $attr $input_event_handlers>";
   else
-    return "<span class='string'>$text</span>";
+    return "<span class='string $extra_class' $id>$text</span>";
 }
 
 function ean_view( $ean, $length = 20, $fieldname = false, $attr = '', $with_links = false ) {
@@ -2056,33 +2057,49 @@ function catalogue_acronym_view( $editable ) {
   $ui_form = open_form();
     $input_event_handlers = '';
     open_fieldset('small_form', '', 'Auswahl');
-      open_table('small_form');
+      open_table('small_form hfill');
+        open_tag('col', '', '', '');
+        open_tag('col', 'hfill', '', '');
         open_tr();
           open_td('', '', 'Suche:');
-          open_td('', '', string_view('', 20, 'search', 'id=search'));
+          open_td('', '', string_view('', 20, 'search', 'id=search', true, 'hfill'));
         open_tr();
           open_td('', '', 'Akronym:');
           open_td('');
-            open_select('', 'size=8 id="acronymSelect"');
+            open_select('', 'size=8 id="acronymSelect" class="hfill"');
             close_select();
       close_table();
     close_fieldset();
     open_fieldset('small_form', 'id=edit', $editable ? 'Bearbeiten' : 'Details');
-      open_table('small_form');
+      open_table('small_form hfill', '');
+        open_tag('col', '', '', '');
+        open_tag('col', '', 'style="width:50%"', '');
+        open_tag('col', '', 'style="width:50%"', '');
         open_tr();
           open_td('', '', 'Akronym:');
-          open_td('', '', string_view('', 20, 'acronym', 'id=acronym tabindex=1'));
-          open_td('qquad right', '', 'Kontext:');
-          open_td('right', '', string_view('', 20, 'context', 'id=context tabindex=3'));
+          open_td('', '', string_view('', 20, 'acronym', 'tabindex=1', $editable, 'hfill'));
+          open_td('right');
+            echo ('Kontext: ');
+            if ($editable) {
+              open_select('context', 'id="context" tabindex=3');
+                ?>
+                <option value='hrk'>Herkunft</option>
+                <option value='vbd'>Verband</option>
+                <option value='hst'>Hersteller</option>
+                <?php
+              close_select();
+            } else {
+              echo string_view('', 20, 'context', 'tabindex=3', $editable, 'hfill');
+            }
         open_tr();
           open_td('', '', 'Definition:');
-          open_td('', 'colspan=3', string_view('', 60, 'definition', 'id=definition tabindex=2'));
+          open_td('', 'colspan=2', string_view('', 60, 'definition', 'tabindex=2', $editable, 'hfill'));
         open_tr();
-          open_td('', '', 'Bemerkung:');
-          open_td('', 'colspan=3', string_view('', 60, 'comment', 'id=comment tabindex=4'));
+          open_td('', '"', 'Bemerkung:');
+          open_td('', 'colspan=2', string_view('', 60, 'comment', 'tabindex=4', $editable, 'hfill'));
         open_tr();
           open_td('', '', 'URL:');
-          open_td('', 'colspan=3', string_view('', 60, 'url', 'id=url tabindex=5'));
+          open_td('', 'colspan=2', string_view('', 60, 'url', 'tabindex=5', $editable, 'hfill'));
       close_table();
       if ($editable) {
         medskip();
@@ -2168,19 +2185,39 @@ function catalogue_acronym_view( $editable ) {
     displayEditData();
   }
   
+  function setField(element, value) {
+    if (editable)
+      element.value = value;
+    else
+      element.textContent = value;
+  }
+  
+  function setDisplayContext(value) {
+    if (editable)
+      contextInput.value = value;
+    else {
+      switch (value) {
+        case 'hrk': value = 'Herkunft'; break;
+        case 'vbd': value = 'Verband'; break;
+        case 'hst': value = 'Hersteller'; break;
+      }
+      contextInput.textContent = value;
+    }
+  }
+  
   function displayEditData() {
     if (currentEditData !== null) {
-      acronymInput.value = currentEditData.acronym;
-      contextInput.value = currentEditData.context;
-      definitionInput.value = currentEditData.definition;
-      commentInput.value = currentEditData.comment;
-      urlInput.value = currentEditData.url;
+      setField(acronymInput, currentEditData.acronym);
+      setDisplayContext(currentEditData.context);
+      setField(definitionInput, currentEditData.definition);
+      setField(commentInput, currentEditData.comment);
+      setField(urlInput, currentEditData.url);
     } else {
-      acronymInput.value = '';
-      contextInput.value = '';
-      definitionInput.value = '';
-      commentInput.value = '';
-      urlInput.value = '';
+      setField(acronymInput, '');
+      setField(contextInput, '');
+      setField(definitionInput, '');
+      setField(commentInput, '');
+      setField(urlInput, '');
     }
   }
     
