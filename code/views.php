@@ -2138,6 +2138,11 @@ function catalogue_acronym_view( $editable ) {
   var commentInput = $('comment');
   var urlInput = $('url');
   
+  disableAutocomplete(acronymInput);
+  disableAutocomplete(definitionInput);
+  disableAutocomplete(commentInput);
+  disableAutocomplete(urlInput);
+  
   var currentEditData = null;
 
   function reset() {
@@ -2214,7 +2219,9 @@ function catalogue_acronym_view( $editable ) {
       setField(urlInput, currentEditData.url);
     } else {
       setField(acronymInput, '');
-      setField(contextInput, '');
+      <?php 
+      // leave for new acronym
+      // setField(contextInput, ''); ?>
       setField(definitionInput, '');
       setField(commentInput, '');
       setField(urlInput, '');
@@ -2275,11 +2282,20 @@ function catalogue_acronym_view( $editable ) {
       return;
     }
     readEditData();
-    if (enterPressed)
-      addAcronym();
+    if (enterPressed) {
+      <?php // addAcronym(); ?>
+      currentEditData = null;
+      displayEditData();
+      acronymInput.select();
+      searchableSelect.selectIndex(-1);
+      acronymSelect.scrollTop = acronymSelect.scrollHeight;
+    }
   }
   
   function updownHandler(event) {
+    if (event.target == contextInput)
+      return;
+  
     var delta = 0;
     if (event.keyCode === Event.KEY_UP)
       delta = -1;
