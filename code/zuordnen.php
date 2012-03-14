@@ -3457,7 +3457,7 @@ function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'be
       ON gruppenpfand.bestell_id = gesamtbestellungen.id
          AND gruppenpfand.gruppen_id = bestellgruppen.id
     GROUP BY $group_by
-    ORDER BY bestellgruppen.aktiv, bestellgruppen.id
+    ORDER BY bestellgruppen.aktiv, gruppennummer
   " ) );
 }
 

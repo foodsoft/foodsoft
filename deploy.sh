@@ -33,7 +33,7 @@ chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/print.css
 chmod 644 css/readonly.gif
-chmod 700 deploy.sh
+chmod 755 deploy.sh
 chmod 644 dump.php
 chmod 644 fcck.php
 chmod 644 files_und_skripte
@@ -75,6 +75,7 @@ chmod 755 pre-commit
 chmod 755 setup.php
 chmod 644 structure.php
 chmod 644 templates/bestellschein.tex
+chmod 644 templates/prettytables.tex
 chmod 644 wiki/foodsoft/abrechnung.txt
 chmod 644 wiki/foodsoft/basar.txt
 chmod 644 wiki/foodsoft/basarbewegungen_eintragen.txt

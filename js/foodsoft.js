@@ -623,3 +623,7 @@ var SearchableSelect = Class.create({
     this.mSelectElement.fire('option:selected', this.currentMemo());
   }
 });
+
+function disableAutocomplete(element) {
+  element.setAttribute('autocomplete', 'off');
+}

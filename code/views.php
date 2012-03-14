@@ -123,12 +123,13 @@ function gebindegroesse_view( $pr /* a row from table produktpreise */ ) {
    return $s;
 }
 
-function string_view( $text, $length = 20, $fieldname = false, $attr = '' ) {
+function string_view( $text, $length = 20, $fieldname = false, $attr = '', $edit_if_fieldname = true, $extra_class = '' ) {
   global $input_event_handlers;
-  if( $fieldname )
-    return "<input type='text' class='string' size='$length' name='$fieldname' value='$text' $attr $input_event_handlers>";
+  $id = $fieldname ? "id='$fieldname'" : '';
+  if( $fieldname && $edit_if_fieldname )
+    return "<input type='text' class='string $extra_class' size='$length' name='$fieldname' value='$text' $id $attr $input_event_handlers>";
   else
-    return "<span class='string'>$text</span>";
+    return "<span class='string $extra_class' $id>$text</span>";
 }
 
 function ean_view( $ean, $length = 20, $fieldname = false, $attr = '', $with_links = false ) {
@@ -594,8 +595,34 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   global $muell_id, $input_event_handlers;
 
   if( $editAmounts ) {
-    open_form( '', 'action=basarzuteilung' );
+    $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=15;
+    
+    open_javascript();
+?>
+function pick_group_dropdown() {
+  var source = $('gruppen_id');
+  var text = $('gruppen_id_text');
+  
+  text.value = source.value % 1000;
+}
+
+function pick_group_text() {
+  var source = $('gruppen_id_text');
+  var dropdown = $('gruppen_id');
+  
+  var options = dropdown.options;
+  var group_id = 0;
+  for (var i = 0; i < options.length; ++i) {
+    if (options.item(i).value % 1000 == source.value) {
+      group_id = options.item(i).value;
+      break;
+    }
+  }
+  dropdown.value = group_id;
+}
+<?php
+    close_javascript();
   } else {
     $cols=13;
   }
@@ -629,22 +656,22 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
              "<th title='Aufschlag der FC in Prozent'>Aufschlag</th>
               <th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Endpreis</th>"
            : "<th colspan='2' title='mit MWSt und ggf. Pfand'>V-Preis</th>" )
-       . ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
+  , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   if( $have_aufschlag )
     $cols++;
   switch( $order ) {
     case 'bestellung':
-      $rowformat='%2$s%1$s%3$s%4$s';
+      $rowformat='%2$s%5$s%1$s%3$s%4$s';
       $keyfield=1;
       break;
     case 'datum':
-      $rowformat='%3$s%1$s%2$s%4$s';
+      $rowformat='%3$s%5$s%1$s%2$s%4$s';
       $keyfield=2;
       break;
     default:
     case 'produktname':
-      $rowformat='%1$s%2$s%3$s%4$s';
+      $rowformat='%5$s%1$s%2$s%3$s%4$s';
       $keyfield=0;
       break;
   }
@@ -696,7 +723,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
             . ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' ) ."
           <td class='mult'>" .sprintf( "%.2lf", $preis ). "</td>
           <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
-            . ( $editAmounts ?
+    , ( $editAmounts ?
                    "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
                     <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
                     <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
@@ -710,40 +737,41 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     //
     if( $last_key == $row[$keyfield] ) {
       $rowspan++;
-      $row[$keyfield] = '<tr>';
+      $row[$keyfield] = '';
     } else {
       if( $output )
-        echo "<tr><td rowspan='$rowspan ' " . $output;
+        echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
       $output = '';
       $last_key = $row[$keyfield];
       $rowspan = 1;
-      $row[$keyfield] = preg_replace( "/^<td/", ' ', $row[$keyfield], 1 );
+      $row[$keyfield] = preg_replace( "/^<td/", "<td rowspan='@rowspan@' ", $row[$keyfield], 1 );
     }
-    $output .= vsprintf( "$rowformat</tr>\n", $row );
+    $output .= vsprintf( "<tr>$rowformat</tr>\n", $row );
 
   }
   if( $output )
-    echo "<tr><td rowspan='$rowspan' " . $output;
+    echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
 
   open_tr('summe');
-    open_td( 'right', "colspan='10'", 'Summe:' );
+    open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
     if( $have_aufschlag )
       open_td( '' );
     open_td( '', "colspan='2'" );
-    if( $editAmounts )
-      open_td( '', "colspan='2'" );
 
   if( $editAmounts ) {
     open_tr();
-      open_td( 'right medskip', "colspan='$cols'" );
-        open_select( 'gruppen_id' );
+      open_td( 'medskip', "colspan='$cols'" );
+        open_tag('input', '', "type='text' size='4' name='gruppen_id_text' id='gruppen_id_text' value='' onkeyup='pick_group_text();'");
+        close_tag('input');
+        open_select( 'gruppen_id', 'id="gruppen_id" onchange="pick_group_dropdown();"' );
           echo optionen_gruppen( false, array( 'where' => "aktiv or ( bestellgruppen.id = $muell_id )" ) );
         close_select();
         hidden_input( 'fieldcount', $fieldcount );
         qquad();
         submission_button('Zuteilen');
     close_table();
+    open_javascript("\$('form_$form_id').onsubmit = pick_login_text;");
     close_form();
   } else {
     close_table();
@@ -2056,33 +2084,49 @@ function catalogue_acronym_view( $editable ) {
   $ui_form = open_form();
     $input_event_handlers = '';
     open_fieldset('small_form', '', 'Auswahl');
-      open_table('small_form');
+      open_table('small_form hfill');
+        open_tag('col', '', '', '');
+        open_tag('col', 'hfill', '', '');
         open_tr();
           open_td('', '', 'Suche:');
-          open_td('', '', string_view('', 20, 'search', 'id=search'));
+          open_td('', '', string_view('', 20, 'search', 'id=search', true, 'hfill'));
         open_tr();
           open_td('', '', 'Akronym:');
           open_td('');
-            open_select('', 'size=8 id="acronymSelect"');
+            open_select('', 'size=8 id="acronymSelect" class="hfill"');
             close_select();
       close_table();
     close_fieldset();
     open_fieldset('small_form', 'id=edit', $editable ? 'Bearbeiten' : 'Details');
-      open_table('small_form');
+      open_table('small_form hfill', '');
+        open_tag('col', '', '', '');
+        open_tag('col', '', 'style="width:50%"', '');
+        open_tag('col', '', 'style="width:50%"', '');
         open_tr();
           open_td('', '', 'Akronym:');
-          open_td('', '', string_view('', 20, 'acronym', 'id=acronym tabindex=1'));
-          open_td('qquad right', '', 'Kontext:');
-          open_td('right', '', string_view('', 20, 'context', 'id=context tabindex=3'));
+          open_td('', '', string_view('', 20, 'acronym', 'tabindex=1', $editable, 'hfill'));
+          open_td('right');
+            echo ('Kontext: ');
+            if ($editable) {
+              open_select('context', 'id="context" tabindex=3');
+                ?>
+                <option value='hrk'>Herkunft</option>
+                <option value='vbd'>Verband</option>
+                <option value='hst'>Hersteller</option>
+                <?php
+              close_select();
+            } else {
+              echo string_view('', 20, 'context', 'tabindex=3', $editable, 'hfill');
+            }
         open_tr();
           open_td('', '', 'Definition:');
-          open_td('', 'colspan=3', string_view('', 60, 'definition', 'id=definition tabindex=2'));
+          open_td('', 'colspan=2', string_view('', 60, 'definition', 'tabindex=2', $editable, 'hfill'));
         open_tr();
-          open_td('', '', 'Bemerkung:');
-          open_td('', 'colspan=3', string_view('', 60, 'comment', 'id=comment tabindex=4'));
+          open_td('', '"', 'Bemerkung:');
+          open_td('', 'colspan=2', string_view('', 60, 'comment', 'tabindex=4', $editable, 'hfill'));
         open_tr();
           open_td('', '', 'URL:');
-          open_td('', 'colspan=3', string_view('', 60, 'url', 'id=url tabindex=5'));
+          open_td('', 'colspan=2', string_view('', 60, 'url', 'tabindex=5', $editable, 'hfill'));
       close_table();
       if ($editable) {
         medskip();
@@ -2120,6 +2164,11 @@ function catalogue_acronym_view( $editable ) {
   var definitionInput = $('definition');
   var commentInput = $('comment');
   var urlInput = $('url');
+  
+  disableAutocomplete(acronymInput);
+  disableAutocomplete(definitionInput);
+  disableAutocomplete(commentInput);
+  disableAutocomplete(urlInput);
   
   var currentEditData = null;
 
@@ -2168,19 +2217,41 @@ function catalogue_acronym_view( $editable ) {
     displayEditData();
   }
   
+  function setField(element, value) {
+    if (editable)
+      element.value = value;
+    else
+      element.textContent = value;
+  }
+  
+  function setDisplayContext(value) {
+    if (editable)
+      contextInput.value = value;
+    else {
+      switch (value) {
+        case 'hrk': value = 'Herkunft'; break;
+        case 'vbd': value = 'Verband'; break;
+        case 'hst': value = 'Hersteller'; break;
+      }
+      contextInput.textContent = value;
+    }
+  }
+  
   function displayEditData() {
     if (currentEditData !== null) {
-      acronymInput.value = currentEditData.acronym;
-      contextInput.value = currentEditData.context;
-      definitionInput.value = currentEditData.definition;
-      commentInput.value = currentEditData.comment;
-      urlInput.value = currentEditData.url;
+      setField(acronymInput, currentEditData.acronym);
+      setDisplayContext(currentEditData.context);
+      setField(definitionInput, currentEditData.definition);
+      setField(commentInput, currentEditData.comment);
+      setField(urlInput, currentEditData.url);
     } else {
-      acronymInput.value = '';
-      contextInput.value = '';
-      definitionInput.value = '';
-      commentInput.value = '';
-      urlInput.value = '';
+      setField(acronymInput, '');
+      <?php 
+      // leave for new acronym
+      // setField(contextInput, ''); ?>
+      setField(definitionInput, '');
+      setField(commentInput, '');
+      setField(urlInput, '');
     }
   }
     
@@ -2238,11 +2309,20 @@ function catalogue_acronym_view( $editable ) {
       return;
     }
     readEditData();
-    if (enterPressed)
-      addAcronym();
+    if (enterPressed) {
+      <?php // addAcronym(); ?>
+      currentEditData = null;
+      displayEditData();
+      acronymInput.select();
+      searchableSelect.selectIndex(-1);
+      acronymSelect.scrollTop = acronymSelect.scrollHeight;
+    }
   }
   
   function updownHandler(event) {
+    if (event.target == contextInput)
+      return;
+  
     var delta = 0;
     if (event.keyCode === Event.KEY_UP)
       delta = -1;
