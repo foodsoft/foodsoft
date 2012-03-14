@@ -21,6 +21,11 @@ get_http_var( 'window', 'w', 'menu', true );         // eigentlich: name des skr
 get_http_var( 'window_id', 'w', 'main', true );   // ID des browserfensters
 setWikiHelpTopic( "foodsoft:$window" );
 
+if ($window == 'media') { // special case: avatar img access
+  include( "windows/media.php" );
+  exit();
+}
+
 switch( $window_id ) {
   case 'main':   // anzeige im hauptfenster des browsers
     include('head.php');

@@ -170,6 +170,10 @@ table.tight tr th, table.tight tr td, td.tight, th.tight, div.tight {
   margin:0pt !important;
 }
 
+table.form * input[type='text'] {
+  width:100%;
+}
+
 ul {
   padding:0px 1ex 0px 1em;
   margin:0px;
@@ -946,4 +950,9 @@ div#footbar {
 
 .norightmargin {
   margin-right: 0px !important;
+}
+
+img.avatar {
+  border: solid black 1px;
+  margin: 3px;
 }

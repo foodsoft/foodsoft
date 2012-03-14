@@ -23,6 +23,7 @@ if( hat_dienst(5) and ! $readonly ) {
 }
 
 $pwmsg = '';
+$avatar_msg = '';
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
 get_http_var('action','w','');
@@ -48,6 +49,9 @@ switch( $action ) {
       get_http_var( "name_$id", 'H', $row['name'] );
       get_http_var( "email_$id", 'H', $row['email'] );
       get_http_var( "telefon_$id", 'H', $row['telefon'] );
+      get_http_var( "slogan_$id", 'H', $row['slogan'] );
+      get_http_var( "url_$id", 'H', $row['url'] );
+      get_http_var( "avatar_delete_$id", 'H', false);
       if( $edit_dienst_einteilung ) {
         get_http_var( "dienst_$id", 'H', $row['diensteinteilung'] );
       } else {
@@ -59,7 +63,39 @@ switch( $action ) {
       , 'email' => ${"email_$id"}
       , 'telefon' => ${"telefon_$id"}
       , 'diensteinteilung' => ${"dienst_$id"}
+      , 'slogan' => ${"slogan_$id"}
+      , 'url' => ${"url_$id"}
       ) );
+      
+      if (${"avatar_delete_$id"} && !is_null($row['avatar_id'])) {
+        sql_update( 'gruppenmitglieder', $id, array('avatar_id' => 'null'), false);
+        sql_media_delete($row['avatar_id']);
+        $row['avatar_id'] = null;
+      }
+
+      if (isset($_FILES["avatar_$id"])) {
+        $avatar_upload = $_FILES["avatar_$id"];
+        if (!$avatar_upload['error']) {
+          $imagesize = getimagesize($avatar_upload['tmp_name']);
+          if (!$imagesize) {
+            $avatar_msg .= "<div class='warn' style='padding:1em;'>"
+              . "Kann Bildgröße nicht bestimmen!"
+              . "</div>";
+          } else if ($imagesize[0] > 128 || $imagesize[1] > 128) {
+            $avatar_msg .= "<div class='warn' style='padding:1em;'>"
+              . "Bild zu groß ({$imagesize[0]} x {$imagesize[1]} Pixel, max. 128 x 128 Pixel)!"
+              . "</div>";
+          } else {
+            $avatar_id = sql_media_store(
+                    $avatar_upload['type']
+                  , file_get_contents($avatar_upload['tmp_name'])
+                  , $avatar_upload['name'] );
+            sql_update( 'gruppenmitglieder', $id, array('avatar_id' => $avatar_id ));
+            if (!is_null($row['avatar_id']))
+              sql_media_delete($row['avatar_id']); // old id
+          }
+        }
+      }
     }
     if( hat_dienst(5) ) {
       get_http_var( 'gruppenname', 'H', sql_gruppenname( $gruppen_id ) );
@@ -90,7 +126,9 @@ open_fieldset( 'small_form', '', 'Gruppe '.$gruppenname.' ('.sql_gruppennummer($
 
 medskip();
 
-membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
+echo $avatar_msg;
+
+memberform_view( $gruppen_id, $edit_names, $edit_dienst_einteilung );
 
 medskip();
 if( hat_dienst(5) and ! $readonly ) {
@@ -128,5 +166,6 @@ medskip();
 if( hat_dienst(4,5) or ( $gruppen_id == $login_gruppen_id ) )
   open_div( 'smallskip right', '', fc_link( 'gruppenkonto', "gruppen_id=$gruppen_id,text=Gruppenkonto..." ) );
 close_fieldset();
+
 
 ?>

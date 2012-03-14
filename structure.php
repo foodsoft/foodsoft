@@ -573,6 +573,24 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
+    , 'slogan' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'url' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'avatar_id' => array(
+        'type' => "int(11)"
+      , 'null' => 'YES'
+      , 'default' => 'NULL'
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
@@ -1353,6 +1371,37 @@ $tables = array(
   , 'indices' => array(
       'primary' => array( 'unique' => 1, 'collist' => 'id' )
     , 'secondary' => array( 'unique' => 1, 'collist' => 'context, acronym')
+  )
+)
+, 'media' => array(
+    'updownload' => true
+  , 'cols'=> array(
+      'id' => array(
+        'type' => "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'name' => array(
+        'type' => "varchar(255)"
+      , 'null' => 'YES'
+      , 'default' => 'NULL'
+      , 'extra' => ''
+    )
+    , 'mimetype' => array(
+        'type' => "varchar(255)"
+      , 'null' => 'NO'
+      , 'default' => 'application/octet-stream'
+      , 'extra' => ''
+      )
+    , 'data' => array(
+        'type' => "mediumblob"
+      , 'null' => 'NO'
+      , 'extra' => ''
+      )
+    )
+  , 'indices' => array(
+      'primary' => array( 'unique' => 1, 'collist' => 'id' )
   )
 )
 );
