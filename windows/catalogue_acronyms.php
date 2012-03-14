@@ -44,11 +44,11 @@ if ($action == 'update') {
   }
   foreach ($decodedChanges as $change) {
     $values = array(
-         'context' => $change['context']
-       , 'acronym' => $change['acronym']
-       , 'definition' => $change['definition']
-       , 'comment' => $change['comment']
-       , 'url' => $change['url']);
+         'context' => htmlspecialchars( $change['context'] )
+       , 'acronym' => htmlspecialchars( $change['acronym'] )
+       , 'definition' => htmlspecialchars( $change['definition'] )
+       , 'comment' => htmlspecialchars( $change['comment'] )
+       , 'url' => htmlspecialchars( $change['url'] ) ); 
         
     if (preg_match('/^new-(\d+)$/', $change['id'], $matches))  {
       sql_insert('catalogue_acronyms', $values);
