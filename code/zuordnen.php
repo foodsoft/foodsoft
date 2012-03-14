@@ -1567,7 +1567,7 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
         break;
       case 'not_in_order':
         if ($cond) {
-          $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = $cond";
+          $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = '$cond'";
           $filters['produkte.id'] = "!= ALL ($order_products_select)";
         }
         break;
@@ -3869,10 +3869,12 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = true ) {
   return $row ? $row['id'] : 0;
 }
 
-function select_current_productprice_id( $product_id, $timestamp = "NOW()" ) {
+function select_current_productprice_id( $product_id, $timestamp = true ) {
+  if( $timestamp === true )
+    $timestamp = $GLOBALS['mysqljetzt'];
   if ($timestamp) {
-    $zeitfilter = "AND (zeitende >= $timestamp OR ISNULL(zeitende)) "
-        . "AND (zeitstart <= $timestamp OR ISNULL(zeitstart))";
+    $zeitfilter = "AND (zeitende >= '$timestamp' OR ISNULL(zeitende)) "
+        . "AND (zeitstart <= '$timestamp' OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = '';
   }

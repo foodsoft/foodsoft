@@ -792,10 +792,10 @@ if( ! $readonly ) {
     close_fieldset();
   close_div();
   
-  $unlisted_products = sql_produkte(array(
+  $unlisted_products = sql_produkte( array(
       (hat_dienst( 4 ) ? 'price_on_date_or_null' : 'price_on_date') 
-          => "'{$gesamtbestellung['lieferung']}'"
-    , 'not_in_order' => "'{$gesamtbestellung['id']}'"));
+          => $gesamtbestellung['lieferung']
+    , 'not_in_order' => $gesamtbestellung['id'] ));
     
   foreach ($unlisted_products as $p) {
     $json = array();
