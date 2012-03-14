@@ -44,7 +44,7 @@ function sql_selects( $table, $prefix = false ) {
 
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
-    open_div( 'alert', '', htmlspecialchars( $sql ) );
+    open_div( 'alert', '', htmlspecialchars( $sql, ENT_QUOTES, 'UTF-8' ) );
   }
   $result = mysql_query($sql);
   if( ! $result ) {
@@ -4186,7 +4186,7 @@ function checkvalue( $val, $typ){
       case 'H':
         if( get_magic_quotes_gpc() )
           $val = stripslashes( $val );
-        $val = htmlspecialchars( $val );
+        $val = htmlspecialchars( $val, ENT_QUOTES, 'UTF-8' );
         break;
       case 'R':
         break;
@@ -4819,8 +4819,12 @@ function tex2pdf( $tex ) {
 function tex_encode( $s ) {
   $maps = array(
     '/\\\\/' => '\\backslash'
+  , '/\\&quot;/' => "''"
+  , '/\\&#039;/' => "'"
   , '/([$%_#~])/' => '\\\\$1'
   , '/\\&amp;/' => '\\&'
+  , '/\\&lt;/' => '$<$'
+  , '/\\&gt;/' => '$>$'
   , '/[}]/' => '$\}$'
   , '/[{]/' => '$\{$'
   , '/ä/' => '\"a{}'
