@@ -595,8 +595,34 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   global $muell_id, $input_event_handlers;
 
   if( $editAmounts ) {
-    open_form( '', 'action=basarzuteilung' );
+    $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=15;
+    
+    open_javascript();
+?>
+function pick_group_dropdown() {
+  var source = $('gruppen_id');
+  var text = $('gruppen_id_text');
+  
+  text.value = source.value % 1000;
+}
+
+function pick_group_text() {
+  var source = $('gruppen_id_text');
+  var dropdown = $('gruppen_id');
+  
+  var options = dropdown.options;
+  var group_id = 0;
+  for (var i = 0; i < options.length; ++i) {
+    if (options.item(i).value % 1000 == source.value) {
+      group_id = options.item(i).value;
+      break;
+    }
+  }
+  dropdown.value = group_id;
+}
+<?php
+    close_javascript();
   } else {
     $cols=13;
   }
@@ -630,22 +656,22 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
              "<th title='Aufschlag der FC in Prozent'>Aufschlag</th>
               <th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Endpreis</th>"
            : "<th colspan='2' title='mit MWSt und ggf. Pfand'>V-Preis</th>" )
-       . ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
+  , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   if( $have_aufschlag )
     $cols++;
   switch( $order ) {
     case 'bestellung':
-      $rowformat='%2$s%1$s%3$s%4$s';
+      $rowformat='%2$s%5$s%1$s%3$s%4$s';
       $keyfield=1;
       break;
     case 'datum':
-      $rowformat='%3$s%1$s%2$s%4$s';
+      $rowformat='%3$s%5$s%1$s%2$s%4$s';
       $keyfield=2;
       break;
     default:
     case 'produktname':
-      $rowformat='%1$s%2$s%3$s%4$s';
+      $rowformat='%5$s%1$s%2$s%3$s%4$s';
       $keyfield=0;
       break;
   }
@@ -697,7 +723,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
             . ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' ) ."
           <td class='mult'>" .sprintf( "%.2lf", $preis ). "</td>
           <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
-            . ( $editAmounts ?
+    , ( $editAmounts ?
                    "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
                     <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
                     <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
@@ -711,40 +737,41 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     //
     if( $last_key == $row[$keyfield] ) {
       $rowspan++;
-      $row[$keyfield] = '<tr>';
+      $row[$keyfield] = '';
     } else {
       if( $output )
-        echo "<tr><td rowspan='$rowspan ' " . $output;
+        echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
       $output = '';
       $last_key = $row[$keyfield];
       $rowspan = 1;
-      $row[$keyfield] = preg_replace( "/^<td/", ' ', $row[$keyfield], 1 );
+      $row[$keyfield] = preg_replace( "/^<td/", "<td rowspan='@rowspan@' ", $row[$keyfield], 1 );
     }
-    $output .= vsprintf( "$rowformat</tr>\n", $row );
+    $output .= vsprintf( "<tr>$rowformat</tr>\n", $row );
 
   }
   if( $output )
-    echo "<tr><td rowspan='$rowspan' " . $output;
+    echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
 
   open_tr('summe');
-    open_td( 'right', "colspan='10'", 'Summe:' );
+    open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
     if( $have_aufschlag )
       open_td( '' );
     open_td( '', "colspan='2'" );
-    if( $editAmounts )
-      open_td( '', "colspan='2'" );
 
   if( $editAmounts ) {
     open_tr();
-      open_td( 'right medskip', "colspan='$cols'" );
-        open_select( 'gruppen_id' );
+      open_td( 'medskip', "colspan='$cols'" );
+        open_tag('input', '', "type='text' size='4' name='gruppen_id_text' id='gruppen_id_text' value='' onkeyup='pick_group_text();'");
+        close_tag('input');
+        open_select( 'gruppen_id', 'id="gruppen_id" onchange="pick_group_dropdown();"' );
           echo optionen_gruppen( false, array( 'where' => "aktiv or ( bestellgruppen.id = $muell_id )" ) );
         close_select();
         hidden_input( 'fieldcount', $fieldcount );
         qquad();
         submission_button('Zuteilen');
     close_table();
+    open_javascript("\$('form_$form_id').onsubmit = pick_login_text;");
     close_form();
   } else {
     close_table();
