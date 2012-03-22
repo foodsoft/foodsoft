@@ -1355,7 +1355,8 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
 
     $zeile = '';
     if( $spalten & PR_COL_NAME ) {
-      $zeile .= '&' . tex_encode( $produkte_row['produkt_name'] );
+      $name = substr( $produkte_row['produkt_name'], 0, 36 );
+      $zeile .= '&' . tex_encode( $name );
     }
     if( $spalten & PR_COL_ANUMMER ) {
       $zeile .= '&' . $produkte_row['artikelnummer'];
