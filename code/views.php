@@ -740,17 +740,17 @@ function pick_group_text() {
       $row[$keyfield] = '';
     } else {
       if( $output )
-        echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
+        echo preg_replace('/&rowspan&/', $rowspan, $output, 1);
       $output = '';
       $last_key = $row[$keyfield];
       $rowspan = 1;
-      $row[$keyfield] = preg_replace( "/^<td/", "<td rowspan='@rowspan@' ", $row[$keyfield], 1 );
+      $row[$keyfield] = preg_replace( "/^<td/", "<td rowspan='&rowspan&' ", $row[$keyfield], 1 );
     }
     $output .= vsprintf( "<tr>$rowformat</tr>\n", $row );
 
   }
   if( $output )
-    echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
+    echo preg_replace('/&rowspan&/', $rowspan, $output, 1);
 
   open_tr('summe');
     open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
