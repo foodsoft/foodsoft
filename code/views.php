@@ -1330,10 +1330,6 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
   foreach( $produkte as $produkte_row ) {
     $produkt_id = $produkte_row['produkt_id'];
 
-    if( $produkte_row['menge_ist_null'] ) {
-      continue;
-    }
-
     // preise je V-einheit:
     $nettopreis = $produkte_row['nettopreis'];
 
@@ -1348,6 +1344,10 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
     $liefermenge = $produkte_row['liefermenge'];
     $gebinde = $liefermenge / $gebindegroesse;
     $liefermenge_scaled = $liefermenge / $lv_faktor;
+
+    if( $gebinde < 1 ) {
+      continue;
+    }
 
     $nettogesamtpreis = $nettopreis * $liefermenge;
 
