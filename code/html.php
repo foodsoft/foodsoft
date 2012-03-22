@@ -49,13 +49,17 @@ function new_html_id() {
 
 // open_tag(), close_tag(): open and close html tag. wrong nesting will cause an error
 //
-function open_tag( $tag, $class = '', $attr = '' ) {
+function open_tag( $tag, $class = '', $attr = '', $payload = null ) {
   global $open_tags;
   if( $class )
     $class = "class='$class'";
   echo "<$tag $class $attr>\n";
   $n = count( $open_tags );
   $open_tags[$n+1] = $tag;
+  if (!is_null($payload)) {
+    echo $payload;
+    close_tag($tag);
+  }
 }
 
 function close_tag( $tag ) {
@@ -407,6 +411,10 @@ function floating_submission_button() {
   close_tag('span');
 }
 
+function html_button( $text, $js = '', $attrib = '' ) {
+  echo "<a href='javascript:$js' class='button' $attrib title='$text'>$text</a>";
+}
+
 function submission_button( $text = '', $active = true, $confirm = '' ) {
   global $form_id;
   $text or $text = 'Speichern';
@@ -632,6 +640,21 @@ function textfield_on_change_handler( $handler, $capture_enter = true ) {
     $result .= " onkeypress='handleTextFieldKeyPress(event, function() { $handler });'";
   }
   return $result;
+}
+
+/**
+ * Send a PHP array as a JavaScript object via JSON
+ * 
+ * @author Tilman Vogel
+ * 
+ * @param[in]   name
+ *              name of the JavaScript variable, must contain "var " if desired
+ * @param[in]   value
+ *              the PHP array to send
+ * @returns     the correspoding JS code
+ */
+function toJavaScript( $name, $value ) {
+  return "$name = ".json_encode($value).";";
 }
 
 ?>

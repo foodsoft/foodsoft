@@ -731,7 +731,13 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'adresse' => array(
+    , 'strasse' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'ort' => array(
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
@@ -756,6 +762,36 @@ $tables = array(
       , 'extra' => ''
       )
     , 'mail' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'grussformel' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'anrede' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'fc_name' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'fc_strasse' => array(
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'fc_ort' => array(
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
@@ -1274,6 +1310,51 @@ $tables = array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     )
   )
+, 'catalogue_acronyms' => array(
+    'updownload' => true
+  , 'cols'=> array(
+      'id' => array(
+        'type' => "int(11)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => 'auto_increment'
+      )
+    , 'context' => array(
+        'type' => "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'acronym' => array(
+        'type' => "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'definition' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'comment' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'url' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    )
+  , 'indices' => array(
+      'primary' => array( 'unique' => 1, 'collist' => 'id' )
+    , 'secondary' => array( 'unique' => 1, 'collist' => 'context, acronym')
+  )
+)
 );
 
 ?>

@@ -1,0 +1,165 @@
+\definecolor{tabRowShading}{cmyk}{0,0,0,0.1}%
+%
+\newbox\memoryHole%  /dev/null for boxes
+%
+%
+% \reversevbox#1:
+%   - #1 must be a vbox containing other boxes
+%   - contents will be moved into \reverseVBoxOut in reverse order
+%   - useful when processing lists using TeX's LIFO to get stuff into desired order
+%
+\newbox\reverseVBoxOut%
+\newbox\reverseVBoxLine%
+%
+\def\reverseVBoxGo{%
+  \setbox\reverseVBoxLine\lastbox\unskip%
+  \let\next\reverseVBoxGo%
+  \ifhbox\reverseVBoxLine%
+    \global\setbox\reverseVBoxOut\vbox{\unvbox\reverseVBoxOut\box\reverseVBoxLine}%
+    \else\ifvbox\reverseVBoxLine%
+      \global\setbox\reverseVBoxOut\vbox{\unvbox\reverseVBoxOut\box\reverseVBoxLine}%
+    \else%
+      \let\next\relax%
+  \fi\fi%
+  \next%
+}%
+\def\reverseVBox#1{%
+  \setbox\memoryHole\vbox to 0pt{%  enter restriced  mode, so stuff will be stacked on TeX's LIFO
+    \setbox\reverseVBoxOut\vbox{}%
+    \unvbox#1%
+    \reverseVBoxGo%
+  }%
+}%
+%
+%
+% \tabsplit#1#2#3
+%   - #1 must be a vbox containing list of hboxes (typically containing an \halign table)
+%   - #1 will be split into pages, stored as a list of vboxes in \tabsplitPages
+%   - #2 is maximum vsize of first page; for other pages \vsize is the maximum
+%   - #3 is the number of table header lines repeated on each page
+%   - table headers and even-numbered table rows will get grey-shaded background
+%   - any glue between table rows will be removed (with \offinterlineskip usually not relevant)
+%
+\newbox\tabsplitPages%
+\newbox\tabsplitChunk%
+\newbox\tabsplitLine%
+\newbox\tabsplitHeader%
+\newcount\tabsplitCount%
+\newdimen\tabsplitVremainder%
+\newdimen\tabsplitHeaderVsize%
+\newdimen\tabsplitLineVsize%
+%
+\def\tabsplitSplitofheader{%
+  \setbox\tabsplitLine\lastbox\unskip%
+  \setbox\tabsplitLine\hbox{%
+    \hbox to 0pt{\color{tabRowShading}\vrule height\ht\tabsplitLine depth\dp\tabsplitLine width\wd\tabsplitLine}%
+    \unhbox\tabsplitLine%
+  }%
+  \global\setbox\tabsplitHeader\vbox{\unvbox\tabsplitHeader\box\tabsplitLine}%
+  \ifnum\tabsplitCount>1%
+    \advance\tabsplitCount-1%
+    \let\next\tabsplitSplitofheader%
+  \else%
+    \setbox\tabsplitLine\hbox to \wd\tabsplitHeader{\vrule width\wd\tabsplitHeader height0.5pt depth0pt}%
+    \global\setbox\tabsplitHeader\vbox{%
+      \unvbox\tabsplitHeader%
+      \box\tabsplitLine%
+    }%
+    \global\tabsplitHeaderVsize\ht\tabsplitHeader%
+    \global\advance\tabsplitHeaderVsize\dp\tabsplitHeader%
+    \let\next\relax%
+  \fi%
+  \next%
+}%
+%
+\def\tabsplitGo{%
+  \setbox\tabsplitLine\lastbox\unskip%
+  \ifvoid\tabsplitLine%
+    \global\setbox\tabsplitPages\vbox{\unvbox\tabsplitPages\box\tabsplitChunk}%
+    \let\next\relax%
+  \else%
+    \tabsplitLineVsize\ht\tabsplitLine%
+    \advance\tabsplitLineVsize\dp\tabsplitLine%
+    \ifdim\tabsplitLineVsize>\tabsplitVremainder%
+      \global\setbox\tabsplitPages\vbox{\unvbox\tabsplitPages\box\tabsplitChunk}%
+      % \box\onechunk\vskip 0pt plus1fill\newpage%
+      \tabsplitVremainder\vsize%
+      \setbox\tabsplitChunk\vbox{\copy\tabsplitHeader}%
+      \tabsplitCount0%
+      \advance\tabsplitVremainder-\tabsplitHeaderVsize%
+    \fi%
+    \advance\tabsplitVremainder-\tabsplitLineVsize%
+    \advance\tabsplitCount1\relax%
+    \ifodd\tabsplitCount\else%
+      \setbox\tabsplitLine\hbox{%
+        \hbox to 0pt{%
+          \color{tabRowShading}%
+          \vrule height\ht\tabsplitLine depth\dp\tabsplitLine width\wd\tabsplitLine%
+        }%
+        \unhbox\tabsplitLine%
+      }%
+    \fi%
+    \setbox\tabsplitChunk\vbox{\unvbox\tabsplitChunk\box\tabsplitLine}%
+    \let\next\tabsplitGo%
+  \fi%
+  \next%
+}%
+%
+\def\tabsplit#1#2#3{%
+  \reverseVBox{#3}%
+  \setbox\memoryHole\vbox to 0pt{% enter restricted mode
+    \global\setbox\tabsplitPages\vbox{}%
+    \global\setbox\tabsplitHeader\vbox{}%
+    \tabsplitCount#1%
+    \unvbox\reverseVBoxOut%
+    \tabsplitSplitofheader%
+%
+    \tabsplitVremainder#2%
+    \setbox\tabsplitChunk\copy\tabsplitHeader%
+    \advance\tabsplitVremainder-\tabsplitHeaderVsize%
+    \tabsplitCount0%
+    \tabsplitGo%
+  }%
+}%
+%
+% \shippages#1: output pages
+%   - #1 is a vbox containing a list of vboxes, which will be output with pagebreaks between
+%
+\newbox\shippagesRemaining%
+\newbox\shippagesOnepage%
+\newbox\shippagesNextpage%
+%
+\def\shippagesGo{%
+  \global\setbox\shippagesOnepage\lastbox\unskip%
+  \global\setbox\shippagesNextpage\lastbox\unskip%
+  \ifvbox\shippagesNextpage% more pages to come
+    \global\setbox\shippagesRemaining\vbox{\box\shippagesOnepage\unvbox\shippagesRemaining}%
+    \let\next\shippagesGo%
+    \box\shippagesNextpage%  put \shippagesNextpage back on stack
+  \else%
+    \egroup% leave restricted mode
+    \ifvbox\shippagesOnepage%
+      \box\shippagesOnepage% output the page
+      \ifvbox\shippagesRemaining%
+        \vskip0pt plus1fill\newpage%
+        \let\next\shippagesGo%
+        \setbox\memoryHole\vbox\bgroup% enter restricted mode again
+        \hbox{BOS marker - should not be visible}% put BOS marker on stack
+        \unvbox\shippagesRemaining%
+      \else%
+        \let\next\relax%
+      \fi%
+    \else%
+      \let\next\relax%
+    \fi%
+  \fi%
+  \next%
+}
+%
+\def\shippages#1{%
+  \setbox\memoryHole\vbox\bgroup% enter restricted mode
+  \hbox{BOS marker - should not be visible}%
+  \unvbox#1%
+  \shippagesGo%
+}
+

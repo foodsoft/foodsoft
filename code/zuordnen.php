@@ -44,7 +44,7 @@ function sql_selects( $table, $prefix = false ) {
 
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
-    open_div( 'alert', '', htmlspecialchars( $sql ) );
+    open_div( 'alert', '', htmlspecialchars( $sql, ENT_QUOTES, 'UTF-8' ) );
   }
   $result = mysql_query($sql);
   if( ! $result ) {
@@ -248,12 +248,12 @@ function adefault( $array, $index, $default ) {
     return $default;
 }
 
-function mysql2array( $result, $key = false, $val = false ) {
+function mysql2array( $result, $key = false, $val = false, $result_type = MYSQL_ASSOC ) {
   if( is_array( $result ) )  // temporary kludge: make me idempotent
     return $result;
   $r = array();
   $n = 1;
-  while( $row = mysql_fetch_array( $result ) ) {
+  while( $row = mysql_fetch_array( $result, $result_type ) ) {
     if( $key ) {
       need( isset( $row[$key] ) );
       need( isset( $row[$val] ) );
@@ -291,7 +291,11 @@ function need_joins( $using, $rules ) {
   $joins_array = need_joins_array( $using, $rules );
   foreach( $joins_array as $table => $rule ) {
     if( is_numeric( $table ) ) {
-      $joins .= " JOIN $rule ";
+      if ( strstr( $rule, 'JOIN ') ) {
+        $joins .= " $rule ";
+      } else {
+        $joins .= " JOIN $rule ";
+      }
     } else {
       $joins .= " JOIN $table ON $rule ";
     }
@@ -1544,6 +1548,29 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
           $have_price = true;
         }
         break;
+      case 'price_on_date_or_null':
+        if ($cond) {
+          $price_select = select_current_productprice_id('produkte.id', $cond);
+          $joins[] = "LEFT OUTER JOIN produktpreise ON "
+              . 'produktpreise.produkt_id = produkte.id '
+              . "AND produktpreise.id = ($price_select)";
+          $have_price = true;
+        }
+        break;
+      case 'price_on_date':
+        if ($cond) {
+          $price_select = select_current_productprice_id('produkte.id', $cond);
+          $joins['produktpreise'] = 'produktpreise.produkt_id = produkte.id '
+              . "AND produktpreise.id = ($price_select)";
+          $have_price = true;
+        }
+        break;
+      case 'not_in_order':
+        if ($cond) {
+          $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = '$cond'";
+          $filters['produkte.id'] = "!= ALL ($order_products_select)";
+        }
+        break;
       default:
           error( "undefined key: $key" );
     }
@@ -1673,6 +1700,8 @@ function sql_produktgruppen_name( $id ) {
 //
 ////////////////////////////////////
 
+$wochentage = array( 'invalid', 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag' );
+
 define('STATUS_BESTELLEN', 10 );
 define('STATUS_LIEFERANT', 20 );
 define('STATUS_VERTEILT', 30 );
@@ -1790,7 +1819,10 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
 
 function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
   return mysql2array( doSql( "
-    SELECT gesamtbestellungen.*, lieferanten.name as lieferantenname FROM gesamtbestellungen
+    SELECT gesamtbestellungen.*
+         , dayofweek( lieferung ) as lieferdatum_dayofweek
+         , DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad
+         , lieferanten.name as lieferantenname FROM gesamtbestellungen
     JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
     WHERE $filter ORDER BY $orderby
   " ) );
@@ -3425,7 +3457,7 @@ function sql_gruppenpfand( $lieferanten_id = 0, $bestell_id = 0, $group_by = 'be
       ON gruppenpfand.bestell_id = gesamtbestellungen.id
          AND gruppenpfand.gruppen_id = bestellgruppen.id
     GROUP BY $group_by
-    ORDER BY bestellgruppen.aktiv, bestellgruppen.id
+    ORDER BY bestellgruppen.aktiv, gruppennummer
   " ) );
 }
 
@@ -3791,6 +3823,8 @@ function references_produktpreis( $preis_id ) {
 }
 
 function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
+  if( $zeitpunkt === true )
+    $zeitpunkt = $GLOBALS['mysqljetzt'];
   if( $zeitpunkt ) {
     $zeitfilter = " AND (zeitende >= '$zeitpunkt' OR ISNULL(zeitende))
                     AND (zeitstart <= '$zeitpunkt' OR ISNULL(zeitstart))";
@@ -3822,7 +3856,7 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
  *  liefert aktuellsten preis zu $produkt_id,
  *  oder false falls es keinen gueltigen preis gibt:
  */
-function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
+function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = true ) {
   return end( sql_produktpreise( $produkt_id, $zeitpunkt ) );
 }
 
@@ -3830,9 +3864,25 @@ function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = "NOW()" ) {
  *  liefert id des aktuellsten preises zu $produkt_id,
  *  oder 0 falls es NOW() keinen gueltigen preis gibt:
  */
-function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = "NOW()" ) {
+function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = true ) {
   $row = sql_aktueller_produktpreis( $produkt_id, $zeitpunkt );
   return $row ? $row['id'] : 0;
+}
+
+function select_current_productprice_id( $product_id, $timestamp = true ) {
+  if( $timestamp === true )
+    $timestamp = $GLOBALS['mysqljetzt'];
+  if ($timestamp) {
+    $zeitfilter = "AND (zeitende >= '$timestamp' OR ISNULL(zeitende)) "
+        . "AND (zeitstart <= '$timestamp' OR ISNULL(zeitstart))";
+  } else {
+    $zeitfilter = '';
+  }
+
+  return "SELECT id FROM produktpreise "
+      . "WHERE produkt_id = $product_id $zeitfilter "
+      . "ORDER BY zeitstart DESC, IFNULL(zeitende,'9999-12-31') DESC, id DESC "
+      . "LIMIT 1";
 }
 
 // produktpreise_konsistenztest:
@@ -3912,7 +3962,7 @@ function sql_insert_produktpreis (
   }
   need( $lv_faktor >= 0.001, "kein gueltiger Umrechnungsfaktor L-Einheit / V-Einheit" );
 
-  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
+  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, "'$start'" );
   if( $aktueller_preis ) {
     sql_update( 'produktpreise'
     , $aktueller_preis['id']
@@ -4042,6 +4092,11 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
   }
 }
 
+function sql_catalogue_acronym( $context, $acronym ) {
+  return mysql2array( doSql( 
+            "SELECT * from `catalogue_acronyms` "
+          . "WHERE `context`='$context' AND `acronym`='$acronym'") );
+}
 
 ////////////////////////////////////
 //
@@ -4131,7 +4186,7 @@ function checkvalue( $val, $typ){
       case 'H':
         if( get_magic_quotes_gpc() )
           $val = stripslashes( $val );
-        $val = htmlspecialchars( $val );
+        $val = htmlspecialchars( $val, ENT_QUOTES, 'UTF-8' );
         break;
       case 'R':
         break;
@@ -4603,6 +4658,40 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
       logger( 'update_database: update to version 23 successful' );
+      
+ case 23:
+      logger( 'starting update_database: from version 23' );
+      
+      doSql( "CREATE TABLE `catalogue_acronyms` ("
+              . "  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY"
+              . ", `context` VARCHAR(10) NOT NULL"
+              . ", `acronym` VARCHAR(10) NOT NULL"
+              . ", `definition` TEXT NOT NULL"
+              . ", `comment` TEXT NOT NULL"
+              . ", `url` TEXT NOT NULL"
+              . ", UNIQUE INDEX `secondary` (`context`, `acronym`)"
+              . " ) ");
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
+      logger( 'update_database: update to version 24 successful' );
+   
+ case 24:
+      logger( 'starting update_database: from version 24' );
+
+      doSql( "ALTER TABLE `lieferanten`
+                CHANGE COLUMN `adresse` `strasse` text not null
+              , ADD COLUMN `ort` text not null
+              , ADD COLUMN `anrede` text not null
+              , ADD COLUMN `grussformel` text not null
+              , ADD COLUMN `fc_name` text not null
+              , ADD COLUMN `fc_strasse` text not null
+              , ADD COLUMN `fc_ort` text not null
+      " );
+
+      // doSql( "UPDATE `lieferanten` set fc_name='FoodCoop $foodcoop_name'" ); // not yet available!
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
+      logger( 'update_database: update to version 25 successful' );
 
 /*
 	case n:
@@ -4686,6 +4775,109 @@ function optionen( $values, $selected ) {
   }
   return $output;
 }
+
+
+////////////////////////////////////
+//
+// PDF-export
+//
+////////////////////////////////////
+
+function get_tmp_working_dir( $base = '/tmp' ) {
+  for( $retries = 0; $retries < 10; $retries++ ) {
+    $fqpath = $base . '/foodsoft.' . random_hex_string( 8 );
+    if( mkdir( $fqpath, 0700 ) )
+      return $fqpath;
+  }
+  return false;
+}
+
+function tex2pdf( $tex ) {
+  $tex = preg_replace( '/@@macros_prettytables@@/', file_get_contents( 'templates/prettytables.tex' ), $tex );
+  $cwd = getcwd();
+  need( $tmpdir = get_tmp_working_dir() );
+  need( chdir( $tmpdir ) );
+  file_put_contents( 'tex2pdf.tex', $tex );
+  exec( 'pdflatex tex2pdf.tex', & $output, & $rv );
+  if( ! $rv ) {
+    $pdf = file_get_contents( 'tex2pdf.pdf' );
+    // open_div( 'ok', '', 'ok: '.  implode( ' ', $output ) );
+  } else {
+    open_div( 'warn', '', 'error: '. file_get_contents( 'tex2pdf.log' ) );
+    $pdf = false;
+  }
+  @ unlink( 'tex2pdf.tex' );
+  @ unlink( 'tex2pdf.aux' );
+  @ unlink( 'tex2pdf.log' );
+  @ unlink( 'tex2pdf.pdf' );
+  chdir( $cwd );
+  rmdir( $tmpdir );
+
+  return $pdf;
+}
+
+function tex_encode( $s ) {
+  $maps = array(
+    '/\\\\/' => '\\backslash'
+  , '/\\&quot;/' => "''"
+  , '/\\&#039;/' => "'"
+  , '/([$%_#~])/' => '\\\\$1'
+  , '/\\&amp;/' => '\\&'
+  , '/\\&lt;/' => '$<$'
+  , '/\\&gt;/' => '$>$'
+  , '/[}]/' => '$\}$'
+  , '/[{]/' => '$\{$'
+  , '/ä/' => '\"a{}'
+  , '/Ä/' => '\"A{}'
+  , '/ö/' => '\"o{}'
+  , '/Ö/' => '\"O{}'
+  , '/ü/' => '\"u{}'
+  , '/Ü/' => '\"U{}'
+  , '/ß/' => '\ss{}'
+  , '/\\\\backslash/' => '\\$\\backslash{}\\$'
+  );
+  foreach( $maps as $pattern => $to ) {
+    $s = preg_replace( $pattern, $to, $s );
+  }
+  $len = strlen( $s );
+  $i = 0;
+  $out = '';
+  while( $i < $len ) {
+    $c = $s[ $i ];
+    $n = ord( $c );
+    $bytes = 1;
+    if( $n < 128 ) {
+      // skip most control characters:
+      if( $n < 32 ) {
+        switch( $n ) {
+          case  9: // tab
+            $out .= ' ';
+            break;
+          case 10: // lf 
+            $out .= '\\newline{}';
+            break;
+          case 13: // cr
+            break;
+          default:
+            break;
+        }
+      } else {
+        $out .= $c;
+      }
+    } else {
+      // skip remaining utf-8 characters:
+      if( $n > 247 ) continue;
+      elseif( $n > 239 ) $bytes = 4;
+      elseif( $n > 223 ) $bytes = 3;
+      elseif( $n > 191 ) $bytes = 2;
+      else continue;
+    }
+    $i += $bytes;
+  }
+  return $out;
+}
+
+
 
 // insert_html:
 // erzeugt javascript-code, der $element als Child vom element $id ins HTML einfuegt.

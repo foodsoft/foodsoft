@@ -1,0 +1,101 @@
+\documentclass[11pt]{article}
+\usepackage{times}
+\usepackage{eurosym}
+\usepackage{german}
+\usepackage{color}
+
+\definecolor{mygray}{cmyk}{0,0,0,0.1}
+\def\normalfont{\sffamily}
+
+\pagestyle{empty}
+
+
+\paperwidth210mm\paperheight297mm\relax%
+%
+\pdfpagewidth\paperwidth%
+\oddsidemargin0mm%
+\evensidemargin0mm%
+\textwidth172mm%
+\hsize\textwidth%
+
+\pdfpageheight\paperheight%
+\topmargin-10mm%
+\textheight260mm%
+\vsize\textheight%
+%
+\headheight0mm%
+\headsep0mm%
+\footskip0mm%
+\leftskip0mm%
+\parindent0pt%
+
+@@macros_prettytables@@
+
+\newbox\mytable
+\def\empty{}
+
+\begin{document}%
+\normalfont
+
+  \vbox{%
+    \hbox to \hsize{%
+      @@fc_name@@
+      \hskip 1em plus1fil
+      \ifnum\day<10 0\fi\the\day.%
+      \hskip1pt%
+      \ifnum\month<10 0\fi\the\month.%
+      \number\year%
+    }%
+    \hbox{@@fc_strasse@@}%
+    \hbox{@@fc_ort@@}%
+    \def\kundennummer{@@fc_kundennummer@@}
+    \ifx\kundennummer\empty\relax\else
+      \hbox{Kd-Nr. \kundennummer}%
+    \fi
+  %
+    \kern10mm%
+    \hbox{@@lieferant_name@@}%
+    \hbox{@@lieferant_strasse@@}%
+    \hbox{@@lieferant_ort@@}%
+    \def\lieferantEmail{@@lieferant_email@@}
+    \ifx\lieferantEmail\empty\else
+      \hbox{email: \lieferantEmail}%
+    \fi
+    \def\lieferantFax{@@lieferant_fax@@}
+    \ifx\lieferantFax\empty\else
+      \hbox{fax: \lieferantFax}%
+    \fi
+  %
+    \kern10mm%
+  
+    \hbox{@@lieferant_anrede@@}%
+    \kern4mm%
+    \hbox{zur Lieferung am {\bf\,@@lieferdatum_trad@@\,} bestellen wir:}%
+    \kern8mm%
+  }%
+  %
+  \setbox\mytable\vbox{%
+    @@tabelle@@%
+  }
+  %
+  \tabsplit{1}{0.7\vsize}{\mytable}%
+  %
+  \shippages{\tabsplitPages}%
+  %
+  \vbox{%
+    %
+    \kern8mm%
+    \hbox{@@lieferant_grussformel@@}
+    \kern8mm%
+    \hbox{@@besteller_name@@}
+    \kern8mm%
+  }
+%
+%
+  \vskip 0pt plus1fill%
+%  \hbox to \hsize{X \hfill X}%
+% }  
+
+
+
+\end{document}%

@@ -29,6 +29,8 @@ open_table('layout hfill' );
           open_td( '', '', fc_link( 'katalog', "class=bigbutton,text=Lieferantenkatalog,lieferanten_id=$lieferanten_id" ) );
       }
       open_tr();
+        open_td( '', '', fc_link( 'catalogue_acronyms', "class=bigbutton,text=Katalog-Akronyme") );
+      open_tr();
         open_td( '', '', fc_link( 'self', "class=bigbutton,text=Seite aktualisieren" ) );
       open_tr();
         open_td( '', '', fc_link( 'index', "class=bigbutton" ) );

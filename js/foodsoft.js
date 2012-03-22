@@ -135,8 +135,17 @@ function handleTextFieldKeyPress(event, onEnter) {
       return;
     }
     event.stop(); // no submit
-    onEnter();
     event.findElement().select();
+    onEnter(true);
+}
+
+function installTextFieldChangeHandler(element, handler, captureEnter) {
+  captureEnter = typeof captureEnter === 'undefined' ? true : captureEnter;
+  element.on('change', function() {handler(false);} );
+  if (captureEnter)
+    element.on(
+        'keypress', 
+        function(event) {handleTextFieldKeyPress(event, handler);});
 }
 
 // experimenteller code - funktioniert noch nicht richtig...
@@ -189,9 +198,9 @@ var Scroller = Class.create({
     this.mKeyCode = 0;
     // generate closures
     var self = this;
-    this.mKeyPressHandler = function(event) { self.handleKey(event, Scroller.PRESS); };
-    this.mKeyDownHandler = function(event) { self.handleKey(event, Scroller.DOWN); };
-    this.mKeyUpHandler = function(event) { self.handleKey(event, Scroller.UP); };
+    this.mKeyPressHandler = function(event) {self.handleKey(event, Scroller.PRESS);};
+    this.mKeyDownHandler = function(event) {self.handleKey(event, Scroller.DOWN);};
+    this.mKeyUpHandler = function(event) {self.handleKey(event, Scroller.UP);};
   },
   setPageHeight: function(pageHeight) {
     this.mPageHeight = pageHeight;
@@ -273,6 +282,7 @@ Scroller.UP = 0;
 Scroller.DOWN = 1;
 Scroller.PRESS = 2;
 
+window.scroller = new Scroller();
 
 var MagicCalculator = Class.create(
 {
@@ -353,7 +363,7 @@ var MagicCalculator = Class.create(
     var fixPointFactor = (this.mNotInteger) ? 1000 : 1;
     
     var groupsSum = 0;
-    this.mGroupValues.each(function(x) { groupsSum += x });
+    this.mGroupValues.each(function(x) {groupsSum += x});
     var groupsTarget = this.mTotal - this.mBazaarTarget - this.mTrashValue;
     var ratio = groupsTarget / groupsSum;
     groupsSum = 0;
@@ -371,7 +381,7 @@ var MagicCalculator = Class.create(
     this.mBazaarValue = Math.round((this.mTotal - this.mTrashValue - groupsSum) * fixPointFactor);
     this.mBazaarTarget = Math.round(this.mBazaarTarget * fixPointFactor);
     // rounding fix-up: make array with same length initialized to zero
-    var roundingDistribution = this.mGroupValues.collect(function(x) { return 0; });
+    var roundingDistribution = this.mGroupValues.collect(function(x) {return 0;});
     while (this.mBazaarValue != this.mBazaarTarget) {
       // bazaar rest from rounding
       // direction +1: need to distribute more to groups
@@ -463,4 +473,157 @@ var MagicCalculator = Class.create(
   }
 });
 
-window.scroller = new Scroller();
+function bound(min, x, max) {
+  x = x < min ? min : x;
+  x = x > max ? max : x;
+  return x;
+}
+
+var SearchableSelect = Class.create({
+  initialize: function(selectElement, searchInput) {
+    var self = this;
+    this.mSelectElement = selectElement;
+    this.mSearchInput = searchInput;
+    this.mListEntries = [];
+    this.mVisibleEntries = [];
+    this.mCaseSensitive = false;
+    
+    installTextFieldChangeHandler(
+        this.mSearchInput, 
+        function() {self.filterList();});
+    this.mSelectElement.on('change', function() {self.emitSelection();});
+  },
+  updateText: function(entry) {
+    entry.data.setOption(entry.option);
+    entry.option.memo = entry.data;
+    if (this.mCaseSensitive)
+      entry.searchText = entry.option.text;
+    else
+      entry.searchText = entry.option.text.toLowerCase();
+  },
+  setEntries: function(entries) {
+    var self = this;
+    this.mListEntries = entries.collect(function(entry) {
+      return { 
+        data: entry,
+        option: document.createElement('option')
+      };
+    });
+    this.mListEntries.each(function(entry) {
+      self.updateText(entry);
+    });
+    this.mVisibleEntries = this.mListEntries.clone();
+    this.updateSelectElement();
+  },
+  appendEntry: function(entry) {
+    var newListEntry = {
+      data: entry,
+      option: document.createElement('option')
+    };
+    this.mListEntries.push(newListEntry);
+    this.updateText(newListEntry);
+    this.filterList();
+  },
+  remove: function(entry) {
+    var listEntry = this.mListEntries.detect(function(it) {
+      return it.data === entry;
+    });
+    this.mListEntries = this.mListEntries.without(listEntry);
+    this.mVisibleEntries = this.mVisibleEntries.without(listEntry);
+    var i = this.mSelectElement.selectedIndex;
+    this.updateSelectElement();
+    i = bound(0, i, this.mSelectElement.options.length - 1);
+    this.selectIndex(i);
+  },
+  selectIndex: function(index) {
+    if (index === this.mSelectElement.selectedIndex)
+      return;
+    this.mSelectElement.selectedIndex = index;
+    this.emitSelection();
+  },
+  select: function(entry) {
+    var self = this;
+    var found = false;
+    this.mVisibleEntries.each(function (listEntry, index) {
+      if (listEntry.data === entry) {
+        self.selectIndex(index);
+        found = true;
+        throw $break;
+      }
+    });
+    if (!found) {
+      // remove filter
+      if (this.mSearchInput.value !== '') {
+        this.mSearchInput.value = '';
+        this.filterList();
+        this.select(entry);
+      }
+      /*
+      // force append to visible list
+      this.mListEntries.each(function (listEntry) {
+        if (listEntry.data === entry) {
+          self.mVisibleEntries.push(listEntry);
+          self.updateSelectElement();
+          self.select(entry);
+          found = true;
+          throw $break;
+        }
+      });
+      */
+    }
+  },
+  moveSelection: function(delta) {
+    var oldIndex = this.mSelectElement.selectedIndex;
+    var newIndex = bound(
+        0,
+        oldIndex + delta,
+        this.mSelectElement.options.length - 1);
+    if (newIndex !== oldIndex) {
+      this.mSelectElement.selectedIndex = newIndex;
+      this.emitSelection();
+      return true;
+    }
+    return false;
+  },
+  updateEntry: function(entry) {
+    var listEntry = this.mListEntries.detect(function (x) {
+      return x.data === entry;
+    })
+    this.updateText(listEntry);
+  },
+  filterList: function() {
+    var searchText = this.mSearchInput.value;
+    if (!this.mCaseSensitive)
+      searchText = searchText.toLowerCase();
+    this.mVisibleEntries = this.mListEntries.findAll(function(entry) {
+      return ! (searchText.length && entry.searchText.indexOf(searchText) < 0);
+    });
+    this.updateSelectElement();
+  },
+  updateSelectElement: function() {
+    var self = this;
+    var currentMemo = this.currentMemo();
+    this.mSelectElement.innerHTML = '';
+    this.mVisibleEntries.each(function(entry) {
+      self.mSelectElement.appendChild(entry.option);
+      if (currentMemo === entry.option.memo) {
+        self.mSelectElement.selectedIndex 
+            = self.mSelectElement.options.length - 1;
+        self.emitSelection();
+      }
+    });
+  },
+  currentMemo: function() {
+    var selectedIndex = this.mSelectElement.selectedIndex;
+    return selectedIndex < 0 
+        ? null 
+        : this.mSelectElement.options[selectedIndex].memo;
+  },
+  emitSelection: function() {
+    this.mSelectElement.fire('option:selected', this.currentMemo());
+  }
+});
+
+function disableAutocomplete(element) {
+  element.setAttribute('autocomplete', 'off');
+}
