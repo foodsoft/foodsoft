@@ -1,6 +1,40 @@
 \definecolor{tabRowShading}{cmyk}{0,0,0,0.1}%
 %
 \newbox\memoryHole%  /dev/null for boxes
+\def\stopper{EOD}%   generic end-of-{list|string|stack|...} marker
+%
+%
+\newbox\truncHBoxOut%
+\newbox\truncHBoxTmp%
+\newdimen\truncHBoxLimit%
+%
+%
+\def\truncHBoxGo#1{%
+  \ifx\stopper#1%
+    \let\next\relax%
+  \else%
+    \global\setbox\truncHBoxTmp\copy\truncHBoxOut%
+    \global\setbox\truncHBoxTmp\hbox{\unhbox\truncHBoxTmp{}#1}%
+    \ifdim\truncHBoxLimit>\wd\truncHBoxTmp%
+      \global\setbox\truncHBoxOut\box\truncHBoxTmp%
+      \let\next\truncHBoxGo%
+    \else%
+      \let\next\relax%
+    \fi%
+  \fi%
+  \next%
+}
+\def\truncHBoxWorker#1{%
+  \global\setbox\truncHBoxOut\hbox{}%
+  \setbox\memoryHole\hbox{%
+    \truncHBoxGo#1\stopper\catcode`\ 10%
+  }%
+}%
+\def\truncHBox#1{%
+  \catcode`\ 13%   make spaces ungobbleable by TeX before feeding input to tokenizer
+  \truncHBoxLimit#1%
+  \truncHBoxWorker%
+}%
 %
 %
 % \reversevbox#1:

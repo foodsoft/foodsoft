@@ -1294,7 +1294,7 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
   $header = '';
 
   if( $spalten & PR_COL_NAME ) {
-    $format .= '&\hskip2ex #\hskip1ex plus1fil\vrule width0.3pt';
+    $format .= '&\hskip2ex\truncHBox{65mm}{#}\box\truncHBoxOut\hskip1ex plus1fil\vrule width0.3pt';
     $header .= '&Artikel';
   }
   if( $spalten & PR_COL_ANUMMER ) {
@@ -1355,7 +1355,7 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
 
     $zeile = '';
     if( $spalten & PR_COL_NAME ) {
-      $name = substr( $produkte_row['produkt_name'], 0, 36 );
+      $name = $produkte_row['produkt_name'];
       $zeile .= '&' . tex_encode( $name );
     }
     if( $spalten & PR_COL_ANUMMER ) {
