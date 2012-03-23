@@ -43,7 +43,6 @@ if ($action == 'update') {
     error("Cannot decode JSON $changes");
   }
   foreach ($decodedChanges as $change) {
-   var_dump($values);
     $values = array(
          'context' => htmlspecialchars( $change['context'], ENT_QUOTES, 'UTF-8' )
        , 'acronym' => htmlspecialchars( $change['acronym'], ENT_QUOTES, 'UTF-8' )
