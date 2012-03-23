@@ -3962,7 +3962,7 @@ function sql_insert_produktpreis (
   }
   need( $lv_faktor >= 0.001, "kein gueltiger Umrechnungsfaktor L-Einheit / V-Einheit" );
 
-  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, "'$start'" );
+  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
   if( $aktueller_preis ) {
     sql_update( 'produktpreise'
     , $aktueller_preis['id']
