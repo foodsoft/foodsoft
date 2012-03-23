@@ -44,7 +44,7 @@ function sql_selects( $table, $prefix = false ) {
 
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
-    open_div( 'alert', '', htmlspecialchars( $sql ) );
+    open_div( 'alert', '', htmlspecialchars( $sql, ENT_QUOTES, 'UTF-8' ) );
   }
   $result = mysql_query($sql);
   if( ! $result ) {
@@ -1575,7 +1575,7 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
         break;
       case 'not_in_order':
         if ($cond) {
-          $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = $cond";
+          $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = '$cond'";
           $filters['produkte.id'] = "!= ALL ($order_products_select)";
         }
         break;
@@ -3877,10 +3877,12 @@ function sql_aktueller_produktpreis_id( $produkt_id, $zeitpunkt = true ) {
   return $row ? $row['id'] : 0;
 }
 
-function select_current_productprice_id( $product_id, $timestamp = "NOW()" ) {
+function select_current_productprice_id( $product_id, $timestamp = true ) {
+  if( $timestamp === true )
+    $timestamp = $GLOBALS['mysqljetzt'];
   if ($timestamp) {
-    $zeitfilter = "AND (zeitende >= $timestamp OR ISNULL(zeitende)) "
-        . "AND (zeitstart <= $timestamp OR ISNULL(zeitstart))";
+    $zeitfilter = "AND (zeitende >= '$timestamp' OR ISNULL(zeitende)) "
+        . "AND (zeitstart <= '$timestamp' OR ISNULL(zeitstart))";
   } else {
     $zeitfilter = '';
   }
@@ -3968,7 +3970,7 @@ function sql_insert_produktpreis (
   }
   need( $lv_faktor >= 0.001, "kein gueltiger Umrechnungsfaktor L-Einheit / V-Einheit" );
 
-  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, "'$start'" );
+  $aktueller_preis = sql_aktueller_produktpreis( $produkt_id, $start );
   if( $aktueller_preis ) {
     sql_update( 'produktpreise'
     , $aktueller_preis['id']
@@ -4192,7 +4194,7 @@ function checkvalue( $val, $typ){
       case 'H':
         if( get_magic_quotes_gpc() )
           $val = stripslashes( $val );
-        $val = htmlspecialchars( $val );
+        $val = htmlspecialchars( $val, ENT_QUOTES, 'UTF-8' );
         break;
       case 'R':
         break;
@@ -4845,17 +4847,21 @@ function tex2pdf( $tex ) {
 function tex_encode( $s ) {
   $maps = array(
     '/\\\\/' => '\\backslash'
+  , '/\\&quot;/' => "''"
+  , '/\\&#039;/' => "'"
   , '/([$%_#~])/' => '\\\\$1'
   , '/\\&amp;/' => '\\&'
+  , '/\\&lt;/' => '$<$'
+  , '/\\&gt;/' => '$>$'
   , '/[}]/' => '$\}$'
   , '/[{]/' => '$\{$'
-  , '/ä/' => '\"a{}'
-  , '/Ä/' => '\"A{}'
-  , '/ö/' => '\"o{}'
-  , '/Ö/' => '\"O{}'
-  , '/ü/' => '\"u{}'
-  , '/Ü/' => '\"U{}'
-  , '/ß/' => '\ss{}'
+  , '/ä/' => '{\"a}'
+  , '/Ä/' => '{\"A}'
+  , '/ö/' => '{\"o}'
+  , '/Ö/' => '{\"O}'
+  , '/ü/' => '{\"u}'
+  , '/Ü/' => '{\"U}'
+  , '/ß/' => '{\ss}'
   , '/\\\\backslash/' => '\\$\\backslash{}\\$'
   );
   foreach( $maps as $pattern => $to ) {

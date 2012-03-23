@@ -740,17 +740,17 @@ function pick_group_text() {
       $row[$keyfield] = '';
     } else {
       if( $output )
-        echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
+        echo preg_replace('/&rowspan&/', $rowspan, $output, 1);
       $output = '';
       $last_key = $row[$keyfield];
       $rowspan = 1;
-      $row[$keyfield] = preg_replace( "/^<td/", "<td rowspan='@rowspan@' ", $row[$keyfield], 1 );
+      $row[$keyfield] = preg_replace( "/^<td/", "<td rowspan='&rowspan&' ", $row[$keyfield], 1 );
     }
     $output .= vsprintf( "<tr>$rowformat</tr>\n", $row );
 
   }
   if( $output )
-    echo preg_replace('/@rowspan@/', $rowspan, $output, 1);
+    echo preg_replace('/&rowspan&/', $rowspan, $output, 1);
 
   open_tr('summe');
     open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
@@ -1294,32 +1294,32 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
   $header = '';
 
   if( $spalten & PR_COL_NAME ) {
-    $format .= '&\hskip1ex #\hskip1ex plus1fil\vrule width0.3pt';
-    $header .= '& Artikel ';
+    $format .= '&\hskip2ex\truncHBox{65mm}{#}\box\truncHBoxOut\hskip1ex plus1fil\vrule width0.3pt';
+    $header .= '&Artikel';
   }
   if( $spalten & PR_COL_ANUMMER ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule width0.3pt';
-    $header .= '& Artikel-Nr ';
+    $format .= '&\hskip2ex plus1fil#\hskip1ex\vrule width0.3pt';
+    $header .= '&Artikel-Nr';
   }
   if( $spalten & PR_COL_BNUMMER ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule width0.3pt';
-    $header .= '& Bestell-Nr ';
+    $format .= '&\hskip2ex plus1fil#\hskip1ex\vrule width0.3pt';
+    $header .= '&Bestell-Nr';
   }
   if( $spalten & PR_COL_LIEFERMENGE ) {
-    $format .= '&\hskip1ex plus1fil#\hskip1pt&#\hskip1ex plus1fil\vrule width0.3pt';
-    $header .= '&\span Menge ';
+    $format .= '&\hskip2ex plus1fil#\hskip3pt&#\hskip1ex plus1fil\vrule width0.3pt';
+    $header .= '&\span Menge';
   }
   if( $spalten & PR_COL_LIEFERGEBINDE ) {
-    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule width0.3pt';
-    $header .= '&\span Gebinde ';
+    $format .= '&\hskip2ex plus1fil#\hskip3pt&{\scriptsize #}\hskip1ex plus1fil\vrule width0.3pt';
+    $header .= '&\span\normalsize Gebinde';
   }
   if( $spalten & PR_COL_LPREIS ) {
-    $format .= '&\hskip1ex plus1fil#\hskip3pt&{\small #}\hskip1ex plus1fil\vrule width0.3pt';
-    $header .= '&\span Einzelpreis ';
+    $format .= '&\hskip2ex plus1fil#\hskip3pt&{\scriptsize #}\hskip1ex plus1fil\vrule width0.3pt';
+    $header .= '&\span\normalsize\hskip-1ex Einzelpreis';
   };
   if( $spalten & PR_COL_NETTOSUMME ) {
     $format .= '&\hskip1ex plus1fil#\hskip1ex\vrule width0.3pt';
-    $header .= '& Gesamtpreis ';
+    $header .= '&Gesamtpreis';
   };
   $tabstart = '\halign{'.$format.'\cr'.$header.'\cr';
 
@@ -1329,10 +1329,6 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
 
   foreach( $produkte as $produkte_row ) {
     $produkt_id = $produkte_row['produkt_id'];
-
-    if( $produkte_row['menge_ist_null'] ) {
-      continue;
-    }
 
     // preise je V-einheit:
     $nettopreis = $produkte_row['nettopreis'];
@@ -1349,13 +1345,18 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
     $gebinde = $liefermenge / $gebindegroesse;
     $liefermenge_scaled = $liefermenge / $lv_faktor;
 
+    if( $gebinde < 1 ) {
+      continue;
+    }
+
     $nettogesamtpreis = $nettopreis * $liefermenge;
 
     $netto_summe += $nettogesamtpreis;
 
     $zeile = '';
     if( $spalten & PR_COL_NAME ) {
-      $zeile .= '&' . tex_encode( $produkte_row['produkt_name'] );
+      $name = $produkte_row['produkt_name'];
+      $zeile .= '&' . tex_encode( $name );
     }
     if( $spalten & PR_COL_ANUMMER ) {
       $zeile .= '&' . $produkte_row['artikelnummer'];
@@ -2186,6 +2187,12 @@ function catalogue_acronym_view( $editable ) {
   $acronyms = mysql2array( doSql ("SELECT * from catalogue_acronyms "
           . "ORDER BY context, acronym") );
   
+  $decoder = function($string) { return html_entity_decode($string, ENT_QUOTES, 'UTF-8' ); };
+  foreach ($acronyms as &$row)
+  {
+    $row = array_map($decoder, $row);
+  }
+    
   open_javascript(toJavaScript("var acronymParameters", $acronyms));
   
   $ui_form = open_form();
