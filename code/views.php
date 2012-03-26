@@ -2080,13 +2080,12 @@ function catalogue_acronym_view( $editable ) {
   $acronyms = mysql2array( doSql ("SELECT * from catalogue_acronyms "
           . "ORDER BY context, acronym") );
   
-  $decoder = function($string) { return html_entity_decode($string, ENT_QUOTES, 'UTF-8' ); };
-  foreach ($acronyms as &$row)
-  {
-    $row = array_map($decoder, $row);
-  }
-    
-  open_javascript(toJavaScript("var acronymParameters", $acronyms));
+  // $decoder = function($string) { return html_entity_decode($string, ENT_QUOTES, 'UTF-8' ); };
+  foreach( $acronyms as $n => $row )
+    foreach( $row as $name => $val )
+      $acronyms_decoded[ $n ][ $name ] = html_entity_decode( $val, ENT_QUOTES, 'UTF-8' );
+
+  open_javascript(toJavaScript("var acronymParameters", $acronyms_decoded ));
   
   $ui_form = open_form();
     $input_event_handlers = '';
