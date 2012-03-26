@@ -23,6 +23,7 @@ chmod 644 code/common.php
 chmod 644 code/config.php
 chmod 644 code/err_functions.php
 chmod 644 code/forms.php
+chmod 644 code/gravatar.php
 chmod 644 code/html.php
 chmod 644 code/inlinks.php
 chmod 644 code/katalogsuche.php
@@ -138,6 +139,7 @@ chmod 644 windows/katalog_upload.php
 chmod 644 windows/konto.php
 chmod 644 windows/lieferanten.php
 chmod 644 windows/lieferantenkonto.php
+chmod 644 windows/media.php
 chmod 644 windows/menu.php
 chmod 644 windows/pfandverpackungen.php
 chmod 644 windows/produkte.php

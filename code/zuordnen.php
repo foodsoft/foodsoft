@@ -123,7 +123,7 @@ function select_query( $table, $selects = '*', $joins = '', $filters = false, $o
 // }
 
 
-function sql_select_single_row( $sql, $allownull = false ) {
+function sql_select_single_row( $sql, $allownull = false, $result_type = MYSQL_ASSOC  ) {
   $result = doSql( $sql );
   $rows = mysql_num_rows($result);
   // echo "<br>$sql<br>rows: $rows<br>";
@@ -135,7 +135,7 @@ function sql_select_single_row( $sql, $allownull = false ) {
   }
   need( $rows > 0, "Kein Treffer bei Datenbanksuche: $sql" );
   need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig ($rows)" );
-  return mysql_fetch_array($result);
+  return mysql_fetch_array($result, $result_type);
 }
 
 function sql_select_single_field( $sql, $field, $allownull = false ) {
@@ -974,6 +974,9 @@ function select_gruppenmitglieder() {
          , gruppenmitglieder.rotationsplanposition as rotationsplanposition
          , gruppenmitglieder.aktiv as aktiv
          , gruppenmitglieder.sockeleinlage as sockeleinlage
+         , gruppenmitglieder.slogan as slogan
+         , gruppenmitglieder.url as url
+         , gruppenmitglieder.avatar_id as avatar_id
     FROM gruppenmitglieder
     JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
   ";
@@ -1210,11 +1213,16 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
   need( $daten['aktiv'], "Mitglied nicht aktiv" );
   $gruppen_id = $daten['gruppen_id'];
 
+  if (!is_null($daten['avatar_id']))
+    sql_media_delete($daten['avatar_id']);
+  
   sql_update( 'gruppenmitglieder', $gruppenmitglieder_id, array(
     'aktiv' => 0
-  , 'diensteinteilung' => 'freigestellt'
+  , 'diensteinteilung' => "'freigestellt'"
   , 'sockeleinlage' => 0.0
-  ) );
+  , 'avatar_id' => 'null'
+  ), false);
+  
   logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppennummer']} geloescht" );
 
   // sockelbetrag fuer mitglied rueckerstatten:
@@ -4687,11 +4695,31 @@ function update_database( $version ) {
               , ADD COLUMN `fc_strasse` text not null
               , ADD COLUMN `fc_ort` text not null
       " );
+  
 
       // doSql( "UPDATE `lieferanten` set fc_name='FoodCoop $foodcoop_name'" ); // not yet available!
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
       logger( 'update_database: update to version 25 successful' );
+
+ case 25:
+      logger( 'starting update_database: from version 25' );
+   
+      doSql( "CREATE TABLE `media` ("
+              . "  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY"
+              . ", `name` VARCHAR(255) NULL DEFAULT NULL"
+              . ", `mimetype` VARCHAR(255) NOT NULL DEFAULT 'application/octet-stream'"
+              . ", `data` MEDIUMBLOB NOT NULL"
+              . " ) ");
+
+      doSql( "ALTER TABLE `gruppenmitglieder`
+                ADD COLUMN `slogan` text not null 
+              , ADD COLUMN `url` text not null
+              , ADD COLUMN `avatar_id` int(11) null default null
+      " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
+      logger( 'update_database: update to version 26 successful' );
 
 /*
 	case n:
@@ -4973,6 +5001,53 @@ function move_html( $id, $into_id ) {
   // appendChild erzeugt _keine_ Kopie!
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
+}
+
+////////////////////////////////////
+//
+// media
+//
+////////////////////////////////////
+function sql_media( $id ) {
+  return sql_select_single_row(
+          "SELECT id, name, mimetype, data FROM media WHERE id=$id");
+}
+
+function sql_media_store( $mimetype, $data, $name = false ) {
+  $values = array('mimetype' => $mimetype, 'data' => $data);
+  if ($name) 
+    $values['name'] = $name;
+  return sql_insert('media', $values);
+}
+
+function sql_media_delete( $id ) {
+  doSql( "DELETE FROM media WHERE id = $id" );
+}
+
+
+////////////////////////////////////
+//
+// social
+//
+////////////////////////////////////
+
+function get_avatar_url( $member_row ) {
+  if (!is_null($member_row['avatar_id']))
+    return fc_link( 'media', "context=action,id={$member_row['avatar_id']}" );
+  $d = '404';
+  $email = $member_row['email'];
+  /*
+  if ($member_row['slogan'] || $member_row['url']) {
+    $d = 'identicon';
+    if (!$email) {
+      $d = 'mm';
+      $email = true;
+    }
+  }
+  */
+  if (!$email)
+    return false;
+  return checked_gravatar_url($email, 128, $d);
 }
 
 ?>

@@ -86,6 +86,7 @@ global $angemeldet, $login_gruppen_id, $login_gruppen_name, $login_dienst, $coop
 $angemeldet = false;
 
 require_once('structure.php');
+require_once('code/gravatar.php');
 require_once('code/views.php');
 require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
