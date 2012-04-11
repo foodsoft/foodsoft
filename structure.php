@@ -585,14 +585,8 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
-    , 'photo_data' => array(
+    , 'photo_url' => array(
         'type' => 'mediumtext'
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'photo_mimetype' => array(
-        'type' => 'text'
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
