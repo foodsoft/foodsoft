@@ -23,6 +23,7 @@ if( hat_dienst(5) and ! $readonly ) {
 }
 
 $pwmsg = '';
+$avatar_msg = '';
 
 // ggf. Aktionen durchführen (z.B. Gruppe löschen...)
 get_http_var('action','w','');
@@ -48,6 +49,9 @@ switch( $action ) {
       get_http_var( "name_$id", 'H', $row['name'] );
       get_http_var( "email_$id", 'H', $row['email'] );
       get_http_var( "telefon_$id", 'H', $row['telefon'] );
+      get_http_var( "slogan_$id", 'H', $row['slogan'] );
+      get_http_var( "url_$id", 'H', $row['url'] );
+      get_http_var( "avatar_delete_$id", 'u', 0 );
       if( $edit_dienst_einteilung ) {
         get_http_var( "dienst_$id", 'H', $row['diensteinteilung'] );
       } else {
@@ -59,7 +63,52 @@ switch( $action ) {
       , 'email' => ${"email_$id"}
       , 'telefon' => ${"telefon_$id"}
       , 'diensteinteilung' => ${"dienst_$id"}
+      , 'slogan' => ${"slogan_$id"}
+      , 'url' => ${"url_$id"}
       ) );
+
+      if( ${"avatar_delete_$id"} ) {
+        sql_update( 'gruppenmitglieder', $id, array( 'photo_url' => '' ) );
+        $row['photo_url'] = '';
+      }
+
+      while( isset($_FILES["avatar_$id"]) ) {
+        $avatar_upload = $_FILES["avatar_$id"];
+        if( ! $avatar_upload['size'] ) {
+          break;
+        }
+        if( $avatar_upload['error'] ) {
+          $avatar_msg .= "<div class='warn' style='padding:1em;'>Hochladen der Bilddatei fehlgeschlagen!</div>";
+          break;
+        }
+        if( filesize( $avatar_upload['tmp_name'] ) > 0x40000 ) {
+          $avatar_msg .= "<div class='warn' style='padding:1em;'>Bilddatei zu gross (Limit: 256kB)!</div>";
+          break;
+        }
+        $data = base64_encode( file_get_contents( $avatar_upload['tmp_name'] ) );
+        if( ( $avatar_upload['type'] == 'image/jpeg' ) && ! strncmp( $data, '/9j/4', 5 ) ) {
+          $mimetype = 'image/jpeg';
+        } else if( ( $avatar_upload['type'] == 'image/png' ) && ! strncmp( $data, 'iVBOR', 5 ) ) {
+          $mimetype = 'image/png';
+        } else {
+          $avatar_msg .= "<div class='warn' style='padding:1em;'>Bilddatei: Dateityp nicht unterstützt (bitte nur JPEG oder PNG!)(</div>";
+          break;
+        }
+       $imagesize = getimagesize( $avatar_upload['tmp_name'] );
+        if( ! $imagesize ) {
+          $avatar_msg .= "<div class='warn' style='padding:1em;'>Kann Bildgröße nicht bestimmen</div>";
+          break;
+        }
+        if( $imagesize[0] > 128 || $imagesize[1] > 192  ) {
+          $avatar_msg .= "<div class='warn' style='padding:1em;'>"
+            . "Bild zu groß ({$imagesize[0]} x {$imagesize[1]} Pixel, max. 128 x 192 Pixel)!"
+            . "</div>";
+          break;
+        }
+        sql_update( 'gruppenmitglieder', $id, array( 'photo_url' => "data:$mimetype;base64," . $data ) );
+
+        break;
+      }
     }
     if( hat_dienst(5) ) {
       get_http_var( 'gruppenname', 'H', sql_gruppenname( $gruppen_id ) );
@@ -90,7 +139,9 @@ open_fieldset( 'small_form', '', 'Gruppe '.$gruppenname.' ('.sql_gruppennummer($
 
 medskip();
 
-membertable_view( $gruppen_id, $edit_names , $edit_dienst_einteilung);
+echo $avatar_msg;
+
+memberform_view( $gruppen_id, $edit_names, $edit_dienst_einteilung );
 
 medskip();
 if( hat_dienst(5) and ! $readonly ) {

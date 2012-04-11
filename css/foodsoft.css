@@ -230,7 +230,7 @@ li {
 .large {
   font-size:larger;
 }
-.hfill {
+.hfill, td.hfill input[type='text'] {
   width:100%;
 }
 
@@ -946,4 +946,9 @@ div#footbar {
 
 .norightmargin {
   margin-right: 0px !important;
+}
+
+img.avatar {
+  border: solid black 1px;
+  margin: 3px;
 }

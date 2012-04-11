@@ -573,6 +573,30 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
+    , 'slogan' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'url' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'photo_data' => array(
+        'type' => 'mediumtext'
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
+    , 'photo_mimetype' => array(
+        'type' => 'text'
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

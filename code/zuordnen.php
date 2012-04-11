@@ -123,7 +123,7 @@ function select_query( $table, $selects = '*', $joins = '', $filters = false, $o
 // }
 
 
-function sql_select_single_row( $sql, $allownull = false ) {
+function sql_select_single_row( $sql, $allownull = false, $result_type = MYSQL_ASSOC ) {
   $result = doSql( $sql );
   $rows = mysql_num_rows($result);
   // echo "<br>$sql<br>rows: $rows<br>";
@@ -135,7 +135,7 @@ function sql_select_single_row( $sql, $allownull = false ) {
   }
   need( $rows > 0, "Kein Treffer bei Datenbanksuche: $sql" );
   need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig ($rows)" );
-  return mysql_fetch_array($result);
+  return mysql_fetch_array($result, $result_type);
 }
 
 function sql_select_single_field( $sql, $field, $allownull = false ) {
@@ -974,6 +974,9 @@ function select_gruppenmitglieder() {
          , gruppenmitglieder.rotationsplanposition as rotationsplanposition
          , gruppenmitglieder.aktiv as aktiv
          , gruppenmitglieder.sockeleinlage as sockeleinlage
+         , gruppenmitglieder.slogan as slogan
+         , gruppenmitglieder.url as url
+         , gruppenmitglieder.photo_url as photo_url
     FROM gruppenmitglieder
     JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
   ";
@@ -1011,6 +1014,13 @@ function query_gruppen( $op, $keys = array(), $using = array(), $orderby = false
           AND gruppenmitglieder.gruppen_id = bestellgruppen.id
       ) as mitgliederzahl
   ';
+  $selects[] = "
+    ( SELECT count(*) FROM gruppenmitglieder
+        WHERE gruppenmitglieder.aktiv
+          AND gruppenmitglieder.gruppen_id = bestellgruppen.id
+          AND gruppenmitglieder.photo_url != ''
+    ) as avatars_count
+  ";
   $selects[] = 'bestellgruppen.id % 1000 as gruppennummer';
 
   foreach( $keys as $key => $cond ) {
@@ -1214,7 +1224,9 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     'aktiv' => 0
   , 'diensteinteilung' => 'freigestellt'
   , 'sockeleinlage' => 0.0
+  , 'photo_url' => ''
   ) );
+
   logger( "Gruppenmitglied $gruppenmitglieder_id ({$daten['vorname']}) aus Gruppe {$daten['gruppennummer']} geloescht" );
 
   // sockelbetrag fuer mitglied rueckerstatten:
@@ -4693,6 +4705,18 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
       logger( 'update_database: update to version 25 successful' );
 
+ case 25:
+      logger( 'starting update_database: from version 25' );
+
+      doSql( "ALTER TABLE `gruppenmitglieder`
+                ADD COLUMN `slogan` text not null 
+              , ADD COLUMN `url` text not null
+              , ADD COLUMN `photo_url` mediumtext not null
+      " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
+      logger( 'update_database: update to version 26 successful' );
+
 /*
 	case n:
 		$sql = "
@@ -4973,6 +4997,34 @@ function move_html( $id, $into_id ) {
   // appendChild erzeugt _keine_ Kopie!
   // das urspruengliche element verschwindet, also ist das explizite loeschen unnoetig:
   //   document.getElementById('$id').removeChild(child_$autoid);
+}
+
+
+////////////////////////////////////
+//
+// social
+//
+////////////////////////////////////
+
+function get_avatar_url( $member_row ) {
+
+  return $member_row['photo_url'];
+
+//   $d = '404';
+//   $email = $member_row['email'];
+//   /*
+//   if ($member_row['slogan'] || $member_row['url']) {
+//     $d = 'identicon';
+//     if (!$email) {
+//       $d = 'mm';
+//       $email = true;
+//     }
+//   }
+//   */
+//   if (!$email)
+//     return false;
+//   return checked_gravatar_url($email, 128, $d);
+
 }
 
 ?>

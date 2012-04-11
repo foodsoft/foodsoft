@@ -53,6 +53,33 @@ open_table( 'layout hfill' );
         close_div();
       close_form();
     }
+
+  /* social column */
+  if( $member_showcase_count ) {
+    open_td( '', 'rowspan=2');
+      bigskip();
+      $random_group_members = sql_gruppenmitglieder('true', 'rand()');
+
+      $pick_count = 0;
+
+      open_table( 'menu' );
+        open_tr();
+          open_td( 'center' );
+            echo $member_showcase_title;
+      foreach ($random_group_members as $member) {
+        $member['avatar_url'] = get_avatar_url($member);
+        if (!$member['avatar_url'])
+          continue;
+        open_tr();
+          open_td();
+            avatar_view($member);
+        if (++$pick_count >= $member_showcase_count)
+          break;
+      }
+      close_table();
+  }
+
+
   open_tr();
   open_td();
 

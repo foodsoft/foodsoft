@@ -2032,6 +2032,118 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
     close_form();
 }
 
+/*
+ * Zeigt die Gruppenmitglieder einer Gruppe als Formularansicht an.
+ * Argument: sql_members($group_id)
+ */
+function memberform_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE) {
+
+  $gruppendaten = sql_gruppe( $gruppen_id );
+  if( ! $editable && ! $gruppendaten['avatars_count'] ) {
+    // no photos - fallback to compact view:
+    return membertable_view( $gruppen_id );
+  }
+
+  if( $editable or $super_edit )
+    open_form( array( 'attr' => 'enctype="multipart/form-data"' ), 'action=edit' );
+
+  open_fieldset( 'small_form', '', $super_edit ? 'Gruppendaten:' : 'Mitglieder:' );
+    if( $super_edit ) {
+      open_div( 'medskip bold' );
+        open_span( 'left', '', "Gruppenname: " . string_view( sql_gruppenname( $gruppen_id ), 24, 'gruppenname' ) );
+        open_span( 'qquad', '', "Sockeleinlage für Gruppe: " . price_view( $gruppendaten['sockeleinlage_gruppe'] ) );
+      close_div();
+      medskip();
+    }
+
+    foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
+      $id = $row['gruppenmitglieder_id'];
+      $row['avatar_url'] = get_avatar_url($row);
+      open_div( 'floatright' );
+        avatar_view($row);
+      close_div();
+
+      open_table('form');
+        open_tag('col', '', '', '');
+        open_tag('col', 'hfill', '', '');
+        open_tr();
+          open_td( '', '', 'Vorname: ');
+          open_td( 'hfill', '', string_view( $row['vorname'], 10, $editable ? "vorname_$id" : false ) );
+        open_tr();
+          open_td( '', '', 'Name: ' );
+          open_td( 'hfill', '', string_view( $row['name'], 16, $editable ? "name_$id" : false ) );
+        open_tr();
+          open_td( '', '', 'Mail: ' );
+          open_td( 'hfill', '', string_view( $row['email'], 20, $editable ? "email_$id" : false ) );
+        open_tr();
+          open_td( '', '', 'Telefon: ' );
+          open_td( 'hfill', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
+        if ($editable) {
+          open_tr();
+            open_td( '', '', 'Slogan: ' );
+            open_td( 'hfill', '', string_view( $row['slogan'], 80, $editable ? "slogan_$id" : false ) );
+          open_tr();
+            open_td( '', '', 'URL: ' );
+            open_td( 'hfill', '', string_view( $row['url'], 255, $editable ? "url_$id" : false ) );
+          open_tr();
+            open_td( '', '', 'Bild: ' );
+            open_td( '', '');
+              open_tag('input', '', "name='avatar_$id' type='file' size='40' maxlength='256000' accept='image/jpg,image/png'", '');
+              open_tag('input', '', "name='avatar_delete_$id' type='checkbox' value='1'", 'löschen');
+        }
+        open_tr();
+          open_td( '', '', 'Diensteinteilung: ' );
+          if($super_edit){
+            open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
+          } else {
+            open_td( '', '',  $row['diensteinteilung'] );
+          }
+        if($super_edit) {
+          open_tr();
+            open_td( '', '', 'Sockeleinlage: ' );
+            open_td( '', '', price_view( $row['sockeleinlage'] ) );
+          open_tr();
+            open_td( '', '', 'Aktionen: ' );
+            open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Gruppenmitglied löschen'
+                                             , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
+                                      , array( 'action' => 'delete', 'person_id' => $id ) ) );
+        }
+      close_table();
+      medskip();
+    }
+
+    if($super_edit or $editable) {
+      open_div( 'right medskip' );
+        submission_button();
+      close_div();
+    }
+
+  close_fieldset();
+  
+  if( $editable or $super_edit )
+    close_form();
+}
+
+function avatar_view( $member_row ) {
+  $url = $member_row['url'];
+  $slogan = $member_row['slogan'];
+
+  if( ! $member_row['avatar_url'] )
+    return;
+
+  open_div( 'center' );
+    if ($url)
+      open_tag( 'a', '', "href='$url'" );
+    open_tag( 'img', 'avatar', "src='{$member_row['avatar_url']}'", '');
+    open_div('', "title='{$member_row['gruppenname']}'", "{$member_row['vorname']} ({$member_row['gruppennummer']})");
+    if ($url)
+      close_tag( 'a' );
+    open_div('small', '', "Dienst {$member_row['diensteinteilung']}");
+    open_div('small italic', 'style="width:150px;"', $slogan);
+  close_div(); 
+
+}
+
 function join_details( &$details, $prefix, $value, $context = false ) {
   if ( $value )
   {
