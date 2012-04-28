@@ -4717,6 +4717,23 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
       logger( 'update_database: update to version 26 successful' );
 
+case 26:
+      logger( 'starting update_database: from version 26' );
+
+      sql_insert( 'leitvariable', array(
+        'name' => 'member_showcase_count'
+      , 'value' => '3'
+      , 'comment' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
+      ) );
+      sql_insert( 'leitvariable', array(
+        'name' => 'member_showcase_title'
+      , 'value' => '<b>Ein paar von uns</b>'
+      , 'comment' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+      ) );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 27 ) );
+      logger( 'update_database: update to version 27 successful' );
+
 /*
 	case n:
 		$sql = "
