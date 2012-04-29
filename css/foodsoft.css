@@ -951,4 +951,6 @@ div#footbar {
 img.avatar {
   border: solid black 1px;
   margin: 3px;
+  max-width:72px;
+  max-height:96px;
 }

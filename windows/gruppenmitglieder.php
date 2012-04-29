@@ -81,8 +81,8 @@ switch( $action ) {
           $avatar_msg .= "<div class='warn' style='padding:1em;'>Hochladen der Bilddatei fehlgeschlagen!</div>";
           break;
         }
-        if( filesize( $avatar_upload['tmp_name'] ) > 0x40000 ) {
-          $avatar_msg .= "<div class='warn' style='padding:1em;'>Bilddatei zu gross (Limit: 256kB)!</div>";
+        if( filesize( $avatar_upload['tmp_name'] ) > 0x20000 ) {
+          $avatar_msg .= "<div class='warn' style='padding:1em;'>Bilddatei zu gross (Limit: 128kB)!</div>";
           break;
         }
         $data = base64_encode( file_get_contents( $avatar_upload['tmp_name'] ) );
@@ -99,11 +99,13 @@ switch( $action ) {
           $avatar_msg .= "<div class='warn' style='padding:1em;'>Kann Bildgröße nicht bestimmen</div>";
           break;
         }
-        if( $imagesize[0] > 128 || $imagesize[1] > 192  ) {
-          $avatar_msg .= "<div class='warn' style='padding:1em;'>"
-            . "Bild zu groß ({$imagesize[0]} x {$imagesize[1]} Pixel, max. 128 x 192 Pixel)!"
-            . "</div>";
-          break;
+        if( $mimetype === 'image/png' ) {
+          if( $imagesize[0] > 128 || $imagesize[1] > 192  ) {
+            $avatar_msg .= "<div class='warn' style='padding:1em;'>"
+              . "Bild zu groß ({$imagesize[0]} x {$imagesize[1]} Pixel, max. 128 x 192 Pixel)!"
+              . "</div>";
+            break;
+          }
         }
         sql_update( 'gruppenmitglieder', $id, array( 'photo_url' => "data:$mimetype;base64," . $data ) );
 
