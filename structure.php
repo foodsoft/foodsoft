@@ -851,6 +851,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
+    , 'bestellfaxspalten' => array(
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '534541'
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

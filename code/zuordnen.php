@@ -4132,6 +4132,7 @@ $foodsoft_get_vars = array(
 , 'confirmed' => 'w'
 , 'detail' => 'w'
 , 'download' => 'w'
+, 'faxspalten' => 'u'
 , 'gruppen_id' => 'u'
 , 'id' => 'u'
 , 'id_to' => 'u'
@@ -4734,6 +4735,14 @@ case 26:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 27 ) );
       logger( 'update_database: update to version 27 successful' );
 
+  case 27:
+      logger( 'starting update_database: from version 27' );
+
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `bestellfaxspalten` int(11) not null default 534541" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 28 ) );
+      logger( 'update_database: update to version 28 successful' );
+      
 /*
 	case n:
 		$sql = "
