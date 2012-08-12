@@ -87,22 +87,6 @@ switch( $action ) {
     }
     break;
 
-  case 'faxansicht_save':
-    sql_update( 'lieferanten', $lieferant['id'], array(
-      'strasse' => $lieferant_strasse
-    , 'ort' => $lieferant_ort
-    , 'fax' => $lieferant_fax
-    , 'mail' => $lieferant_email
-    , 'anrede' => $lieferant_anrede
-    , 'grussformel' => $lieferant_grussformel
-    , 'fc_name' => $fc_name
-    , 'fc_strasse' => $fc_strasse
-    , 'fc_ort' => $fc_ort
-    , 'kundennummer' => $fc_kundennummer
-    ) );
-
-    break;
-
   default:
     break;
 }
@@ -163,38 +147,6 @@ if( hat_dienst(0) ) {
 get_http_var( 'spalten', 'w', $default_spalten, true );
 
 
-get_http_var( 'export', 'w', '' );
-if( $export == 'bestellschein' ) {
-  fc_openwindow( 'self', 'window_id=pdf,download=bestellschein' );
-}
-
-if( isset( $download ) && ( $download == 'bestellschein' ) ) {
-  $fc_kundennummer = trim( $fc_kundennummer );
-
-  $tex = file_get_contents( 'templates/bestellschein.tex' );
-  foreach( array( 'lieferant_name', 'lieferant_strasse', 'lieferant_ort', 'lieferant_fax'
-                , 'lieferant_email' , 'lieferant_anrede', 'lieferant_grussformel'
-                , 'fc_kundennummer' , 'fc_name', 'fc_strasse', 'fc_ort'
-                , 'besteller_name', 'lieferdatum_trad'
-  ) as $field ) {
-    $tex = preg_replace( "/@@$field@@/", tex_encode( $GLOBALS[ $field ] ) , $tex );
-  }
-  $tex = preg_replace( '/@@tabelle@@/', bestellfax_tex( $bestell_id, $spalten ), $tex );
-  // file_put_contents( '/tmp/b.tex', $tex );
-  if( ( $pdf = tex2pdf( $tex ) ) ) {
-    $downloadname = 'Bestellschein.pdf';
-    // header("Content-Type: text/plain");
-    // echo $tex;
-    header( 'Content-Type: application/pdf' );
-    header( "Content-Disposition: filename=$downloadname" );
-    echo $pdf;
-    return;
-  } else {
-    header( 'Content-Type: text/html' );
-    open_div( 'warn', '', 'Konvertierung nach PDF fehlgeschlagen' );
-  }
-}
-
 
 $abrechnung_id = $bestellung['abrechnung_id'];
 $bestell_id_set = sql_abrechnung_set( $abrechnung_id );
@@ -213,162 +165,62 @@ open_table( 'layout hfill' );
 close_table();
 
 
-if( ( $faxansicht = ( $spalten & PR_FAXANSICHT ) ) ) {
 
-  echo "<h1>$title - Faxansicht</h1>";
-  $gruppen_id = 0;
-  $editable = false;
+echo "<h1>$title</h1>";
 
-  $faxspalten = $spalten & PR_FAXOPTIONS;
+open_option_menu_row();
+  open_td( '', '', 'Gruppenansicht:' );
+  open_td();
+    open_select( 'gruppen_id', 'autoreload' );
+      $keys = array( 'bestell_id' => $bestell_id );
+      if( ! hat_dienst(4) )
+        $keys['where'] = "bestellgruppen.id in ( $login_gruppen_id, ".sql_muell_id().", ".sql_basar_id()." )";
+      echo optionen_gruppen( $gruppen_id, $keys, "Alle (Gesamtbestellung)" );
+    close_select();
+close_option_menu_row();
 
-  if( $lieferant['katalogformat'] == 'bnn' ) {
-    // die b-nummern sind eigentlich a-nummern (in zukunft besser gar nicht erfassen?):
-    if( $spalten & PR_COL_BNUMMER ) {
-      open_div( 'warn medskip', '', 'WARNUNG: Katalogformat BNN kennt keine Bestellnummern - die angezeigten B-Nummern sind eigentlich A-Nummern!' );
-      bigskip();
+medskip();
+bestellschein_view(
+  $bestell_id,
+  $editable,   // Liefermengen edieren zulassen?
+  $editable,   // Preise edieren zulassen?
+  $spalten,    // welche Tabellenspalten anzeigen
+  $gruppen_id, // Gruppenansicht (0: alle)
+  true,        // angezeigte Spalten auswaehlen lassen
+  true         // Option: Anzeige nichtgelieferte zulassen
+);
+
+medskip();
+switch( $status ) {
+  case STATUS_LIEFERANT:
+  case STATUS_VERTEILT:
+    if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
+      open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
+        open_form( '', 'action=insert' );
+          open_div( 'kommentar' )
+            ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
+            open_ul();
+              open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
+              open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
+            close_ul();
+          close_div();
+          select_products_not_in_list($bestell_id);
+          // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
+          // (die haengt von der auswahl in obiger Produktliste ab!)
+          // ?> <label>Menge:</label> <?php
+          // echo int_view( 1, 'menge' );
+          submission_button();
+        close_form();
+      close_fieldset();
     }
-  }
-
-  $faxform_id = open_form( '', 'action=faxansicht_save,export=' );
-
-    open_table();
-      open_tr();
-        open_th( 'medskip', '', 'Lieferanschrift: ' );
-        open_th( 'quad medskip', '', 'Name:' );
-        open_td( 'quad medskip', '', string_view( $fc_name, 40, 'fc_name' ) );
-      open_tr();
-        open_th();
-        open_th( 'quad medskip', '', 'Kundennummer:' );
-        open_td( 'quad medskip', '', string_view( $fc_kundennummer, 40, 'fc_kundennummer' ) );
-      open_tr();
-        open_th();
-        open_th( 'quad smallskip', '', 'Strasse:' );
-        open_td( 'quad smallskip', '', string_view( $fc_strasse, 40, 'fc_strasse' ) );
-      open_tr();
-        open_th();
-        open_th( 'quad smallskip', '', 'Ort:' );
-        open_td( 'quad smallskip', '', string_view( $fc_ort, 40, 'fc_ort' ) );
-      open_tr();
-        open_th( 'bigskip', '', 'Lieferant:' );
-        open_th( 'quad bigskip', '', 'Name:' );
-        open_td( 'quad bigskip', '', string_view( $lieferant_name, 40, 'lieferant_name' ) );
-      open_tr( '' );
-        open_th();
-        open_th( 'quad smallskip', '', 'Strasse:' );
-        open_td( 'quad smallskip', '', string_view( $lieferant_strasse, 40, 'lieferant_strasse' ) );
-      open_tr( '' );
-        open_th();
-        open_th( 'quad smallskip', '', 'Ort:' );
-        open_td( 'quad smallskip', '', string_view( $lieferant_ort, 40, 'lieferant_ort' ) );
-      open_tr( '' );
-        open_th();
-        open_th( 'quad smallskip', '', 'Fax:' );
-        open_td( 'quad smallskip', '', string_view( $lieferant_fax, 40, 'lieferant_fax' ) );
-      open_tr( '' );
-        open_th();
-        open_th( 'quad smallskip', '', 'email:' );
-        open_td( 'quad smallskip', '', string_view( $lieferant_email, 40, 'lieferant_email' ) );
-      open_tr();
-        open_th();
-        open_th( 'bigskip', '', 'Anrede:' );
-        open_td( 'quad bigskip', "colspan='1'", string_view( $lieferant_anrede, 40, 'lieferant_anrede' ) );
-
-      open_tr();
-        open_th( 'smallskip' );
-        open_th( 'smallskip' );
-        open_td( 'quad smallskip', '', "zur Lieferung am $lieferdatum_trad bestellen wir:" );
-
-    close_table();
-
-
-    bigskip();
-    bestellschein_view(
-      $bestell_id 
-    , false    // Mengen...
-    , false    // ... und Preise hier _nicht_ edieren lassen
-    , $faxspalten // nur teilmenge erlauben
-    , 0        // Gruppenansicht: alle
-    , true     // angezeigte Spalten auswaehlen lassen
-    , false    // nichtgelieferte nicht anzeigen
-    );
-
-    bigskip();
-    open_table();
-      open_tr();
-        open_th( 'medskip', '', 'Grußformel:' );
-        open_td( 'medskip qquad', '', string_view( $lieferant_grussformel, 40, 'lieferant_grussformel' ) );
-      open_tr();
-        open_th( 'bigskip', '', 'Name Besteller:' );
-        open_td( 'bigskip qquad', '', string_view( $besteller_name, 40, 'besteller_name' ) );
-    close_table();
-
-  close_form();
-
-  open_div( 'right medskip' );
-    open_span( 'qquad button', "onclick=\"f=document.forms.form_$faxform_id;f.elements.export.value='bestellschein';f.submit();\"", 'PDF erzeugen' );
-    open_span( 'qquad button', "onclick='document.forms.form_$faxform_id.submit();'", 'Speichern' );
-  close_div()    ;
-
-
-} else {
-
-  echo "<h1>$title</h1>";
-
-  open_option_menu_row();
-    open_td( '', '', 'Gruppenansicht:' );
-    open_td();
-      open_select( 'gruppen_id', 'autoreload' );
-        $keys = array( 'bestell_id' => $bestell_id );
-        if( ! hat_dienst(4) )
-          $keys['where'] = "bestellgruppen.id in ( $login_gruppen_id, ".sql_muell_id().", ".sql_basar_id()." )";
-        echo optionen_gruppen( $gruppen_id, $keys, "Alle (Gesamtbestellung)" );
-      close_select();
-  close_option_menu_row();
-
-  medskip();
-  bestellschein_view(
-    $bestell_id,
-    $editable,   // Liefermengen edieren zulassen?
-    $editable,   // Preise edieren zulassen?
-    $spalten,    // welche Tabellenspalten anzeigen
-    $gruppen_id, // Gruppenansicht (0: alle)
-    true,        // angezeigte Spalten auswaehlen lassen
-    true         // Option: Anzeige nichtgelieferte zulassen
-  );
-
-  medskip();
-  switch( $status ) {
-    case STATUS_LIEFERANT:
-    case STATUS_VERTEILT:
-      if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
-        open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
-          open_form( '', 'action=insert' );
-            open_div( 'kommentar' )
-              ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
-              open_ul();
-                open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
-                open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
-              close_ul();
-            close_div();
-            select_products_not_in_list($bestell_id);
-            // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
-            // (die haengt von der auswahl in obiger Produktliste ab!)
-            // ?> <label>Menge:</label> <?php
-            // echo int_view( 1, 'menge' );
-            submission_button();
-          close_form();
-        close_fieldset();
-      }
-      break;
-    default:
-      break;
-  }
+    break;
+  default:
+    break;
 }
 
 if( hat_dienst( 4 ) && ( $status > STATUS_BESTELLEN ) && ( $status < STATUS_ABGERECHNET ) ) {
   open_option_menu_row();
-      open_td( '', "colspan='2'" );
-        option_checkbox( 'spalten', PR_FAXANSICHT, "Bestellfax Ansicht" );
+    open_td( '', "colspan='2'", fc_link( 'bestellfax', "class=qquad href,bestell_id=$bestell_id,text=zur Faxansicht..." ) );
   close_option_menu_row();
 }
 

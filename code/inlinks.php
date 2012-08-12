@@ -182,6 +182,12 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'browse';
       $options = $large_window_options;
       break;
+    case 'bestellfax':
+      $parameters['window'] = 'bestellfax';
+      $parameters['window_id'] = 'bestellschein';
+      $parameters['class'] = 'browse';
+      $options = $large_window_options;
+      break;
     case 'gesamtlieferschein':
       $parameters['window'] = 'gesamtlieferschein';
       $parameters['window_id'] = 'bestellschein';
