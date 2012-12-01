@@ -115,6 +115,7 @@ chmod 644 windows/artikelsuche.php
 chmod 644 windows/basar.php
 chmod 644 windows/bestellen.php
 chmod 644 windows/bestellen.php.neu
+chmod 644 windows/bestellfax.php
 chmod 644 windows/bestellschein.php
 chmod 644 windows/bestellungen.php
 chmod 644 windows/bilanz.php
