@@ -62,6 +62,7 @@ switch( $action ) {
     , 'kundennummer' => $fc_kundennummer
     , 'bestellfaxspalten' => $spalten
     ) );
+    $lieferant = sql_lieferant( $bestellung['lieferanten_id'] );
 
     break;
 
@@ -119,8 +120,13 @@ $editable = false;
 if( $lieferant['katalogformat'] == 'bnn' ) {
   // die b-nummern sind eigentlich a-nummern (in zukunft besser gar nicht erfassen?):
   if( $spalten & PR_COL_BNUMMER ) {
-    open_div( 'warn medskip', '', 'WARNUNG: Katalogformat BNN kennt keine Bestellnummern - die angezeigten B-Nummern sind eigentlich A-Nummern!' );
-    bigskip();
+    if( $spalten & PR_COL_BNUMMER ) {
+      $spalten = $self_fields['spalten'] = ( ( $spalten | PR_COL_ANUMMER ) & ~ PR_COL_BNUMMER );
+      $msg = 'WARNUNG: Katalogformat BNN kennt keine Bestellnummern - Spaltenauswahl wurde korrigiert!';
+      open_div( 'warn medskip', '', $spalten . $msg );
+      bigskip();
+      $js_on_exit[] = "alert('$msg');";
+    }
   }
 }
 
@@ -194,14 +200,15 @@ $faxform_id = open_form( '', 'action=faxansicht_save,export=' );
       open_td( 'medskip qquad', '', string_view( $lieferant_grussformel, 40, 'lieferant_grussformel' ) );
     open_tr();
       open_th( 'bigskip', '', 'Name Besteller:' );
-      open_td( 'bigskip qquad', '', string_view( $besteller_name, 40, 'besteller_name' ) );
+      open_td( 'bigskip qquad', '', string_view( $besteller_name ) );
   close_table();
 
 close_form();
 
 open_div( 'right medskip' );
-  open_span( 'qquad button', "onclick=\"f=document.forms.form_$faxform_id;f.elements.export.value='bestellschein';f.submit();\"", 'PDF erzeugen' );
-  open_span( 'qquad button', "onclick='document.forms.form_$faxform_id.submit();'", 'Speichern' );
+  $confirm = ( (int)$lieferant['bestellfaxspalten'] !== (int)$spalten ) ? "if( confirm( 'Spaltenauswahl f&uuml;r diesen Lieferanten wurde ge&auml;ndert - sind sie sicher?' ) ) " : '';
+  open_span( 'qquad button', "onclick=\" f=document.forms.form_$faxform_id;f.elements.export.value='bestellschein'; $confirm f.submit(); \"", 'PDF erzeugen' );
+  open_span( 'qquad button', "onclick=\" $confirm document.forms.form_$faxform_id.submit(); \"", 'Speichern' );
 close_div()    ;
 
 open_option_menu_row();
