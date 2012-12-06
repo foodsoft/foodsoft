@@ -1282,14 +1282,6 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
   $status = $bestellung['rechnungsstatus'];
   need( $status >= STATUS_LIEFERANT );
 
-  $lieferant = sql_lieferant( $bestellung['lieferanten_id'] );
-  if( $lieferant['katalogformat'] == 'bnn' ) {
-    // die b-nummern sind eigentlich a-nummern (in zukunft besser gar nicht erfassen?):
-    if( $spalten & PR_COL_BNUMMER ) {
-      $spalten = ( ( $spalten | PR_COL_ANUMMER ) & ~ PR_COL_BNUMMER );
-    }
-  }
-
   $format = '\vrule width0.3pt height6mm depth3mm #';
   $header = '';
 
