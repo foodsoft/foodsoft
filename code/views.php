@@ -1286,7 +1286,7 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
   if( $lieferant['katalogformat'] == 'bnn' ) {
     // die b-nummern sind eigentlich a-nummern (in zukunft besser gar nicht erfassen?):
     if( $spalten & PR_COL_BNUMMER ) {
-      $spalten = ( ( $spalten || PR_COL_ANUMMER ) && ~ PR_COL_BNUMMER );
+      $spalten = ( ( $spalten | PR_COL_ANUMMER ) & ~ PR_COL_BNUMMER );
     }
   }
 
