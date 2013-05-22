@@ -351,7 +351,7 @@ function upload_bode() {
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
-  $pattern = '/^@\d+\s+@/';
+  $pattern = '/^@\d+\s*@/';
   $splitat = '/@/';
 
   $n = 0;
