@@ -2457,9 +2457,11 @@ function sql_basarmenge( $bestell_id, $produkt_id ) {
  * produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
  */
 function select_basar( $bestell_id = 0 ) {
-  $where = '';
-  if( $bestell_id )
+  if( $bestell_id ) {
     $where = "WHERE gesamtbestellungen.id = $bestell_id";
+  } else {
+    $where = "WHERE gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET; // todo: change to 'ABGESCHLOSSEN'
+  }
   return "
     SELECT produkte.name as produkt_name
          , gesamtbestellungen.name as bestellung_name
