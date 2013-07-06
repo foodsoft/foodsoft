@@ -4762,12 +4762,14 @@ case 26:
 
 function wikiLink( $topic, $text, $head = false ) {
   global $foodsoftdir;
-  echo "
-    <a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) . "
-      title='zur Wiki-Seite $topic'
-      href=\"javascript:neuesfenster('$foodsoftdir/../wiki/doku.php?id=$topic','wiki');\"
-    >$text</a>
-  ";
+  if( ( $wikibase = getenv('wikibase') ) ) {
+    echo "
+      <a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) . "
+        title='zur Wiki-Seite $topic'
+        href=\"javascript:neuesfenster('$wikibase/doku.php?id=$topic','wiki');\"
+      >$text</a>
+    ";
+  }
 }
 
 function setWikiHelpTopic( $topic ) {

@@ -12,7 +12,7 @@
  */
 
 define('DOKU_AUTH', dirname(__FILE__));
-define('FOODSOFT_PATH', realpath( DOKU_AUTH . '/../../../foodsoft' ) );
+define('FOODSOFT_PATH', getenv('foodsoftpath') );
 
 require_once(DOKU_AUTH.'/basic.class.php');
 
