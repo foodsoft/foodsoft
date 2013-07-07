@@ -1,7 +1,0 @@
-----
-[[:|Nahrungskette]] * [[privates:Privates]]
-
-===== Nahrungskette: Privates =====
-
-Der Namensraum //Privates// ist da fuer Seiten, die nicht oeffentlich lesbar sein sollen: zum Beispiel fuer die [[Mitgliederliste]] und den [[Dienstplan]], denn da stehen ja auch email-Adressen und Telefonnummern drin.
-
