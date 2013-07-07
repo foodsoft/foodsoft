@@ -4774,10 +4774,12 @@ function wikiLink( $topic, $text, $head = false ) {
 
 function setWikiHelpTopic( $topic ) {
   global $foodsoftdir, $js_on_exit;
-  // head may not have been read (yet), so we postpone this:
-  $js_on_exit[] = "document.getElementById('wikilink_head').href
-        = \"javascript:neuesfenster('$foodsoftdir/../wiki/doku.php?id=$topic','wiki');\" ";
-  $js_on_exit[] = "document.getElementById('wikilink_head').title = \"zur Wiki-Seite $topic\" ";
+  if( ( $wikibase = getenv('wikibase') ) ) {
+    // head may not have been read (yet), so we postpone this:
+    $js_on_exit[] = "document.getElementById('wikilink_head').href
+          = \"javascript:neuesfenster('$wikibase/doku.php?id=$topic','wiki');\" ";
+    $js_on_exit[] = "document.getElementById('wikilink_head').title = \"zur Wiki-Seite $topic\" ";
+  }
 }
 
 // auf <title> (fensterrahmen) kann offenbar nicht mehr zugegriffen werden(?), wir
