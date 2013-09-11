@@ -1294,7 +1294,7 @@ $tables = array(
     , 'muteReconfirmation_timestamp' => array(
         'type' => "timestamp"
       , 'null' => 'YES'
-      , 'default' => 'NULL'
+      , 'default' => ''
       , 'extra' => ''
       )
     )
@@ -1375,7 +1375,7 @@ $tables = array(
       )
     )
   , 'indices' => array(
-      'primary' => array( 'unique' => 1, 'collist' => 'id' )
+      'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
     , 'secondary' => array( 'unique' => 1, 'collist' => 'context, acronym')
   )
 )
