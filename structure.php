@@ -1,6 +1,6 @@
 <?php
 
-// db version 12
+// db version 28
 
 $tables = array(
   'bankkonten' => array(
