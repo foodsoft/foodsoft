@@ -4854,7 +4854,7 @@ function tex2pdf( $tex ) {
   need( $tmpdir = get_tmp_working_dir() );
   need( chdir( $tmpdir ) );
   file_put_contents( 'tex2pdf.tex', $tex );
-  exec( 'pdflatex tex2pdf.tex', & $output, & $rv );
+  exec( 'pdflatex tex2pdf.tex', /* & */ $output, /* & */ $rv );
   if( ! $rv ) {
     $pdf = file_get_contents( 'tex2pdf.pdf' );
     // open_div( 'ok', '', 'ok: '.  implode( ' ', $output ) );
