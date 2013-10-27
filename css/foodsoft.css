@@ -650,6 +650,12 @@ a:hover, .href:hover {
 a + a , .link + .link {
   margin-left:1ex;
 }
+@media print {
+  a {
+    color:#000000 !important;
+  }
+}
+    
 
 .bigbutton, .bigbutton:visited {
   width:200px;
