@@ -3803,11 +3803,12 @@ function sql_verluste_summe( $type ) {
 //     * gleich wie einheit, ausser: kg in g und l in ml umgerechnet, gross/kleinschreibung vereinheitlicht, und
 //     * masszahl immer abgetrennt
 //   verteileinheit und liefereinheit muessen gleiche kanonische einheit haben, ausser:
-//     * GB, KI oder PA als liefereinheit: verteileinheit ist dann beliebig
+//     * GB, KI, VPE oder PA als liefereinheit: verteileinheit ist dann beliebig
+//     * VPE als verteileinheit ist mit beliebiger liefereinheit kombinierbar
 //  - lv_faktor:
 //     umrechnungsfaktor L-Einheit / V-Einheit
-//     wenn verteileinheit und liefereinheit verschiedene kanonische enheiten haben (nur bei GB, KI, PA als
-//     L-Einheit erlaubt) muss dieser faktor manuell erfasst werden.
+//     wenn verteileinheit und liefereinheit verschiedene kanonische enheiten haben (nur bei GB, KI, PA, VPE als
+//     L-Einheit oder VPE als V-Einheit erlaubt) muss dieser faktor manuell erfasst werden.
 // - gebindegroesse:
 //     gebindegroesse, vielfache der V-Einheit. Muss immer eine ganze Zahl sein!
 // - lieferpreis:
@@ -3830,6 +3831,7 @@ function sql_verluste_summe( $type ) {
 //   B&L/Partybroetchen      1 ST    30 ST     30 (manuell)         30 (= 30ST ("Wagenrad"))
 //   B&L/Torte               1 ST    12 ST      6 (manuell)          6 (= 6ST ("halbe Torte"))
 //   Bauer/Kartoffeln      500 g      1 kg     (2 (automatisch)     25 (= 12.5kg ("1/4 Zentner"))
+//   Bode/Schokoriegel       1 VPE   45 g      (1 (manuell)         30 (= 30*45g = 30VPE)
 
 
 function references_produktpreis( $preis_id ) {
