@@ -3969,8 +3969,12 @@ function sql_insert_produktpreis (
       case 'PA':
       case 'KI':
       case 'KO':
+      case 'VPE':
         break;
       default:
+        if( $ve === 'VPE' ) {
+          break;
+        }
         error( "L-Einheit und V-Einheit nicht kompatibel" );
     }
   }
@@ -4002,7 +4006,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
