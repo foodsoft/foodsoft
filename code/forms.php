@@ -1038,7 +1038,7 @@ function action_form_produktpreis() {
   $gebindegroesse *= $lv_faktor;
   // kludge alert: rundungsfehler korrigieren (gebindegroesse muss ganzzahlig und >= 1 sein!)
   // (eigentlich brauchen wir Q-arithnetik fuer den lv_faktor)
-  $gebindegroesse = floor( $gebindegroesse + 0.002 );
+  $gebindegroesse = floor( $gebindegroesse + 0.02 );
 
   $produkt = sql_produkt( $produkt_id );
 
