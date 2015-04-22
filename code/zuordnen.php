@@ -790,8 +790,8 @@ function possible_areas(){
 
   if( ( hat_dienst(4) && $exportDB ) ) {
     $areas[] = array("area" => "updownload",
-    "hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
-    "title" => "Up/Download");
+    "hint" => "Hier kann die Datenbank runtergeladen werden...",
+    "title" => "Download");
   }
 
    $areas[] = array("area" => "dienstplan", 

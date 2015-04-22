@@ -2,7 +2,7 @@
 
 assert( $angemeldet ) or exit();
 nur_fuer_dienst(1,3,4);
-need( $exportDB ) );
+need( $exportDB );
 
 setWikiHelpTopic( 'foodsoft:updownload' );
 
@@ -202,7 +202,7 @@ if( $action == 'download' ) {
 }
 
 
-?> <h1>Up/Download der Datenbank...</h1> <?php
+?> <h1>Download der Datenbank...</h1> <?php
 
 open_table( 'layout' );
   global $usb_device;
