@@ -729,6 +729,7 @@ function create_dienste( $start, $spacing, $zahl, $personenzahlen ) {
  * they are performing
  */
 function possible_areas(){
+  global $exportDB;
 
   $areas = array();
 
@@ -787,7 +788,7 @@ function possible_areas(){
     "hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
     "title" => "Dienstkontrollblatt");
 
-  if( false ) {
+  if( ( hat_dienst(4) && $exportDB ) ) {
     $areas[] = array("area" => "updownload",
     "hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
     "title" => "Up/Download");
