@@ -4751,6 +4751,17 @@ case 26:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 28 ) );
       logger( 'update_database: update to version 28 successful' );
       
+  case 28:
+      logger( 'starting update_database: from version 28' );
+      sql_insert( 'leitvariable', array(
+        'name' => 'exportDB'
+      , 'value' => '0'
+      , 'comment' => 'Flag: export des Datenbankinhalts erlauben'  
+      ) );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 29 ) );
+      logger( 'update_database: update to version 29 successful' );
+      
+
 /*
 	case n:
 		$sql = "

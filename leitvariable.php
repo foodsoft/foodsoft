@@ -40,6 +40,14 @@ $leitvariable = array(
   , 'runtime_editable' => 1
   , 'cols' => '60', 'rows' => 1
   )
+, 'exportDB' => array(
+    'meaning' => 'Export der datenbank erlauben'
+  , 'default' => '0'
+  , 'local' => true
+  , 'comment' => 'Flag (1 oder 0), um Dienst 4 den Export der Datenbank zu erlauben'
+  , 'runtime_editable' => 1
+  , 'cols' => '1'
+  )
 , 'readonly' => array(
     'meaning' => 'Datenbank schreibgeschuetzt setzen (einige sehr eingeschränkte Schreibzugriffe sind dennoch moeglich)'
   , 'default' => '0'
