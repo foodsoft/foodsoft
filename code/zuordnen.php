@@ -729,6 +729,7 @@ function create_dienste( $start, $spacing, $zahl, $personenzahlen ) {
  * they are performing
  */
 function possible_areas(){
+  global $exportDB;
 
   $areas = array();
 
@@ -787,10 +788,10 @@ function possible_areas(){
     "hint" => "Hier kann man das Dienstkontrollblatt einsehen...",
     "title" => "Dienstkontrollblatt");
 
-  if( false ) {
+  if( ( hat_dienst(4) && $exportDB ) ) {
     $areas[] = array("area" => "updownload",
-    "hint" => "Hier kann die Datenbank hoch und runter geladen werden...",
-    "title" => "Up/Download");
+    "hint" => "Hier kann die Datenbank runtergeladen werden...",
+    "title" => "Download");
   }
 
    $areas[] = array("area" => "dienstplan", 
@@ -3803,11 +3804,12 @@ function sql_verluste_summe( $type ) {
 //     * gleich wie einheit, ausser: kg in g und l in ml umgerechnet, gross/kleinschreibung vereinheitlicht, und
 //     * masszahl immer abgetrennt
 //   verteileinheit und liefereinheit muessen gleiche kanonische einheit haben, ausser:
-//     * GB, KI oder PA als liefereinheit: verteileinheit ist dann beliebig
+//     * GB, KI, VPE oder PA als liefereinheit: verteileinheit ist dann beliebig
+//     * VPE als verteileinheit ist mit beliebiger liefereinheit kombinierbar
 //  - lv_faktor:
 //     umrechnungsfaktor L-Einheit / V-Einheit
-//     wenn verteileinheit und liefereinheit verschiedene kanonische enheiten haben (nur bei GB, KI, PA als
-//     L-Einheit erlaubt) muss dieser faktor manuell erfasst werden.
+//     wenn verteileinheit und liefereinheit verschiedene kanonische enheiten haben (nur bei GB, KI, PA, VPE als
+//     L-Einheit oder VPE als V-Einheit erlaubt) muss dieser faktor manuell erfasst werden.
 // - gebindegroesse:
 //     gebindegroesse, vielfache der V-Einheit. Muss immer eine ganze Zahl sein!
 // - lieferpreis:
@@ -3830,6 +3832,7 @@ function sql_verluste_summe( $type ) {
 //   B&L/Partybroetchen      1 ST    30 ST     30 (manuell)         30 (= 30ST ("Wagenrad"))
 //   B&L/Torte               1 ST    12 ST      6 (manuell)          6 (= 6ST ("halbe Torte"))
 //   Bauer/Kartoffeln      500 g      1 kg     (2 (automatisch)     25 (= 12.5kg ("1/4 Zentner"))
+//   Bode/Schokoriegel       1 VPE   45 g      (1 (manuell)         30 (= 30*45g = 30VPE)
 
 
 function references_produktpreis( $preis_id ) {
@@ -3969,8 +3972,12 @@ function sql_insert_produktpreis (
       case 'PA':
       case 'KI':
       case 'KO':
+      case 'VPE':
         break;
       default:
+        if( $ve === 'VPE' ) {
+          break;
+        }
         error( "L-Einheit und V-Einheit nicht kompatibel" );
     }
   }
@@ -4002,7 +4009,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -4745,6 +4752,17 @@ case 26:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 28 ) );
       logger( 'update_database: update to version 28 successful' );
       
+  case 28:
+      logger( 'starting update_database: from version 28' );
+      sql_insert( 'leitvariable', array(
+        'name' => 'exportDB'
+      , 'value' => '0'
+      , 'comment' => 'Flag: export des Datenbankinhalts erlauben'  
+      ) );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 29 ) );
+      logger( 'update_database: update to version 29 successful' );
+      
+
 /*
 	case n:
 		$sql = "

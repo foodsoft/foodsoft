@@ -2,6 +2,7 @@
 
 assert( $angemeldet ) or exit();
 nur_fuer_dienst(1,3,4);
+need( $exportDB );
 
 setWikiHelpTopic( 'foodsoft:updownload' );
 
@@ -201,7 +202,7 @@ if( $action == 'download' ) {
 }
 
 
-?> <h1>Up/Download der Datenbank...</h1> <?php
+?> <h1>Download der Datenbank...</h1> <?php
 
 open_table( 'layout' );
   global $usb_device;
@@ -254,7 +255,7 @@ open_table( 'layout' );
         echo fc_action( "window=updownload,text=Runterladen,title=Download jetzt starten", "action=download".$download );
         echo " (wird gespeichert als <b>$downloadname</b>)";
     open_tr();
-      open_td( 'kommentar', "colspan='2'", '(dient zur Zeit nur zur Datensicherung --- der Rechner im Keller funktioniert <b>nicht</b>, dort kein upload versuchen!)' );
+      open_td( 'kommentar', "colspan='2'", '(dient zur Zeit nur zur Datensicherung und zum Datenexport)' );
     open_tr();
       open_td('medskip');
 //     open_tr();

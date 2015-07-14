@@ -299,9 +299,13 @@ function katalogabgleich(
       case 'KI':
       case 'PA':
       case 'GB':
+      case 'VPE':
         // verteileinheit darf von liefereinheit abweichen:
         break;
       default:
+        if( $artikel['kan_verteileinheit'] === 'VPE' ) {
+          break;
+        }
         if( $kan_liefereinheit !== $artikel['kan_verteileinheit'] ) {
           $preiseintrag_neu['verteileinheit'] = $verteileinheit_default;
           $problems[] = "Warnung: Einheiten inkompatibel:

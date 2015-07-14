@@ -1438,8 +1438,11 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
         close_div();
       }
       open_div('small');
-        printf( "Produktgruppe %s,  Nettopreis: %.2lf/%s / Endpreis: %.2lf/%s"
-          , $produkt['produktgruppen_name']
+        printf( 'Gruppe %s', $produkt['produktgruppen_name'] );
+        if( $produkt['artikelnummer'] ) {
+          printf( '/ A-Nr: %s ', $produkt['artikelnummer'] );
+        }
+        printf( "/  Netto: %.2lf/%s / Endpreis: %.2lf/%s"
           , $produkt['nettopreis']
           , $produkt['verteileinheit']
           , $produkt['endpreis']
