@@ -8,9 +8,8 @@ setWindowSubtitle( 'Gruppenmitglieder' );
 
 need_http_var('gruppen_id','u', 1);
 
-          //predefine all edit modes as false
 $edit_names = FALSE;
-$edit_dienst_einteilung=FALSE;
+$edit_dienst_einteilung = FALSE;
 $edit_pwd = FALSE;
 if( ( $login_gruppen_id == $gruppen_id ) and ! $readonly ) {
   $edit_names = TRUE;
@@ -51,6 +50,7 @@ switch( $action ) {
       get_http_var( "telefon_$id", 'H', $row['telefon'] );
       get_http_var( "slogan_$id", 'H', $row['slogan'] );
       get_http_var( "url_$id", 'H', $row['url'] );
+      get_http_var( "notiz_$id", 'H', $row['notiz'] );
       get_http_var( "avatar_delete_$id", 'u', 0 );
       if( $edit_dienst_einteilung ) {
         get_http_var( "dienst_$id", 'H', $row['diensteinteilung'] );
@@ -65,6 +65,7 @@ switch( $action ) {
       , 'diensteinteilung' => ${"dienst_$id"}
       , 'slogan' => ${"slogan_$id"}
       , 'url' => ${"url_$id"}
+      , 'notiz' => ${"notiz_$id"}
       ) );
 
       if( ${"avatar_delete_$id"} ) {

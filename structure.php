@@ -591,6 +591,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => ''
       )
+    , 'notiz' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

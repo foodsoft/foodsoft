@@ -978,6 +978,7 @@ function select_gruppenmitglieder() {
          , gruppenmitglieder.slogan as slogan
          , gruppenmitglieder.url as url
          , gruppenmitglieder.photo_url as photo_url
+         , gruppenmitglieder.notiz as notiz
     FROM gruppenmitglieder
     JOIN bestellgruppen ON bestellgruppen.id = gruppenmitglieder.gruppen_id
   ";
@@ -4762,6 +4763,14 @@ case 26:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 29 ) );
       logger( 'update_database: update to version 29 successful' );
       
+  case 29:
+      logger( 'starting update_database: from version 29' );
+
+      doSql( "ALTER TABLE `gruppenmitglieder` ADD COLUMN `notiz` text not null " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 30 ) );
+      logger( 'update_database: update to version 30 successful' );
+
 
 /*
 	case n:
