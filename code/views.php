@@ -2098,6 +2098,9 @@ function memberform_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE) {
             open_td( '', '', 'Sockeleinlage: ' );
             open_td( '', '', price_view( $row['sockeleinlage'] ) );
           open_tr();
+            open_td( '', '', 'Notiz: ' );
+            open_td( '', '', "<textarea name='notiz_$id' id='notiz_$id' rows='3' cols='80'>{$row['notiz']}</textarea>" );
+          open_tr();
             open_td( '', '', 'Aktionen: ' );
             open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Gruppenmitglied löschen'
                                              , 'confirm' => 'Soll das Gruppenmitglied wirklich GELÖSCHT werden?' )
