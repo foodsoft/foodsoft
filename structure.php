@@ -167,6 +167,12 @@ $tables = array(
       , 'default' => '0'
       , 'extra' => ''
       )
+    , 'notiz_gruppe' => array(
+        'type' => "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
