@@ -7,6 +7,7 @@ setWikiHelpTopic( 'foodsoft:gruppenmitglieder' );
 setWindowSubtitle( 'Gruppenmitglieder' );
 
 need_http_var('gruppen_id','u', 1);
+$gruppe = sql_gruppe( $gruppen_id );
 
 $edit_names = FALSE;
 $edit_dienst_einteilung = FALSE;
@@ -114,8 +115,9 @@ switch( $action ) {
       }
     }
     if( hat_dienst(5) ) {
-      get_http_var( 'gruppenname', 'H', sql_gruppenname( $gruppen_id ) );
-      sql_update( 'bestellgruppen', $gruppen_id, array( 'name' => $gruppenname ) );
+      get_http_var( 'gruppenname', 'H', $gruppe['name'] );
+      get_http_var( 'notiz_gruppe', 'H', $gruppe['notiz_gruppe'] );
+      sql_update( 'bestellgruppen', $gruppen_id, array( 'name' => $gruppenname, 'notiz_gruppe' => $notiz_gruppe ) );
     }
     break;
   case 'delete':
@@ -138,7 +140,7 @@ switch( $action ) {
 
 $gruppenname = sql_gruppenname( $gruppen_id );
 
-open_fieldset( 'small_form', '', 'Gruppe '.$gruppenname.' ('.sql_gruppennummer($gruppen_id).')' );
+open_fieldset( 'small_form', '', 'Gruppe '.$gruppe['name'].' ('.$gruppe['gruppennummer'].')' );
 
 medskip();
 

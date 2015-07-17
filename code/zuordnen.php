@@ -1010,6 +1010,7 @@ function query_gruppen( $op, $keys = array(), $using = array(), $orderby = false
   $selects[] = 'bestellgruppen.passwort as passwort';
   $selects[] = 'bestellgruppen.salt as salt';
   $selects[] = 'bestellgruppen.sockeleinlage as sockeleinlage_gruppe';
+  $selects[] = 'bestellgruppen.notiz_gruppe as notiz_gruppe';
   $selects[] = '
     ( SELECT count(*) FROM gruppenmitglieder
         WHERE gruppenmitglieder.aktiv
@@ -4771,19 +4772,15 @@ case 26:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 30 ) );
       logger( 'update_database: update to version 30 successful' );
 
+  case 30:
+      logger( 'starting update_database: from version 30' );
 
-/*
-	case n:
-		$sql = "
-			";
-		doSql($sql, LEVEL_IMPORTANT, "Konnte Tabelle gruppenmitglieder nicht anlegen");
-		$sql="UPDATE leitvariable
-			set value =  n+1
-			WHERE name = 'database_version' ;
-               ";
-		doSql($sql, LEVEL_IMPORTANT, "Konnte Datenbank-Version nicht hochsetzen");
-	       
- */
+      doSql( "ALTER TABLE `bestellgruppen` ADD COLUMN `notiz_gruppe` text not null " );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 31 ) );
+      logger( 'update_database: update to version 31 successful' );
+
+
 	}
 }
 

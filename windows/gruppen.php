@@ -9,7 +9,7 @@ $problems="";
 $msg="";
 
 get_http_var( 'optionen', 'u', 0, true );
-$show_member_details= $optionen & GRUPPEN_OPT_DETAIL;
+$show_member_details = $optionen & GRUPPEN_OPT_DETAIL;
 
 if( hat_dienst(4,5) ) {
   open_table('menu');
@@ -199,11 +199,16 @@ open_table('list');
         ?>(inaktiv)<?php
       }
 
-    if($show_member_details) {
+    if( $show_member_details ) {
+      if( $gruppe['notiz_gruppe'] ) {
+        open_tr();
+          open_td();
+          open_td( '', "colspan='5'", $gruppe['notiz_gruppe'] );
+      }
       open_tr();
         open_td();
-        open_td('', "colspan='4'" );
-          membertable_view( $id, FALSE,FALSE, FALSE);
+        open_td( '', "colspan='5'" );
+          membertable_view( $id, FALSE, FALSE, FALSE );
     }
   }
 

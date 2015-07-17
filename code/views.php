@@ -1993,6 +1993,9 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
         open_th( '', '', 'Sockeleinlage' );
         open_th( '', '', 'Aktionen' );
       }
+      if( hat_dienst(5) ) {
+        open_th( '', 'Notiz' );
+      }
     }
   
     foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
@@ -2011,6 +2014,9 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
                                     , array( 'action' => 'delete', 'person_id' => $id ) ) );
         } else {
           open_td( '', '',  $row['diensteinteilung'] );
+        }
+        if( hat_dienst(5) ) {
+          open_td( '', '', $row['notiz'] );
         }
     }
     close_table();
@@ -2045,9 +2051,10 @@ function memberform_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE) {
   open_fieldset( 'small_form', '', $super_edit ? 'Gruppendaten:' : 'Mitglieder:' );
     if( $super_edit ) {
       open_div( 'medskip bold' );
-        open_span( 'left', '', "Gruppenname: " . string_view( sql_gruppenname( $gruppen_id ), 24, 'gruppenname' ) );
+        open_span( 'left', '', "Gruppenname: " . string_view( $gruppendaten['name'], 24, 'gruppenname' ) );
         open_span( 'qquad', '', "Sockeleinlage für Gruppe: " . price_view( $gruppendaten['sockeleinlage_gruppe'] ) );
       close_div();
+      open_div( 'top', '', "Notiz: <textarea style='display:block;' name='notiz_gruppe' id='notiz_gruppe' rows='3' cols='80'>{$gruppendaten['notiz_gruppe']}</textarea>" );
       medskip();
     }
 
