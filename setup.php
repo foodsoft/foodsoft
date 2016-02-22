@@ -652,12 +652,13 @@ function check_5() {
       switch( $action ) {
         case 'set':
           $value = $_POST['leit_value_'.$id];
-          $props = $leitvariable['name'];
+          $props = $leitvariable[$name];
           $local = $props['local'];
+          $comment = $props['comment'];
           $runtime_editable = $props['runtime_editable'];
           $changes[] .= "
-            INSERT INTO leitvariable ( name, value )
-            VALUES ( '$name', '$value' )
+            INSERT INTO leitvariable ( name, value, comment )
+            VALUES ( '$name', '$value', '$comment' )
             ON DUPLICATE KEY UPDATE value = '$value';
           ";
           break;
