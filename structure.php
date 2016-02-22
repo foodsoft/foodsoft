@@ -973,7 +973,6 @@ $tables = array(
       , 'default' => '1'
       , 'extra' => ''
       )
-    )
     , 'hersteller' => array(
         'type' => "text"
       , 'null' => 'NO'
@@ -992,11 +991,12 @@ $tables = array(
       , 'default' => ''
       , 'extra' => '' 
     )
-    , 'indices' => array(
+  )
+  , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'secondary' => array( 'unique' => 1, 'collist' => 'lieferanten_id, artikelnummer' )
-    )
   )
+)
 , 'lieferantenpfand' => array(
     'updownload' => true
   , 'cols' => array(
