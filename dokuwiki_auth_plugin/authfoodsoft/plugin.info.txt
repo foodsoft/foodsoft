@@ -1,0 +1,7 @@
+base   authfoodsoft
+author Tilman Vogel
+email  tilman.vogel@web.de
+date   2016-02-23
+name   authfoodsoft plugin
+desc   Authentication plugin for FoodSoft authentication
+url    https://github.com/foodsoft/foodsoft
