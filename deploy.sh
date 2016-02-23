@@ -31,7 +31,6 @@ chmod 644 code/views.php
 chmod 644 code/zuordnen.php
 chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
-chmod 644 css/print.css
 chmod 644 css/readonly.gif
 chmod 755 deploy.sh
 chmod 644 dump.php
