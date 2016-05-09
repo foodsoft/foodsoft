@@ -12,7 +12,7 @@ $db_pwd    =  getenv( 'mysql_db_password' ); // password to authenticate with
 $foodsoftbase = getenv( 'foodsoftbase' );    // path relative to DocumentRoot: http://<DOMAIN>/$foodsoftbase/css/foodsoft.css must find the css
 
 // set time zone
-date_default_timezone_set("Europe/Berlin");
+// date_default_timezone_set("Europe/Berlin");
 
 // alternatively, store the information in the following lines:
 //
