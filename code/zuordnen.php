@@ -3960,7 +3960,7 @@ function sql_insert_produktpreis (
 ) {
   need( $lieferpreis > 0, "kein gueltiger Lieferpreis" );
   need( $gebindegroesse >= 1, "keine gueltige Gebindegroesse" );
-  need( $mwst > 0, "kein gueltiger Mehrwertsteuersatz" );
+  need( $mwst >= 0, "kein gueltiger Mehrwertsteuersatz" );
   need( $pfand >= 0, "kein gueltiges Pfand" );
   need( list( $lm, $le ) = kanonische_einheit( $liefereinheit, false ), "keine gueltige L-Einheit" );
   need( list( $vm, $ve ) = kanonische_einheit( $verteileinheit, false ), "keine gueltige V-Einheit" );
