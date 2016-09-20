@@ -207,6 +207,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
         open_th( '', '', 'MWSt' );
         open_th( '', '', 'Brutto' );
       }
+      open_th( '', '', 'Pfand');
       open_th( '', '', 'EAN einzeln');
       open_th( '', '', 'Katalog' );
       if( ! $produkt_id ) {
@@ -234,13 +235,14 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_td( '', '', $row['herkunft'] );
           open_td( '', '', $row['verband'] );
           open_td( '', '', $row['hersteller'] );
-          open_td( '', '', price_view( $netto ) );
+          open_td( 'mult', '', price_view( $netto ) );
           if( $have_mwst ) {
             $mwst = $row['mwst'];
             $brutto = $netto * (1 + $mwst / 100.0 );
             open_td( 'mult', '', price_view( $mwst ) );
             open_td( 'mult', '', price_view( $brutto ) );
           }
+          open_td( 'mult', '', price_view( $row['pfand'] ) );
           open_td( '', '', ean_view( $row['ean_einzeln']).ean_links($row['ean_einzeln']) );
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );
           if( ! $produkt_id ) {

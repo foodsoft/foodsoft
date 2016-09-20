@@ -86,6 +86,7 @@ function katalogabgleich(
   $katalog_hersteller = $katalogeintrag["hersteller"];
   $katalog_ean = $katalogeintrag["ean_einzeln"];
   $katalog_netto = $katalogeintrag["preis"];
+  $katalog_pfand = $katalogeintrag['pfand'];
   $katalog_id = $katalogeintrag["id"];
 
   $katalog_katalogname = sql_katalogname( $katalog_id );
@@ -225,6 +226,7 @@ function katalogabgleich(
           open_th( '', '', 'L-Preis' );
           open_th( '', '', 'MWSt' );
           open_th( '', '', 'Brutto' );
+          open_th( '', '', 'Pfand');
           open_th( '', "title='hier koennt ihr fehlerhafte oder ungueltige Katalogeintraege markieren'", 'gilt noch' );
         open_tr();
           open_td( '', '', $katalog_artikelnummer );
@@ -242,6 +244,7 @@ function katalogabgleich(
           open_td( '', '', $katalog_netto );
           open_td( '', '', $katalog_mwst );
           open_td( '', '', $katalog_brutto );
+          open_td( '', '', $katalog_pfand);
           open_td( "$class", "rowspan='2'" );
             open_div( '', '', "<input type='radio' class='radiooption' name='kgueltig' $checkedyes> ja" );
             open_div( '', '', "<input type='radio' class='radiooption' name='kgueltig' $checkedno> nein" );
@@ -249,7 +252,7 @@ function katalogabgleich(
           open_td( 'left small top', "colspan='3'", 'Interpretation der Foodsoft:' );
           open_td( 'center small top', "colspan='2'", "1 Gebinde = $liefergebinde * ($liefereinheit)" );
           open_td( '', "colspan='4'", '');
-          open_td( 'center small top', "colspan='3'", "Preis gilt pro $liefereinheit" );
+          open_td( 'center small top', "colspan='4'", "Preis gilt pro $liefereinheit" );
       close_table();
     close_fieldset();
   }
@@ -265,6 +268,7 @@ function katalogabgleich(
   $preiseintrag_neu['katalogname'] = $katalog_katalogname;
   $preiseintrag_neu['liefereinheit'] = $liefereinheit;
   $preiseintrag_neu['lieferpreis'] = $katalog_netto;
+  $preiseintrag_neu['pfand'] = $katalog_pfand;
   $preiseintrag_neu['bestellnummer'] = $katalog_bestellnummer;
   if( $have_mwst ) {
     $preiseintrag_neu['mwst'] = $katalog_mwst;
@@ -368,6 +372,14 @@ function katalogabgleich(
       if( $liefereinheit != $artikel['verteileinheit'] ) {
         $p .= " = {$artikel['nettolieferpreis']} / $liefereinheit";
       }
+      $p .= "</kbd></p>";
+      $problems[] = $p;
+    }
+    
+    if( abs( $preiseintrag_neu['pfand'] - $artikel['pfand'] ) > 0.005 ) {
+      $p = "Problem: Pfandbeträge stimmen nicht:
+        <p class='li'>Katalog: <kbd>$katalog_pfand / $liefereinheit</kbd></p>
+        <p class='li'>Foodsoft: <kbd>". price_view($artikel['pfand'])." / {$artikel['verteileinheit']} ";
       $p .= "</kbd></p>";
       $problems[] = $p;
     }
