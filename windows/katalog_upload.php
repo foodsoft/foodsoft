@@ -16,7 +16,7 @@ need_http_var( 'katalogkw', 'w' );
 // echo '<br>tmpfile: ' . $_FILES['katalog']['tmp_name'];
 // echo '<br>katalogkw: ' . $katalogkw . '<br>';
 
-open_div( '', '', "Katalog einlesen: Lieferant: {$lieferant['name']} / g&uuml;ltig: $katalogkw" );
+open_div( '', '', "Katalog einlesen: Lieferant: {$lieferant['name']} / g&uuml;ltig: $katalogkw / Aufschlag: {$lieferant['katalogaufschlag']} %" );
 
 
 function katalog_update(
@@ -26,8 +26,10 @@ function katalog_update(
 , $netto
 , $ean_einzeln
 , $katalogformat
+, $katalogaufschlag
 ) {
 
+  $netto = round($netto * (1.0 + $katalogaufschlag/100.0), 2);
   open_div( 'ok' );
     open_div( 'ok qquad', '', 
             "erfasst: $anummer, $bnummer, $name, $bemerkung, $einheit, "
@@ -96,7 +98,7 @@ function katalog_update(
 
 
 function upload_terra() {
-  global $katalogkw, $lieferanten_id;
+  global $katalogkw, $lieferanten_id, $lieferant;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
@@ -268,7 +270,7 @@ function upload_terra() {
     }
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'terra_xls'
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'terra_xls', $lieferant['katalogaufschlag']
     );
     $success++;
   }
@@ -279,7 +281,7 @@ function upload_terra() {
 
 
 function upload_rapunzel() {
-  global $katalogkw, $lieferanten_id;
+  global $katalogkw, $lieferanten_id, $lieferant;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Rapunzel: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -336,7 +338,7 @@ function upload_rapunzel() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'rapunzel'
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'rapunzel', $lieferant['katalogaufschlag']
     );
     $success++;
   }
@@ -347,7 +349,7 @@ function upload_rapunzel() {
 
 
 function upload_bode() {
-  global $katalogkw, $lieferanten_id;
+  global $katalogkw, $lieferanten_id, $lieferant;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -410,7 +412,7 @@ function upload_bode() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'bode'
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'bode', $lieferant['katalogaufschlag']
     );
     $success++;
   }
@@ -499,7 +501,7 @@ function upload_bode() {
 // und um mit der existierenden datenbank kompatibel zu bleiben:
 //
 function upload_bnn( $katalogformat ) {
-  global $katalogkw, $lieferanten_id;
+  global $katalogkw, $lieferanten_id, $lieferant;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
 
@@ -651,7 +653,7 @@ function upload_bnn( $katalogformat ) {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat, $lieferant['katalogaufschlag']
     );
     $success++;
   }

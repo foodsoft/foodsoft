@@ -1,6 +1,6 @@
 <?php
 
-// db version 28
+// db version 32
 
 $tables = array(
   'bankkonten' => array(
@@ -868,6 +868,12 @@ $tables = array(
       , 'null' => 'NO'
       , 'default' => '534541'
       , 'extra' => ''
+      )
+    , 'katalogaufschlag' => array(
+          'type' => 'decimal(5,2)'
+        , 'null' => 'NO'
+        , 'default' => '0.0'
+        , 'extra' => ''
       )
     )
     , 'indices' => array(

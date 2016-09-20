@@ -4779,9 +4779,15 @@ case 26:
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 31 ) );
       logger( 'update_database: update to version 31 successful' );
+  case 31:
+      logger( 'starting update_database: from version 31' );
 
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogaufschlag` decimal(5,2) not null default 0.0" );
 
-	}
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 32 ) );
+      logger( 'update_database: update to version 32 successful' );
+  
+  }
 }
 
 function wikiLink( $topic, $text, $head = false ) {

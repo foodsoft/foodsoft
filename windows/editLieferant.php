@@ -28,6 +28,7 @@ get_http_var('bestellmodalitaeten','H',$row);
 get_http_var('kundennummer','H',$row);
 get_http_var('url','H',$row);
 get_http_var('katalogformat','w',$row);
+get_http_var('katalogaufschlag', 'f', $row);
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
@@ -45,6 +46,7 @@ if( $action == 'save' ) {
   , 'kundennummer' => $kundennummer
   , 'url' => $url
   , 'katalogformat' => $katalogformat
+  , 'katalogaufschlag' => $katalogaufschlag
   );
   if( ! $name ) {
     $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
@@ -103,6 +105,7 @@ open_form( '', 'action=save' );
           }
           echo "$options";
         close_select();
+      form_row_betrag( 'Katalog-Aufschlag:', ( $editable ? 'katalogaufschlag' : false), $katalogaufschlag); echo '%';
       open_tr();
         open_td( 'right', "colspan='2'" );
           if( $lieferanten_id > 0 )
