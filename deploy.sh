@@ -33,6 +33,10 @@ chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
 chmod 755 deploy.sh
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/README
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/auth/authentication.php
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/lang/en/lang.php
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/plugin.info.txt
 chmod 644 dump.php
 chmod 644 fcck.php
 chmod 644 files_und_skripte

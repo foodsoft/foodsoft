@@ -238,7 +238,7 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
 
 function logger( $notiz ) {
   global $session_id;
-  return sql_insert( 'logbook', array( 'notiz' => $notiz, 'session_id' => $session_id ) );
+  return sql_insert( 'logbook', array( 'notiz' => $notiz, 'session_id' => $session_id ? $session_id : 0) );
 }
 
 function adefault( $array, $index, $default ) {
