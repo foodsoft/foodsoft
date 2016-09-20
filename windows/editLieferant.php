@@ -29,6 +29,7 @@ get_http_var('kundennummer','H',$row);
 get_http_var('url','H',$row);
 get_http_var('katalogformat','w',$row);
 get_http_var('katalogaufschlag', 'f', $row);
+get_http_var('gruppenpfand', 'f', $row);
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
@@ -47,6 +48,7 @@ if( $action == 'save' ) {
   , 'url' => $url
   , 'katalogformat' => $katalogformat
   , 'katalogaufschlag' => $katalogaufschlag
+  , 'gruppenpfand' => $gruppenpfand
   );
   if( ! $name ) {
     $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
@@ -106,6 +108,7 @@ open_form( '', 'action=save' );
           echo "$options";
         close_select();
       form_row_betrag( 'Katalog-Aufschlag:', ( $editable ? 'katalogaufschlag' : false), $katalogaufschlag); echo '%';
+      form_row_betrag( 'Gruppenpfand-Einheit:', ( $editable ? 'gruppenpfand' : false), $gruppenpfand);
       open_tr();
         open_td( 'right', "colspan='2'" );
           if( $lieferanten_id > 0 )

@@ -3070,11 +3070,13 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
   if( $anzahl_leer > 0 ) {
     // pfandrueckgabe ist jetzt an eine gesamtbestellung gebunden, und wir brauchen eine gruppenbestellung:
     sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
+    $lieferanten_id = sql_bestellung_lieferant_id($bestell_id);
+    $lieferant = sql_lieferant($lieferanten_id);
     return sql_insert( 'gruppenpfand', array(
         'gruppen_id' => $gruppen_id
       , 'bestell_id' => $bestell_id
       , 'anzahl_leer' => $anzahl_leer
-      , 'pfand_wert' => 0.16
+      , 'pfand_wert' => $lieferant['gruppenpfand']
       )
     , true
     );
@@ -4786,7 +4788,13 @@ case 26:
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 32 ) );
       logger( 'update_database: update to version 32 successful' );
-  
+  case 32:
+      logger( 'starting update_database: from version 32' );
+
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `gruppenpfand` decimal(4,2) not null default 0.16" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 33 ) );
+      logger( 'update_database: update to version 33 successful' );
   }
 }
 

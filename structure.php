@@ -875,6 +875,12 @@ $tables = array(
         , 'default' => '0.0'
         , 'extra' => ''
       )
+    , 'gruppenpfand' => array(
+          'type' => 'decimal(4,2)'
+        , 'null' => 'NO'
+        , 'default' => '0.16'
+        , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )

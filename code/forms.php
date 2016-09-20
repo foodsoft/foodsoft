@@ -747,6 +747,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
   $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
   $produkt = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
+  $lieferant = sql_lieferant($produkt['lieferanten_id']);
 
   // besetze $vorschlag mit Werten fuer Formularfelder; benutze nacheinander
   //  - existierende Werte in $vorschlag (typischerweise: automatisch aus lieferantenkatalog entnommen)
@@ -807,7 +808,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         <label class='qquad'>Pfand:</label>
            <input type='text' class='number' size='4' name='pfand' id='newpfand'
             value='<?php printf( "%.2lf", $vorschlag['pfand'] ); ?>'
-            title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
+            title='Pfand pro V-Einheit, bei diesem Lieferant immer 0.00 oder <?php echo $lieferant['gruppenpfand']; ?>'
             onchange='preisberechnung_vorwaerts();'>
         <?php
 
