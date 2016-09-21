@@ -336,7 +336,7 @@ function fc_window_defaults( $name ) {
       $parameters['window_id'] = 'edit_lieferant';
       $parameters['title'] = 'zu den Stammdaten des Lieferanten...';
       $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
-      $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 500 ) );
+      $options = array_merge( $small_window_options, array( 'width' => '680', 'height' => 550 ) );
       break;
     case 'editprodukt':
     case 'edit_produkt':
