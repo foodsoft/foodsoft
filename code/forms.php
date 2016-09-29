@@ -1050,7 +1050,7 @@ function action_form_produktpreis() {
     sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
   }
 
-  sql_insert_produktpreis(
+  return sql_insert_produktpreis(
     $produkt_id, $lieferpreis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
   , "$liefermult $liefereinheit", "$verteilmult $verteileinheit", $lv_faktor
   );
