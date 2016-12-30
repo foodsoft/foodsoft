@@ -32,6 +32,7 @@ get_http_var('katalogaufschlag', 'f', $row);
 get_http_var('gruppenpfand', 'f', $row);
 
 get_http_var( 'action', 'w', '' );
+get_http_var('katalogaufschlagrunden', 'u', $action == 'save' ? 0 : $row);
 $editable or $action = '';
 if( $action == 'save' ) {
   $values = array(
@@ -49,6 +50,7 @@ if( $action == 'save' ) {
   , 'katalogformat' => $katalogformat
   , 'katalogaufschlag' => $katalogaufschlag
   , 'gruppenpfand' => $gruppenpfand
+  , 'katalogaufschlagrunden' => $katalogaufschlagrunden
   );
   if( ! $name ) {
     $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
@@ -108,6 +110,7 @@ open_form( '', 'action=save' );
           echo "$options";
         close_select();
       form_row_betrag( 'Katalog-Aufschlag:', ( $editable ? 'katalogaufschlag' : false), $katalogaufschlag); echo '%';
+        echo " <input type='checkbox' name='katalogaufschlagrunden' value='1'".($katalogaufschlagrunden ? " checked" : "")."> runden";
       form_row_betrag( 'Gruppenpfand-Einheit:', ( $editable ? 'gruppenpfand' : false), $gruppenpfand);
       open_tr();
         open_td( 'right', "colspan='2'" );

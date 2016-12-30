@@ -4795,6 +4795,13 @@ case 26:
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 33 ) );
       logger( 'update_database: update to version 33 successful' );
+  case 33:
+      logger( 'starting update_database: from version 33' );
+
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogaufschlagrunden` tinyint(1) not null default 1" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 34 ) );
+      logger( 'update_database: update to version 34 successful' );
   }
 }
 

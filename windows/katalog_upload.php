@@ -27,9 +27,13 @@ function katalog_update(
 , $ean_einzeln
 , $katalogformat
 , $katalogaufschlag
+, $katalogaufschlagrunden
 ) {
 
-  $netto = round($netto * (1.0 + $katalogaufschlag/100.0), 2);
+  $netto = $netto * (1.0 + $katalogaufschlag/100.0);
+  if ($katalogaufschlagrunden) {
+    $netto = round($netto, 2);
+  }
   open_div( 'ok' );
     open_div( 'ok qquad', '', 
             "erfasst: $anummer, $bnummer, $name, $bemerkung, $einheit, "
@@ -270,7 +274,7 @@ function upload_terra() {
     }
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'terra_xls', $lieferant['katalogaufschlag']
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'terra_xls', $lieferant['katalogaufschlag'], $lieferant['katalogaufschlagrunden']
     );
     $success++;
   }
@@ -338,7 +342,7 @@ function upload_rapunzel() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'rapunzel', $lieferant['katalogaufschlag']
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'rapunzel', $lieferant['katalogaufschlag'], $lieferant['katalogaufschlagrunden']
     );
     $success++;
   }
@@ -412,7 +416,7 @@ function upload_bode() {
     $einheit = "$m $e";
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'bode', $lieferant['katalogaufschlag']
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, 'bode', $lieferant['katalogaufschlag'], $lieferant['katalogaufschlagrunden']
     );
     $success++;
   }
@@ -657,7 +661,7 @@ function upload_bnn( $katalogformat ) {
     $pfand = $wahrscheinlich_pfand ? $lieferant['gruppenpfand'] : 0.0;
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
-    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat, $lieferant['katalogaufschlag']
+    , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat, $lieferant['katalogaufschlag'], $lieferant['katalogaufschlagrunden']
     );
     $success++;
   }

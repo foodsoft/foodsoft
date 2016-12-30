@@ -1,6 +1,6 @@
 <?php
 
-// db version 32
+// db version 34
 
 $tables = array(
   'bankkonten' => array(
@@ -879,6 +879,12 @@ $tables = array(
           'type' => 'decimal(4,2)'
         , 'null' => 'NO'
         , 'default' => '0.16'
+        , 'extra' => ''
+      )
+    , 'katalogaufschlagrunden' => array(
+          'type' => 'tinyint(1)'
+        , 'null' => 'NO'
+        , 'default' => '1'
         , 'extra' => ''
       )
     )
