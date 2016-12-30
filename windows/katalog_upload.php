@@ -652,7 +652,9 @@ function upload_bnn( $katalogformat ) {
     $m *= $extra_mult;
     $einheit = "$m $e";
     
-    $pfand = $splitline[26] ? $lieferant['gruppenpfand'] : 0.0;
+    $wahrscheinlich_pfand = $splitline[26]  && ($e == "FL" || $e == "GL" || $e == "ml");
+    
+    $pfand = $wahrscheinlich_pfand ? $lieferant['gruppenpfand'] : 0.0;
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
     , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat, $lieferant['katalogaufschlag']
