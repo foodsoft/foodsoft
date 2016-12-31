@@ -820,7 +820,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('L-Preis: Netto: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
                  onmouseout="help(' ');" >
            <input title='Nettopreis' class='number' type='text' size='8' id='newlieferpreis' name='lieferpreis'
-             value='<?php printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
+             value='<?php printf( "%.4lf", $vorschlag['nettolieferpreis'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>

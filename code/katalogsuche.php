@@ -73,6 +73,8 @@ function katalogabgleich(
     return 2;
   }
 
+  $lieferant = sql_lieferant($artikel["lieferanten_id"]);
+  
   $katalog_datum = $katalogeintrag["katalogdatum"];
   $katalog_typ = $katalogeintrag["katalogtyp"];
   $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
@@ -85,7 +87,12 @@ function katalogabgleich(
   $katalog_verband = $katalogeintrag["verband"];
   $katalog_hersteller = $katalogeintrag["hersteller"];
   $katalog_ean = $katalogeintrag["ean_einzeln"];
-  $katalog_netto = $katalogeintrag["preis"];
+  $katalog_netto = $katalogeintrag["preis"] * (1.0 + $lieferant["katalogaufschlag"]/100.0);
+  
+  if ($lieferant["katalogaufschlagrunden"]) {
+    $katalog_netto = round($katalog_netto, 2);
+  }
+
   $katalog_pfand = $katalogeintrag['pfand'];
   $katalog_id = $katalogeintrag["id"];
 
