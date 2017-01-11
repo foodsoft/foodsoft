@@ -3878,7 +3878,7 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
  *  oder false falls es keinen gueltigen preis gibt:
  */
 function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = true ) {
-  return end( sql_produktpreise( $produkt_id, $zeitpunkt ) );
+  return end( ( sql_produktpreise( $produkt_id, $zeitpunkt ) ) );
 }
 
 /* sql_aktueller_produktpreis_id:
