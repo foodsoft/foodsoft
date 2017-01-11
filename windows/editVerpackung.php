@@ -65,7 +65,7 @@ open_form( '', 'action=save' );
     open_table('small_form hfill');
       form_row_lieferant( 'Lieferant:', false, $lieferanten_id );
       form_row_text( 'Bezeichnung:', 'name', 30, $name );
-      form_row_betrag( 'Wert:', 'wert', $wert );
+      form_row_betrag( 'Wert:', 'wert', $wert, 4 );
       form_row_betrag( 'MWSt:', 'mwst', $mwst );
       open_tr();
         open_td('right smallskip', "colspan='2'");

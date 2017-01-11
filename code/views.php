@@ -91,9 +91,9 @@ function int_view( $num, $fieldname = false, $size = 6, $transmit = true, $edit_
     return "<span class='int number' $id>$num</span>";
 }
 
-function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true ) {
+function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $decimals = 2 ) {
   global $input_event_handlers;
-  $price = sprintf( "%.2lf", $price );
+  $price = price2string( $price, $decimals );
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname )

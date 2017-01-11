@@ -1,6 +1,6 @@
 <?php
 
-// db version 34
+// db version 35
 
 $tables = array(
   'bankkonten' => array(
@@ -1108,7 +1108,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'wert' => array(
-        'type' =>  "decimal(8,2)"
+        'type' =>  "decimal(8,4)"
       , 'null' => 'NO'
       , 'default' => '0.0'
       , 'extra' => ''

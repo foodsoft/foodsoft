@@ -150,7 +150,7 @@ foreach( sql_lieferantenpfand( $lieferanten_id, $abrechnung_id ) as $row ) {
   $verpackung_id = $row['verpackung_id'];
   open_tr();
     open_td( '', '', $row['name'] );
-    open_td( 'number', '', price_view( $row['wert'] ) );
+    open_td( 'number', '', price_view( $row['wert'], false, true, true, 4 ) );
     open_td( 'number', '', price_view( $row['mwst'] ) );
 
     open_td( 'number', '', int_view( $row['pfand_voll_anzahl'], ( ($editable and $abrechnung_id) ? "anzahl_voll_$verpackung_id" : false ) ) );

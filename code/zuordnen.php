@@ -4090,6 +4090,13 @@ function mult2string( $mult ) {
   return preg_replace( '/\.$/', '', $mult );
 }
 
+function price2string( $price, $decimals = 2 ) {
+  $string = sprintf( "%.{$decimals}lf", $price );
+  if ( $decimals > 2 )
+    $string = preg_replace( "/0{1,". ($decimals - 2). "}$/", '', $string );
+  return $string;
+}
+
 
 function sql_delete_produktpreis( $preis_id ) {
   need( references_produktpreis( $preis_id ) == 0 , 'Preiseintrag nicht löschbar, da er benutzt wird!' );
@@ -4802,6 +4809,13 @@ case 26:
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 34 ) );
       logger( 'update_database: update to version 34 successful' );
+  case 34:
+      logger( 'starting update_database: from version 34' );
+
+      doSql( "ALTER TABLE `pfandverpackungen` MODIFY COLUMN `wert` decimal(8,4) not null default 0.0" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 35 ) );
+      logger( 'update_database: update to version 35 successful' );
   }
 }
 
