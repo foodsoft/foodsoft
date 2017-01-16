@@ -87,7 +87,7 @@ function form_row_date_time( $label, $fieldname, $initial = 0 ) {
     open_td( 'kbd' ); echo date_time_view( $datetime, $fieldname );
 }
 
-function form_row_betrag( $label = 'Betrag:' , $fieldname = 'betrag', $initial = 0.0, $decimals = 2 ) {
+function form_row_betrag( $label = 'Betrag:' , $fieldname = 'betrag', $initial = NULL, $decimals = 2 ) {
   open_tr();
     open_td( 'label', '', $label );
     open_td( 'kbd' ); echo price_view( $initial, $fieldname, true, true, $decimals );

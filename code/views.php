@@ -97,7 +97,7 @@ function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fiel
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname )
-    return "<input type='text' class='price number' size='8' $transmit $id value='$price' $input_event_handlers>";
+    return "<input type='text' class='price number' size='8' placeholder='0.00' $transmit $id value='$price' $input_event_handlers>";
   else
     return "<span class='price number' $id>$price</span>";
 }

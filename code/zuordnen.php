@@ -4091,6 +4091,8 @@ function mult2string( $mult ) {
 }
 
 function price2string( $price, $decimals = 2 ) {
+  if( is_null($price) )
+    return "";
   $string = sprintf( "%.{$decimals}lf", $price );
   if ( $decimals > 2 )
     $string = preg_replace( "/0{1,". ($decimals - 2). "}$/", '', $string );
