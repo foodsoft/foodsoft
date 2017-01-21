@@ -56,6 +56,7 @@ chmod 644 img/close_black_hover.gif
 chmod 644 img/close_black_trans.gif
 chmod 644 img/euro.png
 chmod 644 img/fant.gif
+chmod 644 img/favicon.ico
 chmod 644 img/gluehbirne_15x16.png
 chmod 644 img/green.png
 chmod 644 img/magic_wand.png
