@@ -38,13 +38,14 @@ if( $action == 'save' ) {
   if( ! $name ) $problems .= "<div class='warn'>Die neue Verpackung muss eine Bezeichnung haben!</div>";
 
   // Wenn keine Fehler, dann einfügen...
+  global $db_handle;
   if( ! $problems ) {
     if( $verpackung_id ) {
       if( sql_update( 'pfandverpackungen', $verpackung_id, $values ) ) {
         $msg .= "<div class='ok'>&Auml;nderungen gespeichert</div>";
         $done = true;
       } else {
-        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysqli_error($db_handle) . '</div>';
       }
     } else {
       if( ( $verpackung_id = sql_insert( 'pfandverpackungen', $values ) ) ) {
@@ -53,7 +54,7 @@ if( $action == 'save' ) {
         $msg .= "<div class='ok'>Verpackung erfolgreich eingetragen:</div>";
         $done = true;
       } else {
-        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .mysql_error(). "</div>";
+        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .mysqli_error($db_handle). "</div>";
       }
     }
   }

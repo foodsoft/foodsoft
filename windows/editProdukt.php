@@ -48,13 +48,14 @@ if( $action == 'save' ) {
   if( ! $produktgruppen_id ) $problems .= "<div class='warn'>Das neue Produkt muß zu einer Produktgruppe gehören!</div>";
 
   // Wenn keine Fehler, dann einfügen...
+  global $db_handle;
   if( ! $problems ) {
     if( $produkt_id ) {
       if( sql_update( 'produkte', $produkt_id, $values ) ) {
         $msg .= "<div class='ok'>&Auml;nderungen gespeichert</div>";
         $done = true;
       } else {
-        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysqli_error($db_handle) . '</div>';
       }
     } else {
       if( ( $produkt_id = sql_insert( 'produkte', $values ) ) ) {
@@ -62,7 +63,7 @@ if( $action == 'save' ) {
         $msg .= "<div class='ok'>Produkt erfolgreich eingetragen:</div>";
         $done = true;
       } else {
-        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .  mysqli_error($db_handle) . "</div>";
       }
     }
   }
