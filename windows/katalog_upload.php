@@ -528,10 +528,10 @@ function upload_bnn( $katalogformat ) {
   $pattern = '/^\d+;[ANWRXV];/';
   $splitat = '/;/';
 
-  $n = 0;
+  $lineCount = 0;
   $success = 0;
   foreach ( $klines as $line ) {
-    if( $n++ > 9999 )
+    if( $lineCount++ > 9999 )
       break;
     $line = iconv( "CP850", "UTF-8", $line );
 
@@ -660,7 +660,7 @@ function upload_bnn( $katalogformat ) {
     $success++;
   }
 
-  logger( "$katalogformat-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $n" );
+  logger( "$katalogformat-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $lineCount" );
   open_div( 'ok', '', 'finis.' );
 }
 
