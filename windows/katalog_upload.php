@@ -510,6 +510,8 @@ function upload_bnn( $katalogformat ) {
 
   $tag = 'Tr'; // Bode, Grell: nur ein Katalog, entspricht "Trocken" bei Terra
 
+  $is_midgard = ($katalogformat == "midgard");
+
   if( preg_match( '/;"Terra Naturkost /', $fuehrungssatz ) ) {
     // Terra: unterscheidet 4 Kataloge:
     if( preg_match( '/;"[^"]*(Obst|O&G)/', $fuehrungssatz ) )
@@ -523,6 +525,8 @@ function upload_bnn( $katalogformat ) {
     else
       error( 'Terra: Katalogformat nicht erkannt' );
     open_div( 'ok', '', "Terra: detektierter Teilkatalog: $tag" );
+  } elseif( preg_match( '/;"?Midgard/', $fuehrungssatz ) ) {
+    $is_midgard = true;
   }
 
   $pattern = '/^\d+;[ANWRXV];/';
@@ -642,6 +646,16 @@ function upload_bnn( $katalogformat ) {
 
     $netto = $splitline[37];
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
+
+    if ($lineCount == 1 && $is_midgard)
+    {
+      if ($anummer < 10)
+        $tag = "Tr";
+      elseif ($anummer >= 80000)
+        $tag = "OG";
+
+      open_div( 'ok', '', "Midgard: detektierter Teilkatalog: $tag" );
+    }
 
     if( ( $netto < 0.01 ) || ( $mwst < 0 ) || ! ( list( $m, $e ) = kanonische_einheit( $einheit, false ) ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit,netto:$netto,mwst:$mwst] $line " );
