@@ -32,6 +32,7 @@ get_http_var("dienstanzahl","U",8) or $dienstanzahl = 8;
 get_http_var("personen_1","u",2) or $personen_1 = 2;
 get_http_var("personen_3","u",1) or $personen_3 = 1;
 get_http_var("personen_4","u",2) or $personen_4 = 2;
+get_http_var("personen_6","u",2) or $personen_6 = 2;
 
 if( $startdatum_day && $startdatum_month && $startdatum_year ) {
   $startdatum = "$startdatum_year-$startdatum_month-$startdatum_day";
@@ -47,7 +48,8 @@ switch( $action ) {
     need( $personen_1 >= 0 );
     need( $personen_3 >= 0 );
     need( $personen_4 >= 0 );
-    $personenzahlen = array( '1/2' => $personen_1, '3' => $personen_3, '4' => $personen_4 );
+    need( $personen_6 >= 0 );
+    $personenzahlen = array( '1/2' => $personen_1, '3' => $personen_3, '4' => $personen_4 , '6' => $personen_6);
     create_dienste( $startdatum, $dienstinterval, $dienstanzahl, $personenzahlen );
     break;
   case 'dienstLoeschen':
@@ -178,7 +180,8 @@ if( hat_dienst(5) ) {
           open_td( 'qquad' );
             open_span( 'qquad', '', "1/2: " . int_view( $personen_1, "personen_1", 1 ) );
             open_span( 'qquad', '', "3: " . int_view( $personen_3, "personen_3", 1 ) );
-            open_span( 'qquad', '', "4: " . int_view( $personen_4, "personen_4", 1 ) . " Personen" );
+            open_span( 'qquad', '', "4: " . int_view( $personen_4, "personen_4", 1 ) );
+            open_span( 'qquad', '', "6: " . int_view( $personen_6, "personen_6", 1 ) . " Personen" );
         open_tr();
           open_td( 'right', '' );
             smallskip();
@@ -191,7 +194,7 @@ if( hat_dienst(5) ) {
 
     ?> Rotationsplan für <?php
      open_select( 'plan_dienst', 'autoreload' );
-       foreach( array( '1/2', '3', '4' ) as $dienst ) {
+       foreach( array( '1/2', '3', '4', '6' ) as $dienst ) {
          $selected = ( $plan_dienst == $dienst ? 'selected' : '' );
          echo "<option value='$dienst' $selected>Dienst $dienst</option>";
        }
@@ -234,13 +237,14 @@ open_table( 'menu', "id='option_menu_table'" );
 close_table();
 medskip();
 
-$dienstnamen = array( '1/2', '3', '4' );
+$dienstnamen = array( '1/2', '3', '4', '6' );
 
 open_table( 'list' );
   open_th( '', '', 'Datum' );
   open_th( '', '', 'Dienst 1/2' );
   open_th( '', '', 'Dienst 3' );
   open_th( '', '', 'Dienst 4' );
+  open_th( '', '', 'Dienst 6' );
 
   $dienste = sql_dienste();
 
