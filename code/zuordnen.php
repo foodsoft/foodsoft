@@ -337,7 +337,7 @@ function use_filters( $using, $rules ) {
 //
 ////////////////////////////////////
 
-$_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', 'freigestellt');
+$_SESSION['DIENSTEINTEILUNG'] =  array('1/2', '3', '4', '5', '6', 'freigestellt');
 
 function select_dienste( $filter = 'true' ) {
   return "SELECT
