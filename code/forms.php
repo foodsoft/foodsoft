@@ -977,7 +977,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         lieferpreis = 
-          parseInt( 0.499 + 100 * ( vpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
+          parseInt( 0.499 + 10000 * ( vpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 10000.0;
       }
       preiseintrag_update();
     }
