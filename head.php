@@ -33,7 +33,10 @@ open_div( $headclass, "id='header'" );
     open_td( '', "style='padding-top:1em;'" );
       if( $angemeldet ) {
         if( $login_dienst > 0 ) {
-          echo "Hallo $coopie_name ($login_gruppen_name) vom Dienst $login_dienst!";
+          if ( $login_dienst == 4 )
+              echo "Hallo $coopie_name ($login_gruppen_name) vom Dienst 4/6!";
+          else
+              echo "Hallo $coopie_name ($login_gruppen_name) vom Dienst $login_dienst!";
         } else {
           echo "Hallo Gruppe $login_gruppen_name!";
         }

@@ -50,7 +50,10 @@ open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt
       open_td( '', "style='font-size:11pt;'" );
         if( $angemeldet ) {
           if( $login_dienst > 0 ) {
-            echo "$coopie_name ($login_gruppen_name) / Dienst $login_dienst";
+            if ( $login_dienst == 4)
+                echo "$coopie_name ($login_gruppen_name) / Dienst 4/6";
+            else
+                echo "$coopie_name ($login_gruppen_name) / Dienst $login_dienst";
           } else {
             echo "angemeldet: $login_gruppen_name";
           }
