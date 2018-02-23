@@ -256,7 +256,7 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
           echo " <input class='checkbox' type='radio' name='dienst' value='4'
                  onclick='dienstform_on();' ";
           echo ( $login_dienst == 4 ) ? ' checked>' : '>';
-          echo "<label title='Abrechnung'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " IV</label>";
+          echo "<label title='Abrechnung'>" . ( $FC_acronym == 'LS' ? 'Aktion' : 'Dienst' ) . " IV/VI</label>";
         open_td();
           echo " <input class='checkbox' type='radio' name='dienst' value='5'
               onclick='dienstform_on();' ";
