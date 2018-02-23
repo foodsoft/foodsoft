@@ -126,7 +126,7 @@ open_table( 'list hfill' );
   open_th('','','Detailansichten');
   if( $login_dienst != 0 )
     open_th('','','Aktionen');
-  if( hat_dienst(4) )
+  if( hat_dienst(3,4) )
     open_th('','','Abrechnung');
 
 // $bestellungen = sql_bestellungen( 'true', 'rechnungsstatus, abrechnung_id DESC' );
@@ -218,7 +218,7 @@ foreach( $bestellungen as $bestellung ) {
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$combined_id" );
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$combined_id,druck=1,text=Produktverteilung (Druck)" );
         }
-        if( hat_dienst(4) ) {
+        if( hat_dienst(3,4) ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$combined_id,text=Stammdaten &auml;ndern..." );
           if( $abrechnung_set_count > 1 ) {
             $combs[] = fc_action( 'update,text=Trennen,confirm=Bestellung von Gesamtabrechnung abtrennen?', "action=split,message=$combined_id" );
@@ -296,7 +296,7 @@ foreach( $bestellungen as $bestellung ) {
           }
       }
 
-      if( hat_dienst(4) ) {
+      if( hat_dienst(3,4) ) {
         open_td( ( ( $n == 1 ) ? '' : 'notop ' ) . ( ( $n == $abrechnung_set_count ) ? '' : ' nobottom' ) );
         if( $combs ) {
           open_ul('plain');
