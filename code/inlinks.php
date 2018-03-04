@@ -141,6 +141,15 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = 'browse';
       $options = array_merge( $large_window_options, array( 'width' => 1200 ) );
       break;
+    case 'basardruck':
+      $parameters['window'] = 'basardruck';
+      $parameters['window_id'] = 'basardruck';
+      $parameters['text'] = "Basar (Druckansicht)";
+      $parameters['title'] = "zur Basar&uuml;bersicht (Druckansicht)...";
+      $parameters['class'] = 'browse';
+      $options = array_merge(
+          $large_window_options, array( 'toolbar' => 'no', 'location' => 'no', 'width' => '840', 'menubar' => 'no','height' => '640' ) );
+      break;
     case 'dienstkontrollblatt':
       $parameters['window'] = 'dienstkontrollblatt';
       $parameters['window_id'] = 'main';

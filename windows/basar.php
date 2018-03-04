@@ -8,6 +8,8 @@ get_http_var( 'bestell_id', 'u' , 0, true );
 
 $editable = ( hat_dienst(4) and ! $readonly );
 
+echo fc_link( 'basardruck', "" );
+
 get_http_var( 'action','w','' );
 $editable or $action = '';
 if( $action == 'basarzuteilung' ) {
