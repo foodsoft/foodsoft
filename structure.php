@@ -331,7 +331,7 @@ $tables = [
       , 'extra' => ''
       ]
     , 'dienst' => [
-        'type' =>  "enum('1/2','3','4','5','freigestellt')"
+        'type' =>  "enum('1/2','3','4','5','6','freigestellt')"
       , 'null' => 'YES'
       , 'default' => null
       , 'extra' => ''
