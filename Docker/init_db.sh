@@ -1,7 +1,7 @@
 #!/bin/bash
 mysqld_safe & 
 
-while [[ ! $(pgrep -f "/usr/sbin/mysqld") ]]
+while [[ ! $(echo "SHOW DATABASES;" | mysql --user=admin --password=pass) ]]
 	do echo "waiting for mysql"
 	sleep 1
 done
