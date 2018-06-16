@@ -5,7 +5,7 @@ assert( $angemeldet ) or exit();
 setWikiHelpTopic( 'foodsoft:pfandzettel' );
 setWindowSubtitle( 'Pfandzettel Lieferant' );
 
-$editable = ( hat_dienst(4) and ! $readonly );
+$editable = ( (hat_dienst(3) or hat_dienst(4)) and ! $readonly );
 
 get_http_var( 'abrechnung_id', 'u', 0, true );
 if( $abrechnung_id ) {

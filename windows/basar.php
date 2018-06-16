@@ -6,7 +6,7 @@ assert( $angemeldet ) or exit();  // aufruf nur per index.php?window=basar...
 get_http_var( 'orderby', 'w' , 'artikelname', true );
 get_http_var( 'bestell_id', 'u' , 0, true );
 
-$editable = ( hat_dienst(4) and ! $readonly );
+$editable = ( (hat_dienst(3) or hat_dienst(4)) and ! $readonly );
 
 echo fc_link( 'basardruck', "" );
 
