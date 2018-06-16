@@ -7,4 +7,5 @@ echo  \
 and start it again via 
         $DOCKER_CMD start FoodSoft"
 
-exec $DOCKER_CMD run -v $(dirname $PWD):/FoodSoft --name FoodSoft foodsoftimage
+cp config.php ../code/config.php
+exec $DOCKER_CMD run -p 80:80 -v $(dirname $PWD):/FoodSoft --name FoodSoft foodsoftimage
