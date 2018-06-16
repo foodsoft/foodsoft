@@ -1854,6 +1854,8 @@ $wochentage = array( 'invalid', 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Do
 define('STATUS_BESTELLEN', 10 );
 define('STATUS_LIEFERANT', 20 );
 define('STATUS_VERTEILT', 30 );
+define('STATUS_ABGESCHLOSSEN_DIENST_3', 33 );
+define('STATUS_ABGESCHLOSSEN_DIENST_4', 36 );
 define('STATUS_ABGERECHNET', 40 );
 define('STATUS_ABGESCHLOSSEN', 45 );
 define('STATUS_ARCHIVIERT', 50 );
@@ -1868,6 +1870,10 @@ function rechnung_status_string( $state ) {
       return 'geliefert und verteilt';
     case STATUS_ABGERECHNET:
       return 'abgerechnet';
+    case STATUS_ABGESCHLOSSEN_DIENST_3:
+      return 'Dienst 3 hat Abrechnung vorbereitet';
+    case STATUS_ABGESCHLOSSEN_DIENST_4:
+      return 'Dienst 4 hat die Abrechnung abgeschlossen';
     case STATUS_ABGESCHLOSSEN:
       return 'abgeschlossen';
     case STATUS_ARCHIVIERT:
@@ -1931,7 +1937,17 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
     case STATUS_LIEFERANT . "," . STATUS_VERTEILT:
       // $changes .= ", lieferung=NOW()";   // TODO: eingabe erlauben?
       break;
-    case STATUS_VERTEILT . "," . STATUS_ABGERECHNET:
+    case STATUS_VERTEILT . "," . STATUS_ABGESCHLOSSEN_DIENST_3:
+      break;
+    case STATUS_VERTEILT . "," . STATUS_ABGESCHLOSSEN_DIENST_4:
+      break;
+    case STATUS_ABGESCHLOSSEN_DIENST_3 . "," . STATUS_VERTEILT:
+      break;
+    case STATUS_ABGESCHLOSSEN_DIENST_4 . "," . STATUS_ABGESCHLOSSEN_DIENST_3:
+      break;
+    case STATUS_ABGESCHLOSSEN_DIENST_3 . "," . STATUS_ABGESCHLOSSEN_DIENST_4:
+      break;
+    case STATUS_ABGESCHLOSSEN_DIENST_4 . "," . STATUS_ABGERECHNET:
       nur_fuer_dienst(4);
       need( $dienstkontrollblatt_id > 0, "Kein Dienstkontrollblatt Eintrag" );
       $changes .= ", abrechnung_dienstkontrollblatt_id = '$dienstkontrollblatt_id'

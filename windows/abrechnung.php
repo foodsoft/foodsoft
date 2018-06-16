@@ -87,6 +87,24 @@ if( $action == 'save' ) {
       }
     }
     get_http_var( 'rechnung_abschluss', 'w', '' );
+    get_http_var( 'abrechnung_dienst_3', 'w', '' );
+    get_http_var( 'abrechnung_dienst_4', 'w', '' );
+    if( $abrechnung_dienst_3 == 'yes' ) {
+      foreach( $bestell_id_set as $b_id ) {
+        sql_change_bestellung_status( $b_id, STATUS_ABGESCHLOSSEN_DIENST_3);
+      }
+    } else
+    {
+      foreach( $bestell_id_set as $b_id ) {
+        sql_change_bestellung_status( $b_id, STATUS_VERTEILT);
+      }
+    }
+    if( $abrechnung_dienst_4 == 'yes' ) {
+      foreach( $bestell_id_set as $b_id ) {
+        sql_change_bestellung_status( $b_id, STATUS_ABGESCHLOSSEN_DIENST_4);
+      }
+      // todo: mail an domenik
+    }
     if( $rechnung_abschluss == 'yes' ) {
       need( abs( basar_wert_brutto( $bestell_id ) ) < 0.01 , "Abschluss noch nicht möglich: da sind noch Reste im Basar!" );
       foreach( $bestell_id_set as $b_id ) {
@@ -311,6 +329,21 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
       if( $teil_abrechnung ) {
         open_td( 'italic small', "colspan='5'", 'Abschluss bitte in Gesamtabrechnung durchfuehren' );
       } else {
+        if( hat_dienst(4) or hat_dienst(3)) {
+            $dienst_3_done = $status >= STATUS_ABGESCHLOSSEN_DIENST_3 ? "checked" : "";
+            $dienst_4_done = $status >= STATUS_ABGESCHLOSSEN_DIENST_4 ? "checked" : "";
+            open_tr();
+            open_td( 'medskip right', "colspan='4' style='border-right:none;'"
+                     , "Abrechnung von Dienst 3 vorbereitet:
+                       <input type='checkbox' name='abrechnung_dienst_3' value='yes' $dienst_3_done $input_event_handlers>" );
+            open_td();
+            open_tr();
+            open_td( 'medskip right', "colspan='4' style='border-right:none;'"
+                     , "Abrechnung von Dienst 4 abgeschlossen:
+                       <input type='checkbox' name='abrechnung_dienst_4' value='yes' $dienst_4_done $input_event_handlers>" );
+            open_td();
+            open_tr();
+        }
         if( hat_dienst(4) ) {
           if( abs( $warenwert_basar_brutto ) < 0.05 ) {
             open_td( 'medskip right', "colspan='4' style='border-right:none;'"
