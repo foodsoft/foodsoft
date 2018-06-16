@@ -4,7 +4,6 @@ setWikiHelpTopic( 'foodsoft:' );
 
 function process_bullentinboard_content($bulltin, $up_or_down) {
     global $bulletinboard;
-    error_log($bulletinboard);
 
     $b = preg_split( '/\n/m', $bulltin . "\n\n\n\n\n\n\n" );
     $bulltin = '';
