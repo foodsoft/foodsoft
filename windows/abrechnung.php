@@ -334,7 +334,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
             $dienst_4_done = $status >= STATUS_ABGESCHLOSSEN_DIENST_4 ? "checked" : "";
             open_tr();
             open_td( 'medskip right', "colspan='4' style='border-right:none;'"
-                     , "Abrechnung von Dienst 3 vorbereitet:
+                     , "Eintragungen in der Foodsoft von Dienst 3 abgeschlossen:
                        <input type='checkbox' name='abrechnung_dienst_3' value='yes' $dienst_3_done $input_event_handlers>" );
             open_td();
             open_tr();
