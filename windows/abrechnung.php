@@ -165,6 +165,7 @@ if( $gesamt_abrechnung ) {
 if( hat_dienst(4) and ! $readonly )
   open_form( '', 'action=save' );
 
+
 open_table( 'list', "style='width:98%'" );
   open_th( '', '', 'Abrechnungsschritt' );
   open_th( '', '', 'Details' );
@@ -340,7 +341,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
             open_tr();
             open_td( 'medskip right', "colspan='4' style='border-right:none;'"
                      , "Abrechnung von Dienst 4 abgeschlossen:
-                       <input type='checkbox' name='abrechnung_dienst_4' value='yes' $dienst_4_done $input_event_handlers>" );
+                       <input type='checkbox' onchange='javascript:do_abrechnung_dienst_4();'name='abrechnung_dienst_4' value='yes' $dienst_4_done $input_event_handlers>" );
             open_td();
             open_tr();
         }
@@ -363,6 +364,14 @@ close_table();
 
 if( hat_dienst(4) and ! $readonly )
   close_form();
+
+// todo: chekc form number
+echo "<script>
+		function do_abrechnung_dienst_4() {
+			if (window.confirm('Dienst 4 abschließen und Mail an Domenik schicken?'))
+				submit_form(1);
+		}
+      </script>";
 
 close_fieldset();
 
