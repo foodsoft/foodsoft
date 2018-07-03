@@ -4013,7 +4013,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'Stk', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'Bund', 'Bunde', 'Schalen', 'BT', 'KT', 'Kiste', 'FL', 'Flaschen', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
