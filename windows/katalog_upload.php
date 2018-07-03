@@ -552,7 +552,7 @@ function upload_bnn( $katalogformat ) {
   $lineCount = 0;
   $success = 0;
   foreach ( $klines as $line ) {
-    if( $lineCount++ > 9999 )
+    if( $lineCount++ > 99999 )
       break;
     $line = iconv( "CP850", "UTF-8", $line );
 
