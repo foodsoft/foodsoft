@@ -350,7 +350,7 @@ function select_dienste( $filter = 'true' ) {
          , gruppenmitglieder.diensteinteilung
          , gruppenmitglieder.aktiv
          , ( if( not dienste.geleistet and ( adddate( curdate(), 14 ) >= dienste.lieferdatum ), 1, 0 ) ) as soon
-         , if( lieferdatum <= CURDATE(), 1, 0 ) as over
+         , if( lieferdatum <= CURDATE(), 1, 0 ) as 'over'
          , ( if( lieferdatum < ( SELECT max(lieferdatum) FROM dienste WHERE lieferdatum < CURDATE() ), 1, 0 ) ) as historic
          , if( lieferdatum > adddate( curdate(), -32 ), 1, 0 ) as editable
     FROM dienste
