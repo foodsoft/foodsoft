@@ -39,7 +39,7 @@ require_once('code/html.php');
 
 // verbindung gleich aufbauen:
 global $db_handle;
-if( ! ( $db_handle = mysql_connect($db_server,$db_user,$db_pwd ) ) || !mysql_select_db( $db_name ) ) {
+if( ! ( $db_handle = mysqli_connect($db_server,$db_user,$db_pwd ) ) || !mysqli_select_db( $db_handle, $db_name ) ) {
   echo "<html><body><h1>Datenbankfehler!</h1>Konnte keine Verbindung zur Datenbank herstellen... Bitte später nochmal versuchen.</body></html>";
   exit();
 }
@@ -52,8 +52,8 @@ global $leitvariable;
 require_once('leitvariable.php');
 foreach( $leitvariable as $name => $props ) {
   global $$name;
-  $result = mysql_query( "SELECT * FROM leitvariable WHERE name='$name'" );
-  if( $result and ( $row = mysql_fetch_array( $result ) ) ) {
+  $result = mysqli_query( $db_handle, "SELECT * FROM leitvariable WHERE name='$name'" );
+  if( $result and ( $row = mysqli_fetch_array( $result ) ) ) {
     $$name = $row['value'];
   } else {
     $$name = $props['default'];

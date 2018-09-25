@@ -158,7 +158,7 @@ function check_3() {
   //
   // (3) check MySQL server connection
   //
-  global $db_server, $db_name, $db_user, $db_pwd;
+  global $db, $db_server, $db_name, $db_user, $db_pwd;
 
   $problems = false;
   do {
@@ -204,16 +204,16 @@ function check_3() {
       break;
     ?>
       <tr>
-        <th>mysql_connect():</th>
+        <th>mysqli_connect():</th>
     <?php
-    $db = mysql_connect($db_server,$db_user,$db_pwd);
+    $db = mysqli_connect($db_server,$db_user,$db_pwd);
     if( $db ) {
       ?> <td class='ok'>Verbindung zum MySQL Server OK </td></tr> <?php
     } else {
       ?>
         <td class='warn'>
           Verbindung zum MySQL Server fehlgeschlagen:
-          <div class='warn'><?php echo mysql_error(); ?></div>
+          <div class='warn'><?php echo mysqli_error( $db ); ?></div>
         </dt>
       <?php
       $problems = true;
@@ -224,16 +224,16 @@ function check_3() {
 
     ?>
       <tr>
-        <th>mysql_select_db():</th>
+        <th>mysqli_select_db():</th>
     <?php
-    $db_selected = mysql_select_db( $db_name, $db );
+    $db_selected = mysqli_select_db( $db, $db_name );
     if( $db_selected ) {
       ?> <td class='ok'>Verbindung zur Datenbank OK </td></tr> <?php
     } else {
       ?>
         <td class='warn'>
           Verbindung zur Datenbank fehlgeschlagen:
-          <div class='warn'><?php echo mysql_error(); ?></div>
+          <div class='warn'><?php echo mysqli_error( $db ); ?></div>
         </dt>
       <?php
       $problems = true;
@@ -260,6 +260,8 @@ function check_4() {
   //
   // (4) database connection established: check tables, columns, indices:
   //
+
+  global $db;
 
   $problems = false;
   require_once('structure.php');
@@ -419,7 +421,7 @@ function check_4() {
     ?><tr><th colspan='6' style='padding-top:1em;text-align:center;'>table: <?php echo $table; ?></th></tr><?php
 
     $sql = "SHOW COLUMNS FROM $table; ";
-    $result = mysql_query( $sql );
+    $result = mysqli_query( $db, $sql );
     if( ! $result ) {
       ?>
         <tr>
@@ -439,7 +441,7 @@ function check_4() {
     echo $thead;
     $want_cols = $want['cols'];
     $want_indices = $want['indices'];
-    while( $row = mysql_fetch_array( $result ) ) {
+    while( $row = mysqli_fetch_array( $result ) ) {
       $field = $row['Field'];
       ?>
         <tr>
@@ -533,10 +535,10 @@ function check_4() {
 
     ?><tr><th colspan='6' style='text-align:left;'>indices:</th></tr><?php
     echo $ihead;
-    $result = mysql_query( "SHOW INDEX FROM $table; " );
+    $result = mysqli_query( $db, "SHOW INDEX FROM $table; " );
     $iname = '';
     $icols = '';
-    while( ( $row = mysql_fetch_array( $result ) ) or $iname ) {
+    while( ( $row = mysqli_fetch_array( $result ) ) or $iname ) {
       if( $row and ( $iname == $row['Key_name'] ) ) {
         $icols .= ", {$row['Column_name']}";
       } else {
@@ -632,7 +634,7 @@ function check_4() {
 }
 
 function check_5() {
-  global $leitvariable, $changes;
+  global $db, $leitvariable, $changes;
   //
   // (5) setup leitvariable database:
   //
@@ -708,8 +710,8 @@ function check_5() {
             echo $props['meaning'];
             if( isset( $props['comment'] ) )
               echo "<div class='small'>".$props['comment']."</div>";
-            $result = mysql_query( "SELECT * FROM leitvariable WHERE name='$name'" );
-            if( $result and ( $row = mysql_fetch_array( $result ) ) ) {
+            $result = mysqli_query( $db, "SELECT * FROM leitvariable WHERE name='$name'" );
+            if( $result and ( $row = mysqli_fetch_array( $result ) ) ) {
               $value = $row['value'];
               $checked = '';
             } else {
@@ -740,9 +742,9 @@ function check_5() {
     }
   }
 
-  $result = mysql_query( "SELECT * FROM leitvariable" );
+  $result = mysqli_query( $db, "SELECT * FROM leitvariable" );
   $header_written = false;
-  while( $row = mysql_fetch_array( $result ) ) {
+  while( $row = mysqli_fetch_array( $result ) ) {
     if( isset( $leitvariable[$row['name']] ) )
       continue;
     if( ! $header_written ) {
@@ -773,18 +775,18 @@ function check_5() {
 }
 
 function check_6() {
-  global $changes;
+  global $db, $changes;
   $problems = false;
 
-  $result = mysql_query( "SELECT * FROM leitvariable WHERE name = 'muell_id'; " );
-  $row = mysql_fetch_array( $result );
+  $result = mysqli_query( $db, "SELECT * FROM leitvariable WHERE name = 'muell_id'; " );
+  $row = mysqli_fetch_array( $result );
   if( $row ) {
     $muell_id = $row['value'];
   } else {
     $muell_id = false;
   }
-  $result = mysql_query( "SELECT * FROM leitvariable WHERE name = 'basar_id'; " );
-  $row = mysql_fetch_array( $result );
+  $result = mysqli_query( $db, "SELECT * FROM leitvariable WHERE name = 'basar_id'; " );
+  $row = mysqli_fetch_array( $result );
   if( $row ) {
     $basar_id = $row['value'];
   } else {
@@ -828,8 +830,8 @@ function check_6() {
         <td>Bad-Bank (Nr. <?php echo $muell_id; ?>)</td>
   <?php
 
-  $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$muell_id; " );
-  $row = mysql_fetch_array( $result );
+  $result = mysqli_query( $db, "SELECT * FROM bestellgruppen WHERE id=$muell_id; " );
+  $row = mysqli_fetch_array( $result );
   if( $row ) {
     ?>
       <td class='ok'>eingetragen</td>
@@ -850,8 +852,8 @@ function check_6() {
         <td>'Basar'-Gruppe (Nr. <?php echo $basar_id; ?>)</td>
   <?php
 
-  $result = mysql_query( "SELECT * FROM bestellgruppen WHERE id=$basar_id; " );
-  $row = mysql_fetch_array( $result );
+  $result = mysqli_query( $db, "SELECT * FROM bestellgruppen WHERE id=$basar_id; " );
+  $row = mysqli_fetch_array( $result );
   if( $row ) {
     ?>
       <td class='ok'>eingetragen</td>
@@ -871,8 +873,8 @@ function check_6() {
       <tr>
         <td>Sonstige Gruppen</td>
   <?php
-  $result = mysql_query( "SELECT * FROM bestellgruppen " );
-  $num = mysql_num_rows( $result ) - 2;
+  $result = mysqli_query( $db, "SELECT * FROM bestellgruppen " );
+  $num = mysqli_num_rows( $result ) - 2;
   if( $num > 0 ) {
     ?>
       <td class='ok'><?php echo $num; ?> Gruppen eingetragen</td>
@@ -986,7 +988,7 @@ if( count( $changes ) > 0 ) {
         <td><pre> <?php echo htmlspecialchars("$s\n"); ?></pre></td>
     <?php
     $result = false;
-    $result = mysql_query( $s );
+    $result = mysqli_query( $db, $s );
     if( $result ) {
       ?>
         <td class='ok'>OK</td>
@@ -996,7 +998,7 @@ if( count( $changes ) > 0 ) {
       ?>
         <td class='warn'>
           fehlgeschlagen:
-          <div><?php echo mysql_error(); ?></div>
+          <div><?php echo mysqli_error($db); ?></div>
         </td>
         </tr>
       <?php
