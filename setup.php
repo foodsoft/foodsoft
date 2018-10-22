@@ -19,7 +19,7 @@
 require_once('code/config.php');
 
 $remote_ip = getenv('REMOTE_ADDR');
-if( $allow_setup_from and ereg( '^'.$allow_setup_from, $remote_ip ) ) {
+if( $allow_setup_from and preg_match( '/^'.$allow_setup_from.'/', $remote_ip ) ) {
   true;
 } else {
   ?>
