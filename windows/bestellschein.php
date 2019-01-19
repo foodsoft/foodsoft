@@ -141,6 +141,8 @@ switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
     // $selectButtons = array("zeigen" => "bestellschein", "pdf" => "bestellt_faxansicht" );
     break;
   case STATUS_VERTEILT:
+  case STATUS_ABGESCHLOSSEN_DIENST_3:
+  case STATUS_ABGESCHLOSSEN_DIENST_4:
   case STATUS_ABGERECHNET:
     if( $gruppen_id ) {
       $editable = FALSE;
