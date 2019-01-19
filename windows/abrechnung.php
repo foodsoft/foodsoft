@@ -102,8 +102,24 @@ if( $action == 'save' ) {
     if( $abrechnung_dienst_4 == 'yes' ) {
       foreach( $bestell_id_set as $b_id ) {
         sql_change_bestellung_status( $b_id, STATUS_ABGESCHLOSSEN_DIENST_4);
+        if( isset($konto_mail) ) {
+            $cur_bestellung = sql_bestellung( $b_id );
+            $to      = 'mail@johanneswegener.de';
+            $subject = 'Diest 4 hat Bestellung: ' . $cur_bestellung['name'] . ' abgeschlossen';
+            $message = "Hallo lieber Kontodienst,\nDie Bestllung: ". $cur_bestellung['name'] .
+                " wurde von Dienst 4 als Abgeschlossen makiert.\n\nFolge dem Link für die Abrechnung: https://" .
+                $_SERVER['HTTP_HOST'] . $foodsoftbase . "/index.php?&window=abrechnung&abrechnung_id=" . $b_id . "\n\nGrüße,\ndie Foodsoft";
+            $headers = 'From: mail@nahrungskette.net' . "\r\n" .
+                'Reply-To: mail@nahrungskette.net' . "\r\n" .
+                'Mime-Version: 1.0' . "\r\n" .
+                'Content-Type: text/plain; charset=utf-8' . "\r\n" .
+                'Content-Transfer-Encoding: quoted-printable' . "\r\n" .
+                'charset: "UTF-8"' . "\r\n" .
+                'X-Mailer: PHP/' . phpversion();
+            error_log($message);
+            mail($konto_mail, $subject, quoted_printable_encode($message), $headers);
+        }
       }
-      // todo: mail an domenik
     }
     if( $rechnung_abschluss == 'yes' ) {
       need( abs( basar_wert_brutto( $bestell_id ) ) < 0.01 , "Abschluss noch nicht möglich: da sind noch Reste im Basar!" );
@@ -152,7 +168,6 @@ if( $bestell_id_count > 1 ) {
   abrechnung_overview( $abrechnung_id, ( $gesamt_abrechnung ? 0 : $bestell_id ) );
   medskip();
 }
-
 
 if( $gesamt_abrechnung ) {
   open_fieldset( '', "'style='padding:1em;'", "Gesamt-Abrechnung: $bestell_id_count Bestellungen" );
@@ -341,7 +356,7 @@ if( $lieferant['anzahl_pfandverpackungen'] > 0 ) {
             open_tr();
             open_td( 'medskip right', "colspan='4' style='border-right:none;'"
                      , "Abrechnung von Dienst 4 abgeschlossen:
-                       <input type='checkbox' onchange='javascript:do_abrechnung_dienst_4();'name='abrechnung_dienst_4' value='yes' $dienst_4_done $input_event_handlers>" );
+                       <input type='checkbox' onchange='javascript:do_abrechnung_dienst_4(this.checked);'name='abrechnung_dienst_4' value='yes' $dienst_4_done $input_event_handlers>" );
             open_td();
             open_tr();
         }
@@ -367,9 +382,10 @@ if( hat_dienst(4) and ! $readonly )
 
 // todo: chekc form number
 echo "<script>
-		function do_abrechnung_dienst_4() {
-			if (window.confirm('Dienst 4 abschließen und Mail an Domenik schicken?'))
-				submit_form(1);
+		function do_abrechnung_dienst_4(value) {
+			if(value)
+				if (window.confirm('Dienst 4 abschließen und Mail an den Kontodienst schicken?'))
+					submit_form(1);
 		}
       </script>";
 
