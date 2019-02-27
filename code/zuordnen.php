@@ -3697,7 +3697,8 @@ function sockeleinlagen( $gruppen_id = 0 ) {
       ) as soll
     FROM (".select_gruppen( array( 'aktiv' => 'true' ) ).") AS bestellgruppen 
     $where
-  ", 'soll' 
+  ", 'soll'
+  , true
   );
 }
 
