@@ -13,7 +13,10 @@ Installation der Foodosoft:
     php muss der Server natuerlich unterstuetzen
     - Stellt sicher, dass in php.ini (z.B. /etc/php7/apache2/php.ini) der Wert
       upload_max_filesize groß genug ist für Eure Kataloge, z.B.
-      upload_max_filesize = 16M
+        upload_max_filesize = 16M
+      und dass bei langen Produktlisten genug Variablen benutzt werden dürfen, 
+      z.B.:
+        max_input_vars = 1500
 
 (b) Unterhalb der /DocumentRoot des Servers koennt Ihr nebeneinander die
     Foodsoft, und optional das DokuWiki, unterbringen, und zwar in
@@ -40,6 +43,9 @@ Installation der Foodosoft:
     eintragen.
     - stellt sicher, dass in Eurer my.cnf die Option sql_mode den Wert
       STRICT_TRANS_TABLES *nicht* enthält!
+      Dieser Wert ist seit MariaDB 10.2.4 defaultmäßig enthalten, kann man mit
+        show variables like 'sql_mode';
+      überprüfen.
 
 (d) Zum Test und zur weiteren Konfiguration koennt ihr das Skript setup.php
     benutzen.
