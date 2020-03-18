@@ -130,6 +130,14 @@ $leitvariable = array(
   , 'runtime_editable' => 0
   , 'cols' => '2'
   )
+, 'basar_budget' => array(
+    'meaning' => 'Budget für Basar-Bestellungen'
+  , 'default' => '250'
+  , 'comment' => 'F&uuml;r diesen Betrag kann der Bestelldienst Waren auf den Basar bestellen'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '4'
+  )
 , 'database_version' => array(
     'meaning' => 'Version der Datenbank'
   , 'default' => '35'

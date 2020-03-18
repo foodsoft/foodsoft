@@ -7,7 +7,7 @@ setWikiHelpTopic( "foodsoft:bestellen" );
 
 if( hat_dienst(4) ) {
   $gruppen_id = $basar_id;
-  $kontostand = 250.0;
+  $kontostand = $basar_budget;
   $festgelegt = 0.0;
   echo "<h1>Bestellen f&uuml;r den Basar</h1>";
 } else {

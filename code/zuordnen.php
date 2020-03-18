@@ -4700,7 +4700,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
       logger( 'update_database: update to version 23 successful' );
       
- case 23:
+  case 23:
       logger( 'starting update_database: from version 23' );
       
       doSql( "CREATE TABLE `catalogue_acronyms` ("
@@ -4716,7 +4716,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
       logger( 'update_database: update to version 24 successful' );
    
- case 24:
+  case 24:
       logger( 'starting update_database: from version 24' );
 
       doSql( "ALTER TABLE `lieferanten`
@@ -4734,7 +4734,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
       logger( 'update_database: update to version 25 successful' );
 
- case 25:
+  case 25:
       logger( 'starting update_database: from version 25' );
 
       doSql( "ALTER TABLE `gruppenmitglieder`
@@ -4746,7 +4746,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
       logger( 'update_database: update to version 26 successful' );
 
-case 26:
+  case 26:
       logger( 'starting update_database: from version 26' );
 
       sql_insert( 'leitvariable', array(
@@ -4824,6 +4824,17 @@ case 26:
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 35 ) );
       logger( 'update_database: update to version 35 successful' );
+  case 35:
+      logger( 'starting update_database: from version 35' );
+
+      sql_insert( 'leitvariable', array(
+        'name' => 'basar_budget'
+      , 'value' => '250'
+      , 'comment' => 'F&uuml;r diesen Betrag kann der Bestelldienst Waren auf den Basar bestellen'
+      ) );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 36 ) );
+      logger( 'update_database: update to version 36 successful' );
   }
 }
 
