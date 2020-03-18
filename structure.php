@@ -1,6 +1,6 @@
 <?php
 
-// db version 28
+// db version 35
 
 $tables = array(
   'bankkonten' => array(
@@ -869,6 +869,24 @@ $tables = array(
       , 'default' => '534541'
       , 'extra' => ''
       )
+    , 'katalogaufschlag' => array(
+          'type' => 'decimal(5,2)'
+        , 'null' => 'NO'
+        , 'default' => '0.0'
+        , 'extra' => ''
+      )
+    , 'gruppenpfand' => array(
+          'type' => 'decimal(4,2)'
+        , 'null' => 'NO'
+        , 'default' => '0.16'
+        , 'extra' => ''
+      )
+    , 'katalogaufschlagrunden' => array(
+          'type' => 'tinyint(1)'
+        , 'null' => 'NO'
+        , 'default' => '1'
+        , 'extra' => ''
+      )
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
@@ -1090,7 +1108,7 @@ $tables = array(
       , 'extra' => ''
       )
     , 'wert' => array(
-        'type' =>  "decimal(8,2)"
+        'type' =>  "decimal(8,4)"
       , 'null' => 'NO'
       , 'default' => '0.0'
       , 'extra' => ''

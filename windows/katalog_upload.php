@@ -18,6 +18,23 @@ need_http_var( 'katalogkw', 'w' );
 
 open_div( '', '', "Katalog einlesen: Lieferant: {$lieferant['name']} / g&uuml;ltig: $katalogkw" );
 
+if ($_FILES['katalog']['error'] != UPLOAD_ERR_OK) {
+  $phpFileUploadErrors = array(
+    0 => 'There is no error, the file uploaded with success',
+    1 => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+    2 => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
+    3 => 'The uploaded file was only partially uploaded',
+    4 => 'No file was uploaded',
+    6 => 'Missing a temporary folder',
+    7 => 'Failed to write file to disk.',
+    8 => 'A PHP extension stopped the file upload.',
+  );
+
+  $code = $_FILES['katalog']['error'];
+  $message = $phpFileUploadErrors[$code];
+
+  error ("Fehler beim Upload: $message (Code $code)");
+}
 
 function katalog_update(
   $lieferant_id, $tag, $katalogkw
@@ -96,7 +113,7 @@ function katalog_update(
 
 
 function upload_terra() {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
@@ -241,7 +258,7 @@ function upload_terra() {
     $i=0;
     foreach( $splitline as $field ) {
       if( isset( $fields[$i] ) and $fields[$i] ) {
-        ${$fields[$i]} = mysql_real_escape_string($field);
+        ${$fields[$i]} = mysqli_real_escape_string( $db_handle, $field );
       }
       $i++;
     }
@@ -249,7 +266,7 @@ function upload_terra() {
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', $netto ) );
     $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.',  $mwst ) );
     $pfand = sprintf( "%.2lf", preg_replace( '/,/', '.', $pfand ) );
-    $name = mysql_real_escape_string( $name );
+    $name = mysqli_real_escape_string( $db_handle, $name );
 
     // drop spurious whitespace from numbers:
     $anummer = preg_replace( '/\s/', '', $anummer );
@@ -279,7 +296,7 @@ function upload_terra() {
 
 
 function upload_rapunzel() {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Rapunzel: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -315,9 +332,9 @@ function upload_rapunzel() {
 
     $bnummer = $splitline[1]; // if $pattern matches, this is purely numerical
     $anummer = $bnummer;
-    $name = mysql_real_escape_string( $splitline[2] );
-    $verband = mysql_real_escape_string( $splitline[5] );
-    $herkunft = mysql_real_escape_string( $splitline[6] );
+    $name = mysqli_real_escape_string( $db_handle, $splitline[2] );
+    $verband = mysqli_real_escape_string( $db_handle, $splitline[5] );
+    $herkunft = mysqli_real_escape_string( $db_handle, $splitline[6] );
 
     $gebinde = $splitline[9];
 
@@ -347,7 +364,7 @@ function upload_rapunzel() {
 
 
 function upload_bode() {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -381,11 +398,11 @@ function upload_bode() {
 
     $splitline = preg_split( $splitat, $line );
     $bnummer = $splitline[1];
-    $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
+    $bnummer = mysqli_real_escape_string( $db_handle, preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
 
-    $name = mysql_real_escape_string( $splitline[2] );
-    $verband = mysql_real_escape_string( $splitline[3] );
+    $name = mysqli_real_escape_string( $db_handle, $splitline[2] );
+    $verband = mysqli_real_escape_string( $db_handle, $splitline[3] );
     $gebinde = $splitline[5];
     $gebinde = preg_replace( '/,/', '.', $gebinde );
 
@@ -499,7 +516,7 @@ function upload_bode() {
 // und um mit der existierenden datenbank kompatibel zu bleiben:
 //
 function upload_bnn( $katalogformat ) {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
 
@@ -509,6 +526,8 @@ function upload_bnn( $katalogformat ) {
   need( preg_match( '/^BNN;3;/', $fuehrungssatz ), 'kein oder falsches BNN format' );
 
   $tag = 'Tr'; // Bode, Grell: nur ein Katalog, entspricht "Trocken" bei Terra
+
+  $is_midgard = ($katalogformat == "midgard");
 
   if( preg_match( '/;"Terra Naturkost /', $fuehrungssatz ) ) {
     // Terra: unterscheidet 4 Kataloge:
@@ -523,15 +542,17 @@ function upload_bnn( $katalogformat ) {
     else
       error( 'Terra: Katalogformat nicht erkannt' );
     open_div( 'ok', '', "Terra: detektierter Teilkatalog: $tag" );
+  } elseif( preg_match( '/;"?Midgard/', $fuehrungssatz ) ) {
+    $is_midgard = true;
   }
 
   $pattern = '/^\d+;[ANWRXV];/';
   $splitat = '/;/';
 
-  $n = 0;
+  $lineCount = 0;
   $success = 0;
   foreach ( $klines as $line ) {
-    if( $n++ > 9999 )
+    if( $lineCount++ > 99999 )
       break;
     $line = iconv( "CP850", "UTF-8", $line );
 
@@ -593,16 +614,16 @@ function upload_bnn( $katalogformat ) {
     $ean_einzeln = "";
 
     $bnummer = $splitline[0];
-    $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
+    $bnummer = mysqli_real_escape_string( $db_handle, preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
 
-    $name = mysql_real_escape_string( $splitline[6] );
-    $bemerkung = mysql_real_escape_string( $splitline[7] );
-    $handelsklasse = mysql_real_escape_string( $splitline[9] );
-    $herkunft = mysql_real_escape_string( $splitline[12] );
-    $verband = mysql_real_escape_string( $splitline[13] );
-    $hersteller = mysql_real_escape_string( $splitline[10] );
-    $ean_einzeln = mysql_real_escape_string( $splitline[4] );
+    $name = mysqli_real_escape_string( $db_handle, $splitline[6] );
+    $bemerkung = mysqli_real_escape_string( $db_handle, $splitline[7] );
+    $handelsklasse = mysqli_real_escape_string( $db_handle, $splitline[9] );
+    $herkunft = mysqli_real_escape_string( $db_handle, $splitline[12] );
+    $verband = mysqli_real_escape_string( $db_handle, $splitline[13] );
+    $hersteller = mysqli_real_escape_string( $db_handle, $splitline[10] );
+    $ean_einzeln = mysqli_real_escape_string( $db_handle, $splitline[4] );
     
     if ( $handelsklasse )
     {
@@ -643,12 +664,26 @@ function upload_bnn( $katalogformat ) {
     $netto = $splitline[37];
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', trim( $netto ) ) );
 
+    if ($lineCount == 1 && $is_midgard)
+    {
+      if ($anummer < 10)
+        $tag = "Tr";
+      elseif ($anummer >= 80000)
+        $tag = "OG";
+
+      open_div( 'ok', '', "Midgard: detektierter Teilkatalog: $tag" );
+    }
+
     if( ( $netto < 0.01 ) || ( $mwst < 0 ) || ! ( list( $m, $e ) = kanonische_einheit( $einheit, false ) ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit,netto:$netto,mwst:$mwst] $line " );
       continue;
     }
     $m *= $extra_mult;
     $einheit = "$m $e";
+    
+    $wahrscheinlich_pfand = $splitline[26]  && ($e == "FL" || $e == "GL" || $e == "ml");
+    
+    $pfand = $wahrscheinlich_pfand ? $lieferant['gruppenpfand'] : 0.0;
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
     , $anummer, $bnummer, $name, $bemerkung, $einheit, $gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, $netto, $ean_einzeln, $katalogformat
@@ -656,7 +691,7 @@ function upload_bnn( $katalogformat ) {
     $success++;
   }
 
-  logger( "$katalogformat-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $n" );
+  logger( "$katalogformat-Katalog erfasst: $tag / $katalogkw: erfolgreich geparst: $success Zeilen von $lineCount" );
   open_div( 'ok', '', 'finis.' );
 }
 

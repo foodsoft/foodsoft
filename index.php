@@ -42,7 +42,7 @@ switch( $window_id ) {
         }
     }
     open_table( 'footer', "width='100%'" );
-      open_td( '', '', "aktueller Server: <kbd>" .getenv('HOSTNAME'). "</kbd>" );
+      open_td( '', '', "aktueller Server: <kbd>" .gethostname(). "</kbd>" );
       $version = "unknown";
       if (file_exists("version.txt")) {
         $version = file_get_contents("version.txt");

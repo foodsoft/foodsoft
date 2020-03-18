@@ -1,0 +1,3 @@
+#!/bin/sh
+[ -x ./deploy.sh ] && ./deploy.sh
+find . -path './.git/*' -o -print0 | xargs -r -0 chmod -c go=u-wst

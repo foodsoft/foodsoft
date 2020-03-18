@@ -3,12 +3,17 @@
 # this file is generated - do not modify!
 #
 
+wd_clean ()
+{
+  test -z "$(git status --porcelain)"
+}
+
 export LANG=C
 BRANCH=`git branch | sed -e '/^[^*]/d' -e 's/^\* \(.*\)/\1/'`
 COMMIT=`git rev-parse --short HEAD`
 COMMIT_FULL=`git rev-parse HEAD`
 DIRTY=""
-git status | grep -qF 'working directory clean' || DIRTY='-dirty'
+wd_clean || DIRTY='-dirty'
 echo "<a href='http://github.com/foodsoft/foodsoft/commits/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
 
 chmod 644 .gitattributes
@@ -33,10 +38,18 @@ chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
 chmod 755 deploy.sh
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/README
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/auth/authentication.php
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/lang/en/lang.php
+chmod 644 dokuwiki_auth_plugin/authfoodsoft/plugin.info.txt
 chmod 644 dump.php
 chmod 644 fcck.php
 chmod 644 files_und_skripte
 chmod 644 foodsoft.class.php
+chmod 755 git-hooks/post-checkout
+chmod 755 git-hooks/post-commit
+chmod 755 git-hooks/post-merge
+chmod 755 git-hooks/pre-commit
 chmod 644 head.php
 chmod 644 img/arrow.down.blue.png
 chmod 644 img/arrow.up.blue.png
@@ -52,6 +65,7 @@ chmod 644 img/close_black_hover.gif
 chmod 644 img/close_black_trans.gif
 chmod 644 img/euro.png
 chmod 644 img/fant.gif
+chmod 644 img/favicon.ico
 chmod 644 img/gluehbirne_15x16.png
 chmod 644 img/green.png
 chmod 644 img/magic_wand.png
@@ -70,7 +84,6 @@ chmod 644 js/lib/prototype.js
 chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
 chmod 644 links_und_parameter
-chmod 755 pre-commit
 chmod 755 setup.php
 chmod 644 structure.php
 chmod 644 templates/bestellschein.tex

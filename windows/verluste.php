@@ -43,7 +43,7 @@ function verlust_bestellungen( $detail = false ) {
   // $aufschlag_soll_summe = 0;
   $soll_summe = 0;
 
-  while( $row = mysql_fetch_array( $result ) ) {
+  while( $row = mysqli_fetch_array( $result ) ) {
     $muell_soll = - $row['muell_soll'];  // soll _aus_sicht_von_gruppe_13_! (also der FC-Gemeinschaft!)
     $extra_soll = $row['extra_soll'];
     // $aufschlag_soll = $row['aufschlag_soll'];

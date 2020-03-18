@@ -11,6 +11,12 @@ Installation der Foodosoft:
     virtuellen Servers fuer den Apache Webserver.
     Mit einer simpleren default-Konfiguration sollte es notfalls auch klappen;
     php muss der Server natuerlich unterstuetzen
+    - Stellt sicher, dass in php.ini (z.B. /etc/php7/apache2/php.ini) der Wert
+      upload_max_filesize groß genug ist für Eure Kataloge, z.B.
+        upload_max_filesize = 16M
+      und dass bei langen Produktlisten genug Variablen benutzt werden dürfen, 
+      z.B.:
+        max_input_vars = 1500
 
 (b) Unterhalb der /DocumentRoot des Servers koennt Ihr nebeneinander die
     Foodsoft, und optional das DokuWiki, unterbringen, und zwar in
@@ -24,7 +30,7 @@ Installation der Foodosoft:
     "ausfuehrbar" (bedeutet: "betretbar") sein, sollten aber fuer den Server
     nicht schreibbar sein (sollten daher dem Server auch nicht gehoeren).
 
-(c) Ihr braucht eine MySQL Datenbank; genauer:
+(c) Ihr braucht eine MySQL oder MariaDB Datenbank; genauer:
     - die Serveradresse (meist 127.0.0.1, wenn Apache und MySQL auf demselben
       Rechner laufen) des MySQL-Servers,
     - den Datenbanknamen,
@@ -35,6 +41,11 @@ Installation der Foodosoft:
     (siehe apache.sample.conf), alternativ koennt Ihr sie in der Datei
       code/config.php
     eintragen.
+    - stellt sicher, dass in Eurer my.cnf die Option sql_mode den Wert
+      STRICT_TRANS_TABLES *nicht* enthält!
+      Dieser Wert ist seit MariaDB 10.2.4 defaultmäßig enthalten, kann man mit
+        show variables like 'sql_mode';
+      überprüfen.
 
 (d) Zum Test und zur weiteren Konfiguration koennt ihr das Skript setup.php
     benutzen.

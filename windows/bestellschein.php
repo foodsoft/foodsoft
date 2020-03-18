@@ -91,7 +91,8 @@ switch( $action ) {
     break;
 }
 
-get_http_var( 'gruppen_id', 'u', 0, true );
+global $login_dienst;
+get_http_var( 'gruppen_id', 'u', $login_dienst != 0 ? 0 : $login_gruppen_id, true );
 
 if( $gruppen_id and ! in_array( $gruppen_id, $specialgroups ) ) {
   if( $gruppen_id != $login_gruppen_id )

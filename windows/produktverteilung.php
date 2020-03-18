@@ -23,10 +23,14 @@ if( $ro or $readonly )
 
 setWikiHelpTopic( "foodsoft:verteilung" );
 
-if( $produkt_id ) {
-  ?> <h1>Produktverteilung</h1> <?php
+if( $status < STATUS_LIEFERANT ) {
+  ?> <h1>Bestellmengen</h1> <?php
 } else {
-  ?> <h1>Verteilliste</h1> <?php
+  if( $produkt_id ) {
+    ?> <h1>Produktverteilung</h1> <?php
+  } else {
+    ?> <h1>Verteilliste</h1> <?php
+  }
 }
 bestellung_overview( $bestell_id );
 
@@ -97,15 +101,21 @@ if( $editable ) {
 }
 
 open_table('list');
-  distribution_tabellenkopf(); 
+  distribution_tabellenkopf($status); 
 
   foreach( sql_bestellung_produkte( $bestell_id, $produkt_id ) as $produkt ) {
-    if( ( $produkt['liefermenge'] < 0.001 ) and ( $produkt['verteilmenge'] < 0.001 ) )
-      continue;
+    if( $status < STATUS_LIEFERANT) {
+      if ( $produkt['gesamtbestellmenge'] < 0.001 )
+        continue;
+    } else {
+      if( ( $produkt['liefermenge'] < 0.001 ) and ( $produkt['verteilmenge'] < 0.001 ) )
+        continue;
+    }
+    
     $produkt_id = $produkt['produkt_id'];
 
-    distribution_produktdaten( $bestell_id, $produkt_id );
-    distribution_view( $bestell_id, $produkt_id, $editable );
+    distribution_produktdaten( $status, $bestell_id, $produkt_id );
+    distribution_view( $status, $bestell_id, $produkt_id, $editable );
     open_tr();
       open_td( 'medskip', "colspan='6'", '' );
   }

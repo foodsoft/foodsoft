@@ -91,13 +91,13 @@ function int_view( $num, $fieldname = false, $size = 6, $transmit = true, $edit_
     return "<span class='int number' $id>$num</span>";
 }
 
-function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true ) {
+function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $decimals = 2 ) {
   global $input_event_handlers;
-  $price = sprintf( "%.2lf", $price );
+  $price = price2string( $price, $decimals );
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname )
-    return "<input type='text' class='price number' size='8' $transmit $id value='$price' $input_event_handlers>";
+    return "<input type='text' class='price number' size='8' placeholder='0.00' $transmit $id value='$price' $input_event_handlers>";
   else
     return "<span class='price number' $id>$price</span>";
 }
@@ -916,7 +916,8 @@ function bestellschein_view(
   } else {
     $col[PR_COL_BESTELLMENGE] = array(
      'title' => "von Konsumenten bestellte Mengen: fest/Toleranz/Basar",
-     'header' => "bestellt<br>fest/Toleranz/Basar", 'cols' => 2
+     'header' => "bestellt<br>fest/Toleranz/Basar", 
+     'cols' => ($status == STATUS_BESTELLEN ? 3 : 2)
     );
     if( $status == STATUS_BESTELLEN ) {
       $col[PR_COL_BESTELLGEBINDE] = array(
@@ -1186,7 +1187,9 @@ function bestellschein_view(
                   , ( ( $gruppen_id == $basar_id ) ? $basarbestellmenge : $toleranzbestellmenge ) * $kan_verteilmult );
             if( ! $gruppen_id )
               printf( ' / %u', $basarbestellmenge * $kan_verteilmult );
-          open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
+          open_td( 'unit', "style='border-right-style:none;'", $produkte_row['kan_verteileinheit'] );
+          if( $status < STATUS_LIEFERANT and !$gruppen_id )
+            open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
         }
 
         if( $spalten & PR_COL_BESTELLGEBINDE ) {
@@ -1415,19 +1418,21 @@ function select_products_not_in_list( $bestell_id ) {
   close_select();
 }
 
-function distribution_tabellenkopf() {
+function distribution_tabellenkopf( $status ) {
   open_tr('legende');
     open_th(''       ,''           ,'Gruppe');
-    open_th('oneline','colspan="2"','bestellt (toleranz)');
-    open_th(''       ,'colspan="2"','geliefert');
-    open_th(''       ,"title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag'",'Gesamtpreis');
+    open_th('oneline','colspan="2"','bestellt (Toleranz)');
+    if( $status >= STATUS_LIEFERANT ) {
+      open_th(''       ,'colspan="2"','geliefert');
+      open_th(''       ,"title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag'",'Gesamtpreis');
+    }
   close_tr();
 }
 
-function distribution_produktdaten( $bestell_id, $produkt_id ) {
+function distribution_produktdaten( $status, $bestell_id, $produkt_id ) {
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   open_tr();
-    open_th( '', "colspan='6'" );
+    open_th( '', $status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'" );
       open_div( '', "style='font-size:1.2em; margin:5px;'" );
         echo fc_link( 'produktpreise', array(
          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
@@ -1452,7 +1457,7 @@ function distribution_produktdaten( $bestell_id, $produkt_id ) {
   close_tr();
 }
 
-function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
+function distribution_view( $status, $bestell_id, $produkt_id, $editable = false ) {
   global $js_on_exit;
   global $input_event_handlers;
   global $form_id;
@@ -1478,13 +1483,17 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
   
   $input_event_handlers = textfield_on_change_handler("on_change($form_id); $magicCalculator.handleChangedDistribution();");
   open_tr('summe');
-    open_th('', "colspan='3'", 'Liefermenge:' );
-    open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
-    open_td('unit','',$verteileinheit );
-    open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
-    if ($editable) {
-      open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'", 
-          alink("javascript:$magicCalculator.applyResult(); on_change($form_id);", 'button', '&larr; OK' )); 
+    if( $status < STATUS_LIEFERANT ) {
+      open_th('', "colspan='3'", 'Bestellte Mengen' );
+    } else {
+      open_th('', "colspan='3'", 'Liefermenge:' );
+      open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
+      open_td('unit','',$verteileinheit );
+      open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
+      if ($editable) {
+        open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'", 
+            alink("javascript:$magicCalculator.applyResult(); on_change($form_id);", 'button', '&larr; OK' )); 
+      }
     }
   close_tr();
 
@@ -1521,51 +1530,57 @@ function distribution_view( $bestell_id, $produkt_id, $editable = false ) {
       open_td( '', '', "{$gruppe['gruppennummer']} {$gruppe['name']}" );
       open_td( 'mult', '', mult_view($festmenge) . " (".mult_view($toleranzmenge) .")" );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
-      open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
-      if ($editable) {
-        open_td( "mult $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
-        open_td( "unit $magic_style", '', $verteileinheit );
-        $js_on_exit[] = "$magicCalculator.addGroupField('{$bestell_id}_{$produkt_id}_{$gruppen_id}');";
+      if( $status >= STATUS_LIEFERANT ) {
+        open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
+        open_td( 'unit', '', $verteileinheit );
+        open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
+        if ($editable) {
+          open_td( "mult $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
+          open_td( "unit $magic_style", '', $verteileinheit );
+          $js_on_exit[] = "$magicCalculator.addGroupField('{$bestell_id}_{$produkt_id}_{$gruppen_id}');";
+        }
       }
+    close_tr();
   }
 
-  open_tr('summe');
-    open_td('', "colspan='3'", "M&uuml;ll:" );
-    open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
-    open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
-    if ($editable) {
-      open_td( "mult $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
-      open_td( "unit $magic_style", '', $verteileinheit );
-      $js_on_exit[] = "$magicCalculator.setTrashField('{$bestell_id}_{$produkt_id}_{$muell_id}');";
-    }
-
-  close_tr();
+  if( $status >= STATUS_LIEFERANT ) {
+    open_tr('summe');
+      open_td('', "colspan='3'", "M&uuml;ll:" );
+      open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
+      open_td( 'unit', '', $verteileinheit );
+      open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
+      if ($editable) {
+        open_td( "mult $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
+        open_td( "unit $magic_style", '', $verteileinheit );
+        $js_on_exit[] = "$magicCalculator.setTrashField('{$bestell_id}_{$produkt_id}_{$muell_id}');";
+      }
+    close_tr();
+  }
+  
   open_tr('summe');
     open_td('', '', fc_link( 'basar', 'class=href,text=Basar:' ) );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
-    open_td( 'mult', '');
-    if ($editable) {
-      echo alink("javascript:$magicCalculator.initUi();", 'magic').' ';
-    }
-    open_span('', "id='menge_{$bestell_id}_{$produkt_id}_{$basar_id}'", $basar_verteilmenge );
-    close_td();
-    open_td( 'unit', '', $verteileinheit );
-    open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
-    if ($editable) {
-      $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
-      open_td( "mult $magic_style" );
-      echo alink("javascript:\$('magic_{$bestell_id}_{$produkt_id}_{$basar_id}').value = 0; $magicCalculator.updateUi();", 'button', '0 &rarr;').' ';
-      echo(mult_view( $basar_verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$basar_id}", false ) );
+    if( $status >= STATUS_LIEFERANT ) {
+      open_td( 'mult', '');
+      if ($editable) {
+        echo alink("javascript:$magicCalculator.initUi();", 'magic').' ';
+      }
+      open_span('', "id='menge_{$bestell_id}_{$produkt_id}_{$basar_id}'", $basar_verteilmenge );
       close_td();
-      open_td( "unit $magic_style", '', $verteileinheit );
-      $js_on_exit[] = "$magicCalculator.setBazaarField('{$bestell_id}_{$produkt_id}_{$basar_id}');";
-      $input_event_handlers = $form_event_handlers;
+      open_td( 'unit', '', $verteileinheit );
+      open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+      if ($editable) {
+        $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
+        open_td( "mult $magic_style" );
+        echo alink("javascript:\$('magic_{$bestell_id}_{$produkt_id}_{$basar_id}').value = 0; $magicCalculator.updateUi();", 'button', '0 &rarr;').' ';
+        echo(mult_view( $basar_verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$basar_id}", false ) );
+        close_td();
+        open_td( "unit $magic_style", '', $verteileinheit );
+        $js_on_exit[] = "$magicCalculator.setBazaarField('{$bestell_id}_{$produkt_id}_{$basar_id}');";
+        $input_event_handlers = $form_event_handlers;
+      }
     }
-    
   close_tr();
 }
 

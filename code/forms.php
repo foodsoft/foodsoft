@@ -87,10 +87,10 @@ function form_row_date_time( $label, $fieldname, $initial = 0 ) {
     open_td( 'kbd' ); echo date_time_view( $datetime, $fieldname );
 }
 
-function form_row_betrag( $label = 'Betrag:' , $fieldname = 'betrag', $initial = 0.0 ) {
+function form_row_betrag( $label = 'Betrag:' , $fieldname = 'betrag', $initial = NULL, $decimals = 2 ) {
   open_tr();
     open_td( 'label', '', $label );
-    open_td( 'kbd' ); echo price_view( $initial, $fieldname );
+    open_td( 'kbd' ); echo price_view( $initial, $fieldname, true, true, $decimals );
 }
 
 function form_row_text( $label = 'Notiz:', $fieldname = 'notiz', $size = 60, $initial = '' ) {
@@ -747,6 +747,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 
   $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
   $produkt = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
+  $lieferant = sql_lieferant($produkt['lieferanten_id']);
 
   // besetze $vorschlag mit Werten fuer Formularfelder; benutze nacheinander
   //  - existierende Werte in $vorschlag (typischerweise: automatisch aus lieferantenkatalog entnommen)
@@ -807,7 +808,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
         <label class='qquad'>Pfand:</label>
            <input type='text' class='number' size='4' name='pfand' id='newpfand'
             value='<?php printf( "%.2lf", $vorschlag['pfand'] ); ?>'
-            title='Pfand pro V-Einheit, bei uns immer 0.00 oder 0.16'
+            title='Pfand pro V-Einheit, bei diesem Lieferant immer 0.00 oder <?php echo $lieferant['gruppenpfand']; ?>'
             onchange='preisberechnung_vorwaerts();'>
         <?php
 
@@ -819,7 +820,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
            <span onmouseover="help('L-Preis: Netto: der Einzelpreis aus dem Katalog des Lieferanten (ohne MWSt, ohne Pfand)');"
                  onmouseout="help(' ');" >
            <input title='Nettopreis' class='number' type='text' size='8' id='newlieferpreis' name='lieferpreis'
-             value='<?php printf( "%.2lf", $vorschlag['nettolieferpreis'] ); ?>'
+             value='<?php printf( "%.4lf", $vorschlag['nettolieferpreis'] ); ?>'
              onchange='preisberechnung_vorwaerts();'>
            </span>
         <span style='padding:1ex;'>/</span>
@@ -976,7 +977,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
         lieferpreis = 
-          parseInt( 0.499 + 100 * ( vpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
+          parseInt( 0.499 + 10000 * ( vpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 10000.0;
       }
       preiseintrag_update();
     }
@@ -1049,7 +1050,7 @@ function action_form_produktpreis() {
     sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
   }
 
-  sql_insert_produktpreis(
+  return sql_insert_produktpreis(
     $produkt_id, $lieferpreis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
   , "$liefermult $liefereinheit", "$verteilmult $verteileinheit", $lv_faktor
   );

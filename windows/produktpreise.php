@@ -48,7 +48,14 @@ switch( $action ) {
     sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
     break;
   case 'neuer_preiseintrag':
-    action_form_produktpreis();
+    $neue_preis_id = action_form_produktpreis();
+    if( $neue_preis_id && $bestell_id && sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET )
+    {
+      sql_update('bestellvorschlaege'
+              , array('gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id)
+              , array('produktpreise_id' => $neue_preis_id)
+      );
+    }
     break;
   case 'delete_price':
     need_http_var('preis_id','u');

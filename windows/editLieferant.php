@@ -28,8 +28,11 @@ get_http_var('bestellmodalitaeten','H',$row);
 get_http_var('kundennummer','H',$row);
 get_http_var('url','H',$row);
 get_http_var('katalogformat','w',$row);
+get_http_var('katalogaufschlag', 'f', $row);
+get_http_var('gruppenpfand', 'f', $row);
 
 get_http_var( 'action', 'w', '' );
+get_http_var('katalogaufschlagrunden', 'u', $action == 'save' ? 0 : $row);
 $editable or $action = '';
 if( $action == 'save' ) {
   $values = array(
@@ -45,6 +48,9 @@ if( $action == 'save' ) {
   , 'kundennummer' => $kundennummer
   , 'url' => $url
   , 'katalogformat' => $katalogformat
+  , 'katalogaufschlag' => $katalogaufschlag
+  , 'gruppenpfand' => $gruppenpfand
+  , 'katalogaufschlagrunden' => $katalogaufschlagrunden
   );
   if( ! $name ) {
     $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
@@ -53,14 +59,14 @@ if( $action == 'save' ) {
       if( sql_update( 'lieferanten', $lieferanten_id, $values ) ) {
         $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
       } else {
-        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysqli_error( $db_handle ) . '</div>';
       }
     } else {
       if( ( $lieferanten_id = sql_insert( 'lieferanten', $values ) ) ) {
         $self_fields['lieferanten_id'] = $lieferanten_id;
         $msg = $msg . "<div class='ok'>Lieferant erfolgreich angelegt:</div>";
       } else {
-        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysqli_error( $db_handle ) . "</div>";
       }
     }
   }
@@ -103,6 +109,9 @@ open_form( '', 'action=save' );
           }
           echo "$options";
         close_select();
+      form_row_betrag( 'Katalog-Aufschlag:', ( $editable ? 'katalogaufschlag' : false), $katalogaufschlag); echo '%';
+        echo " <input type='checkbox' name='katalogaufschlagrunden' value='1'".($katalogaufschlagrunden ? " checked" : "")."> runden";
+      form_row_betrag( 'Gruppenpfand-Einheit:', ( $editable ? 'gruppenpfand' : false), $gruppenpfand);
       open_tr();
         open_td( 'right', "colspan='2'" );
           if( $lieferanten_id > 0 )
