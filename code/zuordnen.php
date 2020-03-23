@@ -4019,7 +4019,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'Stk', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'Bund', 'Bunde', 'Schalen', 'BT', 'KT', 'Kiste', 'FL', 'Flaschen', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -4036,6 +4036,25 @@ function kanonische_einheit( $einheit, $die_on_error = true ) {
     $kan_mult = 1;
   }
   $einheit = str_replace( ' ', '', strtolower($einheit) );
+  // Synonyme
+  switch( $einheit ) {
+    case 'bund':
+    case 'bunde':
+      $einheit = "bd";
+      break;
+    case 'schalen':
+      $einheit = "sch";
+      break;
+    case 'kiste':
+      $einheit = "ki";
+      break;
+    case 'flaschen':
+      $einheit = "fl";
+      break;
+    case 'stk':
+      $einheit = "st";
+      break;
+  }
   switch( $einheit ) {
     //
     // gewicht immer in gramm:
