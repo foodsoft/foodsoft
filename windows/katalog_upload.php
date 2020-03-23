@@ -539,6 +539,8 @@ function upload_bnn( $katalogformat ) {
       $tag = 'Tr';
     else if( preg_match( '/;"Frisch/', $fuehrungssatz ) )
       $tag = 'Fr';
+    else if( preg_match( '/;"Gastronomie/', $fuehrungssatz ) )
+      $tag = 'Gastro';
     else
       error( 'Terra: Katalogformat nicht erkannt' );
     open_div( 'ok', '', "Terra: detektierter Teilkatalog: $tag" );

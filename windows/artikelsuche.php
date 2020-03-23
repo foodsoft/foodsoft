@@ -159,7 +159,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           open_span( 'qquad' );
             ?> <label>Katalog:</label> <?php
             open_select( 'katalogtyp' );
-              echo optionen( array( '', 'OG', 'Fr', 'Tr', 'drog' ), $katalogtyp );
+              echo optionen( array( '', 'OG', 'Fr', 'Tr', 'drog', 'Gastro' ), $katalogtyp );
             close_select();
           close_span();
       open_tr();
