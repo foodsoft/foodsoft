@@ -676,7 +676,7 @@ function upload_bnn( $katalogformat ) {
       open_div( 'ok', '', "Midgard: detektierter Teilkatalog: $tag" );
     }
 
-    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || ! ( list( $m, $e ) = kanonische_einheit( $einheit, false ) ) ) {
+    if( ( $netto < 0 ) || ( $mwst < 0 ) || ! ( list( $m, $e ) = kanonische_einheit( $einheit, false ) ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit,netto:$netto,mwst:$mwst] $line " );
       continue;
     }
