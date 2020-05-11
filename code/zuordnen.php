@@ -4664,7 +4664,7 @@ function update_database( $version ) {
       logger( 'starting update_database: from version 17' );
 
       doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
-      doSql( "ALTER TABLE `sessions` ADD COLUMN `session_timestamp` timestamp not null default CURRENT_TIMESTAMP " );
+      doSql( "ALTER TABLE `sessions` ADD COLUMN `session_timestamp` timestamp not null default current_timestamp() " );
       doSql( "ALTER TABLE `bestellvorschlaege` ADD COLUMN `vorschlag_gruppen_id` int(11) not null default 0 " );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );

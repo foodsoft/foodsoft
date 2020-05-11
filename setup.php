@@ -45,7 +45,7 @@ $problems = false;
 
 function escape_val( $val ) {
   switch( $val ) {
-    case 'CURRENT_TIMESTAMP';
+    case 'current_timestamp()';
       return $val;
     default:
       return "'$val'";
