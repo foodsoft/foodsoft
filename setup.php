@@ -18,7 +18,17 @@
 
 require_once('code/config.php');
 
+
+  // proof ips behind proxies, dont blame proxies.
 $remote_ip = getenv('REMOTE_ADDR');
+if (filter_var($remote_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false){
+  foreach (array( 'HTTP_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_FORWARDED') as $pos){
+    if (array_key_exists($pos, $_SERVER) === true){
+      $remote_ip = getenv($pos);
+    }
+  }
+}
+  
 if( $allow_setup_from and preg_match( '/^'.$allow_setup_from.'/', $remote_ip ) ) {
   true;
 } else {
