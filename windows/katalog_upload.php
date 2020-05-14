@@ -539,6 +539,8 @@ function upload_bnn( $katalogformat ) {
       $tag = 'Tr';
     else if( preg_match( '/;"Frisch/', $fuehrungssatz ) )
       $tag = 'Fr';
+    else if( preg_match( '/;"Gastronomie/', $fuehrungssatz ) )
+      $tag = 'Gastro';
     else
       error( 'Terra: Katalogformat nicht erkannt' );
     open_div( 'ok', '', "Terra: detektierter Teilkatalog: $tag" );
@@ -674,7 +676,7 @@ function upload_bnn( $katalogformat ) {
       open_div( 'ok', '', "Midgard: detektierter Teilkatalog: $tag" );
     }
 
-    if( ( $netto < 0.01 ) || ( $mwst < 0 ) || ! ( list( $m, $e ) = kanonische_einheit( $einheit, false ) ) ) {
+    if( ( $netto < 0 ) || ( $mwst < 0 ) || ! ( list( $m, $e ) = kanonische_einheit( $einheit, false ) ) ) {
       open_div( 'warn', '', "Fehler bei Auswertung der Zeile: [einheit:$einheit,netto:$netto,mwst:$mwst] $line " );
       continue;
     }

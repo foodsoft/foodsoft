@@ -76,6 +76,12 @@ Installation der Foodosoft:
       $allow_setup_from = false
     eintragen.
 
+(i) Wer statt der katalogtypischen Akronyme für Herkunft, Anbauverband und 
+    Hersteller lieber ausgeschriebene Bezeichnungen nutzen will, kann einen
+    Grundbestand an Daten aus der Datei catalogue_acronyms.sql in die SQL-
+    Datenbank laden. (Sollte man nur ganz am Anfang machen, um eigene Änderungen
+    nicht zu velieren. Pull-Requests willkommen!)
+
 
 Weitere FoodCoops installieren
 ==============================

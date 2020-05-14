@@ -4019,7 +4019,7 @@ function sql_insert_produktpreis (
 
 
 global $masseinheiten;
-$masseinheiten = array( 'g', 'ml', 'ST', 'Stk', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'Bund', 'Bunde', 'Schalen', 'BT', 'KT', 'Kiste', 'FL', 'Flaschen', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE' );
+$masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE', 'FA', 'SA', 'VE' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
 // 
@@ -4036,6 +4036,25 @@ function kanonische_einheit( $einheit, $die_on_error = true ) {
     $kan_mult = 1;
   }
   $einheit = str_replace( ' ', '', strtolower($einheit) );
+  // Synonyme
+  switch( $einheit ) {
+    case 'bund':
+    case 'bunde':
+      $einheit = "bd";
+      break;
+    case 'schalen':
+      $einheit = "sch";
+      break;
+    case 'kiste':
+      $einheit = "ki";
+      break;
+    case 'flaschen':
+      $einheit = "fl";
+      break;
+    case 'stk':
+      $einheit = "st";
+      break;
+  }
   switch( $einheit ) {
     //
     // gewicht immer in gramm:
@@ -4645,7 +4664,7 @@ function update_database( $version ) {
       logger( 'starting update_database: from version 17' );
 
       doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
-      doSql( "ALTER TABLE `sessions` ADD COLUMN `session_timestamp` timestamp not null default CURRENT_TIMESTAMP " );
+      doSql( "ALTER TABLE `sessions` ADD COLUMN `session_timestamp` timestamp not null default current_timestamp() " );
       doSql( "ALTER TABLE `bestellvorschlaege` ADD COLUMN `vorschlag_gruppen_id` int(11) not null default 0 " );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
@@ -4700,7 +4719,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
       logger( 'update_database: update to version 23 successful' );
       
- case 23:
+  case 23:
       logger( 'starting update_database: from version 23' );
       
       doSql( "CREATE TABLE `catalogue_acronyms` ("
@@ -4716,7 +4735,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
       logger( 'update_database: update to version 24 successful' );
    
- case 24:
+  case 24:
       logger( 'starting update_database: from version 24' );
 
       doSql( "ALTER TABLE `lieferanten`
@@ -4734,7 +4753,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
       logger( 'update_database: update to version 25 successful' );
 
- case 25:
+  case 25:
       logger( 'starting update_database: from version 25' );
 
       doSql( "ALTER TABLE `gruppenmitglieder`
@@ -4746,7 +4765,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
       logger( 'update_database: update to version 26 successful' );
 
-case 26:
+  case 26:
       logger( 'starting update_database: from version 26' );
 
       sql_insert( 'leitvariable', array(
@@ -4824,6 +4843,17 @@ case 26:
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 35 ) );
       logger( 'update_database: update to version 35 successful' );
+  case 35:
+      logger( 'starting update_database: from version 35' );
+
+      sql_insert( 'leitvariable', array(
+        'name' => 'basar_budget'
+      , 'value' => '250'
+      , 'comment' => 'F&uuml;r diesen Betrag kann der Bestelldienst Waren auf den Basar bestellen'
+      ) );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 36 ) );
+      logger( 'update_database: update to version 36 successful' );
   }
 }
 
