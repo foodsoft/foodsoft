@@ -105,6 +105,22 @@ $leitvariable = array(
   , 'runtime_editable' => 1
   , 'cols' => '8'
   )
+, 'katalog_mwst_reduziert' => array(
+    'meaning' => 'Reduzierter MwSt-Satz beim BNN-Import'
+  , 'comment' => 'H&auml;ufigster Mehrwertsteuer-Satz auf Lebensmittel in Prozent'
+  , 'default' => '7.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
+, 'katalog_mwst_standard' => array(
+    'meaning' => 'Standard MwSt-Satz beim BNN-Import'
+  , 'comment' => 'Standard-Mehrwertsteuer-Satz in Prozent'
+  , 'default' => '19.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
 , 'toleranz_default' => array(
     'meaning' => 'Default-Toleranz-Satz'
   , 'comment' => 'automatischer Toleranzzuschlag in Prozent bei Bestellungen (kann im Einzelfall manuell runtergesetzt werden)'

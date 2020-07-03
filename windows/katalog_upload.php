@@ -246,7 +246,7 @@ function upload_terra() {
     $bemerkung = "";
     $einheit = "";
     $gebinde = "";
-    $mwst = "7.00";
+    $mwst = $katalog_mwst_reduziert;
     $pfand = "0.00";
     $hersteller = "";
     $verband = "";
@@ -654,10 +654,10 @@ function upload_bnn( $katalogformat ) {
 
     switch( trim( $splitline[33] ) ) {
       case '1':
-        $mwst = "7.00";
+        $mwst = $katalog_mwst_reduziert;
         break;
       case '2':
-        $mwst = "19.00";
+        $mwst = $katalog_mwst_standard;
         break;
       default:
         break;
