@@ -113,7 +113,7 @@ function katalog_update(
 
 
 function upload_terra() {
-  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant, $katalog_mwst_standard, $katalog_mwst_reduziert;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
@@ -516,7 +516,7 @@ function upload_bode() {
 // und um mit der existierenden datenbank kompatibel zu bleiben:
 //
 function upload_bnn( $katalogformat ) {
-  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant, $katalog_mwst_standard, $katalog_mwst_reduziert;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
 
