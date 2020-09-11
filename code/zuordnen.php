@@ -4973,6 +4973,7 @@ function tex2pdf( $tex ) {
     // open_div( 'ok', '', 'ok: '.  implode( ' ', $output ) );
   } else {
     open_div( 'warn', '', 'error: '. file_get_contents( 'tex2pdf.log' ) );
+    open_div( 'warn', '', 'tex: ' . file_get_contents( 'tex2pdf.tex' ) );
     $pdf = false;
   }
   @ unlink( 'tex2pdf.tex' );
@@ -4990,12 +4991,10 @@ function tex_encode( $s ) {
     '/\\\\/' => '\\backslash'
   , '/\\&quot;/' => "''"
   , '/\\&#039;/' => "'"
-  , '/([$%_#~])/' => '\\\\$1'
+  , '/([$%_#~{}])/' => '\\\\$1'
   , '/\\&amp;/' => '\\&'
-  , '/\\&lt;/' => '$<$'
-  , '/\\&gt;/' => '$>$'
-  , '/[}]/' => '$\}$'
-  , '/[{]/' => '$\{$'
+  , '/\\&lt;/' => '\textless'
+  , '/\\&gt;/' => '\textgreater'
   , '/ä/' => '{\"a}'
   , '/Ä/' => '{\"A}'
   , '/ö/' => '{\"o}'
