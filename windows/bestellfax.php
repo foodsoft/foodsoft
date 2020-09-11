@@ -88,10 +88,11 @@ if( isset( $download ) && ( $download == 'bestellfax' ) ) {
   }
   $tex = preg_replace( '/@@tabelle@@/', bestellfax_tex( $bestell_id, $spalten ), $tex );
   // file_put_contents( '/tmp/b.tex', $tex );
+  //header("Content-Type: text/plain");
+  //echo $tex;
+  //return;
   if( ( $pdf = tex2pdf( $tex ) ) ) {
     $downloadname = 'Bestellschein.pdf';
-    // header("Content-Type: text/plain");
-    // echo $tex;
     header( 'Content-Type: application/pdf' );
     header( "Content-Disposition: filename=$downloadname" );
     echo $pdf;
