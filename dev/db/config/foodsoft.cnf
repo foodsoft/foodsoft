@@ -1,0 +1,7 @@
+[mysqld]
+# This is required to avoid MariaDB throwing errors
+# in many cases where Foodsoft creates DB records without
+# specifying certain fields which don't have default values
+# (default for this is STRICT_TRANS_TABLES)
+# see: https://mariadb.com/kb/en/server-system-variables/#sql_mode
+sql_mode=NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION

@@ -1,0 +1,80 @@
+version: "3.2"
+
+services:
+  # idea: run php5 and php7 in parallel during the migration
+
+  web_php5:
+    build:
+      context: ./..
+      dockerfile: dev/web/Containerfile.php5
+      args:
+        PHP5_VERSION: ${PHP5_VERSION}
+    environment:
+      EXT_UID: ${UID}
+      EXT_GID: ${GID}
+      EXT_USER: ${USER}
+    depends_on:
+      - db
+    networks:
+      - backend
+    ports:
+      - "8005:80"
+    volumes:
+      - ../src:/src:ro
+      - ./web/assets/foodsoft.conf:/etc/apache2/sites-available/foodsoft.conf
+    container_name: foodsoft-php5
+    command: /opt/bin/start-web.sh
+
+  web_php7:
+    build:
+      context: ./..
+      dockerfile: dev/web/Containerfile.php7
+      args:
+        PHP7_VERSION: ${PHP7_VERSION}
+    environment:
+      EXT_UID: ${UID}
+      EXT_GID: ${GID}
+      EXT_USER: ${USER}
+    depends_on:
+      - db
+    networks:
+      - backend
+    ports:
+      - "8007:80"
+    volumes:
+      - ../src:/src:ro
+      - ./web/assets/foodsoft.conf:/etc/apache2/sites-available/foodsoft.conf
+    container_name: foodsoft-php7
+    command: /opt/bin/start-web.sh
+
+  db:
+    image: mariadb:${MARIADB_VERSION:-latest}
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - ${DB_DATADIR}:/var/lib/mysql
+      - ./db/config:/etc/mysql/mariadb.conf.d
+    networks:
+      - backend
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    container_name: mariadb
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    networks:
+      - backend
+    restart: always
+    container_name: adminer
+
+networks:
+  backend:
+
+volumes:
+  dbdata:

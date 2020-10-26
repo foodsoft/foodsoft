@@ -1,0 +1,53 @@
+ARG PHP7_VERSION
+FROM php:${PHP7_VERSION}-apache
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+
+RUN set -ex \
+    && \
+    apt-get update \
+    && \
+    apt-get install -y \
+        apt-utils \
+        curl \
+        git \
+        libcurl4-nss-dev \
+        libicu-dev \
+        libmcrypt-dev \
+        libpng-dev \
+        libssl-dev \
+        libxml2-dev \
+        mariadb-client \
+        pngquant \
+        sendmail \
+        unzip \
+        zip \
+    && \
+    # Install PHP extensions
+    docker-php-ext-install \
+        bcmath \
+        curl \
+        dom \
+        gd \
+        hash \
+        intl \
+        mysqli \
+        opcache \
+        pdo_mysql \
+        session \
+        xml \
+    && \
+    # Install TeXLive for PDF generation
+    apt -y install texlive-latex-base \
+    && \
+    # Enable mod_rewrite
+    a2enmod rewrite
+
+ADD /dev/web/assets/start-web.sh /opt/bin/start-web.sh
+RUN set -e && \
+    chmod +x /opt/bin/start-web.sh && \
+    rm /etc/apache2/sites-enabled/*
+
+CMD apache2-foreground

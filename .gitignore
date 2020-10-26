@@ -2,3 +2,4 @@
 *.kdev4
 version.txt
 /nbproject
+dev/dbdata
