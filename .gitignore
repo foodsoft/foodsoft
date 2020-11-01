@@ -1,6 +1,7 @@
 *~
 *.kdev4
-version.txt
+src/version.txt
 /nbproject
+src/version.txt
 dev/dbdata
 dev/wiki/config
