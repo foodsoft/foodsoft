@@ -43,12 +43,13 @@ function sql_selects( $table, $prefix = false ) {
 }
 
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
+  global $db_handle;
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
     open_div( 'alert', '', htmlspecialchars( $sql, ENT_QUOTES, 'UTF-8' ) );
   }
-  $result = mysql_query($sql);
+  $result = mysqli_query($db_handle, $sql);
   if( ! $result ) {
-    error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysql_error() );
+    error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysqli_error($db_handle) );
   }
   return $result;
 }
@@ -123,9 +124,9 @@ function select_query( $table, $selects = '*', $joins = '', $filters = false, $o
 // }
 
 
-function sql_select_single_row( $sql, $allownull = false, $result_type = MYSQL_ASSOC ) {
+function sql_select_single_row( $sql, $allownull = false, $result_type = MYSQLI_ASSOC ) {
   $result = doSql( $sql );
-  $rows = mysql_num_rows($result);
+  $rows = mysqli_num_rows($result);
   // echo "<br>$sql<br>rows: $rows<br>";
   if( $rows == 0 ) {
     if( is_array( $allownull ) )
@@ -135,7 +136,7 @@ function sql_select_single_row( $sql, $allownull = false, $result_type = MYSQL_A
   }
   need( $rows > 0, "Kein Treffer bei Datenbanksuche: $sql" );
   need( $rows == 1, "Ergebnis der Datenbanksuche $sql nicht eindeutig ($rows)" );
-  return mysql_fetch_array($result, $result_type);
+  return mysqli_fetch_array($result, $result_type);
 }
 
 function sql_select_single_field( $sql, $field, $allownull = false ) {
@@ -156,6 +157,8 @@ function sql_count( $table, $where ) {
 }
 
 function sql_update( $table, $where, $values, $escape_and_quote = true ) {
+  global $db_handle;
+  
   switch( $table ) {
     case 'leitvariable':
     case 'transactions':
@@ -169,7 +172,7 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
   $komma='';
   foreach( $values as $key => $val ) {
     if( $escape_and_quote )
-      $val = "'" . mysql_real_escape_string($val) . "'";
+      $val = "'" . mysqli_real_escape_string($db_handle, $val) . "'";
     $sql .= "$komma $key=$val";
     $komma=',';
   }
@@ -177,7 +180,7 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
     $and = 'WHERE';
     foreach( $where as $field => $val ) {
       if( $escape_and_quote )
-        $val = "'" . mysql_real_escape_string($val) . "'";
+        $val = "'" . mysqli_real_escape_string($db_handle, $val) . "'";
       $sql .= " $and ($field=$val) ";
       $and = 'AND';
     }
@@ -191,6 +194,8 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
 }
 
 function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = true ) {
+  global $db_handle;
+  
   switch( $table ) {
     case 'leitvariable':
     case 'transactions':
@@ -208,14 +213,14 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
   foreach( $values as $key => $val ) {
     $cols .= "$komma $key";
     if( $escape_and_quote )
-      $val = "'" . mysql_real_escape_string($val) . "'";
+      $val = "'" . mysqli_real_escape_string($db_handle, $val) . "'";
     $vals .= "$komma $val";
     if( is_array( $update_cols ) ) {
       if( isset( $update_cols[$key] ) ) {
         if( $update_cols[$key] ) {
           $val = $update_cols[$key];
           if( $escape_and_quote )
-            $val = "'" . mysql_real_escape_string($val) . "'";
+            $val = "'" . mysqli_real_escape_string($db_handle, $val) . "'";
         }
         $update .= "$update_komma $key=$val";
         $update_komma=',';
@@ -231,7 +236,7 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
     $sql .= " ON DUPLICATE KEY UPDATE $update $update_komma id = LAST_INSERT_ID(id) ";
   }
   if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: "  ))
-    return mysql_insert_id();
+    return mysqli_insert_id($db_handle);
   else
     return FALSE;
 }
@@ -248,12 +253,12 @@ function adefault( $array, $index, $default ) {
     return $default;
 }
 
-function mysql2array( $result, $key = false, $val = false, $result_type = MYSQL_ASSOC ) {
+function mysql2array( $result, $key = false, $val = false, $result_type = MYSQLI_ASSOC ) {
   if( is_array( $result ) )  // temporary kludge: make me idempotent
     return $result;
   $r = array();
   $n = 1;
-  while( $row = mysql_fetch_array( $result, $result_type ) ) {
+  while( $row = mysqli_fetch_array( $result, $result_type ) ) {
     if( $key ) {
       need( isset( $row[$key] ) );
       need( isset( $row[$val] ) );
@@ -856,9 +861,10 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
 ////////////////////////////////////
 
 function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $dienst, $name, $telefon, $notiz, $datum = '', $zeit = '' ) {
-  $notiz = mysql_real_escape_string($notiz);
-  $telefon = mysql_real_escape_string($telefon);
-  $name = mysql_real_escape_string($name);
+  global $db_handle;
+  $notiz = mysqli_real_escape_string($db_handle, $notiz);
+  $telefon = mysqli_real_escape_string($db_handle, $telefon);
+  $name = mysqli_real_escape_string($db_handle, $name);
   if( $dienstkontrollblatt_id ) {
     doSql( "
       UPDATE dienstkontrollblatt SET
@@ -896,7 +902,7 @@ function dienstkontrollblatt_eintrag( $dienstkontrollblatt_id, $gruppen_id, $die
         , id = LAST_INSERT_ID(id)
     ", LEVEL_ALL, "Eintrag im Dienstkontrollblatt fehlgeschlagen: "
     );
-    return mysql_insert_id();
+    return mysqli_insert_id($db_handle);
     //  WARNING: ^ does not always work (see http://bugs.mysql.com/bug.php?id=27033)
     //  (fixed in mysql-5.0.45)
   }
@@ -1109,7 +1115,7 @@ function sql_gruppe_letztes_login( $gruppen_id ) {
     WHERE sessions.login_gruppen_id = $gruppen_id
     ORDER BY time_stamp DESC
   " );
-  return mysql_fetch_array( $result );
+  return mysqli_fetch_array( $result );
 }
 function sql_gruppe_letzte_bestellung( $gruppen_id ) {
   global $login_gruppen_id;
@@ -1122,7 +1128,7 @@ function sql_gruppe_letzte_bestellung( $gruppen_id ) {
     WHERE gruppenbestellungen.bestellgruppen_id = $gruppen_id
     ORDER BY lieferdatum DESC
   " );
-  return mysql_fetch_array( $result );
+  return mysqli_fetch_array( $result );
 }
 
 function sql_gruppe_offene_bestellungen( $gruppen_id ) {
@@ -1244,7 +1250,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage ausgetretenes Mitglied: {$daten['sockeleinlage']} Euro wurden erstattet.</div>";
     } else {
-      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysqli_error($db_handle) . "</div>";
     }
   }
 
@@ -1261,7 +1267,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: {$gruppendaten['sockeleinlage']} Euro wurden erstattet.</div>";
       sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => 0.0 ) );
     } else {
-      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
+      $problems = $problems . "<div class='warn'>Verbuchen Aenderung Sockeleinlage fehlgeschlagen: " . mysqli_error($db_handle) . "</div>";
     }
   }
 
@@ -1328,7 +1334,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
     ) ) {
       $msg = $msg . "<div class='ok'>Aenderung Sockelbetrag neues Mitglied: $sockelbetrag_mitglied Euro wurden verbucht.</div>";
     } else {
-      $problems .= "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysql_error() . "</div>";
+      $problems .= "<div class='warn'>Verbuchen Sockelbetrag fehlgeschlagen: " . mysqli_error($db_handle) . "</div>";
     }
   }
   // falls erstes mitglied der gruppe: sockelbetrag fuer ganze gruppe verbuchen:
@@ -1344,7 +1350,7 @@ function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $
         $msg = $msg . "<div class='ok'>Aenderung Sockeleinlage Gruppe: $sockelbetrag_gruppe Euro wurden verbucht.</div>";
         sql_update( 'bestellgruppen', $gruppen_id, array( 'sockeleinlage' => $sockelbetrag_gruppe ) );
       } else {
-        $problems .= "<div class='warn'>Verbuchen Sockeleinlage fehlgeschlagen: " . mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Verbuchen Sockeleinlage fehlgeschlagen: " . mysqli_error($db_handle) . "</div>";
       }
     }
   }
@@ -1387,7 +1393,7 @@ function sql_insert_group($newNumber, $newName, $pwd) {
     , 'sockeleinlage' => 0.0  // wird erst bei Eintrag erstes Mitglied verbucht
     , 'name' => $newName
     ) );
-    if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysql_insert_id() == 0 bei Erfolg!
+    if( $id !== FALSE ) { // bestellgruppen hat kein AUTO_INCREMENT: mysqli_insert_id() == 0 bei Erfolg!
       set_password( $new_id, $pwd );
       return $new_id;
     } else {
@@ -1745,7 +1751,7 @@ function rechnung_status_string( $state ) {
 function sql_abrechnung_set( $abrechnung_id ) {
   $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id" );
   $r = array();
-  while( $row = mysql_fetch_array( $result ) ) {
+  while( $row = mysqli_fetch_array( $result ) ) {
     $r[] = $row['id'];
   }
   return $r;

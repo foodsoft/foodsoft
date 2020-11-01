@@ -96,7 +96,7 @@ function katalog_update(
 
 
 function upload_terra() {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
@@ -241,7 +241,7 @@ function upload_terra() {
     $i=0;
     foreach( $splitline as $field ) {
       if( isset( $fields[$i] ) and $fields[$i] ) {
-        ${$fields[$i]} = mysql_real_escape_string($field);
+        ${$fields[$i]} = mysqli_real_escape_string($db_handle, $field);
       }
       $i++;
     }
@@ -249,7 +249,7 @@ function upload_terra() {
     $netto = sprintf( "%.2lf", preg_replace( '/,/', '.', $netto ) );
     $mwst = sprintf( "%.2lf", preg_replace( '/,/', '.',  $mwst ) );
     $pfand = sprintf( "%.2lf", preg_replace( '/,/', '.', $pfand ) );
-    $name = mysql_real_escape_string( $name );
+    $name = mysqli_real_escape_string( $db_handle, $name );
 
     // drop spurious whitespace from numbers:
     $anummer = preg_replace( '/\s/', '', $anummer );
@@ -279,7 +279,7 @@ function upload_terra() {
 
 
 function upload_rapunzel() {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Rapunzel: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -315,9 +315,9 @@ function upload_rapunzel() {
 
     $bnummer = $splitline[1]; // if $pattern matches, this is purely numerical
     $anummer = $bnummer;
-    $name = mysql_real_escape_string( $splitline[2] );
-    $verband = mysql_real_escape_string( $splitline[5] );
-    $herkunft = mysql_real_escape_string( $splitline[6] );
+    $name = mysqli_real_escape_string( $db_handle, $splitline[2] );
+    $verband = mysqli_real_escape_string( $db_handle, $splitline[5] );
+    $herkunft = mysqli_real_escape_string( $db_handle, $splitline[6] );
 
     $gebinde = $splitline[9];
 
@@ -347,7 +347,7 @@ function upload_rapunzel() {
 
 
 function upload_bode() {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
   $tag = 'Tr'; // Bode: nur ein Katalog, entspricht "Trocken" bei Terra
@@ -381,11 +381,11 @@ function upload_bode() {
 
     $splitline = preg_split( $splitat, $line );
     $bnummer = $splitline[1];
-    $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
+    $bnummer = mysqli_real_escape_string( $db_handle, preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
 
-    $name = mysql_real_escape_string( $splitline[2] );
-    $verband = mysql_real_escape_string( $splitline[3] );
+    $name = mysqli_real_escape_string( $db_handle, $splitline[2] );
+    $verband = mysqli_real_escape_string( $db_handle, $splitline[3] );
     $gebinde = $splitline[5];
     $gebinde = preg_replace( '/,/', '.', $gebinde );
 
@@ -499,7 +499,7 @@ function upload_bode() {
 // und um mit der existierenden datenbank kompatibel zu bleiben:
 //
 function upload_bnn( $katalogformat ) {
-  global $katalogkw, $lieferanten_id;
+  global $db_handle, $katalogkw, $lieferanten_id;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
 
@@ -593,16 +593,16 @@ function upload_bnn( $katalogformat ) {
     $ean_einzeln = "";
 
     $bnummer = $splitline[0];
-    $bnummer = mysql_real_escape_string( preg_replace( '/\s/', '', $bnummer ) );
+    $bnummer = mysqli_real_escape_string( $db_handle, preg_replace( '/\s/', '', $bnummer ) );
     $anummer = $bnummer;
 
-    $name = mysql_real_escape_string( $splitline[6] );
-    $bemerkung = mysql_real_escape_string( $splitline[7] );
-    $handelsklasse = mysql_real_escape_string( $splitline[9] );
-    $herkunft = mysql_real_escape_string( $splitline[12] );
-    $verband = mysql_real_escape_string( $splitline[13] );
-    $hersteller = mysql_real_escape_string( $splitline[10] );
-    $ean_einzeln = mysql_real_escape_string( $splitline[4] );
+    $name = mysqli_real_escape_string( $db_handle, $splitline[6] );
+    $bemerkung = mysqli_real_escape_string( $db_handle, $splitline[7] );
+    $handelsklasse = mysqli_real_escape_string( $db_handle, $splitline[9] );
+    $herkunft = mysqli_real_escape_string( $db_handle, $splitline[12] );
+    $verband = mysqli_real_escape_string( $db_handle, $splitline[13] );
+    $hersteller = mysqli_real_escape_string( $db_handle, $splitline[10] );
+    $ean_einzeln = mysqli_real_escape_string( $db_handle, $splitline[4] );
     
     if ( $handelsklasse )
     {

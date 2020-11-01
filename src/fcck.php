@@ -8,6 +8,7 @@ exit(1);  // ...funktioniert noch nicht!
 
 assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=bestellen erfolgen
 
+global $db_handle;
 
 <h1>Test Gesamtbestellungen:</h1>
 
@@ -28,7 +29,7 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
 
   $bestellungen = doSql( "SELECT * FROM gesamtbestellungen ORDER by id" );
   $last_id = -1;
-  while( $row = mysql_fetch_array( $bestellungen ) ) {
+  while( $row = mysqli_fetch_array( $bestellungen ) ) {
     $n1 = sql_select_single_field( "SELECT count(*) as count FROM bestellvorschlaege WHERE gesamtbestellung_id = $id", 'count' );
     $n2 = sql_select_single_field( "SELECT count(*) as count FROM gruppenbestellungen WHERE gesamtbestellung_id = $id", 'count' );
     if( 
@@ -42,7 +43,7 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
     $self = "$self&bestell_id=$bestell_id";
     $self_fields = $self_fields . "<input type='hidden' name='bestell_id' value='$bestell_id'>";
   } else {
-    $bestellungen = mysql_query( "SELECT * FROM gesamtbestellungen ORDER BY bestellende DESC,name" )
+    $bestellungen = mysqli_query( $db_handle, "SELECT * FROM gesamtbestellungen ORDER BY bestellende DESC,name" )
       or error ( __LINE__, __FILE__, "Suche in gesamtbestellungen fehlgeschlagen" );
     echo "
       <table>
@@ -57,7 +58,7 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
           <th>Bezahlung</th>
         </tr>
     ";
-    while( $bestellung = mysql_fetch_array( $bestellungen ) ) {
+    while( $bestellung = mysqli_fetch_array( $bestellungen ) ) {
       echo "
         <tr>
           <td><a href='$self&bestell_id={$bestellung['id']}'>{$bestellung['id']}</a></td>
@@ -75,10 +76,11 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
     exit( $print_on_exit );
   }
 
-  $bestellungen = mysql_query(
+  $bestellungen = mysqli_query(
+    $db_handle,
     "SELECT * FROM gesamtbestellungen WHERE id='$bestell_id' ORDER BY bestellende DESC,name"
   ) or error ( __LINE__, __FILE__, "Suche nach Bestellung" );
-  $bestellung = mysql_fetch_array( $bestellungen )
+  $bestellung = mysqli_fetch_array( $bestellungen )
     or error ( __LINE__, __FILE__, "Bestellung nicht gefunden" );
 
   echo "<h2>Bestellung: <a href='$self'>{$bestellung['name']} ($bestell_id)</a></h2>";
@@ -88,7 +90,8 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
     $self = "$self&produkt_id=$produkt_id";
     $self_fields = $self_fields . "<input type='hidden' name='produkt_id' value='$produkt_id'>";
   } else {
-    $vorschlaege = mysql_query(
+    $vorschlaege = mysqli_query(
+      $db_handle,
       "SELECT * FROM bestellvorschlaege WHERE gesamtbestellung_id='$bestell_id' ORDER BY produkt_id"
     ) or error ( __LINE__, __FILE__, "Suche in bestellvorschlaegen fehlgeschlagen" );
     echo "
@@ -101,11 +104,12 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
           <th>Liefermenge</th>
         </tr>
     ";
-    while( $vorschlag = mysql_fetch_array( $vorschlaege ) ) {
-      $produkte = mysql_query(
+    while( $vorschlag = mysqli_fetch_array( $vorschlaege ) ) {
+      $produkte = mysqli_query(
+        $db_handle,
         "SELECT * FROM produkte WHERE id='{$vorschlag['produkt_id']}'"
       ) or error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-      if( ! ( $produkt = mysql_fetch_array( $produkte ) ) ) {
+      if( ! ( $produkt = mysqli_fetch_array( $produkte ) ) ) {
         echo "<div class='warn'>Produkt '{$produkt_id}' nicht gefunden</div>";
       }
       echo "
@@ -124,17 +128,19 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
     exit( $print_on_exit );
   }
     
-  $vorschlaege = mysql_query(
+  $vorschlaege = mysqli_query(
+    $db_handle,
     "SELECT * FROM bestellvorschlaege
      WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produkt_id' "
   ) or error ( __LINE__, __FILE__, "Suche in bestellvorschlaegen fehlgeschlagen" );
-  $vorschlag = mysql_fetch_array( $vorschlaege )
+  $vorschlag = mysqli_fetch_array( $vorschlaege )
     or error ( __LINE__, __FILE__, "Bestellvorschlag nicht gefunden" );
   
-  $produkte = mysql_query(
+  $produkte = mysqli_query(
+    $db_handle,
     "SELECT * FROM produkte WHERE id='{$vorschlag['produkt_id']}'"
   ) or error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );
-  $produkt = mysql_fetch_array( $produkte )
+  $produkt = mysqli_fetch_array( $produkte )
     or error ( __LINE__, __FILE__, "Produkt '{$vorschlag['produkt_id']}' nicht gefunden" );
 
   echo "<h2>Bestellvorschlag: <a href='$self'>{$produkt['name']} ({$vorschlag['produkt_id']})</a></h2>";
@@ -145,7 +151,8 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
     $self_fields = $self_fields . "<input type='hidden' name='gruppen_id' value='$gruppen_id'>";
   } else {
     $order_by != '' or $order_by='art,bestellguppen_id';
-    $zuordnungen = mysql_query(
+    $zuordnungen = mysqli_query(
+      $db_handle,
       "SELECT *
         FROM bestellzuordnung
         INNER JOIN gruppenbestellungen
@@ -160,7 +167,7 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
         ORDER BY $order_by
       "
     ) or error ( __LINE__, __FILE__,
-      "Suche in bestellzuordnung,gruppenbestellungen fehlgeschlagen: " . mysql_error() );
+      "Suche in bestellzuordnung,gruppenbestellungen fehlgeschlagen: " . mysqli_error($db_handle) );
     echo "
       <table class='list'>
         <tr>
@@ -173,7 +180,7 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
           <th>Gruppenbestellung</th>
         </tr>
     ";
-    while( $zuordnung = mysql_fetch_array( $zuordnungen ) ) {
+    while( $zuordnung = mysqli_fetch_array( $zuordnungen ) ) {
       $zuordnung = preisdatenSetzen( $zuordnung );
       echo "
         <tr>
@@ -195,5 +202,3 @@ assert( $angemeldet ) or exit();  // aufruf sollte nur noch per index.php?area=b
   }
 
 ?>
-
-

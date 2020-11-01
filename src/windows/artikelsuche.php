@@ -8,6 +8,8 @@
 assert( $angemeldet ) or exit();
 $editable = ( ! $readonly and hat_dienst(4) );
 
+global $db_handle;
+
 setWindowSubtitle( "Artikelsuche im Lieferanten-Katalog" );
 setWikiHelpTopic( "foodsoft:katalogsuche" );
 
@@ -66,7 +68,7 @@ get_http_var( 'anummer', 'w', '', 'POST' ) or $anummer = '';
 $anummer and $filter .= " AND artikelnummer='$anummer'";
 
 get_http_var( 'name', 'H', '', 'POST' ) or $name = '';
-$name and $filter .= " AND name like '%".mysql_real_escape_string($name)."%' ";
+$name and $filter .= " AND name like '%".mysqli_real_escape_string($db_handle, $name)."%' ";
 
 get_http_var( 'minpreis', 'f', 0, 'POST' ) or $minpreis = 0;
 ( $minpreis > 0 ) and $filter .= " AND preis >= $minpreis";
@@ -115,7 +117,7 @@ if( $editable and ( ! $produkt_id ) ) {
         open_th( '', '', 'Typ' );
         open_th( '', '', 'Aktionen' );
 
-        while( $row = mysql_fetch_array( $kataloge ) ) {
+        while( $row = mysqli_fetch_array( $kataloge ) ) {
           open_tr();
             open_td( '', '', $row['katalogdatum'] );
             open_td( '', '', $row['katalogtyp'] );
@@ -190,7 +192,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       div_msg( 'bold', 'Zur Übernahme in die Produktdatenbank bitte auf Artikelnummer klicken!' );
     }
 
-    ?> <h3> <?php echo mysql_num_rows($result); ?> Treffer (Limit: <?php echo $limit; ?>) </h3><?php
+    ?> <h3> <?php echo mysqli_num_rows($result); ?> Treffer (Limit: <?php echo $limit; ?>) </h3><?php
     open_table( 'list' );
       open_th( '', '', 'A-Nr.' );
       open_th( '', '', 'B-Nr.' );
@@ -213,7 +215,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
         open_th( '', '', 'Foodsoft-Datenbank' );
       }
 
-      while( $row = mysql_fetch_array( $result ) ) {
+      while( $row = mysqli_fetch_array( $result ) ) {
         $netto = $row['preis'];
         open_tr();
           open_td( 'mult' );

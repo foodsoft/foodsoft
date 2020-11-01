@@ -43,7 +43,7 @@ open_table( 'layout hfill' );
 
         rubrik( "Bankguthaben" );
           $kontosalden = sql_bankkonto_salden();
-          while( $konto = mysql_fetch_array( $kontosalden ) ) {
+          while( $konto = mysqli_fetch_array( $kontosalden ) ) {
             posten(
               fc_link( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'class' => 'href', 'text' => "Konto {$konto['kontoname']}" ) )
             , $konto['saldo']

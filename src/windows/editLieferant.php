@@ -53,14 +53,14 @@ if( $action == 'save' ) {
       if( sql_update( 'lieferanten', $lieferanten_id, $values ) ) {
         $msg = $msg . "<div class='ok'>&Auml;nderungen gespeichert</div>";
       } else {
-        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems = $problems . "<div class='warn'>Änderung fehlgeschlagen: " . mysqli_error($db_handle) . '</div>';
       }
     } else {
       if( ( $lieferanten_id = sql_insert( 'lieferanten', $values ) ) ) {
         $self_fields['lieferanten_id'] = $lieferanten_id;
         $msg = $msg . "<div class='ok'>Lieferant erfolgreich angelegt:</div>";
       } else {
-        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        $problems = $problems . "<div class='warn'>Eintrag fehlgeschlagen: " . mysqli_error($db_handle) . "</div>";
       }
     }
   }

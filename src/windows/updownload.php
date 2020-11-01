@@ -7,7 +7,7 @@ need( $exportDB );
 setWikiHelpTopic( 'foodsoft:updownload' );
 
 $path = array_merge(
-  split( ':', getenv("PATH") )
+  explode( ':', getenv("PATH") )
 , array( '/usr/local/bin', '/usr/local/sbin', '/usr/bin', '/usr/sbin', '/bin', '/sbin'
          , '/opt/lampp/bin', '/opt/lampp/mysql/bin' )
 );
@@ -74,7 +74,8 @@ function umount_usb() {
 
   
 function datenbank_sperren() {
-  if( mysql_query( 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
+  global $db_handle;
+  if( mysqli_query( $db_handle, 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
     return true;
   } else {
     echo "<div class='warn'>Sperrung der Datenbank fehlgeschlagen!</div>";
@@ -83,7 +84,8 @@ function datenbank_sperren() {
 }
 
 function datenbank_freigeben() {
-  if( mysql_query( 'UPDATE leitvariable SET value="0" WHERE name="readonly"' ) ) {
+  global $db_handle;
+  if( mysqli_query( $db_handle, 'UPDATE leitvariable SET value="0" WHERE name="readonly"' ) ) {
     return true;
   } else {
     echo "<div class='warn'>Freigabe fehlgeschlagen!</div>";
@@ -146,7 +148,7 @@ if( $action == 'lock' ) {
 // }
 
 if( $action == 'download' ) {
-  global $leitvariable, $mysqljetzt, $foodsoftserver, $cookie;
+  global $db_handle, $leitvariable, $mysqljetzt, $foodsoftserver, $cookie;
   global $usb_device;
 
   // datenbank_sperren() or exit();
@@ -162,8 +164,8 @@ if( $action == 'download' ) {
   foreach( $leitvariable as $name => $props ) {
     if( $props['local'] )
       continue;
-    $value = mysql_real_escape_string($$name);
-    $comment = mysql_real_escape_string($props['comment']);
+    $value = mysqli_real_escape_string($db_handle, $$name);
+    $comment = mysqli_real_escape_string($db_handle, $props['comment']);
     $sql .= "
       INSERT INTO leitvariable
          ( `name`, `value`, `comment` )

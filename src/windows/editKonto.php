@@ -37,14 +37,14 @@ if( $action == 'save' ) {
       if( sql_update( 'bankkonten', $konto_id, $values ) ) {
         $msg .= "<div class='ok'>&Auml;nderungen gespeichert</div>";
       } else {
-        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysql_error() . '</div>';
+        $problems .= "<div class='warn'>Änderung fehlgeschlagen: " . mysqli_error($db_handle) . '</div>';
       }
     } else {
       if( ( $konto_id = sql_insert( 'bankkonten', $values ) ) ) {
         $self_fields['konto_id'] = $konto_id;
         $msg .= "<div class='ok'>Bankkonto erfolgreich eingetragen:</div>";
       } else {
-        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .  mysql_error() . "</div>";
+        $problems .= "<div class='warn'>Eintrag fehlgeschlagen: " .  mysqli_error($db_handle) . "</div>";
       }
     }
   }
