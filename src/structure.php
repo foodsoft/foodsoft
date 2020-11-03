@@ -246,7 +246,7 @@ $tables = array(
     , 'zeitpunkt' => array(
         'type' =>  "timestamp"
       , 'null' => 'NO'
-      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'default' => 'current_timestamp()'
       , 'extra' => ''
       )
     )
@@ -680,7 +680,7 @@ $tables = array(
     , 'eingabe_zeit' => array(
         'type' =>  "timestamp"
       , 'null' => 'NO'
-      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'default' => 'current_timestamp()'
       , 'extra' => ''
       )
     , 'summe' => array(
@@ -1054,7 +1054,7 @@ $tables = array(
     , 'time_stamp' => array(
         'type' =>  "timestamp"
       , 'null' => 'NO'
-      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'default' => 'current_timestamp()'
       , 'extra' => ''
       )
     , 'notiz' => array(
@@ -1300,7 +1300,7 @@ $tables = array(
     , 'session_timestamp' => array(
         'type' =>  "timestamp"
       , 'null' => 'NO'
-      , 'default' => 'CURRENT_TIMESTAMP'
+      , 'default' => 'current_timestamp()'
       , 'extra' => ''
       )
     , 'muteReconfirmation_timestamp' => array(
