@@ -60,7 +60,7 @@ function date_selector($tag_feld, $tag, $monat_feld, $monat, $jahr_feld, $jahr, 
   $s .= '.';
   $s .= number_selector($monat_feld,1, 12, $monat,"%02d",false);
   $s .= '.';
-  $s .=  number_selector($jahr_feld, 2009, 2018, $jahr,"%04d",false);
+  $s .=  number_selector($jahr_feld, 2009, date("Y")+1, $jahr,"%04d",false);
   if( $to_stdout )
     echo $s;
   return $s;
