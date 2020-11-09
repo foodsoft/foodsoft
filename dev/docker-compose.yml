@@ -64,6 +64,23 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD}"
     container_name: mariadb
 
+  dokuwiki:
+    # https://hub.docker.com/r/linuxserver/dokuwiki
+    image: ghcr.io/linuxserver/dokuwiki
+    container_name: dokuwiki
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Berlin
+    tty: true
+    volumes:
+      - ${DOKUWIKI_DATADIR}/config:/config
+      - ../dokuwiki_auth_plugin/authfoodsoft:/config/dokuwiki/lib/plugins/authfoodsoft
+    ports:
+      - 7080:80
+      - 7443:443 #optional
+    restart: unless-stopped
+
   adminer:
     image: adminer
     ports:
