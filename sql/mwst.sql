@@ -31,8 +31,8 @@
 /*
  * Skript-Konfiguration:
  */
-set @old1 = 7, @new1 = 5, @old2 = 19, @new2 = 16;
-set @changetime = timestamp('2020-07-01 00:00:00');
+set @old1 = 5.00, @new1 = 7.00, @old2 = 16.00, @new2 = 19.00;
+set @changetime = timestamp('2021-01-01 00:00:00');
 
 /*
  * Umstellung der Rückgaben kann im allgemeinen drei Monate später erfolgen, siehe
@@ -47,6 +47,11 @@ set @changetime_deposit_return = @changetime;
 /*
  * Ausführung:
  */
+select concat('Setze Katalog-MwSt-Sätze auf ', @new1, '% und ', @new2, '%:') as '';
+update leitvariable set value=@new1 where name='katalog_mwst_reduziert';
+update leitvariable set value=@new2 where name='katalog_mwst_standard';
+select name, value from leitvariable where name like 'katalog_mwst_%';
+
 select concat('Suche aktuelle Preiseinträge mit MwSt ', @old1, '% oder ', @old2, '%:') as '';
 
 drop table if exists new_produktpreise;
