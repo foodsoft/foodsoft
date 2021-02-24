@@ -4854,6 +4854,22 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 36 ) );
       logger( 'update_database: update to version 36 successful' );
+  case 36:
+      logger( 'starting update_database: from version 36' );
+
+      sql_insert( 'leitvariable', array(
+        'name' => 'katalog_mwst_reduziert'
+      , 'value' => '7.00'
+      , 'comment' => 'Reduzierter MwSt-Satz beim BNN-Import'
+      ) );
+      sql_insert( 'leitvariable', array(
+        'name' => 'katalog_mwst_standard'
+      , 'value' => '19.00'
+      , 'comment' => 'Standard-MwSt-Satz beim BNN-Import'
+      ) );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 37 ) );
+      logger( 'update_database: update to version 37 successful' );
   }
 }
 
