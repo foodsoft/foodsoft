@@ -521,6 +521,7 @@ function upload_bnn( $katalogformat ) {
   $klines = file( $_FILES['katalog']['tmp_name'] );
 
   $fuehrungssatz = $klines[0];
+  $fuehrungssatz = iconv( "CP850", "UTF-8", $fuehrungssatz );
   unset( $klines[0] );
 
   need( preg_match( '/^BNN;3;/', $fuehrungssatz ), 'kein oder falsches BNN format' );
@@ -529,17 +530,17 @@ function upload_bnn( $katalogformat ) {
 
   $is_midgard = ($katalogformat == "midgard");
 
-  if( preg_match( '/;"Terra Naturkost /', $fuehrungssatz ) ) {
+  if( preg_match( '/;"?Terra Naturkost /', $fuehrungssatz ) ) {
     // Terra: unterscheidet 4 Kataloge:
-    if( preg_match( '/;"[^"]*(Obst|O&G)/', $fuehrungssatz ) )
+    if( preg_match( '/;[^;]*(Obst|O&G)/', $fuehrungssatz ) )
       $tag = 'OG';
-    else if( preg_match( '/;"(Naturdrog|Drog)/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?(Naturdrog|Drog)/', $fuehrungssatz ) )
       $tag = 'drog';
-    else if( preg_match( '/;"Trocken/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?Trocken/', $fuehrungssatz ) )
       $tag = 'Tr';
-    else if( preg_match( '/;"Frisch/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?Frisch/', $fuehrungssatz ) )
       $tag = 'Fr';
-    else if( preg_match( '/;"Gastronomie/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?Gastronomie/', $fuehrungssatz ) )
       $tag = 'Gastro';
     else
       error( 'Terra: Katalogformat nicht erkannt' );
