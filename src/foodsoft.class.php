@@ -50,7 +50,7 @@ class auth_foodsoft extends auth_basic {
       }
       if( $_REQUEST['do'] == 'logout' ) {
         unset( $_COOKIE['foodsoftkeks'] );
-        setcookie( 'foodsoftkeks', '0', 0, '/' );
+        setcookie( 'foodsoftkeks', '0', 0, '/', '', TRUE );
         $_REQUEST['do'] = 'show';
       }
 
@@ -129,4 +129,3 @@ class auth_foodsoft extends auth_basic {
     }
 
 }
-

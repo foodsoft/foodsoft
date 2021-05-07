@@ -1,5 +1,5 @@
 <?PHP
-error_reporting('E_ALL'); 
+error_reporting(E_ALL); 
 
 assert( $angemeldet ) or exit();
 
@@ -172,7 +172,7 @@ if( ! $readonly ) {
     const anzahl_produkte = <?php echo count( $produkte ); ?>;
     let kontostand = <?php printf( "%.2lf", $kontostand ); ?>;
     let gesamtpreis = 0.00;
-    const aufschlag = <?php printf( "%.2lf", $gesamtbestellung['aufschlag'] ); ?>;
+    const aufschlag = <?php printf( "%.2lf", $gesamtbestellung['aufschlag_prozent'] ); ?>;
     const toleranz_default_faktor = <?php printf( "%.3lf", 0.001 + $toleranz_default / 100.0 ); ?>;
     let gebindegroesse     = [];
     let preis              = [];
@@ -583,7 +583,7 @@ open_table( 'list hfill' );  // bestelltabelle
   open_tr( 'groupofrows_bottom' );
     open_th( '', '', '' );
     open_th( 'small', '', '' );
-    if( $gesamtbestellung['aufschlag'] > 0 ) {
+    if( $gesamtbestellung['aufschlag_prozent'] > 0 ) {
       open_th( 'small', "colspan='1'", '(mit Aufschlag)' );
     } else {
       open_th( 'small', "colspan='1'", '' );
@@ -803,7 +803,7 @@ foreach( $produkte as $produkt ) {
     close_div();
     open_div( 'oneline center' );
        // gebinde:
-        open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen[gebinde] ) );
+        open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen['gebinde'] ) );
         open_span( 'unit', '', "* (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
     close_div();
 
@@ -906,11 +906,11 @@ if( ! $readonly ) {
     $json = array();
     $json['id'] = $p['produkt_id'];
     $json['name'] = $p['name'];
-    $price = $p['vpreis'];
+    $price = array_key_exists('vpreis', $p) ? $p['vpreis'] : null;
     if (!is_null($price))
       $price = price_view($price);
     $json['price'] = $price;
-    $json['unit'] = $p['verteileinheit_anzeige'];
+    $json['unit'] = array_key_exists('verteileinheit_anzeige', $p) ? $p['verteileinheit_anzeige'] : null;
     $json['group'] = $p['produktgruppen_name'];
     $json['link'] = fc_link(
       'produktdetails',

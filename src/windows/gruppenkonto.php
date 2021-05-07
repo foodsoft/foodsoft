@@ -202,7 +202,6 @@ open_table('list');
     open_td( 'number solidright', '', price_view( $kontostand ) );
 
   $konto_result = sql_transactions( $gruppen_id, 0 );
-  $num_rows = count($result);
 
   $vert_result = sql_bestellungen_soll_gruppe( $gruppen_id );
   $summe = $kontostand;

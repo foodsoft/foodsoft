@@ -94,7 +94,7 @@ function init_login() {
 function logout() {
   init_login();
   unset( $_COOKIE['foodsoftkeks'] );
-  setcookie( 'foodsoftkeks', '0', 0, '/' );
+  setcookie( 'foodsoftkeks', '0', 0, '/', '', TRUE );
 }
 
 init_login();
@@ -198,7 +198,7 @@ switch( $login ) {
         ]
       );
       $keks = $session_id.'_'.$cookie;
-      need( setcookie( 'foodsoftkeks', $keks, 0, '/' ), "setcookie() fehlgeschlagen" );
+      need( setcookie( 'foodsoftkeks', $keks, 0, '/', '', TRUE ), "setcookie() fehlgeschlagen" );
       $angemeldet = TRUE;
       logger( "successful login. client: {$_SERVER['HTTP_USER_AGENT']} {$activate_mozilla_kludges} {$activate_safari_kludges} {$activate_exploder_kludges}" );
     }
