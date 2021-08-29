@@ -14,7 +14,7 @@ COMMIT=`git rev-parse --short HEAD`
 COMMIT_FULL=`git rev-parse HEAD`
 DIRTY=""
 wd_clean || DIRTY='-dirty'
-echo "<a rel="noreferrer noopener" target="_blank" href='http://github.com/fcpotsdamwest/foodsoft/commit/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >src/version.txt
+echo "<a rel='noreferrer noopener' target='_blank' href='http://github.com/fcpotsdamwest/foodsoft/commit/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >src/version.txt
 
 chmod 644 .gitattributes
 chmod 644 .gitignore
@@ -24,7 +24,7 @@ chmod 644 README.md
 chmod 644 ToDo.txt
 chmod 644 apache.sample.conf
 chmod 644 db/mwst.sql
-chmod 755 deploy.sh
+chmod 700 deploy.sh
 chmod 644 dev/.env.sample
 chmod 644 dev/db/config/foodsoft.cnf
 chmod 644 dev/docker-compose.yml
