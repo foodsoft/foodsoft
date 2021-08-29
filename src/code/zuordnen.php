@@ -4341,6 +4341,7 @@ $foodsoft_get_vars = array(
   'auszug_jahr' => 'u',
   'auszug_nr' => 'u',
   'auszus_jahr' => 'u',
+  'basarmodus' => '/[01]/',
   'bestell_id' => 'u',
   'buchung_id' => 'd' /* kann auch negativ sein */,
   'confirmed' => 'w',
