@@ -18,7 +18,7 @@ COMMIT=`git rev-parse --short HEAD`
 COMMIT_FULL=`git rev-parse HEAD`
 DIRTY=""
 wd_clean || DIRTY='-dirty'
-echo "<a rel="noreferrer noopener" target="_blank" href='http://github.com/fcpotsdamwest/foodsoft/commit/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >src/version.txt
+echo "<a rel='noreferrer noopener' target='_blank' href='http://github.com/fcpotsdamwest/foodsoft/commit/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >src/version.txt
 
 EOF
   git ls-files | xargs stat -c "chmod %a %n"

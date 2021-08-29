@@ -5,25 +5,46 @@ assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( "foodsoft:bestellen" );
 
+get_http_var( 'basarmodus', 'd', 0, true);
+get_http_var( 'bestell_id','u',false,true );
 get_http_var( 'vertical_scroll', 'w', '' );
 
-if( hat_dienst(4) ) {
-  $gruppen_id = $basar_id;
+// variable muss evtl. an anderen Stellen mitübergeben werden, wie dem Link auf "abbrechen" im floating submit Button
+
+if( hat_dienst(4) && $basarmodus ) {
+  $gruppen_id = $basar_id; // Im Basarmodus wird für den Basar bestellt...
   $kontostand = 250.0;
   $festgelegt = 0.0;
-  echo "<h1>Bestellen für den Basar</h1>";
+  $heading = "Bestellen für den Basar";
 } else {
-  $gruppen_id = $login_gruppen_id;  // ...alle anderen für sich selbst!
+  $gruppen_id = $login_gruppen_id;  // ...ansonsten für sich selbst!
   $kontostand = kontostand( $gruppen_id );
   // $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
-  echo "<h1>Bestellen für Gruppe $login_gruppen_name</h1>";
+  $heading = "Bestellen für Gruppe $login_gruppen_name";
 }
 
-get_http_var('bestell_id','u',false,true );
-if( $bestell_id ) {
-  if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
-    $bestell_id = 0;
-}
+if ( hat_dienst(4) ) { // add button to toggle basar/group order
+  $basarToggleUrl = fc_link(
+    'self',
+    [
+      'bestell_id' => $bestell_id ?: 0,
+      'basarmodus' => -($basarmodus-1), // 0 => 1, 1 => 0
+      'context' => 'js',
+      ]
+    );
+    $orderFor = $basarmodus
+      ? "Gruppe $login_gruppen_name"
+      : "den Basar";
+    $basarToggleButton = "<button id='basarToggleButton' onClick=\"$basarToggleUrl\" style='display:inline'>Für $orderFor bestellen</button>";
+    $heading .= "&nbsp;$basarToggleButton";
+  }
+  
+  echo "<h1>$heading</h1>";
+  
+  if( $bestell_id ) {
+    if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
+      $bestell_id = 0;
+  }
 
 $laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
 if( count( $laufende_bestellungen ) < 1) {
@@ -388,6 +409,11 @@ if( ! $readonly ) {
       return true;
     }
 
+    function disable_basar_toggle() {
+      const basarToggleButton = document.getElementById('basarToggleButton');
+      basarToggleButton.disabled = true;
+    }
+
     function reminder_on() {
       const reminder = document.getElementById('floating_submit_button_<?php echo $bestellform_id; ?>');
       const footbar = document.getElementById('footbar');
@@ -398,6 +424,7 @@ if( ! $readonly ) {
       footbar.appendChild(reminder);
       
       set_footbar(true);
+      disable_basar_toggle();
       
       const id = document.getElementById('hinzufuegen');
       while( id.firstChild ) {
