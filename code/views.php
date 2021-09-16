@@ -1234,9 +1234,9 @@ function bestellschein_view(
 
         if( $spalten & PR_COL_LIEFERGEBINDE ) {
           open_td( 'mult', '', mult2string( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
-          open_td( 'unit', '', sprintf( ' * (%s %s)'
-                                      , $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
-                                      , $produkte_row['kan_verteileinheit'] ) );
+          open_td( 'unit', '', sprintf( ' &times; (%s %s)'
+                                      , $produkte_row['kan_liefermult_anzeige'] * $produkte_row['gebindegroesse'] / $lv_faktor
+                                      , $produkte_row['kan_liefereinheit_anzeige'] ) );
         }
 
         if( $spalten & PR_COL_NETTOSUMME )
@@ -1365,8 +1365,8 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
     }
     if( $spalten & PR_COL_LIEFERGEBINDE ) {
       $zeile .= '&' . mult2string( $gebinde )
-                    . '& * (' . mult2string( $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse'] ) 
-                              . '\,' . $produkte_row['kan_verteileinheit'] . ')' ;
+                    . '& $\times$ (' . mult2string( $produkte_row['kan_liefermult_anzeige'] * $produkte_row['gebindegroesse'] / $lv_faktor )
+                              . '\,' . $produkte_row['kan_liefereinheit_anzeige'] . ')' ;
     }
     if( $spalten & PR_COL_LPREIS ) {
       $zeile .= '&' . sprintf( '%.2lf', $nettolieferpreis )
