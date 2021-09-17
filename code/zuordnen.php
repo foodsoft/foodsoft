@@ -4180,6 +4180,7 @@ $foodsoft_get_vars = array(
 , 'detail' => 'w'
 , 'download' => 'w'
 , 'faxspalten' => 'u'
+, 'format' => 'w'
 , 'gruppen_id' => 'u'
 , 'id' => 'u'
 , 'id_to' => 'u'
@@ -5045,7 +5046,10 @@ function tex_encode( $s ) {
   return $out;
 }
 
-
+function csv_encode( $s ) {
+  $s = preg_replace( '/"/', '""', html_entity_decode( $s, ENT_QUOTES ) );
+  return '"'.$s.'"';
+}
 
 // insert_html:
 // erzeugt javascript-code, der $element als Child vom element $id ins HTML einfuegt.

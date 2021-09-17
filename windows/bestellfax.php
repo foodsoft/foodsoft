@@ -72,10 +72,15 @@ switch( $action ) {
 
 get_http_var( 'export', 'w', '' );
 if( $export == 'bestellschein' ) {
-  fc_openwindow( 'self', 'window_id=pdf,download=bestellfax' );
+  fc_openwindow( 'self', 'window_id=pdf,download=bestellfax,format=pdf' );
+}
+if( $export == 'bestellschein_csv' ) {
+  fc_openwindow( 'self', 'window_id=csv,download=bestellfax,format=csv' );
 }
 
-if( isset( $download ) && ( $download == 'bestellfax' ) ) {
+get_http_var( 'format', 'w', '' );
+
+if( isset( $download ) && ( $download == 'bestellfax' ) && ( $format == 'pdf' ) ) {
   $fc_kundennummer = trim( $fc_kundennummer );
 
   $tex = file_get_contents( 'templates/bestellschein.tex' );
@@ -103,6 +108,14 @@ if( isset( $download ) && ( $download == 'bestellfax' ) ) {
   }
 }
 
+if( isset( $download ) && ( $download == 'bestellfax' ) && ( $format == 'csv' ) ) {
+  $csv = utf8_decode( bestellcsv( $bestell_id, $spalten ) );
+  $downloadname = 'Bestellschein.csv';
+  header( 'Content-Type: text/csv;charset=iso-8859-1' );
+  header( "Content-Disposition: filename=$downloadname" );
+  echo $csv;
+  return;
+}
 
 open_table( 'layout hfill' );
   open_td( 'left' );
@@ -209,6 +222,7 @@ close_form();
 open_div( 'right medskip' );
   $confirm = ( (int)$lieferant['bestellfaxspalten'] !== (int)$spalten ) ? "if( confirm( 'Spaltenauswahl f&uuml;r diesen Lieferanten wurde ge&auml;ndert - sind sie sicher?' ) ) " : '';
   open_span( 'qquad button', "onclick=\" $confirm { f=document.forms.form_$faxform_id;f.elements.export.value='bestellschein'; f.submit(); } \"", 'PDF erzeugen' );
+  open_span( 'qquad button', "onclick=\" $confirm { f=document.forms.form_$faxform_id;f.elements.export.value='bestellschein_csv'; f.submit(); } \"", 'CSV erzeugen' );
   open_span( 'qquad button', "onclick=\" $confirm document.forms.form_$faxform_id.submit(); \"", 'Speichern' );
 close_div()    ;
 

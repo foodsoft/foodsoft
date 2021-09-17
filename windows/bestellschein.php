@@ -221,7 +221,7 @@ switch( $status ) {
 
 if( hat_dienst( 4 ) && ( $status > STATUS_BESTELLEN ) && ( $status < STATUS_ABGERECHNET ) ) {
   open_option_menu_row();
-    open_td( '', "colspan='2'", fc_link( 'bestellfax', "class=qquad href,bestell_id=$bestell_id,text=zur Faxansicht..." ) );
+    open_td( '', "colspan='2'", fc_link( 'bestellfax', "class=qquad href,bestell_id=$bestell_id,text=zur Fax-/CSV-Ansicht..." ) );
   close_option_menu_row();
 }
 

@@ -1385,6 +1385,112 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
   return $tex;
 }
 
+function bestellcsv( $bestell_id, $spalten = 0xfffff, $sep = ';' ) {
+  $produkte = sql_bestellung_produkte( $bestell_id );
+  $bestellung = sql_bestellung( $bestell_id );
+
+  $status = $bestellung['rechnungsstatus'];
+  need( $status >= STATUS_LIEFERANT );
+
+  $header = '';
+/*
+  if( $spalten & PR_COL_NAME ) {
+    $header .= 'artikel' . $sep;
+  }
+*/
+  if( $spalten & PR_COL_ANUMMER ) {
+    $header .= 'artnr' . $sep;
+  }
+/*
+  if( $spalten & PR_COL_BNUMMER ) {
+    $header .= 'bestellnr' . $sep;
+  }
+  if( $spalten & PR_COL_LIEFERMENGE ) {
+    $header .= 'menge' . $sep;
+  }
+*/
+  if( $spalten & PR_COL_LIEFERGEBINDE ) {
+    $header .= 'menge' . $sep; // Terra verlangt "menge"!
+  }
+/*
+  if( $spalten & PR_COL_LPREIS ) {
+    $header .= 'einzelpreis' . $sep;
+  }
+  if( $spalten & PR_COL_NETTOSUMME ) {
+    $header .= 'gesamtpreis' . $sep;
+  }
+*/
+  $header .= "kommentar\n";
+
+  $csv = $header;
+
+  $netto_summe = 0;
+
+  foreach( $produkte as $produkte_row ) {
+    $produkt_id = $produkte_row['produkt_id'];
+
+    // preise je V-einheit:
+    $nettopreis = $produkte_row['nettopreis'];
+
+    $nettolieferpreis = $produkte_row['nettolieferpreis'];
+    $lv_faktor = $produkte_row['lv_faktor'];
+
+    $gesamtbestellmenge = $produkte_row['gesamtbestellmenge'];
+
+    $gebindegroesse = $produkte_row['gebindegroesse'];
+    $kan_verteilmult = $produkte_row['kan_verteilmult'];
+
+    $liefermenge = $produkte_row['liefermenge'];
+    $gebinde = $liefermenge / $gebindegroesse;
+    $liefermenge_scaled = $liefermenge / $lv_faktor;
+
+    if( $gebinde < 1 ) {
+      continue;
+    }
+
+    $nettogesamtpreis = $nettopreis * $liefermenge;
+
+    $netto_summe += $nettogesamtpreis;
+
+    $zeile = '';
+/*
+    if( $spalten & PR_COL_NAME ) {
+      $name = $produkte_row['produkt_name'];
+      $zeile .= csv_encode( $name ) . $sep;
+    }
+*/
+    if( $spalten & PR_COL_ANUMMER ) {
+      $zeile .= $produkte_row['artikelnummer'] . $sep;
+    }
+/*
+    if( $spalten & PR_COL_BNUMMER ) {
+      $zeile .= $produkte_row['bestellnummer'] . $sep;
+    }
+    if( $spalten & PR_COL_LIEFERMENGE ) {
+      $zeile .= mult2string( $liefermenge_scaled * $produkte_row['kan_liefermult_anzeige'] ) . $sep;
+    }
+*/
+    if( $spalten & PR_COL_LIEFERGEBINDE ) {
+      $zeile .= mult2string( $gebinde ) . $sep;
+    }
+/*
+    if( $spalten & PR_COL_LPREIS ) {
+      $zeile .= sprintf( '%.2lf', $nettolieferpreis ) . $sep;
+    }
+    if( $spalten & PR_COL_NETTOSUMME ) {
+      $zeile .= sprintf( '%.2lf', $nettogesamtpreis ) . $sep;
+    }
+*/
+    $zeile .= csv_encode( mult2string( $gebinde )
+           . ' x ' . mult2string( $produkte_row['kan_liefermult_anzeige'] * $produkte_row['gebindegroesse'] / $lv_faktor ) . ' ' . $produkte_row['kan_liefereinheit_anzeige'] 
+           . ' ' . $produkte_row['produkt_name'] );
+    $zeile .= "\n";
+
+    $csv .= $zeile;
+  }
+
+  return $csv;
+}
 
 
 
