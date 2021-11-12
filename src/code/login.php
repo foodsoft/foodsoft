@@ -37,31 +37,31 @@ $dienstinfos = [
   DIENST_VERTEILEN => [
     'label'       => 'Verteilen',
     'description' => 'Verteilung Terra',
-    'wiki'        => 'fc:dienst_1-2',
+    'wiki'        => 'fc:dienst_verteilen_1_2',
     'comment'     => 'This is the former `Dienst 1`'
   ],
   DIENST_AUCH_VERTEILEN => [  // does not occur in the wild
     'label'       => '(auch Verteilen)',
     'description' => '(auch: Verteilung Terra)',
-    'wiki'        => 'fc:dienst_1-2',
+    'wiki'        => 'fc:dienst_verteilen_1_2',
     'comment'     => 'This is the former `Dienst 2`'
   ],
   DIENST_ANNEHMEN => [
     'label'       => 'Annehmen',
     'description' => 'Pfand, Annahme Terra, Verteilung Landbrot',
-    'wiki'        => 'fc:dienst_3',
+    'wiki'        => 'fc:dienst_annehmen_3',
     'comment'     => 'This is the former `Dienst 3`'
   ],
   DIENST_VORBEREITEN_ABRECHNEN => [
     'label'       => 'Vorbereiten/Abrechnen',
     'description' => 'Katalogpflege, Bestellformulare, Abrechnung',
-    'wiki'        => 'fc:dienst_4',
+    'wiki'        => 'fc:dienst_vorbereiten_abrechnen_4',
     'comment'     => 'This is the former `Dienst 4`'
   ],
   DIENST_MITGLIEDER_DIENSTE => [
     'label'       => 'Mitglieder/Dienste/Konto',
     'description' => 'Mitgliederverwaltung, Dienstplanerstellung, Buchhaltung/Kontoführung',
-    'wiki'        => 'fc:dienst_5',
+    'wiki'        => 'fc:dienst_mitglieder_dienstplan_5',
     'comment'     => 'This is the former `Dienst 5`'
   ],
 ];
