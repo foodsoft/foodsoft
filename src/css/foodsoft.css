@@ -1143,6 +1143,7 @@ div.board {
 
 div.board textarea {
   border-style: none;
+  resize: none;
 }
 
 .chalk {
