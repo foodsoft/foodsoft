@@ -158,8 +158,9 @@ switch( $status ){    // anzeigedetails abhängig vom Status auswählen
     if( $gruppen_id ) {
       $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_VSUMME );
     } else {
-      $default_spalten
-        |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE | PR_COL_NETTOSUMME | PR_ROWS_NICHTGEFUELLT );
+      # here, we want the cols that are relevant for the supplier
+      # FIXME: It might be a better design to have supplier-specific settings instead!
+      $default_spalten = ( PR_COL_NAME | PR_COL_BNUMMER | PR_COL_LIEFERGEBINDE | PR_COL_MWST | PR_COL_LPREIS | PR_COL_VSUMME );
     }
     $title="Bestellschein";
     break;
