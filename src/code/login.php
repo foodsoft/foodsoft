@@ -93,8 +93,10 @@ function init_login() {
 
 function logout() {
   init_login();
-  unset( $_COOKIE['foodsoftkeks'] );
-  setcookie( 'foodsoftkeks', '0', 0, '/', '', TRUE );
+  if (!headers_sent() ) {
+    unset( $_COOKIE['foodsoftkeks'] );
+    setcookie( 'foodsoftkeks', '0', 0, '/', '', TRUE );
+  }
 }
 
 init_login();
