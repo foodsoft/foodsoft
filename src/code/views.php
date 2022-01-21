@@ -776,28 +776,28 @@ function pick_group_text() {
 
 }
 
-define( 'PR_COL_NAME' , 0x1 );            // produktname
-define( 'PR_COL_ANUMMER', 0x2 );          // Artikelnummer
-define( 'PR_COL_BNUMMER', 0x4 );          // Bestellnummer
-define( 'PR_COL_LPREIS', 0x8 );           // Netto-L-Preis (wie im Katalog)
-define( 'PR_COL_MWST', 0x10 );            // Mehrwertsteuersatz
-define( 'PR_COL_PFAND', 0x20 );           // Pfand
-define( 'PR_COL_VPREIS', 0x40 );          // V-Preis (Nettopreis + MWSt + Pfand)
-define( 'PR_COL_AUFSCHLAG', 0x80 );       // Aufschlag (prozentual vom Nettopreis)
-define( 'PR_COL_ENDPREIS', 0x100 );       // End-Preis (V-Preis + Pfand)
-define( 'PR_COL_BESTELLMENGE', 0x200 );   // bestellte menge (1)
-define( 'PR_COL_BESTELLGEBINDE', 0x400 ); // bestellte Gebinde (1)
-define( 'PR_COL_LIEFERMENGE', 0x800 );    // gelieferte Menge (1,2)
-define( 'PR_COL_LIEFERGEBINDE', 0x1000 ); // gelieferte Gebinde(1,2)
-define( 'PR_COL_NETTOSUMME', 0x2000 );    // Gesamtpreis Netto (1,3)
-define( 'PR_COL_BRUTTOSUMME', 0x4000 );   // Gesamtpreis Brutto ohne Pfand (1,3)
-define( 'PR_COL_VSUMME', 0x8000 );        // V-Summe: brutto mit Pfand (1,3)
-define( 'PR_COL_ENDSUMME', 0x10000 );     // Endsumme: V-summe mit aufschlag (1,3)
+define( 'PR_COL_NAME' ,           0x1     ); // produktname
+define( 'PR_COL_ANUMMER',         0x2     ); // Artikelnummer
+define( 'PR_COL_BNUMMER',         0x4     ); // Bestellnummer
+define( 'PR_COL_LPREIS',          0x8     ); // Netto-L-Preis (wie im Katalog)
+define( 'PR_COL_MWST',            0x10    ); // Mehrwertsteuersatz
+define( 'PR_COL_PFAND',           0x20    ); // Pfand
+define( 'PR_COL_VPREIS',          0x40    ); // V-Preis (Nettopreis + MWSt + Pfand)
+define( 'PR_COL_AUFSCHLAG',       0x80    ); // Aufschlag (prozentual vom Nettopreis)
+define( 'PR_COL_ENDPREIS',        0x100   ); // End-Preis (V-Preis + Pfand)
+define( 'PR_COL_BESTELLMENGE',    0x200   ); // bestellte menge (1)
+define( 'PR_COL_BESTELLGEBINDE',  0x400   ); // bestellte Gebinde (1)
+define( 'PR_COL_LIEFERMENGE',     0x800   ); // gelieferte Menge (1,2)
+define( 'PR_COL_LIEFERGEBINDE',   0x1000  ); // gelieferte Gebinde(1,2)
+define( 'PR_COL_NETTOSUMME',      0x2000  ); // Gesamtpreis Netto (1,3)
+define( 'PR_COL_BRUTTOSUMME',     0x4000  ); // Gesamtpreis Brutto ohne Pfand (1,3)
+define( 'PR_COL_VSUMME',          0x8000  ); // V-Summe: brutto mit Pfand (1,3)
+define( 'PR_COL_ENDSUMME',        0x10000 ); // Endsumme: V-summe mit aufschlag (1,3)
 //
 define( 'PR_ROWS_NICHTGELIEFERT', 0x20000 ); // nicht gelieferte Produkte auch anzeigen
-define( 'PR_ROWS_NICHTGEFUELLT', 0x40000 ); // nicht gefuellte gebinde auch anzeigen?
+define( 'PR_ROWS_NICHTGEFUELLT',  0x40000 ); // nicht gefuellte gebinde auch anzeigen?
 
-define( 'PR_FAXANSICHT', 0x80000 ); // faxansicht: mehr eingabefelder / link .pdf download
+define( 'PR_FAXANSICHT',          0x80000 ); // faxansicht: mehr eingabefelder / link .pdf download
 
 define( 'PR_FAXOPTIONS'
   , PR_COL_NAME | PR_COL_ANUMMER | PR_COL_BNUMMER | PR_COL_LPREIS | PR_COL_NETTOSUMME

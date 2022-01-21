@@ -10,12 +10,12 @@ global $from_dokuwiki;
 $from_dokuwiki or   // dokuwiki hat viele, viele "undefined variable"s !!!
   error_reporting(E_ALL); // alle Fehler anzeigen
 
-define('LEVEL_NEVER', 5);
-define('LEVEL_ALL', 4);
-define('LEVEL_MOST', 3);
+define('LEVEL_NEVER',     5);
+define('LEVEL_ALL',       4);
+define('LEVEL_MOST',      3);
 define('LEVEL_IMPORTANT', 2); // all UPDATE and INSERT statements should have level important
-define('LEVEL_KEY', 1);
-define('LEVEL_NONE', 0);
+define('LEVEL_KEY',       1);
+define('LEVEL_NONE',      0);
 
 // LEVEL_CURRENT: alle sql-aufrufe bis zu diesem level werden angezeigt:
 $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
@@ -1488,11 +1488,11 @@ function sql_insert_group($newNumber, $newName, $pwd) {
 // optionsflags für anzeige in gruppen.php
 // (hier definiert, um bei aufruf aus anderem fenster optionen setzen zu können):
 //
-define( 'GRUPPEN_OPT_INAKTIV', 1 );
-define( 'GRUPPEN_OPT_SCHULDEN', 2 );
-define( 'GRUPPEN_OPT_GUTHABEN', 4 );
-define( 'GRUPPEN_OPT_UNGEBUCHT', 8 );
-define( 'GRUPPEN_OPT_DETAIL', 16 );
+define( 'GRUPPEN_OPT_INAKTIV',    1 );
+define( 'GRUPPEN_OPT_SCHULDEN',   2 );
+define( 'GRUPPEN_OPT_GUTHABEN',   4 );
+define( 'GRUPPEN_OPT_UNGEBUCHT',  8 );
+define( 'GRUPPEN_OPT_DETAIL',    16 );
 
 
 ////////////////////////////////////
@@ -1807,12 +1807,12 @@ function sql_produktgruppen_name( $id ) {
 
 $wochentage = array( 'invalid', 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag' );
 
-define('STATUS_BESTELLEN', 10 );
-define('STATUS_LIEFERANT', 20 );
-define('STATUS_VERTEILT', 30 );
-define('STATUS_ABGERECHNET', 40 );
+define('STATUS_BESTELLEN',     10 );
+define('STATUS_LIEFERANT',     20 );
+define('STATUS_VERTEILT',      30 );
+define('STATUS_ABGERECHNET',   40 );
 define('STATUS_ABGESCHLOSSEN', 45 );
-define('STATUS_ARCHIVIERT', 50 );
+define('STATUS_ARCHIVIERT',    50 );
 
 function rechnung_status_string( $state ) {
   switch( $state ) {
@@ -2066,17 +2066,17 @@ function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
 
 // werte für feld `art' in bestellzuordnung:
 //
-define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_FEST', 10 );
+define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_FEST',     10 );
 define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ', 11 );
-define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 20 );
-define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 21 );
-define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 30 );
+define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG',      20 );
+define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG',  21 );
+define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG',           30 );
 
 define( 'BESTELLZUORDNUNG_ART_VORMERKUNGEN', 'BETWEEN 10 AND 19' );
 define( 'BESTELLZUORDNUNG_ART_BESTELLUNGEN', 'BETWEEN 20 AND 29' );
-define( 'BESTELLZUORDNUNG_ART_ZUTEILUNGEN', 'BETWEEN 30 AND 39' );
+define( 'BESTELLZUORDNUNG_ART_ZUTEILUNGEN',  'BETWEEN 30 AND 39' );
 
-define( 'BESTELLZUORDNUNG_ART_ANY', 'BETWEEN 1 AND 99' );
+define( 'BESTELLZUORDNUNG_ART_ANY',          'BETWEEN 1 AND 99'  );
 
 // todo: basarzuteilungen unterscheiden:
 // define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 31 );
@@ -3205,7 +3205,7 @@ function sql_kontoauszug( $konto_id, $auszug_jahr = 0, $auszug_nr = 0 ) {
 //
 ////////////////////////////////////
 
-define( 'PFAND_OPT_GRUPPEN_INAKTIV', 1 );
+define( 'PFAND_OPT_GRUPPEN_INAKTIV',   1 );
 define( 'PFAND_OPT_ALLE_BESTELLUNGEN', 2 );
 
 // pfandzuordnung_{lieferant,gruppe}:
@@ -3255,24 +3255,23 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
 // TRANSAKTION_TYP_xxx: dienen zur Klassifikation der BadBank-Buchungen,
 // die *SALDO*-typen auch für gruppen/lieferanten/bank:
 //
-define( 'TRANSAKTION_TYP_UNDEFINIERT', 0 );      // noch nicht zugeordnet
-define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN', 1 );  // anfangsguthaben: gruppen, lieferanten und bank
-define( 'TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN', 2 ); // Ausgleich/Umlage Differenz Anfangsguthaben
-define( 'TRANSAKTION_TYP_SPENDE', 3 );           // freiwillige Spende
-define( 'TRANSAKTION_TYP_SONDERAUSGABEN', 4 );   // Mitgliedsbeitrag Haus der Natur, Kontoführung, ...
-define( 'TRANSAKTION_TYP_UMLAGE', 5 );           // Verlustumlage auf alle Mitglieder
-define( 'TRANSAKTION_TYP_SOCKEL', 6 );           // geparkte Sockelbeträge
-define( 'TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE', 7 ); // Umlage Bestellverluste (auch: ein paar ganz alte Basarabrechnungen)
-define( 'TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN', 8 ); // Umlage Sonderausgaben
-define( 'TRANSAKTION_TYP_UMBUCHUNG_SPENDE', 9 );   // umbuchung von spenden nach TRANSAKTION_TYP_AUSGLEICH_*
-define( 'TRANSAKTION_TYP_UMBUCHUNG_UMLAGE', 10 );  // umbuchung von umlagen nach TRANSAKTION_TYP_AUSGLEICH_*
+define( 'TRANSAKTION_TYP_UNDEFINIERT',                0 ); // noch nicht zugeordnet
+define( 'TRANSAKTION_TYP_ANFANGSGUTHABEN',            1 ); // anfangsguthaben: gruppen, lieferanten und bank
+define( 'TRANSAKTION_TYP_AUSGLEICH_ANFANGSGUTHABEN',  2 ); // Ausgleich/Umlage Differenz Anfangsguthaben
+define( 'TRANSAKTION_TYP_SPENDE',                     3 ); // freiwillige Spende
+define( 'TRANSAKTION_TYP_SONDERAUSGABEN',             4 ); // Mitgliedsbeitrag Haus der Natur, Kontoführung, ...
+define( 'TRANSAKTION_TYP_UMLAGE',                     5 ); // Verlustumlage auf alle Mitglieder
+define( 'TRANSAKTION_TYP_SOCKEL',                     6 ); // geparkte Sockelbeträge
+define( 'TRANSAKTION_TYP_AUSGLEICH_BESTELLVERLUSTE',  7 ); // Umlage Bestellverluste (auch: ein paar ganz alte Basarabrechnungen)
+define( 'TRANSAKTION_TYP_AUSGLEICH_SONDERAUSGABEN',   8 ); // Umlage Sonderausgaben
+define( 'TRANSAKTION_TYP_UMBUCHUNG_SPENDE',           9 ); // Umbuchung von Spenden nach TRANSAKTION_TYP_AUSGLEICH_*
+define( 'TRANSAKTION_TYP_UMBUCHUNG_UMLAGE',          10 ); // Umbuchung von Umlagen nach TRANSAKTION_TYP_AUSGLEICH_*
 
-define( 'TRANSAKTION_TYP_SALDO', 11 );             // saldo nach jahresabschluss
-define( 'TRANSAKTION_TYP_PFANDSALDO', 12 );        // pfandsaldo nach jahresabschluss
+define( 'TRANSAKTION_TYP_SALDO',                     11 ); // saldo nach jahresabschluss
+define( 'TRANSAKTION_TYP_PFANDSALDO',                12 ); // pfandsaldo nach jahresabschluss
 
 // die folgenden sind historisch und sollten nicht erzeugt werden (aber teils noch in der db vorhanden):
-define( 'TRANSAKTION_TYP_STORNO', 98 );          // Buchungen, die sich gegenseitig neutralisieren
-// define( 'TRANSAKTION_TYP_SONSTIGES', 99 ); // ... nicht mehr vorhanden! :-)
+define( 'TRANSAKTION_TYP_STORNO',                    98 ); // Buchungen, die sich gegenseitig neutralisieren
 
 
 $selectable_types = array(
@@ -3316,8 +3315,6 @@ function transaktion_typ_string( $typ ) {
       return 'Pfandsaldo nach Abschluss';
     case TRANSAKTION_TYP_STORNO:
       return 'Storno';
-    case TRANSAKTION_TYP_SONSTIGES:
-      return 'Sonstiges (sollte nicht mehr vorkommen!)';
   }
   return "FEHLER: undefinierter Typ: $typ";
 }
@@ -3328,17 +3325,17 @@ function transaktion_typ_string( $typ ) {
 // Beträge werden immer als 'soll' der fc, also schuld der fc
 // (an gruppen, lieferanten oder bank) zurückgegeben (ggf. also negativ)
 //
-define( 'OPTION_WAREN_NETTO_SOLL', 1 );       /* waren ohne pfand */
-define( 'OPTION_WAREN_BRUTTO_SOLL', 2 );      /* mit mwst, ohne pfand */
-define( 'OPTION_AUFSCHLAG_SOLL', 3 );         /* Aufschlag zur Kostendeckung der FC */
-define( 'OPTION_VPREIS_SOLL', 4 );          /* waren brutto inclusive pfand, aber _ohne_ aufschlag (nur gruppenseitig sinnvoll) */
-define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 );   /* schuld aus kauf voller pfandverpackungen */
-define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 15 );
-define( 'OPTION_PFAND_VOLL_ANZAHL', 16 );
-define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 17 );   /* schuld aus Rückgabe leerer pfandverpackungen */
-define( 'OPTION_PFAND_LEER_NETTO_SOLL', 18 ); 
-define( 'OPTION_PFAND_LEER_ANZAHL', 19 );
-define( 'OPTION_EXTRA_BRUTTO_SOLL', 20 );   /* sonstiges: Rabatte, Versandkosten, ... (nur lieferantenseitig sinnvoll) */
+define( 'OPTION_WAREN_NETTO_SOLL',        1 ); /* waren ohne pfand */
+define( 'OPTION_WAREN_BRUTTO_SOLL',       2 ); /* mit mwst, ohne pfand */
+define( 'OPTION_AUFSCHLAG_SOLL',          3 ); /* Aufschlag zur Kostendeckung der FC */
+define( 'OPTION_VPREIS_SOLL',             4 ); /* waren brutto inclusive pfand, aber _ohne_ aufschlag (nur gruppenseitig sinnvoll) */
+define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 ); /* schuld aus kauf voller pfandverpackungen */
+define( 'OPTION_PFAND_VOLL_NETTO_SOLL',  15 );
+define( 'OPTION_PFAND_VOLL_ANZAHL',      16 );
+define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 17 ); /* schuld aus Rückgabe leerer pfandverpackungen */
+define( 'OPTION_PFAND_LEER_NETTO_SOLL',  18 );
+define( 'OPTION_PFAND_LEER_ANZAHL',      19 );
+define( 'OPTION_EXTRA_BRUTTO_SOLL',      20 ); /* sonstiges: Rabatte, Versandkosten, ... (nur lieferantenseitig sinnvoll) */
 
 
 
@@ -5273,5 +5270,3 @@ function get_avatar_url( $member_row ) {
 //   return checked_gravatar_url($email, 128, $d);
 
 }
-
-?>
