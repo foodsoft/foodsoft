@@ -45,9 +45,9 @@ class auth_plugin_authfoodsoft_authentication extends DokuWiki_Auth_Plugin {
           chdir( $dir );
           $_REQUEST['do'] = 'show';
         }
-        if( $_REQUEST['do'] == 'logout' ) {
+        if( $_REQUEST['do'] == 'logout' && !headers_sent() ) {
           unset( $_COOKIE['foodsoftkeks'] );
-          setcookie( 'foodsoftkeks', '0', 0, '/' );
+          setcookie( 'foodsoftkeks', '0', 0, '/', '', TRUE );
           $_REQUEST['do'] = 'show';
         }
                                                                                          
