@@ -147,8 +147,9 @@ function ean_links( $ean ) {
   $external_link_attributes = "ref='external noopener noreferrer' target='_blank'";
   $s = '';
   if (isset($ean)) {
-    $s .= "<a $external_link_attributes title='ecoinform' href='http://www.ecoinform.de/Suche.Liste;$ean.1.html'>[e]</a>";
-    $s .= "<a $external_link_attributes title='Google' href='http://google.de/search?q=$ean'>[g]</a>";
+    $s .= "<a $external_link_attributes title='ecoinform'     href='http://www.ecoinform.de/Suche.Liste;$ean.1.html'>[e]</a>";
+    $s .= "<a $external_link_attributes title='Google'        href='http://google.de/search?q=$ean'                 >[g]</a>";
+    $s .= "<a $external_link_attributes title='Google Images' href='http://google.de/search?tbm=isch&q=$ean'        >[i]</a>";
   }
   return $s;
 }
