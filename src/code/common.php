@@ -99,7 +99,7 @@ global
 
 $angemeldet = false;
 
-// Dienstlabel und -bechreibungen
+// Dienstlabel und -beschreibungen
 global
   $dienstinfos;
 

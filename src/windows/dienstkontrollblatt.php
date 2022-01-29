@@ -74,7 +74,7 @@ foreach( $result as $row ) {
     open_td('','', fc_link( 'self', array( 'title' => 'Zentrieren', 'id_to' => $row['id'] + 5, 'text' => $row['id'] ) ) );
     open_td('','', $row['datum'] );
     open_td('','', $row['zeit'] );
-    open_td('','', $row['dienst'] );
+    open_td('','', "{$dienstinfos[$row['dienst']]['label']} ({$row['dienst']})" );
     open_td('','', $row['gruppen_name'] );
     open_td('','', $row['name'] );
     open_td('','', $row['telefon'] );
@@ -88,5 +88,3 @@ if( $id_to < $id_max ) {
     open_th('',"colspan='8'", fc_link( '', "class=button,id_to=$n,text= &gt; &gt; &gt;  Blättern &gt; &gt; &gt; " ) );
 }
 close_table();
-
-?>
