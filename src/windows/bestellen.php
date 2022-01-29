@@ -5,7 +5,8 @@ assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( "foodsoft:bestellen" );
 
-get_http_var( 'basarmodus', 'd', 0, true);
+// the 'basarmodus' has only to be added to $self_fields when logged in as dienst 4
+get_http_var( 'basarmodus', 'd', 0, hat_dienst(4) );
 get_http_var( 'bestell_id','u',false,true );
 get_http_var( 'vertical_scroll', 'w', '' );
 
