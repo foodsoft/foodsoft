@@ -1851,6 +1851,35 @@ function buchung_kurzinfo( $id ) {
   }
 }
 
+function produktpreise_konsistenztest_problem_view( $probleme, $editable = false ) {
+  foreach( $probleme as $problem ) {
+    $show_button = false;
+    if( $problem['error'] == 2 ) {
+      echo "<div class='warn'>FEHLER: Preisintervall {$problem['produktpreis_id1']} nicht aktuell aber nicht abgeschlossen.</div>";
+      $show_button = true;
+    } else if( $problem['error'] == 1 ) {
+      echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$problem['produktpreis_id1']} und {$problem['produktpreis_id2']}.</div>";
+      $show_button = true;
+    }
+    if( $editable && $show_button ) {
+      $date = date_parse( $problem['vorschlag_ende'] );
+      $jahr = $date['year'];
+      $monat = $date['month'];
+      $tag = $date['day'];
+      div_msg( 'warn', fc_action( array( 'text' => "Eintrag {$problem['produktpreis_id1']} zum $jahr-$monat-$tag enden lassen"
+                                      , 'title' => "Eintrag {$problem['produktpreis_id1']} zum $jahr-$monat-$tag enden lassen" )
+                                , array(  'action' => 'zeitende_setzen', 'vortag' => '1', 'preis_id' => $problem['produktpreis_id1']
+                                      , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr" ) ) );
+    }
+    if( $problem['error'] == 5 ) {
+      div_msg( 'alert', 'HINWEIS: kein Preiseintrag fuer diesen Artikel vorhanden!' );
+    } else if ($problem['error'] == 3) {
+      div_msg('alert', 'HINWEIS: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!');
+    } else if ($problem['error'] == 4) {
+      div_msg('alert', 'HINWEIS: aktueller Preis l&auml;uft aus!');
+    }
+  }
+}
 
 // preishistorie_view:
 //  - kann preishistorie anzeigen
@@ -1870,7 +1899,9 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     $legend = "Preis-Historie";
   }
 
-  if( sql_aktueller_produktpreis_id( $produkt_id ) and ! $bestell_id ) {
+  $produktpreis_probleme = sql_produktpreise_konsistenztest( false, $produkt_id )[$produkt_id];
+
+  if( sql_aktueller_produktpreis_id( $produkt_id ) and ! $bestell_id and ! $produktpreis_probleme ) {
     $initial = 'off';
   } else {
     $initial = 'on';
@@ -1941,7 +1972,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
   close_table();
   close_div();
 
-  produktpreise_konsistenztest( $produkt_id, $editable, 0 );
+  produktpreise_konsistenztest_problem_view( $produktpreis_probleme, $editable );
 
   close_fieldset();
 }
@@ -2269,11 +2300,15 @@ function avatar_view( $member_row ) {
 
 }
 
-function join_details( &$details, $prefix, $value, $context = false ) {
-  if ( $value )
+function join_details( &$details, $prefix, $value, $context = false, $catalogue_record = array() ) {
+  if( $value )
   {
-    if ( $context && $acronym_details = current(sql_catalogue_acronym($context, $value))) {
-      if ($acronym_details['url']) {
+    if( $context ) {
+      $acronym_details = unalias_columns( $catalogue_record, $context );
+      if( !$acronym_details ) {
+        $acronym_details = current( sql_catalogue_acronym( $context, $value ) );
+      }
+      if( $acronym_details['url'] ) {
         $value = "<a title='$value' "
             . "href='{$acronym_details['url']}'>{$acronym_details['definition']}</a>";
       } else {
@@ -2295,15 +2330,18 @@ function catalogue_product_details( $catalogue_record ) {
   join_details( $details
           , '<span title="Herkunft">Hrk:</span> '
           , $catalogue_record['herkunft']
-          , 'hrk');
+          , 'hrk'
+          , $catalogue_record);
   join_details( $details
           , '<span title="Verband">Vbd:</span> '
           , $catalogue_record['verband']
-          , 'vbd');
+          , 'vbd'
+          , $catalogue_record);
   join_details( $details
           , '<span title="Hersteller">Hst:</span> '
           , $catalogue_record['hersteller']
-          , 'hst');
+          , 'hst'
+          , $catalogue_record);
   join_details( $details
           , '<span title="European Article Number">EAN</span> ', 
           ean_links($catalogue_record['ean_einzeln']));
