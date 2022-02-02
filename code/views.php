@@ -5,10 +5,10 @@
 function number_selector($name, $min, $max, $selected, $format, $to_stdout = true ){
   global $input_event_handlers;
   $s = "<select name='$name' $input_event_handlers>";
-  for ($i=$min; $i <= $max; $i++) { 
-	       if ($i == $selected) $select_str="selected";
-     	       else $select_str = ""; 
-	       $s .= "<option value='".$i."' ".$select_str.">".sprintf($format,$i)."</option>\n";
+  for ($i=$min; $i <= $max; $i++) {
+         if ($i == $selected) $select_str="selected";
+              else $select_str = "";
+         $s .= "<option value='".$i."' ".$select_str.">".sprintf($format,$i)."</option>\n";
   }
   $s .= "</select>";
   if( $to_stdout )
@@ -28,7 +28,7 @@ function number_selector($name, $min, $max, $selected, $format, $to_stdout = tru
  */
 function date_time_selector($sql_date, $prefix, $show_time=true, $to_stdout = true ) {
   echo "<!-- sql_date :$sql_date -->";
-	$datum = date_parse($sql_date);
+  $datum = date_parse($sql_date);
 
   $s = "
     <table class='inner'>
@@ -136,7 +136,7 @@ function ean_view( $ean, $length = 20, $fieldname = false, $attr = '', $with_lin
   global $input_event_handlers;
   if ( $fieldname )
     return "<input type='text' class='ean' size='$length' name='$fieldname' value='$ean' $attr $input_event_handlers>";
-  
+
   $s = "<span class='ean'>$ean</span> ";
   if ($with_links)
     $s .= ean_links ($ean);
@@ -245,23 +245,23 @@ function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
 }
 
 /**
- *  Zeigt einen Dienst um in mit einem Dienstkontrollblatt-Eintrag zu 
- *  verknüpfen (Als Abschluss sozusagen). 
+ *  Zeigt einen Dienst um in mit einem Dienstkontrollblatt-Eintrag zu
+ *  verknüpfen (Als Abschluss sozusagen).
  */
 function dienst_view3($row){
-	echo("<p>".$row['lieferdatum'].", Dienst ".$row['dienst'].": ".$row['vorname']."Geleistet (ja/nein); Auswahl Logbucheintrag; ggf. neuer Logbucheintrag </p>");
-	$kontrollblatt = sql_dienstkontrollblatt(0,0,$row['gruppen_id'], $row['dienst']);
+  echo("<p>".$row['lieferdatum'].", Dienst ".$row['dienst'].": ".$row['vorname']."Geleistet (ja/nein); Auswahl Logbucheintrag; ggf. neuer Logbucheintrag </p>");
+  $kontrollblatt = sql_dienstkontrollblatt(0,0,$row['gruppen_id'], $row['dienst']);
   open_form( sprintf( 'aktion=akzeptieren_%u', $row["id"] ) );
   ?>
        <select name="kontrollblatt" >
      <option value='new'>Kein passender Eintrag</option>
   <?php
-	foreach($kontrollblatt as $eintrag){
-		printf( "<option value='%u'>%s %s</option>", $eintrag['id'], $eintrag['datum'], $eintrag['notiz'] );
-	}	
+  foreach($kontrollblatt as $eintrag){
+    printf( "<option value='%u'>%s %s</option>", $eintrag['id'], $eintrag['datum'], $eintrag['notiz'] );
+  }
   ?>
                </select>
-	       <br> Notiz: <input type="text"  size="30" name="notiz">  
+         <br> Notiz: <input type="text"  size="30" name="notiz">
   <?php
   submission_button( 'Dienst abschliessen' );
   close_form();
@@ -558,10 +558,10 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
     else
       open_div( 'warn', '', 'Bitte bald abklären!' );
   }
-  
+
   if( $reconfirmation_muted )
     return false;
-  
+
   return true;
 }
 
@@ -596,20 +596,20 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   if( $editAmounts ) {
     $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=15;
-    
+
     open_javascript();
 ?>
 function pick_group_dropdown() {
   var source = $('gruppen_id');
   var text = $('gruppen_id_text');
-  
+
   text.value = source.value % 1000;
 }
 
 function pick_group_text() {
   var source = $('gruppen_id_text');
   var dropdown = $('gruppen_id');
-  
+
   var options = dropdown.options;
   var group_id = 0;
   for (var i = 0; i < options.length; ++i) {
@@ -701,7 +701,7 @@ function pick_group_text() {
          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'class' => 'href'
        ) ) . "</td>"
     , "<td>{$basar_row['lieferung']}</td>"
-    , "<td class='mult'>" 
+    , "<td class='mult'>"
         . fc_link( 'produktdetails', array(
             'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
           , 'text' => sprintf( "%.2lf", $basar_row['nettolieferpreis'] )
@@ -915,7 +915,7 @@ function bestellschein_view(
   } else {
     $col[PR_COL_BESTELLMENGE] = array(
      'title' => "von Konsumenten bestellte Mengen: fest/Toleranz/Basar",
-     'header' => "bestellt<br>fest/Toleranz/Basar", 
+     'header' => "bestellt<br>fest/Toleranz/Basar",
      'cols' => ($status == STATUS_BESTELLEN ? 3 : 2)
     );
     if( $status == STATUS_BESTELLEN ) {
@@ -939,7 +939,7 @@ function bestellschein_view(
         $option_nichtgefuellt = true;
       } else {
         $col[PR_COL_LIEFERMENGE] = array(
-          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 ) 
+          'title' => "vom Lieferanten gelieferte Menge", 'header' => "L-Menge", 'cols' => ( $editAmounts ? 4 : 3 )
         );
         $col[PR_COL_LIEFERGEBINDE] = array(
           'title' => "vom Lieferanten gelieferte Gebinde", 'header' => "L-Gebinde", 'cols' => 2
@@ -1481,7 +1481,7 @@ function bestellcsv( $bestell_id, $spalten = 0xfffff, $sep = ';' ) {
     }
 */
     $zeile .= csv_encode( mult2string( $gebinde )
-           . ' x ' . mult2string( $produkte_row['kan_liefermult_anzeige'] * $produkte_row['gebindegroesse'] / $lv_faktor ) . ' ' . $produkte_row['kan_liefereinheit_anzeige'] 
+           . ' x ' . mult2string( $produkte_row['kan_liefermult_anzeige'] * $produkte_row['gebindegroesse'] / $lv_faktor ) . ' ' . $produkte_row['kan_liefereinheit_anzeige']
            . ' ' . $produkte_row['produkt_name'] );
     $zeile .= "\n";
 
@@ -1497,7 +1497,7 @@ function select_products_not_in_list( $bestell_id ) {
   $bestellung = sql_bestellung( $bestell_id );
   $lieferanten_id = $bestellung['lieferanten_id'];
   $produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
-  
+
   ?> Produkt: <?php
   open_select( 'produkt_id' );
     echo "<option value='0' selected>(Bitte Produkt wählen)</option>";
@@ -1566,7 +1566,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   global $js_on_exit;
   global $input_event_handlers;
   global $form_id;
-  
+
 
   $form_event_handlers = $input_event_handlers;
 
@@ -1579,13 +1579,13 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   $magicCalculator = "window.magicCalculator_{$bestell_id}_{$produkt_id}";
   $js_on_exit[] = "$magicCalculator = new MagicCalculator($bestell_id, $produkt_id, $verteilmult, $endpreis);";
   $js_on_exit[] = "\$('form_$form_id').observe('form:afterReset', function(event) { $magicCalculator.handleChangedDistribution(); });";
-  
+
   $magic_style = "magic_{$bestell_id}_{$produkt_id}";
-  
+
   open_tag('style', '', "id='${magic_style}_style' type='text/css'");
   echo(".$magic_style { display: none; }");
   close_tag('style');
-  
+
   $input_event_handlers = textfield_on_change_handler("on_change($form_id); $magicCalculator.handleChangedDistribution();");
   open_tr('summe');
     if( $status < STATUS_LIEFERANT ) {
@@ -1596,8 +1596,8 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td('unit','',$verteileinheit );
       open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
       if ($editable) {
-        open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'", 
-            alink("javascript:$magicCalculator.applyResult(); on_change($form_id);", 'button', '&larr; OK' )); 
+        open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'",
+            alink("javascript:$magicCalculator.applyResult(); on_change($form_id);", 'button', '&larr; OK' ));
       }
     }
   close_tr();
@@ -1608,7 +1608,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   $basar_toleranzmenge = 0;
   $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult;
   $muellmenge = 0;
-  
+
   foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
     $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
@@ -1661,7 +1661,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       }
     close_tr();
   }
-  
+
   open_tr('summe');
     open_td('', '', fc_link( 'basar', 'class=href,text=Basar:' ) );
     open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
@@ -1864,8 +1864,8 @@ function produktpreise_konsistenztest_problem_view( $probleme, $editable = false
     if( $editable && $show_button ) {
       $date = date_parse( $problem['vorschlag_ende'] );
       $jahr = $date['year'];
-      $monat = $date['month'];
-      $tag = $date['day'];
+      $monat = sprintf("%02d", $date['month']);
+      $tag = sprintf("%02d", $date['day']);
       div_msg( 'warn', fc_action( array( 'text' => "Eintrag {$problem['produktpreis_id1']} zum $jahr-$monat-$tag enden lassen"
                                       , 'title' => "Eintrag {$problem['produktpreis_id1']} zum $jahr-$monat-$tag enden lassen" )
                                 , array(  'action' => 'zeitende_setzen', 'vortag' => '1', 'preis_id' => $problem['produktpreis_id1']
@@ -2106,12 +2106,12 @@ function auswahl_bestellung( $bestell_id = 0 ) {
  */
 function dienst_selector($pre_select, $id=""){
   $s = "<select name='dienst_$id'>";
-	    
-	  //var_dump($_SESSION['DIENSTEINTEILUNG']);
-	  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) { 
-	       if ($i == $pre_select) $select_str="selected";
-     	       else $select_str = ""; 
-	       $s .= "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
+
+    //var_dump($_SESSION['DIENSTEINTEILUNG']);
+    foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) {
+         if ($i == $pre_select) $select_str="selected";
+              else $select_str = "";
+         $s .= "<option value='".$i."' ".$select_str.">".$i."</option>\n"; }
   $s .= "</select>";
   return $s;
 }
@@ -2148,7 +2148,7 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
         open_th( '', 'Notiz' );
       }
     }
-  
+
     foreach( sql_gruppe_mitglieder( $gruppen_id ) as $row ) {
       open_tr();
         $id = $row['gruppenmitglieder_id'];
@@ -2156,7 +2156,7 @@ function membertable_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE, 
         open_td( '', '', string_view( $row['name'], 16, $editable ? "name_$id" : false ) );
         open_td( '', '', string_view( $row['email'], 20, $editable ? "email_$id" : false ) );
         open_td( '', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
-  
+
         if($super_edit){
           open_td( '', '', dienst_selector( $row['diensteinteilung'], $id ) );
           open_td( '', '', price_view( $row['sockeleinlage'] ) );
@@ -2275,7 +2275,7 @@ function memberform_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE) {
     }
 
   close_fieldset();
-  
+
   if( $editable or $super_edit )
     close_form();
 }
@@ -2296,7 +2296,7 @@ function avatar_view( $member_row ) {
       close_tag( 'a' );
     open_div('small', '', "Dienst {$member_row['diensteinteilung']}");
     open_div('small italic', 'style="width:150px;"', $slogan);
-  close_div(); 
+  close_div();
 
 }
 
@@ -2323,7 +2323,7 @@ function join_details( &$details, $prefix, $value, $context = false, $catalogue_
 function catalogue_product_details( $catalogue_record ) {
   if( !is_array($catalogue_record) || empty($catalogue_record) )
     return '';
-  
+
   $details = array();
 
   join_details( $details, '', $catalogue_record['bemerkung']);
@@ -2343,7 +2343,7 @@ function catalogue_product_details( $catalogue_record ) {
           , 'hst'
           , $catalogue_record);
   join_details( $details
-          , '<span title="European Article Number">EAN</span> ', 
+          , '<span title="European Article Number">EAN</span> ',
           ean_links($catalogue_record['ean_einzeln']));
 
   return join('; ', $details);
@@ -2351,17 +2351,17 @@ function catalogue_product_details( $catalogue_record ) {
 
 function catalogue_acronym_view( $editable ) {
   global $input_event_handlers, $foodsoftdir;
-  
+
   $acronyms = mysql2array( doSql ("SELECT * from catalogue_acronyms "
           . "ORDER BY context, acronym") );
-  
+
   // $decoder = function($string) { return html_entity_decode($string, ENT_QUOTES, 'UTF-8' ); };
   foreach( $acronyms as $n => $row )
     foreach( $row as $name => $val )
       $acronyms_decoded[ $n ][ $name ] = html_entity_decode( $val, ENT_QUOTES, 'UTF-8' );
 
   open_javascript(toJavaScript("var acronymParameters", $acronyms_decoded ));
-  
+
   $ui_form = open_form();
     $input_event_handlers = '';
     open_fieldset('small_form', '', 'Auswahl');
@@ -2419,38 +2419,38 @@ function catalogue_acronym_view( $editable ) {
       }
     close_fieldset();
   close_form();
-  
+
   $update_form = open_form('action=update');
     floating_submission_button();
     hidden_input('changes', '', "id='changes'");
     /* ?><textarea name='changes' id='changes' rows=10 cols=80></textarea> <?php */
   close_form();
-  
+
   ?><script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/Acronyms.js' language='javascript'></script><?php
   open_javascript();
   ?>
 
   var acronyms;
   var changes;
-  
+
   var updateFormIndex = <?php echo $update_form; ?>;
   var uiFormId = <?php echo $ui_form; ?>;
   var editable = <?php echo $editable ? 'true' : 'false'; ?>;
-   
+
   var acronymSelect = $('acronymSelect');
   var searchableSelect = new SearchableSelect(acronymSelect, $('search'));
-  
+
   var acronymInput = $('acronym');
   var contextInput = $('context');
   var definitionInput = $('definition');
   var commentInput = $('comment');
   var urlInput = $('url');
-  
+
   disableAutocomplete(acronymInput);
   disableAutocomplete(definitionInput);
   disableAutocomplete(commentInput);
   disableAutocomplete(urlInput);
-  
+
   var currentEditData = null;
 
   function reset() {
@@ -2460,7 +2460,7 @@ function catalogue_acronym_view( $editable ) {
     changes = new AcronymChanges($('changes'), updateFormIndex);
     changes.setOriginalData(acronyms);
     searchableSelect.setEntries(acronyms);
-    
+
     currentEditData = null;
     displayEditData();
     changes.publish();
@@ -2469,7 +2469,7 @@ function catalogue_acronym_view( $editable ) {
   function readEditData() {
     if (currentEditData === null)
       return;
-      
+
     currentEditData.set(
         currentEditData.id,
         contextInput.value,
@@ -2477,34 +2477,34 @@ function catalogue_acronym_view( $editable ) {
         definitionInput.value,
         commentInput.value,
         urlInput.value);
-    
+
     currentEditDataChanged();
   }
-  
+
   function currentEditDataChanged() {
     searchableSelect.updateEntry(currentEditData);
     changes.check(currentEditData);
   }
-  
+
   function selectAcronym(data) {
     if (editable)
       readEditData();
 
     if (data.id === undefined)
       data = null;
-    
+
     currentEditData = data;
-    
+
     displayEditData();
   }
-  
+
   function setField(element, value) {
     if (editable)
       element.value = value;
     else
       element.textContent = value;
   }
-  
+
   function setDisplayContext(value) {
     if (editable)
       contextInput.value = value;
@@ -2517,7 +2517,7 @@ function catalogue_acronym_view( $editable ) {
       contextInput.textContent = value;
     }
   }
-  
+
   function displayEditData() {
     if (currentEditData !== null) {
       setField(acronymInput, currentEditData.acronym);
@@ -2527,7 +2527,7 @@ function catalogue_acronym_view( $editable ) {
       setField(urlInput, currentEditData.url);
     } else {
       setField(acronymInput, '');
-      <?php 
+      <?php
       // leave for new acronym
       // setField(contextInput, ''); ?>
       setField(definitionInput, '');
@@ -2535,7 +2535,7 @@ function catalogue_acronym_view( $editable ) {
       setField(urlInput, '');
     }
   }
-    
+
   function addAcronym() {
     var a = Acronym.makeNew();
     if (currentEditData !== null)
@@ -2546,7 +2546,7 @@ function catalogue_acronym_view( $editable ) {
     searchableSelect.select(a);
     acronymInput.select();
   }
-  
+
   function deleteAcronym() {
     if (currentEditData === null)
       return;
@@ -2564,11 +2564,11 @@ function catalogue_acronym_view( $editable ) {
     currentEditDataChanged();
     displayEditData();
   }
-    
+
   function resetEditData() {
     if (currentEditData === null)
       return;
-      
+
     if (currentEditData.isDeleted()) {
       changes.remove(currentEditData.id);
       currentEditData.unmarkDeleted();
@@ -2577,7 +2577,7 @@ function catalogue_acronym_view( $editable ) {
     currentEditDataChanged();
     displayEditData();
   }
-  
+
   function onFieldChange(enterPressed) {
     if (!editable)
       return;
@@ -2599,35 +2599,35 @@ function catalogue_acronym_view( $editable ) {
       acronymSelect.scrollTop = acronymSelect.scrollHeight;
     }
   }
-  
+
   function updownHandler(event) {
     if (event.target == contextInput)
       return;
-  
+
     var delta = 0;
     if (event.keyCode === Event.KEY_UP)
       delta = -1;
     else if (event.keyCode === Event.KEY_DOWN)
       delta = 1;
-      
+
     if (!delta)
       return;
-      
+
     event.stop();
     searchableSelect.moveSelection(delta);
   }
 
   reset();
-  
+
   $('edit').on('keypress', updownHandler);
   acronymSelect.observe('option:selected', function(event) { selectAcronym(event.memo); });
   installTextFieldChangeHandler($('edit'), onFieldChange);
-  $('form_'+updateFormIndex).on('form:afterReset', reset);  
+  $('form_'+updateFormIndex).on('form:afterReset', reset);
 
   <?php
   close_javascript();
-  
+
   return $update_form;
-}  
+}
 
 ?>
