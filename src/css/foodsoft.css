@@ -6,6 +6,7 @@
 
 :root {
   --main-color: #a01111;
+  --warn-bg-color: #f8dada;
 }
 
 [data-theme="dienst"] {
@@ -649,6 +650,11 @@ table.greywhite tr.even td {
   background-color: #ffffff;
 }
 
+/* highlight orders that are not cleared yet */
+tr.tobecleared td {
+  background-color: var(--warn-bg-color);
+}
+
 
 /*
  *
@@ -757,7 +763,7 @@ div.floatingbuttons {
 .warn td,
 .warn div,
 .warn span {
-  background-color: #f0a0a0;
+  background-color: var(--warn-bg-color);
   color: #000000;
   font-weight: bold;
 }

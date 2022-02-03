@@ -3720,6 +3720,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
+         , gesamtbestellungen.rechnungsstatus AS gesamtbestellung_status
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%d.%m.%Y') as valuta_trad
          , DATE_FORMAT(gesamtbestellungen.bestellende,'%Y%m%d') as valuta_kan
