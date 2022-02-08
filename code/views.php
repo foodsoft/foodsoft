@@ -2308,11 +2308,13 @@ function join_details( &$details, $prefix, $value, $context = false, $catalogue_
       if( !$acronym_details ) {
         $acronym_details = current( sql_catalogue_acronym( $context, $value ) );
       }
-      if( $acronym_details['url'] ) {
-        $value = "<a title='$value' "
-            . "href='{$acronym_details['url']}'>{$acronym_details['definition']}</a>";
-      } else {
-        $value = "<span title='$value'>{$acronym_details['definition']}</span>";
+      if ( $acronym_details['definition'] ) {
+        if( $acronym_details['url'] ) {
+          $value = "<a title='$value' "
+              . "href='{$acronym_details['url']}'>{$acronym_details['definition']}</a>";
+        } else {
+          $value = "<span title='$value'>{$acronym_details['definition']}</span>";
+        }
       }
     }
     $details[] = "$prefix$value";
