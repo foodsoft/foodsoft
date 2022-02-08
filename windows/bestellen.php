@@ -1,5 +1,5 @@
 <?PHP
-error_reporting('E_ALL'); 
+error_reporting('E_ALL');
 
 assert( $angemeldet ) or exit();
 
@@ -67,7 +67,7 @@ switch( $action ) {
   case 'bestellen':
     $gesamtpreis = 0;
     $bestellungen = array();
-    foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+    foreach( sql_bestellung_produkte( ['bestell_id' => $bestell_id] ) as $produkt ) {
       $n = $produkt['produkt_id'];
       get_http_var( "fest_$n", 'u', 0 );
       $fest = ${"fest_$n"};
@@ -94,7 +94,7 @@ switch( $action ) {
   case 'update_prices':
     // preiseintrage automatisch aktualisieren: bisher nur fuer bestellnummern:
     $n = 0;
-    foreach( sql_bestellung_produkte( $bestell_id ) as $p ) {
+    foreach( sql_bestellung_produkte( ['bestell_id' => $bestell_id] ) as $p ) {
       $id = update_preis( $p['produkt_id'] );
       if( $id > 0 ) {
         sql_update( 'bestellvorschlaege'
@@ -112,7 +112,7 @@ switch( $action ) {
     break;
 }
 
-$produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
+$produkte = sql_bestellung_produkte( ['bestell_id' => $bestell_id], 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
 
 
@@ -275,7 +275,7 @@ if( ! $readonly ) {
       //
       s = fest[produkt] * verteilmult[produkt];
       var toleranzNode = document.getElementById('t_'+produkt);
-      
+
       // also show when tolerance changed for marking change by color
       if( toleranz[produkt] > 0 || toleranz_alt[produkt] != toleranz[produkt] ) {
         s = s + ' ... ';
@@ -283,16 +283,16 @@ if( ! $readonly ) {
       } else {
         toleranzNode.firstChild.nodeValue = ' ';
       }
-      
+
       var festNode = document.getElementById('f_'+produkt);
       festNode.firstChild.nodeValue = s;
-      
+
       // highlight changes
       if (!init) {
         set_class(festNode, 'changed', fest[produkt] != fest_alt[produkt]);
         set_class(
-            toleranzNode, 
-            'changed', 
+            toleranzNode,
+            'changed',
             fest[produkt] + toleranz[produkt] != fest_alt[produkt] + toleranz_alt[produkt]);
       }
 
@@ -368,9 +368,9 @@ if( ! $readonly ) {
       }
       reminder.style.display = "inline";
       footbar.appendChild(reminder);
-      
+
       set_footbar(true);
-      
+
       id = document.getElementById('hinzufuegen');
       while( id.firstChild ) {
         id.removeChild( id.firstChild );
@@ -548,7 +548,7 @@ foreach( $produkte as $produkt ) {
 
   $kosten = $preis * ( $festmenge + $toleranzmenge );
   $gesamtpreis += $kosten;
- 
+
   $js_on_exit[] = sprintf( "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n"
   , $n, $gebindegroesse , $preis
   , $festmenge, $toleranzmenge
@@ -557,9 +557,9 @@ foreach( $produkte as $produkt ) {
   , $verteilmult
   );
   $produktgruppe = $produkt['produktgruppen_id'];
-  
+
   $katalogeintrag = katalogsuche($produkt_id);
-  
+
   if( $produktgruppe != $produktgruppe_alt ) {
     if( 0 * $activate_mozilla_kludges ) {
       // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
@@ -580,7 +580,7 @@ foreach( $produkte as $produkt ) {
     open_span('oneline', '', $produkt['produkt_name']);
     open_span('small floatright', 'title="Quelle: Lieferantenkatalog"', catalogue_product_details($katalogeintrag) );
     open_div('small', '', $produkt['notiz']);
-    
+
   // preis:
   $class = '';
   $title = '';
@@ -751,7 +751,7 @@ if( ! $readonly ) {
     }
   }
   smallskip();
-  open_div( 'middle', "id='hinzufuegen' style='display:block;'" );  
+  open_div( 'middle', "id='hinzufuegen' style='display:block;'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen');
         open_table('small_form');
@@ -777,12 +777,12 @@ if( ! $readonly ) {
               );
         close_table();
       close_form();
-    
+
       open_div();
         $anzahl_eintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
         if( $anzahl_eintraege > 0 ) {
           div_msg( 'kommentar', "
-            Ist ein gewünschter Artikel nicht in der Auswahlliste? 
+            Ist ein gewünschter Artikel nicht in der Auswahlliste?
             Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
             findest du $anzahl_eintraege Artikel; bitte wende dich an die Leute vom Dienst 4, wenn
             du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
@@ -791,13 +791,13 @@ if( ! $readonly ) {
       close_div();
     close_fieldset();
   close_div();
-  
+
   $unlisted_products = sql_produkte( array(
-      (hat_dienst( 4 ) ? 'price_on_date_or_null' : 'price_on_date') 
+      (hat_dienst( 4 ) ? 'price_on_date_or_null' : 'price_on_date')
           => $gesamtbestellung['lieferung']
     , 'not_in_order' => $gesamtbestellung['id']
     , 'lieferanten_id' => $lieferanten_id  ));
-    
+
   foreach ($unlisted_products as $p) {
     $json = array();
     $json['id'] = $p['produkt_id'];
@@ -808,14 +808,14 @@ if( ! $readonly ) {
     $json['price'] = $price;
     $json['unit'] = $p['verteileinheit_anzeige'];
     $json['group'] = $p['produktgruppen_name'];
-    $json['link'] = fc_link('produktdetails', array( 
+    $json['link'] = fc_link('produktdetails', array(
           'produkt_id' => $p['produkt_id']
         , 'text' => 'Produktdetails'
         , 'class' => 'button noleftmargin'));
     $json_list[] = $json;
   }
-  
-  
+
+
   open_javascript();
     echo toJavaScript('var unlistedProducts', $json_list);
   ?>
@@ -840,24 +840,24 @@ if( ! $readonly ) {
       option.innerHTML += ')';
     }
   });
-             
+
   var searchableSelect = new SearchableSelect($('productSelect'), $('search'));
   var productGroupCell = $('productGroup');
   var productLinkCell = $('productLink');
-  
+
   unlistedProducts = unlistedProducts.collect(function(product) {
     return new UnlistedProduct(product);
   });
-  
+
   function showDetails(unlistedProduct) {
     productGroupCell.innerHTML = unlistedProduct.group;
     productLinkCell.innerHTML = unlistedProduct.link;
   }
-  
+
   searchableSelect.setEntries(unlistedProducts);
-  
+
   $('productSelect').on('option:selected', function(event) { showDetails(event.memo); } );
-  
+
   <?php
   close_javascript();
 

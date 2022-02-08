@@ -58,7 +58,9 @@ open_table('list');
     $produktbestellungen = array();
     foreach( $bestellungen as $b ) {
       $bestell_id = $b['id'];
-      $r = sql_bestellung_produkte( $bestell_id, $produkt_id );
+      $r = sql_bestellung_produkte( [
+          'bestell_id' => $bestell_id
+        , 'produkt_id' => $produkt_id] );
       switch( count($r) ) {
         case 0:
           continue 2;
@@ -71,7 +73,7 @@ open_table('list');
           $p['bestell_id'] = $bestell_id;
           $produktbestellungen[] = $p;
           break;
-        default: 
+        default:
           error( "internal error: unexpected count: " . count($r) );
       }
     }

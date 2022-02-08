@@ -831,7 +831,9 @@ function bestellschein_view(
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  $produkte = sql_bestellung_produkte( $bestell_id, 0, $gruppen_id );
+  $produkte = sql_bestellung_produkte( [
+      'bestell_id' => $bestell_id
+    , 'gruppen_id' => $gruppen_id] );
 
   $bestellung = sql_bestellung( $bestell_id );
 
@@ -1278,7 +1280,7 @@ function bestellschein_view(
 
 
 function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
-  $produkte = sql_bestellung_produkte( $bestell_id );
+  $produkte = sql_bestellung_produkte( ['bestell_id' => $bestell_id] );
   $bestellung = sql_bestellung( $bestell_id );
 
   $status = $bestellung['rechnungsstatus'];
@@ -1385,7 +1387,7 @@ function bestellfax_tex( $bestell_id, $spalten = 0xfffff ) {
 }
 
 function bestellcsv( $bestell_id, $spalten = 0xfffff, $sep = ';' ) {
-  $produkte = sql_bestellung_produkte( $bestell_id );
+  $produkte = sql_bestellung_produkte( ['bestell_id' => $bestell_id] );
   $bestellung = sql_bestellung( $bestell_id );
 
   $status = $bestellung['rechnungsstatus'];
@@ -1611,7 +1613,12 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
 
   foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
     $gruppen_id = $gruppe['id'];
-    $mengen = sql_select_single_row( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id ), true );
+    $mengen = sql_select_single_row( select_bestellung_produkte( [
+            'bestell_id' => $bestell_id
+          , 'produkt_id' => $produkt_id
+          , 'gruppen_id' => $gruppen_id
+        ] )
+      , true );
     if( $mengen ) {
       $mengen = preisdatenSetzen( $mengen );
       $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;

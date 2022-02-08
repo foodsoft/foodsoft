@@ -2199,27 +2199,46 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
 // - basarbestellmenge: _toleranzbestellungen_ des basars
 // - verteilmenge _ohne_ muellgruppe (nicht sinnvoll fuer basar: liefert nicht den basarbestand!)
 // - muellmenge: zuteilung an muell-gruppe
-// $gruppen_id = 0: summe aller gruppen
-// $gruppen_id != 0: nur fuer diese gruppe (muell*, basar* sind dann nicht sinnvoll)
-//
-function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
+// Das Array $keys versteht folgende Schlüssel:
+// - 'bestell_id' => ID der Bestellung (notwendig)
+// - 'gruppen_id' => ID der Gruppe (optional), sonst Summe aller Gruppen
+//                   (muell*, basar* sind dann nicht sinnvoll)
+// - 'produkt_id' => ID des Produkts (optional), sonst alle Produkte
+function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  // if( is_array( $bestell_id ) ) {
-  //  $state = sql_bestellung_status( $bestell_id[0] );
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ';
-  //  $komma = '(';
-  //  foreach( $bestell_id as $b_id ) {
-  //    $bestell_id_filter .= "$komma $b_id";
-  //    $komma = ',';
-  //  }
-  //  $bestell_id_filter .= ')';
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ( 11, 20 ) ';
-  // } else {
-    $state = sql_bestellung_status( $bestell_id );
-    $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
-  // }
+  $selects = [];
+  $filters = [];
+  $joins = [
+      'produkte' => 'produkte.id=bestellvorschlaege.produkt_id'
+    , 'produktpreise' => 'produktpreise.id=bestellvorschlaege.produktpreise_id'
+    , 'produktgruppen' => 'produktgruppen.id=produkte.produktgruppen_id'
+    , 'gesamtbestellungen' => 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id'
+    , 'LEFT JOIN gruppenbestellungen ON (gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id)'
+    , 'LEFT JOIN bestellzuordnung
+         ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
+         AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)'
+  ];
+
+  foreach( $keys as $key => $value ) {
+    switch( $key ) {
+      case 'bestell_id':
+        $filters['gesamtbestellungen.id'] = $value;
+        break;
+      case 'gruppen_id':
+        $filters['gruppenbestellungen.bestellgruppen_id'] = $value;
+        break;
+      case 'produkt_id':
+        $filters['produkte.id'] = $value;
+        break;
+    }
+  }
+
+  need($bestell_id = $keys['bestell_id']);
+  $gruppen_id = $keys['gruppen_id'];
+
+  $state = sql_bestellung_status( $bestell_id );
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_BESTELLUNGEN."), bestellzuordnung.menge, 0 ) ), 0 )";
@@ -2281,57 +2300,37 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
       break;
   }
 
-  return "SELECT
-      produkte.name as produkt_name
-    , produktgruppen.name as produktgruppen_name
-    , produktgruppen.id as produktgruppen_id
-    , produkte.id as produkt_id
-    , produkte.notiz as notiz
-    , bestellvorschlaege.liefermenge  as liefermenge
-    , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
-    , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
-    , produktpreise.liefereinheit as liefereinheit
-    , produktpreise.verteileinheit as verteileinheit
-    , produktpreise.lv_faktor as lv_faktor
-    , produktpreise.gebindegroesse as gebindegroesse
-    , produktpreise.lieferpreis as lieferpreis
-    , produktpreise.id as preis_id
-    , produktpreise.pfand as pfand
-    , produktpreise.mwst as mwst
-    , produkte.artikelnummer as artikelnummer
-    , produktpreise.bestellnummer as bestellnummer
-    , ( $gesamtbestellmenge_expr ) as gesamtbestellmenge
-    , ( $festbestellmenge_expr ) as festbestellmenge
-    , ( $basarbestellmenge_expr ) as basarbestellmenge
-    , ( $toleranzbestellmenge_expr ) as toleranzbestellmenge
-    , ( $verteilmenge_expr ) as verteilmenge
-    , ( $muellmenge_expr ) as muellmenge
-    , IF( abs($firstorder_expr) > 0, 0, 1 ) as menge_ist_null
-    FROM bestellvorschlaege
-    INNER JOIN produkte
-      ON (produkte.id=bestellvorschlaege.produkt_id)
-    INNER JOIN produktpreise
-      ON (produktpreise.id=bestellvorschlaege.produktpreise_id)
-    INNER JOIN produktgruppen
-      ON (produktgruppen.id=produkte.produktgruppen_id)
-    INNER JOIN gesamtbestellungen
-      ON (gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id)
-    LEFT JOIN gruppenbestellungen
-      ON (gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id)
-    LEFT JOIN bestellzuordnung
-      ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
-         AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
-    WHERE ( $bestell_id_filter )
-    " . ( $gruppen_id ? " and gruppenbestellungen.bestellgruppen_id=$gruppen_id " : "" )
-      . ( $produkt_id ? " and produkte.id=$produkt_id " : "" )
-    . "
-    GROUP BY produkte.id
-    ORDER BY $orderby
-  ";
+  $selects[] = 'produkte.name as produkt_name';
+  $selects[] = 'produktgruppen.name as produktgruppen_name';
+  $selects[] = 'produktgruppen.id as produktgruppen_id';
+  $selects[] = 'produkte.id as produkt_id';
+  $selects[] = 'produkte.notiz as notiz';
+  $selects[] = 'bestellvorschlaege.liefermenge  as liefermenge';
+  $selects[] = 'bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id';
+  $selects[] = 'gesamtbestellungen.aufschlag_prozent as aufschlag_prozent';
+  $selects[] = 'produktpreise.liefereinheit as liefereinheit';
+  $selects[] = 'produktpreise.verteileinheit as verteileinheit';
+  $selects[] = 'produktpreise.lv_faktor as lv_faktor';
+  $selects[] = 'produktpreise.gebindegroesse as gebindegroesse';
+  $selects[] = 'produktpreise.lieferpreis as lieferpreis';
+  $selects[] = 'produktpreise.id as preis_id';
+  $selects[] = 'produktpreise.pfand as pfand';
+  $selects[] = 'produktpreise.mwst as mwst';
+  $selects[] = 'produkte.artikelnummer as artikelnummer';
+  $selects[] = 'produktpreise.bestellnummer as bestellnummer';
+  $selects[] = "( $gesamtbestellmenge_expr ) as gesamtbestellmenge";
+  $selects[] = "( $festbestellmenge_expr ) as festbestellmenge";
+  $selects[] = "( $basarbestellmenge_expr ) as basarbestellmenge";
+  $selects[] = "( $toleranzbestellmenge_expr ) as toleranzbestellmenge";
+  $selects[] = "( $verteilmenge_expr ) as verteilmenge";
+  $selects[] = "( $muellmenge_expr ) as muellmenge";
+  $selects[] = "IF( abs($firstorder_expr) > 0, 0, 1 ) as menge_ist_null";
+
+  return get_sql_query('SELECT', 'bestellvorschlaege', $selects, $joins, $filters, $orderby, 'produkte.id');
 }
 
-function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
-  $result = doSql( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id, $orderby ), LEVEL_KEY );
+function sql_bestellung_produkte( array $keys, $orderby = '' ) {
+  $result = doSql( select_bestellung_produkte( $keys, $orderby ), LEVEL_KEY );
   $r = mysql2array( $result );
   foreach( $r as $key => $val )
     $r[ $key ] = preisdatenSetzen( $val );
@@ -2671,7 +2670,7 @@ function verteilmengenZuweisen( $bestell_id ) {
 
   need( sql_bestellung_status($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
-  foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( ['bestell_id' => $bestell_id] ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $zuteilungen = zuteilungen_berechnen( $produkt );
     sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id )
@@ -2712,7 +2711,7 @@ function vormerkungenLoeschen( $bestell_id ) {
   $vormerkungen_unerfuellt = 0;
   $vormerkungen_erfuellt = 0;
   $lieferant_id = sql_bestellung_lieferant_id( $bestell_id );
-  foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( ['bestell_id' => $bestell_id] ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
       $gruppen_id = $gruppe['id'];
