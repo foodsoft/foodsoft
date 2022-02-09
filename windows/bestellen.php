@@ -112,7 +112,13 @@ switch( $action ) {
     break;
 }
 
-$produkte = sql_bestellung_produkte( ['bestell_id' => $bestell_id, 'katalog' => true], 'produktgruppen_name,produkt_name' );
+$produkte = sql_bestellung_produkte( [
+    'bestell_id' => $bestell_id
+  , 'gruppen_id' => $gruppen_id
+  , 'katalog' => true
+  , 'gesamt' => true
+  ]
+, 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
 
 
@@ -529,10 +535,9 @@ foreach( $produkte as $produkt ) {
   $preis = $produkt['endpreis'];
   $lv_faktor = $produkt['lv_faktor'];
 
-  $keys = array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id, 'gruppen_id' => $gruppen_id );
-  $festmenge = sql_bestellzuordnung_menge( $keys + array( 'art' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG ) );
-  $toleranzmenge = sql_bestellzuordnung_menge( $keys + array( 'art' => BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG ) );
-  $vormerkung = sql_bestellzuordnung_menge( $keys + array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN ) );
+  $festmenge = $produkt['gruppe.fest'];
+  $toleranzmenge = $produkt['gruppe.toleranz'];
+  $vormerkung = $produkt['gruppe.vormerkung'];
 
   $toleranzmenge_gesamt = $produkt['toleranzbestellmenge'] + $produkt['basarbestellmenge'];
   $toleranzmenge_andere = $toleranzmenge_gesamt - $toleranzmenge;
