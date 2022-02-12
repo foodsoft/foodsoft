@@ -1,7 +1,7 @@
 <?php
 
 // katalogsuche: sucht im lieferantenkatalog nach $produkt (soweit fuer den Lieferanten implementiert)
-// 
+//
 // !!! dieses Skript ist nur fuer den _internen_ katalogabgleich aufgrund der Artikelnummer zustaendig!
 // !!! fuer die manuelle Suche ist windows/artikelsuche.php da!
 //
@@ -74,7 +74,7 @@ function katalogabgleich(
   }
 
   $lieferant = sql_lieferant($artikel["lieferanten_id"]);
-  
+
   $katalog_datum = $katalogeintrag["katalogdatum"];
   $katalog_typ = $katalogeintrag["katalogtyp"];
   $katalog_artikelnummer = $katalogeintrag["artikelnummer"];
@@ -88,7 +88,7 @@ function katalogabgleich(
   $katalog_hersteller = $katalogeintrag["hersteller"];
   $katalog_ean = $katalogeintrag["ean_einzeln"];
   $katalog_netto = $katalogeintrag["preis"] * (1.0 + $lieferant["katalogaufschlag"]/100.0);
-  
+
   if ($lieferant["katalogaufschlagrunden"]) {
     $katalog_netto = round($katalog_netto, 2);
   }
@@ -267,7 +267,7 @@ function katalogabgleich(
   ////////////////////////////////
   // aktuellsten preiseintrag mit Katalogeintrag vergleichen,
   // Vorlage fuer neuen preiseintrag mit Katalogdaten vorbesetzen:
-  // - die L-felder werden immer aus dem katalog uebernommen, 
+  // - die L-felder werden immer aus dem katalog uebernommen,
   // - die V-felder wenn moeglich aus dem letzten Preiseintrag
   //
 
@@ -382,7 +382,7 @@ function katalogabgleich(
       $p .= "</kbd></p>";
       $problems[] = $p;
     }
-    
+
     if( abs( $preiseintrag_neu['pfand'] - $artikel['pfand'] ) > 0.005 ) {
       $p = "Problem: Pfandbeträge stimmen nicht:
         <p class='li'>Katalog: <kbd>$katalog_pfand / $liefereinheit</kbd></p>
@@ -482,7 +482,7 @@ function update_preis( $produkt_id ) {
       foreach( array( 'lieferpreis', 'bestellnummer', 'gebindegroesse', 'mwst', 'pfand'
                     , 'liefereinheit', 'verteileinheit', 'lv_faktor' ) as $key ) {
         if( ! isset( $preiseintrag_neu[ $key ] ) ) {
-          continue 2;
+          break 2;
         }
       }
       return sql_insert_produktpreis(
