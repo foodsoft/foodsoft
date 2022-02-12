@@ -566,15 +566,7 @@ foreach( $produkte as $produkt ) {
   $katalogeintrag = unalias_columns($produkt, 'katalog');
 
   if( $produktgruppe != $produktgruppe_alt ) {
-    if( 0 * $activate_mozilla_kludges ) {
-      // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
-      // so we set rowspan=1 first and modify later :-/
-      open_td( '', "rowspan='1' id='pg_$produktgruppe'", $produkt['produktgruppen_name'] );
-      $js_on_exit[] = "document.getElementById('pg_$produktgruppe').rowSpan = {$produktgruppen_zahl[$produktgruppe]}; ";
-    } else {
-      // other browsers get it right the first time, as it should be:
-      open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
-    }
+    open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
     $produktgruppe_alt = $produktgruppe;
   }
 
