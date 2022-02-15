@@ -6,14 +6,12 @@ global $open_tags      /* keep track of open tags */
      , $html_id        /* draw-a-number-box to generate unique ids */
      , $form_id        /* id of the currently open form (if any) */
      , $input_event_handlers  /* insert into <input> and similar inside a form */
-     , $html_hints     /* online hints to display for fields */
      , $table_level      /* nesting level for tables */
      , $table_row_number /* stack of table row counters */
 ;
 $open_tags = array();
 $print_on_exit = array();
 $js_on_exit = array();
-$html_hints = array();
 $html_id = 0;
 $input_event_handlers = '';
 $form_id = '';
@@ -530,7 +528,7 @@ function alternatives_radio( $items ) {
 }
 
 function close_all_tags() {
-  global $open_tags, $print_on_exit, $js_on_exit, $html_hints;
+  global $open_tags, $print_on_exit, $js_on_exit;
   while( $n = count( $open_tags ) ) {
     if( $open_tags[$n] == 'body' ) {
       foreach( $print_on_exit as $p )
@@ -554,28 +552,6 @@ register_shutdown_function( 'close_all_tags' );
 function div_msg( $class, $msg, $backlink = false ) {
   echo "<div class='$class'>$msg " . ( $backlink ? fc_link( $backlink, 'text=zurück...' ) : '' ) ."</div>";
 }
-
-function open_hints() {
-  global $html_hints;
-  $n = count( $html_hints );
-  $html_hints[++$n] = new_html_id();
-}
-function close_hints( $class = 'kommentar', $initial = '' ) {
-  global  $html_hints;
-  $n = count( $html_hints );
-  $id = $html_hints[$n];
-  open_div( $class, "id='hints_$id'", $initial );
-  unset( $html_hints[$n--] );
-}
-
-function html_hint( $hint ) {
-  global $html_hints;
-  $n = count( $html_hints );
-  $id = $html_hints[$n];
-  return " onmouseover=\" document.getElementById('hints_$id').firstChild.nodeValue = '$hint'; \" "
-        . " onmouseout=\" document.getElementById('hints_$id').firstChild.nodeValue = ' '; \" ";
-}
-
 
 // the following are kludges to replace the missing <spacer> (equivalent of \kern) element:
 //
