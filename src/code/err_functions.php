@@ -23,9 +23,8 @@ function error( $string ) {
 
 function need( $exp, $comment = "Problem" ) {
   static $in_need = false;
-  if( ! $exp ) {
-    if( $in_need )
-      die();
+  if( $exp ) { return true; }
+  if( !$in_need ) {
     $in_need = true;
     $stack = debug_backtrace();
     open_div( 'warn' );
@@ -37,9 +36,8 @@ function need( $exp, $comment = "Problem" ) {
       bigskip();
     close_div();
     logger( "assertion failed: $exp" );
-    die();
   }
-  return true;
+  die();
 }
 
 function fail_if_readonly() {

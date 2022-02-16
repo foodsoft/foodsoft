@@ -39,13 +39,14 @@ if ( hat_dienst(4) ) { // add button to toggle basar/group order
 
 echo "<h1>$heading</h1>";
 
-if( $bestell_id ) {
-  if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
+if( $bestell_id != 0 and sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
+{
     $bestell_id = 0;
 }
 
 $laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
-if( count( $laufende_bestellungen ) < 1) {
+
+if( empty( $laufende_bestellungen ) ) {
   div_msg( 'warn', "Zur Zeit laufen leider keine Bestellungen! <a href='index.php'>Zurück...</a>" );
   return;
 }
@@ -495,12 +496,8 @@ if( ! $readonly ) {
     }
 
     function toleranz_auffuellen( produkt ) {
-      const gebinde = Math.floor( fest[produkt] / gebindegroesse[produkt] );
-      if( fest[produkt] - gebinde * gebindegroesse[produkt] > 0 ) {
-        toleranz[produkt] = (gebinde+1) * gebindegroesse[produkt] - fest[produkt];
-      } else {
-        toleranz[produkt] = 0;
-      }
+      const rest = fest[produkt] % gebindegroesse[produkt];
+      toleranz[produkt] = rest > 0 ? (gebindegroesse[produkt] - rest) : 0;
       zuteilung_berechnen( produkt, false );
     }
 

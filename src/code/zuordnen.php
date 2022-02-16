@@ -244,7 +244,7 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
     $komma=',';
   }
   $sql = "INSERT INTO $table ( $cols ) VALUES ( $vals )";
-  if( $update_cols or is_array( $update_cols ) ) {
+  if( $update_cols !== FALSE ) {
     $sql .= " ON DUPLICATE KEY UPDATE $update $update_komma id = LAST_INSERT_ID(id) ";
   }
   if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: "  ))
@@ -293,7 +293,7 @@ function mysql2array( $result, $key = false, $val = false, $result_type = MYSQLI
   $r = array();
   $n = 1;
   while( $row = mysqli_fetch_array( $result, $result_type ) ) {
-    if( $key ) {
+    if( $key != FALSE ) {
       need( isset( $row[$key] ) );
       need( isset( $row[$val] ) );
       $r[$row[$key]] = $row[$val];
