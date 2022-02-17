@@ -7,7 +7,7 @@ setWikiHelpTopic( "foodsoft:bestellen" );
 
 // the 'basarmodus' has only to be added to $self_fields when logged in as dienst 4
 get_http_var( 'basarmodus', 'd', 0, hat_dienst(4) );
-get_http_var( 'bestell_id','u',false,true );
+get_http_var( 'bestell_id','u', 0, true );
 get_http_var( 'vertical_scroll', 'w', '' );
 
 if( hat_dienst(4) && $basarmodus ) {
@@ -25,7 +25,7 @@ if ( hat_dienst(4) ) { // add button to toggle basar/group order
   $basarToggleUrl = fc_link(
     'self',
     [
-      'bestell_id' => $bestell_id ?: 0,
+      'bestell_id' => $bestell_id,
       'basarmodus' => -($basarmodus-1), // 0 => 1, 1 => 0
       'context' => 'js',
     ]
@@ -55,7 +55,7 @@ if( empty( $laufende_bestellungen ) ) {
 /* --- order details overview and current orders list --- */
 open_table( 'layout hfill' );
 
-if( $bestell_id ) {
+if( $bestell_id != 0 ) {
   $gesamtbestellung = sql_bestellung( $bestell_id );
   open_td( 'left' );
     bestellung_overview( $bestell_id, $gruppen_id );
@@ -68,7 +68,7 @@ open_td( 'qquad smallskip floatright', "id='auswahl_bestellung'" );
 close_table();
 medskip();
 
-if( ! $bestell_id )
+if( $bestell_id == 0 )
   return;
 
 /* --- start of logic for order sheet --- */
