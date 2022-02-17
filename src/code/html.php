@@ -1,4 +1,10 @@
 <?php
+/** html.php
+ * 
+ * HTML related logic - auxiliary functions for conveniently rendering
+ * various HTML elements and fragments.
+ * 
+ */
 
 global
   $form_id,               /* id of the currently open form (if any) */

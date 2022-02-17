@@ -205,6 +205,22 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
     return FALSE;
 }
 
+/** sql_insert
+ *
+ * @param string $table
+ * @param array $values
+ * @param array|bool $update_cols
+ *   used for declaring which columns to update on duplicate key
+ *   (if the record we're trying to insert does already eXist)
+ *   - FALSE : no updates
+ *   - TRUE:   update all columns with given values
+ *   - array of $k -> $v: update selected columns with given values
+ * @param bool $escape_and_quote
+ * @return bool|int
+ *   If an autoincrement value has been updated successfully, it will be returned.
+ *   0 will be returned on successful insert without autoincrement update.
+ *   FALSE (insert failed) otherwise.
+ */
 function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = true ) {
   global $db_handle;
   
@@ -1926,9 +1942,9 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
  * Query `gesamtbestellungen`.
  * 
  * @param string $filter
- *   valid SQL where clause (optional)
+ *   valid SQL where clause, not including the WHERE keyword (optional)
  * @param string $orderby
- *   valid SQL 'order by' clause (optional)
+ *   valid SQL 'order by' clause, not including the ORDER BY keyword (optional)
  * @return array
  *   Array of assoc arrays, each representing one result row
  */
@@ -2007,8 +2023,14 @@ function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestel
   ) );
 }
 
-/**
- *  Bestellvorschlag einfuegen
+/** sql_insert_bestellvorschlag
+ * 
+ * @param int $produkt_id
+ * @param int $gesamtbestellung_id
+ * @param int $preis_id
+ * @param int $gruppen_id
+ * 
+ * @return 
  */
 function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis_id = 0, $gruppen_id = 0 ) {
   fail_if_readonly();
@@ -2036,8 +2058,18 @@ function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis
   );
 }
 
+/** sql_delete_bestellvorschlag
+ *
+ * Remove a product from the order sheet during ordering period.
+ * Clean up all existing allocations of the product.
+ * 
+ * @param int $produkt_id
+ * @param int $bestell_id
+ *   Params used for WHERE clause - product/bestell_id to remove
+ * @return void
+ */
 function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
-  need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Loeschen von Bestellvorschlaegen nur in der Bestellzeit!" );
+  need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Löschen von Bestellvorschlägen nur in der Bestellzeit!" );
   sql_delete_bestellzuordnungen( array( 'produkt_id' => $produkt_id, 'bestell_id' => $bestell_id ) );
   doSql( "
     DELETE FROM bestellvorschlaege
@@ -2208,6 +2240,7 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
  *   If 0: Return sum for all groups
  * @param string $orderby
  * @return string
+ *   SQL statement for SELECT query
  */
 function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
   $basar_id = sql_basar_id();
@@ -2326,14 +2359,20 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
 }
 
 
-/**
- * sql_bestellung_produkte
+/** sql_bestellung_produkte
+ *
+ * Get the product details for all products that are part of the order sheet,
+ * including price information
  *
  * @param int $bestell_id
  * @param int $produkt_id
  * @param int $gruppen_id
+ *   query parameters for building the WHERE clause
  * @param string $orderby
+ *   ORDER BY parameter, omitting the 'ORDER BY' keyword itself
  * @return array
+ *   result records
+ *   
  */
 function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
   $result = doSql(
@@ -4108,8 +4147,14 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
 }
 
 
-/**
- *  Erzeugt einen Produktpreiseintrag
+/** sql_insert_produktpreis
+ *
+ * Erzeugt einen Produktpreiseintrag
+ *
+ * @param int $produkt_id
+ * ...
+ * @return bool|int
+ *   see `sql_insert` return value description
  */
 function sql_insert_produktpreis (
   $produkt_id,

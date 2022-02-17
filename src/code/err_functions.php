@@ -21,6 +21,19 @@ function error( $string ) {
   die();
 }
 
+/** need
+ *
+ * Fail noisily in case the given assertion fails.
+ * 
+ * @param bool $exp
+ *   assertion to evaluate
+ * @param string $comment
+ *   message to display if assertion fails
+ * @staticvar bool $in_need
+ *   used to avoid infinite recursion
+ * @return bool|never
+ *   true 
+ */
 function need( $exp, $comment = "Problem" ) {
   static $in_need = false;
   if( $exp ) { return true; }

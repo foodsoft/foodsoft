@@ -39,6 +39,7 @@ if ( hat_dienst(4) ) { // add button to toggle basar/group order
 
 echo "<h1>$heading</h1>";
 
+/* redirect to orders overview page if $bestell_id is not open for ordering */
 if( $bestell_id != 0 and sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
 {
     $bestell_id = 0;
@@ -51,8 +52,7 @@ if( empty( $laufende_bestellungen ) ) {
   return;
 }
 
-// tabelle für infos und auswahl bestellungen:
-//
+/* --- order details overview and current orders list --- */
 open_table( 'layout hfill' );
 
 if( $bestell_id ) {
@@ -71,11 +71,11 @@ medskip();
 if( ! $bestell_id )
   return;
 
-///////////////////////////////////////////
-// ab hier: eigentliches bestellformular:
-//
+/* --- start of logic for order sheet --- */
 
 $lieferanten_id = $gesamtbestellung['lieferanten_id'];
+
+/* --- action-specific logic --- */
 
 $scroll_to_product = null;
 
@@ -90,6 +90,10 @@ switch( $action ) {
     $js_on_exit[] = "scrollToMarkedProduct();";
     break;
   case 'bestellen':
+    /* Step 1:
+     * create assoc array with current group order amounts (fixed/tolerance)
+     * from the received POST parameters
+     */
     $gesamtpreis = 0;
     $bestellungen = array();
     foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
@@ -107,6 +111,10 @@ switch( $action ) {
     if( $gesamtpreis > 0.005 ) {
       need( $gesamtpreis <= $kontostand, "Konto überzogen!" );
     }
+
+    /* Step 2:
+     * update group order details using data from step 1  
+     */
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen(
         $gruppen_id,
@@ -118,6 +126,8 @@ switch( $action ) {
       );
     }
     logger( "Bestellung speichern: $bestell_id" );
+
+    /* step 3: prepare after-effects like scroll and snackbar */
     $js_on_exit[] = "if ( verticalScroll ) window.scrollTo(0, verticalScroll);";
     $js_on_exit[] = "showInSnackbar('Bestellung wurde eingetragen!')";
 
@@ -154,6 +164,7 @@ switch( $action ) {
 $produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
 
+/* --- order form: prepare display of issues/warnings for order preparation responsible(s) --- */
 
 if( hat_dienst( 4 ) ) {
   $bestellnummern_falsch = array();
@@ -173,6 +184,7 @@ if( hat_dienst( 4 ) ) {
   smallskip();
 }
 
+/* --- order form: scaffolding (javascript and submit bar) --- */
 
 if( ! $readonly ) {
   $bestellform_id = open_form( '', 'action=bestellen' );
@@ -419,6 +431,11 @@ if( ! $readonly ) {
       return true;
     }
 
+    /**
+     * Disable the button that allows for switching between basar order mode
+     * and group order mode. E.g. when there are already changes in the order
+     * sheet, it shouldn't be possible to toggle to ensure data consistency. 
+     */
     function disable_basar_toggle() {
       const basarToggleButton = document.getElementById('basarToggleButton');
       basarToggleButton.disabled = true;
@@ -557,6 +574,8 @@ if( ! $readonly ) {
   close_div(); // submit div
 }
 
+/* --- order sheet: table header --- */
+
 open_table( 'list hfill' );
   open_tr( 'groupofrows_top' );
     open_th( '', '', 'Produktgruppe' );
@@ -591,12 +610,16 @@ open_table( 'list hfill' );
     else
       open_th( 'small tight', '', '(aktuell)' );
 
+/* --- prepare aggregating product groups --- */
+
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
   $id = $produkt['produktgruppen_id'];
   $produktgruppen_zahl[$id] = adefault( $produktgruppen_zahl, $id, 0 ) + 1;
 }
 $produktgruppe_alt = -1;
+
+/* --- order sheet: product rows --- */
 
 foreach( $produkte as $produkt ) {
   open_tr();
@@ -825,6 +848,7 @@ foreach( $produkte as $produkt ) {
   }
 }
 
+/* --- order sheet: sum row --- */
 
 open_tr('summe');
   open_td( '', "colspan='6'", 'Gesamtpreis:' );
@@ -849,6 +873,9 @@ if( ! $readonly ) {
     }
   }
   smallskip();
+
+/* --- order sheet: additional products area --- */
+
   open_div( 'middle', "id='hinzufuegen' style='display:block;'" );  
     open_fieldset( 'small_form', '', 'Zusätzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen');

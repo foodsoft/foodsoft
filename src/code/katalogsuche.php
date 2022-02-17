@@ -33,15 +33,19 @@ function katalogsuche( $produkt ) {
 }
 
 
-// katalogabgleich
-//
-// rueckgabe:
-//  0: ok
-//  1: Katalogeintrag weicht ab (oder kein Preiseintrag in der Foodsoft-Datenbank)
-//  2: Katalogsuche fehlgeschlagen
-//  3: kein Katalog dieses Lieferanten erfasst
-//  4: Abweichung nur bei Bestellnummer (Terra.....)
-//
+/** katalogabgleich
+ *
+ * @param int $display_level
+ *   0: garnix, 1: abweichungen, 2: voller katalogeintrag
+ * @param bool $editable
+ * @param &$preiseintrag_neu
+ * @return int
+ *  0: ok
+ *  1: Katalogeintrag weicht ab (oder kein Preiseintrag in der Foodsoft-Datenbank)
+ *  2: Katalogsuche fehlgeschlagen
+ *  3: kein Katalog dieses Lieferanten erfasst
+ *  4: Abweichung nur bei Bestellnummer (Terra.....)
+ */
 function katalogabgleich(
   $produkt_id,
   $display_level = 0,
@@ -429,14 +433,17 @@ function katalogabgleich(
   return 0; // keine probleme
 }
 
-// update_preis:
-//   aktuellen preiseintrag aus katalog automatisch erzeugen
-//   (zur zeit: nur falsche bestellnummern werden automatisch korrigiert!)
-// rückgabe:
-//  -1 : preis ist aktuell, kein neueintrag notwendig
-//   0 : automatische aktualisierung nicht möglich oder fehlgeschlagen
-//  >0 : preis wurde aktualisiert, rückgabe ist produktpreise.id
-//
+/** update_preis
+ * 
+ * aktuellen preiseintrag aus katalog automatisch erzeugen
+ * (zur zeit: nur falsche bestellnummern werden automatisch korrigiert!)
+ * 
+ * @param int $produkt_id
+ * @return int
+ *  -1 : preis ist aktuell, kein neueintrag notwendig
+ *   0 : automatische aktualisierung nicht möglich oder fehlgeschlagen
+ *  >0 : preis wurde aktualisiert, rückgabe ist produktpreise.id
+ */
 function update_preis( $produkt_id ) {
   global $mysqlheute;
   $preiseintrag_neu = array();
