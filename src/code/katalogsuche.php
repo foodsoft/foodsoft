@@ -43,10 +43,10 @@ function katalogsuche( $produkt ) {
 //  4: Abweichung nur bei Bestellnummer (Terra.....)
 //
 function katalogabgleich(
-  $produkt_id
-, $display_level = 0  // 0: garnix, 1: abweichungen, 2: voller katalogeintrag
-, $editable = false
-, & $preiseintrag_neu = array() // aus Katalogeintrag Vorschlag für Preiseintrag generieren
+  $produkt_id,
+  $display_level = 0,
+  $editable = false,
+  & $preiseintrag_neu = array() // aus Katalogeintrag Vorschlag für Preiseintrag generieren
 ) {
   global $mwst_default;
 
@@ -467,11 +467,16 @@ function update_preis( $produkt_id ) {
         }
       }
       return sql_insert_produktpreis(
-        $produkt_id, $preiseintrag_neu['lieferpreis'], $mysqlheute
-      , $preiseintrag_neu['bestellnummer'], $preiseintrag_neu['gebindegroesse']
-      , $preiseintrag_neu['mwst'], $preiseintrag_neu['pfand']
-      , $preiseintrag_neu['liefereinheit'], $preiseintrag_neu['verteileinheit']
-      , $preiseintrag_neu['lv_faktor']
+        $produkt_id,
+        $preiseintrag_neu['lieferpreis'],
+        $mysqlheute,
+        $preiseintrag_neu['bestellnummer'],
+        $preiseintrag_neu['gebindegroesse'],
+        $preiseintrag_neu['mwst'],
+        $preiseintrag_neu['pfand'],
+        $preiseintrag_neu['liefereinheit'],
+        $preiseintrag_neu['verteileinheit'],
+        $preiseintrag_neu['lv_faktor']
       );
   }
 }

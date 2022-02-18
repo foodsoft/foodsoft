@@ -31,21 +31,21 @@ if ( hat_dienst(4) ) { // add button to toggle basar/group order
       'bestell_id' => $bestell_id ?: 0,
       'basarmodus' => -($basarmodus-1), // 0 => 1, 1 => 0
       'context' => 'js',
-      ]
-    );
-    $orderFor = $basarmodus
-      ? "Gruppe $login_gruppen_name"
-      : "den Basar";
-    $basarToggleButton = "<button id='basarToggleButton' onClick=\"$basarToggleUrl\" style='display:inline'>Für $orderFor bestellen</button>";
-    $heading .= "&nbsp;$basarToggleButton";
-  }
-  
-  echo "<h1>$heading</h1>";
-  
-  if( $bestell_id ) {
-    if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
-      $bestell_id = 0;
-  }
+    ]
+  );
+  $orderFor = $basarmodus
+    ? "Gruppe $login_gruppen_name"
+    : "den Basar";
+  $basarToggleButton = "<button id='basarToggleButton' onClick=\"$basarToggleUrl\" style='display:inline'>Für $orderFor bestellen</button>";
+  $heading .= "&nbsp;$basarToggleButton";
+}
+
+echo "<h1>$heading</h1>";
+
+if( $bestell_id ) {
+  if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
+    $bestell_id = 0;
+}
 
 $laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
 if( count( $laufende_bestellungen ) < 1) {
@@ -83,8 +83,8 @@ $lieferant = sql_lieferant( $lieferanten_id );
 $scroll_to_product = null;
 
 get_http_var( 'action', 'w', '' );
-if( $readonly )
-  $action = '';
+if( $readonly ) { $action = ''; }
+
 switch( $action ) {
   case 'produkt_hinzufuegen':
     need_http_var( 'produkt_id', 'U' );
@@ -98,23 +98,32 @@ switch( $action ) {
     foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
       $n = $produkt['produkt_id'];
       get_http_var( "fest_$n", 'u', 0 );
-      $fest = ${"fest_$n"};
       get_http_var( "toleranz_$n", 'u', 0 );
-      $toleranz = ${"toleranz_$n"};
       get_http_var( "vm_$n", 'w', 'no' );
+      $fest = ${"fest_$n"};
+      $toleranz = ${"toleranz_$n"};
       $vormerken = ( ${"vm_$n"} === 'yes' );
       $bestellungen[$n] = array( 'fest' => $fest, 'toleranz' => $toleranz, 'vormerken' => $vormerken );
       $gesamtpreis += $produkt['endpreis'] * ( $fest + $toleranz );
     }
+
     if( $gesamtpreis > 0.005 ) {
       need( $gesamtpreis <= $kontostand, "Konto überzogen!" );
     }
     foreach( $bestellungen as $produkt_id => $m ) {
-      change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'], $m['vormerken'] );
+      change_bestellmengen(
+        $gruppen_id,
+        $bestell_id,
+        $produkt_id,
+        $m['fest'],
+        $m['toleranz'],
+        $m['vormerken']
+      );
     }
     logger( "Bestellung speichern: $bestell_id" );
     $js_on_exit[] = "if ( verticalScroll ) window.scrollTo(0, verticalScroll);";
     $js_on_exit[] = "showInSnackbar('Bestellung wurde eingetragen!')";
+
     break;
   case 'delete':
     need_http_var( 'produkt_id', 'U' );
@@ -126,9 +135,13 @@ switch( $action ) {
     foreach( sql_bestellung_produkte( $bestell_id ) as $p ) {
       $id = update_preis( $p['produkt_id'] );
       if( $id > 0 ) {
-        sql_update( 'bestellvorschlaege'
-        , array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $p['produkt_id'] )
-        , array( 'produktpreise_id' => $id )
+        sql_update(
+          'bestellvorschlaege',
+          [
+            'gesamtbestellung_id' => $bestell_id,
+            'produkt_id'          => $p['produkt_id']
+          ],
+          [ 'produktpreise_id'    => $id ]
         );
         $n++;
       }
@@ -636,13 +649,20 @@ foreach( $produkte as $produkt ) {
   $kosten = $preis * ( $festmenge + $toleranzmenge );
   $gesamtpreis += $kosten;
  
-  $js_on_exit[] = sprintf( "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n"
-  , $n, $gebindegroesse , $preis
-  , $festmenge, $toleranzmenge
-  , $festmenge_andere, $toleranzmenge_andere
-  , $zuteilung_fest, $zuteilung_toleranz
-  , $verteilmult
+  $js_on_exit[] = sprintf(
+    "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n",
+    $n,
+    $gebindegroesse,
+    $preis,
+    $festmenge,
+    $toleranzmenge,
+    $festmenge_andere,
+    $toleranzmenge_andere,
+    $zuteilung_fest,
+    $zuteilung_toleranz,
+    $verteilmult
   );
+
   $produktgruppe = $produkt['produktgruppen_id'];
   
   $katalogeintrag = katalogsuche($produkt_id);

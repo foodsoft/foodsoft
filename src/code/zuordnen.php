@@ -1932,14 +1932,22 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
  * @return array
  *   Array of assoc arrays, each representing one result row
  */
-function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
+function sql_bestellungen(
+  $filter = 'true',
+  $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name'
+) {
   return mysql2array( doSql( "
-    SELECT gesamtbestellungen.*
-         , dayofweek( lieferung ) as lieferdatum_dayofweek
-         , DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad
-         , lieferanten.name as lieferantenname FROM gesamtbestellungen
-    JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
-    WHERE $filter ORDER BY $orderby
+    SELECT
+      gesamtbestellungen.*,
+      dayofweek( lieferung ) AS lieferdatum_dayofweek,
+      DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad,
+      lieferanten.name AS lieferantenname
+    FROM
+      gesamtbestellungen
+      JOIN lieferanten
+      ON lieferanten.id = gesamtbestellungen.lieferanten_id
+    WHERE $filter
+    ORDER BY $orderby
   " ) );
 }
 
@@ -1992,7 +2000,7 @@ function sql_insert_bestellung( $name, $startzeit, $endzeit, $lieferung, $liefer
 
 function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag_prozent ) {
   nur_fuer_dienst(4);
-  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
   , 'aufschlag_prozent' => $aufschlag_prozent
@@ -2004,7 +2012,7 @@ function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestel
  */
 function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis_id = 0, $gruppen_id = 0 ) {
   fail_if_readonly();
-  need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
 
   // finde NOW() aktuellen preis:
   if( ! $preis_id )
@@ -2050,7 +2058,7 @@ function sql_references_gesamtbestellung( $bestell_id ) {
 function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
   need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()) or ($gruppe == sql_basar_id())
       , "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
-  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Änderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Änderung nicht mehr möglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellgruppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurückgeben */  )
@@ -4388,7 +4396,7 @@ function sanitize_http_input() {
 
   if( ! $from_dokuwiki ) {
     foreach( $_GET as $key => $val ) {
-      need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
+      need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL übergeben" );
       need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert für Variable $key in URL" );
     }
     if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {

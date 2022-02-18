@@ -1,20 +1,21 @@
 <?php
 
-global $open_tags      /* keep track of open tags */
-     , $print_on_exit  /* print this just before </body> */
-     , $js_on_exit     /* javascript code to insert just before </body> */
-     , $html_id        /* draw-a-number-box to generate unique ids */
-     , $form_id        /* id of the currently open form (if any) */
-     , $input_event_handlers  /* insert into <input> and similar inside a form */
-     , $table_level      /* nesting level for tables */
-     , $table_row_number /* stack of table row counters */
-;
-$open_tags = array();
-$print_on_exit = array();
-$js_on_exit = array();
+global
+  $form_id,               /* id of the currently open form (if any) */
+  $html_id,               /* draw-a-number-box to generate unique ids */
+  $input_event_handlers,  /* insert into <input> and similar inside a form */
+  $js_on_exit,            /* javascript code to insert just before </body> */
+  $open_tags,             /* keep track of open tags */
+  $print_on_exit,         /* print this just before </body> */
+  $table_level,           /* nesting level for tables */
+  $table_row_number;      /* stack of table row counters */
+
+$form_id = '';
 $html_id = 0;
 $input_event_handlers = '';
-$form_id = '';
+$js_on_exit = array();
+$open_tags = array();
+$print_on_exit = array();
 
 global $td_title, $tr_title;  /* can be used to set title for next <td> or <tr> */
 $td_title = '';
@@ -570,7 +571,6 @@ function quad() {
 function qquad() {
   open_span('qquad', '', '' );
 }
-
 
 // option_menu_row():
 // create row in a small dummy table;
