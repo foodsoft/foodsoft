@@ -441,7 +441,6 @@ function fc_url( $parameters ) {
 // $url may also contain javascript; if so, '-quotes but no "-quotes must be used in the js code
 //
 function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
-  global $activate_safari_kludges, $activate_konqueror_kludges;
   $alt = '';
   if( $title ) {
     $alt = "alt='$title'";
@@ -455,11 +454,6 @@ function alink( $url, $class = '', $text = '', $title = '', $img = false ) {
   }
   if( $text ) {
     $l .= "$text";
-  } else if( ! $img ) {
-    if( $activate_safari_kludges )
-      $l .= "&#8203;"; // safari can't handle completely empty links...
-    if( $activate_konqueror_kludges )
-      $l .= "&nbsp;"; // ...dito konqueror (and it can't even handle unicode)
   }
   return $l . '</a>';
 }

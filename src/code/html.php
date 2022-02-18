@@ -21,24 +21,6 @@ global $td_title, $tr_title;  /* can be used to set title for next <td> or <tr> 
 $td_title = '';
 $tr_title = '';
 
-// set flags to activate workarounds for known browser bugs:
-//
-$browser = $_SERVER['HTTP_USER_AGENT'];
-global $activate_mozilla_kludges, $activate_safari_kludges, $activate_exploder_kludges, $activate_konqueror_kludges;
-$activate_safari_kludges = 0;
-$activate_mozilla_kludges = 0;
-$activate_exploder_kludges = 0;
-$activate_konqueror_kludges = 0;
-if( preg_match ( '/safari/i', $browser ) ) {  // safari sends "Mozilla...safari"!
-  $activate_safari_kludges = 1;
-} else if( preg_match ( '/konqueror/i', $browser ) ) {  // dito: konqueror
-  $activate_konqueror_kludges = 1;
-} else if( preg_match ( '/^mozilla/i', $browser ) ) {  // plain mozilla(?)
-  $activate_mozilla_kludges = 1;
-} else if( preg_match ( '/^msie/i', $browser ) ) {
-  $activate_exploder_kludges = 1;
-}
-
 // new_html_id(): increment and return next unique id:
 //
 function new_html_id() {

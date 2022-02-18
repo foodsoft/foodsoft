@@ -12,10 +12,6 @@ $lieferant = sql_lieferant( $lieferanten_id );
 
 need_http_var( 'katalogkw', 'w' );
 
-// echo '<br>files: ' . var_export($_FILES);
-// echo '<br>tmpfile: ' . $_FILES['katalog']['tmp_name'];
-// echo '<br>katalogkw: ' . $katalogkw . '<br>';
-
 open_div( '', '', "Katalog einlesen: Lieferant: {$lieferant['name']} / gültig: $katalogkw" );
 
 if (isset($_FILES['katalog']['error'])) {
@@ -347,6 +343,3 @@ switch( $lieferant['katalogformat'] ) {
   default:
     error( "kann Katalog von {$lieferant['name']} nicht parsen" );
 }
-
-
-?>

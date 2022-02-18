@@ -10,8 +10,6 @@ get_http_var( 'basarmodus', 'd', 0, hat_dienst(4) );
 get_http_var( 'bestell_id','u',false,true );
 get_http_var( 'vertical_scroll', 'w', '' );
 
-// variable muss evtl. an anderen Stellen mitübergeben werden, wie dem Link auf "abbrechen" im floating submit Button
-
 if( hat_dienst(4) && $basarmodus ) {
   $gruppen_id = $basar_id; // Im Basarmodus wird für den Basar bestellt...
   $kontostand = 250.0;
@@ -20,7 +18,6 @@ if( hat_dienst(4) && $basarmodus ) {
 } else {
   $gruppen_id = $login_gruppen_id;  // ...ansonsten für sich selbst!
   $kontostand = kontostand( $gruppen_id );
-  // $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
   $heading = "Bestellen für Gruppe $login_gruppen_name";
 }
 
@@ -78,7 +75,6 @@ if( ! $bestell_id )
 //
 
 $lieferanten_id = $gesamtbestellung['lieferanten_id'];
-$lieferant = sql_lieferant( $lieferanten_id );
 
 $scroll_to_product = null;
 
@@ -176,7 +172,6 @@ if( hat_dienst( 4 ) ) {
   smallskip();
 }
 
-// $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
 
 if( ! $readonly ) {
   $bestellform_id = open_form( '', 'action=bestellen' );
@@ -565,20 +560,7 @@ if( ! $readonly ) {
   close_div(); // submit div
 }
 
-open_table( 'list hfill' );  // bestelltabelle
-  ?> <!-- colgroup scheint bei firefox nicht die spur einer wirkung zu haben...
-    <colgroup>
-      <col width='2*'>
-      <col width='3*'>
-      <col width='1*'>
-      <col width='3*'>
-      <col width='3*'>
-      <col width='3*'>
-      <col width='1*'>
-      <?php if( hat_dienst(4) ) echo "<col width='1*'>"; ?>
-    </colgroup>
-    -->
-  <?php
+open_table( 'list hfill' );
   open_tr( 'groupofrows_top' );
     open_th( '', '', 'Produktgruppe' );
     open_th( '', '', 'Bezeichnung' );
@@ -668,15 +650,7 @@ foreach( $produkte as $produkt ) {
   $katalogeintrag = katalogsuche($produkt_id);
   
   if( $produktgruppe != $produktgruppe_alt ) {
-    if( 0 * $activate_mozilla_kludges ) {
-      // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
-      // so we set rowspan=1 first and modify later :-/
-      open_td( '', "rowspan='1' id='pg_$produktgruppe'", $produkt['produktgruppen_name'] );
-      $js_on_exit[] = "document.getElementById('pg_$produktgruppe').rowSpan = {$produktgruppen_zahl[$produktgruppe]}; ";
-    } else {
-      // other browsers get it right the first time, as it should be:
-      open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
-    }
+    open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
     $produktgruppe_alt = $produktgruppe;
   }
 

@@ -2213,20 +2213,8 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  // if( is_array( $bestell_id ) ) {
-  //  $state = sql_bestellung_status( $bestell_id[0] );
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ';
-  //  $komma = '(';
-  //  foreach( $bestell_id as $b_id ) {
-  //    $bestell_id_filter .= "$komma $b_id";
-  //    $komma = ',';
-  //  }
-  //  $bestell_id_filter .= ')';
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ( 11, 20 ) ';
-  // } else {
-    $state = sql_bestellung_status( $bestell_id );
-    $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
-  // }
+  $state = sql_bestellung_status( $bestell_id );
+  $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
 
   // zur information, vor allem im "vorläufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_BESTELLUNGEN."), bestellzuordnung.menge, 0 ) ), 0 )";

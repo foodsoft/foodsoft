@@ -480,5 +480,3 @@ function update_preis( $produkt_id ) {
       );
   }
 }
-
-?>
