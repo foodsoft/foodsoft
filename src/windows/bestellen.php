@@ -819,6 +819,7 @@ foreach( $produkte as $produkt ) {
     open_div( 'oneline center' );
        // gebinde:
         open_span( 'mult_factor', "id='gg_$n'", sprintf( '%u', $zuteilungen['gebinde'] ) );
+        open_span( 'unit', '', MULTIPLY_CHAR . " (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
     close_div();
 
   if( hat_dienst(4) ) {

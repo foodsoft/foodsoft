@@ -12,6 +12,8 @@ $db_pwd       = getenv( 'mysql_db_password' ); // password to authenticate with
 $foodsoftbase = getenv( 'foodsoftbase' );    // path relative to DocumentRoot: http://<DOMAIN>/$foodsoftbase/css/foodsoft.css must find the css
 $wikibase     = getenv( 'wikibase' );
 
+define('MULTIPLY_CHAR', '&times;');
+
 // set time zone
 // date_default_timezone_set("Europe/Berlin");
 

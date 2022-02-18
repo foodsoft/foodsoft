@@ -116,7 +116,7 @@ function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldn
 }
 
 function gebindegroesse_view( $pr /* a row from table produktpreise */ ) {
-   $s = "{$pr['gebindegroesse']} * {$pr['verteileinheit_anzeige']}";
+   $s = "{$pr['gebindegroesse']} ". MULTIPLY_CHAR . " {$pr['verteileinheit_anzeige']}";
    if( $pr['verteileinheit_anzeige'] != $pr['liefereinheit_anzeige'] ) {
      $s .= "<span class='quad small'>(" . mult_view( $pr['gebindegroesse'] / $pr['lv_faktor'] ) . " * {$pr['liefereinheit_anzeige']})</span>";
    }
@@ -1200,7 +1200,7 @@ function bestellschein_view(
             }
             printf( '%.2lf / %.2lf', $festbestellmenge / $gebindegroesse , $gesamtbestellmenge / $gebindegroesse );
           open_td( 'unit' );
-            printf( ' * (%s %s)', $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse'], $produkte_row['kan_verteileinheit'] );
+            printf( ' ' . MULTIPLY_CHAR . ' (%s %s)', $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse'], $produkte_row['kan_verteileinheit'] );
         }
 
         if( $spalten & PR_COL_LIEFERMENGE ) {
@@ -1220,7 +1220,7 @@ function bestellschein_view(
               } else {
                 echo $m;
               }
-              echo " *";
+              echo " " . MULTIPLY_CHAR;
             open_td( 'unit', "style='border-right-style:none;'", $produkte_row['liefereinheit_anzeige'] );
             if( $editAmounts ) {
               open_td( '', "style='border-left-style:none;border-right-style:none;'" );
@@ -1234,6 +1234,9 @@ function bestellschein_view(
 
         if( $spalten & PR_COL_LIEFERGEBINDE ) {
           open_td( 'mult_factor', '', mult2string( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
+          open_td( 'unit', '', sprintf( '  (%s %s)'
+                                      , $produkte_row['kan_liefermult_anzeige'] * $produkte_row['gebindegroesse'] / $lv_faktor
+                                      , $produkte_row['kan_liefereinheit_anzeige'] ) );
         }
 
         if( $spalten & PR_COL_NETTOSUMME )
@@ -1328,7 +1331,6 @@ function bestellfax_html( $bestell_id, $spalten = 0xfffff ) {
     $lv_faktor = $produkte_row['lv_faktor'];
 
     $gebindegroesse = $produkte_row['gebindegroesse'];
-    $kan_verteilmult = $produkte_row['kan_verteilmult'];
 
     $liefermenge = $produkte_row['liefermenge'];
     $gebinde = $liefermenge / $gebindegroesse;
@@ -1368,9 +1370,9 @@ function bestellfax_html( $bestell_id, $spalten = 0xfffff ) {
           mult2string( $gebinde ) .
         '</td>' .
         '<td>' .
-            mult2string( $kan_verteilmult * $gebindegroesse ) .
+            mult2string($produkte_row['kan_liefermult_anzeige'] * $gebindegroesse / $lv_faktor ) .
             '&thinsp;' .
-            $produkte_row['kan_verteileinheit'] .
+            $produkte_row['kan_liefereinheit_anzeige'] .
         '</td>';
     }
     if( $spalten & PR_COL_LPREIS ) {
