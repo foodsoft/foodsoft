@@ -99,10 +99,10 @@ open_table('list');
       open_td( 'center', '', $p['lieferung'] );
       open_td( 'center', '', $p['artikelnummer'] );
       open_td( 'right', '', $p['bestellnummer'] );
-      open_td( 'mult', '', fc_link( 'produktdetails', array( 'class' => 'href'
+      open_td( 'mult_factor', '', fc_link( 'produktdetails', array( 'class' => 'href'
       , 'produkt_id' => $produkt_id, 'bestell_id' => $p['bestell_id'], 'text' => price_view( $p['nettolieferpreis'] ) ) ) );
       open_td( 'unit', '', " / " . $p['liefereinheit_anzeige'] );
-      open_td( 'mult', '', sprintf( '%.3lf', $p['liefermenge'] * $p['kan_liefermult_anzeige'] / $p['lv_faktor'] ) );
+      open_td( 'mult_factor', '', sprintf( '%.3lf', $p['liefermenge'] * $p['kan_liefermult_anzeige'] / $p['lv_faktor'] ) );
       open_td( 'unit', '', $p['kan_liefereinheit_anzeige'] );
       open_td( 'number', '', price_view( $netto ) );
       open_td( 'number', '', price_view( $brutto ) );

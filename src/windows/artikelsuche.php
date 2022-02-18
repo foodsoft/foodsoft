@@ -218,7 +218,7 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
       while( $row = mysqli_fetch_array( $result ) ) {
         $netto = $row['preis'];
         open_tr();
-          open_td( 'mult' );
+          open_td( 'mult_factor' );
             $anummer = $row['artikelnummer'];
             if ( $produkt_id > 0 ) {
               echo fc_action( "window=produktpreise,class=button,text=$anummer,produkt_id=$produkt_id,bestell_id=$bestell_id,title=Artikelnummer auswählen"
@@ -240,8 +240,8 @@ open_fieldset( 'small_form', '', $produkt_id ?  "Katalogsuche nach Artikelnummer
           if( $have_mwst ) {
             $mwst = $row['mwst'];
             $brutto = $netto * (1 + $mwst / 100.0 );
-            open_td( 'mult', '', price_view( $mwst ) );
-            open_td( 'mult', '', price_view( $brutto ) );
+            open_td( 'mult_factor', '', price_view( $mwst ) );
+            open_td( 'mult_factor', '', price_view( $brutto ) );
           }
           open_td( '', '', ean_view( $row['ean_einzeln']).ean_links($row['ean_einzeln']) );
           open_td( '', '',  "{$row['katalogtyp']} / {$row['katalogdatum']}" );

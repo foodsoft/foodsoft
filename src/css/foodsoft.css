@@ -462,8 +462,8 @@ ul#menu li a.wikilink {
   text-align: right !important;
 }
 
-.mult,
-.mult input {
+.mult_factor,
+.mult_factor input {
   white-space: nowrap !important;
   text-align: right !important;
   border-right-style: none !important;

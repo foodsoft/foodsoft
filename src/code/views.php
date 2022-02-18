@@ -699,17 +699,17 @@ function pick_group_text() {
          'bestell_id' => $basar_row['gesamtbestellung_id'], 'text' => $basar_row['bestellung_name'], 'class' => 'href'
        ) ) . "</td>"
     , "<td>{$basar_row['lieferung']}</td>"
-    , "<td class='mult'>" 
+    , "<td class='mult_factor'>" 
         . fc_link( 'produktdetails', array(
             'class' => 'href', 'produkt_id' => $basar_row['produkt_id']
           , 'text' => sprintf( "%.2lf", $basar_row['nettolieferpreis'] )
           ) )
         ." </td>
           <td class='unit'>/ {$basar_row['liefereinheit_anzeige']} </td>
-          <td class='mult'>" . sprintf( "%8.2lf", $basar_row['bruttopreis'] ) . "</td>
+          <td class='mult_factor'>" . sprintf( "%8.2lf", $basar_row['bruttopreis'] ) . "</td>
           <td class='unit'>/ {$basar_row['verteileinheit_anzeige']} </td>
 
-          <td class='mult'><b>$menge</b></td>
+          <td class='mult_factor'><b>$menge</b></td>
           <td class='unit' style='border-right-style:none;'>$kan_verteileinheit</td>
           <td class='unit'>"
             . fc_link( 'produktverteilung', array( 'class' => 'question', 'text' => false
@@ -718,10 +718,10 @@ function pick_group_text() {
 
           <td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
             . ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' ) ."
-          <td class='mult'>" .sprintf( "%.2lf", $preis ). "</td>
+          <td class='mult_factor'>" .sprintf( "%.2lf", $preis ). "</td>
           <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
     , ( $editAmounts ?
-                   "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
+                   "<td class='mult_factor' style='padding:0pt 1ex 0pt 1ex;'>
                     <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
                     <input type='hidden' name='bestellung$fieldcount' value='{$basar_row['gesamtbestellung_id']}'>
                     <input name='menge$fieldcount' type='text' size='5' $input_event_handlers></td>
@@ -1141,7 +1141,7 @@ function bestellschein_view(
           open_td( 'right', '', $produkte_row['bestellnummer'] );
 
         if( $spalten & PR_COL_LPREIS ) {
-          open_td( 'mult', '', fc_link( 'produktdetails',
+          open_td( 'mult_factor', '', fc_link( 'produktdetails',
             "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $nettolieferpreis ) ) );
           open_td( 'unit' );
             echo "/ {$produkte_row['liefereinheit_anzeige']}";
@@ -1159,22 +1159,22 @@ function bestellschein_view(
           open_td( 'number', '', $produkte_row['pfand'] );
 
         if( $spalten & PR_COL_VPREIS ) {
-          open_td( 'mult', '', price_view( $vpreis ) );
+          open_td( 'mult_factor', '', price_view( $vpreis ) );
           open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
         if( $spalten & PR_COL_AUFSCHLAG ) {
-          open_td( 'mult', '', price_view( $aufschlag ) );
+          open_td( 'mult_factor', '', price_view( $aufschlag ) );
           open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
         if( $spalten & PR_COL_ENDPREIS ) {
-          open_td( 'mult', '', price_view( $endpreis ) );
+          open_td( 'mult_factor', '', price_view( $endpreis ) );
           open_td( 'unit', '', "/ {$produkte_row['verteileinheit_anzeige']}" );
         }
 
         if( $spalten & PR_COL_BESTELLMENGE ) {
-          open_td( 'mult' );
+          open_td( 'mult_factor' );
             printf( '%u / %u', $festbestellmenge * $kan_verteilmult
                   , ( ( $gruppen_id == $basar_id ) ? $basarbestellmenge : $toleranzbestellmenge ) * $kan_verteilmult );
             if( ! $gruppen_id )
@@ -1193,7 +1193,7 @@ function bestellschein_view(
         }
 
         if( $spalten & PR_COL_BESTELLGEBINDE ) {
-          open_td( 'mult' );
+          open_td( 'mult_factor' );
             if( $status == STATUS_BESTELLEN and ! $gruppen_id ) {
               open_span( 'bold', '', $gebinde );
               echo ' / ';
@@ -1205,11 +1205,11 @@ function bestellschein_view(
 
         if( $spalten & PR_COL_LIEFERMENGE ) {
           if( $gruppen_id ) {    // Gruppenansicht: 2 spalten, V-Einheit benutzen:
-            open_td( 'mult', '', sprintf( '%d', $liefermenge * $kan_verteilmult ) );
+            open_td( 'mult_factor', '', sprintf( '%d', $liefermenge * $kan_verteilmult ) );
             open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
 
           } else {               // Gesamtansicht: 4 spalten, Liefer-Einheit benutzen:
-            open_td( 'mult' );
+            open_td( 'mult_factor' );
               $m = mult2string( $liefermenge_scaled );
               if( $editAmounts ) {
                 printf( "
@@ -1233,10 +1233,7 @@ function bestellschein_view(
         }
 
         if( $spalten & PR_COL_LIEFERGEBINDE ) {
-          open_td( 'mult', '', mult2string( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
-          open_td( 'unit', '', sprintf( ' * (%s %s)'
-                                      , $produkte_row['kan_verteilmult'] * $produkte_row['gebindegroesse']
-                                      , $produkte_row['kan_verteileinheit'] ) );
+          open_td( 'mult_factor', '', mult2string( $gebinde ) );  //  <- sic: ggf. auch bruchteile anzeigen!
         }
 
         if( $spalten & PR_COL_NETTOSUMME )
@@ -1520,7 +1517,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
     } else {
       open_th('', "colspan='3'", 'Liefermenge:' );
 
-      open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
+      open_td('mult_factor','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
       open_td('unit','',$verteileinheit );
 
       open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
@@ -1565,14 +1562,14 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
     }
     open_tr();
       open_td( '', '', "{$gruppe['gruppennummer']} {$gruppe['name']}" );
-      open_td( 'mult', '', mult_view($festmenge) . " (".mult_view($toleranzmenge) .")" );
+      open_td( 'mult_factor', '', mult_view($festmenge) . " (".mult_view($toleranzmenge) .")" );
       open_td( 'unit', '', $verteileinheit );
       if( $status >= STATUS_LIEFERANT ) {
-        open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
+        open_td( 'mult_factor', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
         open_td( 'unit', '', $verteileinheit );
         open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
         if ($editable) {
-          open_td( "mult $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
+          open_td( "mult_factor $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
           open_td( "unit $magic_style", '', $verteileinheit );
           $js_on_exit[] = "$magicCalculator.addGroupField('{$bestell_id}_{$produkt_id}_{$gruppen_id}');";
         }
@@ -1583,11 +1580,11 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   if( $status >= STATUS_LIEFERANT ) {
     open_tr('summe');
       open_td('', "colspan='3'", "Müll:" );
-      open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
+      open_td( 'mult_factor', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
       open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
       if ($editable) {
-        open_td( "mult $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
+        open_td( "mult_factor $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
         open_td( "unit $magic_style", '', $verteileinheit );
         $js_on_exit[] = "$magicCalculator.setTrashField('{$bestell_id}_{$produkt_id}_{$muell_id}');";
       }
@@ -1597,10 +1594,10 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
 
   open_tr('summe');
     open_td('', '', fc_link( 'basar', 'class=href,text=Basar:' ) );
-    open_td( 'mult', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
+    open_td( 'mult_factor', '', mult_view($basar_festmenge) . " (".int_view($basar_toleranzmenge).")" );
     open_td( 'unit', '', $verteileinheit );
     if( $status >= STATUS_LIEFERANT ) {
-      open_td( 'mult', '');
+      open_td( 'mult_factor', '');
       if ($editable) {
         echo alink("javascript:$magicCalculator.initUi();", 'magic').' ';
       }
@@ -1610,7 +1607,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
       if ($editable) {
         $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
-        open_td( "mult $magic_style" );
+        open_td( "mult_factor $magic_style" );
         echo alink("javascript:\$('magic_{$bestell_id}_{$produkt_id}_{$basar_id}').value = 0; $magicCalculator.updateUi();", 'button', '0 &rarr;').' ';
         echo(mult_view( $basar_verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$basar_id}", false ) );
         close_td();
@@ -1870,12 +1867,12 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
             echo " - ";
           }
         }
-      open_td( 'mult', '', price_view( $pr1['nettolieferpreis'] ) );
+      open_td( 'mult_factor', '', price_view( $pr1['nettolieferpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['liefereinheit_anzeige']}" );
       open_td( 'number', '', $pr1['mwst'] );
       open_td( 'number', '', $pr1['pfand'] );
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
-      open_td( 'mult', '', price_view( $pr1['vpreis'] ) );
+      open_td( 'mult_factor', '', price_view( $pr1['vpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
   }
   close_table();

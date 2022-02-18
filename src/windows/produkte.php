@@ -155,9 +155,9 @@ open_table('list hfill');
       }
       if( $preis_id ) {
         open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
-        open_td( 'mult', '', price_view( $produkt['nettolieferpreis'] ) );
+        open_td( 'mult_factor', '', price_view( $produkt['nettolieferpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['liefereinheit']}" );
-        open_td( 'mult', '', price_view( $produkt['vpreis'] ) );
+        open_td( 'mult_factor', '', price_view( $produkt['vpreis'] ) );
         open_td( 'unit', '', "/ {$produkt['kan_verteilmult']} {$produkt['kan_verteileinheit']}" );
       } else {
         open_td( 'center', "colspan='5'", '(kein aktueller Preiseintrag)' );

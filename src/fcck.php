@@ -187,7 +187,7 @@ global $db_handle;
           <td>{$zuordnung['bestellguppen_id']} ({$zuordnung['name']})</td>
           <td>{$zuordnung['zeitpunkt']}</td>
           <td>{$zuordnung['art']}</td>
-          <td class='mult'>" . $zuordnung['menge'] * $zuordnung['kan_verteilmult'] . "</td>
+          <td class='mult_factor'>" . $zuordnung['menge'] * $zuordnung['kan_verteilmult'] . "</td>
           <td class='unit'>{$zuordnung['kan_verteileinheit']}</td>
           <td class='number'>
           <a href=\"javascript:neuesfenster('/foodsoft/terraabgleich.php?produkt_id=$produkt_id&bestell_id=$bestell_id','foodsoftdetail');\"

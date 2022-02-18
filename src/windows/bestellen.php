@@ -403,9 +403,9 @@ if( ! $readonly ) {
         document.getElementById('k_'+produkt).firstChild.nodeValue = ' ';
         tag = '';
       }
-      document.getElementById('tf_'+produkt).className = 'center mult ' + tag; // festmenge
+      document.getElementById('tf_'+produkt).className = 'center mult_factor ' + tag; // festmenge
       document.getElementById('tt_'+produkt).className = 'center unit ' + tag; // toleranzmenge
-      document.getElementById('k_'+produkt).className = 'mult ' + tag;         // kosten
+      document.getElementById('k_'+produkt).className = 'mult_factor ' + tag;         // kosten
 
       document.getElementById('gesamtpreis1').firstChild.nodeValue = gesamtpreis.toFixed(2);
       document.getElementById('gesamtpreis2').firstChild.nodeValue = gesamtpreis.toFixed(2);
@@ -722,7 +722,7 @@ foreach( $produkte as $produkt ) {
   open_td( "top center tight $class", "title='$title'" );
     open_table( "layout $class" );
       open_tr();
-        open_td( "mult $class" );
+        open_td( "mult_factor $class" );
         echo fc_link(
           'produktdetails',
           [
@@ -736,15 +736,15 @@ foreach( $produkte as $produkt ) {
 
       open_tr();
       if( $lv_faktor != 1 ) {
-        open_td( "mult small $class", '', price_view( $preis * $produkt['lv_faktor'] ) );
+        open_td( "mult_factor small $class", '', price_view( $preis * $produkt['lv_faktor'] ) );
         open_td( "unit small $class", '', "/ {$produkt['liefereinheit']}" );
       } else {
-        open_td( "mult small $class", "colspan='2'", ' ' );
+        open_td( "mult_factor small $class", "colspan='2'", ' ' );
       }
     close_table();
 
   // festmenge
-  open_td( "center mult noright", "colspan='1' id='tf_$n' " );
+  open_td( "center mult_factor noright", "colspan='1' id='tf_$n' " );
     open_div( 'oneline right' );
       open_span( '', "id='f_$n'" );
         echo mult2string( $festmenge * $produkt['kan_verteilmult'] );
@@ -796,7 +796,7 @@ foreach( $produkte as $produkt ) {
     echo "<input type='checkbox' onclick='reminder_on();' name='vm_$n' value='yes' $checked>";
   close_td();
 
-  open_td( "mult", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
+  open_td( "mult_factor", "id='k_$n'", sprintf( '%.2lf', $kosten ) );
 
 
   // bestellungen aller gruppen:
@@ -808,7 +808,7 @@ foreach( $produkte as $produkt ) {
     close_div();
     open_div( 'oneline center' );
       // v-menge:
-      open_span( 'mult', "id='gv_$n'" );
+      open_span( 'mult_factor', "id='gv_$n'" );
         echo mult2string( $verteilmult * $festmenge_gesamt );
         if( $toleranzmenge_gesamt > 0 ) {
           echo ' ... ' . mult2string( $verteilmult * ( $festmenge_gesamt + $toleranzmenge_gesamt ) );
@@ -818,8 +818,7 @@ foreach( $produkte as $produkt ) {
     close_div();
     open_div( 'oneline center' );
        // gebinde:
-        open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen['gebinde'] ) );
-        open_span( 'unit', '', "* (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
+        open_span( 'mult_factor', "id='gg_$n'", sprintf( '%u', $zuteilungen['gebinde'] ) );
     close_div();
 
   if( hat_dienst(4) ) {
