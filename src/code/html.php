@@ -1,44 +1,31 @@
 <?php
+/** html.php
+ * 
+ * HTML related logic - auxiliary functions for conveniently rendering
+ * various HTML elements and fragments.
+ * 
+ */
 
-global $open_tags      /* keep track of open tags */
-     , $print_on_exit  /* print this just before </body> */
-     , $js_on_exit     /* javascript code to insert just before </body> */
-     , $html_id        /* draw-a-number-box to generate unique ids */
-     , $form_id        /* id of the currently open form (if any) */
-     , $input_event_handlers  /* insert into <input> and similar inside a form */
-     , $html_hints     /* online hints to display for fields */
-     , $table_level      /* nesting level for tables */
-     , $table_row_number /* stack of table row counters */
-;
-$open_tags = array();
-$print_on_exit = array();
-$js_on_exit = array();
-$html_hints = array();
+global
+  $form_id,               /* id of the currently open form (if any) */
+  $html_id,               /* draw-a-number-box to generate unique ids */
+  $input_event_handlers,  /* insert into <input> and similar inside a form */
+  $js_on_exit,            /* javascript code to insert just before </body> */
+  $open_tags,             /* keep track of open tags */
+  $print_on_exit,         /* print this just before </body> */
+  $table_level,           /* nesting level for tables */
+  $table_row_number;      /* stack of table row counters */
+
+$form_id = '';
 $html_id = 0;
 $input_event_handlers = '';
-$form_id = '';
+$js_on_exit = array();
+$open_tags = array();
+$print_on_exit = array();
 
 global $td_title, $tr_title;  /* can be used to set title for next <td> or <tr> */
 $td_title = '';
 $tr_title = '';
-
-// set flags to activate workarounds for known browser bugs:
-//
-$browser = $_SERVER['HTTP_USER_AGENT'];
-global $activate_mozilla_kludges, $activate_safari_kludges, $activate_exploder_kludges, $activate_konqueror_kludges;
-$activate_safari_kludges = 0;
-$activate_mozilla_kludges = 0;
-$activate_exploder_kludges = 0;
-$activate_konqueror_kludges = 0;
-if( preg_match ( '/safari/i', $browser ) ) {  // safari sends "Mozilla...safari"!
-  $activate_safari_kludges = 1;
-} else if( preg_match ( '/konqueror/i', $browser ) ) {  // dito: konqueror
-  $activate_konqueror_kludges = 1;
-} else if( preg_match ( '/^mozilla/i', $browser ) ) {  // plain mozilla(?)
-  $activate_mozilla_kludges = 1;
-} else if( preg_match ( '/^msie/i', $browser ) ) {
-  $activate_exploder_kludges = 1;
-}
 
 // new_html_id(): increment and return next unique id:
 //
@@ -530,7 +517,7 @@ function alternatives_radio( $items ) {
 }
 
 function close_all_tags() {
-  global $open_tags, $print_on_exit, $js_on_exit, $html_hints;
+  global $open_tags, $print_on_exit, $js_on_exit;
   while( $n = count( $open_tags ) ) {
     if( $open_tags[$n] == 'body' ) {
       foreach( $print_on_exit as $p )
@@ -555,28 +542,6 @@ function div_msg( $class, $msg, $backlink = false ) {
   echo "<div class='$class'>$msg " . ( $backlink ? fc_link( $backlink, 'text=zurück...' ) : '' ) ."</div>";
 }
 
-function open_hints() {
-  global $html_hints;
-  $n = count( $html_hints );
-  $html_hints[++$n] = new_html_id();
-}
-function close_hints( $class = 'kommentar', $initial = '' ) {
-  global  $html_hints;
-  $n = count( $html_hints );
-  $id = $html_hints[$n];
-  open_div( $class, "id='hints_$id'", $initial );
-  unset( $html_hints[$n--] );
-}
-
-function html_hint( $hint ) {
-  global $html_hints;
-  $n = count( $html_hints );
-  $id = $html_hints[$n];
-  return " onmouseover=\" document.getElementById('hints_$id').firstChild.nodeValue = '$hint'; \" "
-        . " onmouseout=\" document.getElementById('hints_$id').firstChild.nodeValue = ' '; \" ";
-}
-
-
 // the following are kludges to replace the missing <spacer> (equivalent of \kern) element:
 //
 function smallskip() {
@@ -594,7 +559,6 @@ function quad() {
 function qquad() {
   open_span('qquad', '', '' );
 }
-
 
 // option_menu_row():
 // create row in a small dummy table;

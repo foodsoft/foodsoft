@@ -7,10 +7,8 @@ setWikiHelpTopic( "foodsoft:bestellen" );
 
 // the 'basarmodus' has only to be added to $self_fields when logged in as dienst 4
 get_http_var( 'basarmodus', 'd', 0, hat_dienst(4) );
-get_http_var( 'bestell_id','u',false,true );
+get_http_var( 'bestell_id','u', 0, true );
 get_http_var( 'vertical_scroll', 'w', '' );
-
-// variable muss evtl. an anderen Stellen mitübergeben werden, wie dem Link auf "abbrechen" im floating submit Button
 
 if( hat_dienst(4) && $basarmodus ) {
   $gruppen_id = $basar_id; // Im Basarmodus wird für den Basar bestellt...
@@ -20,7 +18,6 @@ if( hat_dienst(4) && $basarmodus ) {
 } else {
   $gruppen_id = $login_gruppen_id;  // ...ansonsten für sich selbst!
   $kontostand = kontostand( $gruppen_id );
-  // $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
   $heading = "Bestellen für Gruppe $login_gruppen_name";
 }
 
@@ -28,36 +25,37 @@ if ( hat_dienst(4) ) { // add button to toggle basar/group order
   $basarToggleUrl = fc_link(
     'self',
     [
-      'bestell_id' => $bestell_id ?: 0,
+      'bestell_id' => $bestell_id,
       'basarmodus' => -($basarmodus-1), // 0 => 1, 1 => 0
       'context' => 'js',
-      ]
-    );
-    $orderFor = $basarmodus
-      ? "Gruppe $login_gruppen_name"
-      : "den Basar";
-    $basarToggleButton = "<button id='basarToggleButton' onClick=\"$basarToggleUrl\" style='display:inline'>Für $orderFor bestellen</button>";
-    $heading .= "&nbsp;$basarToggleButton";
-  }
-  
-  echo "<h1>$heading</h1>";
-  
-  if( $bestell_id ) {
-    if( sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
-      $bestell_id = 0;
-  }
+    ]
+  );
+  $orderFor = $basarmodus
+    ? "Gruppe $login_gruppen_name"
+    : "den Basar";
+  $basarToggleButton = "<button id='basarToggleButton' onClick=\"$basarToggleUrl\" style='display:inline'>Für $orderFor bestellen</button>";
+  $heading .= "&nbsp;$basarToggleButton";
+}
+
+echo "<h1>$heading</h1>";
+
+/* redirect to orders overview page if $bestell_id is not open for ordering */
+if( $bestell_id != 0 and sql_bestellung_status( $bestell_id ) != STATUS_BESTELLEN )
+{
+    $bestell_id = 0;
+}
 
 $laufende_bestellungen = sql_bestellungen( 'rechnungsstatus = ' . STATUS_BESTELLEN );
-if( count( $laufende_bestellungen ) < 1) {
+
+if( empty( $laufende_bestellungen ) ) {
   div_msg( 'warn', "Zur Zeit laufen leider keine Bestellungen! <a href='index.php'>Zurück...</a>" );
   return;
 }
 
-// tabelle für infos und auswahl bestellungen:
-//
+/* --- order details overview and current orders list --- */
 open_table( 'layout hfill' );
 
-if( $bestell_id ) {
+if( $bestell_id != 0 ) {
   $gesamtbestellung = sql_bestellung( $bestell_id );
   open_td( 'left' );
     bestellung_overview( $bestell_id, $gruppen_id );
@@ -70,21 +68,20 @@ open_td( 'qquad smallskip floatright', "id='auswahl_bestellung'" );
 close_table();
 medskip();
 
-if( ! $bestell_id )
+if( $bestell_id == 0 )
   return;
 
-///////////////////////////////////////////
-// ab hier: eigentliches bestellformular:
-//
+/* --- start of logic for order sheet --- */
 
 $lieferanten_id = $gesamtbestellung['lieferanten_id'];
-$lieferant = sql_lieferant( $lieferanten_id );
+
+/* --- action-specific logic --- */
 
 $scroll_to_product = null;
 
 get_http_var( 'action', 'w', '' );
-if( $readonly )
-  $action = '';
+if( $readonly ) { $action = ''; }
+
 switch( $action ) {
   case 'produkt_hinzufuegen':
     need_http_var( 'produkt_id', 'U' );
@@ -93,28 +90,47 @@ switch( $action ) {
     $js_on_exit[] = "scrollToMarkedProduct();";
     break;
   case 'bestellen':
+    /* Step 1:
+     * create assoc array with current group order amounts (fixed/tolerance)
+     * from the received POST parameters
+     */
     $gesamtpreis = 0;
     $bestellungen = array();
     foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
       $n = $produkt['produkt_id'];
       get_http_var( "fest_$n", 'u', 0 );
-      $fest = ${"fest_$n"};
       get_http_var( "toleranz_$n", 'u', 0 );
-      $toleranz = ${"toleranz_$n"};
       get_http_var( "vm_$n", 'w', 'no' );
+      $fest = ${"fest_$n"};
+      $toleranz = ${"toleranz_$n"};
       $vormerken = ( ${"vm_$n"} === 'yes' );
       $bestellungen[$n] = array( 'fest' => $fest, 'toleranz' => $toleranz, 'vormerken' => $vormerken );
       $gesamtpreis += $produkt['endpreis'] * ( $fest + $toleranz );
     }
+
     if( $gesamtpreis > 0.005 ) {
       need( $gesamtpreis <= $kontostand, "Konto überzogen!" );
     }
+
+    /* Step 2:
+     * update group order details using data from step 1  
+     */
     foreach( $bestellungen as $produkt_id => $m ) {
-      change_bestellmengen( $gruppen_id, $bestell_id, $produkt_id, $m['fest'], $m['toleranz'], $m['vormerken'] );
+      change_bestellmengen(
+        $gruppen_id,
+        $bestell_id,
+        $produkt_id,
+        $m['fest'],
+        $m['toleranz'],
+        $m['vormerken']
+      );
     }
     logger( "Bestellung speichern: $bestell_id" );
+
+    /* step 3: prepare after-effects like scroll and snackbar */
     $js_on_exit[] = "if ( verticalScroll ) window.scrollTo(0, verticalScroll);";
     $js_on_exit[] = "showInSnackbar('Bestellung wurde eingetragen!')";
+
     break;
   case 'delete':
     need_http_var( 'produkt_id', 'U' );
@@ -126,9 +142,13 @@ switch( $action ) {
     foreach( sql_bestellung_produkte( $bestell_id ) as $p ) {
       $id = update_preis( $p['produkt_id'] );
       if( $id > 0 ) {
-        sql_update( 'bestellvorschlaege'
-        , array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $p['produkt_id'] )
-        , array( 'produktpreise_id' => $id )
+        sql_update(
+          'bestellvorschlaege',
+          [
+            'gesamtbestellung_id' => $bestell_id,
+            'produkt_id'          => $p['produkt_id']
+          ],
+          [ 'produktpreise_id'    => $id ]
         );
         $n++;
       }
@@ -144,6 +164,7 @@ switch( $action ) {
 $produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
 
+/* --- order form: prepare display of issues/warnings for order preparation responsible(s) --- */
 
 if( hat_dienst( 4 ) ) {
   $bestellnummern_falsch = array();
@@ -163,7 +184,7 @@ if( hat_dienst( 4 ) ) {
   smallskip();
 }
 
-// $festgelegt = gruppenkontostand_festgelegt( $gruppen_id );
+/* --- order form: scaffolding (javascript and submit bar) --- */
 
 if( ! $readonly ) {
   $bestellform_id = open_form( '', 'action=bestellen' );
@@ -410,6 +431,11 @@ if( ! $readonly ) {
       return true;
     }
 
+    /**
+     * Disable the button that allows for switching between basar order mode
+     * and group order mode. E.g. when there are already changes in the order
+     * sheet, it shouldn't be possible to toggle to ensure data consistency. 
+     */
     function disable_basar_toggle() {
       const basarToggleButton = document.getElementById('basarToggleButton');
       basarToggleButton.disabled = true;
@@ -487,12 +513,8 @@ if( ! $readonly ) {
     }
 
     function toleranz_auffuellen( produkt ) {
-      const gebinde = Math.floor( fest[produkt] / gebindegroesse[produkt] );
-      if( fest[produkt] - gebinde * gebindegroesse[produkt] > 0 ) {
-        toleranz[produkt] = (gebinde+1) * gebindegroesse[produkt] - fest[produkt];
-      } else {
-        toleranz[produkt] = 0;
-      }
+      const rest = fest[produkt] % gebindegroesse[produkt];
+      toleranz[produkt] = rest > 0 ? (gebindegroesse[produkt] - rest) : 0;
       zuteilung_berechnen( produkt, false );
     }
 
@@ -552,20 +574,9 @@ if( ! $readonly ) {
   close_div(); // submit div
 }
 
-open_table( 'list hfill' );  // bestelltabelle
-  ?> <!-- colgroup scheint bei firefox nicht die spur einer wirkung zu haben...
-    <colgroup>
-      <col width='2*'>
-      <col width='3*'>
-      <col width='1*'>
-      <col width='3*'>
-      <col width='3*'>
-      <col width='3*'>
-      <col width='1*'>
-      <?php if( hat_dienst(4) ) echo "<col width='1*'>"; ?>
-    </colgroup>
-    -->
-  <?php
+/* --- order sheet: table header --- */
+
+open_table( 'list hfill' );
   open_tr( 'groupofrows_top' );
     open_th( '', '', 'Produktgruppe' );
     open_th( '', '', 'Bezeichnung' );
@@ -599,12 +610,16 @@ open_table( 'list hfill' );  // bestelltabelle
     else
       open_th( 'small tight', '', '(aktuell)' );
 
+/* --- prepare aggregating product groups --- */
+
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
   $id = $produkt['produktgruppen_id'];
   $produktgruppen_zahl[$id] = adefault( $produktgruppen_zahl, $id, 0 ) + 1;
 }
 $produktgruppe_alt = -1;
+
+/* --- order sheet: product rows --- */
 
 foreach( $produkte as $produkt ) {
   open_tr();
@@ -636,27 +651,26 @@ foreach( $produkte as $produkt ) {
   $kosten = $preis * ( $festmenge + $toleranzmenge );
   $gesamtpreis += $kosten;
  
-  $js_on_exit[] = sprintf( "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n"
-  , $n, $gebindegroesse , $preis
-  , $festmenge, $toleranzmenge
-  , $festmenge_andere, $toleranzmenge_andere
-  , $zuteilung_fest, $zuteilung_toleranz
-  , $verteilmult
+  $js_on_exit[] = sprintf(
+    "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n",
+    $n,
+    $gebindegroesse,
+    $preis,
+    $festmenge,
+    $toleranzmenge,
+    $festmenge_andere,
+    $toleranzmenge_andere,
+    $zuteilung_fest,
+    $zuteilung_toleranz,
+    $verteilmult
   );
+
   $produktgruppe = $produkt['produktgruppen_id'];
   
   $katalogeintrag = katalogsuche($produkt_id);
   
   if( $produktgruppe != $produktgruppe_alt ) {
-    if( 0 * $activate_mozilla_kludges ) {
-      // mozilla can't handle rowspan in complex tables on first pass (grid lines get lost),
-      // so we set rowspan=1 first and modify later :-/
-      open_td( '', "rowspan='1' id='pg_$produktgruppe'", $produkt['produktgruppen_name'] );
-      $js_on_exit[] = "document.getElementById('pg_$produktgruppe').rowSpan = {$produktgruppen_zahl[$produktgruppe]}; ";
-    } else {
-      // other browsers get it right the first time, as it should be:
-      open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
-    }
+    open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
     $produktgruppe_alt = $produktgruppe;
   }
 
@@ -834,6 +848,7 @@ foreach( $produkte as $produkt ) {
   }
 }
 
+/* --- order sheet: sum row --- */
 
 open_tr('summe');
   open_td( '', "colspan='6'", 'Gesamtpreis:' );
@@ -858,6 +873,9 @@ if( ! $readonly ) {
     }
   }
   smallskip();
+
+/* --- order sheet: additional products area --- */
+
   open_div( 'middle', "id='hinzufuegen' style='display:block;'" );  
     open_fieldset( 'small_form', '', 'Zusätzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen');

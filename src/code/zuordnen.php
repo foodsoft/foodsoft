@@ -205,6 +205,22 @@ function sql_update( $table, $where, $values, $escape_and_quote = true ) {
     return FALSE;
 }
 
+/** sql_insert
+ *
+ * @param string $table
+ * @param array $values
+ * @param array|bool $update_cols
+ *   used for declaring which columns to update on duplicate key
+ *   (if the record we're trying to insert does already eXist)
+ *   - FALSE : no updates
+ *   - TRUE:   update all columns with given values
+ *   - array of $k -> $v: update selected columns with given values
+ * @param bool $escape_and_quote
+ * @return bool|int
+ *   If an autoincrement value has been updated successfully, it will be returned.
+ *   0 will be returned on successful insert without autoincrement update.
+ *   FALSE (insert failed) otherwise.
+ */
 function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = true ) {
   global $db_handle;
   
@@ -244,7 +260,7 @@ function sql_insert( $table, $values, $update_cols = false, $escape_and_quote = 
     $komma=',';
   }
   $sql = "INSERT INTO $table ( $cols ) VALUES ( $vals )";
-  if( $update_cols or is_array( $update_cols ) ) {
+  if( $update_cols !== FALSE ) {
     $sql .= " ON DUPLICATE KEY UPDATE $update $update_komma id = LAST_INSERT_ID(id) ";
   }
   if( doSql( $sql, LEVEL_IMPORTANT, "Einfügen in Tabelle $table fehlgeschlagen: "  ))
@@ -293,7 +309,7 @@ function mysql2array( $result, $key = false, $val = false, $result_type = MYSQLI
   $r = array();
   $n = 1;
   while( $row = mysqli_fetch_array( $result, $result_type ) ) {
-    if( $key ) {
+    if( $key != FALSE ) {
       need( isset( $row[$key] ) );
       need( isset( $row[$val] ) );
       $r[$row[$key]] = $row[$val];
@@ -1926,20 +1942,28 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
  * Query `gesamtbestellungen`.
  * 
  * @param string $filter
- *   valid SQL where clause (optional)
+ *   valid SQL where clause, not including the WHERE keyword (optional)
  * @param string $orderby
- *   valid SQL 'order by' clause (optional)
+ *   valid SQL 'order by' clause, not including the ORDER BY keyword (optional)
  * @return array
  *   Array of assoc arrays, each representing one result row
  */
-function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
+function sql_bestellungen(
+  $filter = 'true',
+  $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name'
+) {
   return mysql2array( doSql( "
-    SELECT gesamtbestellungen.*
-         , dayofweek( lieferung ) as lieferdatum_dayofweek
-         , DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad
-         , lieferanten.name as lieferantenname FROM gesamtbestellungen
-    JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
-    WHERE $filter ORDER BY $orderby
+    SELECT
+      gesamtbestellungen.*,
+      dayofweek( lieferung ) AS lieferdatum_dayofweek,
+      DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad,
+      lieferanten.name AS lieferantenname
+    FROM
+      gesamtbestellungen
+      JOIN lieferanten
+      ON lieferanten.id = gesamtbestellungen.lieferanten_id
+    WHERE $filter
+    ORDER BY $orderby
   " ) );
 }
 
@@ -1992,19 +2016,25 @@ function sql_insert_bestellung( $name, $startzeit, $endzeit, $lieferung, $liefer
 
 function sql_update_bestellung( $name, $startzeit, $endzeit, $lieferung, $bestell_id, $aufschlag_prozent ) {
   nur_fuer_dienst(4);
-  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
   return sql_update( 'gesamtbestellungen', $bestell_id, array(
     'name' => $name, 'bestellstart' => $startzeit, 'bestellende' => $endzeit, 'lieferung' => $lieferung
   , 'aufschlag_prozent' => $aufschlag_prozent
   ) );
 }
 
-/**
- *  Bestellvorschlag einfuegen
+/** sql_insert_bestellvorschlag
+ * 
+ * @param int $produkt_id
+ * @param int $gesamtbestellung_id
+ * @param int $preis_id
+ * @param int $gruppen_id
+ * 
+ * @return 
  */
 function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis_id = 0, $gruppen_id = 0 ) {
   fail_if_readonly();
-  need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht moeglich: Bestellung ist bereits abgerechnet!" );
+  need( sql_bestellung_status( $gesamtbestellung_id ) < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
 
   // finde NOW() aktuellen preis:
   if( ! $preis_id )
@@ -2028,8 +2058,18 @@ function sql_insert_bestellvorschlag( $produkt_id , $gesamtbestellung_id, $preis
   );
 }
 
+/** sql_delete_bestellvorschlag
+ *
+ * Remove a product from the order sheet during ordering period.
+ * Clean up all existing allocations of the product.
+ * 
+ * @param int $produkt_id
+ * @param int $bestell_id
+ *   Params used for WHERE clause - product/bestell_id to remove
+ * @return void
+ */
 function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
-  need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Loeschen von Bestellvorschlaegen nur in der Bestellzeit!" );
+  need( sql_bestellung_status( $bestell_id ) == STATUS_BESTELLEN, "Löschen von Bestellvorschlägen nur in der Bestellzeit!" );
   sql_delete_bestellzuordnungen( array( 'produkt_id' => $produkt_id, 'bestell_id' => $bestell_id ) );
   doSql( "
     DELETE FROM bestellvorschlaege
@@ -2050,7 +2090,7 @@ function sql_references_gesamtbestellung( $bestell_id ) {
 function sql_insert_gruppenbestellung( $gruppe, $bestell_id ){
   need( sql_gruppe_aktiv( $gruppe ) or ($gruppe == sql_muell_id()) or ($gruppe == sql_basar_id())
       , "sql_insert_gruppenbestellung: keine aktive Bestellgruppe angegeben!" );
-  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Änderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Änderung nicht mehr möglich: Bestellung ist abgeschlossen!" );
   return sql_insert( 'gruppenbestellungen'
   , array( 'bestellgruppen_id' => $gruppe , 'gesamtbestellung_id' => $bestell_id )
   , array(  /* falls schon existiert: -kein fehler -nix updaten -id zurückgeben */  )
@@ -2200,25 +2240,14 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
  *   If 0: Return sum for all groups
  * @param string $orderby
  * @return string
+ *   SQL statement for SELECT query
  */
 function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  // if( is_array( $bestell_id ) ) {
-  //  $state = sql_bestellung_status( $bestell_id[0] );
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ';
-  //  $komma = '(';
-  //  foreach( $bestell_id as $b_id ) {
-  //    $bestell_id_filter .= "$komma $b_id";
-  //    $komma = ',';
-  //  }
-  //  $bestell_id_filter .= ')';
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ( 11, 20 ) ';
-  // } else {
-    $state = sql_bestellung_status( $bestell_id );
-    $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
-  // }
+  $state = sql_bestellung_status( $bestell_id );
+  $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
 
   // zur information, vor allem im "vorläufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_BESTELLUNGEN."), bestellzuordnung.menge, 0 ) ), 0 )";
@@ -2330,14 +2359,20 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
 }
 
 
-/**
- * sql_bestellung_produkte
+/** sql_bestellung_produkte
+ *
+ * Get the product details for all products that are part of the order sheet,
+ * including price information
  *
  * @param int $bestell_id
  * @param int $produkt_id
  * @param int $gruppen_id
+ *   query parameters for building the WHERE clause
  * @param string $orderby
+ *   ORDER BY parameter, omitting the 'ORDER BY' keyword itself
  * @return array
+ *   result records
+ *   
  */
 function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
   $result = doSql(
@@ -4112,8 +4147,14 @@ function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id =
 }
 
 
-/**
- *  Erzeugt einen Produktpreiseintrag
+/** sql_insert_produktpreis
+ *
+ * Erzeugt einen Produktpreiseintrag
+ *
+ * @param int $produkt_id
+ * ...
+ * @return bool|int
+ *   see `sql_insert` return value description
  */
 function sql_insert_produktpreis (
   $produkt_id,
@@ -4388,7 +4429,7 @@ function sanitize_http_input() {
 
   if( ! $from_dokuwiki ) {
     foreach( $_GET as $key => $val ) {
-      need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL uebergeben" );
+      need( isset( $foodsoft_get_vars[$key] ), "unerwartete Variable $key in URL übergeben" );
       need( checkvalue( $val, $foodsoft_get_vars[$key] ) !== false , "unerwarteter Wert für Variable $key in URL" );
     }
     if( $_SERVER['REQUEST_METHOD'] == 'POST' ) {

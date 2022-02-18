@@ -1655,9 +1655,12 @@ function abrechnung_overview( $abrechnung_id, $bestell_id_current = 0 ) {
   close_table();
 }
 
-/**
+/** bestellung_overview
+ * 
  * Create an HTML table with the basic metadata for an order
  * (label, supplier, order period, fc surcharge, status)
+ * 
+ * plus (maybe not too coherent) some group information
  */
 function bestellung_overview( $bestell_id, $gruppen_id = 0 ) {
   global $login_gruppen_id, $window_id;
