@@ -1590,13 +1590,13 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
                           . 'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)'
   , 'hersteller_acro' => 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
                        . 'ON (hersteller_acro.context = "hst" '
-                       . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_general_ci)'
+                       . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)'
   , 'verband_acro' => 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
                        . 'ON (verband_acro.context = "vbd" '
-                       . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_general_ci)'
+                       . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)'
   , 'herkunft_acro' => 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
                        . 'ON (herkunft_acro.context = "hrk" '
-                       . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_general_ci)'
+                       . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)'
   ) );
 
   $selects[] = 'produkte.id as produkt_id';
