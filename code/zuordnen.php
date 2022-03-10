@@ -5096,6 +5096,13 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 37 ) );
       logger( 'update_database: update to version 37 successful' );
+  case 37:
+      logger( 'starting update_database: from version 37' );
+
+      doSql( "ALTER TABLE `bestellvorschlaege` ADD INDEX `by_produkt_id` (`produkt_id`)" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 38 ) );
+      logger( 'update_database: update to version 38 successful' );
   }
 }
 

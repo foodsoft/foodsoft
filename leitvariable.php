@@ -25,7 +25,7 @@ $leitvariable = array(
   , 'cols' => '30', 'rows' => 5
   )
 , 'member_showcase_count' => array(
-    'meaning' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+    'meaning' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
   , 'default' => '3'
   , 'local' => false
   , 'comment' => '0, um ganz abzuschalten'
@@ -33,7 +33,7 @@ $leitvariable = array(
   , 'cols' => '2'
   )
 , 'member_showcase_title' => array(
-    'meaning' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+    'meaning' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
   , 'default' => '<b>Ein paar von uns</b>'
   , 'local' => false
   , 'comment' => 'Beliebiger Text mit einfachem HTML'
@@ -156,7 +156,7 @@ $leitvariable = array(
   )
 , 'database_version' => array(
     'meaning' => 'Version der Datenbank'
-  , 'default' => '37'
+  , 'default' => '38'
   , 'comment' => 'Bitte den vorgeschlagenen Wert &uuml;bernehmen und nicht manuell &auml;ndern: diese Variable wird bei Upgrades automatisch hochgesetzt!'
   , 'local' => false
   , 'runtime_editable' => 0
