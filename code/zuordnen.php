@@ -2258,22 +2258,23 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
       . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)';
   }
 
+  need($bestell_id = $keys['bestell_id']);
+
   foreach( $keys as $key => $value ) {
     switch( $key ) {
       case 'bestell_id':
         $filters['gesamtbestellungen.id'] = $value;
         break;
       case 'gruppen_id':
-        if (!$brauche_alle_gruppen)
+        if (!$brauche_alle_gruppen && $value)
           $filters['gruppenbestellungen.bestellgruppen_id'] = $value;
         break;
       case 'produkt_id':
-        $filters['produkte.id'] = $value;
+        if ($value)
+          $filters['produkte.id'] = $value;
         break;
     }
   }
-
-  need($bestell_id = $keys['bestell_id']);
 
   $state = sql_bestellung_status( $bestell_id );
 
