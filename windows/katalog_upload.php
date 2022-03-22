@@ -658,7 +658,7 @@ function upload_bnn( $katalogformat ) {
       // und nennt die echte Größe nur im Name, z.B. "Schafgouda jung ca.4kg", "Gouda Koriander/Bockshorn 4 kg"
       // "Tommette de Yenne ca. 800g", oder gar "Scamorza geräu.2x360gfoliert"
 
-      if( preg_match( '/(\d\s*x\s*)([0-9]+[,.]?[0-9]*)\s*(k?g)/', $name, $parts ) ) {
+      if( preg_match( '/(\d\s*x\s*)?([0-9]+[,.]?[0-9]*)\s*(k?g)/', $name, $parts ) ) {
         $gebinde = preg_replace( '/,/', '.', trim( $parts[2] ) );
         if( $parts[1] )
           $gebinde *= $parts[1];
