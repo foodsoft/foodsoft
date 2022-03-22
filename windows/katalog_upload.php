@@ -46,7 +46,7 @@ function katalog_update(
 ) {
 
   open_div( 'ok' );
-    open_div( 'ok qquad', '', 
+    open_div( 'ok qquad', '',
             "erfasst: $anummer, $bnummer, $name, $bemerkung, $einheit, "
             . "$gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, "
             . "$netto, $ean_einzeln, $katalogformat" );
@@ -234,7 +234,7 @@ function upload_terra() {
       }
       continue;
     }
-    
+
     if( ! preg_match( $pattern, $line ) ) {
       open_div( 'alert', '', "Zeile nicht ausgewertet: $line" );
       continue;
@@ -482,7 +482,7 @@ function upload_bode() {
 //
 //  36807;A;20101018;0000;4019736002475;;Brot-Salat 'Gutsherren'          ;;;--;ZWE;;DE;C%;;;0701;;36;;;6 x 200 g;6,00;200 g;1;N;;;;0,20;;;;1;;2,69;;1,63;J;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;T;;;;;kg;5,000000;;
 //
-//  01266;A;20100318;0000;4009233002948;;TK Steinofen Pizzies Salami (2er);(Unsere Natur);St.Pz.Salami2er;--;WGP;;DE;C%;;;1031;;1;;;10 x 2x 150 g;10,00;2x 150 g;1;N;;;;0,30;;;;1;;3,79;;2,45;N;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;F;;;;;kg;3,333000;; 
+//  01266;A;20100318;0000;4009233002948;;TK Steinofen Pizzies Salami (2er);(Unsere Natur);St.Pz.Salami2er;--;WGP;;DE;C%;;;1031;;1;;;10 x 2x 150 g;10,00;2x 150 g;1;N;;;;0,30;;;;1;;3,79;;2,45;N;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;F;;;;;kg;3,333000;;
 //
 // vermutliche semantik:
 //
@@ -627,7 +627,7 @@ function upload_bnn( $katalogformat ) {
     $verband = mysqli_real_escape_string( $db_handle, $splitline[13] );
     $hersteller = mysqli_real_escape_string( $db_handle, $splitline[10] );
     $ean_einzeln = mysqli_real_escape_string( $db_handle, $splitline[4] );
-    
+
     if ( $handelsklasse )
     {
         $handelsklasse = "HK $handelsklasse";
@@ -636,7 +636,7 @@ function upload_bnn( $katalogformat ) {
         else
             $bemerkung = $handelsklasse;
     }
-    
+
     $gebinde = $splitline[22];
     $gebinde = preg_replace( '/,/', '.', trim( $gebinde ) );
     $gebinde = sprintf( '%.2f', $gebinde );
@@ -648,9 +648,25 @@ function upload_bnn( $katalogformat ) {
     // bnn: gelegentlich einheiten wie: 3 x 100g:
     if( preg_match( '/\d *x *\d/', $einheit ) ) {
       $extra_mult = sprintf( '%d', $einheit );
-      $einheit = preg_replace( '/^.*\d *x *(\d.*)$/', '${1}', $einheit ); 
+      $einheit = preg_replace( '/^.*\d *x *(\d.*)$/', '${1}', $einheit );
     } else {
       $extra_mult = 1;
+    }
+
+    if( $is_midgard && $gebinde == 1 && $extra_mult == 1 && $einheit == "kg" ) {
+      // Midgard nennt (insbesondere bei Käse) die Gebindegröße nicht korrekt in Spalte 23, sondern gibt 1 kg an
+      // und nennt die echte Größe nur im Name, z.B. "Schafgouda jung ca.4kg", "Gouda Koriander/Bockshorn 4 kg"
+      // oder "Tommette de Yenne ca. 800g"
+
+      if( preg_match( '/([0-9]+[,.]?[0-9]*)\s*(k?g)/', $name, $parts ) ) {
+        $gebinde = preg_replace( '/,/', '.', trim( $parts[1] ) );
+        $einheit = $parts[2];
+
+        if( $einheit == 'g' ) {
+          $gebinde = sprintf( '%.3f', $gebinde / 1000 );
+          $einheit = 'kg';
+        }
+      }
     }
 
     switch( trim( $splitline[33] ) ) {
@@ -683,9 +699,9 @@ function upload_bnn( $katalogformat ) {
     }
     $m *= $extra_mult;
     $einheit = "$m $e";
-    
+
     $wahrscheinlich_pfand = $splitline[27]  && ($e == "FL" || $e == "GL" || $e == "ml");
-    
+
     $pfand = $wahrscheinlich_pfand ? $lieferant['gruppenpfand'] : 0.0;
 
     katalog_update( $lieferanten_id, $tag, $katalogkw
