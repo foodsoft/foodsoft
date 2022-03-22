@@ -19,17 +19,19 @@ function katalogsuche( $produkt ) {
 
   $where = "WHERE ( lieferanten_id = {$produkt['lieferanten_id']} ) ";
 
+  if( !( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) ) {
+    $result = 2;
+  } else {
+    $where .= " AND ( artikelnummer = '$artikelnummer' ) ";
+    if( $result = sql_select_single_row( "SELECT * FROM lieferantenkatalog $where " , true ) )
+      return $result;
+  }
+
   if( ! sql_lieferant_katalogeintraege( $produkt['lieferanten_id'] ) ) {
     return 1;
   }
-  if( ( $artikelnummer = adefault( $produkt, 'artikelnummer', 0 ) ) )
-    $where .= " AND ( artikelnummer = '$artikelnummer' ) ";
-  // elseif( ( $bestellnummer = adefault( $produkt, 'bestellnummer', 0 ) ) )
-  //  $where .= " AND bestellnummer='$bestellnummer' ";
-  else
-    return 2;
 
-  return sql_select_single_row( "SELECT * FROM lieferantenkatalog $where " , true );
+  return $result;
 }
 
 

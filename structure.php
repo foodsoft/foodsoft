@@ -1180,6 +1180,7 @@ $tables = array(
     )
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
+      , 'by_lieferanten_id' => [ 'unique' => 0, 'collist' => 'lieferanten_id' ]
     )
   )
 , 'produktgruppen' => array(
@@ -1281,6 +1282,7 @@ $tables = array(
     , 'indices' => array(
         'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
       , 'secondary' => array( 'unique' => 0, 'collist' => 'produkt_id, zeitende' )
+      , 'by_zeitstart' => [ 'unique' => 0, 'collist' => 'produkt_id, zeitstart' ]
     )
   )
 , 'sessions' => array(

@@ -88,6 +88,7 @@ if( $editable )
 $produkte = sql_produkte( array(
     'lieferanten_id' => $lieferanten_id
   , 'price_on_date_or_null' => true
+  , 'katalog' => true
   , 'references' => $editable
   , 'bestellzuordnung_menge' => BESTELLZUORDNUNG_ART_VORMERKUNGEN
   ) );
