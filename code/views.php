@@ -2687,6 +2687,7 @@ function unlisted_products_view( array $gesamtbestellung, string $action, bool $
     $json['price'] = $price;
     $json['distUnit'] = $p['verteileinheit_anzeige'];
     $json['suppUnit'] = $p['liefereinheit_anzeige'];
+    $json['suppBundle'] = $p['lv_faktor'] ? $p['gebindegroesse'] / $p['lv_faktor'] : 0;
     $json['group'] = $p['produktgruppen_name'];
     $json['link'] = fc_link('produktdetails', array(
           'produkt_id' => $p['produkt_id']
@@ -2705,6 +2706,7 @@ function unlisted_products_view( array $gesamtbestellung, string $action, bool $
       this.price = other.price;
       this.distUnit = other.distUnit;
       this.suppUnit = other.suppUnit;
+      this.suppBundle = other.suppBundle;
       this.group = other.group;
       this.link = other.link;
     },
@@ -2735,7 +2737,7 @@ function unlisted_products_view( array $gesamtbestellung, string $action, bool $
     productGroupCell.innerHTML = unlistedProduct.group;
     productLinkCell.innerHTML = unlistedProduct.link;
     if (amountInput) {
-      amountInput.value = unlistedProduct.suppUnit ? 1 : 0;
+      amountInput.value = unlistedProduct.suppUnit ? unlistedProduct.suppBundle : 0;
       amountInput.disabled = !unlistedProduct.suppUnit;
       suppUnitCell.innerHTML = unlistedProduct.suppUnit
         ? " * " + unlistedProduct.suppUnit
