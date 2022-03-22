@@ -656,11 +656,13 @@ function upload_bnn( $katalogformat ) {
     if( $is_midgard && $gebinde == 1 && $extra_mult == 1 && $einheit == "kg" ) {
       // Midgard nennt (insbesondere bei Käse) die Gebindegröße nicht korrekt in Spalte 23, sondern gibt 1 kg an
       // und nennt die echte Größe nur im Name, z.B. "Schafgouda jung ca.4kg", "Gouda Koriander/Bockshorn 4 kg"
-      // oder "Tommette de Yenne ca. 800g"
+      // "Tommette de Yenne ca. 800g", oder gar "Scamorza geräu.2x360gfoliert"
 
-      if( preg_match( '/([0-9]+[,.]?[0-9]*)\s*(k?g)/', $name, $parts ) ) {
-        $gebinde = preg_replace( '/,/', '.', trim( $parts[1] ) );
-        $einheit = $parts[2];
+      if( preg_match( '/(\d\s*x\s*)([0-9]+[,.]?[0-9]*)\s*(k?g)/', $name, $parts ) ) {
+        $gebinde = preg_replace( '/,/', '.', trim( $parts[2] ) );
+        if( $parts[1] )
+          $gebinde *= $parts[1];
+        $einheit = $parts[3];
 
         if( $einheit == 'g' ) {
           $gebinde = sprintf( '%.3f', $gebinde / 1000 );
