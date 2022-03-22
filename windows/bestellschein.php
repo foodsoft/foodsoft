@@ -51,16 +51,32 @@ switch( $action ) {
     nur_fuer_dienst(1,3,4);
     need( $status < STATUS_ABGERECHNET, "Änderung nicht möglich: Bestellung ist bereits abgerechnet!" );
     need_http_var( 'produkt_id', 'u' );
-    // need_http_var( 'menge', 'f' );
     if( $bestell_id ) {
+      get_http_var( 'menge', 'f' );
       if( sql_insert_bestellvorschlag( $produkt_id, $bestell_id ) ) {
         if( $status < STATUS_VERTEILT ) {
           $msg = 'Produkt wurde aufgenommen, steht aber noch unter \"nicht bestellt\" (da Menge 0); bitte nach Lieferung die Menge nachtragen!'
                  . ' (das geht leider erst nach \"Lieferschein fertigmachen\"!)';
-        } else {
+        } else if( ! $menge ) {
           $msg = 'Produkt wurde aufgenommen, steht aber noch unter \"nicht geliefert\" (da Liefermenge 0): bitte Menge nachtragen!';
+        } else {
+          $msg = 'Produkt wurde aufgenommen!';
         }
+
         $js_on_exit[] = "alert( '$msg' );";
+      }
+      if( isset($menge) ) {
+        need( $status == STATUS_VERTEILT );
+        foreach( sql_bestellung_produkte( [
+            'bestell_id' => $bestell_id
+          , 'produkt_id' => $produkt_id] ) as $produkt ) {
+          $lv_faktor = $produkt['lv_faktor'];
+          $liefermenge = $produkt['liefermenge'] / $lv_faktor;
+          if( abs( $menge - $liefermenge ) > 0.001 ) {
+            $liefermenge = $menge;
+            sql_change_liefermenge( $bestell_id, $produkt_id, $liefermenge * $lv_faktor );
+          }
+        }
       }
     }
     break;
@@ -197,21 +213,16 @@ switch( $status ) {
   case STATUS_VERTEILT:
     if( ! $readonly and ! $gruppen_id and hat_dienst(1,3,4) ) {
       open_fieldset( 'small_form', '', 'Zusätzliches Produkt eintragen', 'off' );
-        open_form( '', 'action=insert' );
-          open_div( 'kommentar' )
-            ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
-            open_ul();
-              open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
+        open_div( 'kommentar' )
+          ?> Hier koennt ihr ein weiteres geliefertes Produkt in den Lieferschein eintragen: <?php
+          open_ul();
+            open_li( '', '', 'das Produkt muss vorher in der Produkt-Datenbank erfasst sein' );
+            if( $status == STATUS_LIEFERANT ) {
               open_li( '', '', 'die <em>Liefermenge</em> ist danach noch 0 und muss hinterher gesetzt werden!' );
-            close_ul();
-          close_div();
-          select_products_not_in_list($bestell_id);
-          // mengeneingabe ist hier sinnlos, da wir keine Masseinheit anbieten koennen
-          // (die haengt von der auswahl in obiger Produktliste ab!)
-          // ?> <label>Menge:</label> <?php
-          // echo int_view( 1, 'menge' );
-          submission_button();
-        close_form();
+            }
+          close_ul();
+        close_div();
+        unlisted_products_view($bestellung, 'insert', $status == STATUS_VERTEILT);
       close_fieldset();
     }
     break;

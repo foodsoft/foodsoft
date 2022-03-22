@@ -750,31 +750,9 @@ if( ! $readonly ) {
   smallskip();
   open_div( 'middle', "id='hinzufuegen' style='display:block;'" );
     open_fieldset( 'small_form', '', 'Zus&auml;tzlich Produkt in Bestellvorlage aufnehmen', 'off' );
-      open_form( '', 'action=produkt_hinzufuegen');
-        open_table('small_form');
-          open_tr();
-            open_td('', '', 'Suche:');
-            open_td('', 'colspan=2', string_view('', 20, 'search', 'id=search', true, 'hfill'));
-          open_tr();
-            open_td();
-              open_div('', '', 'Produkt:');
-            open_td('', 'colspan=2');
-              open_select('produkt_id', 'size=8 id="productSelect" class="hfill"');
-              close_select();
-          open_tr();
-            open_td('', '', 'Produktgruppe:');
-            open_td('', 'id="productGroup"', '');
-          open_tr();
-            open_td('', '', '');
-            open_td('', 'id="productLink"', '');
-            open_td('right');
-              submission_button( 'Produkt hinzuf&uuml;gen', true
-                , "Produkt zur Bestellvorlage hinzufuegen: bist du ueberzeugt, dass das Gebinde noch voll werden wird, "
-                  ."und dass du dich nicht lieber an der Bestellung eines schon teilweise gefuellten Gebindes beteiligen moechtest?"
-              );
-        close_table();
-      close_form();
-
+      unlisted_products_view( $gesamtbestellung, 'produkt_hinzufuegen', false
+      , "Produkt zur Bestellvorlage hinzufuegen: bist du ueberzeugt, dass das Gebinde noch voll werden wird, "
+      . "und dass du dich nicht lieber an der Bestellung eines schon teilweise gefuellten Gebindes beteiligen moechtest?");
       open_div();
         $anzahl_eintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
         if( $anzahl_eintraege > 0 ) {
@@ -789,74 +767,6 @@ if( ! $readonly ) {
     close_fieldset();
   close_div();
 
-  $unlisted_products = sql_produkte( array(
-      (hat_dienst( 4 ) ? 'price_on_date_or_null' : 'price_on_date')
-          => $gesamtbestellung['lieferung']
-    , 'not_in_order' => $gesamtbestellung['id']
-    , 'lieferanten_id' => $lieferanten_id  ));
-
-  foreach ($unlisted_products as $p) {
-    $json = array();
-    $json['id'] = $p['produkt_id'];
-    $json['name'] = $p['name'];
-    $price = $p['vpreis'];
-    if (!is_null($price))
-      $price = price_view($price);
-    $json['price'] = $price;
-    $json['unit'] = $p['verteileinheit_anzeige'];
-    $json['group'] = $p['produktgruppen_name'];
-    $json['link'] = fc_link('produktdetails', array(
-          'produkt_id' => $p['produkt_id']
-        , 'text' => 'Produktdetails'
-        , 'class' => 'button noleftmargin'));
-    $json_list[] = $json;
-  }
-
-
-  open_javascript();
-    echo toJavaScript('var unlistedProducts', $json_list);
-  ?>
-  var UnlistedProduct = Class.create({
-    initialize: function(other) {
-      this.id = other.id;
-      this.name = other.name;
-      this.price = other.price;
-      this.unit = other.unit;
-      this.group = other.group;
-      this.link = other.link;
-    },
-    setOption: function(option) {
-      option.value = this.id;
-      option.innerHTML = this.name;
-      option.innerHTML += ' (';
-      if (this.price === null) {
-        option.innerHTML += 'kein aktueller Preiseintrag';
-      } else {
-        option.innerHTML += 'V-Preis: ' + this.price + ' / ' + this.unit;
-      }
-      option.innerHTML += ')';
-    }
-  });
-
-  var searchableSelect = new SearchableSelect($('productSelect'), $('search'));
-  var productGroupCell = $('productGroup');
-  var productLinkCell = $('productLink');
-
-  unlistedProducts = unlistedProducts.collect(function(product) {
-    return new UnlistedProduct(product);
-  });
-
-  function showDetails(unlistedProduct) {
-    productGroupCell.innerHTML = unlistedProduct.group;
-    productLinkCell.innerHTML = unlistedProduct.link;
-  }
-
-  searchableSelect.setEntries(unlistedProducts);
-
-  $('productSelect').on('option:selected', function(event) { showDetails(event.memo); } );
-
-  <?php
-  close_javascript();
 
 }
 
