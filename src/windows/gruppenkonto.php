@@ -209,10 +209,18 @@ open_table('list');
   $konto_row = current($konto_result);
   $vert_row = current($vert_result);
   while( $vert_row or $konto_row ) {
-    open_tr();
-
+    
     //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
     if( ( $vert_row ? $vert_row['valuta_kan'] : '0' ) > ( $konto_row ? $konto_row['valuta_kan'] : '0' ) ) {
+      
+      /* TODO: use status < 40 as indicator for uncleared orders and adjust display style! */
+      $status = (int) $vert_row['gesamtbestellung_status'];
+      $not_cleared_yet = $status < 40;
+      $row_css_class = $not_cleared_yet ? 'tobecleared' : '';
+      open_tr(
+        $row_css_class,
+        'title="Bestellung noch nicht fertig abgerechnet, angezeigte Werte vorläufig (evtl. sind Liefer-/Verteilabweichungen noch nicht berücksichtigt)"',
+      );
 
       $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
       $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
@@ -225,11 +233,23 @@ open_table('list');
       open_td('bold', '', 'Bestellung' );
       open_td('', '', $vert_row['valuta_trad'] );
       open_td('', '', $vert_row['lieferdatum_trad'] );
-      open_td('solidright', '', 'Bestellung '. fc_link( 'lieferschein', array(
-        'class' => 'href', 'text' => $vert_row['name'], 'title' => 'zum Lieferschein...'
-      , 'bestell_id' => $vert_row['gesamtbestellung_id'] , 'gruppen_id' => $gruppen_id
-      , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME )
-      ) ) );
+      open_td(
+        'solidright',
+        '',
+        'Bestellung '. fc_link(
+          'lieferschein',
+          [
+            'class'      => 'href',
+            'text'       => $vert_row['name'],
+            'title'      => 'zum Lieferschein...',
+            'bestell_id' => $vert_row['gesamtbestellung_id'] ,
+            'gruppen_id' => $gruppen_id,
+            'spalten' => (
+              PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME
+            ),
+          ]
+        ) . ( $not_cleared_yet ? ' (noch nicht abgerechnet)' : '' )
+      );
       open_td( 'number' );
         if( abs( $pfand_voll_soll ) > 0.005 ) {
           echo price_view( $pfand_voll_soll );
@@ -254,6 +274,7 @@ open_table('list');
 
     } else {
 
+      open_tr();
       $k_id = $konto_row['konterbuchung_id'];
       open_td( 'bold' );
         if( $k_id >= 0 ) {
