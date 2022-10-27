@@ -1906,7 +1906,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     $legend = "Preis-Historie";
   }
 
-  $produktpreis_probleme = sql_produktpreise_konsistenztest( false, $produkt_id )[$produkt_id];
+  $produktpreis_probleme = sql_produktpreise_konsistenztest( false, $produkt_id )[$produkt_id] ?? [];
 
   if( sql_aktueller_produktpreis_id( $produkt_id ) and ! $bestell_id and ! $produktpreis_probleme ) {
     $initial = 'off';
@@ -2681,13 +2681,13 @@ function unlisted_products_view( array $gesamtbestellung, string $action, bool $
     $json = array();
     $json['id'] = $p['produkt_id'];
     $json['name'] = $p['name'];
-    $price = $p['vpreis'];
+    $price = $p['vpreis'] ?? null;
     if (!is_null($price))
       $price = price_view($price);
     $json['price'] = $price;
-    $json['distUnit'] = $p['verteileinheit_anzeige'];
-    $json['suppUnit'] = $p['liefereinheit_anzeige'];
-    $json['suppBundle'] = $p['lv_faktor'] ? $p['gebindegroesse'] / $p['lv_faktor'] : 0;
+    $json['distUnit'] = $p['verteileinheit_anzeige'] ?? null;
+    $json['suppUnit'] = $p['liefereinheit_anzeige'] ?? null;
+    $json['suppBundle'] = is_null($price) ? null : ($p['lv_faktor'] ? $p['gebindegroesse'] / $p['lv_faktor'] : 0);
     $json['group'] = $p['produktgruppen_name'];
     $json['link'] = fc_link('produktdetails', array(
           'produkt_id' => $p['produkt_id']

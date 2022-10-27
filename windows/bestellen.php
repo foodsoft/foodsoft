@@ -1,5 +1,5 @@
 <?PHP
-error_reporting('E_ALL');
+error_reporting(E_ALL);
 
 assert( $angemeldet ) or exit();
 
@@ -153,7 +153,7 @@ if( ! $readonly ) {
     var anzahl_produkte = <?php echo count( $produkte ); ?>;
     var kontostand = <?php printf( "%.2lf", $kontostand ); ?>;
     var gesamtpreis = 0.00;
-    var aufschlag = <?php printf( "%.2lf", $gesamtbestellung['aufschlag'] ); ?>;
+    var aufschlag = <?php printf( "%.2lf", $gesamtbestellung['aufschlag_prozent'] ); ?>;
     var toleranz_default_faktor = <?php printf( "%.3lf", 0.001 + $toleranz_default / 100.0 ); ?>;
     var gebindegroesse     = new Array();
     var preis              = new Array();
@@ -506,7 +506,7 @@ open_table( 'list hfill' );  // bestelltabelle
   open_tr( 'groupofrows_bottom' );
     open_th( '', '', '' );
     open_th( 'small', '', '' );
-    if( $gesamtbestellung['aufschlag'] > 0 ) {
+    if( $gesamtbestellung['aufschlag_prozent'] > 0 ) {
       open_th( 'small', "colspan='1'", '(mit Aufschlag)' );
     } else {
       open_th( 'small', "colspan='1'", '' );
@@ -708,7 +708,7 @@ foreach( $produkte as $produkt ) {
     close_div();
     open_div( 'oneline center' );
        // gebinde:
-        open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen[gebinde] ) );
+        open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen['gebinde'] ) );
         open_span( 'unit', '', "* (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
     close_div();
 

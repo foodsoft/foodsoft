@@ -121,9 +121,9 @@ open_table('list hfill');
     $id = $p['produkt_id'];
     $preis_id = $p['preis_id'];
     $produkt = $p;
-    $references = $p['references'];
+    $references = $p['references'] ?? null;
     $vormerkungen_menge = $p['bestellzuordnung_menge'];
-    
+
     $katalogeintrag = unalias_columns($p, 'katalog');
 
     open_tr( 'groupofrows_top' );
@@ -182,7 +182,7 @@ open_table('list hfill');
       // open_td();
       open_td( '', "colspan='$cols'" );
         if( $options & OPTION_PREISKONSISTENZTEST )
-          produktpreise_konsistenztest_problem_view($produktpreis_probleme[$id]);
+          produktpreise_konsistenztest_problem_view($produktpreis_probleme[$id] ?? []);
         if( $options & OPTION_KATALOGABGLEICH )
           katalogabgleich( $id, 1 );
   }

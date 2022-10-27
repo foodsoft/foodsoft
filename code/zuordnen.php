@@ -20,28 +20,6 @@ define('LEVEL_NONE', 0);
 // LEVEL_CURRENT: alle sql-aufrufe bis zu diesem level werden angezeigt:
 $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
-function sql_selects( $table, $prefix = false ) {
-  global $tables;
-  $cols = $tables[$table]['cols'];
-  $selects = array();
-  foreach( $cols as $name => $type ) {
-    if( $name == 'id' ) {
-      if( isstring( $prefix ) )
-        $selects[] = "$table.id as {$prefix}id";
-      else
-        $selects[] = "$table.id as $table_id";
-    } else {
-      if( isstring( $prefix ) )
-        $selects[] = "$table.$name as $prefix$name";
-      else if( $prefix )
-        $selects[] = "$table.$name as $table_$name";
-      else
-        $selects[] = "$table.$name as $name";
-    }
-  }
-  return $selects;
-}
-
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   global $db_handle;
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
@@ -4066,7 +4044,8 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
  *  oder false falls es keinen gueltigen preis gibt:
  */
 function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = true ) {
-  return end( ( sql_produktpreise( $produkt_id, $zeitpunkt ) ) );
+  $preise = sql_produktpreise( $produkt_id, $zeitpunkt );
+  return end( $preise );
 }
 
 /* sql_aktueller_produktpreis_id:
@@ -4476,8 +4455,6 @@ function checkvalue( $val, $typ){
     $format = '';
     switch( substr( $typ, 0, 1 ) ) {
       case 'H':
-        if( get_magic_quotes_gpc() )
-          $val = stripslashes( $val );
         $val = htmlspecialchars( $val, ENT_QUOTES, 'UTF-8' );
         break;
       case 'R':
