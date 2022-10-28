@@ -4700,7 +4700,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10 ) );
       logger( 'update_database: update to version 10 successful' );
 
-  case 10:
+    case 10:
       logger( 'starting update_database: from version 10' );
 
       // preise ab jetzt pro L-einheit speichern:
@@ -4728,7 +4728,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 11 ) );
       logger( 'update_database: update to version 11 successful' );
 
-  case 11:
+    case 11:
       logger( 'starting update_database: from version 11' );
 
       doSql( "ALTER TABLE `gruppenbestellungen` CHANGE column `bestellguppen_id` `bestellgruppen_id` int(11)" );
@@ -4759,7 +4759,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
       logger( 'update_database: update to version 12 successful' );
 
-  case 12:
+    case 12:
       logger( 'starting update_database: from version 12' );
 
       doSql( "ALTER TABLE `bestellvorschlaege` MODIFY COLUMN `liefermenge` decimal(10,3) not null default 0
@@ -4834,7 +4834,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
 
       logger( 'update_database: update to version 13 successful' );
-  case 13:
+    case 13:
       logger( 'starting update_database: from version 13' );
 
       doSql( "update `bestellzuordnung` set art=20 where art=0" );
@@ -4843,7 +4843,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 14 ) );
 
       logger( 'update_database: update to version 14 successful' );
-  case 14:
+    case 14:
       logger( 'starting update_database: from version 14' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `katalogformat` varchar(20) not null default '' " );
@@ -4852,7 +4852,7 @@ function update_database( $version ) {
 
       logger( 'update_database: update to version 15 successful' );
 
-  case 15:
+    case 15:
       logger( 'starting update_database: from version 15' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `gueltig` tinyint(1) not null default 1 " );
@@ -4860,7 +4860,7 @@ function update_database( $version ) {
 
       logger( 'update_database: update to version 16 successful' );
 
-  case 16:
+    case 16:
       logger( 'starting update_database: from version 16' );
 
       doSql( "ALTER TABLE `gesamtbestellungen` ADD COLUMN `abrechnung_id` int(11) not null default 0 " );
@@ -4869,7 +4869,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 17 ) );
       logger( 'update_database: update to version 17 successful' );
 
-  case 17:
+    case 17:
       logger( 'starting update_database: from version 17' );
 
       doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
@@ -4879,7 +4879,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
       logger( 'update_database: update to version 18 successful' );
 
-  case 18:
+    case 18:
       logger( 'starting update_database: from version 18' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` MODIFY COLUMN `gebinde` decimal(8,3) not null default 1.0 " );
@@ -4887,7 +4887,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 19 ) );
       logger( 'update_database: update to version 19 successful' );
 
-  case 19:
+    case 19:
       logger( 'starting update_database: from version 19' );
 
       sql_update( 'lieferanten', array( 'katalogformat' => 'terra' ), array( 'katalogformat' => 'terra_xls' ) );
@@ -4902,7 +4902,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 20 ) );
       logger( 'update_database: update to version 20 successful' );
 
-  case 20:
+    case 20:
       logger( 'starting update_database: from version 20' );
 
       sql_update( 'lieferantenkatalog', array( 'katalogformat' => 'terra' ), array( 'katalogformat' => 'terra_xls' ) );
@@ -4910,7 +4910,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 21 ) );
       logger( 'update_database: update to version 21 successful' );
 
-  case 21:
+    case 21:
       logger( 'starting update_database: from version 21' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `hersteller` text not null default '' " );
@@ -4920,7 +4920,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 22 ) );
       logger( 'update_database: update to version 22 successful' );
 
-  case 22:
+    case 22:
       logger( 'starting update_database: from version 22' );
 
       doSql( "ALTER TABLE `sessions` ADD COLUMN `muteReconfirmation_timestamp` timestamp null default null" );
@@ -4928,7 +4928,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
       logger( 'update_database: update to version 23 successful' );
 
-  case 23:
+    case 23:
       logger( 'starting update_database: from version 23' );
 
       doSql( "CREATE TABLE `catalogue_acronyms` ("
@@ -4944,7 +4944,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
       logger( 'update_database: update to version 24 successful' );
 
-  case 24:
+    case 24:
       logger( 'starting update_database: from version 24' );
 
       doSql( "ALTER TABLE `lieferanten`
@@ -4962,7 +4962,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
       logger( 'update_database: update to version 25 successful' );
 
-  case 25:
+    case 25:
       logger( 'starting update_database: from version 25' );
 
       doSql( "ALTER TABLE `gruppenmitglieder`
@@ -4974,7 +4974,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
       logger( 'update_database: update to version 26 successful' );
 
-  case 26:
+    case 26:
       logger( 'starting update_database: from version 26' );
 
       sql_insert( 'leitvariable', array(
@@ -4991,7 +4991,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 27 ) );
       logger( 'update_database: update to version 27 successful' );
 
-  case 27:
+    case 27:
       logger( 'starting update_database: from version 27' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `bestellfaxspalten` int(11) not null default 534541" );
@@ -4999,7 +4999,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 28 ) );
       logger( 'update_database: update to version 28 successful' );
 
-  case 28:
+    case 28:
       logger( 'starting update_database: from version 28' );
       sql_insert( 'leitvariable', array(
         'name' => 'exportDB'
@@ -5009,7 +5009,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 29 ) );
       logger( 'update_database: update to version 29 successful' );
 
-  case 29:
+    case 29:
       logger( 'starting update_database: from version 29' );
 
       doSql( "ALTER TABLE `gruppenmitglieder` ADD COLUMN `notiz` text not null " );
@@ -5017,42 +5017,42 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 30 ) );
       logger( 'update_database: update to version 30 successful' );
 
-  case 30:
+    case 30:
       logger( 'starting update_database: from version 30' );
 
       doSql( "ALTER TABLE `bestellgruppen` ADD COLUMN `notiz_gruppe` text not null " );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 31 ) );
       logger( 'update_database: update to version 31 successful' );
-  case 31:
+    case 31:
       logger( 'starting update_database: from version 31' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogaufschlag` decimal(5,2) not null default 0.0" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 32 ) );
       logger( 'update_database: update to version 32 successful' );
-  case 32:
+    case 32:
       logger( 'starting update_database: from version 32' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `gruppenpfand` decimal(4,2) not null default 0.16" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 33 ) );
       logger( 'update_database: update to version 33 successful' );
-  case 33:
+    case 33:
       logger( 'starting update_database: from version 33' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogaufschlagrunden` tinyint(1) not null default 1" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 34 ) );
       logger( 'update_database: update to version 34 successful' );
-  case 34:
+    case 34:
       logger( 'starting update_database: from version 34' );
 
       doSql( "ALTER TABLE `pfandverpackungen` MODIFY COLUMN `wert` decimal(8,4) not null default 0.0" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 35 ) );
       logger( 'update_database: update to version 35 successful' );
-  case 35:
+    case 35:
       logger( 'starting update_database: from version 35' );
 
       sql_insert( 'leitvariable', array(
@@ -5063,7 +5063,7 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 36 ) );
       logger( 'update_database: update to version 36 successful' );
-  case 36:
+    case 36:
       logger( 'starting update_database: from version 36' );
 
       sql_insert( 'leitvariable', array(
@@ -5079,14 +5079,14 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 37 ) );
       logger( 'update_database: update to version 37 successful' );
-  case 37:
+    case 37:
       logger( 'starting update_database: from version 37' );
 
       doSql( "ALTER TABLE `bestellvorschlaege` ADD INDEX `by_produkt_id` (`produkt_id`)" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 38 ) );
       logger( 'update_database: update to version 38 successful' );
-  case 38:
+    case 38:
       logger( 'starting update_database: from version 38' );
 
       doSql( "ALTER TABLE `produktpreise` ADD INDEX `by_zeitstart` (`produkt_id`, `zeitstart`)" );
@@ -5094,6 +5094,33 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 39 ) );
       logger( 'update_database: update to version 39 successful' );
+    case 39:
+      logger( 'starting update_database: from version 39' );
+      doSql( "ALTER TABLE bankkonto MODIFY COLUMN `valuta` date NOT NULL" );
+      doSql( "ALTER TABLE bankkonto MODIFY COLUMN `buchungsdatum` date NOT NULL" );
+      doSql( "ALTER TABLE bestellgruppen MODIFY COLUMN `passwort` text NOT NULL default ''" );
+      doSql( "ALTER TABLE bestellgruppen MODIFY COLUMN `notiz_gruppe` text NOT NULL default ''" );
+      doSql( "ALTER TABLE dienstkontrollblatt MODIFY COLUMN `datum` date NOT NULL" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `rechnungsnummer` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `extra_soll` decimal(10,2) NOT NULL default '0.00'" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `extra_text` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `abrechnung_datum` date NULL" );
+      doSql( "ALTER TABLE gruppen_transaktion MODIFY COLUMN `valuta` date NOT NULL" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `rotationsplanposition` int(11) NOT NULL default '0'" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `slogan` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `url` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `photo_url` mediumtext NOT NULL default ''" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `notiz` text NOT NULL default ''" );
+      doSql( "ALTER TABLE leitvariable MODIFY COLUMN `comment` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `grussformel` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `anrede` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `fc_name` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `fc_strasse` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `fc_ort` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `sonstiges` text NOT NULL default ''" );
+      doSql( "ALTER TABLE produktpreise MODIFY COLUMN `zeitstart` datetime NOT NULL" );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 40 ) );
+      logger( 'update_database: update to version 40 successful' );
   }
 }
 

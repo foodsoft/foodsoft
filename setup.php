@@ -28,7 +28,7 @@ if (filter_var($remote_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTE
     }
   }
 }
-  
+
 if( $allow_setup_from and preg_match( '/^'.$allow_setup_from.'/', $remote_ip ) ) {
   true;
 } else {
@@ -108,7 +108,7 @@ function check_2() {
   function check_dir( $path ) {
     echo "check_dir: $path<br>";
     if( $path == 'CVS' or $path == 'attic' ) {
-  
+
     }
     return true;
   }
@@ -160,7 +160,7 @@ function check_2() {
   // recurse_dir( $foodsoft_path );
 
   echo "(Baustelle! Hier werden bisher noch keine tests durchgefuehrt)";
-  
+
   return 0;
 }
 
@@ -287,7 +287,7 @@ function check_4() {
       } else {
         $s .= 'NULL ';
       }
-      if( isset( $props['default'] ) && ( $props['default'] !== '' ) ) {
+      if( isset( $props['default'] ) ) {
         $s .= 'default ' . escape_val( $props['default'] ) .' ';
       }
       if( isset( $props['extra'] ) ) {
@@ -316,7 +316,7 @@ function check_4() {
     $col = $tables[$want_table]['cols'][$want_col];
     $type = $col['type'];
     $null = ( $col['null'] == 'NO' ? 'NOT NULL' : 'NULL' );
-    $default = ( ( isset( $col['default'] ) && ( $col['default'] !== '' ) ) ? "default " . escape_val( $col['default'] ) : '' );
+    $default = ( isset( $col['default'] ) ? "default " . escape_val( $col['default'] ) : '' );
     $extra = ( isset( $col['extra'] ) ? $col['extra'] : '' );
     $s = " ALTER TABLE $want_table $op COLUMN `$want_col` $type $null $default $extra;";
     $changes[] = $s;
@@ -359,7 +359,7 @@ function check_4() {
     add_index( $table, $index );
   }
 
-  if( $_POST['action'] == 'repair' ) {
+  if( $_POST['action'] ?? null == 'repair' ) {
     foreach( $_POST as $name => $value ) {
       $v = explode( '_', $name );
       switch( $v[0] ) {
@@ -458,7 +458,7 @@ function check_4() {
           <td><?php echo $field; ?></td>
           <td><?php echo $row['Type']; ?></td>
           <td><?php echo $row['Null']; ?></td>
-          <td><?php echo $row['Default']; ?></td>
+          <td><?php echo $row['Default'] ?? 'NULL'; ?></td>
           <td><?php echo $row['Extra']; ?></td>
       <?php
       if( isset( $want_cols[$field] ) ) {
@@ -473,13 +473,19 @@ function check_4() {
         }
         if( $want_col['null'] != $row['Null'] ) {
           $mismatch = true;
-          $s .= "<td class='warn'>{$want_cold['null']}</td>";
+          $s .= "<td class='warn'>{$want_col['null']}</td>";
         } else {
           $s .= "<td>&nbsp;</td>";
         }
-        if( $want_col['default'] != $row['Default'] ) {
+        // unquote strings for comparison because number and string defaults are
+        // both represented as strings in structure.php
+        $rowDefaultAsStr
+          = is_null($row['Default']) ? null
+          : preg_replace("/^'(.*)'$/", '$1', $row['Default']);
+        if( $want_col['default'] !== $rowDefaultAsStr ) {
           $mismatch = true;
-          $s .= "<td class='warn'>{$want_col['default']}</td>";
+          $quote = strstr($row['Type'], 'text') ? "'" : '';
+          $s .= "<td class='warn'>".(is_null($want_col['default']) ? 'NULL' : "$quote{$want_col['default']}$quote")."</td>";
         } else {
           $s .= "<td>&nbsp;</td>";
         }
@@ -653,7 +659,7 @@ function check_5() {
   require_once('leitvariable.php');
   $id = 1;
 
-  if( $_POST['action'] == 'repair' ) {
+  if( $_POST['action'] ?? null == 'repair' ) {
     foreach( $_POST as $name => $value ) {
       $v = explode( '_', $name );
       if( $v[0] != 'leit' )
@@ -804,11 +810,11 @@ function check_6() {
   }
 
   if( $muell_id and isset( $_POST['add_group_muell'] ) ) {
-    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort )
                   VALUES ( $muell_id, 'Bad Bank', 0, '*' )";
   }
   if( $basar_id and isset( $_POST['add_group_basar'] ) ) {
-    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort )
                   VALUES ( $basar_id, 'Basargruppe', 0, '*' )";
   }
   if( isset( $_POST['add_group_regular'] ) ) {
@@ -823,7 +829,7 @@ function check_6() {
       $salt .= sprintf( '%02x', ord($c) );
       $bytes--;
     }
-    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort, salt ) 
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort, salt )
                   VALUES ( $group_id, '$group_name', 1, '". crypt( $password, $salt) ."' , '$salt' )";
   }
   if( $changes )

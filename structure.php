@@ -1,1417 +1,1416 @@
 <?php
 
-// db version 35
+// db version 40
 
-$tables = array(
-  'bankkonten' => array(
+$tables = [
+  'bankkonten' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'kontonr' => array(
+      ]
+    , 'kontonr' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'blz' => array(
+      ]
+    , 'blz' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'url' => array(
+      ]
+    , 'url' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'kommentar' => array(
+      ]
+    , 'kommentar' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'letzter_auszug_jahr' => array(
+      ]
+    , 'letzter_auszug_jahr' => [
         'type' =>  "smallint(6)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'letzter_auszug_nr' => array(
+      ]
+    , 'letzter_auszug_nr' => [
         'type' =>  "smallint(6)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'bankkonto' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+, 'bankkonto' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'valuta' => array(
+      ]
+    , 'valuta' => [
         'type' =>  "date"
       , 'null' => 'NO'
-      , 'default' => '0000-00-00'
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'kontoauszug_jahr' => array(
+      ]
+    , 'kontoauszug_jahr' => [
         'type' =>  "smallint(6)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'kontoauszug_nr' => array(
+      ]
+    , 'kontoauszug_nr' => [
         'type' =>  "smallint(6)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'buchungsdatum' => array(
+      ]
+    , 'buchungsdatum' => [
         'type' =>  "date"
       , 'null' => 'NO'
-      , 'default' => '0000-00-00'
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'dienstkontrollblatt_id' => array(
+      ]
+    , 'dienstkontrollblatt_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'betrag' => array(
+      ]
+    , 'betrag' => [
         'type' =>  "decimal(10,2)"
       , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'kommentar' => array(
+      ]
+    , 'kommentar' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'konto_id' => array(
+      ]
+    , 'konto_id' => [
         'type' =>  "smallint(6)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'konterbuchung_id' => array(
+      ]
+    , 'konterbuchung_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'konto_id, kontoauszug_jahr, kontoauszug_nr' )
-    )
-  )
-, 'bestellgruppen' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 0, 'collist' => 'konto_id, kontoauszug_jahr, kontoauszug_nr' ]
+    ]
+  ]
+, 'bestellgruppen' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'passwort' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-    )
-    , 'passwort' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-    )
-    , 'salt' => array(
+      ]
+    , 'salt' => [
         'type' =>  "char(8)"
       , 'null' => 'NO'
       , 'default' => '35464'
       , 'extra' => ''
-    )
-    , 'sockeleinlage' => array(
-        'type' => "decimal(8,2)"
+      ]
+    , 'sockeleinlage' => [
+        'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-    )
-    , 'aktiv' => array(
+      ]
+    , 'aktiv' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'notiz_gruppe' => array(
-        'type' => "text"
+      ]
+    , 'notiz_gruppe' => [
+        'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'bestellvorschlaege' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+, 'bestellvorschlaege' => [
     'updownload' => true
-  , 'cols' => array(
-      'produkt_id' => array(
+  , 'cols' => [
+      'produkt_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'gesamtbestellung_id' => array(
+      ]
+    , 'gesamtbestellung_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'produktpreise_id' => array(
+      ]
+    , 'produktpreise_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'liefermenge' => array(
-        'type' =>  "decimal(10,3)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'gesamtbestellung_id, produkt_id' )
-      , 'by_produkt_id' => [ 'unique' => 0, 'collist' => 'produkt_id' ]
-    )
-  )
-, 'bestellzuordnung' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'produkt_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'gruppenbestellung_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'menge' => array(
+      ]
+    , 'liefermenge' => [
         'type' =>  "decimal(10,3)"
       , 'null' => 'NO'
       , 'default' => '0.000'
       , 'extra' => ''
-      )
-    , 'art' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'gesamtbestellung_id, produkt_id' ]
+    , 'by_produkt_id' => [ 'unique' => 0, 'collist' => 'produkt_id' ]
+    ]
+  ]
+, 'bestellzuordnung' => [
+    'updownload' => true
+  , 'cols' => [
+      'id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => 'auto_increment'
+      ]
+    , 'produkt_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'gruppenbestellung_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'menge' => [
+        'type' =>  "decimal(10,3)"
+      , 'null' => 'NO'
+      , 'default' => '0.000'
+      , 'extra' => ''
+      ]
+    , 'art' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'zeitpunkt' => array(
+      ]
+    , 'zeitpunkt' => [
         'type' =>  "timestamp"
       , 'null' => 'NO'
       , 'default' => 'current_timestamp()'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'art, produkt_id, gruppenbestellung_id' )
-      , 'nochnindex' => array( 'unique' => 0, 'collist' => 'produkt_id, gruppenbestellung_id' )
-      , 'undnocheiner' => array( 'unique' => 0, 'collist' => 'art, gruppenbestellung_id' )
-    )
-  )
-, 'dienste' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 0, 'collist' => 'art, produkt_id, gruppenbestellung_id' ]
+    , 'nochnindex' => [ 'unique' => 0, 'collist' => 'produkt_id, gruppenbestellung_id' ]
+    , 'undnocheiner' => [ 'unique' => 0, 'collist' => 'art, gruppenbestellung_id' ]
+    ]
+  ]
+, 'catalogue_acronyms' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'dienstkontrollblatt_id' => array(
+      ]
+    , 'context' => [
+        'type' =>  "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'acronym' => [
+        'type' =>  "varchar(10)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'definition' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'comment' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'url' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 1, 'collist' => 'context, acronym' ]
+    ]
+  ]
+, 'dienste' => [
+    'updownload' => true
+  , 'cols' => [
+      'id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => 'auto_increment'
+      ]
+    , 'dienstkontrollblatt_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'dienst' => array(
+      ]
+    , 'dienst' => [
         'type' =>  "enum('1/2','3','4','5','freigestellt')"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'lieferdatum' => array(
+      ]
+    , 'lieferdatum' => [
         'type' =>  "date"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'status' => array(
+      ]
+    , 'status' => [
         'type' =>  "enum('Vorgeschlagen','Akzeptiert','Bestaetigt','Offen')"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'geleistet' => array(
+      ]
+    , 'geleistet' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'bemerkung' => array(
+      ]
+    , 'bemerkung' => [
         'type' =>  "text"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'gruppenmitglieder_id' => array(
+      ]
+    , 'gruppenmitglieder_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'gruppen_id' => array(
+      ]
+    , 'gruppen_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'mitglied' => array( 'unique' => 0, 'collist' => 'gruppenmitglieder_id' )
-    )
-  )
-, 'dienstkontrollblatt' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'mitglied' => [ 'unique' => 0, 'collist' => 'gruppenmitglieder_id' ]
+    ]
+  ]
+, 'dienstkontrollblatt' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'gruppen_id' => array(
+      ]
+    , 'gruppen_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'dienst' => array(
+      ]
+    , 'dienst' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'datum' => array(
+      ]
+    , 'datum' => [
         'type' =>  "date"
       , 'null' => 'NO'
-      , 'default' => '0000-00-00'
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'zeit' => array(
+      ]
+    , 'zeit' => [
         'type' =>  "time"
       , 'null' => 'NO'
       , 'default' => '00:00:00'
       , 'extra' => ''
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'telefon' => array(
+      ]
+    , 'telefon' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'notiz' => array(
+      ]
+    , 'notiz' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'dienst, gruppen_id, datum' )
-    )
-  )
-, 'gesamtbestellungen' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 1, 'collist' => 'dienst, gruppen_id, datum' ]
+    ]
+  ]
+, 'gesamtbestellungen' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'bestellstart' => array(
+      ]
+    , 'bestellstart' => [
         'type' =>  "datetime"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'bestellende' => array(
+      ]
+    , 'bestellende' => [
         'type' =>  "datetime"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'ausgang' => array(
+      ]
+    , 'ausgang' => [
         'type' =>  "datetime"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'lieferung' => array(
+      ]
+    , 'lieferung' => [
         'type' =>  "date"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'bezahlung' => array(
+      ]
+    , 'bezahlung' => [
         'type' =>  "datetime"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'rechnungssumme' => array(
+      ]
+    , 'rechnungssumme' => [
         'type' =>  "decimal(10,2)"
       , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'abrechnung_dienstkontrollblatt_id' => array(
+      ]
+    , 'abrechnung_dienstkontrollblatt_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'rechnungsnummer' => array(
+      ]
+    , 'rechnungsnummer' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'lieferanten_id' => array(
+      ]
+    , 'lieferanten_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'rechnungsstatus' => array(
+      ]
+    , 'rechnungsstatus' => [
         'type' =>  "smallint(6)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'extra_soll' => array(
+      ]
+    , 'extra_soll' => [
         'type' =>  "decimal(10,2)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'extra_text' => array(
+      ]
+    , 'extra_text' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'aufschlag_prozent' => array(
+      ]
+    , 'aufschlag_prozent' => [
         'type' =>  "decimal(4,2)"
       , 'null' => 'NO'
-      , 'default' => '0.0'
+      , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'abrechnung_datum' => array(
+      ]
+    , 'abrechnung_datum' => [
+        'type' =>  "date"
+      , 'null' => 'YES'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'abrechnung_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'rechnungsstatus' => [ 'unique' => 0, 'collist' => 'rechnungsstatus' ]
+    ]
+  ]
+, 'gruppen_transaktion' => [
+    'updownload' => true
+  , 'cols' => [
+      'id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => 'auto_increment'
+      ]
+    , 'dienstkontrollblatt_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'type' => [
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'gruppen_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'eingabe_zeit' => [
+        'type' =>  "timestamp"
+      , 'null' => 'NO'
+      , 'default' => 'current_timestamp()'
+      , 'extra' => ''
+      ]
+    , 'summe' => [
+        'type' =>  "decimal(10,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.00'
+      , 'extra' => ''
+      ]
+    , 'notiz' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'valuta' => [
         'type' =>  "date"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'abrechnung_id' => array(
+      ]
+    , 'konterbuchung_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'rechnungsstatus' => array( 'unique' => 0, 'collist' => 'rechnungsstatus' )
-    )
-  )
-, 'gruppenbestellungen' => array(
+      ]
+    , 'lieferanten_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 0, 'collist' => 'gruppen_id, valuta' ]
+    , 'tertiary' => [ 'unique' => 0, 'collist' => 'lieferanten_id, valuta' ]
+    ]
+  ]
+, 'gruppenbestellungen' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'bestellgruppen_id' => array(
+      ]
+    , 'bestellgruppen_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'gesamtbestellung_id' => array(
+      ]
+    , 'gesamtbestellung_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'gesamtbestellung_id, bestellgruppen_id' )
-      , 'gruppe' => array( 'unique' => 0, 'collist' => 'bestellgruppen_id' )
-    )
-  )
-, 'gruppenmitglieder' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 1, 'collist' => 'gesamtbestellung_id, bestellgruppen_id' ]
+    , 'gruppe' => [ 'unique' => 0, 'collist' => 'bestellgruppen_id' ]
+    ]
+  ]
+, 'gruppenmitglieder' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'gruppen_id' => array(
+      ]
+    , 'gruppen_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'vorname' => array(
+      ]
+    , 'vorname' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'telefon' => array(
+      ]
+    , 'telefon' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'email' => array(
+      ]
+    , 'email' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'diensteinteilung' => array(
+      ]
+    , 'diensteinteilung' => [
         'type' =>  "enum('1/2','3','4','5','freigestellt')"
       , 'null' => 'NO'
       , 'default' => 'freigestellt'
       , 'extra' => ''
-      )
-    , 'rotationsplanposition' => array(
+      ]
+    , 'rotationsplanposition' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'sockeleinlage' => array(
-        'type' => "decimal(8,2)"
+      ]
+    , 'sockeleinlage' => [
+        'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'aktiv' => array(
+      ]
+    , 'aktiv' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'slogan' => array(
-        'type' => "text"
+      ]
+    , 'slogan' => [
+        'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'url' => array(
-        'type' => "text"
+      ]
+    , 'url' => [
+        'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'photo_url' => array(
-        'type' => 'mediumtext'
+      ]
+    , 'photo_url' => [
+        'type' =>  "mediumtext"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'notiz' => array(
-        'type' => "text"
+      ]
+    , 'notiz' => [
+        'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'gruppe' => array( 'unique' => 0, 'collist' => 'gruppen_id' )
-      , 'rotationsplan' => array( 'unique' => 1, 'collist' => 'rotationsplanposition' )
-    )
-  )
-, 'gruppenpfand' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'rotationsplan' => [ 'unique' => 1, 'collist' => 'rotationsplanposition' ]
+    , 'gruppe' => [ 'unique' => 0, 'collist' => 'gruppen_id' ]
+    ]
+  ]
+, 'gruppenpfand' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'bestell_id' => array(
+      ]
+    , 'bestell_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'gruppen_id' => array(
+      ]
+    , 'gruppen_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'pfand_wert' => array(
+      ]
+    , 'pfand_wert' => [
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
-      , 'default' => '0.0'
-      , 'extra' => ''
-      )
-    , 'anzahl_leer' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, gruppen_id' )
-      , 'gruppe' => array( 'unique' => 0, 'collist' => 'gruppen_id' )
-    )
-  )
-, 'gruppen_transaktion' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'dienstkontrollblatt_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'type' => array(
-        'type' =>  "tinyint(1)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'gruppen_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'eingabe_zeit' => array(
-        'type' =>  "timestamp"
-      , 'null' => 'NO'
-      , 'default' => 'current_timestamp()'
-      , 'extra' => ''
-      )
-    , 'summe' => array(
-        'type' =>  "decimal(10,2)"
-      , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'notiz' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'valuta' => array(
-        'type' =>  "date"
-      , 'null' => 'NO'
-      , 'default' => '0000-00-00'
-      , 'extra' => ''
-      )
-    , 'konterbuchung_id' => array(
+      ]
+    , 'anzahl_leer' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'lieferanten_id' => array(
-        'type' =>  "int(11)"
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 1, 'collist' => 'bestell_id, gruppen_id' ]
+    , 'gruppe' => [ 'unique' => 0, 'collist' => 'gruppen_id' ]
+    ]
+  ]
+, 'leitvariable' => [
+    'updownload' => false
+  , 'cols' => [
+      'name' => [
+        'type' =>  "varchar(30)"
       , 'null' => 'NO'
-      , 'default' => '0'
+      , 'default' => null
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'gruppen_id, valuta' )
-      , 'tertiary' => array( 'unique' => 0, 'collist' => 'lieferanten_id, valuta' )
-    )
-  )
-, 'leitvariable' => array(
-    'updownload' => false  // leitvariable werden gesondert behandelt!
-  , 'cols' => array(
-      'name' => array(
-        'type' =>  'varchar(30)'
+      ]
+    , 'value' => [
+        'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'value' => array(
+      ]
+    , 'comment' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'comment' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'name' )
-    )
-  )
-, 'lieferanten' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'name' ]
+    ]
+  ]
+, 'lieferanten' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'strasse' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'ort' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'ansprechpartner' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'telefon' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'fax' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'mail' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'grussformel' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'strasse' => array(
+      ]
+    , 'anrede' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'ort' => array(
+      ]
+    , 'fc_name' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'ansprechpartner' => array(
+      ]
+    , 'fc_strasse' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'telefon' => array(
+      ]
+    , 'fc_ort' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'fax' => array(
+      ]
+    , 'liefertage' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'bestellmodalitaeten' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'url' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'kundennummer' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'sonstiges' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
       , 'extra' => ''
-      )
-    , 'mail' => array(
-        'type' =>  "text"
+      ]
+    , 'katalogformat' => [
+        'type' =>  "varchar(20)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'grussformel' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'anrede' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'fc_name' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'fc_strasse' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'fc_ort' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'liefertage' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'bestellmodalitaeten' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'url' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'kundennummer' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'sonstiges' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'katalogformat' => array(
-        'type' => 'varchar(20)'
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'bestellfaxspalten' => array(
+      ]
+    , 'bestellfaxspalten' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '534541'
       , 'extra' => ''
-      )
-    , 'katalogaufschlag' => array(
-          'type' => 'decimal(5,2)'
-        , 'null' => 'NO'
-        , 'default' => '0.0'
-        , 'extra' => ''
-      )
-    , 'gruppenpfand' => array(
-          'type' => 'decimal(4,2)'
-        , 'null' => 'NO'
-        , 'default' => '0.16'
-        , 'extra' => ''
-      )
-    , 'katalogaufschlagrunden' => array(
-          'type' => 'tinyint(1)'
-        , 'null' => 'NO'
-        , 'default' => '1'
-        , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'lieferantenkatalog' => array(
+      ]
+    , 'katalogaufschlag' => [
+        'type' =>  "decimal(5,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.00'
+      , 'extra' => ''
+      ]
+    , 'gruppenpfand' => [
+        'type' =>  "decimal(4,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.16'
+      , 'extra' => ''
+      ]
+    , 'katalogaufschlagrunden' => [
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '1'
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+, 'lieferantenkatalog' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'lieferanten_id' => array(
+      ]
+    , 'lieferanten_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'artikelnummer' => array(
+      ]
+    , 'artikelnummer' => [
         'type' =>  "bigint(20)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'bestellnummer' => array(
+      ]
+    , 'bestellnummer' => [
         'type' =>  "bigint(20)"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'liefereinheit' => array(
-        'type' =>  'varchar(20)'
+      ]
+    , 'liefereinheit' => [
+        'type' =>  "varchar(20)"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'gebinde' => array(
+      ]
+    , 'gebinde' => [
         'type' =>  "decimal(8,3)"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'mwst' => array(
+      ]
+    , 'mwst' => [
         'type' =>  "decimal(4,2)"
       , 'null' => 'NO'
-      , 'default' => '0.0'
+      , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'pfand' => array(
+      ]
+    , 'pfand' => [
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
-      , 'default' => '0.0'
+      , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'verband' => array(
+      ]
+    , 'verband' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'herkunft' => array(
+      ]
+    , 'herkunft' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'preis' => array(
+      ]
+    , 'preis' => [
         'type' =>  "decimal(8,2)"
       , 'null' => 'NO'
-      , 'default' => '0.0'
+      , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'katalogdatum' => array(
+      ]
+    , 'katalogdatum' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'katalogtyp' => array(
+      ]
+    , 'katalogtyp' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'katalogformat' => array(
-        'type' => 'varchar(20)'
+      ]
+    , 'katalogformat' => [
+        'type' =>  "varchar(20)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'gueltig' => array(
+      ]
+    , 'gueltig' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '1'
       , 'extra' => ''
-      )
-    , 'hersteller' => array(
-        'type' => "text"
+      ]
+    , 'hersteller' => [
+        'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-    )
-    , 'bemerkung' => array(
-        'type' => "text"
+      ]
+    , 'bemerkung' => [
+        'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-    )
-    , 'ean_einzeln' => array(
-        'type' => "varchar(15)"
+      ]
+    , 'ean_einzeln' => [
+        'type' =>  "varchar(15)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-    )
-  )
-  , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'lieferanten_id, artikelnummer' )
-  )
-)
-, 'lieferantenpfand' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 1, 'collist' => 'lieferanten_id, artikelnummer' ]
+    ]
+  ]
+, 'lieferantenpfand' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'verpackung_id' => array(
+      ]
+    , 'verpackung_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'bestell_id' => array(
+      ]
+    , 'bestell_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'anzahl_voll' => array(
+      ]
+    , 'anzahl_voll' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'anzahl_leer' => array(
+      ]
+    , 'anzahl_leer' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' )
-    )
-  )
-, 'logbook' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' ]
+    ]
+  ]
+, 'logbook' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'session_id' => array(
+      ]
+    , 'session_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'time_stamp' => array(
+      ]
+    , 'time_stamp' => [
         'type' =>  "timestamp"
       , 'null' => 'NO'
       , 'default' => 'current_timestamp()'
       , 'extra' => ''
-      )
-    , 'notiz' => array(
+      ]
+    , 'notiz' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'pfandverpackungen' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+, 'pfandverpackungen' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'lieferanten_id' => array(
+      ]
+    , 'lieferanten_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'name' => array(
+      ]
+    , 'name' => [
         'type' =>  "text"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'wert' => array(
+      ]
+    , 'wert' => [
         'type' =>  "decimal(8,4)"
       , 'null' => 'NO'
-      , 'default' => '0.0'
+      , 'default' => '0.0000'
       , 'extra' => ''
-      )
-    , 'mwst' => array(
-        'type' =>  "decimal(6,2)"
-      , 'null' => 'NO'
-      , 'default' => '0.0'
-      , 'extra' => ''
-      )
-    , 'sort_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'sort_id' => array( 'unique' => 0, 'collist' => 'lieferanten_id, sort_id' )
-    )
-  )
-, 'produkte' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'artikelnummer' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'name' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'lieferanten_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'produktgruppen_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'notiz' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'dauerbrenner' => array(
-        'type' =>  "tinyint(1)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'by_lieferanten_id' => [ 'unique' => 0, 'collist' => 'lieferanten_id' ]
-    )
-  )
-, 'produktgruppen' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'name' => array(
-        'type' =>  "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'produktpreise' => array(
-    'updownload' => true
-  , 'cols' => array(
-      'id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'produkt_id' => array(
-        'type' =>  "int(11)"
-      , 'null' => 'NO'
-      , 'default' => '0'
-      , 'extra' => ''
-      )
-    , 'lieferpreis' => array(
-        'type' =>  "decimal(12,4)"
-      , 'null' => 'NO'
-      , 'default' => '0.0'
-      , 'extra' => ''
-      )
-    , 'zeitstart' => array(
-        'type' =>  "datetime"
-      , 'null' => 'NO'
-      , 'default' => '0000-00-00 00:00:00'
-      , 'extra' => ''
-      )
-    , 'zeitende' => array(
-        'type' =>  "datetime"
-      , 'null' => 'YES'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'bestellnummer' => array(
-        'type' =>  'varchar(20)'
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'pfand' => array(
+      ]
+    , 'mwst' => [
         'type' =>  "decimal(6,2)"
       , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'mwst' => array(
+      ]
+    , 'sort_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'sort_id' => [ 'unique' => 0, 'collist' => 'lieferanten_id, sort_id' ]
+    ]
+  ]
+, 'produkte' => [
+    'updownload' => true
+  , 'cols' => [
+      'id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => 'auto_increment'
+      ]
+    , 'artikelnummer' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'name' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'lieferanten_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'produktgruppen_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'notiz' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'dauerbrenner' => [
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'by_lieferanten_id' => [ 'unique' => 0, 'collist' => 'lieferanten_id' ]
+    ]
+  ]
+, 'produktgruppen' => [
+    'updownload' => true
+  , 'cols' => [
+      'id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => 'auto_increment'
+      ]
+    , 'name' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+, 'produktpreise' => [
+    'updownload' => true
+  , 'cols' => [
+      'id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => 'auto_increment'
+      ]
+    , 'produkt_id' => [
+        'type' =>  "int(11)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'lieferpreis' => [
+        'type' =>  "decimal(12,4)"
+      , 'null' => 'NO'
+      , 'default' => '0.0000'
+      , 'extra' => ''
+      ]
+    , 'zeitstart' => [
+        'type' =>  "datetime"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'zeitende' => [
+        'type' =>  "datetime"
+      , 'null' => 'YES'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'bestellnummer' => [
+        'type' =>  "varchar(20)"
+      , 'null' => 'NO'
+      , 'default' => null
+      , 'extra' => ''
+      ]
+    , 'pfand' => [
+        'type' =>  "decimal(6,2)"
+      , 'null' => 'NO'
+      , 'default' => '0.00'
+      , 'extra' => ''
+      ]
+    , 'mwst' => [
         'type' =>  "decimal(4,2)"
       , 'null' => 'NO'
       , 'default' => '0.00'
       , 'extra' => ''
-      )
-    , 'verteileinheit' => array(
+      ]
+    , 'verteileinheit' => [
         'type' =>  "varchar(10)"
       , 'null' => 'NO'
       , 'default' => '1 ST'
       , 'extra' => ''
-      )
-    , 'gebindegroesse' => array(
+      ]
+    , 'gebindegroesse' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '1'
       , 'extra' => ''
-      )
-    , 'liefereinheit' => array(
+      ]
+    , 'liefereinheit' => [
         'type' =>  "varchar(10)"
       , 'null' => 'NO'
       , 'default' => '1 ST'
       , 'extra' => ''
-      )
-    , 'lv_faktor' => array(
+      ]
+    , 'lv_faktor' => [
         'type' =>  "decimal(12,6)"
       , 'null' => 'NO'
-      , 'default' => '1.0'
+      , 'default' => '1.000000'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-      , 'secondary' => array( 'unique' => 0, 'collist' => 'produkt_id, zeitende' )
-      , 'by_zeitstart' => [ 'unique' => 0, 'collist' => 'produkt_id, zeitstart' ]
-    )
-  )
-, 'sessions' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    , 'secondary' => [ 'unique' => 0, 'collist' => 'produkt_id, zeitende' ]
+    , 'by_zeitstart' => [ 'unique' => 0, 'collist' => 'produkt_id, zeitstart' ]
+    ]
+  ]
+, 'sessions' => [
     'updownload' => true
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'cookie' => array(
+      ]
+    , 'cookie' => [
         'type' =>  "varchar(10)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'login_gruppen_id' => array(
+      ]
+    , 'login_gruppen_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'dienst' => array(
+      ]
+    , 'dienst' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'dienstkontrollblatt_id' => array(
+      ]
+    , 'dienstkontrollblatt_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'session_timestamp' => array(
+      ]
+    , 'session_timestamp' => [
         'type' =>  "timestamp"
       , 'null' => 'NO'
       , 'default' => 'current_timestamp()'
       , 'extra' => ''
-      )
-    , 'muteReconfirmation_timestamp' => array(
-        'type' => "timestamp"
+      ]
+    , 'muteReconfirmation_timestamp' => [
+        'type' =>  "timestamp"
       , 'null' => 'YES'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'transactions' => array(
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+, 'transactions' => [
     'updownload' => false
-  , 'cols' => array(
-      'id' => array(
+  , 'cols' => [
+      'id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => 'auto_increment'
-      )
-    , 'used' => array(
+      ]
+    , 'used' => [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    , 'itan' => array(
+      ]
+    , 'itan' => [
         'type' =>  "varchar(10)"
       , 'null' => 'NO'
-      , 'default' => ''
+      , 'default' => null
       , 'extra' => ''
-      )
-    , 'session_id' => array(
+      ]
+    , 'session_id' => [
         'type' =>  "int(11)"
       , 'null' => 'NO'
       , 'default' => '0'
       , 'extra' => ''
-      )
-    )
-    , 'indices' => array(
-        'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    )
-  )
-, 'catalogue_acronyms' => array(
-    'updownload' => true
-  , 'cols'=> array(
-      'id' => array(
-        'type' => "int(11)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => 'auto_increment'
-      )
-    , 'context' => array(
-        'type' => "varchar(10)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'acronym' => array(
-        'type' => "varchar(10)"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'definition' => array(
-        'type' => "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'comment' => array(
-        'type' => "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    , 'url' => array(
-        'type' => "text"
-      , 'null' => 'NO'
-      , 'default' => ''
-      , 'extra' => ''
-      )
-    )
-  , 'indices' => array(
-      'PRIMARY' => array( 'unique' => 1, 'collist' => 'id' )
-    , 'secondary' => array( 'unique' => 1, 'collist' => 'context, acronym')
-  )
-)
-);
-
+      ]
+    ]
+  , 'indices' => [
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+    ]
+  ]
+];
 ?>

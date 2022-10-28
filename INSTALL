@@ -41,11 +41,13 @@ Installation der Foodosoft:
     (siehe apache.sample.conf), alternativ koennt Ihr sie in der Datei
       code/config.php
     eintragen.
-    - stellt sicher, dass in Eurer my.cnf die Option sql_mode den Wert
+    - Bis Oktober 2022 galt:
+      stellt sicher, dass in Eurer my.cnf die Option sql_mode den Wert
       STRICT_TRANS_TABLES *nicht* enthält!
       Dieser Wert ist seit MariaDB 10.2.4 defaultmäßig enthalten, kann man mit
         show variables like 'sql_mode';
       überprüfen.
+      Seitdem sollte die Foodsoft auch mit STRICT_TRANS_TABLES funktionieren.
 
 (d) Zum Test und zur weiteren Konfiguration koennt ihr das Skript setup.php
     benutzen.
