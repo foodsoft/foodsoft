@@ -85,7 +85,15 @@ $lieferant_name = sql_lieferant_name($lieferanten_id);
 if( $editable )
   open_form( 'window=insert_bestellung', "lieferanten_id=$lieferanten_id" );
 
-$produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
+$produkte = sql_produkte( array(
+    'lieferanten_id' => $lieferanten_id
+  , 'price_on_date_or_null' => true
+  , 'katalog' => true
+  , 'references' => $editable
+  , 'bestellzuordnung_menge' => BESTELLZUORDNUNG_ART_VORMERKUNGEN
+  ) );
+if( $options & OPTION_PREISKONSISTENZTEST )
+  $produktpreis_probleme = sql_produktpreise_konsistenztest($lieferanten_id);
 
 $produktgruppen_zahl = array();
 foreach( $produkte as $produkt ) {
@@ -111,12 +119,12 @@ open_table('list hfill');
 
   foreach( $produkte as $p ) {
     $id = $p['produkt_id'];
-    $preis_id = sql_aktueller_produktpreis_id( $id );
-    $produkt = sql_produkt( array( 'produkt_id' => $id, 'preis_id' => $preis_id ) );
-    $references = references_produkt( $id );
-    $vormerkungen_menge = sql_bestellzuordnung_menge( array( 'art' => BESTELLZUORDNUNG_ART_VORMERKUNGEN, 'produkt_id' => $id ) );
-    
-    $katalogeintrag = katalogsuche( $p );
+    $preis_id = $p['preis_id'];
+    $produkt = $p;
+    $references = $p['references'] ?? null;
+    $vormerkungen_menge = $p['bestellzuordnung_menge'];
+
+    $katalogeintrag = unalias_columns($p, 'katalog');
 
     open_tr( 'groupofrows_top' );
       $produktgruppen_id = $produkt['produktgruppen_id'];
@@ -174,7 +182,7 @@ open_table('list hfill');
       // open_td();
       open_td( '', "colspan='$cols'" );
         if( $options & OPTION_PREISKONSISTENZTEST )
-          produktpreise_konsistenztest( $id );
+          produktpreise_konsistenztest_problem_view($produktpreis_probleme[$id] ?? []);
         if( $options & OPTION_KATALOGABGLEICH )
           katalogabgleich( $id, 1 );
   }

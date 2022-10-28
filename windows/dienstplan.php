@@ -265,7 +265,7 @@ open_table( 'list' );
               smallskip();
             $dienst = next( $dienste );
           }
-          if( hat_dienst(5) && ! $readonly && ! $dienst['historic'] ) {
+          if( hat_dienst(5) && ! $readonly && ! ( $options & OPTION_SHOW_HISTORY ) ) {
             open_tr();
             open_td( 'smallskip center', '',
               fc_action( "update,title=Dienst hinzufuegen,class=button,text= + "

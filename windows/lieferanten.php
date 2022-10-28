@@ -44,7 +44,7 @@ foreach( sql_lieferanten() as $row ) {
   $lieferanten_id=$row['id'];
   $kontostand = lieferantenkontostand( $row['id'] );
   open_tr();
-    open_td('','', $row['name'] );
+    open_td('','', fc_link( 'edit_lieferant', [ "lieferanten_id" => $lieferanten_id, "class" => "record", "ro" => "1", "text" => $row['name'] ] ) );
     open_td('','', $row['telefon'] );
     open_td('','', $row['fax'] );
     open_td('','', $row['mail'] );

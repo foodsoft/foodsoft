@@ -25,7 +25,7 @@ $leitvariable = array(
   , 'cols' => '30', 'rows' => 5
   )
 , 'member_showcase_count' => array(
-    'meaning' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+    'meaning' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
   , 'default' => '3'
   , 'local' => false
   , 'comment' => '0, um ganz abzuschalten'
@@ -33,7 +33,7 @@ $leitvariable = array(
   , 'cols' => '2'
   )
 , 'member_showcase_title' => array(
-    'meaning' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+    'meaning' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
   , 'default' => '<b>Ein paar von uns</b>'
   , 'local' => false
   , 'comment' => 'Beliebiger Text mit einfachem HTML'
@@ -105,6 +105,22 @@ $leitvariable = array(
   , 'runtime_editable' => 1
   , 'cols' => '8'
   )
+, 'katalog_mwst_reduziert' => array(
+    'meaning' => 'Reduzierter MwSt-Satz beim BNN-Import'
+  , 'comment' => 'H&auml;ufigster Mehrwertsteuer-Satz auf Lebensmittel in Prozent'
+  , 'default' => '7.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
+, 'katalog_mwst_standard' => array(
+    'meaning' => 'Standard MwSt-Satz beim BNN-Import'
+  , 'comment' => 'Standard-Mehrwertsteuer-Satz in Prozent'
+  , 'default' => '19.00'
+  , 'local' => false
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
 , 'toleranz_default' => array(
     'meaning' => 'Default-Toleranz-Satz'
   , 'comment' => 'automatischer Toleranzzuschlag in Prozent bei Bestellungen (kann im Einzelfall manuell runtergesetzt werden)'
@@ -140,7 +156,7 @@ $leitvariable = array(
   )
 , 'database_version' => array(
     'meaning' => 'Version der Datenbank'
-  , 'default' => '35'
+  , 'default' => '40'
   , 'comment' => 'Bitte den vorgeschlagenen Wert &uuml;bernehmen und nicht manuell &auml;ndern: diese Variable wird bei Upgrades automatisch hochgesetzt!'
   , 'local' => false
   , 'runtime_editable' => 0

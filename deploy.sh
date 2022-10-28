@@ -24,6 +24,7 @@ chmod 644 README.md
 chmod 644 ToDo.txt
 chmod 755 antixls.modif
 chmod 644 apache.sample.conf
+chmod 644 catalogue_acronyms.sql
 chmod 644 code/common.php
 chmod 644 code/config.php
 chmod 644 code/err_functions.php
@@ -85,6 +86,7 @@ chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
 chmod 644 links_und_parameter
 chmod 755 setup.php
+chmod 644 sql/mwst.sql
 chmod 644 structure.php
 chmod 644 templates/bestellschein.tex
 chmod 644 templates/prettytables.tex

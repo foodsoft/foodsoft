@@ -2,7 +2,7 @@
 
 assert($angemeldet) or exit();
 $editable = ! $readonly;
- 
+
 get_http_var( 'meinkonto', 'u', 0, true );
 get_http_var( 'gruppen_id', 'u', 0, true );
 if( ( ! hat_dienst(4,5) ) and ( $gruppen_id == $login_gruppen_id ) ) {
@@ -202,7 +202,6 @@ open_table('list');
     open_td( 'number solidright', '', price_view( $kontostand ) );
 
   $konto_result = sql_transactions( $gruppen_id, 0 );
-  $num_rows = count($result);
 
   $vert_result = sql_bestellungen_soll_gruppe( $gruppen_id );
   $summe = $kontostand;

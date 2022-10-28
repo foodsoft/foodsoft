@@ -46,7 +46,7 @@ function katalog_update(
 ) {
 
   open_div( 'ok' );
-    open_div( 'ok qquad', '', 
+    open_div( 'ok qquad', '',
             "erfasst: $anummer, $bnummer, $name, $bemerkung, $einheit, "
             . "$gebinde, $mwst, $pfand, $hersteller, $verband, $herkunft, "
             . "$netto, $ean_einzeln, $katalogformat" );
@@ -113,7 +113,7 @@ function katalog_update(
 
 
 function upload_terra() {
-  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant, $katalog_mwst_standard, $katalog_mwst_reduziert;
 
   exec( './antixls.modif -c 2>/dev/null ' . $_FILES['katalog']['tmp_name'], $klines );
 
@@ -234,7 +234,7 @@ function upload_terra() {
       }
       continue;
     }
-    
+
     if( ! preg_match( $pattern, $line ) ) {
       open_div( 'alert', '', "Zeile nicht ausgewertet: $line" );
       continue;
@@ -246,7 +246,7 @@ function upload_terra() {
     $bemerkung = "";
     $einheit = "";
     $gebinde = "";
-    $mwst = "7.00";
+    $mwst = $katalog_mwst_reduziert;
     $pfand = "0.00";
     $hersteller = "";
     $verband = "";
@@ -482,7 +482,7 @@ function upload_bode() {
 //
 //  36807;A;20101018;0000;4019736002475;;Brot-Salat 'Gutsherren'          ;;;--;ZWE;;DE;C%;;;0701;;36;;;6 x 200 g;6,00;200 g;1;N;;;;0,20;;;;1;;2,69;;1,63;J;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;T;;;;;kg;5,000000;;
 //
-//  01266;A;20100318;0000;4009233002948;;TK Steinofen Pizzies Salami (2er);(Unsere Natur);St.Pz.Salami2er;--;WGP;;DE;C%;;;1031;;1;;;10 x 2x 150 g;10,00;2x 150 g;1;N;;;;0,30;;;;1;;3,79;;2,45;N;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;F;;;;;kg;3,333000;; 
+//  01266;A;20100318;0000;4009233002948;;TK Steinofen Pizzies Salami (2er);(Unsere Natur);St.Pz.Salami2er;--;WGP;;DE;C%;;;1031;;1;;;10 x 2x 150 g;10,00;2x 150 g;1;N;;;;0,30;;;;1;;3,79;;2,45;N;J;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;0,00;0,00;;;F;;;;;kg;3,333000;;
 //
 // vermutliche semantik:
 //
@@ -516,11 +516,12 @@ function upload_bode() {
 // und um mit der existierenden datenbank kompatibel zu bleiben:
 //
 function upload_bnn( $katalogformat ) {
-  global $db_handle, $katalogkw, $lieferanten_id, $lieferant;
+  global $db_handle, $katalogkw, $lieferanten_id, $lieferant, $katalog_mwst_standard, $katalog_mwst_reduziert;
 
   $klines = file( $_FILES['katalog']['tmp_name'] );
 
   $fuehrungssatz = $klines[0];
+  $fuehrungssatz = iconv( "CP850", "UTF-8", $fuehrungssatz );
   unset( $klines[0] );
 
   need( preg_match( '/^BNN;3;/', $fuehrungssatz ), 'kein oder falsches BNN format' );
@@ -529,17 +530,17 @@ function upload_bnn( $katalogformat ) {
 
   $is_midgard = ($katalogformat == "midgard");
 
-  if( preg_match( '/;"Terra Naturkost /', $fuehrungssatz ) ) {
+  if( preg_match( '/;"?Terra Naturkost /', $fuehrungssatz ) ) {
     // Terra: unterscheidet 4 Kataloge:
-    if( preg_match( '/;"[^"]*(Obst|O&G)/', $fuehrungssatz ) )
+    if( preg_match( '/;[^;]*(Obst|O&G)/', $fuehrungssatz ) )
       $tag = 'OG';
-    else if( preg_match( '/;"(Naturdrog|Drog)/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?(Naturdrog|Drog)/', $fuehrungssatz ) )
       $tag = 'drog';
-    else if( preg_match( '/;"Trocken/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?Trocken/', $fuehrungssatz ) )
       $tag = 'Tr';
-    else if( preg_match( '/;"Frisch/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?Frisch/', $fuehrungssatz ) )
       $tag = 'Fr';
-    else if( preg_match( '/;"Gastronomie/', $fuehrungssatz ) )
+    else if( preg_match( '/;"?Gastronomie/', $fuehrungssatz ) )
       $tag = 'Gastro';
     else
       error( 'Terra: Katalogformat nicht erkannt' );
@@ -626,7 +627,7 @@ function upload_bnn( $katalogformat ) {
     $verband = mysqli_real_escape_string( $db_handle, $splitline[13] );
     $hersteller = mysqli_real_escape_string( $db_handle, $splitline[10] );
     $ean_einzeln = mysqli_real_escape_string( $db_handle, $splitline[4] );
-    
+
     if ( $handelsklasse )
     {
         $handelsklasse = "HK $handelsklasse";
@@ -635,7 +636,7 @@ function upload_bnn( $katalogformat ) {
         else
             $bemerkung = $handelsklasse;
     }
-    
+
     $gebinde = $splitline[22];
     $gebinde = preg_replace( '/,/', '.', trim( $gebinde ) );
     $gebinde = sprintf( '%.2f', $gebinde );
@@ -647,17 +648,35 @@ function upload_bnn( $katalogformat ) {
     // bnn: gelegentlich einheiten wie: 3 x 100g:
     if( preg_match( '/\d *x *\d/', $einheit ) ) {
       $extra_mult = sprintf( '%d', $einheit );
-      $einheit = preg_replace( '/^.*\d *x *(\d.*)$/', '${1}', $einheit ); 
+      $einheit = preg_replace( '/^.*\d *x *(\d.*)$/', '${1}', $einheit );
     } else {
       $extra_mult = 1;
     }
 
+    if( $is_midgard && $gebinde == 1 && $extra_mult == 1 && $einheit == "kg" ) {
+      // Midgard nennt (insbesondere bei Käse) die Gebindegröße nicht korrekt in Spalte 23, sondern gibt 1 kg an
+      // und nennt die echte Größe nur im Name, z.B. "Schafgouda jung ca.4kg", "Gouda Koriander/Bockshorn 4 kg"
+      // "Tommette de Yenne ca. 800g", oder gar "Scamorza geräu.2x360gfoliert"
+
+      if( preg_match( '/(\d+\s*x\s*)?(\d+[,.]?\d*)\s*(k?g)/', $name, $parts ) ) {
+        $gebinde = preg_replace( '/,/', '.', trim( $parts[2] ) );
+        if( $parts[1] )
+          $gebinde *= $parts[1];
+        $einheit = $parts[3];
+
+        if( $einheit == 'g' ) {
+          $gebinde = sprintf( '%.3f', $gebinde / 1000 );
+          $einheit = 'kg';
+        }
+      }
+    }
+
     switch( trim( $splitline[33] ) ) {
       case '1':
-        $mwst = "7.00";
+        $mwst = $katalog_mwst_reduziert;
         break;
       case '2':
-        $mwst = "19.00";
+        $mwst = $katalog_mwst_standard;
         break;
       default:
         break;
@@ -682,9 +701,9 @@ function upload_bnn( $katalogformat ) {
     }
     $m *= $extra_mult;
     $einheit = "$m $e";
-    
-    $wahrscheinlich_pfand = $splitline[26]  && ($e == "FL" || $e == "GL" || $e == "ml");
-    
+
+    $wahrscheinlich_pfand = $splitline[27]  && ($e == "FL" || $e == "GL" || $e == "ml");
+
     $pfand = $wahrscheinlich_pfand ? $lieferant['gruppenpfand'] : 0.0;
 
     katalog_update( $lieferanten_id, $tag, $katalogkw

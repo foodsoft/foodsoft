@@ -20,28 +20,6 @@ define('LEVEL_NONE', 0);
 // LEVEL_CURRENT: alle sql-aufrufe bis zu diesem level werden angezeigt:
 $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
-function sql_selects( $table, $prefix = false ) {
-  global $tables;
-  $cols = $tables[$table]['cols'];
-  $selects = array();
-  foreach( $cols as $name => $type ) {
-    if( $name == 'id' ) {
-      if( isstring( $prefix ) )
-        $selects[] = "$table.id as {$prefix}id";
-      else
-        $selects[] = "$table.id as $table_id";
-    } else {
-      if( isstring( $prefix ) )
-        $selects[] = "$table.$name as $prefix$name";
-      else if( $prefix )
-        $selects[] = "$table.$name as $table_$name";
-      else
-        $selects[] = "$table.$name as $name";
-    }
-  }
-  return $selects;
-}
-
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   global $db_handle;
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
@@ -78,6 +56,24 @@ function cond2filter( $key, $cond ) {
   }
 }
 
+function get_sql_filter( $filters = false ) {
+  if( !$filters )
+    return "TRUE";
+
+  if( is_string($filters) ) {
+    return $filters;
+  }
+
+  $and = '';
+  $expression = '';
+  foreach ($filters as $key => $cond) {
+    $expression .= "$and(" . cond2filter($key, $cond) . ')';
+    $and = ' AND ';
+  }
+
+  return $expression;
+}
+
 function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = false, $orderby = false, $groupby = false ) {
   if( is_string( $selects ) ) {
     $select_string = $selects;
@@ -95,17 +91,8 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
     $join_string = need_joins( array(), $joins );
   }
   $query = "$op $select_string FROM $table $join_string";
-  if( $filters ) {
-    if( is_string( $filters ) ) {
-      $query .= " WHERE ( $filters ) ";
-    } else {
-      $and = 'WHERE';
-      foreach( $filters as $key => $cond ) {
-        $query .= " $and (". cond2filter( $key, $cond ) .") ";
-        $and = 'AND';
-      }
-    }
-  }
+  $query .= 'WHERE ' . get_sql_filter( $filters );
+
   if( $groupby ) {
     $query .= " GROUP BY $groupby ";
   }
@@ -149,16 +136,20 @@ function sql_select_single_field( $sql, $field, $allownull = false ) {
   return NULL;
 }
 
+function select_count( $table, $where ) {
+  return "SELECT count(*) as count FROM $table WHERE $where";
+}
+
 function sql_count( $table, $where ) {
   return sql_select_single_field(
-    "SELECT count(*) as count FROM $table WHERE $where"
+    select_count($table, $where)
   , 'count'
   );
 }
 
 function sql_update( $table, $where, $values, $escape_and_quote = true ) {
   global $db_handle;
-  
+
   switch( $table ) {
     case 'leitvariable':
     case 'transactions':
@@ -397,7 +388,7 @@ function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
 
 /**
  *  Dienst Akzeptieren (oder auch bestaetigen)
- */ 
+ */
 function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false, $status_neu = 'Akzeptiert' ) {
   global $login_gruppen_id;
 
@@ -557,9 +548,9 @@ function sql_delete_dienst( $dienst_id ) {
 }
 
 function sql_dienst_mute_reconfirmation( $session_id ) {
-    sql_update( 'sessions' 
+    sql_update( 'sessions'
       , $session_id
-      , array( 
+      , array(
           'muteReconfirmation_timestamp' => 'NOW()' )
       , false );
 }
@@ -742,8 +733,8 @@ function possible_areas(){
      "title" => "Bestellen");
 
    if( hat_dienst(0) ) {
-    $areas[] = array("area" => "meinkonto", 
-             "hint"  => "Hier könnt ihr euer Gruppenkonto einsehen", 
+    $areas[] = array("area" => "meinkonto",
+             "hint"  => "Hier könnt ihr euer Gruppenkonto einsehen",
        "title" => "Mein Konto" );
    }
      $areas[] = array("area" => "gruppen",
@@ -770,7 +761,7 @@ function possible_areas(){
 
    if( hat_dienst(4) ){
      $areas[] = array("area" => "produkte",
-     "hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produkte");	 
+     "hint" => "Neue Produkte eingeben ... Preise verwalten ... Bestellung online stellen","title" => "Produkte");
      $areas[] = array("area" => "konto",
      "hint" => "Hier könnt ihr die Bankkonten verwalten...",
      "title" => "Konten");
@@ -779,7 +770,7 @@ function possible_areas(){
      "title" => "LieferantInnen");
    } else {
      $areas[] = array("area" => "produkte",
-     "hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produkte");	 
+     "hint" => "Produktdatenbank und Kataloge einsehen","title" => "Produkte");
      $areas[] = array("area" => "konto",
      "hint" => "Hier könnt ihr die Kontoauszüge der Bankkonten einsehen...",
      "title" => "Konten");
@@ -798,8 +789,8 @@ function possible_areas(){
     "title" => "Download");
   }
 
-   $areas[] = array("area" => "dienstplan", 
-     "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...", 
+   $areas[] = array("area" => "dienstplan",
+     "hint"  => "Eigene Dienste anschauen, Dienste übernehmen, ...",
      "title" => "Dienstplan" );
 
    return $areas;
@@ -1000,7 +991,7 @@ function sql_gruppenmitglieder( $filter = 'true', $orderby = 'gruppennummer' ) {
   return mysql2array( doSql( select_gruppenmitglieder() . " WHERE ( $filter ) ORDER BY $orderby " ) );
 }
 
-function sql_gruppe_mitglieder( $gruppen_id, $filter = 'gruppenmitglieder.aktiv' ) { 
+function sql_gruppe_mitglieder( $gruppen_id, $filter = 'gruppenmitglieder.aktiv' ) {
   return sql_gruppenmitglieder( "(bestellgruppen.id = $gruppen_id) and ($filter) " );
 }
 
@@ -1510,6 +1501,68 @@ function sql_lieferant_katalogeintraege( $lieferanten_id ) {
 //
 ////////////////////////////////////
 
+/**
+ * Produce list of aliased columns
+ *
+ * @param[out]  $result
+ *              array to append the columns to
+ * @param[in]   $table
+ *              original name of the table
+ * @param[in]   $alias
+ *              table alias to use for naming the columns
+ * @param[in]   $columns
+ *              array of columns to list
+ *
+ * This produces a list of expressions selecting the @p $columns from
+ * @p $table and naming by prefixing them with "@p $alias.", e.g.
+ *
+ * > [
+ * >   "`table`.`column1` as `alias.column1`,
+ * >   "`table`.`column2` as `alias.column2`,
+ * > ]
+ */
+function alias_columns( array &$result, string $table, string $alias, array $columns ) {
+  foreach ( $columns as $column ) {
+    $result[] = "`$table`.`$column` as `$alias.$column`";
+  }
+}
+
+/**
+ * Select and unalias aliased columns
+ *
+ * @param[in]   $row
+ *              row to process
+ * @param[in]   $alias
+ *              alias of the table to select and unalias from
+ * @return      associative array with the unaliased results
+ *
+ * As an example:
+ * > unalias_columns(
+ * >   array(
+ * >    'unaliased' => 'v1',
+ * >    'aliased.col1' => 'v2',
+ * >    'aliased.col2' => 'v3',
+ * >    'other.col1' => 'v4',
+ * >   )
+ * >   , 'aliased')
+ * results in
+ * > array(
+ * >   'col1' => 'v2',
+ * >   'col2' => 'v3',
+ * > )
+ */
+function unalias_columns( array $row, string $alias ) : array {
+  $prefix = $alias . '.';
+  $result = array();
+  foreach ( $row as $key => $val )
+  {
+    if (substr($key, 0, strlen($prefix)) == $prefix) {
+      $result[substr($key, strlen($prefix))] = $val;
+    }
+  }
+
+  return $result;
+}
 
 function query_produkte( $op, $keys = array(), $using = array(), $orderby = false ) {
   $have_price = false;
@@ -1585,10 +1638,49 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
           $have_price = true;
         }
         break;
+      case 'katalog':
+        if ($cond) {
+          $joins = array_merge($joins, need_joins_array($using, [
+            'lieferantenkatalog' => 'LEFT OUTER JOIN lieferantenkatalog '
+                  . 'ON (lieferantenkatalog.lieferanten_id = produkte.lieferanten_id '
+                  . 'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)'
+            , 'hersteller_acro' => 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
+                  . 'ON (hersteller_acro.context = "hst" '
+                  . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)'
+            , 'verband_acro' => 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
+                  . 'ON (verband_acro.context = "vbd" '
+                  . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)'
+            , 'herkunft_acro' => 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
+                  . 'ON (herkunft_acro.context = "hrk" '
+                  . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)'
+          ] ) );
+          alias_columns($selects, 'lieferantenkatalog', 'katalog', array(
+              'ean_einzeln'
+            , 'bemerkung'
+            , 'hersteller'
+            , 'verband'
+            , 'herkunft'
+          ));
+          $acronym_fields = [ 'definition', 'url', 'comment' ];
+          alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
+          alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
+          alias_columns($selects, 'herkunft_acro', 'katalog.hrk', $acronym_fields);
+        }
+        break;
       case 'not_in_order':
         if ($cond) {
           $order_products_select = "SELECT produkt_id FROM bestellvorschlaege WHERE gesamtbestellung_id = '$cond'";
           $filters['produkte.id'] = "!= ALL ($order_products_select)";
+        }
+        break;
+      case 'references':
+        if ($cond) {
+          $selects[] = count_references_produkt('produkte.id') . ' as `references`';
+        }
+        break;
+      case 'bestellzuordnung_menge':
+        if ($cond) {
+          $selects[] = '(' . select_bestellzuordnung_menge( array( 'produkt_id' => 'produkte.id', 'art' => $cond ) ) . ') as `bestellzuordnung_menge`';
         }
         break;
       default:
@@ -1618,6 +1710,10 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
           break;
         case 'lieferanten':
           $filters[] = 'produkte.lieferanten_id = lieferanten.id';
+          break;
+        case 'lieferantenkatalog':
+          $filters[] = 'produkte.lieferanten_id = lieferantenkatalog.lieferanten_id '
+                      .'AND produkte.artikelnummer = lieferantenkatalog.artikelnummer';
           break;
         default:
           error( "Sorry, I have no use for table $table" );
@@ -1671,9 +1767,19 @@ function sql_produkte_anzahl( $keys = array() ) {
   return sql_select_single_field( select_produkte_anzahl( $keys ), 'anzahl' );
 }
 
+function count_references_produkt( $produkt_id ) {
+  return '('
+    .select_count('bestellvorschlaege', "produkt_id=$produkt_id")
+    .') + ('
+    .select_count('bestellzuordnung', "produkt_id=$produkt_id")
+    .')';
+}
+
 function references_produkt( $produkt_id ) {
-  return sql_count( 'bestellvorschlaege', "produkt_id=$produkt_id" )
-       + sql_count( 'bestellzuordnung', "produkt_id=$produkt_id" );
+  return sql_select_single_field(
+    'select ' . count_references_produkt($produkt_id) . 'as count'
+  , 'count'
+  );
 }
 
 function sql_delete_produkt( $produkt_id ) {
@@ -1936,7 +2042,7 @@ function sql_delete_bestellvorschlag( $produkt_id, $bestell_id ) {
 function sql_references_gesamtbestellung( $bestell_id ) {
   return sql_select_single_field( " SELECT (
      ( SELECT count(*) FROM bestellvorschlaege WHERE gesamtbestellung_id = $bestell_id )
-   + ( SELECT count(*) FROM gruppenbestellungen WHERE gesamtbestellung_id = $bestell_id ) 
+   + ( SELECT count(*) FROM gruppenbestellungen WHERE gesamtbestellung_id = $bestell_id )
   ) as count
   " , 'count'
   );
@@ -2086,27 +2192,75 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
 // - basarbestellmenge: _toleranzbestellungen_ des basars
 // - verteilmenge _ohne_ muellgruppe (nicht sinnvoll fuer basar: liefert nicht den basarbestand!)
 // - muellmenge: zuteilung an muell-gruppe
-// $gruppen_id = 0: summe aller gruppen
-// $gruppen_id != 0: nur fuer diese gruppe (muell*, basar* sind dann nicht sinnvoll)
-//
-function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
+// Das Array $keys versteht folgende Schlüssel:
+// - 'bestell_id' => ID der Bestellung (notwendig)
+// - 'gruppen_id' => ID der Gruppe (optional), sonst Summe aller Gruppen
+//                   (muell*, basar* sind dann nicht sinnvoll)
+// - 'gesamt'     => Flag, ob neben den Gruppenwerten auch Summen über alle
+//                   Gruppen ermittelt werden sollen (optional), sonst false
+// - 'produkt_id' => ID des Produkts (optional), sonst alle Produkte
+// - 'katalog'    => Flag, ob Katalog-Daten mit abgefragt werden sollen (optional), sonst false
+function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
-  // if( is_array( $bestell_id ) ) {
-  //  $state = sql_bestellung_status( $bestell_id[0] );
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ';
-  //  $komma = '(';
-  //  foreach( $bestell_id as $b_id ) {
-  //    $bestell_id_filter .= "$komma $b_id";
-  //    $komma = ',';
-  //  }
-  //  $bestell_id_filter .= ')';
-  //  $bestell_id_filter = ' gesamtbestellungen.id IN ( 11, 20 ) ';
-  // } else {
-    $state = sql_bestellung_status( $bestell_id );
-    $bestell_id_filter = " gesamtbestellungen.id = $bestell_id";
-  // }
+  $gruppen_id = $keys['gruppen_id'] ?? false;
+  $gesamt = $keys['gesamt'] ?? false;
+  $brauche_alle_gruppen = !($gruppen_id) || $gesamt;
+  $mit_gruppenspalten = $gruppen_id && $gesamt;
+
+  $mit_katalog = $keys['katalog'] ?? false;
+
+  $selects = [];
+  $filters = [];
+  $joins = [
+      'produkte' => 'produkte.id=bestellvorschlaege.produkt_id'
+    , 'produktpreise' => 'produktpreise.id=bestellvorschlaege.produktpreise_id'
+    , 'produktgruppen' => 'produktgruppen.id=produkte.produktgruppen_id'
+    , 'gesamtbestellungen' => 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id'
+    , 'LEFT JOIN gruppenbestellungen ON (gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id)'
+    , 'LEFT JOIN bestellzuordnung
+         ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
+         AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)'
+  ];
+  if( $mit_katalog ) {
+    $joins['lieferantenkatalog']
+      = 'LEFT OUTER JOIN lieferantenkatalog '
+      . 'ON (lieferantenkatalog.lieferanten_id = produkte.lieferanten_id '
+      . 'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)';
+    $joins['hersteller_acro']
+      = 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
+      . 'ON (hersteller_acro.context = "hst" '
+      . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)';
+    $joins['verband_acro']
+      = 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
+      . 'ON (verband_acro.context = "vbd" '
+      . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)';
+    $joins['herkunft_acro']
+      = 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
+      . 'ON (herkunft_acro.context = "hrk" '
+      . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)';
+  }
+
+  need($bestell_id = $keys['bestell_id']);
+
+  foreach( $keys as $key => $value ) {
+    switch( $key ) {
+      case 'bestell_id':
+        $filters['gesamtbestellungen.id'] = $value;
+        break;
+      case 'gruppen_id':
+        if (!$brauche_alle_gruppen && $value)
+          $filters['gruppenbestellungen.bestellgruppen_id'] = $value;
+        break;
+      case 'produkt_id':
+        if ($value)
+          $filters['produkte.id'] = $value;
+        break;
+    }
+  }
+
+  $state = sql_bestellung_status( $bestell_id );
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_BESTELLUNGEN."), bestellzuordnung.menge, 0 ) ), 0 )";
@@ -2168,57 +2322,63 @@ function select_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id =
       break;
   }
 
-  return "SELECT
-      produkte.name as produkt_name
-    , produktgruppen.name as produktgruppen_name
-    , produktgruppen.id as produktgruppen_id
-    , produkte.id as produkt_id
-    , produkte.notiz as notiz
-    , bestellvorschlaege.liefermenge  as liefermenge
-    , bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id
-    , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
-    , produktpreise.liefereinheit as liefereinheit
-    , produktpreise.verteileinheit as verteileinheit
-    , produktpreise.lv_faktor as lv_faktor
-    , produktpreise.gebindegroesse as gebindegroesse
-    , produktpreise.lieferpreis as lieferpreis
-    , produktpreise.id as preis_id
-    , produktpreise.pfand as pfand
-    , produktpreise.mwst as mwst
-    , produkte.artikelnummer as artikelnummer
-    , produktpreise.bestellnummer as bestellnummer
-    , ( $gesamtbestellmenge_expr ) as gesamtbestellmenge
-    , ( $festbestellmenge_expr ) as festbestellmenge
-    , ( $basarbestellmenge_expr ) as basarbestellmenge
-    , ( $toleranzbestellmenge_expr ) as toleranzbestellmenge
-    , ( $verteilmenge_expr ) as verteilmenge
-    , ( $muellmenge_expr ) as muellmenge
-    , IF( abs($firstorder_expr) > 0, 0, 1 ) as menge_ist_null
-    FROM bestellvorschlaege
-    INNER JOIN produkte
-      ON (produkte.id=bestellvorschlaege.produkt_id)
-    INNER JOIN produktpreise
-      ON (produktpreise.id=bestellvorschlaege.produktpreise_id)
-    INNER JOIN produktgruppen
-      ON (produktgruppen.id=produkte.produktgruppen_id)
-    INNER JOIN gesamtbestellungen
-      ON (gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id)
-    LEFT JOIN gruppenbestellungen
-      ON (gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id)
-    LEFT JOIN bestellzuordnung
-      ON (bestellzuordnung.produkt_id=bestellvorschlaege.produkt_id
-         AND bestellzuordnung.gruppenbestellung_id=gruppenbestellungen.id)
-    WHERE ( $bestell_id_filter )
-    " . ( $gruppen_id ? " and gruppenbestellungen.bestellgruppen_id=$gruppen_id " : "" )
-      . ( $produkt_id ? " and produkte.id=$produkt_id " : "" )
-    . "
-    GROUP BY produkte.id
-    ORDER BY $orderby
-  ";
+  $selects[] = 'produkte.name as produkt_name';
+  $selects[] = 'produktgruppen.name as produktgruppen_name';
+  $selects[] = 'produktgruppen.id as produktgruppen_id';
+  $selects[] = 'produkte.id as produkt_id';
+  $selects[] = 'produkte.notiz as notiz';
+  if( $mit_katalog ) {
+    alias_columns($selects, 'lieferantenkatalog', 'katalog', array(
+      'ean_einzeln'
+    , 'bemerkung'
+    , 'hersteller'
+    , 'verband'
+    , 'herkunft'
+    ));
+    $acronym_fields = [ 'definition', 'url', 'comment' ];
+    alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
+    alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
+    alias_columns($selects, 'herkunft_acro', 'katalog.hrk', $acronym_fields);
+  }
+
+  $selects[] = 'bestellvorschlaege.liefermenge  as liefermenge';
+  $selects[] = 'bestellvorschlaege.gesamtbestellung_id as gesamtbestellung_id';
+  $selects[] = 'gesamtbestellungen.aufschlag_prozent as aufschlag_prozent';
+  $selects[] = 'produktpreise.liefereinheit as liefereinheit';
+  $selects[] = 'produktpreise.verteileinheit as verteileinheit';
+  $selects[] = 'produktpreise.lv_faktor as lv_faktor';
+  $selects[] = 'produktpreise.gebindegroesse as gebindegroesse';
+  $selects[] = 'produktpreise.lieferpreis as lieferpreis';
+  $selects[] = 'produktpreise.id as preis_id';
+  $selects[] = 'produktpreise.pfand as pfand';
+  $selects[] = 'produktpreise.mwst as mwst';
+  $selects[] = 'produkte.artikelnummer as artikelnummer';
+  $selects[] = 'produktpreise.bestellnummer as bestellnummer';
+  $selects[] = "( $gesamtbestellmenge_expr ) as gesamtbestellmenge";
+  $selects[] = "( $festbestellmenge_expr ) as festbestellmenge";
+  $selects[] = "( $basarbestellmenge_expr ) as basarbestellmenge";
+  $selects[] = "( $toleranzbestellmenge_expr ) as toleranzbestellmenge";
+  $selects[] = "( $verteilmenge_expr ) as verteilmenge";
+  $selects[] = "( $muellmenge_expr ) as muellmenge";
+  if( $mit_gruppenspalten ) {
+    $gruppen_keys = [ 'gruppenbestellungen.bestellgruppen_id' => $gruppen_id ];
+    foreach( [
+      'gruppe.fest' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG
+    , 'gruppe.toleranz' => BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG
+    , 'gruppe.vormerkung' => BESTELLZUORDNUNG_ART_VORMERKUNGEN
+    ] as $name => $art ) {
+      $selects[] = 'IFNULL(SUM(IF('
+                 . get_sql_filter($gruppen_keys + ['bestellzuordnung.art' => $art])
+                 . ', bestellzuordnung.menge, 0 ) ), 0 ) AS `'. $name . '`';
+    }
+  }
+  $selects[] = "IF( abs($firstorder_expr) > 0, 0, 1 ) as menge_ist_null";
+
+  return get_sql_query('SELECT', 'bestellvorschlaege', $selects, $joins, $filters, $orderby, 'produkte.id');
 }
 
-function sql_bestellung_produkte( $bestell_id, $produkt_id = 0, $gruppen_id = 0, $orderby = '' ) {
-  $result = doSql( select_bestellung_produkte( $bestell_id, $produkt_id, $gruppen_id, $orderby ), LEVEL_KEY );
+function sql_bestellung_produkte( array $keys, $orderby = '' ) {
+  $result = doSql( select_bestellung_produkte( $keys, $orderby ), LEVEL_KEY );
   $r = mysql2array( $result );
   foreach( $r as $key => $val )
     $r[ $key ] = preisdatenSetzen( $val );
@@ -2558,7 +2718,7 @@ function verteilmengenZuweisen( $bestell_id ) {
 
   need( sql_bestellung_status($bestell_id)==STATUS_LIEFERANT , 'verteilmengenZuweisen: falscher Status der Bestellung' );
 
-  foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( ['bestell_id' => $bestell_id] ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     $zuteilungen = zuteilungen_berechnen( $produkt );
     sql_update( 'bestellvorschlaege', array( 'gesamtbestellung_id' => $bestell_id, 'produkt_id' => $produkt_id )
@@ -2599,7 +2759,7 @@ function vormerkungenLoeschen( $bestell_id ) {
   $vormerkungen_unerfuellt = 0;
   $vormerkungen_erfuellt = 0;
   $lieferant_id = sql_bestellung_lieferant_id( $bestell_id );
-  foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+  foreach( sql_bestellung_produkte( ['bestell_id' => $bestell_id] ) as $produkt ) {
     $produkt_id = $produkt['produkt_id'];
     foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
       $gruppen_id = $gruppe['id'];
@@ -3066,7 +3226,7 @@ function sql_pfandzuordnung_lieferant( $bestell_id, $verpackung_id, $anzahl_voll
     , true
     );
   } else {
-    doSql( "DELETE FROM lieferantenpfand WHERE bestell_id=$bestell_id AND verpackung_id=$verpackung_id" ); 
+    doSql( "DELETE FROM lieferantenpfand WHERE bestell_id=$bestell_id AND verpackung_id=$verpackung_id" );
   }
 }
 
@@ -3086,7 +3246,7 @@ function sql_pfandzuordnung_gruppe( $bestell_id, $gruppen_id, $anzahl_leer ) {
     , true
     );
   } else {
-    return doSql( "DELETE FROM gruppenpfand  WHERE bestell_id=$bestell_id AND gruppen_id=$gruppen_id" ); 
+    return doSql( "DELETE FROM gruppenpfand  WHERE bestell_id=$bestell_id AND gruppen_id=$gruppen_id" );
   }
 }
 
@@ -3180,7 +3340,7 @@ define( 'OPTION_PFAND_VOLL_BRUTTO_SOLL', 14 );   /* schuld aus kauf voller pfand
 define( 'OPTION_PFAND_VOLL_NETTO_SOLL', 15 );
 define( 'OPTION_PFAND_VOLL_ANZAHL', 16 );
 define( 'OPTION_PFAND_LEER_BRUTTO_SOLL', 17 );   /* schuld aus rueckgabe leerer pfandverpackungen */
-define( 'OPTION_PFAND_LEER_NETTO_SOLL', 18 ); 
+define( 'OPTION_PFAND_LEER_NETTO_SOLL', 18 );
 define( 'OPTION_PFAND_LEER_ANZAHL', 19 );
 define( 'OPTION_EXTRA_BRUTTO_SOLL', 20 );   /* sonstiges: Rabatte, Versandkosten, ... (nur lieferantenseitig sinnvoll) */
 
@@ -3695,7 +3855,7 @@ function sockeleinlagen( $gruppen_id = 0 ) {
                 AND gruppenmitglieder.gruppen_id = bestellgruppen.id
             )
       ) as soll
-    FROM (".select_gruppen( array( 'aktiv' => 'true' ) ).") AS bestellgruppen 
+    FROM (".select_gruppen( array( 'aktiv' => 'true' ) ).") AS bestellgruppen
     $where
   ", 'soll'
   , true
@@ -3867,7 +4027,7 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
          , year(produktpreise.zeitstart) as jahr_start
          , date(produktpreise.zeitende) as datum_ende
          , produkte.notiz
-    FROM produktpreise 
+    FROM produktpreise
     JOIN produkte ON produkte.id = produktpreise.produkt_id
     WHERE produkt_id= $produkt_id $zeitfilter
     ORDER BY zeitstart $order, IFNULL(zeitende,'9999-12-31') $order, id $order";
@@ -3884,7 +4044,8 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
  *  oder false falls es keinen gueltigen preis gibt:
  */
 function sql_aktueller_produktpreis( $produkt_id, $zeitpunkt = true ) {
-  return end( ( sql_produktpreise( $produkt_id, $zeitpunkt ) ) );
+  $preise = sql_produktpreise( $produkt_id, $zeitpunkt );
+  return end( $preise );
 }
 
 /* sql_aktueller_produktpreis_id:
@@ -3916,48 +4077,97 @@ function select_current_productprice_id( $product_id, $timestamp = true ) {
 //  - alle zeitintervalle bis auf das letzte muessen abgeschlossen sein
 //  - intervalle duerfen nicht ueberlappen
 //  - warnen, wenn kein aktuell gueltiger preis vorhanden
-// rueckgabe: true, falls keine probleme, sonst false
-//
-function produktpreise_konsistenztest( $produkt_id, $editable = false, $mod_id = false ) {
+function select_produktpreise_konsistenztest( $lieferanten_id = false, $produkt_id = false ) {
   global $mysqljetzt;
-  need( $produkt_id );
-  $rv = true;
-  $pr0 = FALSE;
-  foreach( sql_produktpreise( $produkt_id ) as $pr1 ) {
-    if( $pr0 ) {
-      $monat = $pr1['monat_start'];
-      $jahr = $pr1['jahr_start'];
-      $tag = $pr1['tag_start'];
-      $show_button = false;
-      if( $pr0['zeitende'] == '' ) {
-        echo "<div class='warn'>FEHLER: Preisintervall {$pr0['id']} nicht aktuell aber nicht abgeschlossen.</div>";
-        $show_button = true;
-        $rv = false;
-      } else if( $pr0['zeitende'] > $pr1['zeitstart'] ) {
-        echo "<div class='warn'>FEHLER: Ueberlapp in Preishistorie: {$pr0['id']} und {$pr1['id']}.</div>";
-        $show_button = true;
-        $rv = false;
-      }
-      if( $editable && $show_button )
-        div_msg( 'warn', fc_action(  array( 'text' => "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen"
-                                          , 'title' => "Eintrag {$pr0['id']} zum $jahr-$monat-$tag enden lassen" )
-                                   , array(  'action' => 'zeitende_setzen', 'vortag' => '1', 'preis_id' => $pr0['id']
-                                          , 'day' => "$tag", 'month' => "$monat", 'year' => "$jahr" ) ) );
-    }
-    $pr0 = $pr1;
+
+  $where = "";
+  if ($produkt_id) {
+    $where = "WHERE produkte.id = $produkt_id";
+  } else if ($lieferanten_id) {
+    $where = "WHERE produkte.lieferanten_id = $lieferanten_id";
   }
-  if( ! $pr0 ) {
-    div_msg( 'alert', 'HINWEIS: kein Preiseintrag fuer diesen Artikel vorhanden!' );
-  } else if ( $pr0['zeitende'] != '' ) {
-    if ( $pr0['zeitende'] < $mysqljetzt ) {
-        div_msg( 'alert', 'HINWEIS: kein aktuell g&uuml;ltiger Preiseintrag fuer diesen Artikel vorhanden!' );
-    } else {
-        div_msg( 'alert', 'HINWEIS: aktueller Preis l&auml;uft aus!' );
-    }
-  }
-  return $rv;
+
+  $query = "
+    WITH pr as (
+      SELECT
+        ROW_NUMBER() OVER(
+          PARTITION BY produkt_id
+          ORDER BY zeitstart, ifnull(zeitende, '9999-12-31'), id
+        )
+        AS irow
+      , produkte.id
+        AS produkt_id
+      , produktpreise.id
+      , produktpreise.zeitstart
+      , produktpreise.zeitende
+      FROM produkte
+      LEFT JOIN produktpreise on produktpreise.produkt_id = produkte.id
+      $where
+    )
+    SELECT
+      pr0.produkt_id
+    , IFNULL(
+        TIMESTAMPDIFF(SECOND, pr0.zeitende, pr1.zeitstart) < 0  # error 1: Überlapp
+      , 2                                                       # error 2: nicht aktuell aber nicht abgeschlossen
+      )
+      AS error
+    , pr0.id
+      AS produktpreis_id1
+    , pr1.id
+      AS produktpreis_id2
+    , pr1.zeitstart
+      AS vorschlag_ende
+    FROM pr AS pr0
+    JOIN pr AS pr1
+      ON pr0.produkt_id = pr1.produkt_id
+      AND pr0.irow + 1 = pr1.irow
+    HAVING error
+    UNION
+    SELECT
+      produkt_id
+      , IF(
+          zeitende IS NULL
+        , 0
+        , IF(
+            zeitende < '$mysqljetzt'
+          , 3                                                   # error 3: aktueller Eintrag bereits ausgelaufen
+          , 4                                                   # error 4: aktueller Eintrag läuft künftig aus
+          )
+        )
+      AS error
+    , id
+    , NULL
+    , NULL
+    FROM pr
+    WHERE irow = (SELECT MAX(pr1.irow) FROM pr AS pr1 WHERE pr1.produkt_id = pr.produkt_id)
+    HAVING error
+    UNION
+    SELECT
+      produkt_id
+    , IF(COUNT(DISTINCT id) > 0, 0, 5)                          # error 5: kein Preiseintrag vorhanden
+      AS error
+    , NULL
+    , NULL
+    , NULL
+    FROM pr
+    GROUP BY produkt_id
+    HAVING error;
+    ";
+
+  return $query;
 }
 
+function sql_produktpreise_konsistenztest( $lieferanten_id = false, $produkt_id = false ) {
+  $result = [];
+  foreach( mysql2array(doSql(select_produktpreise_konsistenztest($lieferanten_id, $produkt_id))) as $problem ) {
+    $produkt_id = $problem['produkt_id'];
+    if( !array_key_exists( $produkt_id, $result ))
+      $result[$produkt_id] = [ $problem ];
+    else
+      $result[$produkt_id][] = $problem;
+  }
+  return $result;
+}
 
 /**
  *  Erzeugt einen Produktpreiseintrag
@@ -4022,7 +4232,7 @@ global $masseinheiten;
 $masseinheiten = array( 'g', 'ml', 'ST', 'GB', 'KI', 'PA', 'GL', 'BE', 'DO', 'BD', 'BT', 'KT', 'FL', 'EI', 'KA', 'SC', 'NE', 'EA', 'TA', 'TÜ', 'TÖ', 'SET', 'BTL', 'TU', 'KO', 'SCH', 'BOX', 'BX', 'VPE', 'FA', 'SA', 'VE' );
 
 // kanonische_einheit: zerlegt $einheit in kanonische einheit und masszahl:
-// 
+//
 function kanonische_einheit( $einheit, $die_on_error = true ) {
   global $masseinheiten;
   $kan_einheit = NULL;
@@ -4152,7 +4362,7 @@ function sql_katalogname( $katalog_id, $allow_null = false ) {
 }
 
 function sql_catalogue_acronym( $context, $acronym ) {
-  return mysql2array( doSql( 
+  return mysql2array( doSql(
             "SELECT * from `catalogue_acronyms` "
           . "WHERE `context`='$context' AND `acronym`='$acronym'") );
 }
@@ -4180,6 +4390,7 @@ $foodsoft_get_vars = array(
 , 'detail' => 'w'
 , 'download' => 'w'
 , 'faxspalten' => 'u'
+, 'format' => 'w'
 , 'gruppen_id' => 'u'
 , 'id' => 'u'
 , 'id_to' => 'u'
@@ -4244,8 +4455,6 @@ function checkvalue( $val, $typ){
     $format = '';
     switch( substr( $typ, 0, 1 ) ) {
       case 'H':
-        if( get_magic_quotes_gpc() )
-          $val = stripslashes( $val );
         $val = htmlspecialchars( $val, ENT_QUOTES, 'UTF-8' );
         break;
       case 'R':
@@ -4255,7 +4464,7 @@ function checkvalue( $val, $typ){
         $pattern = '/^\d*[1-9]\d*$/';
         break;
       case 'u':
-        //FIXME: zahl sollte als zahl zurückgegeben 
+        //FIXME: zahl sollte als zahl zurückgegeben
         //werden, zur Zeit String
         $val = trim($val);
         // eventuellen nachkommateil (und sonstigen Muell) abschneiden:
@@ -4491,7 +4700,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10 ) );
       logger( 'update_database: update to version 10 successful' );
 
-  case 10:
+    case 10:
       logger( 'starting update_database: from version 10' );
 
       // preise ab jetzt pro L-einheit speichern:
@@ -4519,7 +4728,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 11 ) );
       logger( 'update_database: update to version 11 successful' );
 
-  case 11:
+    case 11:
       logger( 'starting update_database: from version 11' );
 
       doSql( "ALTER TABLE `gruppenbestellungen` CHANGE column `bestellguppen_id` `bestellgruppen_id` int(11)" );
@@ -4550,7 +4759,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 12 ) );
       logger( 'update_database: update to version 12 successful' );
 
-  case 12:
+    case 12:
       logger( 'starting update_database: from version 12' );
 
       doSql( "ALTER TABLE `bestellvorschlaege` MODIFY COLUMN `liefermenge` decimal(10,3) not null default 0
@@ -4625,7 +4834,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 13 ) );
 
       logger( 'update_database: update to version 13 successful' );
-  case 13:
+    case 13:
       logger( 'starting update_database: from version 13' );
 
       doSql( "update `bestellzuordnung` set art=20 where art=0" );
@@ -4634,7 +4843,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 14 ) );
 
       logger( 'update_database: update to version 14 successful' );
-  case 14:
+    case 14:
       logger( 'starting update_database: from version 14' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `katalogformat` varchar(20) not null default '' " );
@@ -4643,7 +4852,7 @@ function update_database( $version ) {
 
       logger( 'update_database: update to version 15 successful' );
 
-  case 15:
+    case 15:
       logger( 'starting update_database: from version 15' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `gueltig` tinyint(1) not null default 1 " );
@@ -4651,7 +4860,7 @@ function update_database( $version ) {
 
       logger( 'update_database: update to version 16 successful' );
 
-  case 16:
+    case 16:
       logger( 'starting update_database: from version 16' );
 
       doSql( "ALTER TABLE `gesamtbestellungen` ADD COLUMN `abrechnung_id` int(11) not null default 0 " );
@@ -4660,7 +4869,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 17 ) );
       logger( 'update_database: update to version 17 successful' );
 
-  case 17:
+    case 17:
       logger( 'starting update_database: from version 17' );
 
       doSql( "ALTER TABLE `produkte` ADD COLUMN `dauerbrenner` tinyint(1) not null default 0 " );
@@ -4670,7 +4879,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 18 ) );
       logger( 'update_database: update to version 18 successful' );
 
-  case 18:
+    case 18:
       logger( 'starting update_database: from version 18' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` MODIFY COLUMN `gebinde` decimal(8,3) not null default 1.0 " );
@@ -4678,7 +4887,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 19 ) );
       logger( 'update_database: update to version 19 successful' );
 
-  case 19:
+    case 19:
       logger( 'starting update_database: from version 19' );
 
       sql_update( 'lieferanten', array( 'katalogformat' => 'terra' ), array( 'katalogformat' => 'terra_xls' ) );
@@ -4693,15 +4902,15 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 20 ) );
       logger( 'update_database: update to version 20 successful' );
 
-  case 20:
+    case 20:
       logger( 'starting update_database: from version 20' );
 
       sql_update( 'lieferantenkatalog', array( 'katalogformat' => 'terra' ), array( 'katalogformat' => 'terra_xls' ) );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 21 ) );
       logger( 'update_database: update to version 21 successful' );
-      
-  case 21:
+
+    case 21:
       logger( 'starting update_database: from version 21' );
 
       doSql( "ALTER TABLE `lieferantenkatalog` ADD COLUMN `hersteller` text not null default '' " );
@@ -4710,18 +4919,18 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 22 ) );
       logger( 'update_database: update to version 22 successful' );
-  
-  case 22:
+
+    case 22:
       logger( 'starting update_database: from version 22' );
 
       doSql( "ALTER TABLE `sessions` ADD COLUMN `muteReconfirmation_timestamp` timestamp null default null" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 23 ) );
       logger( 'update_database: update to version 23 successful' );
-      
-  case 23:
+
+    case 23:
       logger( 'starting update_database: from version 23' );
-      
+
       doSql( "CREATE TABLE `catalogue_acronyms` ("
               . "  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY"
               . ", `context` VARCHAR(10) NOT NULL"
@@ -4734,8 +4943,8 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 24 ) );
       logger( 'update_database: update to version 24 successful' );
-   
-  case 24:
+
+    case 24:
       logger( 'starting update_database: from version 24' );
 
       doSql( "ALTER TABLE `lieferanten`
@@ -4753,11 +4962,11 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 25 ) );
       logger( 'update_database: update to version 25 successful' );
 
-  case 25:
+    case 25:
       logger( 'starting update_database: from version 25' );
 
       doSql( "ALTER TABLE `gruppenmitglieder`
-                ADD COLUMN `slogan` text not null 
+                ADD COLUMN `slogan` text not null
               , ADD COLUMN `url` text not null
               , ADD COLUMN `photo_url` mediumtext not null
       " );
@@ -4765,7 +4974,7 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 26 ) );
       logger( 'update_database: update to version 26 successful' );
 
-  case 26:
+    case 26:
       logger( 'starting update_database: from version 26' );
 
       sql_insert( 'leitvariable', array(
@@ -4776,31 +4985,31 @@ function update_database( $version ) {
       sql_insert( 'leitvariable', array(
         'name' => 'member_showcase_title'
       , 'value' => '<b>Ein paar von uns</b>'
-      , 'comment' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+      , 'comment' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
       ) );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 27 ) );
       logger( 'update_database: update to version 27 successful' );
 
-  case 27:
+    case 27:
       logger( 'starting update_database: from version 27' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `bestellfaxspalten` int(11) not null default 534541" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 28 ) );
       logger( 'update_database: update to version 28 successful' );
-      
-  case 28:
+
+    case 28:
       logger( 'starting update_database: from version 28' );
       sql_insert( 'leitvariable', array(
         'name' => 'exportDB'
       , 'value' => '0'
-      , 'comment' => 'Flag: export des Datenbankinhalts erlauben'  
+      , 'comment' => 'Flag: export des Datenbankinhalts erlauben'
       ) );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 29 ) );
       logger( 'update_database: update to version 29 successful' );
-      
-  case 29:
+
+    case 29:
       logger( 'starting update_database: from version 29' );
 
       doSql( "ALTER TABLE `gruppenmitglieder` ADD COLUMN `notiz` text not null " );
@@ -4808,42 +5017,42 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 30 ) );
       logger( 'update_database: update to version 30 successful' );
 
-  case 30:
+    case 30:
       logger( 'starting update_database: from version 30' );
 
       doSql( "ALTER TABLE `bestellgruppen` ADD COLUMN `notiz_gruppe` text not null " );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 31 ) );
       logger( 'update_database: update to version 31 successful' );
-  case 31:
+    case 31:
       logger( 'starting update_database: from version 31' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogaufschlag` decimal(5,2) not null default 0.0" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 32 ) );
       logger( 'update_database: update to version 32 successful' );
-  case 32:
+    case 32:
       logger( 'starting update_database: from version 32' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `gruppenpfand` decimal(4,2) not null default 0.16" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 33 ) );
       logger( 'update_database: update to version 33 successful' );
-  case 33:
+    case 33:
       logger( 'starting update_database: from version 33' );
 
       doSql( "ALTER TABLE `lieferanten` ADD COLUMN `katalogaufschlagrunden` tinyint(1) not null default 1" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 34 ) );
       logger( 'update_database: update to version 34 successful' );
-  case 34:
+    case 34:
       logger( 'starting update_database: from version 34' );
 
       doSql( "ALTER TABLE `pfandverpackungen` MODIFY COLUMN `wert` decimal(8,4) not null default 0.0" );
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 35 ) );
       logger( 'update_database: update to version 35 successful' );
-  case 35:
+    case 35:
       logger( 'starting update_database: from version 35' );
 
       sql_insert( 'leitvariable', array(
@@ -4854,6 +5063,64 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 36 ) );
       logger( 'update_database: update to version 36 successful' );
+    case 36:
+      logger( 'starting update_database: from version 36' );
+
+      sql_insert( 'leitvariable', array(
+        'name' => 'katalog_mwst_reduziert'
+      , 'value' => '7.00'
+      , 'comment' => 'Reduzierter MwSt-Satz beim BNN-Import'
+      ) );
+      sql_insert( 'leitvariable', array(
+        'name' => 'katalog_mwst_standard'
+      , 'value' => '19.00'
+      , 'comment' => 'Standard-MwSt-Satz beim BNN-Import'
+      ) );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 37 ) );
+      logger( 'update_database: update to version 37 successful' );
+    case 37:
+      logger( 'starting update_database: from version 37' );
+
+      doSql( "ALTER TABLE `bestellvorschlaege` ADD INDEX `by_produkt_id` (`produkt_id`)" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 38 ) );
+      logger( 'update_database: update to version 38 successful' );
+    case 38:
+      logger( 'starting update_database: from version 38' );
+
+      doSql( "ALTER TABLE `produktpreise` ADD INDEX `by_zeitstart` (`produkt_id`, `zeitstart`)" );
+      doSql( "ALTER TABLE `produkte` ADD INDEX `by_lieferanten_id` (`lieferanten_id`)" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 39 ) );
+      logger( 'update_database: update to version 39 successful' );
+    case 39:
+      logger( 'starting update_database: from version 39' );
+      doSql( "ALTER TABLE bankkonto MODIFY COLUMN `valuta` date NOT NULL" );
+      doSql( "ALTER TABLE bankkonto MODIFY COLUMN `buchungsdatum` date NOT NULL" );
+      doSql( "ALTER TABLE bestellgruppen MODIFY COLUMN `passwort` text NOT NULL default ''" );
+      doSql( "ALTER TABLE bestellgruppen MODIFY COLUMN `notiz_gruppe` text NOT NULL default ''" );
+      doSql( "ALTER TABLE dienstkontrollblatt MODIFY COLUMN `datum` date NOT NULL" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `rechnungsnummer` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `extra_soll` decimal(10,2) NOT NULL default '0.00'" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `extra_text` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gesamtbestellungen MODIFY COLUMN `abrechnung_datum` date NULL" );
+      doSql( "ALTER TABLE gruppen_transaktion MODIFY COLUMN `valuta` date NOT NULL" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `rotationsplanposition` int(11) NOT NULL default '0'" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `slogan` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `url` text NOT NULL default ''" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `photo_url` mediumtext NOT NULL default ''" );
+      doSql( "ALTER TABLE gruppenmitglieder MODIFY COLUMN `notiz` text NOT NULL default ''" );
+      doSql( "ALTER TABLE leitvariable MODIFY COLUMN `comment` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `grussformel` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `anrede` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `fc_name` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `fc_strasse` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `fc_ort` text NOT NULL default ''" );
+      doSql( "ALTER TABLE lieferanten MODIFY COLUMN `sonstiges` text NOT NULL default ''" );
+      doSql( "ALTER TABLE produktpreise MODIFY COLUMN `zeitstart` datetime NOT NULL" );
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 40 ) );
+      logger( 'update_database: update to version 40 successful' );
   }
 }
 
@@ -4957,6 +5224,7 @@ function tex2pdf( $tex ) {
     // open_div( 'ok', '', 'ok: '.  implode( ' ', $output ) );
   } else {
     open_div( 'warn', '', 'error: '. file_get_contents( 'tex2pdf.log' ) );
+    open_div( 'warn', '', 'tex: ' . file_get_contents( 'tex2pdf.tex' ) );
     $pdf = false;
   }
   @ unlink( 'tex2pdf.tex' );
@@ -4974,12 +5242,10 @@ function tex_encode( $s ) {
     '/\\\\/' => '\\backslash'
   , '/\\&quot;/' => "''"
   , '/\\&#039;/' => "'"
-  , '/([$%_#~])/' => '\\\\$1'
+  , '/([$%_#~{}])/' => '\\\\$1'
   , '/\\&amp;/' => '\\&'
-  , '/\\&lt;/' => '$<$'
-  , '/\\&gt;/' => '$>$'
-  , '/[}]/' => '$\}$'
-  , '/[{]/' => '$\{$'
+  , '/\\&lt;/' => '\textless'
+  , '/\\&gt;/' => '\textgreater'
   , '/ä/' => '{\"a}'
   , '/Ä/' => '{\"A}'
   , '/ö/' => '{\"o}'
@@ -5006,7 +5272,7 @@ function tex_encode( $s ) {
           case  9: // tab
             $out .= ' ';
             break;
-          case 10: // lf 
+          case 10: // lf
             $out .= '\\newline{}';
             break;
           case 13: // cr
@@ -5030,7 +5296,10 @@ function tex_encode( $s ) {
   return $out;
 }
 
-
+function csv_encode( $s ) {
+  $s = preg_replace( '/"/', '""', html_entity_decode( $s, ENT_QUOTES ) );
+  return '"'.$s.'"';
+}
 
 // insert_html:
 // erzeugt javascript-code, der $element als Child vom element $id ins HTML einfuegt.
