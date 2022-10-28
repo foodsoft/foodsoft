@@ -1584,7 +1584,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
 
   $magic_style = "magic_{$bestell_id}_{$produkt_id}";
 
-  open_tag('style', '', "id='${magic_style}_style' type='text/css'");
+  open_tag('style', '', "id='{$magic_style}_style' type='text/css'");
   echo(".$magic_style { display: none; }");
   close_tag('style');
 
