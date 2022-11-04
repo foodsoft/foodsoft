@@ -755,6 +755,13 @@ function possible_areas(){
      "title" => "Basar");
    }
 
+   if( hat_dienst(0) ) {
+    $areas[] = array("area" => "basar_kauf",
+    "window_id" => "basar_kauf",
+    "hint" => "Waren aus dem Basar kaufen",
+    "title" => "Basarkauf");
+  }
+
    $areas[] = array("area" => "bilanz",
      "hint" => "Finanzen der FC: Überblick und Verwaltung",
      "title" => "Bilanz");
@@ -2073,6 +2080,7 @@ define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ', 11 );
 define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 20 );
 define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 21 );
 define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 30 );
+define( 'BESTELLZUORDNUNG_ART_INVENTUR', 40 );
 
 define( 'BESTELLZUORDNUNG_ART_VORMERKUNGEN', 'BETWEEN 10 AND 19' );
 define( 'BESTELLZUORDNUNG_ART_BESTELLUNGEN', 'BETWEEN 20 AND 29' );
@@ -2631,6 +2639,20 @@ function select_basar( $bestell_id = 0 ) {
     $where = "WHERE gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET; // todo: change to 'ABGESCHLOSSEN'
   }
   return "
+    WITH inventur AS (
+      SELECT bestellzuordnung.produkt_id
+           , bestellzuordnung.menge
+           , bestellzuordnung.zeitpunkt
+           , gruppenbestellungen.bestellgruppen_id as gruppen_id
+           , gruppenbestellungen.gesamtbestellung_id as bestell_id
+        FROM bestellzuordnung
+        JOIN gruppenbestellungen
+          ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+        JOIN gesamtbestellungen
+          ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
+        WHERE bestellzuordnung.art = " . BESTELLZUORDNUNG_ART_INVENTUR . "
+          AND gesamtbestellungen.rechnungsstatus < " . STATUS_ABGESCHLOSSEN . "
+    )
     SELECT produkte.name as produkt_name
          , gesamtbestellungen.name as bestellung_name
          , gesamtbestellungen.lieferung as lieferung
@@ -2646,10 +2668,25 @@ function select_basar( $bestell_id = 0 ) {
          , bestellvorschlaege.produktpreise_id
          , bestellvorschlaege.liefermenge
          , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basarmenge
+         , lieferantenkatalog.ean_einzeln
+         , inventur.menge as inventur_menge
+         , inventur.zeitpunkt as inventur_zeitpunkt
+         , inventur.gruppen_id as inventur_gruppen_id
     FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
     JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
     JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
     JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
+    LEFT JOIN lieferantenkatalog ON ( lieferantenkatalog.lieferanten_id = produkte.lieferanten_id AND lieferantenkatalog.artikelnummer = produkte.artikelnummer )
+    LEFT JOIN inventur
+          ON (inventur.bestell_id = gesamtbestellungen.id
+            AND inventur.produkt_id = bestellvorschlaege.produkt_id
+            AND NOT EXISTS (
+              SELECT 1 FROM inventur AS i1
+              WHERE i1.bestell_id = inventur.bestell_id
+              AND i1.produkt_id = inventur.produkt_id
+              AND i1.zeitpunkt > inventur.zeitpunkt
+            )
+          )
     $where
     HAVING ( basarmenge <> 0 )
   " ;
@@ -2901,11 +2938,21 @@ function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
   return doSql(
     " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
       VALUES ( '$produkt_id', '$gruppenbestellung_id','$menge', ".BESTELLZUORDNUNG_ART_ZUTEILUNG." )
-      ON DUPLICATE KEY UPDATE menge = menge + $menge "
+      ON DUPLICATE KEY UPDATE menge = menge + $menge " // passiert nie, weil unique key ist id
   , LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen"
   );
 }
 
+function sql_basarinventur( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
+  need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
+  $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
+  return doSql(
+    " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
+      VALUES ( '$produkt_id', '$gruppenbestellung_id', '$menge', ".BESTELLZUORDNUNG_ART_INVENTUR." )
+      ON DUPLICATE KEY UPDATE menge = $menge " // passiert nie, weil unique key ist id
+  , LEVEL_IMPORTANT, "Konnte Basarinventur nicht eintragen"
+  );
+}
 
 ////////////////////////////////////
 //

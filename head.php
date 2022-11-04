@@ -9,7 +9,7 @@ if( $readonly ) {
   $payloadclass='ro';
 }
 
-$FC_acronym = adefault( $_SERVER, 'FC_acronym', 'FC' ); 
+$FC_acronym = adefault( $_SERVER, 'FC_acronym', 'FC' );
 
 echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n";
 open_tag( 'html' );
@@ -20,15 +20,16 @@ open_tag( 'head' );
   <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Permanent+Marker">
   <link rel='stylesheet' type='text/css' href='<?php echo $foodsoftbase; ?>/css/foodsoft.css'>
   <link rel='icon' type='image/vnd.microsoft.icon' href='<?php echo $foodsoftbase; ?>/img/favicon.ico'>
-  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/lib/prototype.js' language='javascript'></script>        
-  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>	 
+  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/lib/prototype.js' language='javascript'></script>
+  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>
 <?php
 close_tag( 'head' );
 open_tag( 'body' );
+open_tag( 'meta', '', 'name="viewport" content="width=device-width,initial-scale=1"', '' );
 
 open_div( $headclass, "id='header'" );
   open_table( '', "width='100%'" );
-    open_td( '', '', " 
+    open_td( '', '', "
           <a class='logo' href='index.php'>
           <span class='logoinvers'>$FC_acronym</span><span class='logo'>$foodcoop_name... Foodsoft</span></a>
     " );

@@ -110,7 +110,7 @@ function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldn
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname )
-    return "<input type='text' class='number' size='8' $transmit $id value='$mult' $attr $input_event_handlers>";
+    return "<input type='number' class='number' size='8' $transmit $id value='$mult' $attr $input_event_handlers>";
   else
     return "<span class='number' $id>$mult</span>";
 }
@@ -573,7 +573,7 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
 function areas_in_menu($area){
   open_tr();
     open_td('', '', fc_link( $area['area'], array(
-      'window_id' => 'main', 'text' => $area['title'], 'title' => $area['hint'] , 'class' => 'bigbutton'
+      'window_id' => $area['window_id'] ?? 'main', 'text' => $area['title'], 'title' => $area['hint'] , 'class' => 'bigbutton'
     ) ) );
     // open_td( 'small middle', '', $area['hint'] );
 }
@@ -582,7 +582,7 @@ function areas_in_head($area){
   global $angemeldet;
   if( $angemeldet ) {
     open_li( '', '', fc_link( $area['area'], array(
-      'window_id' => 'main' , 'text' => $area['title'] , 'title' => $area['hint'] , 'class' => 'href'
+      'window_id' => $area['window_id'] ?? 'main' , 'text' => $area['title'] , 'title' => $area['hint'] , 'class' => 'href'
     ) ) );
   } else {
     open_li( '', 'title="bitte erst Anmelden!"', "<span class='href inactive'>{$area['title']}</span>" );
@@ -654,7 +654,8 @@ function pick_group_text() {
      " . ( $have_aufschlag ?
              "<th title='Aufschlag der FC in Prozent'>Aufschlag</th>
               <th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Endpreis</th>"
-           : "<th colspan='2' title='mit MWSt und ggf. Pfand'>V-Preis</th>" )
+           : "<th colspan='2' title='mit MWSt und ggf. Pfand'>V-Preis</th>" ) ."
+    <th colspan='2'>Inventur</th>"
   , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   if( $have_aufschlag )
@@ -680,6 +681,7 @@ function pick_group_text() {
   $fieldcount = 0;
   $gesamtwert = 0;
   $output = '';
+  $rowspan = 1;
   foreach( $basar as $basar_row ) {
     list( $kan_verteilmult, $kan_verteileinheit ) = kanonische_einheit( $basar_row['verteileinheit'] );
     $menge = $basar_row['basarmenge'];
@@ -693,8 +695,6 @@ function pick_group_text() {
 
     // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
     $menge *= $kan_verteilmult;
-    $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
-
     $row = array(
       "<td>{$basar_row['produkt_name']}</td>"
     , "<td>" . fc_link( 'bestellschein', array(
@@ -721,7 +721,17 @@ function pick_group_text() {
           <td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
             . ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' ) ."
           <td class='mult'>" .sprintf( "%.2lf", $preis ). "</td>
-          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
+          <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>
+          " . ( is_null($basar_row['inventur_menge'] )
+                ? "<td class='mult'></td>
+                   <td class='unit'></td>"
+                : (function() use ($basar_row, $kan_verteileinheit, $kan_verteilmult) {
+                    $tooltip = $basar_row['inventur_zeitpunkt'] . ' (Gruppe ' . $basar_row['inventur_gruppen_id'] % 1000 . ')';
+                    return "
+          <td title='$tooltip' class='mult'>" . $basar_row['inventur_menge'] * $kan_verteilmult . "</td>
+          <td title='$tooltip' class='unit'>$kan_verteileinheit</td>";
+                })() ) . "
+          "
     , ( $editAmounts ?
                    "<td class='mult' style='padding:0pt 1ex 0pt 1ex;'>
                     <input type='hidden' name='produkt$fieldcount' value='{$basar_row['produkt_id']}'>
@@ -754,9 +764,7 @@ function pick_group_text() {
   open_tr('summe');
     open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
-    if( $have_aufschlag )
-      open_td( '' );
-    open_td( '', "colspan='2'" );
+    open_td( '', $have_aufschlag ? "colspan='5'" : "colspan='4'" );
 
   if( $editAmounts ) {
     open_tr();

@@ -28,11 +28,12 @@ open_tag( 'head' );
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
   <link rel='stylesheet' type='text/css' href='<?php echo $foodsoftdir; ?>/css/foodsoft.css'>
   <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/lib/prototype.js' language='javascript'></script>
-  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>        
+  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft.js' language='javascript'></script>
 <?php
 close_tag( 'head' );
 
 open_tag( 'body' );
+open_tag( 'meta', '', 'name="viewport" content="width=device-width,initial-scale=1"', '' );
 
 open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt 0pt 1em 0pt;'" );
   open_table( $headclass, "width='100%'" );

@@ -382,6 +382,14 @@ function fc_window_defaults( $name ) {
       $parameters['class'] = ( ( $login_dienst == 4 and ! $readonly ) ? 'edit' : 'record' );
       $options = array_merge( $small_window_options, array( 'width' => '800', 'height' => '600', 'scrollbars' => 'yes' ) );
       break;
+    case 'basar_kauf':
+      $parameters['window'] = 'basar_kauf';
+      $parameters['window_id'] = 'basar_kauf';
+      $parameters['title'] = 'Basar-Kauf...';
+      $parameters['text'] = 'Basar-Kauf';
+      $parameters['class'] = ( ( ! $readonly ) ? 'edit' : 'record' );
+      $options = array_merge( $small_window_options, array( 'scrollbars' => 'yes' ) );
+      break;
     default:
       error( "undefiniertes Fenster: $name " );
   }
@@ -565,7 +573,7 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
         $onsubmit = '';
       } else {
         $target = "target='$js_window_name'";
-        // $onsubmit: 
+        // $onsubmit:
         //  - make sure the target window exists (open empty window unless already open), then
         //  - force reload of document in current window (to issue fresh iTAN for this form):
         $onsubmit = 'onsubmit="'. fc_link( $window, NULL ) . ' document.forms.update_form.submit(); "';
