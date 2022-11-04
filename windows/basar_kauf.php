@@ -11,13 +11,13 @@ get_http_var( 'action','w','' );
 if( $action === 'basarzuteilung' ) {
   header( 'Content-Type: application/json' );
 
-  need_http_var( "produkt", 'U' );
-  need_http_var( "bestellung", 'U' );
-  need( sql_bestellung_status( $bestellung ) < STATUS_ABGERECHNET );
-  need_http_var( "menge", "f" );
+  need_ajax_http_var( "produkt", 'U' );
+  need_ajax_http_var( "bestellung", 'U' );
+  need_ajax( sql_bestellung_status( $bestellung ) < STATUS_ABGERECHNET, 'Bestellung schon abgerechnet!', 400 );
+  need_ajax_http_var( "menge", "f" );
   $pr = sql_produkt( array( 'bestell_id' => $bestellung, 'produkt_id' => $produkt ) );
   $gruppen_menge = $menge / $pr['kan_verteilmult'];
-  need( $gruppen_menge > 0 );
+  need_ajax( $gruppen_menge > 0, 'Menge muss positiv sein!', 400 );
   sql_basar2group( $login_gruppen_id, $produkt, $bestellung, $gruppen_menge );
 
   $response = [
@@ -36,13 +36,13 @@ if( $action === 'basarzuteilung' ) {
 if( $action === 'inventur' ) {
   header( 'Content-Type: application/json' );
 
-  need_http_var( "produkt", 'U' );
-  need_http_var( "bestellung", 'U' );
-  need( sql_bestellung_status( $bestellung ) < STATUS_ABGERECHNET );
-  need_http_var( "menge", "f" );
+  need_ajax_http_var( "produkt", 'U' );
+  need_ajax_http_var( "bestellung", 'U' );
+  need_ajax( sql_bestellung_status( $bestellung ) < STATUS_ABGERECHNET, 'Bestellung schon abgerechnet!', 400 );
+  need_ajax_http_var( "menge", "f" );
   $pr = sql_produkt( array( 'bestell_id' => $bestellung, 'produkt_id' => $produkt ) );
   $rest_menge = $menge / $pr['kan_verteilmult'];
-  need( $rest_menge > 0 );
+  need_ajax( $rest_menge >= 0, 'Menge darf nicht negativ sein!', 400 );
   sql_basarinventur( $login_gruppen_id, $produkt, $bestellung, $rest_menge );
 
   $response = [
@@ -58,6 +58,9 @@ if( $action === 'inventur' ) {
   echo json_encode($response);
   exit(0);
 }
+
+if( $action === 'nop' )
+  $action = '';
 
 need( $action === '', "Unbekannte Aktion $action !" );
 
@@ -91,6 +94,7 @@ foreach( sql_basar() as $produkt ) {
 open_javascript( toJavaScript( 'var availableByEan', $verfuegbar_nach_ean ) );
 
 $prevent_submit = textfield_on_change_handler('');
+open_div( '', 'id="top"', '' );
 open_div( 'tab', 'id="scan-product"' );
   open_div( 'scanner', 'id="scanner-viewport"' );
     open_tag( 'video', '', '', '' );
@@ -165,6 +169,12 @@ open_div( 'tab', 'id="error"' );
   open_tag( 'h1', '', 'id="error_title"', 'Fehler' );
   open_div( 'error_icon', '', '');
   open_div( '', 'id="error_description"', '' );
+  open_div( 'not_touch_only medskip', 'style="text-align:center"');
+    open_div( 'touch_button material-symbols-rounded'
+            , 'id="button_error_reset" style="background-color:darkorange;"'
+            , 'barcode_scanner' );
+  close_div();
+  open_div( '', 'id="error_details"', '' );
 close_div();
 open_div( 'tab', 'id="success"' );
   open_tag( 'h1', '', '', 'Kauf eingetragen!' );
@@ -177,12 +187,6 @@ open_table ( 'list', 'id="bonliste"' );
 close_table();
 
 open_javascript(<<<'EOD'
-
-var dom_kaufmenge = $('kaufmenge');
-var dom_verteilmult = $('verteilmult');
-var dom_basarmenge = $('basarmenge');
-var dom_restmenge = $('restmenge');
-var dom_bonliste = $('bonliste');
 
 function getCookies() {
   return Object.fromEntries(document.cookie.split(/; */).map(function(c) {
@@ -203,35 +207,33 @@ function datediff(first, second) {
   return Math.round((second - first) / (1000 * 60 * 60 * 24));
 }
 
-var basarkaufbon = JSON.parse(getCookies().basarkaufbon ?? '[]');
-basarkaufbon.forEach( bon => {
-  bon.datum = new Date(bon.datum);
-} );
-var heute = new Date();
-basarkaufbon = basarkaufbon.filter( bon => {
-  return datediff(bon.datum, heute) <= 28;
-});
-setCookie('basarkaufbon', JSON.stringify(basarkaufbon));
+var dom_top;
+var dom_kaufmenge;
+var dom_verteilmult;
+var dom_basarmenge;
+var dom_restmenge;
+var dom_bonliste;
+var tab_ids;
+var basarkaufbon;
 
-var tab_ids = $$('div.tab').map( tab => tab.id );
+function evaluateDom() {
+  dom_top = $('top');
+  dom_kaufmenge = $('kaufmenge');
+  dom_verteilmult = $('verteilmult');
+  dom_basarmenge = $('basarmenge');
+  dom_restmenge = $('restmenge');
+  dom_bonliste = $('bonliste');
+
+  tab_ids = $$('div.tab').map( tab => tab.id );
+}
 
 function tab(id) {
   tab_ids.forEach(candidate =>  {
     candidate == id ? $(candidate).show() : $(candidate).hide();
   });
-}
 
-tab('scan-product');
-
-function error( title, description = '' ) {
-  $('error_title').update( title );
-  $('error_description').update( description );
-  tab( 'error' );
-}
-
-function resumeScanning() {
-  Quagga.start();
-  tab('scan-product');
+  dom_top.scrollIntoView();
+  window.scrollTo( 0, 0 );
 }
 
 var bonTemplate = new Template(`
@@ -249,62 +251,55 @@ function displayBon(bon) {
   dom_bonliste.insert(bonTemplate.evaluate(bon));
 }
 
-basarkaufbon.forEach(displayBon);
+function initBasarkaufbon() {
+  // read from cookie and make proper dates
+  basarkaufbon = JSON.parse(getCookies().basarkaufbon ?? '[]');
+  basarkaufbon.forEach( bon => {
+    bon.datum = new Date(bon.datum);
+  } );
 
-$('button_cancel').observe('click', resumeScanning);
-
-$('button_minus').observe('click', () => {
-  if (parseFloat(dom_kaufmenge.value) > parseFloat(dom_verteilmult.value))
-    dom_kaufmenge.value -= dom_verteilmult.value;
-    if (parseFloat(dom_kaufmenge.value) < parseFloat(dom_verteilmult.value))
-      dom_kaufmenge.value = dom_verteilmult.value;
-    dom_kaufmenge.fire('kaufmenge:change');
+  // expire old entries
+  var heute = new Date();
+  basarkaufbon = basarkaufbon.filter( bon => {
+    return datediff(bon.datum, heute) <= 28;
   });
+  setCookie('basarkaufbon', JSON.stringify(basarkaufbon));
 
-$('button_plus').observe('click', () => {
-  dom_kaufmenge.value = parseFloat(dom_kaufmenge.value) + parseFloat(dom_verteilmult.value);
-  if (dom_kaufmenge.value > dom_basarmenge.value * dom_verteilmult.value)
-    dom_kaufmenge.value = dom_basarmenge.value * dom_verteilmult.value;
-  dom_kaufmenge.fire('kaufmenge:change');
-});
+  basarkaufbon.forEach(displayBon);
+}
 
-$('button_buy').observe( 'click', () => {
-  new Ajax.Request( ajax.url, {
-    parameters: {
-      action: 'basarzuteilung',
-      produkt: $('produkt_id').value,
-      bestellung: $('bestell_id').value,
-      menge: dom_kaufmenge.value,
-      itan: ajax.itan
-    },
-    onSuccess: function(response) {
-      let json = response.responseJSON;
-      ajax.itan = json.next_itan;
-      if( !ajax.itan ) {
-        error( 'Keine neue ITAN erhalten!', JSON.stringify(json) );
-        return;
-      }
-      if( !json.success ) {
-        error( 'Unerwarteter Fehler!', JSON.stringify(json) );
-        return;
-      }
-      buySuccess(json);
-    },
-    onFailure: function(response) {
-      error( 'Fehler!', response.statusText );
-    }
-  } ); // ajax
-} );
+function error( title, description = '' ) {
+  $('error_title').update( title );
+  $('error_description').update( description );
+  $('error_details').update();
+  tab( 'error' );
+}
 
-dom_kaufmenge.observe('change', () => {
-  dom_kaufmenge.fire('kaufmenge:change');
-});
+function ajax_error( response ) {
+  let json = response.responseJSON;
+  ajax.itan = response.responseJSON.next_itan;
 
-dom_kaufmenge.observe('kaufmenge:change', () => {
-  $('preis').textContent = (dom_kaufmenge.value / dom_verteilmult.value * $('endpreis').value).toFixed(2);
-  $('button_minus').toggleClassName('disabled', parseFloat(dom_kaufmenge.value) <= parseFloat(dom_verteilmult.value) );
-  $('button_plus').toggleClassName('disabled', parseFloat(dom_kaufmenge.value) >= dom_basarmenge.value * dom_verteilmult.value);
-});
+  $('error_title').update( response.statusText );
+
+  let description = $('error_description');
+  description.update( json.comment );
+  let details = $('error_details');
+  details.update();
+  if( json.stack )
+    details.update( `
+      <fieldset>
+        <legend>Stack Trace</legend>
+        <pre>${json.stack}</pre>
+      </fieldset>
+    ` );
+
+  tab( 'error' );
+}
+
+function resumeScanning() {
+  Quagga.start();
+  tab('scan-product');
+}
 
 function pickDelivery( ean, index, found ) {
   $('ean').value = ean;
@@ -348,50 +343,6 @@ function buySuccess(json) {
   tab( 'check-remaining' );
 }
 
-$('button_check-remaining_skip').observe( 'click', () => {
-  tab( 'success' );
-  window.setTimeout(resumeScanning, 1500);
-} );
-
-$('button_check-remaining_minus').observe( 'click', () => {
-  if (parseFloat(dom_restmenge.value) > 0)
-    dom_restmenge.value -= dom_verteilmult.value;
-  if (parseFloat(dom_restmenge.value) < 0)
-    dom_restmenge.value = 0;
-} );
-
-$('button_check-remaining_plus').observe('click', () => {
-  dom_restmenge.value = parseFloat(dom_restmenge.value) + parseFloat(dom_verteilmult.value);
-});
-
-$('button_check-remaining_confirm').observe( 'click', () => {
-  new Ajax.Request( ajax.url, {
-    parameters: {
-      action: 'inventur',
-      produkt: $('produkt_id').value,
-      bestellung: $('bestell_id').value,
-      menge: dom_restmenge.value,
-      itan: ajax.itan
-    },
-    onSuccess: function(response) {
-      let json = response.responseJSON;
-      ajax.itan = json.next_itan;
-      if( !ajax.itan ) {
-        error( 'Keine neue ITAN erhalten!', JSON.stringify(json) );
-        return;
-      }
-      if( !json.success ) {
-        error( 'Unerwarteter Fehler!', JSON.stringify(json) );
-        return;
-      }
-      checkRemainingSuccess(json);
-    },
-    onFailure: function(response) {
-      error( 'Fehler!', response.statusText );
-    }
-  } ); // ajax
-} );
-
 function checkRemainingSuccess(json) {
   let verteilmult = dom_verteilmult.value;
   availableByEan[$('ean').value][parseInt($('bestell_index').value)].basarmenge = dom_restmenge.value / verteilmult;
@@ -399,8 +350,6 @@ function checkRemainingSuccess(json) {
   tab( 'success' );
   window.setTimeout(resumeScanning, 1500);
 }
-
-Event.observe(window, 'load', () => {
 
 var CodeScanner = {
   init: function() {
@@ -457,34 +406,6 @@ var CodeScanner = {
     locate: true
   },
 };
-var target = $('scanner-viewport');
-CodeScanner.state.inputStream.target = target;
-CodeScanner.init();
-
-Quagga.onProcessed(function(result) {
-  var drawingCtx = Quagga.canvas.ctx.overlay,
-      drawingCanvas = Quagga.canvas.dom.overlay;
-
-  if (result) {
-    drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
-    if (result.boxes) {
-        // window.alert('drawingCanvas: ' + drawingCanvas.getAttribute("width") + ' x ' + drawingCanvas.getAttribute("height"));
-        result.boxes.filter(function (box) {
-            return box !== result.box;
-        }).forEach(function (box) {
-            Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "orange", lineWidth: 2});
-        });
-    }
-
-    if (result.box) {
-        Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 5});
-    }
-
-    if (result.codeResult && result.codeResult.code) {
-        Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 10});
-    }
-  }
-});
 
 function handleQuaggaDetected( result ) {
   var code = result.codeResult.code;
@@ -540,8 +461,158 @@ function handleQuaggaDetected( result ) {
   tab('pick-delivery');
 }
 
-Quagga.onDetected(handleQuaggaDetected);
+function onDomReady() {
+  evaluateDom();
+  initBasarkaufbon();
 
-});
+  tab('scan-product');
+
+  $('button_cancel').observe('click', resumeScanning);
+  $('button_error_reset').observe('click', resumeScanning);
+
+  $('button_minus').observe('click', () => {
+    if (parseFloat(dom_kaufmenge.value) > parseFloat(dom_verteilmult.value))
+      dom_kaufmenge.value -= dom_verteilmult.value;
+      if (parseFloat(dom_kaufmenge.value) < parseFloat(dom_verteilmult.value))
+        dom_kaufmenge.value = dom_verteilmult.value;
+      dom_kaufmenge.fire('kaufmenge:change');
+    });
+
+  $('button_plus').observe('click', () => {
+    dom_kaufmenge.value = parseFloat(dom_kaufmenge.value) + parseFloat(dom_verteilmult.value);
+    if (dom_kaufmenge.value > dom_basarmenge.value * dom_verteilmult.value)
+      dom_kaufmenge.value = dom_basarmenge.value * dom_verteilmult.value;
+    dom_kaufmenge.fire('kaufmenge:change');
+  });
+
+  $('button_buy').observe( 'click', () => {
+    new Ajax.Request( ajax.url, {
+      parameters: {
+        action: 'basarzuteilung',
+        produkt: $('produkt_id').value,
+        bestellung: $('bestell_id').value,
+        menge: dom_kaufmenge.value,
+        itan: ajax.itan
+      },
+      onSuccess: function(response) {
+        let json = response.responseJSON;
+        ajax.itan = json.next_itan;
+        if( !ajax.itan ) {
+          error( 'Keine neue ITAN erhalten!', JSON.stringify(json) );
+          return;
+        }
+        if( !json.success ) {
+          error( 'Unerwarteter Fehler!', JSON.stringify(json) );
+          return;
+        }
+        buySuccess(json);
+      },
+      onFailure: function(response) {
+        ajax_error( response );
+      }
+    } ); // ajax
+  } );
+
+  dom_kaufmenge.observe('change', () => {
+    dom_kaufmenge.fire('kaufmenge:change');
+  });
+
+  dom_kaufmenge.observe('kaufmenge:change', () => {
+    $('preis').textContent = (dom_kaufmenge.value / dom_verteilmult.value * $('endpreis').value).toFixed(2);
+    $('button_minus').toggleClassName('disabled', parseFloat(dom_kaufmenge.value) <= parseFloat(dom_verteilmult.value) );
+    $('button_plus').toggleClassName('disabled', parseFloat(dom_kaufmenge.value) >= dom_basarmenge.value * dom_verteilmult.value);
+  });
+
+  $('button_check-remaining_skip').observe( 'click', () => {
+    tab( 'success' );
+    window.setTimeout(resumeScanning, 1500);
+  } );
+
+  dom_restmenge.observe('change', () => {
+    dom_restmenge.fire('restmenge:change');
+  });
+
+  dom_restmenge.observe('restmenge:change', () => {
+    $('button_minus').toggleClassName('disabled', parseFloat(dom_restmenge.value) <= 0 );
+  });
+
+  $('button_check-remaining_minus').observe( 'click', () => {
+    if (parseFloat(dom_restmenge.value) > 0)
+      dom_restmenge.value -= dom_verteilmult.value;
+    if (parseFloat(dom_restmenge.value) < 0)
+      dom_restmenge.value = 0;
+      dom_restmenge.fire('restmenge:change');
+  } );
+
+  $('button_check-remaining_plus').observe('click', () => {
+    dom_restmenge.value = parseFloat(dom_restmenge.value) + parseFloat(dom_verteilmult.value);
+    dom_restmenge.fire('restmenge:change');
+  });
+
+  $('button_check-remaining_confirm').observe( 'click', () => {
+    new Ajax.Request( ajax.url, {
+      parameters: {
+        action: 'inventur',
+        produkt: $('produkt_id').value,
+        bestellung: $('bestell_id').value,
+        menge: dom_restmenge.value,
+        itan: ajax.itan
+      },
+      onSuccess: function(response) {
+        let json = response.responseJSON;
+        ajax.itan = json.next_itan;
+        if( !ajax.itan ) {
+          error( 'Keine neue ITAN erhalten!', JSON.stringify(json) );
+          return;
+        }
+        if( !json.success ) {
+          error( 'Unerwarteter Fehler!', JSON.stringify(json) );
+          return;
+        }
+        checkRemainingSuccess(json);
+      },
+      onFailure: function(response) {
+        ajax_error( response );
+      }
+    } ); // ajax
+  } );
+
+  var target = $('scanner-viewport');
+  CodeScanner.state.inputStream.target = target;
+  CodeScanner.init();
+
+  Quagga.onProcessed(function(result) {
+    var drawingCtx = Quagga.canvas.ctx.overlay,
+        drawingCanvas = Quagga.canvas.dom.overlay;
+
+    if (result) {
+      drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+      if (result.boxes) {
+          // window.alert('drawingCanvas: ' + drawingCanvas.getAttribute("width") + ' x ' + drawingCanvas.getAttribute("height"));
+          result.boxes.filter(function (box) {
+              return box !== result.box;
+          }).forEach(function (box) {
+              Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "orange", lineWidth: 2});
+          });
+      }
+
+      if (result.box) {
+          Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 5});
+      }
+
+      if (result.codeResult && result.codeResult.code) {
+          Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 10});
+      }
+    }
+  } )
+
+  Quagga.onDetected(handleQuaggaDetected);
+}
+
+if (document.readyState === 'loading') {  // Loading hasn't finished yet
+  document.observe('DOMContentLoaded', onDomReady);
+} else {  // `DOMContentLoaded` has already fired
+  onDomReady();
+}
 EOD);
 ?>

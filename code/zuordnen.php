@@ -4672,6 +4672,11 @@ function need_http_var( $name, $typ, $is_self_field = false ) {
   return TRUE;
 }
 
+function need_ajax_http_var( $name, $typ, $is_self_field = false, $http_error_code = 400 ) {
+  need_ajax( get_http_var( $name, $typ, NULL, $is_self_field ), "variable $name nicht uebergeben", $http_error_code );
+  return TRUE;
+}
+
 function self_field( $name, $default = NULL ) {
   global $self_fields;
   if( isset( $self_fields[$name] ) )
