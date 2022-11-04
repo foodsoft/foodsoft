@@ -16,7 +16,7 @@ function error( $string ) {
       open_span( 'qquad', '', fc_link( 'self', 'img=,text=weiter...' ) );
       bigskip();
     close_div();
-    logger( "error: $string" );
+    logger( "error: $string ({$stack[0]['file']}:{$stack[0]['line']})" );
   }
   die();
 }
@@ -36,7 +36,7 @@ function need( $exp, $comment = "Problem" ) {
       open_span( 'qquad', '', fc_link( 'self', 'img=,text=weiter...' ) );
       bigskip();
     close_div();
-    logger( "assertion failed: $exp" );
+    logger( "need failed ({$stack[0]['file']}:{$stack[0]['line']})" );
     die();
   }
   return true;
