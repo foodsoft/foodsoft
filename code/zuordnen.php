@@ -755,7 +755,7 @@ function possible_areas(){
      "title" => "Basar");
    }
 
-   if( hat_dienst(0) ) {
+   if( false and hat_dienst(0) ) {
     $areas[] = array("area" => "basar_kauf",
     "window_id" => "basar_kauf",
     "hint" => "Waren aus dem Basar kaufen",
