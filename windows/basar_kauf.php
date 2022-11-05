@@ -199,8 +199,9 @@ function getCookies() {
   }));
 }
 
-function setCookie(key, value) {
-  document.cookie = encodeURIComponent(key)+"="+encodeURIComponent(value)+"; SameSite=Strict"
+function setCookie(key, value, maxAge = null) {
+  maxAge = maxAge ? `; MaxAge=${maxAge}` : '';
+  document.cookie = encodeURIComponent(key)+"="+encodeURIComponent(value)+"; SameSite=Strict" + maxAge;
 }
 
 function datediff(first, second) {
@@ -263,9 +264,13 @@ function initBasarkaufbon() {
   basarkaufbon = basarkaufbon.filter( bon => {
     return datediff(bon.datum, heute) <= 28;
   });
-  setCookie('basarkaufbon', JSON.stringify(basarkaufbon));
+  saveBasarkaufbon();
 
   basarkaufbon.forEach(displayBon);
+}
+
+function saveBasarkaufbon() {
+  setCookie('basarkaufbon', JSON.stringify(basarkaufbon), 28 /* days */ * 24 * 60 * 60);
 }
 
 function error( title, description = '' ) {
@@ -334,7 +339,7 @@ function buySuccess(json) {
 
   displayBon(bon);
   basarkaufbon.push(bon);
-  setCookie('basarkaufbon', JSON.stringify(basarkaufbon));
+  saveBasarkaufbon();
 
   $('check-remaining-produkt_name').textContent = produktname;
   dom_restmenge.value = restmenge * verteilmult;
