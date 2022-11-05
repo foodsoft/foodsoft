@@ -8,6 +8,14 @@ $leitvariable = array(
   , 'runtime_editable' => 1
   , 'cols' => '40'
   )
+, 'login_lifetime' => array(
+    'meaning' => 'Lebensdauer des Login-Cookies'
+  , 'default' => 'session'
+  , 'local' => false
+  , 'comment' => '"session": Session-Cookie (auf Android ggfs. sehr kurz), "{x}h": {x} Stunden oder "{x}d": {x} Tage'
+  , 'runtime_editable' => 1
+  , 'cols' => '8'
+  )
 , 'motd' => array(
     'meaning' => '"message of the day": wird auf der Login-Seite (vor dem login, also oeffentilich!) angezeigt'
   , 'default' => 'Willkommen bei der Nahrungskette!'

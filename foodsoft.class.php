@@ -50,7 +50,7 @@ class auth_foodsoft extends auth_basic {
       }
       if( $_REQUEST['do'] == 'logout' ) {
         unset( $_COOKIE['foodsoftkeks'] );
-        setcookie( 'foodsoftkeks', '0', 0, '/' );
+        setcookie( 'foodsoftkeks', '0', time() - 60, '/' );
         $_REQUEST['do'] = 'show';
       }
 
@@ -80,7 +80,7 @@ class auth_foodsoft extends auth_basic {
     function trustExternal($user,$pass,$sticky=false){
       global $USERINFO, $angemeldet, $login_gruppen_name;
       global $from_dokuwiki;
-      
+
       if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
         $dir = getcwd();
         chdir( FOODSOFT_PATH );

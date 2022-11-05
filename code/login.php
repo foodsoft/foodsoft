@@ -33,10 +33,27 @@ function init_login() {
   $reconfirmation_muted = FALSE;
 }
 
+function login_lifetime() {
+  global $login_lifetime;
+  if( $login_lifetime === 'session' )
+    return 0;
+  if( preg_match('/(\d+)\s*h/', $login_lifetime, $matches) )
+    return $matches[1] * 60 * 60;
+  if( preg_match('/(\d+)\s*d/', $login_lifetime, $matches) )
+    return $matches[1] * 24 * 60 * 60;
+  // otherwise, it's something broken which we'll treat as 'session', too:
+  return 0;
+}
+
+function set_foodsoftkeks( $keks, $lifetime ) {
+  global $foodsoftbase;
+  return setcookie( 'foodsoftkeks', $keks, $lifetime ? time() + $lifetime : 0, $foodsoftbase );
+}
+
 function logout() {
   init_login();
   unset( $_COOKIE['foodsoftkeks'] );
-  setcookie( 'foodsoftkeks', '0', 0, '/' );
+  setcookie( 'foodsoftkeks', '0', time() - 60, '/' );
 }
 
 init_login();
@@ -45,6 +62,8 @@ $problems = '';
 $telefon ='';
 $name ='';
 $notiz ='';
+
+$login_lifetime_seconds = login_lifetime();
 
 // pruefen, ob schon eingeloggt:
 //
@@ -61,6 +80,10 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
     $login_dienst = $row['dienst'];
     $dienstkontrollblatt_id = $row['dienstkontrollblatt_id'];
     $login_gruppen_name = sql_gruppenname( $login_gruppen_id );
+
+    if( $login_lifetime_seconds ) // bump expiry
+      set_foodsoftkeks( $_COOKIE['foodsoftkeks'], $login_lifetime_seconds );
+
     if (! is_null($row['muteReconfirmation_elapsed']) && $row['muteReconfirmation_elapsed'] < 60 )
         $reconfirmation_muted = TRUE;
   }
@@ -134,7 +157,7 @@ switch( $login ) {
       , 'dienstkontrollblatt_id' => $dienstkontrollblatt_id
       ) );
       $keks = $session_id.'_'.$cookie;
-      need( setcookie( 'foodsoftkeks', $keks, 0, '/' ), "setcookie() fehlgeschlagen" );
+      need( set_foodsoftkeks( $keks, $login_lifetime_seconds ), "setcookie() fehlgeschlagen" );
       $angemeldet = TRUE;
       logger( "successful login. client: {$_SERVER['HTTP_USER_AGENT']} {$activate_mozilla_kludges} {$activate_safari_kludges} {$activate_exploder_kludges}" );
     }
