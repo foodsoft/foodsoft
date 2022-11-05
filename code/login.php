@@ -46,8 +46,7 @@ function login_lifetime() {
 }
 
 function set_foodsoftkeks( $keks, $lifetime ) {
-  global $foodsoftbase;
-  return setcookie( 'foodsoftkeks', $keks, $lifetime ? time() + $lifetime : 0, $foodsoftbase );
+  return setcookie( 'foodsoftkeks', $keks, $lifetime ? time() + $lifetime : 0, '/' );
 }
 
 function logout() {
