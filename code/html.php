@@ -318,9 +318,9 @@ function open_form( $get_parameters = array(), $post_parameters = array() ) {
   return $form_id;
 }
 
-// hidden_input(): 
+// hidden_input():
 // - register parameter $name, value $val to be inserted as a hidden input field
-//   just before </form> 
+//   just before </form>
 // - thus, this function can be called anywhere in the html structure, not just
 //   where <input> is allowed
 // - $attr can be used to set e.g. an id='foo' to modify the value from javascript
@@ -625,9 +625,9 @@ function close_option_menu_row() {
 
 /**
  * Generate event handler attributes for handling changes and capturing ENTER key
- * 
+ *
  * @author Tilman Vogel
- * 
+ *
  * @param[in]   handler
  *              JS code to execute on field change or ENTER
  * @param[in]   capture_enter
@@ -635,18 +635,20 @@ function close_option_menu_row() {
  * @returns     corresponding "onchange" and "onkeypress" attributes
  */
 function textfield_on_change_handler( $handler, $capture_enter = true ) {
-  $result = " onchange='$handler'";
+  $handlerFunction = "function(triggeredByEnter) { $handler }";
+  $handlerFunction = htmlspecialchars( $handlerFunction );
+  $result = " onchange='($handlerFunction)(false)'";
   if ($capture_enter) {
-    $result .= " onkeypress='handleTextFieldKeyPress(event, function() { $handler });'";
+    $result .= " onkeypress='handleTextFieldKeyPress(event, $handlerFunction);'";
   }
   return $result;
 }
 
 /**
  * Send a PHP array as a JavaScript object via JSON
- * 
+ *
  * @author Tilman Vogel
- * 
+ *
  * @param[in]   name
  *              name of the JavaScript variable, must contain "var " if desired
  * @param[in]   value

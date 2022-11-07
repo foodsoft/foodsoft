@@ -93,97 +93,119 @@ foreach( sql_basar() as $produkt ) {
 }
 open_javascript( toJavaScript( 'var availableByEan', $verfuegbar_nach_ean ) );
 
-$prevent_submit = textfield_on_change_handler('');
 open_div( '', 'id="top"', '' );
 open_div( 'tab', 'id="scan-product"' );
   open_div( 'scanner', 'id="scanner-viewport"' );
     open_tag( 'video', '', '', '' );
   close_div();
 close_div();
-open_div( 'tab', 'id="pick-delivery"' );
+open_div( 'tab max10', 'id="pick-delivery"' );
   open_tag( 'h1', '', 'id="pick-delivery-produkt_name"', '');
   open_tag( 'p', '', '', 'Bitte Lieferung wählen:');
   open_div( '', 'id="delivery-list"', '');
 close_div();
-open_form();
-hidden_input( 'ean', '', 'id="ean"' );
-hidden_input( 'produkt_id', '', 'id="produkt_id"' );
-hidden_input( 'bestell_index', '', 'id="bestell_index"' );
-hidden_input( 'bestell_id', '', 'id="bestell_id"' );
-hidden_input( 'verteilmult', '1', 'id="verteilmult"' );
-hidden_input( 'basarmenge', '', 'id="basarmenge"' );
-hidden_input( 'endpreis', '', 'id="endpreis"' );
-open_div( 'tab', 'id="enter-amount"' );
+open_div( 'tab max10', 'id="enter-amount"' );
   open_tag( 'h1', '', 'id="produkt_name"', '' );
   open_tag( 'p', '', '', 'Bitte Menge wählen:');
   open_table( 'list', 'width="100%"' );
     open_tr();
       open_td( '', '', 'Menge:');
-      open_td( 'mult', '', mult_view( 1, "kaufmenge", true, true, $prevent_submit ) );
+      open_td( 'mult', '', mult_view( 1, "kaufmenge", true, true
+      , textfield_on_change_handler('if (triggeredByEnter) $(\'button_buy\').click();') ) );
       open_td( 'unit', 'id="verteileinheit" width=1' );
     open_tr();
       open_td( '', '', 'Preis:');
       open_td( 'number', 'id="preis" colspan=2', '' );
   close_table();
-  open_div( 'not_touch_only medskip', 'style="text-align:center"');
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_cancel" style="background-color:darkorange;"'
-            , 'barcode_scanner' );
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_minus" style="background-color:darkred;"'
-            , 'remove' );
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_plus" style="background-color:darkgreen;"'
-            , 'add' );
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_buy" style="background-color:rgb(15,33,139); color:rgb(255,255,0);"'
-            , 'euro' );
-  close_div();
+  open_table( 'layout medskip hcenter' );
+    open_tr();
+      open_td( '', '', '' );
+      open_td( '', '' );
+        open_div( 'touch_only touch_button material-symbols-rounded'
+        , 'id="button_plus" style="background-color:darkgreen;"'
+        , 'add' );
+      open_td( '', '', '' );
+    open_tr();
+      open_td( '', '' );
+        open_div( 'touch_button material-symbols-rounded'
+        , 'id="button_cancel" style="background-color:darkorange;"'
+        , 'barcode_scanner' );
+      open_td( '', '' );
+        open_div( 'hidden touch_button material-symbols-rounded'
+        , ''
+        , '' );
+      open_td( '', '' );
+        open_div( 'touch_button material-symbols-rounded'
+        , 'id="button_buy" style="background-color:rgb(15,33,139); color:rgb(255,255,0);"'
+        , 'euro' );
+    open_tr();
+      open_td( '', '', '' );
+      open_td( '', '' );
+        open_div( 'touch_only touch_button material-symbols-rounded'
+                , 'id="button_minus" style="background-color:darkred;"'
+                , 'remove' );
+      open_td( '', '', '' );
+  close_table();
 close_div();
-close_form();
-open_div( 'tab', 'id="check-remaining"' );
+open_div( 'tab max10', 'id="check-remaining"' );
   open_tag( 'h1', '', 'id="check-remaining-produkt_name"', '');
   open_tag( 'p', '', '', 'Wieviel ist noch übrig?');
   open_table( 'list', 'width="100%"' );
     open_tr();
       open_td( '', '', 'Rest:');
-      open_td( 'mult', '', mult_view( 1, "restmenge", true, true, $prevent_submit ) );
+      open_td( 'mult', '', mult_view( 1, "restmenge", true, true
+      , textfield_on_change_handler('if (triggeredByEnter) $(\'button_check-remaining_confirm\').click();') ) );
       open_td( 'unit', 'id="check-remaining-verteileinheit" width=1' );
   close_table();
-  open_div( 'not_touch_only medskip', 'style="text-align:center"');
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
-            , 'skip_next' );
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_check-remaining_minus" style="background-color:darkred;"'
-            , 'remove' );
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
-            , 'add' );
-    open_div( 'touch_button material-symbols-rounded'
-            , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
-            , 'verified' );
-  close_div();
+  open_table( 'layout medskip hcenter' );
+    open_tr();
+      open_td( '', '' );
+        open_div( 'touch_only touch_button material-symbols-rounded'
+        , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
+        , 'add' );
+      open_td( '', '', '' );
+      open_td( '', '', '' );
+    open_tr();
+      open_td( '', '' );
+        open_div( 'hidden touch_button material-symbols-rounded'
+        , ''
+        , '' );
+      open_td( '', '' );
+        open_div( 'touch_button material-symbols-rounded'
+        , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
+        , 'verified' );
+      open_td( '', '' );
+        open_div( 'touch_button material-symbols-rounded'
+        , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
+        , 'skip_next' );
+    open_tr();
+      open_td( '', '' );
+        open_div( 'touch_only touch_button material-symbols-rounded'
+        , 'id="button_check-remaining_minus" style="background-color:darkred;"'
+        , 'remove' );
+      open_td( '', '', '' );
+      open_td( '', '', '' );
+  close_table();
 close_div();
-open_div( 'tab', 'id="error"' );
+open_div( 'tab max10', 'id="error"' );
   open_tag( 'h1', '', 'id="error_title"', 'Fehler' );
   open_div( 'error_icon', '', '');
   open_div( '', 'id="error_description"', '' );
-  open_div( 'not_touch_only medskip', 'style="text-align:center"');
+  open_div( 'touch_only medskip', 'style="text-align:center"');
     open_div( 'touch_button material-symbols-rounded'
             , 'id="button_error_reset" style="background-color:darkorange;"'
             , 'barcode_scanner' );
   close_div();
   open_div( '', 'id="error_details"', '' );
 close_div();
-open_div( 'tab', 'id="success"' );
+open_div( 'tab max10', 'id="success"' );
   open_tag( 'h1', '', '', 'Kauf eingetragen!' );
   open_div( 'success_icon', '', '');
 close_div();
 
 open_tag ( 'hr', '', '', '' );
 
-open_table ( 'list', 'id="bonliste"' );
+open_table ( 'list max10 hcenter', 'id="bonliste"' );
 close_table();
 
 open_javascript(<<<'EOD'
@@ -210,17 +232,18 @@ function datediff(first, second) {
 
 var dom_top;
 var dom_kaufmenge;
-var dom_verteilmult;
 var dom_basarmenge;
 var dom_restmenge;
 var dom_bonliste;
+var dom_bonliste_kopf;
 var tab_ids;
 var basarkaufbon;
+
+var currentProduct;
 
 function evaluateDom() {
   dom_top = $('top');
   dom_kaufmenge = $('kaufmenge');
-  dom_verteilmult = $('verteilmult');
   dom_basarmenge = $('basarmenge');
   dom_restmenge = $('restmenge');
   dom_bonliste = $('bonliste');
@@ -238,25 +261,45 @@ function tab(id) {
 }
 
 var bonTemplate = new Template(`
-  <tr>
-    <td>#{datum}</td>
+  <tr id="bon-#{index}-a">
+    <td rowspan=2>#{datum}</td>
     <td>#{menge}</td>
     <td>#{produkt}</td>
     <td>#{preis}</td>
   </tr>
+  <tr id="bon-#{index}-b">
+    <td colspan=3 class="smalll">#{lieferdatum}: #{bestellung}</td>
+  </tr>
 `);
 
 function displayBon(bon) {
-  bon = { ...bon };
+  if( !dom_bonliste.childElementCount ) {
+    dom_bonliste.insert( bonTemplate.evaluate( {
+      index: 0
+    , datum:       '<b>Datum</b>'
+    , menge:       '<b>Menge</b>'
+    , produkt:     '<b>Produkt</b>'
+    , bestellung:  '<b>Bestellung</b>'
+    , lieferdatum: '<b>Lieferdatum</b>'
+    , preis:       '<b>Preis</b>'
+    } ) );
+    dom_bonliste_kopf = $('bon-0-b');
+  }
+
+  bon = { index: dom_bonliste.childElementCount / 2, ...bon };
   bon.datum = bon.datum.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'});
-  dom_bonliste.insert(bonTemplate.evaluate(bon));
+  if (bon.lieferdatum)
+    bon.lieferdatum = bon.lieferdatum.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'}) ?? '';
+  dom_bonliste_kopf.insert( {after: bonTemplate.evaluate(bon)} );
 }
 
 function initBasarkaufbon() {
   // read from cookie and make proper dates
-  basarkaufbon = JSON.parse(getCookies().basarkaufbon ?? '[]');
+  basarkaufbon = JSON.parse( localStorage.getItem( 'basarkaufbon' ) ?? '[]' );
   basarkaufbon.forEach( bon => {
-    bon.datum = new Date(bon.datum);
+    bon.datum = new Date( bon.datum );
+    if( bon.lieferdatum )
+      bon.lieferdatum = new Date( bon.lieferdatum );
   } );
 
   // expire old entries
@@ -270,7 +313,7 @@ function initBasarkaufbon() {
 }
 
 function saveBasarkaufbon() {
-  setCookie('basarkaufbon', JSON.stringify(basarkaufbon), 28 /* days */ * 24 * 60 * 60);
+  localStorage.setItem( 'basarkaufbon', JSON.stringify(basarkaufbon) );
 }
 
 function error( title, description = '' ) {
@@ -307,32 +350,30 @@ function resumeScanning() {
 }
 
 function pickDelivery( ean, index, found ) {
-  $('ean').value = ean;
+  currentProduct = { ean: ean, index: index, ...found };
   $('produkt_name').textContent = found.produkt_name;
-  $('bestell_index').value = index;
-  $('bestell_id').value = found.bestell_id;
-  $('produkt_id').value = found.produkt_id;
-  dom_verteilmult.value = found.verteilmult;
-  dom_basarmenge.value = found.basarmenge;
-  $('endpreis').value = found.endpreis;
   $('verteileinheit').textContent = found.verteileinheit;
   dom_kaufmenge.value = found.verteilmult;
   dom_kaufmenge.min = 0;
+  dom_kaufmenge.step = found.verteilmult;
   dom_kaufmenge.max = found.basarmenge * found.verteilmult;
   dom_kaufmenge.fire('kaufmenge:change');
   tab('enter-amount');
 }
 
 function buySuccess(json) {
-  let verteilmult = dom_verteilmult.value;
+  let verteilmult = currentProduct.verteilmult;
   let restmenge =
-    availableByEan[$('ean').value][parseInt($('bestell_index').value)].basarmenge -= dom_kaufmenge.value / verteilmult;
-  let produktname = $('produkt_name').textContent;
-  let verteileinheit = $('verteileinheit').textContent;
+    availableByEan[currentProduct.ean][currentProduct.index].basarmenge
+      -= dom_kaufmenge.value / verteilmult;
+  let produktname = currentProduct.produkt_name;
+  let verteileinheit = currentProduct.verteileinheit;
 
   let bon = {
     datum: new Date()
   , produkt: produktname
+  , bestellung: currentProduct.bestellung
+  , lieferdatum: new Date(currentProduct.lieferdatum)
   , menge: dom_kaufmenge.value + ' ' + verteileinheit
   , preis: $('preis').textContent
   };
@@ -343,14 +384,17 @@ function buySuccess(json) {
 
   $('check-remaining-produkt_name').textContent = produktname;
   dom_restmenge.value = restmenge * verteilmult;
+  dom_restmenge.min = 0;
+  dom_restmenge.step = verteilmult;
   $('check-remaining-verteileinheit').textContent = verteileinheit;
 
   tab( 'check-remaining' );
 }
 
 function checkRemainingSuccess(json) {
-  let verteilmult = dom_verteilmult.value;
-  availableByEan[$('ean').value][parseInt($('bestell_index').value)].basarmenge = dom_restmenge.value / verteilmult;
+  let verteilmult = currentProduct.verteilmult;
+  availableByEan[currentProduct.ean][currentProduct.index].basarmenge
+    = dom_restmenge.value / verteilmult;
 
   tab( 'success' );
   window.setTimeout(resumeScanning, 1500);
@@ -457,8 +501,14 @@ function handleQuaggaDetected( result ) {
   `);
 
   found.forEach((candidate, index) => {
-    var templateData = { code: code, index: index, ...candidate, 'json': JSON.stringify( candidate ) };
-    templateData.basarmenge = candidate.basarmenge * candidate.verteilmult + ' ' + candidate.verteileinheit;
+    var templateData = {
+      code: code
+    , index: index
+    , json: JSON.stringify( candidate )
+    , ...candidate
+    };
+    templateData.basarmenge
+      = candidate.basarmenge * candidate.verteilmult + ' ' + candidate.verteileinheit;
     deliveryList.insert(deliveryTemplate.evaluate(templateData));
   });
   deliveryPicker.update(deliveryList);
@@ -476,17 +526,17 @@ function onDomReady() {
   $('button_error_reset').observe('click', resumeScanning);
 
   $('button_minus').observe('click', () => {
-    if (parseFloat(dom_kaufmenge.value) > parseFloat(dom_verteilmult.value))
-      dom_kaufmenge.value -= dom_verteilmult.value;
-      if (parseFloat(dom_kaufmenge.value) < parseFloat(dom_verteilmult.value))
-        dom_kaufmenge.value = dom_verteilmult.value;
+    if (parseFloat(dom_kaufmenge.value) > currentProduct.verteilmult)
+      dom_kaufmenge.value -= currentProduct.verteilmult;
+      if (parseFloat(dom_kaufmenge.value) < currentProduct.verteilmult)
+        dom_kaufmenge.value = currentProduct.verteilmult;
       dom_kaufmenge.fire('kaufmenge:change');
     });
 
   $('button_plus').observe('click', () => {
-    dom_kaufmenge.value = parseFloat(dom_kaufmenge.value) + parseFloat(dom_verteilmult.value);
-    if (dom_kaufmenge.value > dom_basarmenge.value * dom_verteilmult.value)
-      dom_kaufmenge.value = dom_basarmenge.value * dom_verteilmult.value;
+    dom_kaufmenge.value = parseFloat(dom_kaufmenge.value) + currentProduct.verteilmult;
+    if (dom_kaufmenge.value > currentProduct.basarmenge * currentProduct.verteilmult)
+      dom_kaufmenge.value = currentProduct.basarmenge * currentProduct.verteilmult;
     dom_kaufmenge.fire('kaufmenge:change');
   });
 
@@ -494,8 +544,8 @@ function onDomReady() {
     new Ajax.Request( ajax.url, {
       parameters: {
         action: 'basarzuteilung',
-        produkt: $('produkt_id').value,
-        bestellung: $('bestell_id').value,
+        produkt: currentProduct.produkt_id,
+        bestellung: currentProduct.bestell_id,
         menge: dom_kaufmenge.value,
         itan: ajax.itan
       },
@@ -523,9 +573,15 @@ function onDomReady() {
   });
 
   dom_kaufmenge.observe('kaufmenge:change', () => {
-    $('preis').textContent = (dom_kaufmenge.value / dom_verteilmult.value * $('endpreis').value).toFixed(2);
-    $('button_minus').toggleClassName('disabled', parseFloat(dom_kaufmenge.value) <= parseFloat(dom_verteilmult.value) );
-    $('button_plus').toggleClassName('disabled', parseFloat(dom_kaufmenge.value) >= dom_basarmenge.value * dom_verteilmult.value);
+    $('preis').textContent
+      = (dom_kaufmenge.value / currentProduct.verteilmult * currentProduct.endpreis)
+        .toFixed(2);
+    $('button_minus').toggleClassName(
+      'disabled'
+    , parseFloat(dom_kaufmenge.value) <= currentProduct.verteilmult );
+    $('button_plus').toggleClassName(
+      'disabled'
+    , parseFloat(dom_kaufmenge.value) >= currentProduct.basarmenge * currentProduct.verteilmult);
   });
 
   $('button_check-remaining_skip').observe( 'click', () => {
@@ -543,14 +599,14 @@ function onDomReady() {
 
   $('button_check-remaining_minus').observe( 'click', () => {
     if (parseFloat(dom_restmenge.value) > 0)
-      dom_restmenge.value -= dom_verteilmult.value;
+      dom_restmenge.value -= currentProduct.verteilmult;
     if (parseFloat(dom_restmenge.value) < 0)
       dom_restmenge.value = 0;
-      dom_restmenge.fire('restmenge:change');
+    dom_restmenge.fire('restmenge:change');
   } );
 
   $('button_check-remaining_plus').observe('click', () => {
-    dom_restmenge.value = parseFloat(dom_restmenge.value) + parseFloat(dom_verteilmult.value);
+    dom_restmenge.value = parseFloat(dom_restmenge.value) + currentProduct.verteilmult;
     dom_restmenge.fire('restmenge:change');
   });
 
@@ -558,8 +614,8 @@ function onDomReady() {
     new Ajax.Request( ajax.url, {
       parameters: {
         action: 'inventur',
-        produkt: $('produkt_id').value,
-        bestellung: $('bestell_id').value,
+        produkt: currentProduct.produkt_id,
+        bestellung: currentProduct.bestell_id,
         menge: dom_restmenge.value,
         itan: ajax.itan
       },
