@@ -104,13 +104,13 @@ function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fiel
 
 // mult_view: erlaube bis zu 3 nachkommastellen; aber nur anzeigen, wenn noetig:
 //
-function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $attr = '' ) {
+function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $attr = '', $step = 1 ) {
   global $input_event_handlers;
   $mult = mult2string( $mult );
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname )
-    return "<input type='number' class='number' size='8' $transmit $id value='$mult' $attr $input_event_handlers>";
+    return "<input type='number' class='number' size='8' step='$step' $transmit $id value='$mult' $attr $input_event_handlers>";
   else
     return "<span class='number' $id>$mult</span>";
 }
@@ -1651,7 +1651,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td( 'mult', '', mult_view($festmenge) . " (".mult_view($toleranzmenge) .")" );
       open_td( 'unit', '', $verteileinheit );
       if( $status >= STATUS_LIEFERANT ) {
-        open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
+        open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), true, true, '', $verteilmult ) );
         open_td( 'unit', '', $verteileinheit );
         open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
         if ($editable) {
@@ -1666,7 +1666,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   if( $status >= STATUS_LIEFERANT ) {
     open_tr('summe');
       open_td('', "colspan='3'", "M&uuml;ll:" );
-      open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
+      open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), true, true, '', $verteilmult ) );
       open_td( 'unit', '', $verteileinheit );
       open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
       if ($editable) {
@@ -1694,7 +1694,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
         $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
         open_td( "mult $magic_style" );
         echo alink("javascript:\$('magic_{$bestell_id}_{$produkt_id}_{$basar_id}').value = 0; $magicCalculator.updateUi();", 'button', '0 &rarr;').' ';
-        echo(mult_view( $basar_verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$basar_id}", false ) );
+        echo(mult_view( $basar_verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$basar_id}", false, true, '', $verteilmult ) );
         close_td();
         open_td( "unit $magic_style", '', $verteileinheit );
         $js_on_exit[] = "$magicCalculator.setBazaarField('{$bestell_id}_{$produkt_id}_{$basar_id}');";
