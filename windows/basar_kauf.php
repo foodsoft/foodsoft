@@ -354,7 +354,7 @@ function pickDelivery( ean, index, found ) {
   $('produkt_name').textContent = found.produkt_name;
   $('verteileinheit').textContent = found.verteileinheit;
   dom_kaufmenge.value = found.verteilmult;
-  dom_kaufmenge.min = 0;
+  dom_kaufmenge.min = found.verteilmult;
   dom_kaufmenge.step = found.verteilmult;
   dom_kaufmenge.max = found.basarmenge * found.verteilmult;
   dom_kaufmenge.fire('kaufmenge:change');
