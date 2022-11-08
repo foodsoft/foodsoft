@@ -2669,6 +2669,7 @@ function select_basar( $bestell_id = 0 ) {
          , bestellvorschlaege.liefermenge
          , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basarmenge
          , lieferantenkatalog.ean_einzeln
+         , lieferanten.name as lieferanty
          , inventur.menge as inventur_menge
          , inventur.zeitpunkt as inventur_zeitpunkt
          , inventur.gruppen_id as inventur_gruppen_id
@@ -2676,6 +2677,7 @@ function select_basar( $bestell_id = 0 ) {
     JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
     JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
     JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
+    JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
     LEFT JOIN lieferantenkatalog ON ( lieferantenkatalog.lieferanten_id = produkte.lieferanten_id AND lieferantenkatalog.artikelnummer = produkte.artikelnummer )
     LEFT JOIN inventur
           ON (inventur.bestell_id = gesamtbestellungen.id
