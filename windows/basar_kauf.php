@@ -166,6 +166,12 @@ open_div( 'tab max10', 'id="enter-amount"' );
     open_tr();
       open_td( '', '', 'Preis:');
       open_td( 'number', 'id="preis" colspan=2', '' );
+    open_tr();
+      open_td( '', '', 'Bestellung:');
+      open_td( 'number', 'id="bestellung" colspan=2', '' );
+    open_tr();
+      open_td( '', '', 'Lieferdatum:');
+      open_td( 'number', 'id="lieferdatum" colspan=2', '' );
   close_table();
   open_table( 'layout medskip hcenter' );
     open_tr();
@@ -380,6 +386,10 @@ var bonTemplate = new Template(`
   </tr>
 `);
 
+function formatDate( date ) {
+  return date.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'});
+}
+
 function displayBon(bon) {
   if( !dom_bonliste.childElementCount ) {
     dom_bonliste.insert( bonTemplate.evaluate( {
@@ -395,9 +405,9 @@ function displayBon(bon) {
   }
 
   bon = { index: dom_bonliste.childElementCount / 2, ...bon };
-  bon.datum = bon.datum.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'});
+  bon.datum = formatDate(bon.datum);
   if (bon.lieferdatum)
-    bon.lieferdatum = bon.lieferdatum.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'}) ?? '';
+    bon.lieferdatum = formatDate(bon.lieferdatum) ?? '';
   dom_bonliste_kopf.insert( {after: bonTemplate.evaluate(bon)} );
 }
 
@@ -624,6 +634,8 @@ function pickDelivery( id, index ) {
     : availableWithoutEan[id.index][index];
   currentProduct = { id: id, index: index, ...chosenProduct };
   $('produkt_name').textContent = chosenProduct.produkt_name;
+  $('bestellung').textContent = chosenProduct.bestellung;
+  $('lieferdatum').textContent = formatDate(new Date(chosenProduct.lieferdatum));
   $('verteileinheit').textContent = chosenProduct.verteileinheit;
   dom_kaufmenge.max = chosenProduct.basarmenge * chosenProduct.verteilmult;
   dom_kaufmenge.min = Math.min(chosenProduct.verteilmult, dom_kaufmenge.max);
