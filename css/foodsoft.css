@@ -1065,3 +1065,16 @@ div.success_icon::after {
 .hidden {
   visibility:hidden;
 }
+
+@keyframes breathing {
+  from {transform: scale(0.95);}
+  to   {transform: scale(1.0);}
+}
+
+
+.breathing {
+  animation: breathing;
+  animation-direction: alternate;
+  animation-duration: 500ms;
+  animation-iteration-count: infinite;
+}

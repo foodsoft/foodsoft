@@ -73,31 +73,81 @@ $ajax_url = preg_replace( '/&amp;/', '&', fc_link('self', ['download' => 'basar_
 open_javascript( toJavaScript( 'var ajax', [ 'url' => $ajax_url, 'itan' => get_itan() ] ) );
 
 $verfuegbar_nach_ean = [];
+$verfuegbar_ohne_ean = [];
 
 foreach( sql_basar() as $produkt ) {
-  $ean = $produkt['ean_einzeln'];
-  if( !$ean )
+  $basarmenge = $produkt['basarmenge'];
+  $verteilmult = $produkt['kan_verteilmult'];
+  if( $basarmenge <= 0.1 ) // ignoriere alles was kleiner als 10% einer Verteileinheit ist (oder negativ)
     continue;
+  $ean = $produkt['ean_einzeln'];
   $produkt_daten = [
     'produkt_name' => html_entity_decode( $produkt['produkt_name'], ENT_QUOTES, 'UTF-8' )
-  , 'basarmenge' => $produkt['basarmenge']
+  , 'basarmenge' => $basarmenge
   , 'verteileinheit' => $produkt['kan_verteileinheit']
-  , 'verteilmult' => $produkt['kan_verteilmult']
+  , 'verteilmult' => $verteilmult
   , 'endpreis' => $produkt['endpreis']
   , 'bestell_id' => $produkt['gesamtbestellung_id']
   , 'bestellung' => $produkt['bestellung_name']
+  , 'lieferanty' => $produkt['lieferanty']
   , 'lieferdatum' => $produkt['lieferung']
   , 'produkt_id' => $produkt['produkt_id']
   ];
-  $verfuegbar_nach_ean[$ean][] = $produkt_daten or $verfuegbar_nach_ean[$ean] = [ $produkt_daten ];
+  if( $ean ) {
+    $verfuegbar_nach_ean[$ean][] = $produkt_daten or $verfuegbar_nach_ean[$ean] = [ $produkt_daten ];
+    continue;
+  }
+  $verfuegbar_ohne_ean[$produkt['produkt_id']][] = $produkt_daten
+    or $verfuegbar_ohne_ean[$produkt['produkt_id']] = [ $produkt_daten ];
 }
 open_javascript( toJavaScript( 'var availableByEan', $verfuegbar_nach_ean ) );
 
+// sortiere die Lieferungen jedes Produkts absteigend nach Datum
+foreach( $verfuegbar_ohne_ean as &$lieferungen ) {
+  usort( $lieferungen, function( $a, $b ) {
+    // absteigend nach Lieferdatum, dann aufsteigend alphabetisch (selten)
+    return -($a['lieferdatum']  <=> $b['lieferdatum'])
+          ?: $a['produkt_name'] <=> $b['produkt_name'];
+  } );
+}
+
+// sortiere Produkte nach absteigend nach jüngster Lieferung und Namen
+usort( $verfuegbar_ohne_ean, function( $a, $b ) {
+  // absteigend nach Lieferdatum, dann aufsteigend alphabetisch
+  return -($a[0]['lieferdatum']  <=> $b[0]['lieferdatum'])
+        ?: $a[0]['produkt_name'] <=> $b[0]['produkt_name'];
+} );
+
+open_javascript( toJavaScript( 'var availableWithoutEan', $verfuegbar_ohne_ean ) );
+
 open_div( '', 'id="top"', '' );
 open_div( 'tab', 'id="scan-product"' );
+  open_tag( 'p', 'max10 hcenter', '', 'Produkt scannen:');
   open_div( 'scanner', 'id="scanner-viewport"' );
     open_tag( 'video', '', '', '' );
   close_div();
+  open_div( 'max10 hcenter' );
+    open_tag( 'p', 'medskip', '', 'Produkte ohne Barcode:');
+    open_span( '', 'style="display:flex; align-items:center;"' );
+      echo 'Suche:&nbsp;' . string_view('', 20, 'search', 'style="flex:2;" autocomplete=off', true, '') . "&nbsp;";
+      open_div( 'touch_only touch_button material-symbols-rounded'
+      , 'id="button_search_clear" style="background-color:darkorange;"'
+      , 'backspace' );
+      open_div( 'touch_button material-symbols-rounded'
+      , 'id="button_search_speech" style="background-color:rgb(15,33,139);"'
+      , 'mic' );
+    close_span();
+    open_div( 'max10 medskip', 'id="products-without-ean-list"', '' );
+    open_table( 'max10 list hfill', 'id="no-products-label"' );
+      open_tr();
+        open_td( 'large', '', 'Keine Produkte' );
+    close_table();
+  close_div();
+close_div();
+open_div( 'tab max10', 'id="recording-speech" style="text-align:center;"' );
+  open_div( 'touch_button material-symbols-rounded hcenter breathing'
+  , 'id="button_search_abort_speech" style="font-size: xxx-large; width:80%; max-width:none; background-color:rgb(15,33,139);"'
+  , 'mic' );
 close_div();
 open_div( 'tab max10', 'id="pick-delivery"' );
   open_tag( 'h1', '', 'id="pick-delivery-produkt_name"', '');
@@ -230,16 +280,22 @@ function datediff(first, second) {
   return Math.round((second - first) / (1000 * 60 * 60 * 24));
 }
 
+var tab_ids;
+
 var dom_top;
 var dom_kaufmenge;
 var dom_basarmenge;
 var dom_restmenge;
 var dom_bonliste;
 var dom_bonliste_kopf;
-var tab_ids;
-var basarkaufbon;
+var dom_search;
+var dom_products_without_ean;
+
+var scannerPaused = false;
+var speechRecognition;
 
 var currentProduct;
+var basarkaufbon;
 
 function evaluateDom() {
   dom_top = $('top');
@@ -247,18 +303,70 @@ function evaluateDom() {
   dom_basarmenge = $('basarmenge');
   dom_restmenge = $('restmenge');
   dom_bonliste = $('bonliste');
+  dom_search = $('search');
+  dom_products_without_ean = $('products-without-ean-list');
 
   tab_ids = $$('div.tab').map( tab => tab.id );
 }
 
-function tab(id) {
+function tab( id, dom_focus = dom_top ) {
   tab_ids.forEach(candidate =>  {
     candidate == id ? $(candidate).show() : $(candidate).hide();
   });
 
-  dom_top.scrollIntoView();
-  window.scrollTo( 0, 0 );
+  dom_focus.scrollIntoView();
+  if( dom_focus === dom_top )
+    window.scrollTo( 0, 0 );
 }
+
+var pickProductWithoutEanTemplate = new Template(`
+<tr>
+  <td style="vertical-align:middle">
+    <div class="touch_button material-symbols-rounded"
+         style="background-color:darkgreen;"
+         onclick='offerDeliveries( #{id} )'>
+      add_shopping_cart
+    </div>
+  </td>
+  <td style="vertical-align:middle">
+    <table class="list" width="100%">
+      <tr>
+        <td colspan=2>#{produkt_name}</td>
+      </tr>
+      <tr>
+        <td colspan=2 class="smalll">#{lieferanty}</td>
+      </tr>
+    </table>
+  </td>
+</tr>
+`);
+
+var deliveryTemplate = new Template(`
+<tr>
+  <td style="vertical-align:middle">
+    <div class="touch_button material-symbols-rounded"
+         style="background-color:darkgreen;"
+         onclick='pickDelivery(#{id}, #{index})'>
+      add_shopping_cart
+    </div>
+  </td>
+  <td style="vertical-align:middle">
+    <table class="list" width="100%">
+      <tr>
+        <td colspan=2>#{bestellung}</td>
+      </tr>
+      <tr>
+        <td>Lieferdatum:</td>
+        <td>#{lieferdatum}</td>
+      </tr>
+      <tr>
+        <td>Menge:</td>
+        <td>#{basarmenge}</td>
+      </tr>
+    </table>
+  </td>
+</tr>
+`);
 
 var bonTemplate = new Template(`
   <tr id="bon-#{index}-a">
@@ -312,6 +420,120 @@ function initBasarkaufbon() {
   basarkaufbon.forEach(displayBon);
 }
 
+function initProductsWithoutEan() {
+  let dom_button_search_speech = $('button_search_speech');
+  dom_button_search_speech.hide();
+
+  var list = new Element('table', { 'class': 'layout', 'width': '100%' });
+
+  var words = [];
+
+  availableWithoutEan.forEach((product, index) => {
+    let latestDelivery = product[0];
+    console.log(latestDelivery.produkt_name);
+    var templateData = {
+      id: `{type: "product", index: ${index}}`
+    , ...latestDelivery
+    };
+    words.push(...latestDelivery.produkt_name.split(/\s/));
+    list.insert(pickProductWithoutEanTemplate.evaluate(templateData));
+  });
+  $('products-without-ean-list').update(list);
+
+  search();
+
+  words = words.map( (word) => word.replaceAll(/[^-a-zA-ZäüöÄÖÜß]/g, '') );
+  words = words.filter( (word) => ! /\d/.test(word) && word.length > 3 );
+  console.log(`words: ${words}`);
+
+  let SpeechRecognition;
+  let SpeechGrammarList;
+  let SpeechRecognitionEvent;
+
+  try {
+    SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+  } catch (e) {
+    SpeechRecognitionEvent = null;
+  }
+
+  if (!SpeechRecognition)
+  {
+    console.log("No speech recognition");
+    return;
+  }
+
+  try {
+    SpeechGrammarList = window.SpeechGrammarList || webkitSpeechGrammarList;
+  } catch (e) {
+    SpeechGrammarList = null;
+  }
+
+  try {
+    SpeechRecognitionEvent = window.SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+  } catch (e) {
+    SpeechRecognitionEvent = null;
+  }
+
+  speechRecognition = new SpeechRecognition();
+  if (SpeechGrammarList) {
+    // SpeechGrammarList is not currently available in Safari, and does not have any effect in any other browser.
+    // This code is provided as a demonstration of possible capability. You may choose not to use it.
+    var speechRecognitionList = new SpeechGrammarList();
+    var grammar = '#JSGF V1.0; grammar words; public <words> = ' + words.join(' | ') + ' ;'
+    speechRecognitionList.addFromString(grammar, 1);
+    speechRecognition.grammars = speechRecognitionList;
+  }
+  speechRecognition.continuous = false;
+  speechRecognition.lang = 'de-DE';
+  speechRecognition.interimResults = false;
+  speechRecognition.maxAlternatives = 1;
+
+  speechRecognition.onaudiostart = function( event ) {
+    tab( 'recording-speech' );
+  };
+
+  speechRecognition.onresult = function( event ) {
+    // The SpeechRecognitionEvent results property returns a SpeechRecognitionResultList object
+    // The SpeechRecognitionResultList object contains SpeechRecognitionResult objects.
+    // It has a getter so it can be accessed like an array
+    // The first [0] returns the SpeechRecognitionResult at the last position.
+    // Each SpeechRecognitionResult object contains SpeechRecognitionAlternative objects that contain individual results.
+    // These also have getters so they can be accessed like arrays.
+    // The second [0] returns the SpeechRecognitionAlternative at position 0.
+    // We then return the transcript property of the SpeechRecognitionAlternative object
+    var word = event.results[0][0].transcript;
+    // diagnostic.textContent = 'Result received: ' + color + '.';
+    // bg.style.backgroundColor = color;
+    console.log('word: '+ word +', confidence: ' + event.results[0][0].confidence);
+    dom_search.value = word;
+    search();
+  };
+
+  speechRecognition.onspeechend = function( event ) {
+    speechRecognition.stop();
+    tab( 'scan-product', dom_products_without_ean );
+  };
+
+  speechRecognition.onnomatch = function( event ) {
+    console.log('No match.');
+  };
+
+  speechRecognition.onerror = function( event ) {
+    error('Fehler bei Spracherkennung', event.error);
+  };
+
+  dom_button_search_speech.observe( 'click', function( event ) {
+    speechRecognition.start();
+  } );
+
+  dom_button_search_speech.show();
+
+  $('button_search_abort_speech').observe( 'click', function( event ) {
+    speechRecognition.stop();
+    tab( 'scan-product' );
+  } );
+}
+
 function saveBasarkaufbon() {
   localStorage.setItem( 'basarkaufbon', JSON.stringify(basarkaufbon) );
 }
@@ -349,23 +571,80 @@ function resumeScanning() {
   tab('scan-product');
 }
 
-function pickDelivery( ean, index, found ) {
-  currentProduct = { ean: ean, index: index, ...found };
-  $('produkt_name').textContent = found.produkt_name;
-  $('verteileinheit').textContent = found.verteileinheit;
-  dom_kaufmenge.value = found.verteilmult;
-  dom_kaufmenge.min = found.verteilmult;
-  dom_kaufmenge.step = found.verteilmult;
-  dom_kaufmenge.max = found.basarmenge * found.verteilmult;
+function search() {
+  tableRows = dom_products_without_ean.childElements()[0].childElements();
+  let searchString = dom_search.value.toLowerCase();
+  let count = 0;
+  availableWithoutEan.forEach( function( product, index ) {
+    if( product[0].produkt_name.toLowerCase().includes( searchString ) ) {
+      tableRows[index].show();
+      ++count;
+    } else
+      tableRows[index].hide();
+  } );
+
+  if( count )
+    $('no-products-label').hide();
+  else
+    $('no-products-label').show();
+}
+
+function offerDeliveries( id ) {
+  let deliveries = id.type === 'ean'
+    ? availableByEan[id.ean]
+    : availableWithoutEan[id.index];
+
+  if ( deliveries.length == 1 ) {
+    pickDelivery(id, 0);
+    return;
+  }
+
+  $('pick-delivery-produkt_name').textContent = deliveries[0].produkt_name;
+  var deliveryList = new Element('table', { 'class': 'layout', 'width': '100%' });
+
+  deliveries.forEach((candidate, index) => {
+    var templateData = {
+      id: JSON.stringify( id )
+    , index: index
+    , ...candidate
+    };
+    templateData.basarmenge
+      = candidate.basarmenge * candidate.verteilmult + ' ' + candidate.verteileinheit;
+    deliveryList.insert(deliveryTemplate.evaluate(templateData));
+  });
+  $('delivery-list').update(deliveryList);
+
+  tab('pick-delivery');
+
+}
+
+function pickDelivery( id, index ) {
+  let chosenProduct = id.type === 'ean'
+    ? availableByEan[id.ean][index]
+    : availableWithoutEan[id.index][index];
+  currentProduct = { id: id, index: index, ...chosenProduct };
+  $('produkt_name').textContent = chosenProduct.produkt_name;
+  $('verteileinheit').textContent = chosenProduct.verteileinheit;
+  dom_kaufmenge.max = chosenProduct.basarmenge * chosenProduct.verteilmult;
+  dom_kaufmenge.min = Math.min(chosenProduct.verteilmult, dom_kaufmenge.max);
+  dom_kaufmenge.step = dom_kaufmenge.max != dom_kaufmenge.min ? chosenProduct.verteilmult : 1;
+  dom_kaufmenge.value = dom_kaufmenge.min;
   dom_kaufmenge.fire('kaufmenge:change');
   tab('enter-amount');
 }
 
 function buySuccess(json) {
   let verteilmult = currentProduct.verteilmult;
-  let restmenge =
-    availableByEan[currentProduct.ean][currentProduct.index].basarmenge
+  let restmenge;
+  if( currentProduct.id.type === 'ean' )
+    restmenge =
+      availableByEan[currentProduct.id.ean][currentProduct.index].basarmenge
+        -= dom_kaufmenge.value / verteilmult;
+  else
+    restmenge =
+    availableWithoutEan[currentProduct.id.index][currentProduct.index].basarmenge
       -= dom_kaufmenge.value / verteilmult;
+
   let produktname = currentProduct.produkt_name;
   let verteileinheit = currentProduct.verteileinheit;
 
@@ -393,8 +672,12 @@ function buySuccess(json) {
 
 function checkRemainingSuccess(json) {
   let verteilmult = currentProduct.verteilmult;
-  availableByEan[currentProduct.ean][currentProduct.index].basarmenge
-    = dom_restmenge.value / verteilmult;
+  if( currentProduct.id.type === 'ean' )
+    availableByEan[currentProduct.id.ean][currentProduct.index].basarmenge
+      = dom_restmenge.value / verteilmult;
+  else
+    availableWithoutEan[currentProduct.id.index][currentProduct.index].basarmenge
+      = dom_restmenge.value / verteilmult;
 
   tab( 'success' );
   window.setTimeout(resumeScanning, 1500);
@@ -458,69 +741,28 @@ var CodeScanner = {
 
 function handleQuaggaDetected( result ) {
   var code = result.codeResult.code;
-  var found = availableByEan[code];
-  if( ! found ) {
+  if( ! (code in availableByEan) ) {
     console.log(code + " NOT FOUND");
     return;
   }
   Quagga.pause();
-
-  if ( found.length == 1 ) {
-    pickDelivery(code, 0, found[0]);
-    return;
-  }
-  $('pick-delivery-produkt_name').textContent = found[0].produkt_name;
-  var deliveryPicker = $('delivery-list');
-  var deliveryList = new Element('table', { 'class': 'layout', 'width': '100%' });
-
-  var deliveryTemplate = new Template(`
-    <tr>
-      <td style="vertical-align:middle">
-        <div class="touch_button material-symbols-rounded"
-             style="background-color:darkgreen;"
-             onclick='pickDelivery("#{code}", #{index}, #{json})'>
-          add_shopping_cart
-        </div>
-      </td>
-      <td style="vertical-align:middle">
-        <table class="list" width="100%">
-          <tr>
-            <td colspan=2>#{bestellung}</td>
-          </tr>
-          <tr>
-            <td>Lieferdatum:</td>
-            <td>#{lieferdatum}</td>
-          </tr>
-          <tr>
-            <td>Menge:</td>
-            <td>#{basarmenge}</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `);
-
-  found.forEach((candidate, index) => {
-    var templateData = {
-      code: code
-    , index: index
-    , json: JSON.stringify( candidate )
-    , ...candidate
-    };
-    templateData.basarmenge
-      = candidate.basarmenge * candidate.verteilmult + ' ' + candidate.verteileinheit;
-    deliveryList.insert(deliveryTemplate.evaluate(templateData));
-  });
-  deliveryPicker.update(deliveryList);
-
-  tab('pick-delivery');
+  offerDeliveries( {type: 'ean', ean: code} );
 }
 
 function onDomReady() {
   evaluateDom();
   initBasarkaufbon();
+  initProductsWithoutEan();
 
   tab('scan-product');
+
+  dom_search.observe( 'keyup', search );
+  dom_search.observe( 'change', search );
+
+  $('button_search_clear').observe( 'click', function( event ) {
+    dom_search.value = '';
+    search();
+  } );
 
   $('button_cancel').observe('click', resumeScanning);
   $('button_error_reset').observe('click', resumeScanning);
@@ -641,6 +883,26 @@ function onDomReady() {
   var target = $('scanner-viewport');
   CodeScanner.state.inputStream.target = target;
   CodeScanner.init();
+
+  // define an observer instance
+  var scannerVisibleObserver = new IntersectionObserver(function( entries, opts ) {
+    if( entries[0].isIntersecting ) {
+      if( scannerPaused ) {
+        scannerPaused = false;
+        Quagga.start();
+      }
+    } else {
+      if( !scannerPaused ) {
+        scannerPaused = true;
+        Quagga.pause();
+      }
+    }
+  }, {
+    root: null,
+    threshold: 0.8
+  });
+
+  scannerVisibleObserver.observe( $('scanner-viewport') );
 
   Quagga.onProcessed(function(result) {
     var drawingCtx = Quagga.canvas.ctx.overlay,
