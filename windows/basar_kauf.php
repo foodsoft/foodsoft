@@ -580,13 +580,35 @@ function resumeScanning() {
   Quagga.start();
   tab('scan-product');
 }
-
+/**
+ * Fuzzy "and" search
+ *
+ * Versucht Einzahl/Mehrzahl zu ignorieren:
+ * Apfel ~ Äpfel
+ * Kartoffel ~ Kartoffeln
+ * Keks ~ Kekse
+ * Saft ~ Säfte
+ * ...
+ */
 function search() {
+  function canonify( string ) {
+    return string.normalize( 'NFD' )
+      .replace( /[\u0300-\u036f]/g, "" ) // ersetze diakritische Zeichen äöü -> aou
+      .toLowerCase();
+  }
+
   tableRows = dom_products_without_ean.childElements()[0].childElements();
-  let searchString = dom_search.value.toLowerCase();
+  let searchStrings = dom_search.value.split( /\s/ );
+  searchStrings = searchStrings.map( s =>
+    canonify(s.trim())
+      .replace( /[sen]$/, '' ) // vermutliche Mehrzahl weg
+  );
+
   let count = 0;
   availableWithoutEan.forEach( function( product, index ) {
-    if( product[0].produkt_name.toLowerCase().includes( searchString ) ) {
+    let target = canonify(product[0].produkt_name);
+    // and-search
+    if( searchStrings.every( searchString => target.includes( searchString ) ) ) {
       tableRows[index].show();
       ++count;
     } else
