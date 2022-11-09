@@ -145,7 +145,7 @@ open_div( 'tab', 'id="scan-product"' );
   close_div();
 close_div();
 open_div( 'tab max10', 'id="recording-speech" style="text-align:center;"' );
-  open_div( 'touch_button material-symbols-rounded hcenter breathing'
+  open_div( 'touch_button material-symbols-rounded breathing'
   , 'id="button_search_abort_speech" style="font-size: xxx-large; width:80%; max-width:none; background-color:rgb(15,33,139);"'
   , 'mic' );
 close_div();
@@ -153,6 +153,11 @@ open_div( 'tab max10', 'id="pick-delivery"' );
   open_tag( 'h1', '', 'id="pick-delivery-produkt_name"', '');
   open_tag( 'p', '', '', 'Bitte Lieferung wählen:');
   open_div( '', 'id="delivery-list"', '');
+  open_div( 'center', 'width="100%"' );
+    open_div( 'touch_button material-symbols-rounded hcenter'
+    , 'id="button_pick-delivery_cancel" style="background-color:darkorange;"'
+    , 'barcode_scanner' );
+  close_div();
 close_div();
 open_div( 'tab max10', 'id="enter-amount"' );
   open_tag( 'h1', '', 'id="produkt_name"', '' );
@@ -337,11 +342,12 @@ var pickProductWithoutEanTemplate = new Template(`
   <td style="vertical-align:middle">
     <table class="list" width="100%">
       <tr>
-        <td colspan=2>#{produkt_name}</td>
+        <td colspan=3>#{produkt_name}</td>
       </tr>
       <tr>
-        <td colspan=2 class="smalll">#{lieferanty}</td>
+        <td colspan=3 class="smalll">#{lieferanty}</td>
       </tr>
+      #{lieferungen}
     </table>
   </td>
 </tr>
@@ -388,6 +394,10 @@ var bonTemplate = new Template(`
 
 function formatDate( date ) {
   return date.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'});
+}
+
+function mult_view( value ) {
+  return value.toFixed( 3 ).replace( /0+$/, '' ).replace( /\.$/, '' );
 }
 
 function displayBon(bon) {
@@ -444,6 +454,13 @@ function initProductsWithoutEan() {
     var templateData = {
       id: `{type: "product", index: ${index}}`
     , ...latestDelivery
+    , lieferungen: product.reduce( (l, p) =>
+      l + `
+      <tr>
+        <td class="smalll noright">${formatDate(new Date(p.lieferdatum))}:</td>
+        <td class="smalll noleft mult">${mult_view(p.basarmenge * p.verteilmult)}</td>
+        <td class="smalll unit" width="10%">${p.verteileinheit}</td>
+      </tr>`, '' )
     };
     words.push(...latestDelivery.produkt_name.split(/\s/));
     list.insert(pickProductWithoutEanTemplate.evaluate(templateData));
@@ -451,10 +468,6 @@ function initProductsWithoutEan() {
   $('products-without-ean-list').update(list);
 
   search();
-
-  words = words.map( (word) => word.replaceAll(/[^-a-zA-ZäüöÄÖÜß]/g, '') );
-  words = words.filter( (word) => ! /\d/.test(word) && word.length > 3 );
-  console.log(`words: ${words}`);
 
   let SpeechRecognition;
   let SpeechGrammarList;
@@ -488,6 +501,10 @@ function initProductsWithoutEan() {
   if (SpeechGrammarList) {
     // SpeechGrammarList is not currently available in Safari, and does not have any effect in any other browser.
     // This code is provided as a demonstration of possible capability. You may choose not to use it.
+
+    words = words.map( (word) => word.replaceAll(/[^-a-zA-ZäüöÄÖÜß]/g, '') );
+    words = words.filter( (word) => ! /\d/.test(word) && word.length > 3 );
+
     var speechRecognitionList = new SpeechGrammarList();
     var grammar = '#JSGF V1.0; grammar words; public <words> = ' + words.join(' | ') + ' ;'
     speechRecognitionList.addFromString(grammar, 1);
@@ -642,6 +659,7 @@ function offerDeliveries( id ) {
     };
     templateData.basarmenge
       = candidate.basarmenge * candidate.verteilmult + ' ' + candidate.verteileinheit;
+    templateData.lieferdatum = formatDate(new Date(templateData.lieferdatum));
     deliveryList.insert(deliveryTemplate.evaluate(templateData));
   });
   $('delivery-list').update(deliveryList);
@@ -797,6 +815,8 @@ function onDomReady() {
     dom_search.value = '';
     search();
   } );
+
+  $('button_pick-delivery_cancel').observe('click', resumeScanning);
 
   $('button_cancel').observe('click', resumeScanning);
   $('button_error_reset').observe('click', resumeScanning);
