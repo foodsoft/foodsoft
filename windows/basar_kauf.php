@@ -661,7 +661,7 @@ function offerDeliveries( id ) {
     , ...candidate
     };
     templateData.basarmenge
-      = candidate.basarmenge * candidate.verteilmult + ' ' + candidate.verteileinheit;
+      = mult_view( candidate.basarmenge * candidate.verteilmult ) + ' ' + candidate.verteileinheit;
     templateData.lieferdatum = formatDate(new Date(templateData.lieferdatum));
     deliveryList.insert(deliveryTemplate.evaluate(templateData));
   });
@@ -680,7 +680,7 @@ function pickDelivery( id, index ) {
   $('bestellung').textContent = chosenProduct.bestellung;
   $('lieferdatum').textContent = formatDate(new Date(chosenProduct.lieferdatum));
   $('verteileinheit').textContent = chosenProduct.verteileinheit;
-  dom_kaufmenge.max = chosenProduct.basarmenge * chosenProduct.verteilmult;
+  dom_kaufmenge.max = mult_view(chosenProduct.basarmenge * chosenProduct.verteilmult);
   dom_kaufmenge.min = Math.min(chosenProduct.verteilmult, dom_kaufmenge.max);
   dom_kaufmenge.step = dom_kaufmenge.max != dom_kaufmenge.min ? chosenProduct.verteilmult : 1;
   dom_kaufmenge.value = dom_kaufmenge.min;
