@@ -82,6 +82,9 @@ chmod 644 index.php
 chmod 644 js/Acronyms.js
 chmod 644 js/foodsoft.js
 chmod 644 js/lib/prototype.js
+chmod 644 js/lib/quagga.js
+chmod 644 js/lib/quagga.js-LICENSE
+chmod 644 js/lib/quagga.min.js
 chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
 chmod 644 links_und_parameter
@@ -94,6 +97,7 @@ chmod 644 windows/abrechnung.php
 chmod 644 windows/abschluss.php
 chmod 644 windows/artikelsuche.php
 chmod 644 windows/basar.php
+chmod 644 windows/basar_kauf.php
 chmod 644 windows/bestellen.php
 chmod 644 windows/bestellen.php.neu
 chmod 644 windows/bestellfax.php

@@ -76,6 +76,9 @@ $verfuegbar_nach_ean = [];
 $verfuegbar_ohne_ean = [];
 
 foreach( sql_basar() as $produkt ) {
+  global $mysqlheute;
+  if( $produkt['lieferung'] > $mysqlheute )
+    continue;
   $basarmenge = $produkt['basarmenge'];
   $verteilmult = $produkt['kan_verteilmult'];
   if( $basarmenge <= 0.1 ) // ignoriere alles was kleiner als 10% einer Verteileinheit ist (oder negativ)
