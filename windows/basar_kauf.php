@@ -316,7 +316,9 @@ var dom_bonliste_kopf;
 var dom_search;
 var dom_products_without_ean;
 
-var scannerPaused = false;
+var scannerOffView = false;
+var documentHidden = false;
+
 var speechRecognition;
 
 var currentProduct;
@@ -607,7 +609,7 @@ function ajax_error( response ) {
 }
 
 function resumeScanning() {
-  CodeScanner.start();
+  CodeScanner.resume();
   tab('scan-product');
 }
 /**
@@ -778,16 +780,23 @@ var CodeScanner = {
     track.applyConstraints( {advanced:[{zoom: 4}]} );
   },
   start: function() {
+    this.isPaused = false;
     Quagga.start();
   },
   resume: function() {
+    if( !this.isPaused )
+      return;
+    this.isPaused = false;
     this.checkCapabilities();
     this.start();
   },
   pause: function() {
+    if( this.isPaused )
+      return;
+    this.isPaused = true;
     Quagga.pause();
   },
-
+  isPaused: false,
   state: {
     inputStream: {
       type : "LiveStream",
@@ -842,12 +851,17 @@ if( typeof document.hidden !== "undefined" ) { // Opera 12.10 and Firefox 18 and
   };
 }
 
-function handleVisibilityChange() {
-  if( document[visibilityApi.hidden] ) {
+function updateScannerPaused() {
+  if (scannerOffView || documentHidden) {
     CodeScanner.pause();
   } else {
     CodeScanner.resume();
   }
+}
+
+function handleVisibilityChange() {
+  documentHidden = document[visibilityApi.hidden];
+  updateScannerPaused();
 }
 
 function onDomReady() {
@@ -992,17 +1006,8 @@ function onDomReady() {
 
   // define an observer instance
   var scannerVisibleObserver = new IntersectionObserver(function( entries, opts ) {
-    if( entries[0].isIntersecting ) {
-      if( scannerPaused ) {
-        scannerPaused = false;
-        CodeScanner.resume();
-      }
-    } else {
-      if( !scannerPaused ) {
-        scannerPaused = true;
-        CodeScanner.pause();
-      }
-    }
+    scannerOffView = !entries[0].isIntersecting;
+    updateScannerPaused();
   }, {
     root: null,
     threshold: 0.8
