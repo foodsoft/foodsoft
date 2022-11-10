@@ -751,7 +751,21 @@ function checkRemainingSuccess(json) {
 }
 
 var CodeScanner = {
-  init: function() {
+  RunState: {
+    Stopped: 0
+  , Running: 1
+  , Paused: 2
+  },
+
+  start: function() {
+    if( this.runState === this.RunState.Running )
+      return;
+    if( this.runState === this.RunState.Paused ) {
+      this.resume();
+      return;
+    }
+    this.runState = this.RunState.Running;
+
     var self = this;
 
     Quagga.init(this.state, function(err) {
@@ -779,24 +793,30 @@ var CodeScanner = {
     track.applyConstraints( {advanced:[{focusMode: 'continuous'}]} );
     track.applyConstraints( {advanced:[{zoom: 4}]} );
   },
-  start: function() {
-    this.isPaused = false;
-    Quagga.start();
-  },
   resume: function() {
-    if( !this.isPaused )
+    if( this.runState === this.RunState.Stopped ) {
+      this.start();
       return;
-    this.isPaused = false;
+    }
+    if( this.runState === this.RunState.Running )
+      return;
+    this.runState = this.RunState.Running;
     this.checkCapabilities();
     this.start();
   },
   pause: function() {
-    if( this.isPaused )
+    if( this.runState !== this.RunState.Running )
       return;
-    this.isPaused = true;
+    this.runState = this.RunState.Paused;
     Quagga.pause();
   },
-  isPaused: false,
+  stop: function() {
+    if( this.runState === this.RunState.Stopped )
+      return;
+    this.runState = this.RunState.Stopped;
+    Quagga.stop();
+  },
+  runState: 0 /* RunState.Stopped */,
   state: {
     inputStream: {
       type : "LiveStream",
@@ -852,7 +872,9 @@ if( typeof document.hidden !== "undefined" ) { // Opera 12.10 and Firefox 18 and
 }
 
 function updateScannerPaused() {
-  if (scannerOffView || documentHidden) {
+  if( documentHidden )
+    CodeScanner.stop();
+  else if( scannerOffView ) {
     CodeScanner.pause();
   } else {
     CodeScanner.resume();
@@ -1002,7 +1024,7 @@ function onDomReady() {
 
   var target = $('scanner-viewport');
   CodeScanner.state.inputStream.target = target;
-  CodeScanner.init();
+  CodeScanner.start();
 
   // define an observer instance
   var scannerVisibleObserver = new IntersectionObserver(function( entries, opts ) {
