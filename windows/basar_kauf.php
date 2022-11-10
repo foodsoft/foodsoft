@@ -294,6 +294,17 @@ function datediff(first, second) {
   return Math.round((second - first) / (1000 * 60 * 60 * 24));
 }
 
+function monitorEvents(element, log) {
+  var events = [];
+
+  for(var i in element) {
+    if(i.startsWith("on")) events.push(i.substr(2));
+  }
+  events.forEach(function(eventName) {
+    element.addEventListener(eventName, log);
+  });
+}
+
 var tab_ids;
 
 var dom_top;
@@ -453,7 +464,6 @@ function initProductsWithoutEan() {
 
   availableWithoutEan.forEach((product, index) => {
     let latestDelivery = product[0];
-    console.log(latestDelivery.produkt_name);
     var templateData = {
       id: `{type: "product", index: ${index}}`
     , ...latestDelivery
@@ -534,7 +544,7 @@ function initProductsWithoutEan() {
     var word = event.results[0][0].transcript;
     // diagnostic.textContent = 'Result received: ' + color + '.';
     // bg.style.backgroundColor = color;
-    console.log('word: '+ word +', confidence: ' + event.results[0][0].confidence);
+    // console.log('word: '+ word +', confidence: ' + event.results[0][0].confidence);
     dom_search.value = word;
     search();
   };
@@ -597,7 +607,7 @@ function ajax_error( response ) {
 }
 
 function resumeScanning() {
-  Quagga.start();
+  CodeScanner.start();
   tab('scan-product');
 }
 /**
@@ -767,6 +777,16 @@ var CodeScanner = {
     track.applyConstraints( {advanced:[{focusMode: 'continuous'}]} );
     track.applyConstraints( {advanced:[{zoom: 4}]} );
   },
+  start: function() {
+    Quagga.start();
+  },
+  resume: function() {
+    this.checkCapabilities();
+    this.start();
+  },
+  pause: function() {
+    Quagga.pause();
+  },
 
   state: {
     inputStream: {
@@ -804,10 +824,39 @@ function handleQuaggaDetected( result ) {
   offerDeliveries( {type: 'ean', ean: code} );
 }
 
+let visibilityApi = null;
+if( typeof document.hidden !== "undefined" ) { // Opera 12.10 and Firefox 18 and later support
+  visibilityApi = {
+    hidden: "hidden"
+  , visibilityChange: "visibilitychange"
+  };
+} else if( typeof document.msHidden !== "undefined" ) {
+  visibilityApi = {
+    hidden: "msHidden"
+  , visibilityChange: "msvisibilitychange"
+  };
+} else if( typeof document.webkitHidden !== "undefined" ) {
+  visibilityApi = {
+    hidden: "webkitHidden"
+  , visibilityChange: "webkitvisibilitychange"
+  };
+}
+
+function handleVisibilityChange() {
+  if( document[visibilityApi.hidden] ) {
+    CodeScanner.pause();
+  } else {
+    CodeScanner.resume();
+  }
+}
+
 function onDomReady() {
   evaluateDom();
   initBasarkaufbon();
   initProductsWithoutEan();
+
+  if (visibilityApi)
+    document.observe(visibilityApi.visibilityChange, handleVisibilityChange);
 
   tab('scan-product');
 
@@ -946,12 +995,12 @@ function onDomReady() {
     if( entries[0].isIntersecting ) {
       if( scannerPaused ) {
         scannerPaused = false;
-        Quagga.start();
+        CodeScanner.resume();
       }
     } else {
       if( !scannerPaused ) {
         scannerPaused = true;
-        Quagga.pause();
+        CodeScanner.pause();
       }
     }
   }, {
