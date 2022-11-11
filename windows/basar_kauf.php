@@ -802,7 +802,7 @@ var CodeScanner = {
       return;
     this.runState = this.RunState.Running;
     this.checkCapabilities();
-    this.start();
+    Quagga.start();
   },
   pause: function() {
     if( this.runState !== this.RunState.Running )
