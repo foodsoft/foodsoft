@@ -1079,7 +1079,7 @@ function onDomReady() {
   });
 
   dom_restmenge.observe('restmenge:change', () => {
-    $('button_minus').toggleClassName('disabled', parseFloat(dom_restmenge.value) <= 0 );
+    $('button_check-remaining_minus').toggleClassName('disabled', parseFloat(dom_restmenge.value) <= 0 );
   });
 
   $('button_check-remaining_minus').observe( 'click', () => {
