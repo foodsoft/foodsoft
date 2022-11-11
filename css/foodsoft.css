@@ -1044,7 +1044,7 @@ div.tab {
   }
 }
 
-div.error_icon, div.success_icon {
+div.error_icon, div.success_icon, div.thanks_icon {
   text-align: center;
   font-size:30vh;
 }
@@ -1055,6 +1055,10 @@ div.error_icon::after {
 
 div.success_icon::after {
   content: "\1F60B";
+}
+
+div.thanks_icon::after {
+  content: "\1F44D";
 }
 
 .hcenter {

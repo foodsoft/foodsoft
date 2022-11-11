@@ -2,7 +2,6 @@
 error_reporting(E_ALL); // alle Fehler anzeigen
 
 assert( $angemeldet ) or exit();  // aufruf nur per index.php?window=basar...
-nur_fuer_dienst(0);
 
 global $foodsoftdir;
 
@@ -10,6 +9,8 @@ get_http_var( 'action','w','' );
 
 if( $action === 'basarzuteilung' ) {
   header( 'Content-Type: application/json' );
+
+  nur_fuer_dienst( 0 );
 
   need_ajax_http_var( "produkt", 'U' );
   need_ajax_http_var( "bestellung", 'U' );
@@ -35,6 +36,8 @@ if( $action === 'basarzuteilung' ) {
 }
 if( $action === 'inventur' ) {
   header( 'Content-Type: application/json' );
+
+  nur_fuer_dienst( 0, 4 );
 
   need_ajax_http_var( "produkt", 'U' );
   need_ajax_http_var( "bestellung", 'U' );
@@ -64,6 +67,10 @@ if( $action === 'nop' )
 
 need( $action === '', "Unbekannte Aktion $action !" );
 
+nur_fuer_dienst( 0, 4 );
+
+$nur_inventur = hat_dienst( 4 );
+
 ?>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"></link>
 <script type="text/javascript" src='<?php echo $foodsoftdir; ?>/js/lib/quagga.min.js'></script>
@@ -75,7 +82,7 @@ open_javascript( toJavaScript( 'var ajax', [ 'url' => $ajax_url, 'itan' => get_i
 $verfuegbar_nach_ean = [];
 $verfuegbar_ohne_ean = [];
 
-foreach( sql_basar( [ 'lieferanty' => true ] ) as $produkt ) {
+foreach( sql_basar( [ 'lieferanty' => true, 'inventur' => $nur_inventur ] ) as $produkt ) {
   global $mysqlheute;
   if( $produkt['lieferung'] > $mysqlheute )
     continue;
@@ -95,14 +102,22 @@ foreach( sql_basar( [ 'lieferanty' => true ] ) as $produkt ) {
   , 'lieferanty' => $produkt['lieferanty']
   , 'lieferdatum' => $produkt['lieferung']
   , 'produkt_id' => $produkt['produkt_id']
+  , 'ean' => $produkt['ean_einzeln']
   ];
+  if( $nur_inventur ) {
+    $produkt_daten['inventur_menge'] = $produkt['inventur_menge'];
+    $produkt_daten['inventur_zeitpunkt'] = $produkt['inventur_zeitpunkt'];
+    $produkt_daten['inventur_gruppen_id'] = $produkt['inventur_gruppen_id'];
+  }
   if( $ean ) {
     $verfuegbar_nach_ean[$ean][] = $produkt_daten or $verfuegbar_nach_ean[$ean] = [ $produkt_daten ];
-    continue;
+    if( ! $nur_inventur )
+      continue;
   }
   $verfuegbar_ohne_ean[$produkt['produkt_id']][] = $produkt_daten
     or $verfuegbar_ohne_ean[$produkt['produkt_id']] = [ $produkt_daten ];
 }
+open_javascript( toJavaScript( 'var onlyInventory', $nur_inventur ) );
 open_javascript( toJavaScript( 'var availableByEan', $verfuegbar_nach_ean ) );
 
 // sortiere die Lieferungen jedes Produkts absteigend nach Datum
@@ -130,7 +145,8 @@ open_div( 'tab', 'id="scan-product"' );
     open_tag( 'video', '', '', '' );
   close_div();
   open_div( 'max10 hcenter' );
-    open_tag( 'p', 'medskip', '', 'Produkte ohne Barcode:');
+    open_tag( 'p', 'medskip', '',
+      $nur_inventur ? 'Alle Produkte im Basar:' : 'Produkte ohne Barcode:');
     open_span( '', 'style="display:flex; align-items:center;"' );
       echo 'Suche:&nbsp;' . string_view('', 20, 'search', 'style="flex:2;" autocomplete=off', true, '') . "&nbsp;";
       open_div( 'touch_only touch_button material-symbols-rounded'
@@ -222,33 +238,63 @@ open_div( 'tab max10', 'id="check-remaining"' );
       open_td( 'unit', 'id="check-remaining-verteileinheit" width=1' );
   close_table();
   open_table( 'layout medskip hcenter' );
-    open_tr();
-      open_td( '', '' );
-        open_div( 'touch_only touch_button material-symbols-rounded'
-        , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
-        , 'add' );
-      open_td( '', '', '' );
-      open_td( '', '', '' );
-    open_tr();
-      open_td( '', '' );
-        open_div( 'hidden touch_button material-symbols-rounded'
-        , ''
-        , '' );
-      open_td( '', '' );
-        open_div( 'touch_button material-symbols-rounded'
-        , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
-        , 'verified' );
-      open_td( '', '' );
-        open_div( 'touch_button material-symbols-rounded'
-        , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
-        , 'skip_next' );
-    open_tr();
-      open_td( '', '' );
-        open_div( 'touch_only touch_button material-symbols-rounded'
-        , 'id="button_check-remaining_minus" style="background-color:darkred;"'
-        , 'remove' );
-      open_td( '', '', '' );
-      open_td( '', '', '' );
+    if( $nur_inventur ) {
+      open_tr();
+        open_td( '', '', '' );
+        open_td( '', '' );
+          open_div( 'touch_only touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
+          , 'add' );
+        open_td( '', '', '' );
+      open_tr();
+        open_td( '', '' );
+          open_div( 'touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
+          , 'barcode_scanner' );
+        open_td( '', '' );
+          open_div( 'hidden touch_button material-symbols-rounded'
+          , ''
+          , '' );
+        open_td( '', '' );
+          open_div( 'touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
+          , 'verified' );
+      open_tr();
+        open_td( '', '', '' );
+        open_td( '', '' );
+          open_div( 'touch_only touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_minus" style="background-color:darkred;"'
+          , 'remove' );
+        open_td( '', '', '' );
+    } else {
+      open_tr();
+        open_td( '', '' );
+          open_div( 'touch_only touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
+          , 'add' );
+        open_td( '', '', '' );
+        open_td( '', '', '' );
+      open_tr();
+        open_td( '', '' );
+          open_div( 'hidden touch_button material-symbols-rounded'
+          , ''
+          , '' );
+        open_td( '', '' );
+          open_div( 'touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
+          , 'verified' );
+        open_td( '', '' );
+          open_div( 'touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
+          , 'skip_next' );
+      open_tr();
+        open_td( '', '' );
+          open_div( 'touch_only touch_button material-symbols-rounded'
+          , 'id="button_check-remaining_minus" style="background-color:darkred;"'
+          , 'remove' );
+        open_td( '', '', '' );
+        open_td( '', '', '' );
+    }
   close_table();
 close_div();
 open_div( 'tab max10', 'id="error"' );
@@ -263,8 +309,8 @@ open_div( 'tab max10', 'id="error"' );
   open_div( '', 'id="error_details"', '' );
 close_div();
 open_div( 'tab max10', 'id="success"' );
-  open_tag( 'h1', '', '', 'Kauf eingetragen!' );
-  open_div( 'success_icon', '', '');
+  open_tag( 'h1', '', '', $nur_inventur ? 'Danke!' : 'Kauf eingetragen!' );
+  open_div( $nur_inventur ? 'thanks_icon' : 'success_icon', '', '');
 close_div();
 
 open_tag ( 'hr', '', '', '' );
@@ -352,7 +398,7 @@ var pickProductWithoutEanTemplate = new Template(`
     <div class="touch_button material-symbols-rounded"
          style="background-color:darkgreen;"
          onclick='offerDeliveries( #{id} )'>
-      add_shopping_cart
+      ${onlyInventory ? 'difference' : 'add_shopping_cart'}
     </div>
   </td>
   <td style="vertical-align:middle">
@@ -375,7 +421,7 @@ var deliveryTemplate = new Template(`
     <div class="touch_button material-symbols-rounded"
          style="background-color:darkgreen;"
          onclick='pickDelivery(#{id}, #{index})'>
-      add_shopping_cart
+      ${onlyInventory ? 'difference' : 'add_shopping_cart'}
     </div>
   </td>
   <td style="vertical-align:middle">
@@ -399,17 +445,21 @@ var deliveryTemplate = new Template(`
 var bonTemplate = new Template(`
   <tr id="bon-#{index}-a">
     <td rowspan=2>#{datum}</td>
-    <td>#{menge}</td>
+    <td class="number">#{menge}</td>
     <td>#{produkt}</td>
-    <td>#{preis}</td>
+    ${onlyInventory ? '' : '<td>#{preis}</td>'}
   </tr>
   <tr id="bon-#{index}-b">
-    <td colspan=3 class="smalll">#{lieferdatum}: #{bestellung}</td>
+    <td colspan=${onlyInventory ? 2 : 3} class="smalll">#{lieferdatum}: #{bestellung}</td>
   </tr>
 `);
 
 function formatDate( date ) {
   return date.toLocaleDateString(undefined, {day:'2-digit', month:'2-digit', year:'2-digit'});
+}
+
+function sqlFormatDate( date ) {
+  return date.toISOString().replace( 'T', ' ' ).replace( /\..*$/, '' );
 }
 
 function mult_view( value ) {
@@ -439,7 +489,7 @@ function displayBon(bon) {
 
 function initBasarkaufbon() {
   // read from cookie and make proper dates
-  basarkaufbon = JSON.parse( localStorage.getItem( 'basarkaufbon' ) ?? '[]' );
+  basarkaufbon = JSON.parse( localStorage.getItem( onlyInventory ? 'basarinventurbon' : 'basarkaufbon' ) ?? '[]' );
   basarkaufbon.forEach( bon => {
     bon.datum = new Date( bon.datum );
     if( bon.lieferdatum )
@@ -475,7 +525,16 @@ function initProductsWithoutEan() {
         <td class="smalll noright">${formatDate(new Date(p.lieferdatum))}:</td>
         <td class="smalll noleft mult">${mult_view(p.basarmenge * p.verteilmult)}</td>
         <td class="smalll unit" width="10%">${p.verteileinheit}</td>
-      </tr>`, '' )
+      </tr>`
+      + ( onlyInventory && p.inventur_zeitpunkt
+        ? `
+        <tr>
+          <td class="smalll noright">&gt; ${formatDate(new Date(p.inventur_zeitpunkt))} Inventur(${p.inventur_gruppen_id % 1000}):</td>
+          <td class="smalll noleft mult">${mult_view(p.inventur_menge * p.verteilmult)}</td>
+          <td class="smalll unit" width="10%">${p.verteileinheit}</td>
+        </tr>`
+        : '' )
+      , '' )
     };
     words.push(...latestDelivery.produkt_name.split(/\s/));
     list.insert(pickProductWithoutEanTemplate.evaluate(templateData));
@@ -577,7 +636,7 @@ function initProductsWithoutEan() {
 }
 
 function saveBasarkaufbon() {
-  localStorage.setItem( 'basarkaufbon', JSON.stringify(basarkaufbon) );
+  localStorage.setItem( onlyInventory ? 'basarinventurbon' : 'basarkaufbon', JSON.stringify(basarkaufbon) );
 }
 
 function error( title, description = '' ) {
@@ -683,44 +742,58 @@ function offerDeliveries( id ) {
 
 }
 
-function pickDelivery( id, index ) {
-  let chosenProduct = id.type === 'ean'
-    ? availableByEan[id.ean][index]
-    : availableWithoutEan[id.index][index];
-  currentProduct = { id: id, index: index, ...chosenProduct };
-  $('produkt_name').textContent = chosenProduct.produkt_name;
-  $('bestellung').textContent = chosenProduct.bestellung;
-  $('lieferdatum').textContent = formatDate(new Date(chosenProduct.lieferdatum));
-  $('verteileinheit').textContent = chosenProduct.verteileinheit;
-  dom_kaufmenge.max = mult_view(chosenProduct.basarmenge * chosenProduct.verteilmult);
-  dom_kaufmenge.min = Math.min(chosenProduct.verteilmult, dom_kaufmenge.max);
-  dom_kaufmenge.step = dom_kaufmenge.max != dom_kaufmenge.min ? chosenProduct.verteilmult : 1;
+function openEnterAmount() {
+  $('produkt_name').textContent = currentProduct.produkt_name;
+  $('bestellung').textContent = currentProduct.bestellung;
+  $('lieferdatum').textContent = formatDate(new Date(currentProduct.lieferdatum));
+  $('verteileinheit').textContent = currentProduct.verteileinheit;
+  dom_kaufmenge.max = mult_view(currentProduct.basarmenge * currentProduct.verteilmult);
+  dom_kaufmenge.min = Math.min(currentProduct.verteilmult, dom_kaufmenge.max);
+  dom_kaufmenge.step = dom_kaufmenge.max != dom_kaufmenge.min ? currentProduct.verteilmult : 1;
   dom_kaufmenge.value = dom_kaufmenge.min;
   dom_kaufmenge.fire('kaufmenge:change');
   tab('enter-amount');
 }
 
+function getChosenProduct() {
+  if( currentProduct.id.type === 'ean' )
+    return availableByEan[currentProduct.id.ean][currentProduct.index];
+  return availableWithoutEan[currentProduct.id.index][currentProduct.index];
+}
+
+function pickDelivery( id, index ) {
+  let chosenProduct = id.type === 'ean'
+    ? availableByEan[id.ean][index]
+    : availableWithoutEan[id.index][index];
+  currentProduct = { id: id, index: index, ...chosenProduct };
+  if( onlyInventory )
+    openCheckRemaining();
+  else
+    openEnterAmount();
+}
+
+function openCheckRemaining() {
+  let verteilmult = currentProduct.verteilmult;
+  $('check-remaining-produkt_name').textContent = currentProduct.produkt_name;
+  dom_restmenge.value = currentProduct.basarmenge * verteilmult;
+  dom_restmenge.min = 0;
+  dom_restmenge.step = verteilmult;
+  $('check-remaining-verteileinheit').textContent = currentProduct.verteileinheit;
+
+  tab( 'check-remaining' );
+}
+
 function buySuccess(json) {
   let verteilmult = currentProduct.verteilmult;
-  let restmenge;
-  if( currentProduct.id.type === 'ean' )
-    restmenge =
-      availableByEan[currentProduct.id.ean][currentProduct.index].basarmenge
-        -= dom_kaufmenge.value / verteilmult;
-  else
-    restmenge =
-    availableWithoutEan[currentProduct.id.index][currentProduct.index].basarmenge
-      -= dom_kaufmenge.value / verteilmult;
-
-  let produktname = currentProduct.produkt_name;
-  let verteileinheit = currentProduct.verteileinheit;
+  let chosenProduct = getChosenProduct();
+  currentProduct.basarmenge = chosenProduct.basarmenge -= dom_kaufmenge.value / verteilmult;
 
   let bon = {
     datum: new Date()
-  , produkt: produktname
+  , produkt: currentProduct.produkt_name
   , bestellung: currentProduct.bestellung
   , lieferdatum: new Date(currentProduct.lieferdatum)
-  , menge: dom_kaufmenge.value + ' ' + verteileinheit
+  , menge: dom_kaufmenge.value + ' ' + currentProduct.verteileinheit
   , preis: $('preis').textContent
   };
 
@@ -728,23 +801,46 @@ function buySuccess(json) {
   basarkaufbon.push(bon);
   saveBasarkaufbon();
 
-  $('check-remaining-produkt_name').textContent = produktname;
-  dom_restmenge.value = restmenge * verteilmult;
-  dom_restmenge.min = 0;
-  dom_restmenge.step = verteilmult;
-  $('check-remaining-verteileinheit').textContent = verteileinheit;
-
-  tab( 'check-remaining' );
+  openCheckRemaining();
 }
 
 function checkRemainingSuccess(json) {
   let verteilmult = currentProduct.verteilmult;
-  if( currentProduct.id.type === 'ean' )
-    availableByEan[currentProduct.id.ean][currentProduct.index].basarmenge
-      = dom_restmenge.value / verteilmult;
-  else
-    availableWithoutEan[currentProduct.id.index][currentProduct.index].basarmenge
-      = dom_restmenge.value / verteilmult;
+  let chosenProduct = getChosenProduct();
+  if( !onlyInventory ) {
+    chosenProduct.basarmenge = dom_restmenge.value / verteilmult;
+  } else {
+    chosenProduct.inventur_menge = json.menge / verteilmult;
+    chosenProduct.inventur_zeitpunkt = sqlFormatDate(new Date());
+    chosenProduct.inventur_gruppen_id = json.gruppen_id;
+    let mirrorProduct;
+    if( currentProduct.id.type === 'ean' )
+      mirrorProduct = (availableWithoutEan
+        .find( p => p[0].produkt_id === currentProduct.produkt_id )
+        ?? [])
+        .find( p => p.bestell_id === currentProduct.bestell_id );
+    else if( currentProduct.ean )
+      mirrorProduct = availableByEan[currentProduct.ean]
+        .find( p => p.bestell_id === currentProduct.bestell_id );
+    if( mirrorProduct )
+      Object.assign( mirrorProduct, chosenProduct );
+
+    let bon = {
+      datum: new Date()
+    , produkt: currentProduct.produkt_name
+    , bestellung: currentProduct.bestellung
+    , lieferdatum: new Date(currentProduct.lieferdatum)
+    , menge: dom_restmenge.value + ' ' + currentProduct.verteileinheit
+    , preis: (dom_restmenge.value / currentProduct.verteilmult * currentProduct.endpreis).toFixed(2).toString()
+    };
+
+    displayBon(bon);
+    basarkaufbon.push(bon);
+    saveBasarkaufbon();
+  }
+
+  if( onlyInventory || currentProduct.id.type !== 'ean' )
+    initProductsWithoutEan();
 
   tab( 'success' );
   window.setTimeout(resumeScanning, 1500);
@@ -767,7 +863,6 @@ var CodeScanner = {
     this.runState = this.RunState.Running;
 
     var self = this;
-
     Quagga.init(this.state, function(err) {
       if (err) {
           return self.handleError(err);
@@ -969,6 +1064,12 @@ function onDomReady() {
   });
 
   $('button_check-remaining_skip').observe( 'click', () => {
+    if( !onlyInventory && currentProduct.id.type !== 'ean' )
+      initProductsWithoutEan();
+    if( onlyInventory ) {
+      resumeScanning();
+      return;
+    }
     tab( 'success' );
     window.setTimeout(resumeScanning, 1500);
   } );
