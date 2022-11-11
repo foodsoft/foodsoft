@@ -80,9 +80,6 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
     $dienstkontrollblatt_id = $row['dienstkontrollblatt_id'];
     $login_gruppen_name = sql_gruppenname( $login_gruppen_id );
 
-    if( $login_lifetime_seconds ) // bump expiry
-      set_foodsoftkeks( $_COOKIE['foodsoftkeks'], $login_lifetime_seconds );
-
     if (! is_null($row['muteReconfirmation_elapsed']) && $row['muteReconfirmation_elapsed'] < 60 )
         $reconfirmation_muted = TRUE;
   }
@@ -177,8 +174,11 @@ switch( $login ) {
     break;
 }
 
-if( $angemeldet )
+if( $angemeldet ) {
+  if( $login_lifetime_seconds && array_key_exists( 'foodsoftkeks', $_COOKIE ) ) // bump expiry
+    set_foodsoftkeks( $_COOKIE['foodsoftkeks'], $login_lifetime_seconds );
   return;
+}
 
 // ab hier: benutzer ist nicht eingeloggt; wir setzen alles zurueck und zeigen das anmeldeformular:
 
