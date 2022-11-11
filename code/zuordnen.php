@@ -2632,14 +2632,35 @@ function sql_basarmenge( $bestell_id, $produkt_id ) {
  * select_basar:
  * produkte im basar (differenz aus liefer- und verteilmengen) berechnen:
  */
-function select_basar( $bestell_id = 0 ) {
+function select_basar( $keys = [] ) {
+  $bestell_id = 0;
+  $with_inventur = false;
+  $with_lieferanty = false;
+
+  foreach( $keys as $key => $cond ) {
+    switch( $key ) {
+      case 'bestell_id':
+        $bestell_id = $cond;
+        break;
+      case 'inventur':
+        $with_inventur = $cond;
+        break;
+      case 'lieferanty':
+        $with_lieferanty = $cond;
+        break;
+      default:
+        error( "unknown key: $key" );
+    }
+  }
+
   if( $bestell_id ) {
     $where = "WHERE gesamtbestellungen.id = $bestell_id";
   } else {
     $where = "WHERE gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET; // todo: change to 'ABGESCHLOSSEN'
   }
-  return "
-    WITH inventur AS (
+
+  return ($with_inventur ?
+   "WITH inventur AS (
       SELECT bestellzuordnung.produkt_id
            , bestellzuordnung.menge
            , bestellzuordnung.zeitpunkt
@@ -2652,8 +2673,9 @@ function select_basar( $bestell_id = 0 ) {
           ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
         WHERE bestellzuordnung.art = " . BESTELLZUORDNUNG_ART_INVENTUR . "
           AND gesamtbestellungen.rechnungsstatus < " . STATUS_ABGESCHLOSSEN . "
-    )
-    SELECT produkte.name as produkt_name
+    )"
+    : "") .
+   "SELECT produkte.name as produkt_name
          , gesamtbestellungen.name as bestellung_name
          , gesamtbestellungen.lieferung as lieferung
          , gesamtbestellungen.id as gesamtbestellung_id
@@ -2668,18 +2690,20 @@ function select_basar( $bestell_id = 0 ) {
          , bestellvorschlaege.produktpreise_id
          , bestellvorschlaege.liefermenge
          , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basarmenge
-         , lieferantenkatalog.ean_einzeln
-         , lieferanten.name as lieferanty
-         , inventur.menge as inventur_menge
+         , lieferantenkatalog.ean_einzeln "
+         . ($with_lieferanty ? ", lieferanten.name as lieferanty " : "")
+         . ($with_inventur ? ", inventur.menge as inventur_menge
          , inventur.zeitpunkt as inventur_zeitpunkt
-         , inventur.gruppen_id as inventur_gruppen_id
-    FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
+         , inventur.gruppen_id as inventur_gruppen_id "
+           : "") .
+   "FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
     JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
     JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
-    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id )
-    JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
-    LEFT JOIN lieferantenkatalog ON ( lieferantenkatalog.lieferanten_id = produkte.lieferanten_id AND lieferantenkatalog.artikelnummer = produkte.artikelnummer )
-    LEFT JOIN inventur
+    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id ) "
+    . ($with_lieferanty ? "JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id " : "") .
+   "LEFT JOIN lieferantenkatalog ON ( lieferantenkatalog.lieferanten_id = produkte.lieferanten_id AND lieferantenkatalog.artikelnummer = produkte.artikelnummer ) "
+    . ($with_inventur ?
+   "LEFT JOIN inventur
           ON (inventur.bestell_id = gesamtbestellungen.id
             AND inventur.produkt_id = bestellvorschlaege.produkt_id
             AND NOT EXISTS (
@@ -2688,13 +2712,14 @@ function select_basar( $bestell_id = 0 ) {
               AND i1.produkt_id = inventur.produkt_id
               AND i1.zeitpunkt > inventur.zeitpunkt
             )
-          )
+          )"
+    : "") ."
     $where
     HAVING ( basarmenge <> 0 )
-  " ;
+  ";
 }
 
-function sql_basar( $bestell_id = 0, $order='produktname' ) {
+function sql_basar( $keys = [], $order='produktname' ) {
   switch( $order ) {
     case 'datum':
       $order_by = 'lieferung';
@@ -2707,7 +2732,7 @@ function sql_basar( $bestell_id = 0, $order='produktname' ) {
       $order_by = 'produkt_name';
       break;
   }
-  $basar = mysql2array( doSql( select_basar( $bestell_id ) . " ORDER BY $order_by" ) );
+  $basar = mysql2array( doSql( select_basar( $keys ) . " ORDER BY $order_by" ) );
   foreach( $basar as $key => $r ) {
     $basar[ $key ] = preisdatenSetzen( $r );
   }
@@ -2715,7 +2740,7 @@ function sql_basar( $bestell_id = 0, $order='produktname' ) {
 }
 
 function basar_wert_brutto( $bestell_id = 0 ) {
-  $basar = sql_basar( $bestell_id );
+  $basar = sql_basar( [ 'bestell_id' => $bestell_id ] );
   $wert = 0.0;
   foreach( $basar as $r ) {
     $wert += ( $r['basarmenge'] * $r['bruttopreis'] );

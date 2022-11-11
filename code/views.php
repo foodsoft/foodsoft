@@ -626,7 +626,7 @@ function pick_group_text() {
     $cols=13;
   }
 
-  $basar = sql_basar( $bestell_id, $order );
+  $basar = sql_basar( [ 'bestell_id' => $bestell_id, 'inventur' => true ], $order );
   if( count( $basar ) < 1 ) {
     open_div( 'alert', '', 'Basar ist leer!' );
     if ( $editAmounts ) {

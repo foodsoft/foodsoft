@@ -75,7 +75,7 @@ open_javascript( toJavaScript( 'var ajax', [ 'url' => $ajax_url, 'itan' => get_i
 $verfuegbar_nach_ean = [];
 $verfuegbar_ohne_ean = [];
 
-foreach( sql_basar() as $produkt ) {
+foreach( sql_basar( [ 'lieferanty' => true ] ) as $produkt ) {
   global $mysqlheute;
   if( $produkt['lieferung'] > $mysqlheute )
     continue;
