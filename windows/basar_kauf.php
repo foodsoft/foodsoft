@@ -779,6 +779,7 @@ function openCheckRemaining() {
   dom_restmenge.min = 0;
   dom_restmenge.step = verteilmult;
   $('check-remaining-verteileinheit').textContent = currentProduct.verteileinheit;
+  dom_restmenge.fire( 'restmenge:change' );
 
   tab( 'check-remaining' );
 }
