@@ -5209,7 +5209,6 @@ function update_database( $version ) {
 }
 
 function wikiLink( $topic, $text, $head = false ) {
-  global $foodsoftdir;
   if( ( $wikibase = getenv('wikibase') ) ) {
     echo "
       <a class='wikilink' " . ( $head ? "id='wikilink_head' " : "" ) . "
