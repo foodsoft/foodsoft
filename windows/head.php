@@ -7,7 +7,7 @@
 
 global $angemeldet, $login_gruppen_name, $coopie_name
      , $login_dienst, $title, $subtitle, $wikitopic, $readonly
-     , $area, $foodcoop_name;
+     , $foodcoop_name;
 
 if( ! $title ) $title = "FC $foodcoop_name - Foodsoft";
 if( ! $subtitle ) $subtitle = "FC $foodcoop_name - Foodsoft";
@@ -44,7 +44,7 @@ open_div( $headclass, "id='header' style='padding:0.5ex 1em 0.5ex 1ex;margin:0pt
                       </a>" );
       open_td( 'quad', "id='subtitle' ", $subtitle );
       open_td( '', "style='text-align:right;'" );
-        wikiLink( ( $area ? "foodsoft:$area" : 'start' ) , "Hilfe-Wiki...", true );
+        wikiLink( "foodsoft:$window", "Hilfe-Wiki...", true );
     open_tr();
       open_td();
       open_td( '', "style='font-size:11pt;'" );
