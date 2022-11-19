@@ -126,9 +126,10 @@ class auth_plugin_authfoodsoft_authentication extends DokuWiki_Auth_Plugin {
      * grps array   list of groups the user is in
      *
      * @param   string $user the user name
+     * @param   bool $requireGroups whether or not the returned data must include groups
      * @return  array containing user data or false
      */
-    public function getUserData($user) {
+    public function getUserData($user, $requireGroups = true) {
         // FIXME implement
         return false;
     }
