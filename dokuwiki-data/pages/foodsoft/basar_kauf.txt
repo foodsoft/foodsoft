@@ -1,0 +1,48 @@
+====== Basarkauf ======
+
+Mit dieser Foodsoft-Funktion können mit einem Smartphone bequem und zuverlässig Produkte aus dem Basar gekauft werden:
+  * Produkte //mit// Barcode, können mit der Kamera gescannt werden (wenn deren Code im Katalog hinterlegt ist).
+  * Produkte //ohne// Barcode, oder für die der Code nicht im Katalog hinterlegt ist, können aus einer Liste mit Suchfunktion gewählt werden; die Suchfunktion erlaubt sogar Spracherkennung. 
+
+Vorteile 8-):
+  * Spart Zeit: Eintragen von Käufen in der Basarliste unnötig.
+  * Spart Arbeit für Abrechnungs-/Basardienst.
+  * Fehler durch unleserliche Eintragungen werden vermieden.
+  * Lieferdatum wird abgefragt, falls nötig.
+  * Die Käufe sind sofort verbucht.
+  * Die Gruppen-Guthaben sind aktueller.
+
+^ Achtung ^
+| Zugriff auf die Kamera, das Mikrofon und die Spracherkennung sind natürlich sensible Vorgänge, so dass Smartphone-Browser Euch zu Recht dafür erst um Erlaubnis bitten. Chrome auf Android merkt sich das, Safari auf iPhone fragt gerne immer wieder. Das kann in den Sicherheitseinstellungen zu der Foodsoft-Seite in Eurem Browser eingestellt werden! Für Spracherkennung auf iPhone muss die Diktierfunktion in den Systemeinstellungen aktiviert werden. |
+
+
+===== Kauf mit Barcode-Scanner =====
+  - Mit der Kamera den Barcode scannen: \\ Der Scanner umrahmt Objekte orange, die grob nach Barcode aussehen. Wird ein Barcode korrekt erkannt, wird er grün umrahmt und mit rotem "Scanstrich" markiert.
+  - Falls zwar der Barcode erkannt wurde, aber kein passendes Produkt im Foodsoft-Basar ist, scannt die Kamera einfach weiter. Dann bitte [[foodsoft:basar_kauf#Kauf ohne Barcode-Scanner]] versuchen! Kann auch daran liegen, dass die Foodsoft den Code nicht kennt, weil er nicht im Katalog ist, z.B. bei der Mostmanufaktur.
+  - Falls die Foodsoft das Produkt aus mehreren Lieferungen im Basar findet, fragt sie, aus welcher Lieferung das Produkt ist, das man kaufen will. Bitte mit dem Warenkorb-Knopf {{ :foodsoft:basarkauf_warenkorb.png?nolink&64 |}} auswählen! Wenn man es sich anders überlegt hat, oder keine der Wahlmöglichkeit passt, kann man mit dem Barcode-Symbol {{ :foodsoft:basarkauf_barcode.png?nolink&64 |}} abbrechen und zum Scannen zurückgehen.
+  - Dann fragt die Foodsoft nach der Menge. Am einfachsten geht das mit dem Steuerkreuz: {{ :foodsoft:basarkauf_kauf_kreuz.png?nolink |}} Mit Plus und Minus Menge anpassen und mit dem Euro-Knopf bezahlen oder wieder mit dem Barcode-Symbol abbrechen. Man kann auch in das Mengenfeld klicken und den Wert direkt eingeben, was z.B. bei gewogenen Waren nötig ist.
+
+Damit ist der Kauf erledigt und erscheint im [[foodsoft:basar_kauf#Kassenbon]]. Die Foodsoft bittet einen jetzt aber noch darum, die Restmenge in der [[foodsoft:basar_kauf#Dauerinventur]] zu vermerken. Das kann man aber auch überspringen, wenn man es eilig hat.
+
+===== Kauf ohne Barcode-Scanner =====
+  - In der Liste unterhalb des Scanfelds einfach das passende Produkt mit {{ :foodsoft:basarkauf_warenkorb.png?nolink&64 |}} auswählen. Hier sind alle Basarprodukte zu finden, für die kein Barcode bekannt ist. \\ Falls sich das zu kaufende Produkt weder mit dem Scanner noch in der Liste finden lässt, kann es sein, dass es vielleicht von jemand anders liegen gelassen wurde, oder dass die tatsächlichen Liefermengen noch nicht eingebucht sind. **In diesem Fall bitte weiterhin die Papierliste benutzen!**
+    - Falls einem die Liste zu lang ist, kann man im Suchfeld Worte eingeben. Es wird sofort nach Wortteilen gesucht. Alle Worte müssen enthalten sein. Typische Mehrzahlendungen werden ignoriert und Umlaute auch, so dass "Apfel" und "Äpfel" die gleichen Treffer liefert, wie auch "Kartoffel"/"Kartoffeln". Allerdings sind "Karotten" und "Möhren" für die Suche noch unterschiedliche Produkte.
+    - Wer es mag, kann mit dem Mikrofon-Knopf {{ :foodsoft:basarkauf_mikrofon.png?nolink |}} mit der Spracherkennung des Smartphones Worte eingeben. Bei iPhones ist es nötig, die Erkennung durch Klick auf das große pulsierende Mikrofon-Symbol aktiv zu beenden. Android erkennt das Ende des Sprachflusses.
+    - Mit dem Löschen-Knopf {{ :foodsoft:basarkauf_loeschen.png?nolink&64 |}} kann man die Suchbegriffe löschen und wieder alles sehen.
+  - Falls die Foodsoft das Produkt aus mehreren Lieferungen im Basar findet, fragt sie, aus welcher Lieferung das Produkt ist, das man kaufen will. Bitte mit dem Warenkorb-Knopf {{ :foodsoft:basarkauf_warenkorb.png?nolink&64 |}} auswählen! Wenn man es sich anders überlegt hat, oder keine der Wahlmöglichkeit passt, kann man mit dem Barcode-Symbol {{ :foodsoft:basarkauf_barcode.png?nolink&64 |}} abbrechen und zur Liste zurückgehen.
+  - Dann fragt die Foodsoft nach der Menge. Am einfachsten geht das mit dem Steuerkreuz: {{ :foodsoft:basarkauf_kauf_kreuz.png?nolink |}} Mit Plus und Minus Menge anpassen und mit dem Euro-Knopf bezahlen oder wieder mit dem Barcode-Symbol abbrechen. Man kann auch in das Mengenfeld klicken und den Wert direkt eingeben, was z.B. bei gewogenen Waren nötig ist.
+
+Damit ist der Kauf erledigt und erscheint im [[foodsoft:basar_kauf#Kassenbon]]. Die Foodsoft bittet einen jetzt aber noch darum, die Restmenge in der [[foodsoft:basar_kauf#Dauerinventur]] zu vermerken. Das kann man aber auch überspringen, wenn man es eilig hat.
+
+===== Dauerinventur =====
+Nach jedem Basarkauf bittet die Foodsoft um Inventur-Mithilfe und fragt nach dem Restbestand (also ohne die gerade gekauften Produkte). Dabei bezieht sie sich immer nur auf die Ware aus der gewählten Lieferung, **nicht** auf eventuelle Reste aus anderen Lieferungen!
+
+Am einfachsten geht das mit dem "Inventur-Raumschiff": {{ :foodsoft:basarkauf_inventur_kreuz.png?nolink |}}
+Mit Plus und Minus die Restmenge wählen und mit dem blauen Haken bestätigen. Man kann auch in das Mengenfeld klicken und den Wert direkt eingeben, was z.B. bei gewogenen Waren nötig ist.
+
+Falls man partout keine Zeit hat, kann man das mit dem orangenen Skip-Symbol überspringen.
+
+===== Kassenbon =====
+Ganz unten auf jeder Basarkaufseite findet sich ein Protokollbereich, in dem die letzten eigenen Basarkäufe aufgelistet sind. Die neuesten sind oben. Sie werden für vier Wochen gespeichert und zwar auf dem jeweiligen Smartphone, so dass man nur die Käufe sieht, die mit dem jeweiligen Smartphone gemacht wurden.
+
+Der Vorteil ist, dass man hier alle Basarkäufe chronologisch sieht, unabhängig davon, aus welchen Lieferungen die Produkte waren.

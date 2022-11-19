@@ -755,12 +755,12 @@ function possible_areas(){
      "title" => "Basar");
    }
 
-   if( false and hat_dienst(0) ) {
+   if( hat_dienst(0) ) {
     $areas[] = array("area" => "basar_kauf",
     "window_id" => "basar_kauf",
     "hint" => "Waren aus dem Basar kaufen",
     "title" => "Basarkauf");
-   } else if( false and hat_dienst(4) ) {
+   } else if( hat_dienst(4) ) {
     $areas[] = array("area" => "basar_kauf",
     "window_id" => "basar_kauf",
     "hint" => "Basarwaren inventarisieren ",
