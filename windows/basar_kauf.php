@@ -70,6 +70,8 @@ need( $action === '', "Unbekannte Aktion $action !" );
 nur_fuer_dienst( 0, 4 );
 
 $nur_inventur = hat_dienst( 4 );
+if( $nur_inventur )
+  setWikiHelpTopic( 'foodsoft:basar_inventur' );
 
 ?>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"></link>
@@ -318,7 +320,7 @@ open_tag ( 'hr', '', '', '' );
 open_table ( 'list max10 hcenter', 'id="bonliste"' );
 close_table();
 
-open_javascript(<<<'EOD'
+open_javascript(<<<'JS'
 
 function getCookies() {
   return Object.fromEntries(document.cookie.split(/; */).map(function(c) {
@@ -1172,5 +1174,5 @@ if (document.readyState === 'loading') {  // Loading hasn't finished yet
 } else {  // `DOMContentLoaded` has already fired
   onDomReady();
 }
-EOD);
+JS);
 ?>
