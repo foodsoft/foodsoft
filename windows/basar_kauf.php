@@ -151,10 +151,10 @@ open_div( 'tab', 'id="scan-product"' );
       $nur_inventur ? 'Alle Produkte im Basar:' : 'Produkte ohne Barcode:');
     open_span( '', 'style="display:flex; align-items:center;"' );
       echo 'Suche:&nbsp;' . string_view('', 20, 'search', 'style="flex:2;" autocomplete=off', true, '') . "&nbsp;";
-      open_div( 'touch_only touch_button material-symbols-rounded'
+      open_div( 'touch_only touch_button notranslate material-symbols-rounded'
       , 'id="button_search_clear" style="background-color:darkorange;"'
       , 'backspace' );
-      open_div( 'touch_button material-symbols-rounded'
+      open_div( 'touch_button notranslate material-symbols-rounded'
       , 'id="button_search_speech" style="background-color:rgb(15,33,139);"'
       , 'mic' );
     close_span();
@@ -166,7 +166,7 @@ open_div( 'tab', 'id="scan-product"' );
   close_div();
 close_div();
 open_div( 'tab max10', 'id="recording-speech" style="text-align:center;"' );
-  open_div( 'touch_button material-symbols-rounded breathing'
+  open_div( 'touch_button notranslate material-symbols-rounded breathing'
   , 'id="button_search_abort_speech" style="font-size: xxx-large; width:80%; max-width:none; background-color:rgb(15,33,139);"'
   , 'mic' );
 close_div();
@@ -175,7 +175,7 @@ open_div( 'tab max10', 'id="pick-delivery"' );
   open_tag( 'p', '', '', 'Bitte Lieferung wählen:');
   open_div( '', 'id="delivery-list"', '');
   open_div( 'center', 'width="100%"' );
-    open_div( 'touch_button material-symbols-rounded hcenter'
+    open_div( 'touch_button notranslate material-symbols-rounded hcenter'
     , 'id="button_pick-delivery_cancel" style="background-color:darkorange;"'
     , 'barcode_scanner' );
   close_div();
@@ -203,27 +203,27 @@ open_div( 'tab max10', 'id="enter-amount"' );
     open_tr();
       open_td( '', '', '' );
       open_td( '', '' );
-        open_div( 'touch_only touch_button material-symbols-rounded'
+        open_div( 'touch_only touch_button notranslate material-symbols-rounded'
         , 'id="button_plus" style="background-color:darkgreen;"'
         , 'add' );
       open_td( '', '', '' );
     open_tr();
       open_td( '', '' );
-        open_div( 'touch_button material-symbols-rounded'
+        open_div( 'touch_button notranslate material-symbols-rounded'
         , 'id="button_cancel" style="background-color:darkorange;"'
         , 'barcode_scanner' );
       open_td( '', '' );
-        open_div( 'hidden touch_button material-symbols-rounded'
+        open_div( 'hidden touch_button notranslate material-symbols-rounded'
         , ''
         , '' );
       open_td( '', '' );
-        open_div( 'touch_button material-symbols-rounded'
+        open_div( 'touch_button notranslate material-symbols-rounded'
         , 'id="button_buy" style="background-color:rgb(15,33,139); color:rgb(255,255,0);"'
         , 'euro' );
     open_tr();
       open_td( '', '', '' );
       open_td( '', '' );
-        open_div( 'touch_only touch_button material-symbols-rounded'
+        open_div( 'touch_only touch_button notranslate material-symbols-rounded'
                 , 'id="button_minus" style="background-color:darkred;"'
                 , 'remove' );
       open_td( '', '', '' );
@@ -244,54 +244,54 @@ open_div( 'tab max10', 'id="check-remaining"' );
       open_tr();
         open_td( '', '', '' );
         open_td( '', '' );
-          open_div( 'touch_only touch_button material-symbols-rounded'
+          open_div( 'touch_only touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
           , 'add' );
         open_td( '', '', '' );
       open_tr();
         open_td( '', '' );
-          open_div( 'touch_button material-symbols-rounded'
+          open_div( 'touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
           , 'barcode_scanner' );
         open_td( '', '' );
-          open_div( 'hidden touch_button material-symbols-rounded'
+          open_div( 'hidden touch_button notranslate material-symbols-rounded'
           , ''
           , '' );
         open_td( '', '' );
-          open_div( 'touch_button material-symbols-rounded'
+          open_div( 'touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
           , 'verified' );
       open_tr();
         open_td( '', '', '' );
         open_td( '', '' );
-          open_div( 'touch_only touch_button material-symbols-rounded'
+          open_div( 'touch_only touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_minus" style="background-color:darkred;"'
           , 'remove' );
         open_td( '', '', '' );
     } else {
       open_tr();
         open_td( '', '' );
-          open_div( 'touch_only touch_button material-symbols-rounded'
+          open_div( 'touch_only touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_plus" style="background-color:darkgreen;"'
           , 'add' );
         open_td( '', '', '' );
         open_td( '', '', '' );
       open_tr();
         open_td( '', '' );
-          open_div( 'hidden touch_button material-symbols-rounded'
+          open_div( 'hidden touch_button notranslate material-symbols-rounded'
           , ''
           , '' );
         open_td( '', '' );
-          open_div( 'touch_button material-symbols-rounded'
+          open_div( 'touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_confirm" style="background-color:rgb(15,33,139);"'
           , 'verified' );
         open_td( '', '' );
-          open_div( 'touch_button material-symbols-rounded'
+          open_div( 'touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_skip" style="background-color:darkorange;"'
           , 'skip_next' );
       open_tr();
         open_td( '', '' );
-          open_div( 'touch_only touch_button material-symbols-rounded'
+          open_div( 'touch_only touch_button notranslate material-symbols-rounded'
           , 'id="button_check-remaining_minus" style="background-color:darkred;"'
           , 'remove' );
         open_td( '', '', '' );
@@ -304,7 +304,7 @@ open_div( 'tab max10', 'id="error"' );
   open_div( 'error_icon', '', '');
   open_div( '', 'id="error_description"', '' );
   open_div( 'touch_only medskip', 'style="text-align:center"');
-    open_div( 'touch_button material-symbols-rounded'
+    open_div( 'touch_button notranslate material-symbols-rounded'
             , 'id="button_error_reset" style="background-color:darkorange;"'
             , 'barcode_scanner' );
   close_div();
@@ -397,7 +397,7 @@ function tab( id, dom_focus = dom_top ) {
 var pickProductWithoutEanTemplate = new Template(`
 <tr>
   <td style="vertical-align:middle">
-    <div class="touch_button material-symbols-rounded"
+    <div class="touch_button notranslate material-symbols-rounded"
          style="background-color:darkgreen;"
          onclick='offerDeliveries( #{id} )'>
       ${onlyInventory ? 'difference' : 'add_shopping_cart'}
@@ -420,7 +420,7 @@ var pickProductWithoutEanTemplate = new Template(`
 var deliveryTemplate = new Template(`
 <tr>
   <td style="vertical-align:middle">
-    <div class="touch_button material-symbols-rounded"
+    <div class="touch_button notranslate material-symbols-rounded"
          style="background-color:darkgreen;"
          onclick='pickDelivery(#{id}, #{index})'>
       ${onlyInventory ? 'difference' : 'add_shopping_cart'}
