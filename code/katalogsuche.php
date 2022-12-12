@@ -464,7 +464,7 @@ function update_preis( $produkt_id ) {
   $r = katalogabgleich( $produkt_id, 0, 0, $preiseintrag_neu );
   switch( $r ) {
     case 0:
-      return -1;
+      break;
     case 1:
     case 2:
     case 3:
@@ -484,7 +484,7 @@ function update_preis( $produkt_id ) {
       foreach( array( 'lieferpreis', 'bestellnummer', 'gebindegroesse', 'mwst', 'pfand'
                     , 'liefereinheit', 'verteileinheit', 'lv_faktor' ) as $key ) {
         if( ! isset( $preiseintrag_neu[ $key ] ) ) {
-          break 2;
+          return 0;
         }
       }
       return sql_insert_produktpreis(
@@ -495,6 +495,7 @@ function update_preis( $produkt_id ) {
       , $preiseintrag_neu['lv_faktor']
       );
   }
+  return -1;
 }
 
 ?>
