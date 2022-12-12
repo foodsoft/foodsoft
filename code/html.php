@@ -24,7 +24,7 @@ $tr_title = '';
 
 // set flags to activate workarounds for known browser bugs:
 //
-$browser = $_SERVER['HTTP_USER_AGENT'];
+$browser = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
 global $activate_mozilla_kludges, $activate_safari_kludges, $activate_exploder_kludges, $activate_konqueror_kludges;
 $activate_safari_kludges = 0;
 $activate_mozilla_kludges = 0;
