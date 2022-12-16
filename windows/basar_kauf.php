@@ -932,10 +932,10 @@ var CodeScanner = {
     numOfWorkers: 2,
     frequency: 10,
     decoder: {
-      readers : [{
-        format: "ean_reader",
-        config: {}
-      }]
+      readers : [
+        "ean_reader"
+      , "ean_8_reader"
+      ]
     },
     locate: true
   },
