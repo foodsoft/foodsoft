@@ -78,4 +78,5 @@ switch( $window_id ) {
 get_itan( true );
 open_form( 'name=update_form', 'action=nop,message=' );
 
-?>
+// never do POST on reload/backward/forward history actions
+$js_on_exit[] = 'if ( window.history.replaceState ) window.history.replaceState( null, null, window.location.href );';
