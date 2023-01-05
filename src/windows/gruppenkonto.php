@@ -2,7 +2,7 @@
 
 assert($angemeldet) or exit();
 $editable = ! $readonly;
- 
+
 get_http_var( 'meinkonto', 'u', 0, true );
 get_http_var( 'gruppen_id', 'u', 0, true );
 if( ( ! hat_dienst(5) ) and ( $gruppen_id == $login_gruppen_id ) ) {

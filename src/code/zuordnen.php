@@ -20,28 +20,6 @@ define('LEVEL_NONE',      0);
 // LEVEL_CURRENT: alle sql-aufrufe bis zu diesem level werden angezeigt:
 $_SESSION['LEVEL_CURRENT'] = LEVEL_NONE;
 
-function sql_selects( $table, $prefix = false ) {
-  global $tables;
-  $cols = $tables[$table]['cols'];
-  $selects = array();
-  foreach( $cols as $name => $type ) {
-    if( $name == 'id' ) {
-      if( isstring( $prefix ) )
-        $selects[] = "$table.id as {$prefix}id";
-      else
-        $selects[] = "$table.id as $table_id";
-    } else {
-      if( isstring( $prefix ) )
-        $selects[] = "$table.$name as $prefix$name";
-      else if( $prefix )
-        $selects[] = "$table.$name as $table_$name";
-      else
-        $selects[] = "$table.$name as $name";
-    }
-  }
-  return $selects;
-}
-
 function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfehler: " ) {
   global $db_handle;
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
