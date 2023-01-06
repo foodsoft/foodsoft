@@ -5,10 +5,9 @@
 function number_selector($name, $min, $max, $selected, $format, $to_stdout = true ){
   global $input_event_handlers;
   $s = "<select name='$name' $input_event_handlers>";
-  for ($i=$min; $i <= $max; $i++) { 
-	       if ($i == $selected) $select_str="selected";
-     	       else $select_str = ""; 
-	       $s .= "<option value='".$i."' ".$select_str.">".sprintf($format,$i)."</option>\n";
+  for ($i=$min; $i <= $max; $i++) {
+    $select_str = ($i == $selected) ? "selected" : "";
+    $s .= "<option value='{$i}' {$select_str}>" . sprintf($format,$i) . "</option>\n";
   }
   $s .= "</select>";
   if( $to_stdout )
@@ -2054,12 +2053,11 @@ function auswahl_bestellung( $bestell_id = 0 ) {
  */
 function dienst_selector($pre_select, $id=""){
   $s = "<select name='dienst_$id'>";
-	    
-	  //var_dump($_SESSION['DIENSTEINTEILUNG']);
-	  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) { 
-	       if ($i == $pre_select) $select_str="selected";
-     	       else $select_str = ""; 
-	       $s .= "<option value='".$i."' ".$select_str.">".$i."</option>\n"; } 
+
+  foreach ($_SESSION['DIENSTEINTEILUNG'] as $key => $i) {
+    $select_str = ($i == $pre_select) ? "selected" : "";
+    $s .= "<option value='".$i."' ".$select_str.">".$i."</option>\n";
+  }
   $s .= "</select>";
   return $s;
 }

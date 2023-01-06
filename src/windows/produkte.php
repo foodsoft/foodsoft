@@ -175,8 +175,17 @@ open_table('list hfill');
           echo fc_link( 'edit_produkt', "produkt_id=$id" );
         echo fc_link( 'produktpreise', "produkt_id=$id,text=" );
         if( $editable and ( $references == 0 ) ) {
-          echo fc_action( array( 'class' => 'drop', 'title' => 'Produkt Löschen', 'confirm' => 'Soll das Produkt wirklich GELÖSCHT werden?' )
-                        , array( 'action' => 'delete', 'produkt_id' => $id ) );
+          echo fc_action(
+            array(
+              'class'   => 'drop',
+              'title'   => 'Produkt Löschen',
+              'confirm' => 'Soll das Produkt wirklich GELÖSCHT werden?'
+            ),
+            array(
+              'action'     => 'delete',
+              'produkt_id' => $id,
+            )
+          );
         }
     open_tr( 'groupofrows_bottom' );
       // open_td();
