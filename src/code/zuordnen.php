@@ -2326,6 +2326,8 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
  *     If unset, we will get total of all groups (muell* and basar* don't make sense)
  *   - 'produkt_id' (optional)
  *     If unset, we'll get all products
+ *   - 'katalog' (optional)
+ *     Set to TRUE in order to query catalogue data alongside
  * @param string $orderby
  * @return string
  *   SQL statement for SELECT query
@@ -2333,6 +2335,8 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
 function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
+
+  $mit_katalog = $keys['katalog'] ?? false;
 
   $selects = [];
   $filters = [];
@@ -2347,6 +2351,25 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
       ON (bestellzuordnung.produkt_id = bestellvorschlaege.produkt_id
       AND bestellzuordnung.gruppenbestellung_id = gruppenbestellungen.id)'
   ];
+
+  if( $mit_katalog ) {
+    $joins['lieferantenkatalog'] =
+      'LEFT OUTER JOIN lieferantenkatalog ' .
+      'ON (lieferantenkatalog.lieferanten_id = produkte.lieferanten_id ' .
+      'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)';
+    $joins['hersteller_acro'] =
+      'LEFT OUTER JOIN catalogue_acronyms AS hersteller_acro ' .
+      'ON (hersteller_acro.context = "hst" ' .
+      'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)';
+    $joins['verband_acro'] =
+      'LEFT OUTER JOIN catalogue_acronyms AS verband_acro ' .
+      'ON (verband_acro.context = "vbd" ' .
+      'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)';
+    $joins['herkunft_acro'] =
+      'LEFT OUTER JOIN catalogue_acronyms AS herkunft_acro ' .
+      'ON (herkunft_acro.context = "hrk" ' .
+      'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)';
+  }
 
   need($bestell_id = $keys['bestell_id']);
 
@@ -2437,6 +2460,20 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $selects[] = 'produktgruppen.id AS produktgruppen_id';
   $selects[] = 'produkte.id AS produkt_id';
   $selects[] = 'produkte.notiz AS notiz';
+  if( $mit_katalog ) {
+    alias_columns($selects, 'lieferantenkatalog', 'katalog', [
+      'ean_einzeln',
+      'bemerkung',
+      'hersteller',
+      'verband',
+      'herkunft',
+    ]);
+    $acronym_fields = ['definition', 'url', 'comment'];
+    alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
+    alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
+    alias_columns($selects, 'herkunft_acro', 'katalog.hrk', $acronym_fields);
+
+  }
   $selects[] = 'bestellvorschlaege.liefermenge  AS liefermenge';
   $selects[] = 'bestellvorschlaege.gesamtbestellung_id AS gesamtbestellung_id';
   $selects[] = 'gesamtbestellungen.aufschlag_prozent AS aufschlag_prozent';

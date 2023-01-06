@@ -161,7 +161,13 @@ switch( $action ) {
     break;
 }
 
-$produkte = sql_bestellung_produkte(['bestell_id' => $bestell_id], 'produktgruppen_name,produkt_name' );
+$produkte = sql_bestellung_produkte(
+  [
+    'bestell_id' => $bestell_id,
+    'katalog'    => true,
+  ],
+  'produktgruppen_name,produkt_name'
+);
 $gesamtpreis = 0.0;
 
 /* --- order form: prepare display of issues/warnings for order preparation responsible(s) --- */
@@ -667,7 +673,7 @@ foreach( $produkte as $produkt ) {
 
   $produktgruppe = $produkt['produktgruppen_id'];
 
-  $katalogeintrag = katalogsuche($produkt_id);
+  $katalogeintrag = unalias_columns($produkt, 'katalog');
 
   if( $produktgruppe != $produktgruppe_alt ) {
     open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
