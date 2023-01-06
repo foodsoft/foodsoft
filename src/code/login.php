@@ -148,7 +148,7 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
 //
 get_http_var( 'login', 'w', '' );
 switch( $login ) {
-  case 'login': 
+  case 'login':
     get_http_var( 'login_gruppen_id', 'u' )
       or $errors[] = "keine Gruppe ausgewählt";
     get_http_var( 'passwort','R' )
@@ -181,7 +181,7 @@ switch( $login ) {
       $login_dienst = $dienst;
       $login_dienstname = $dienstinfos[$login_dienst]['label'];
       $dienstkontrollblatt_id = dienstkontrollblatt_eintrag(
-        false, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz 
+        false, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz
       );
     } else {
       $dienstkontrollblatt_id = 0;
@@ -214,7 +214,7 @@ switch( $login ) {
       need_http_var('telefon','H');
       need_http_var('notiz','H');
       dienstkontrollblatt_eintrag(
-        $dienstkontrollblatt_id, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz 
+        $dienstkontrollblatt_id, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz
       );
     }
     logout();
@@ -241,14 +241,14 @@ open_javascript();
 function pick_login_dropdown() {
   var source = $('login_gruppen_id');
   var text = $('login_gruppen_id_text');
-  
+
   text.value = source.value % 1000;
 }
 
 function pick_login_text() {
   var source = $('login_gruppen_id_text');
   var dropdown = $('login_gruppen_id');
-  
+
   var options = dropdown.options;
   var group_id = 0;
   for (var i = 0; i < options.length; ++i) {
@@ -276,9 +276,9 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
     open_div( 'newfield', '', "
       <p>
         <label class='login'> ". ( $FC_acronym == 'LS' ? 'Kunde:' : 'Gruppe:' ) ."</label>
-        <input type='text' size='12' name='login_gruppen_id_text' id='login_gruppen_id_text' value='' 
+        <input type='text' size='12' name='login_gruppen_id_text' id='login_gruppen_id_text' value=''
           onkeyup='pick_login_text();'>
-        <select size='1' name='login_gruppen_id' id='login_gruppen_id' 
+        <select size='1' name='login_gruppen_id' id='login_gruppen_id'
           onchange='pick_login_dropdown();'>
         ". optionen_gruppen() ."
         </select>
@@ -293,9 +293,9 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
         </div>
       <p>
         <label class='login'>Dienst:</label>
-        <select size='1' name='dienst' id='dienst' 
+        <select size='1' name='dienst' id='dienst'
           onchange='set_dienstform();'>
-        ". optionen_dienste() . "  
+        ". optionen_dienste() . "
         </select>
       </p>
     " );
@@ -307,7 +307,7 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
         " eingetragen:" );
       open_fieldset( 'small_form', '', ( $FC_acronym == 'LS' ? 'Kontrollblatt' : 'Dienstkontrollblatt' ) );
         open_div( 'newfield' );
-          ?> 
+          ?>
              <label>Dein Name:</label>
              <input type='text' size='20' name='coopie_name' value='<?php echo $coopie_name; ?>'>
              <label style='padding-left:4em;'>Telefon:</label>

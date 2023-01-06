@@ -24,7 +24,7 @@ function error( $string ) {
 /** need
  *
  * Fail noisily in case the given assertion fails.
- * 
+ *
  * @param bool $exp
  *   assertion to evaluate
  * @param string $comment
@@ -32,7 +32,7 @@ function error( $string ) {
  * @staticvar bool $in_need
  *   used to avoid infinite recursion
  * @return bool|never
- *   true 
+ *   true
  */
 function need( $exp, $comment = "Problem" ) {
   static $in_need = false;

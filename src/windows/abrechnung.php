@@ -120,9 +120,9 @@ foreach( ( $gesamt_abrechnung ? $bestell_id_set : array( $bestell_id ) ) as $b_i
   $pfand_voll_brutto_soll += $lieferanten_soll['pfand_voll_brutto_soll'];
   $pfand_leer_netto_soll += $lieferanten_soll['pfand_leer_netto_soll'];
   $pfand_leer_brutto_soll += $lieferanten_soll['pfand_leer_brutto_soll'];
-  $warenwert_verteilt_brutto -= sql_verteilt_brutto_soll( $b_id ); 
-  $warenwert_muell_brutto -= sql_muell_brutto_soll( $b_id ); 
-  $warenwert_basar_brutto += basar_wert_brutto( $b_id ); 
+  $warenwert_verteilt_brutto -= sql_verteilt_brutto_soll( $b_id );
+  $warenwert_muell_brutto -= sql_muell_brutto_soll( $b_id );
+  $warenwert_basar_brutto += basar_wert_brutto( $b_id );
   $aufschlag_soll += sql_aufschlag_soll( $b_id );
   $gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $b_id, "gesamtbestellungen.id" ) );
   $gruppenpfand_voll_brutto_soll += $gruppenpfand['pfand_voll_brutto_soll'];

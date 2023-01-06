@@ -16,7 +16,7 @@ if( $readonly ) {
   $payloadclass='ro';
 }
 
-$FC_acronym = adefault( $_SERVER, 'FC_acronym', '' ); 
+$FC_acronym = adefault( $_SERVER, 'FC_acronym', '' );
 
 echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\n";
 open_tag( 'html' );
@@ -34,7 +34,7 @@ open_tag( 'body' );
 
 open_div( $headclass, "id='header'" );
   open_table( '', "style='padding: 5pt'" );
-    open_td( '', 'style="padding: 0px 5px"', " 
+    open_td( '', 'style="padding: 0px 5px"', "
           <a class='logo' href='index.php'>
             <span class='logoinvers'>$FC_acronym</span>
             <span class='logo'>$foodcoop_name</span>

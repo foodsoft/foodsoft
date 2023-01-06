@@ -15,7 +15,7 @@ create_user_and_group() {
     then
         echo >%2 "Invalid value for EXT_GID: ${EXT_GID}"
     fi
-    
+
     if ! getent group user >/dev/null
     then
         groupadd -g ${EXT_GID} user

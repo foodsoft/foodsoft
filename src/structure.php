@@ -989,7 +989,7 @@ $tables = array(
         'type' => "varchar(15)"
       , 'null' => 'NO'
       , 'default' => ''
-      , 'extra' => '' 
+      , 'extra' => ''
     )
   )
   , 'indices' => array(

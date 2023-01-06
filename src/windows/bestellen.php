@@ -1,5 +1,5 @@
 <?PHP
-error_reporting(E_ALL); 
+error_reporting(E_ALL);
 
 assert( $angemeldet ) or exit();
 
@@ -113,7 +113,7 @@ switch( $action ) {
     }
 
     /* Step 2:
-     * update group order details using data from step 1  
+     * update group order details using data from step 1
      */
     foreach( $bestellungen as $produkt_id => $m ) {
       change_bestellmengen(
@@ -267,7 +267,7 @@ if( ! $readonly ) {
 
       let zuteilung_fest = 0;
       let zuteilung_toleranz = 0;
-      
+
       let restmenge = bestellmenge;
       if( _fest >= _fest_alt ) {
 
@@ -345,7 +345,7 @@ if( ! $readonly ) {
       let anzeige_gruppe;
       anzeige_gruppe = _fest * _verteilmult;
       const toleranzNode = document.getElementById('t_'+produkt);
-      
+
       // also show when tolerance changed for marking change by color
       if( _toleranz > 0 || _toleranz_alt !== _toleranz ) {
         anzeige_gruppe += ' ... ';
@@ -353,16 +353,16 @@ if( ! $readonly ) {
       } else {
         toleranzNode.firstChild.nodeValue = ' ';
       }
-      
+
       const festNode = document.getElementById('f_'+produkt);
       festNode.firstChild.nodeValue = anzeige_gruppe;
-      
+
       // highlight changes
       if (!init) {
         set_class(festNode, 'changed', _fest !== _fest_alt);
         set_class(
-            toleranzNode, 
-            'changed', 
+            toleranzNode,
+            'changed',
             _fest + _toleranz !== _fest_alt + _toleranz_alt
         );
       }
@@ -434,7 +434,7 @@ if( ! $readonly ) {
     /**
      * Disable the button that allows for switching between basar order mode
      * and group order mode. E.g. when there are already changes in the order
-     * sheet, it shouldn't be possible to toggle to ensure data consistency. 
+     * sheet, it shouldn't be possible to toggle to ensure data consistency.
      */
     function disable_basar_toggle() {
       const basarToggleButton = document.getElementById('basarToggleButton');
@@ -449,10 +449,10 @@ if( ! $readonly ) {
       }
       reminder.style.display = "inline";
       footbar.appendChild(reminder);
-      
+
       set_footbar(true);
       disable_basar_toggle();
-      
+
       const id = document.getElementById('hinzufuegen');
       while( id.firstChild ) {
         id.removeChild( id.firstChild );
@@ -541,7 +541,7 @@ if( ! $readonly ) {
             snackBar.className = snackBar.className.replace("show", "");
         }, 8000);
     }
-    
+
     function scrollToMarkedProduct() {
       const markedProduct = document.querySelector('#scroll-me-into-view');
       markedProduct.scrollIntoView({behavior: 'auto', block: 'center'});
@@ -650,7 +650,7 @@ foreach( $produkte as $produkt ) {
 
   $kosten = $preis * ( $festmenge + $toleranzmenge );
   $gesamtpreis += $kosten;
- 
+
   $js_on_exit[] = sprintf(
     "init_produkt( %u, %u, %.2lf, %u, %u, %u, %u, %u, %u, %.3lf );\n",
     $n,
@@ -666,9 +666,9 @@ foreach( $produkte as $produkt ) {
   );
 
   $produktgruppe = $produkt['produktgruppen_id'];
-  
+
   $katalogeintrag = katalogsuche($produkt_id);
-  
+
   if( $produktgruppe != $produktgruppe_alt ) {
     open_td( '', "rowSpan='{$produktgruppen_zahl[$produktgruppe]}'", $produkt['produktgruppen_name'] );
     $produktgruppe_alt = $produktgruppe;
@@ -685,7 +685,7 @@ foreach( $produkte as $produkt ) {
     open_span('oneline', '', $produkt['produkt_name']);
     open_span('small floatright', 'title="Quelle: Lieferantenkatalog"', catalogue_product_details($katalogeintrag) );
     open_div('small', '', $produkt['notiz']);
-    
+
   // preis:
   $class = '';
   $title = '';
@@ -830,7 +830,7 @@ foreach( $produkte as $produkt ) {
           'text'       => '',
           'title'      => 'Bestellvorschlag löschen',
           'confirm'    => 'Bestellvorschlag wirklich löschen?',
-          'class'      => 'drop', 
+          'class'      => 'drop',
         ],
         [
           'action'     => 'delete',
@@ -876,7 +876,7 @@ if( ! $readonly ) {
 
 /* --- order sheet: additional products area --- */
 
-  open_div( 'middle', "id='hinzufuegen' style='display:block;'" );  
+  open_div( 'middle', "id='hinzufuegen' style='display:block;'" );
     open_fieldset( 'small_form', '', 'Zusätzlich Produkt in Bestellvorlage aufnehmen', 'off' );
       open_form( '', 'action=produkt_hinzufuegen');
         open_table('small_form');
@@ -899,12 +899,12 @@ if( ! $readonly ) {
               submission_button( 'Produkt hinzufügen', true );
         close_table();
       close_form();
-    
+
       open_div();
         $anzahl_eintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
         if( $anzahl_eintraege > 0 ) {
           div_msg( 'kommentar', "
-            Ist ein gewünschter Artikel nicht in der Auswahlliste? 
+            Ist ein gewünschter Artikel nicht in der Auswahlliste?
             Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
             findest du $anzahl_eintraege Artikel; bitte wende dich an die Leute vom Dienst 4, wenn
             du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
@@ -913,14 +913,14 @@ if( ! $readonly ) {
       close_div();
     close_fieldset();
   close_div();
-  
+
   $price_key = hat_dienst( 4 ) ? 'price_on_date_or_null' : 'price_on_date';
   $unlisted_products = sql_produkte([
         $price_key       => $gesamtbestellung['lieferung'],
         'not_in_order'   => $gesamtbestellung['id'],
         'lieferanten_id' => $lieferanten_id
       ]);
-    
+
   foreach ($unlisted_products as $p) {
     $json = array();
     $json['id'] = $p['produkt_id'];
@@ -941,8 +941,8 @@ if( ! $readonly ) {
     );
     $json_list[] = $json;
   }
-  
-  
+
+
   open_javascript();
     echo toJavaScript('var unlistedProducts', $json_list);
   ?>
@@ -967,24 +967,24 @@ if( ! $readonly ) {
       option.innerHTML += ')';
     }
   });
-             
+
   var searchableSelect = new SearchableSelect($('productSelect'), $('search'));
   var productGroupCell = $('productGroup');
   var productLinkCell = $('productLink');
-  
+
   unlistedProducts = unlistedProducts.collect(function(product) {
     return new UnlistedProduct(product);
   });
-  
+
   function showDetails(unlistedProduct) {
     productGroupCell.innerHTML = unlistedProduct.group;
     productLinkCell.innerHTML = unlistedProduct.link;
   }
-  
+
   searchableSelect.setEntries(unlistedProducts);
-  
+
   $('productSelect').on('option:selected', function(event) { showDetails(event.memo); } );
-  
+
   <?php
   close_javascript();
 

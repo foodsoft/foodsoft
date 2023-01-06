@@ -35,7 +35,7 @@ if ( (ttDOM) || (ttIE4) || (ttNS4) ) {
  * @param string theText tooltip content
  */
 function textTooltip(theText) {
-    if	(ttDOM || ttIE4) {                   // document.getEelementById || document.all
+    if(ttDOM || ttIE4) {                   // document.getEelementById || document.all
         myTooltipContainer.innerHTML = "";  // we should empty it first
         myTooltipContainer.innerHTML = theText;
     } else if (ttNS4) {                     // document.layers
@@ -114,8 +114,8 @@ function holdTooltip() {
  */
 function moveTooltip(posX, posY) {
     if (ttDOM || ttIE4) {
-        myTooltipContainer.style.left	=	posX + "px";
-        myTooltipContainer.style.top  =	posY + "px";
+        myTooltipContainer.style.left = posX + "px";
+        myTooltipContainer.style.top  = posY + "px";
     } else if (ttNS4) {
         myTooltipContainer.left = posX;
         myTooltipContainer.top  = posY;

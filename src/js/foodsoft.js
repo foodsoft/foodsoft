@@ -17,7 +17,7 @@ function checkAll( form_id ) {
       if (o[i].type == 'checkbox')
         o[i].checked = 1;
     }
-  }	
+  }
   on_change( form_id );
   // if( s = document.getElementById('checkall_'+form_id) )
   //   s.className = 'button inactive';
@@ -32,7 +32,7 @@ function uncheckAll( form_id ) {
       if (o[i].type == 'checkbox')
         o[i].checked = 0;
     }
-  }	
+  }
   on_change( form_id );
   // if( s = document.getElementById('uncheckall_'+form_id) )
   //   s.className = 'button inactive';

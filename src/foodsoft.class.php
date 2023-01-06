@@ -80,7 +80,7 @@ class auth_foodsoft extends auth_basic {
     function trustExternal($user,$pass,$sticky=false){
       global $USERINFO, $angemeldet, $login_gruppen_name;
       global $from_dokuwiki;
-      
+
       if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 1 ) ) {
         $dir = getcwd();
         chdir( FOODSOFT_PATH );

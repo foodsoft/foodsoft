@@ -72,7 +72,7 @@ global
   $specialgroups;
 
 $specialgroups = array();
-$basar_id or error( "Spezielle Basar-Gruppe nicht gesetzt (in tabelle leitvariablen!)" ); 
+$basar_id or error( "Spezielle Basar-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
 $muell_id or error( "Spezielle Müll-Gruppe nicht gesetzt (in tabelle leitvariablen!)" );
 $specialgroups[] = $basar_id;
 $specialgroups[] = $muell_id;

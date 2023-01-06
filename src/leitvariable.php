@@ -25,7 +25,7 @@ $leitvariable = array(
   , 'cols' => '30', 'rows' => 5
   )
 , 'member_showcase_count' => array(
-    'meaning' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+    'meaning' => 'Anzahl an Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
   , 'default' => '3'
   , 'local' => false
   , 'comment' => '0, um ganz abzuschalten'
@@ -33,7 +33,7 @@ $leitvariable = array(
   , 'cols' => '2'
   )
 , 'member_showcase_title' => array(
-    'meaning' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'  
+    'meaning' => 'Titel über Mitgliedern, die auf der Startseite angezeigt werden (neben Schwarzem Brett)'
   , 'default' => '<b>Ein paar von uns</b>'
   , 'local' => false
   , 'comment' => 'Beliebiger Text mit einfachem HTML'

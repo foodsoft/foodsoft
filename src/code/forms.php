@@ -598,7 +598,7 @@ function formular_umbuchung_verlust( $typ = 0 ) {
       open_table('layout');
           open_td( 'label', '', 'von:' );
           open_td( 'kbd' );
-            if( $typ ) { 
+            if( $typ ) {
               need( in_array( $typ, array( TRANSAKTION_TYP_SPENDE, TRANSAKTION_TYP_UMLAGE ) ) );
               echo transaktion_typ_string( $typ );
               hidden_input( 'von_typ', $typ );
@@ -975,7 +975,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       preiseintrag_auslesen();
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        lieferpreis = 
+        lieferpreis =
           parseInt( 0.499 + 100 * ( vpreis - pfand ) / ( 1.0 + mwst / 100.0 ) * lv_faktor ) / 100.0;
       }
       preiseintrag_update();
@@ -986,7 +986,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
       preiseintrag_auslesen();
       berechnen = true; // document.forms[preisform].dynamischberechnen.checked;
       if( berechnen ) {
-        vpreis = 
+        vpreis =
           parseInt( 0.499 + 10000 * ( lieferpreis * ( 1.0 + mwst / 100.0 ) / lv_faktor + pfand ) ) / 10000.0;
       }
       preiseintrag_update();
@@ -1011,7 +1011,7 @@ function action_form_produktpreis() {
   global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
        , $gebindegroesse, $mwst, $pfand, $lieferpreis, $bestellnummer, $lv_faktor
        , $day, $month, $year, $notiz, $produkt_id;
-       
+
   $unit_pattern = '/^[a-zA-ZÄäÖöÜüß]+$/';
 
   need_http_var('produkt_id','u');
@@ -1087,7 +1087,7 @@ function fieldset_edit_transaction( $id, $tag, $editable ) {
     open_tr();
       open_th( 'smallskip', "colspan='2'", "Bank-Transaktion <span class='small'>$id</span>" );
     form_row_konto( 'Konto:', false, $t['konto_id'] );   // TODO: make this editable?
-    form_row_kontoauszug( 'Kontoauszug:', $editable ? "auszug_$tag" : false, $t['kontoauszug_jahr'], $t['kontoauszug_nr'] ); 
+    form_row_kontoauszug( 'Kontoauszug:', $editable ? "auszug_$tag" : false, $t['kontoauszug_jahr'], $t['kontoauszug_nr'] );
     tr_title( 'Haben FC: positiv, falls zu unseren Gunsten (wie auf Kontoauszug der Bank)' );
     form_row_betrag( 'Haben FC:', ( $editable and $tag == 1 ) ? 'haben' : false, $haben );
 

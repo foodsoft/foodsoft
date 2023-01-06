@@ -98,7 +98,7 @@ function check_2() {
   function check_dir( $path ) {
     echo "check_dir: $path<br>";
     if( $path == 'CVS' or $path == 'attic' ) {
-  
+
     }
     return true;
   }
@@ -150,7 +150,7 @@ function check_2() {
   // recurse_dir( $foodsoft_path );
 
   echo "(Baustelle! Hier werden bisher noch keine tests durchgefuehrt)";
-  
+
   return 0;
 }
 
@@ -789,11 +789,11 @@ function check_6() {
   }
 
   if( $muell_id and isset( $_POST['add_group_muell'] ) ) {
-    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort )
                   VALUES ( $muell_id, 'Bad Bank', 0, '*' )";
   }
   if( $basar_id and isset( $_POST['add_group_basar'] ) ) {
-    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort ) 
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort )
                   VALUES ( $basar_id, 'Basargruppe', 0, '*' )";
   }
   if( isset( $_POST['add_group_regular'] ) ) {
@@ -808,7 +808,7 @@ function check_6() {
       $salt .= sprintf( '%02x', ord($c) );
       $bytes--;
     }
-    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort, salt ) 
+    $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort, salt )
                   VALUES ( $group_id, '$group_name', 1, '". crypt( $password, $salt) ."' , '$salt' )";
   }
   if( $changes )

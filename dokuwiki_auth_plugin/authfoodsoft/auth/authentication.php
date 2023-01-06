@@ -50,8 +50,7 @@ class auth_plugin_authfoodsoft_authentication extends DokuWiki_Auth_Plugin {
           setcookie( 'foodsoftkeks', '0', 0, '/', '', TRUE );
           $_REQUEST['do'] = 'show';
         }
-                                                                                         
-        
+
         $this->success = true;
     }
 

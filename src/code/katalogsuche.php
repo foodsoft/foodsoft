@@ -1,7 +1,7 @@
 <?php
 
 // katalogsuche: sucht im lieferantenkatalog nach $produkt (soweit für den Lieferanten implementiert)
-// 
+//
 // !!! dieses Skript ist nur für den _internen_ katalogabgleich aufgrund der Artikelnummer zuständig!
 // !!! für die manuelle Suche ist windows/artikelsuche.php da!
 //
@@ -434,10 +434,10 @@ function katalogabgleich(
 }
 
 /** update_preis
- * 
+ *
  * aktuellen preiseintrag aus katalog automatisch erzeugen
  * (zur zeit: nur falsche bestellnummern werden automatisch korrigiert!)
- * 
+ *
  * @param int $produkt_id
  * @return int
  *  -1 : preis ist aktuell, kein neueintrag notwendig
