@@ -96,7 +96,7 @@ switch( $action ) {
      */
     $gesamtpreis = 0;
     $bestellungen = array();
-    foreach( sql_bestellung_produkte( $bestell_id ) as $produkt ) {
+    foreach( sql_bestellung_produkte(['bestell_id' => $bestell_id]) as $produkt ) {
       $n = $produkt['produkt_id'];
       get_http_var( "fest_$n", 'u', 0 );
       get_http_var( "toleranz_$n", 'u', 0 );
@@ -139,7 +139,7 @@ switch( $action ) {
   case 'update_prices':
     // preiseinträge automatisch aktualisieren: bisher nur für bestellnummern:
     $n = 0;
-    foreach( sql_bestellung_produkte( $bestell_id ) as $p ) {
+    foreach( sql_bestellung_produkte(['bestell_id' => $bestell_id]) as $p ) {
       $id = update_preis( $p['produkt_id'] );
       if( $id > 0 ) {
         sql_update(
@@ -161,7 +161,7 @@ switch( $action ) {
     break;
 }
 
-$produkte = sql_bestellung_produkte( $bestell_id, 0, 0, 'produktgruppen_name,produkt_name' );
+$produkte = sql_bestellung_produkte(['bestell_id' => $bestell_id], 'produktgruppen_name,produkt_name' );
 $gesamtpreis = 0.0;
 
 /* --- order form: prepare display of issues/warnings for order preparation responsible(s) --- */

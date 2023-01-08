@@ -52,13 +52,13 @@ function encodeCSV(&$value, $key){
  * Some implementation details were adjusted according to Terra requests:
  * - use semicolon as CSV delimiter/separator
  * - use WINDOWS-1252 encoding
- * - the seletion of exported data columns fits the structure of Terra
+ * - the selection of exported data columns fits the structure of Terra
  *   fax order forms
  */
 function exportCsv() {
     global $bestellung, $lieferant;
     $separator = ';';
-    $produkte = sql_bestellung_produkte( $bestellung['id'] );
+    $produkte = sql_bestellung_produkte(['bestell_id' => $bestellung['id']]);
     $fp = fopen('php://output', 'w');
     $fileName = implode('_', ['Bestellung', $lieferant['name'], $lieferant['kundennummer'], $bestellung['lieferdatum_trad']]) . ".csv";
     if ( $fp && $produkte ) {
@@ -106,7 +106,7 @@ switch( $action ) {
   case 'update':
     nur_fuer_dienst(4);
     need( $status == STATUS_VERTEILT );
-    foreach( sql_bestellung_produkte($bestell_id ) as $produkt ) {
+    foreach( sql_bestellung_produkte(['bestell_id' => $bestell_id]) as $produkt ) {
       $produkt_id = $produkt['produkt_id'];
       if( get_http_var( 'liefermenge'.$produkt_id, 'f' ) ) {
         $lv_faktor = $produkt['lv_faktor'];
