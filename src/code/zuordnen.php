@@ -35,7 +35,7 @@ function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfe
 // turn $key and $cond into a boolean sql expression, using some heuristics.
 //
 function cond2filter( $key, $cond ) {
-  if( $cond === NULL )
+  if( is_null($cond) )
     return ' true ';
   if( is_numeric( $key ) ) {   // assume $cond is a complete boolean expression
     return " $cond ";
@@ -54,6 +54,27 @@ function cond2filter( $key, $cond ) {
       return " $key = $cond ";
     }
   }
+}
+
+function get_sql_filter( string|array|bool $filters = false ){
+  if( !$filters ){
+    return "TRUE";
+  }
+
+  if( is_string($filters) ){
+    return $filters;
+  }
+
+  return implode(
+    " AND ",
+    array_map(
+      function($key, $cond) {
+        return "(" . cond2filter($key, $cond) . ")";
+      },
+      array_keys($filters),
+      array_values($filters)
+    )
+  );
 }
 
 /**
@@ -84,17 +105,9 @@ function get_sql_query( $op, $table, $selects = '*', $joins = '', $filters = fal
     $join_string = need_joins( array(), $joins );
   }
   $query = "$op $select_string FROM $table $join_string";
-  if( $filters ) {
-    if( is_string( $filters ) ) {
-      $query .= " WHERE ( $filters ) ";
-    } else {
-      $and = 'WHERE';
-      foreach( $filters as $key => $cond ) {
-        $query .= " $and (". cond2filter( $key, $cond ) .") ";
-        $and = 'AND';
-      }
-    }
-  }
+
+  $query .= 'WHERE ' . get_sql_filter( $filters );
+
   if( $groupby ) {
     $query .= " GROUP BY $groupby ";
   }
@@ -2324,6 +2337,8 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
  *   - 'bestell_id' (required)
  *   - 'gruppen_id' (optional)
  *     If unset, we will get total of all groups (muell* and basar* don't make sense)
+ *   - 'gesamt' (optional)
+ *     Set to TRUE to query totals along with group data
  *   - 'produkt_id' (optional)
  *     If unset, we'll get all products
  *   - 'katalog' (optional)
@@ -2335,6 +2350,11 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
 function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
+
+  $gruppen_id = $keys['gruppen_id'] ?? false;
+  $gesamt = $keys['gesamt'] ?? false;
+  $brauche_alle_gruppen = !($gruppen_id) || $gesamt;
+  $mit_gruppenspalten = $gruppen_id && $gesamt;
 
   $mit_katalog = $keys['katalog'] ?? false;
 
@@ -2379,7 +2399,7 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
         $filters['gesamtbestellungen.id'] = $value;
         break;
       case 'gruppen_id':
-        if( $value ){
+        if( !$brauche_alle_gruppen && $value ){
           $filters['gruppenbestellungen.bestellgruppen_id'] = $value;
         }
         break;
@@ -2493,6 +2513,18 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $selects[] = "( $toleranzbestellmenge_expr ) AS toleranzbestellmenge";
   $selects[] = "( $verteilmenge_expr ) AS verteilmenge";
   $selects[] = "( $muellmenge_expr ) AS muellmenge";
+  if( $mit_gruppenspalten ){
+    $gruppen_keys = ['gruppenbestellungen.bestellgruppen_id' => $gruppen_id];
+    foreach ([
+      'gruppe.fest'       => BESTELLZUORDNUNG_ART_FESTBESTELLUNG,
+      'gruppe.toleranz'   => BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG,
+      'gruppe.vormerkung' => BESTELLZUORDNUNG_ART_VORMERKUNGEN,
+    ] as $name => $art) {
+      $selects[] = 'IFNULL(SUM(IF('
+        . get_sql_filter($gruppen_keys + ['bestellzuordnung.art' => $art])
+        . ", bestellzuordnung.menge, 0 ) ), 0 ) AS `{$name}`";
+    }
+  }
   $selects[] = "IF( abs($firstorder_expr) > 0, 0, 1 ) AS menge_ist_null";
 
   return get_sql_query('SELECT', 'bestellvorschlaege', $selects, $joins, $filters, $orderby, 'produkte.id');
