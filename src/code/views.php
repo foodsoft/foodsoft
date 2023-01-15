@@ -2242,7 +2242,6 @@ function join_details(
   $details[] = "{$prefix}{$value}";
 }
 
-
 function catalogue_product_details( $catalogue_record ) {
   if( !is_array($catalogue_record) || empty($catalogue_record) )
     return '';
