@@ -79,13 +79,13 @@ function time_selector($stunde_feld, $stunde, $minute_feld, $minute, $to_stdout 
 // they will return a suitable string, not print to stdout directly!
 //
 
-function int_view( $num, $fieldname = false, $size = 6, $transmit = true, $edit_if_fieldname = true ) {
+function int_view( $num, $fieldname = false, $size = 6, $transmit = true, $edit_if_fieldname = true, $attr = '' ) {
   global $input_event_handlers;
   $num = sprintf( "%d", $num );
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname)
-    return "<input type='text' class='int number' size='$size' $transmit $id value='$num' $input_event_handlers>";
+    return "<input type='text' class='int number' size='$size' $transmit $id value='$num' $attr $input_event_handlers>";
   else
     return "<span class='int number' $id>$num</span>";
 }
@@ -103,13 +103,13 @@ function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fiel
 
 // mult_view: erlaube bis zu 3 nachkommastellen; aber nur anzeigen, wenn nötig:
 //
-function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldname = true ) {
+function mult_view( $mult, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $attr = '' ) {
   global $input_event_handlers;
   $mult = mult2string( $mult );
   $transmit = $transmit ? "name='$fieldname'" : '';
   $id = $fieldname ? "id='$fieldname'" : '';
   if( $fieldname && $edit_if_fieldname )
-    return "<input type='text' class='number' size='8' $transmit $id value='$mult' $input_event_handlers>";
+    return "<input type='text' class='number' size='8' $transmit $id value='$mult' $attr $input_event_handlers>";
   else
     return "<span class='number' $id>$mult</span>";
 }
@@ -1412,45 +1412,6 @@ function bestellfax_html( $bestell_id, $spalten = 0xfffff ) {
       '<table>';
 }
 
-
-/**
- * Generate a list of products that are in the db
- * but not in the order with the given ID
- *
- * This is used in the context of correcting the order list,
- * e.g. to add a product which was delivered instead of an
- * ordered (but not available) other product (accounting)
- */
-function select_products_not_in_list( $bestell_id ) {
-  $bestellung = sql_bestellung( $bestell_id );
-  $lieferanten_id = $bestellung['lieferanten_id'];
-  $produkte = sql_produkte( array( 'lieferanten_id' => $lieferanten_id ) );
-
-  ?> Produkt: <?php
-  open_select( 'produkt_id' );
-    echo "<option value='0' selected>(Bitte Produkt wählen)</option>";
-    foreach( $produkte as $p ) {
-      $produkt_id = $p['produkt_id'];
-      $preis_id = sql_aktueller_produktpreis_id( $produkt_id );
-      if( $preis_id ) {
-        $p = sql_produkt( array( 'produkt_id' => $produkt_id, 'preis_id' => $preis_id ) );
-      } else if( ! hat_dienst(4) ) {
-        continue;
-      }
-      if( sql_produkte_anzahl( array( 'produkt_id' => $produkt_id, 'bestell_id' => $bestell_id ) ) ) {
-        continue;
-      }
-      echo "<option value='{$p['produkt_id']}'>{$p['name']} (";
-      if( $preis_id ) {
-        echo "V-Preis: " . price_view( $p['vpreis'] ) ." / {$p['verteileinheit_anzeige']}";
-      } else {
-        echo "kein aktueller Preiseintrag";
-      }
-      echo ")</option>";
-    }
-  close_select();
-}
-
 function distribution_tabellenkopf( $status ) {
   open_tr('legende');
     open_th(''       ,''           ,'Gruppe');
@@ -2596,4 +2557,122 @@ function catalogue_acronym_view( $editable ) {
   return $update_form;
 }
 
-?>
+function unlisted_products_view(
+  array $gesamtbestellung,
+  string $action,
+  bool $amount_input = false,
+  string $confirmation = ''
+) {
+  open_form( '', "action=$action");
+    open_table('small_form');
+      open_tr();
+        open_td('', '', 'Suche:');
+        open_td('', 'colspan=2', string_view('', 20, 'search', 'id=search', true, 'hfill'));
+      open_tr();
+        open_td();
+          open_div('', '', 'Produkt:');
+        open_td('', 'colspan=2');
+          open_select('produkt_id', 'size=8 id="productSelect" class="hfill"');
+          close_select();
+      open_tr();
+        open_td('', '', 'Produktgruppe:');
+        open_td('', 'id="productGroup",colspan=2', '');
+      if( $amount_input ) {
+        open_tr();
+          open_td('', '', 'Menge:');
+          open_td('', 'colspan=2');
+            echo mult_view( 0, 'menge', true, true, 'disabled' );
+            open_span('unit', 'id="suppUnit"');
+            close_span();
+          close_td();
+      }
+      open_tr();
+        open_td('', '', '');
+        open_td('', 'id="productLink"', '');
+        open_td('right');
+          submission_button( 'Produkt hinzufügen', true, $confirmation );
+    close_table();
+  close_form();
+
+  $unlisted_products = sql_produkte( array(
+    'price_on_date' . (hat_dienst( 4 ) ? '_or_null' : '') => $gesamtbestellung['lieferung'],
+    'not_in_order'                                        => $gesamtbestellung['id'],
+    'lieferanten_id'                                      => $gesamtbestellung['lieferanten_id']
+  ));
+
+  foreach ($unlisted_products as $p) {
+    $json_list[] = [
+      'id'         => $p['produkt_id'],
+      'name'       => $p['name'],
+      'price'      => $p['vpreis'] ? price_view($p['vpreis']) : NULL,
+      'distUnit'   => $p['verteileinheit_anzeige'] ?? NULL,
+      'suppUnit'   => $p['liefereinheit_anzeige'] ?? NULL,
+      'suppBundle' => $p['lv_faktor'] ? $p['gebindegroesse'] / $p['lv_faktor'] : 0,
+      'group'      => $p['produktgruppen_name'],
+      'link'       => fc_link(
+        'produktdetails',
+        array(
+          'produkt_id' => $p['produkt_id'],
+          'text' => 'Produktdetails',
+          'class' => 'button noleftmargin'
+        )
+      )
+    ];
+  }
+
+  open_javascript();
+    echo toJavaScript('var unlistedProducts', $json_list);
+  ?>
+  var UnlistedProduct = Class.create({
+    initialize: function(other) {
+      this.id = other.id;
+      this.name = other.name;
+      this.price = other.price;
+      this.distUnit = other.distUnit;
+      this.suppUnit = other.suppUnit;
+      this.suppBundle = other.suppBundle;
+      this.group = other.group;
+      this.link = other.link;
+    },
+    setOption: function(option) {
+      option.value = this.id;
+      option.innerHTML = this.name;
+      option.innerHTML += ' (';
+      if (this.price === null) {
+        option.innerHTML += 'kein aktueller Preiseintrag';
+      } else {
+        option.innerHTML += 'V-Preis: ' + this.price + ' / ' + this.distUnit;
+      }
+      option.innerHTML += ')';
+    }
+  });
+
+  var searchableSelect = new SearchableSelect($('productSelect'), $('search'));
+  var productGroupCell = $('productGroup');
+  var productLinkCell = $('productLink');
+  var suppUnitCell = $('suppUnit');
+  var amountInput = $('menge');
+
+  unlistedProducts = unlistedProducts.collect(function(product) {
+    return new UnlistedProduct(product);
+  });
+
+  function showDetails(unlistedProduct) {
+    productGroupCell.innerHTML = unlistedProduct.group;
+    productLinkCell.innerHTML = unlistedProduct.link;
+    if (amountInput) {
+      amountInput.value = unlistedProduct.suppUnit ? unlistedProduct.suppBundle : 0;
+      amountInput.disabled = !unlistedProduct.suppUnit;
+      suppUnitCell.innerHTML = unlistedProduct.suppUnit
+        ? " * " + unlistedProduct.suppUnit
+        : "";
+    }
+  }
+
+  searchableSelect.setEntries(unlistedProducts);
+
+  $('productSelect').on('option:selected', function(event) { showDetails(event.memo); } );
+
+  <?php
+  close_javascript();
+}
