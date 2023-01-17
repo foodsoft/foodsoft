@@ -997,8 +997,9 @@ function bestellschein_view(
   open_table( 'list hfill greywhite' );
 
     open_tr('legende');
-      $cols = 0;
-      $cols_vor_summe = 0;
+      open_th('', "title='Zeilennummer'", '#');
+      $cols = 1;
+      $cols_vor_summe = 1;
       for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
         if( $spalten & $n ) {
           if( array_key_exists( $n, $col ) ) {
@@ -1049,6 +1050,7 @@ function bestellschein_view(
     $haben_nichtgeliefert = false;
     $haben_nichtgefuellt = false;
 
+    $zeile = 1;
     foreach( $produkte as $produkte_row ) {
       $produkt_id = $produkte_row['produkt_id'];
 
@@ -1140,6 +1142,7 @@ function bestellschein_view(
       }
 
       open_tr();
+        open_td( 'right', '', $zeile++ );
         if( $spalten & PR_COL_NAME )
           open_td( 'left', '', $produkte_row['produkt_name'] );
 
