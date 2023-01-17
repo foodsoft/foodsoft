@@ -1900,7 +1900,7 @@ function produktpreise_konsistenztest_problem_view( $probleme, $editable = false
 //  - kann preishistorie anzeigen
 //  - kann preisauswahl fuer eine bestellung erlauben
 //
-function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $mod_id = false ) {
+function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
   global $mysqljetzt;
   need( $produkt_id );
 
@@ -1926,7 +1926,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
     open_table( 'list hfill' );
       if( $bestell_id )
         open_th( '', "title='Preiseintrag für Bestellung $bestellung_name'", 'Aktiv' );
-      open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'id' );
+      open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'Preis-ID' );
       open_th( '', "title='Bestellnummer'", 'B-Nr' );
       open_th( '', "title='Preiseintrag gültig ab'", 'von' );
       open_th( '', "title='Preiseintrag gültig bis'", 'bis' );
@@ -1954,14 +1954,14 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
           }
         }
       }
-      open_td( 'oneline' );
+      open_td( 'center oneline' );
         echo $pr1['id'];
         if( $editable and ( $references == 0 ) and $pr1['zeitende'] ) {
           echo fc_action( array( 'class' => 'drop', 'text' => ''
                                , 'title' => 'Dieser Preiseintrag wird nicht verwendet; löschen?' )
                           , "action=delete_price,preis_id={$pr1['id']}" );
         }
-      open_td( '', '', $pr1['bestellnummer'] );
+      open_td( 'center', '', $pr1['bestellnummer'] );
       open_td( 'center', '', $pr1['datum_start'] );
       open_td( 'center' );
         if( $pr1['zeitende'] ) {
@@ -1991,6 +1991,56 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false, $m
 
   close_fieldset();
 }
+
+/**
+ * Zeige Bestellungen, bei denen das Produkt angeboten oder bestellt wurde
+ *
+ * @param[in] $produkt_id
+ * @param[in] $bestell_id,
+ *            optional: markiere Bestellung, aus der die Ansicht heraus aufgerufen wurde
+ */
+function bestellhistorie_view( $produkt_id, $bestell_id = 0 ) {
+  global $mysqljetzt;
+  need( $produkt_id );
+
+  $legend = "Bestell-Historie";
+  $initial = 'off';
+  open_fieldset( 'big_form', '', $legend, $initial );
+  open_div( 'order_history' );
+    open_table( 'list hfill' );
+      if( $bestell_id ) {
+        open_th( '', "title='Aktuelle Bestellung'" );
+        open_tag( 'input', '', "type='checkbox' disabled", '');
+      }
+      open_th( '', "title='Interne eindeutige ID-Nummer des Preiseintrags'", 'Preis-ID' );
+      open_th( '', "title='Name der Bestellung'", 'Bestellung' );
+      open_th( '', "title='Lieferdatum'", 'Lieferdatum' );
+      open_th( '', "title='Status der Bestellung'", 'Status' );
+      open_th( '', "title='Liefermenge' colspan=3", 'L-Menge' );
+
+  foreach( sql_produkt_bestellhistorie( [ 'id' => $produkt_id] ) as $row ) {
+    open_tr();
+      if( $bestell_id ) {
+        open_td( 'center', "style='padding:1ex 1em 1ex 1em;'" );
+        open_tag( 'input', '', "type='checkbox' ".($row['bestellung_id'] == $bestell_id ? 'checked' : '').' disabled', '');
+      }
+      open_td( 'center', '', $row['preis_id'] );
+      open_td( 'oneline' );
+        echo fc_link( 'lieferschein', array(
+          'class' => 'href', 'text' => $row['bestellung_name'], 'bestell_id' => $row['bestellung_id']
+          , 'title' => 'zum Bestellschein/Lieferschein...'
+        ) );
+      open_td( 'center', '', $row['lieferdatum'] );
+      open_td( 'center', '', rechnung_status_string( $row['rechnungsstatus'] ) );
+      open_td( 'mult', '', mult2string( $row['liefermenge'] / $row['lv_faktor'] ).' *' );
+      open_td( 'unit', "style='border-right-style:none;'", $row['liefereinheit_anzeige'] );
+      open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id={$row['bestellung_id']},produkt_id={$row['produkt_id']}" ) );
+  }
+    close_table();
+  close_div();
+  close_fieldset();
+}
+
 
 
 function auswahl_lieferant( $selected = 0 ) {

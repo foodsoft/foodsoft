@@ -102,7 +102,7 @@ open_fieldset( 'big_form', ''
 //
 
 preishistorie_view( $produkt_id, $bestell_id, $editable );
-
+bestellhistorie_view( $produkt_id, $bestell_id );
 
 ///////////////////////////
 // Artikeldaten aus foodsoft-Datenbank anzeigen:
