@@ -4039,6 +4039,97 @@ function sql_produktpreise( $produkt_id, $zeitpunkt = false, $reverse = false ){
   return $result;
 }
 
+function query_produkt_bestellhistorie( $op, $keys = array(), $using = array(), $orderby = false ) {
+  global $db_handle;
+  if( ! $orderby )
+    $orderby = 'lieferdatum DESC';
+  $selects = array();
+  $filters = array();
+  $joins = need_joins_array( $using, array(
+    'bestellvorschlaege' => 'bestellvorschlaege.produkt_id = produkte.id'
+  , 'gesamtbestellungen' => 'gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id'
+  , 'lieferanten' => 'lieferanten.id = produkte.lieferanten_id'
+  , 'produktpreise' => 'produktpreise.id = bestellvorschlaege.produktpreise_id'
+  ) );
+
+  $selects[] = 'produkte.id as produkt_id';
+  $selects[] = 'produkte.name as produkt_name';
+  $selects[] = 'lieferanten.name as lieferant_name';
+  $selects[] = 'gesamtbestellungen.id as bestellung_id';
+  $selects[] = 'gesamtbestellungen.name as bestellung_name';
+  $selects[] = 'gesamtbestellungen.lieferung as lieferdatum';
+  $selects[] = 'gesamtbestellungen.rechnungsstatus';
+  $selects[] = 'bestellvorschlaege.liefermenge';
+  $selects[] = 'produktpreise.id as preis_id';
+  $selects[] = 'produktpreise.lieferpreis';
+  $selects[] = 'produktpreise.mwst';
+  $selects[] = 'produktpreise.pfand';
+  $selects[] = 'produktpreise.lv_faktor';
+  $selects[] = 'produktpreise.verteileinheit';
+  $selects[] = 'produktpreise.liefereinheit';
+
+  $have_filter = false;
+  foreach( $keys as $key => $cond ) {
+    switch( $key ) {
+      case 'id':
+      case 'produkt_id':
+        $filters['produkte.id'] = $cond;
+        $have_filter = true;
+        break;
+      case 'name':
+        $filters['produkte.name']
+          = "LIKE '%". mysqli_real_escape_string( $db_handle, $cond )."%'";
+        $have_filter = true;
+        break;
+      default:
+          error( "undefined key: $key" );
+    }
+  }
+
+  if( ! $have_filter )
+    error( "missing filter" );
+
+  if( $using ) {
+    is_array( $using ) or ( $using = array( $using ) );
+    foreach( $using as $table ) {
+      switch( $table ) {
+        case 'gesamtbestellungen':
+          $joins['bestellvorschlaege'] = 'bestellvorschlaege.produkt_id = produkte.id';
+          $filters[] = 'bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id';
+          break;
+        case 'lieferanten':
+          $filters[] = 'produkte.lieferanten_id = lieferanten.id';
+          break;
+        default:
+          error( "Sorry, I have no use for table $table" );
+      }
+    }
+  }
+  switch( $op ) {
+    case 'SELECT':
+      break;
+    case 'COUNT':
+      $op = 'SELECT';
+      $selects = 'COUNT(*) as anzahl';
+      break;
+    default:
+      error( "undefined op: $op" );
+  }
+  return get_sql_query( $op, 'produkte', $selects, $joins, $filters, $orderby );
+}
+
+function select_produkt_bestellhistorie( $keys = array(), $using = array(), $orderby = false ) {
+  return query_produkt_bestellhistorie( 'SELECT', $keys, $using, $orderby );
+}
+
+function sql_produkt_bestellhistorie( $keys = array(), $using = array(), $orderby = false ) {
+  $r = mysql2array( doSql( select_produkt_bestellhistorie( $keys, $using, $orderby ) ) );
+  foreach( $r as & $p ) {
+    $p = preisdatenSetzen( $p );
+  }
+  return $r;
+}
+
 /* sql_aktueller_produktpreis:
  *  liefert aktuellsten preis zu $produkt_id,
  *  oder false falls es keinen gueltigen preis gibt:
