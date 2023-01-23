@@ -208,7 +208,7 @@ function action_buchung_gruppe_bank() {
   }
 }
 
-function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung Lieferant' ) {
+function formular_buchung_lieferant_bank( $notiz_initial = 'Abbuchung/Zahlung Rechnung NUMMER vom DATUM' ) {
   open_form( '', 'action=buchung_lieferant_bank' );
     open_fieldset( '', '', 'Überweisung / Lastschrift Lieferant' );
       open_table('layout');
