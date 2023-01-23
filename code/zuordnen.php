@@ -3749,6 +3749,7 @@ function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = NULL ) 
   $having = ( $bestell_id ? '' : 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 ) or ( extra_brutto_soll <> 0 )' );
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
+         , gesamtbestellungen.abrechnung_id
          , gesamtbestellungen.name
          , gesamtbestellungen.rechnungsnummer
          , DATE_FORMAT(gesamtbestellungen.lieferung,'%d.%m.%Y') as lieferdatum_trad

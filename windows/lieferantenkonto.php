@@ -1,7 +1,7 @@
 <?PHP
 
 assert($angemeldet) or exit();
- 
+
 setWikiHelpTopic( 'foodsoft:lieferantenkonto' );
 setWindowSubtitle( 'Lieferantenkonto' );
 
@@ -109,10 +109,11 @@ open_table('list');
       open_td('bold', '', 'Bestellung' );
       open_td('', '', $vert_row['valuta_trad'] );
       open_td('', '', $vert_row['lieferdatum_trad'] );
-      open_td(); 
-        echo 'Bestellung: ' . fc_link( 'lieferschein', array(
-           'bestell_id' => $bestell_id, 'text' => $vert_row['name'], 'class' => 'href'
-         , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_LPREIS | PR_COL_LIEFERMENGE | PR_COL_NETTOSUMME | PR_COL_ENDSUMME )
+      open_td();
+        echo 'Bestellung: ' . fc_link( 'abrechnung', array(
+          'abrechnung_id' => $vert_row['abrechnung_id']
+        , 'bestell_id' => $bestell_id
+        , 'text' => $vert_row['name'], 'class' => 'href'
         ) );
         open_span( 'small', '', $vert_row['rechnungsnummer'] );
       open_td( 'number', '', price_view( $pfand_soll ) );
