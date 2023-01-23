@@ -3825,7 +3825,7 @@ function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
 
 function sql_bestellungen_soll_lieferant( $lieferanten_id, $bestell_id = NULL ) {
   $where = '';
-  $having = ( $bestell_id ? '' : 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 )' );
+  $having = ( $bestell_id ? '' : 'HAVING ( waren_netto_soll <> 0 ) or ( pfand_voll_brutto_soll <> 0 ) or ( pfand_leer_brutto_soll <> 0 ) or ( extra_brutto_soll <> 0 )' );
   $query = "
     SELECT gesamtbestellungen.id as gesamtbestellung_id
          , gesamtbestellungen.name
