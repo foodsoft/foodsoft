@@ -210,7 +210,7 @@ function check_3() {
       ?>
         <td class='warn'>
           Verbindung zum MySQL Server fehlgeschlagen:
-          <div class='warn'><?php echo mysqli_error( $db_handle ); ?></div>
+          <div class='warn'><?php echo mysqli_connect_error(); ?></div>
         </td>
       <?php
       $problems = true;
