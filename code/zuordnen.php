@@ -2513,7 +2513,13 @@ function zuteilungen_berechnen( $mengen /* one row from sql_bestellung_produkte 
 
   // erste zuteilungsrunde: festbestellungen in bestellreihenfolge erfuellen, dabei berechnete
   // negativ-toleranz abziehen:
-  //
+  // - bis zu einem halben Gebinde bekommt man die Festbestellung direkt (nach Reihenfolge)
+  // - zwischen einem halben Gebinde und eineinhalb Gebinden geht es linear von
+  //   einem halbe Gebinde auf ein Gebinde hoch; auf diesem Weg wird also graduell bis zu einem
+  //   halben Gebinde abgezogen, um kleinere/spätere Bestellys zu berücksichtigen
+  // - ab eineinhalb Gebinden geht es wieder ohne weiteren Abzug hoch, d.h. bestellt man zwei
+  //   Gebinde, hat man direkt eineinhalb Gebinde, usw.
+  // siehe ../doc/zuteilung-negativ-toleranz.svg
   $festbestellungen = sql_bestellzuordnungen( array( 'art' => BESTELLZUORDNUNG_ART_FESTBESTELLUNG, 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   $festzuteilungen = array();
   $offen = array();
