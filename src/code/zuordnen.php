@@ -1671,18 +1671,6 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
   $joins = need_joins_array( $using, array(
     'produktgruppen'     => 'produktgruppen.id = produkte.produktgruppen_id',
     'lieferanten'        => 'lieferanten.id = produkte.lieferanten_id',
-    'lieferantenkatalog' => 'LEFT OUTER JOIN lieferantenkatalog '
-                            . 'ON (lieferantenkatalog.lieferanten_id = produkte.lieferanten_id '
-                            . 'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)',
-    'hersteller_acro'    => 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
-                            . 'ON (hersteller_acro.context = "hst" '
-                            . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)',
-    'verband_acro'       => 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
-                            . 'ON (verband_acro.context = "vbd" '
-                            . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)',
-    'herkunft_acro'      => 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
-                            . 'ON (herkunft_acro.context = "hrk" '
-                            . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)'
   ) );
 
   $selects[] = 'produkte.id as produkt_id';
@@ -1695,13 +1683,6 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
   $selects[] = 'produktgruppen.name as produktgruppen_name';
   $selects[] = 'produktgruppen.id as produktgruppen_id';
   $selects[] = 'lieferanten.name as lieferant_name';
-  alias_columns($selects, 'lieferantenkatalog', 'katalog', array(
-    'ean_einzeln', 'bemerkung', 'hersteller', 'verband', 'herkunft'
-  ));
-  $acronym_fields = ['definition', 'url', 'comment'];
-  alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
-  alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
-  alias_columns($selects, 'herkunft_acro', 'katalog.hrk', $acronym_fields);
 
   foreach( $keys as $key => $cond ) {
     switch( $key ) {
@@ -1754,6 +1735,32 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
           $joins['produktpreise'] = 'produktpreise.produkt_id = produkte.id '
               . "AND produktpreise.id = ($price_select)";
           $have_price = true;
+        }
+        break;
+      case 'katalog':
+        if ($cond) {
+          $joins = array_merge($joins, need_joins_array($using, [
+            'lieferantenkatalog' => 'LEFT OUTER JOIN lieferantenkatalog '
+            . 'ON (lieferantenkatalog.lieferanten_id = produkte.lieferanten_id '
+            . 'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)', 'hersteller_acro' => 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
+            . 'ON (hersteller_acro.context = "hst" '
+            . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)', 'verband_acro' => 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
+            . 'ON (verband_acro.context = "vbd" '
+            . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)', 'herkunft_acro' => 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
+            . 'ON (herkunft_acro.context = "hrk" '
+            . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)'
+          ]));
+          alias_columns($selects, 'lieferantenkatalog', 'katalog', [
+            'ean_einzeln',
+            'bemerkung',
+            'hersteller',
+            'verband',
+            'herkunft',
+          ]);
+          $acronym_fields = ['definition', 'url', 'comment'];
+          alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
+          alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
+          alias_columns($selects, 'herkunft_acro', 'katalog.hrk', $acronym_fields);
         }
         break;
       case 'not_in_order':

@@ -194,6 +194,10 @@ if( hat_dienst( 4 ) ) {
 
 /* --- order form: scaffolding (javascript and submit bar) --- */
 
+if( !$readonly || hat_dienst(4) ) {
+  $anzahl_katalogeintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
+}
+
 if( ! $readonly ) {
   $bestellform_id = open_form( '', 'action=bestellen' );
 
@@ -703,7 +707,10 @@ foreach( $produkte as $produkt ) {
       $title = 'Preis nicht aktuell!';
     } else {
       $katalogdaten = array();
-      switch( katalogabgleich( $produkt_id, 0, 0, $katalogdaten ) ) {
+      switch( $anzahl_katalogeintraege
+        ? katalogabgleich( $produkt_id, 0, 0, $katalogdaten )
+        : 3
+      ) {
         case 0:
           $class .= 'ok';
           $title = 'Preis aktuell und konsistent mit Lieferantenkatalog '. $katalogdaten['katalogname'];
@@ -891,12 +898,11 @@ if( ! $readonly ) {
         false,
       );
       open_div();
-        $anzahl_eintraege = sql_lieferant_katalogeintraege( $lieferanten_id );
-        if( $anzahl_eintraege > 0 ) {
+        if( $anzahl_katalogeintraege > 0 ) {
           div_msg( 'kommentar', "
             Ist ein gewünschter Artikel nicht in der Auswahlliste?
             Im ". fc_link( 'katalog', "lieferanten_id=$lieferanten_id,text=Lieferantenkatalog,class=href" ) ."
-            findest du $anzahl_eintraege Artikel; bitte wende dich an die Leute vom Dienst 4, wenn
+            findest du $anzahl_katalogeintraege Artikel; bitte wende dich an die Leute vom Dienst 4, wenn
             du einen davon in die Bestellvorlage aufnehmen lassen möchtest!
           " );
         }
