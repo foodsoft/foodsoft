@@ -138,7 +138,7 @@ open_fieldset( 'big_form', '', "Foodsoft-Datenbank:" );
     open_td( 'number', '', price_view( $produkt['pfand'] ) );
     open_td( 'center oneline', '', gebindegroesse_view( $produkt ) );
     open_td( 'mult_factor', '', price_view( $produkt['vpreis'] ) );
-    open_td( 'unit', '', "/ ${produkt['verteileinheit']}" );
+    open_td( 'unit', '', "/ {$produkt['verteileinheit']}" );
   } else {
     open_td( 'warn center', "colspan='8'", '- - -' );
   }

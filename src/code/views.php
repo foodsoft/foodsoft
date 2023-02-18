@@ -1471,7 +1471,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
 
   $magic_style = "magic_{$bestell_id}_{$produkt_id}";
 
-  open_tag('style', '', "id='${magic_style}_style' type='text/css'");
+  open_tag('style', '', "id='{$magic_style}_style' type='text/css'");
   echo(".$magic_style { display: none; }");
   close_tag('style');
 
@@ -2606,7 +2606,7 @@ function unlisted_products_view(
       'price'      => $p['vpreis'] ? price_view($p['vpreis']) : NULL,
       'distUnit'   => $p['verteileinheit_anzeige'] ?? NULL,
       'suppUnit'   => $p['liefereinheit_anzeige'] ?? NULL,
-      'suppBundle' => $p['lv_faktor'] ? $p['gebindegroesse'] / $p['lv_faktor'] : 0,
+      'suppBundle' => is_null($p['lv_faktor']) ? NULL : ($p['lv_faktor'] ? $p['gebindegroesse'] / $p['lv_faktor'] : 0),
       'group'      => $p['produktgruppen_name'],
       'link'       => fc_link(
         'produktdetails',
