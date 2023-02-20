@@ -177,7 +177,7 @@ foreach( $bestellungen as $bestellung ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
         }
         break;
-  
+
       case STATUS_LIEFERANT:
         $views[] = fc_link( 'bestellschein', "class=href,bestell_id=$bestell_id,text=Bestellschein" );
         if( $login_dienst > 0 )
@@ -199,12 +199,12 @@ foreach( $bestellungen as $bestellung ) {
           $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
                                 , "action=delete,delete_id=$bestell_id" );
         break;
-  
+
       case STATUS_VERTEILT:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
         if( $login_dienst > 0 ) {
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
-          $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id,ro=1,text=Produktverteilung (Druck)" );
+          $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id,druck=1,text=Produktverteilung (Druck)" );
         }
         if( hat_dienst(4) ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$bestell_id,text=Stammdaten &auml;ndern..." );
@@ -221,28 +221,28 @@ foreach( $bestellungen as $bestellung ) {
           }
         }
         break;
-  
+
       case STATUS_ABGERECHNET:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$bestell_id,text=Lieferschein" );
         if( $login_dienst > 0 )
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$bestell_id" );
-  
+
         $views[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,bestell_id=$bestell_id,text=Abrechnung" );
-  
+
         if( $n == $abrechnung_set_count ) {
           if( $abrechnung_set_count > 1 ) {
             $combs[] = fc_link( 'gesamtlieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
             $combs[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Abrechnung" );
           }
         }
-  
+
         break;
-  
+
       case STATUS_ARCHIVIERT:
       default:
         break;
     }
-  
+
     open_tr('',"id='row$bestell_id'" );
       open_td();
         open_div( '','', $row['name'] );
@@ -277,13 +277,13 @@ foreach( $bestellungen as $bestellung ) {
           if( $actions ) {
             open_ul('plain');
               foreach( $actions as $action )
-                open_li( '', '',  $action ); 
+                open_li( '', '',  $action );
             close_ul();
           } else {
             echo '-';
           }
       }
-  
+
       if( hat_dienst(4) ) {
         open_td( ( ( $n == 1 ) ? '' : 'notop ' ) . ( ( $n == $abrechnung_set_count ) ? '' : ' nobottom' ) );
         if( $combs ) {

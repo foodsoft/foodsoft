@@ -141,6 +141,7 @@ function open_tr( $class = '', $attr = '' ) {
       close_tag( $open_tags[$n] );
     case 'tr':
       close_tag( 'tr' );
+    case 'tbody':
     case 'table':
       open_tag( 'tr', $class, $attr . $tr_title );
       break;

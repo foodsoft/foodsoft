@@ -511,6 +511,10 @@ table.list tr.groupofrows_bottom td, table.list tr.groupofrows_bottom th {
   border-top-style:none;
 }
 
+table.list tbody {
+  page-break-inside: avoid;
+}
+
 tr.modified td, tr.modified th, .modified {
   background-image:url(modified.gif);
   background-repeat:repeat;

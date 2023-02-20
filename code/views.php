@@ -132,6 +132,15 @@ function string_view( $text, $length = 20, $fieldname = false, $attr = '', $edit
     return "<span class='string $extra_class' $id>$text</span>";
 }
 
+function flag_view( $flag, $fieldname = false, $attr = '', $edit_if_fieldname = true, $extra_class = '' ) {
+  global $input_event_handlers;
+  $id = $fieldname ? "id='$fieldname'" : '';
+  if( $fieldname && $edit_if_fieldname )
+    return "<input type='checkbox' class='flag $extra_class' name='$fieldname' value='1' ".($flag ? 'checked ' : '')."$id $attr $input_event_handlers>";
+  else
+    return "<input type='checkbox' class='flag $extra_class' disabled ".($flag ? 'checked ' : '')."$id $attr>";
+}
+
 function ean_view( $ean, $length = 20, $fieldname = false, $attr = '', $with_links = false ) {
   global $input_event_handlers;
   if ( $fieldname )
@@ -1536,21 +1545,47 @@ function select_products_not_in_list( $bestell_id ) {
 }
 */
 
-function distribution_tabellenkopf( $status ) {
+enum Distribution_Druck: int
+{
+  case Nein = 0;
+  case Menge = 1;
+  case Menge_Preis = 2;
+}
+
+function distribution_tabellenkopf( $status, Distribution_Druck $druck = Distribution_Druck::Nein ) {
   open_tr('legende');
-    open_th(''       ,''           ,'Gruppe');
-    open_th('oneline','colspan="2"','bestellt (Toleranz)');
+    open_th('bottom', 'rowspan="2"', 'Gruppe');
+    open_th('bottom oneline'
+              , 'colspan="2" rowspan="2"'
+                  , 'bestellt (Toleranz)');
     if( $status >= STATUS_LIEFERANT ) {
-      open_th(''       ,'colspan="2"','geliefert');
-      open_th(''       ,"title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag'",'Gesamtpreis');
+      open_th('bottom'
+              , 'colspan="2" rowspan="2"'
+                  , 'zugeteilt');
+      open_th('bottom'
+              , "title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag' rowspan='2'"
+                  , 'Gesamtpreis');
+      if( $druck !== Distribution_Druck::Nein )
+        open_th(''
+                , 'colspan="'.($druck->value+2).'"'
+                  , 'verteilt');
+    }
+  open_tr('legende');
+    if( $status >= STATUS_LIEFERANT ) {
+      if( $druck !== Distribution_Druck::Nein )
+        open_th(''
+                , 'colspan="'.($druck->value+2).'"');
+        open_div('small', '', '&check;: wie erwartet');
+        open_div('small', '', '&empty;: nichts');
+        open_div('small', '', 'sonst: Menge');
     }
   close_tr();
 }
 
-function distribution_produktdaten( $status, $bestell_id, $produkt_id ) {
+function distribution_produktdaten( $status, $bestell_id, $produkt_id, Distribution_Druck $druck = Distribution_Druck::Nein ) {
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   open_tr();
-    open_th( '', $status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'" );
+    open_th( '', ($status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'").($druck !== Distribution_Druck::Nein ? ' rowspan="2"' : ''));
       open_div( '', "style='font-size:1.2em; margin:5px;'" );
         echo fc_link( 'produktpreise', array(
          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
@@ -1572,10 +1607,21 @@ function distribution_produktdaten( $status, $bestell_id, $produkt_id ) {
           , $produkt['verteileinheit']
         );
       close_div();
+
+  if( $druck !== Distribution_Druck::Nein ) {
+      open_td('', 'colspan="'.($druck->value + 2).'"', flag_view(false) . 'fertig verteilt' );
+    open_tr();
+      open_th('bottom', '', '&check;' );
+      open_th('bottom', '', '&empty;');
+      open_th('bottom', 'style="min-width:4em"', 'Menge');
+  }
+  if( $druck === Distribution_Druck::Menge_Preis )
+      open_th('bottom', 'style="min-width:4em"', 'Preis');
+
   close_tr();
 }
 
-function distribution_view( $status, $bestell_id, $produkt_id, $editable = false ) {
+function distribution_view( $status, $bestell_id, $produkt_id, $editable = false, Distribution_Druck $druck = Distribution_Druck::Nein  ) {
   global $js_on_exit;
   global $input_event_handlers;
   global $form_id;
@@ -1608,6 +1654,14 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
       open_td('unit','',$verteileinheit );
       open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
+      if( $druck !== Distribution_Druck::Nein ) {
+        open_td( '', '', flag_view(false) );
+        open_td( '', '', flag_view(false) );
+        open_td( '', '', '');
+    }
+      if( $druck === Distribution_Druck::Menge_Preis )
+        open_td('', '', '');
+
       if ($editable) {
         open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'",
             alink("javascript:$magicCalculator.applyResult(); on_change($form_id);", 'button', '&larr; OK' ));
@@ -1657,6 +1711,13 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
         open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), true, true, '', $verteilmult ) );
         open_td( 'unit', '', $verteileinheit );
         open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
+        if( $druck !== Distribution_Druck::Nein ) {
+          open_td( '', '', flag_view(false) );
+          open_td( '', '', flag_view(false) );
+          open_td( '', '', '');
+        }
+        if( $druck === Distribution_Druck::Menge_Preis )
+          open_td( '', '', '' );
         if ($editable) {
           open_td( "mult $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
           open_td( "unit $magic_style", '', $verteileinheit );
@@ -1672,6 +1733,13 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), true, true, '', $verteilmult ) );
       open_td( 'unit', '', $verteileinheit );
       open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
+      if( $druck !== Distribution_Druck::Nein ) {
+        open_td( '', '', '' );
+        open_td( '', '', flag_view(false) );
+        open_td( '', '', '');
+      }
+      if( $druck === Distribution_Druck::Menge_Preis )
+        open_td('', '', '');
       if ($editable) {
         open_td( "mult $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
         open_td( "unit $magic_style", '', $verteileinheit );
@@ -1693,6 +1761,13 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       close_td();
       open_td( 'unit', '', $verteileinheit );
       open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+      if( $druck !== Distribution_Druck::Nein ) {
+        open_td( '', '', flag_view(false) );
+        open_td( '', '', flag_view(false) );
+        open_td( '', '', '');
+      }
+      if( $druck === Distribution_Druck::Menge_Preis )
+        open_td('', '', '');
       if ($editable) {
         $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
         open_td( "mult $magic_style" );

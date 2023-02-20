@@ -933,6 +933,12 @@ $tables = [
       , 'default' => '1'
       , 'extra' => ''
       ]
+    , 'distribution_druck_preisspalte' => [
+        'type' =>  "tinyint(1)"
+      , 'null' => 'NO'
+      , 'default' => '0'
+      , 'extra' => ''
+      ]
     ]
   , 'indices' => [
       'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]

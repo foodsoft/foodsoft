@@ -33,6 +33,8 @@ get_http_var('gruppenpfand', 'f', $row);
 
 get_http_var( 'action', 'w', '' );
 get_http_var('katalogaufschlagrunden', 'u', $action == 'save' ? 0 : $row);
+get_http_var('distribution_druck_preisspalte', 'u', $action == 'save' ? 0 : $row);
+
 $editable or $action = '';
 if( $action == 'save' ) {
   $values = array(
@@ -51,6 +53,7 @@ if( $action == 'save' ) {
   , 'katalogaufschlag' => $katalogaufschlag
   , 'gruppenpfand' => $gruppenpfand
   , 'katalogaufschlagrunden' => $katalogaufschlagrunden
+  , 'distribution_druck_preisspalte' => $distribution_druck_preisspalte
   );
   if( ! $name ) {
     $problems = $problems . "<div class='warn'>Kein Name eingegeben!</div>";
@@ -112,6 +115,7 @@ open_form( '', 'action=save' );
       form_row_betrag( 'Katalog-Aufschlag:', ( $editable ? 'katalogaufschlag' : false), $katalogaufschlag); echo '%';
         echo " <input type='checkbox' name='katalogaufschlagrunden' value='1'".($katalogaufschlagrunden ? " checked" : "")."> runden";
       form_row_betrag( 'Gruppenpfand-Einheit:', ( $editable ? 'gruppenpfand' : false), $gruppenpfand);
+      form_row_checkbox( 'Druck Verteilliste:', ( $editable ? 'distribution_druck_preisspalte' : false), $distribution_druck_preisspalte ); echo 'mit Preis-Spalte';
       open_tr();
         open_td( 'right', "colspan='2'" );
           if( $lieferanten_id > 0 )

@@ -17,9 +17,11 @@ $editable = ( $status == STATUS_VERTEILT and hat_dienst(1,3,4,5) );
 
 nur_fuer_dienst(1,3,4,5);
 
-get_http_var( 'ro', 'u', 0, true );
-if( $ro or $readonly )
+get_http_var( 'druck', 'u', 0, true );
+if( $druck or $readonly )
   $editable = false;
+if( !$editable && $status < STATUS_ABGERECHNET )
+  $druck = 1;
 
 setWikiHelpTopic( "foodsoft:verteilung" );
 
@@ -108,8 +110,17 @@ if( $editable ) {
   floating_submission_button();
 }
 
+if( $druck ) {
+  $lieferant_id = sql_bestellung_lieferant_id( $bestell_id );
+  $lieferant = sql_lieferant( $lieferant_id );
+
+  $druck = $lieferant['distribution_druck_preisspalte'] ? Distribution_Druck::Menge_Preis : Distribution_Druck::Menge;
+} else {
+  $druck = Distribution_Druck::Nein;
+}
+
 open_table('list');
-  distribution_tabellenkopf($status);
+  distribution_tabellenkopf($status, $druck);
 
   foreach( sql_bestellung_produkte( [
       'bestell_id' => $bestell_id
@@ -125,10 +136,13 @@ open_table('list');
 
     $produkt_id = $produkt['produkt_id'];
 
-    distribution_produktdaten( $status, $bestell_id, $produkt_id );
-    distribution_view( $status, $bestell_id, $produkt_id, $editable );
-    open_tr();
-      open_td( 'medskip', "colspan='6'", '' );
+    open_tag( 'tbody' );
+      distribution_produktdaten( $status, $bestell_id, $produkt_id, $druck );
+      distribution_view( $status, $bestell_id, $produkt_id, $editable, $druck );
+      open_tr();
+        open_td( 'medskip noleft noright notop nobottom', "colspan='".(6 + ($druck !== Distribution_Druck::Nein ? $druck->value + 2 : 0) )."'", '' );
+      close_tr();
+    close_tag( 'tbody' );
   }
 close_table();
 

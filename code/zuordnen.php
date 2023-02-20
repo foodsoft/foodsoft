@@ -4566,6 +4566,7 @@ $foodsoft_get_vars = array(
 , 'confirmed' => 'w'
 , 'detail' => 'w'
 , 'download' => 'w'
+, 'druck' => 'u'
 , 'faxspalten' => 'u'
 , 'format' => 'w'
 , 'gruppen_id' => 'u'
@@ -5303,6 +5304,13 @@ function update_database( $version ) {
       doSql( "ALTER TABLE produktpreise MODIFY COLUMN `zeitstart` datetime NOT NULL" );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 40 ) );
       logger( 'update_database: update to version 40 successful' );
+    case 40:
+      logger( 'starting update_database: from version 40' );
+
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `distribution_druck_preisspalte` tinyint(1) not null default 0" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 41 ) );
+      logger( 'update_database: update to version 41 successful' );
   }
 }
 
