@@ -130,8 +130,131 @@ open_table('layout hfill' );
       close_fieldset();
     }
 
+  if( ! $auszug_jahr or ! $auszug_nr ) {
+    close_table();
+    return;
+  }
+
+  bigskip();
+  close_tr();
+  open_td();
+
+    ////////////////////////////////
+    // anzeige eines kontoauszugs:
+    //
+
+    $kontoname = sql_kontoname($konto_id);
+    echo "<h3>$kontoname - Auszug $auszug_jahr / $auszug_nr</h3>";
+
+
+    if( $editable ) {
+      open_fieldset( 'small_form', '', 'Transaktion eintragen', 'off' );
+        alternatives_radio( array(
+          'gruppe_bank_form' => "Einzahlung / Auszahlung Gruppe"
+        , 'lieferant_bank_form' => "Überweisung / Lastschrift Lieferant"
+        , 'bank_bank_form' => "Überweisung auf ein anderes Konto der FC"
+        , 'sonderausgabe_bank_form' => "Überweisung/Abbuchung Sonderausgabe"
+        , 'anfangsguthaben_bank_form' => "Anfangskontostand erfassen"
+        ) );
+
+        open_div( 'nodisplay', "id='gruppe_bank_form'" );
+          formular_buchung_gruppe_bank();
+        close_div();
+
+        open_div( 'nodisplay', "id='lieferant_bank_form'" );
+          formular_buchung_lieferant_bank();
+        close_div();
+
+        open_div( 'nodisplay', "id='bank_bank_form'" );
+          formular_buchung_bank_bank();
+        close_div();
+
+        open_div( 'nodisplay', "id='sonderausgabe_bank_form'" );
+          formular_buchung_bank_sonderausgabe();
+        close_div();
+
+        open_div( 'nodisplay', "id='anfangsguthaben_bank_form'" );
+          formular_buchung_bank_anfangsguthaben();
+        close_div();
+
+      close_fieldset();
+      medskip();
+    }
+
+    $startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
+    $saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
+
+    open_table('list');
+        open_th('','','Posten');
+        open_th('','','Valuta');
+        open_th('','','Buchung');
+        open_th('','','Kommentar');
+        open_th('','','Betrag');
+        open_th('','','Aktionen');
+      open_tr('summe');
+        open_td( 'right', "colspan='4'", 'Startsaldo:');
+        open_td( 'number', '', price_view( $startsaldo ) );
+        open_td();
+
+    $n=0;
+    foreach( sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr ) as $row ) {
+      $n++;
+      $kommentar = $row['kommentar'];
+      $konterbuchung_id = $row['konterbuchung_id'];
+
+      open_tr();
+        open_td( 'number', '', $n );
+        open_td( 'number', '', $row['valuta_trad'] );
+        open_td( 'number', '', $row['buchungsdatum_trad']."<div class='small'>{$row['dienst_name']}</div>" );
+        open_td();
+          echo $kommentar;
+
+          if( $konterbuchung_id ) {
+            $konterbuchung = sql_get_transaction( $konterbuchung_id );
+            if( $konterbuchung_id > 0 ) {
+              $k_konto_id = $konterbuchung['konto_id'];
+              $k_auszug_jahr = $konterbuchung['kontoauszug_jahr'];
+              $k_auszug_nr = $konterbuchung['kontoauszug_nr'];
+              open_div( '', '', 'Gegenbuchung: ' . fc_link( 'kontoauszug', array(
+                  'konto_id' => $k_konto_id, 'auszug_jahr' => $k_auszug_jahr, 'auszug_nr' => $k_auszug_nr
+                , 'text' => "{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr", 'class' => 'href'
+              ) ) );
+            } else {
+              $gruppen_id = $konterbuchung['gruppen_id'];
+              $lieferanten_id=$konterbuchung['lieferanten_id'];
+              if( $gruppen_id ) {
+                if( $gruppen_id == sql_muell_id() ) {
+                  $typ = $konterbuchung['transaktionstyp'];
+                  div_msg( '', fc_link( 'verlust_details', array(
+                              'detail' => $typ, 'class' => 'href', 'text' => transaktion_typ_string( $typ ) ) ) );
+                } else {
+                  $gruppen_name = sql_gruppenname( $gruppen_id );
+                  div_msg( '', 'Überweisung Gruppe '. fc_link( 'gruppenkonto', array(
+                            'gruppen_id' => $gruppen_id , 'class' => 'href', 'text' => $gruppen_name ) ) );
+                }
+              } elseif ( $lieferanten_id ) {
+                $lieferanten_name = sql_lieferant_name( $lieferanten_id );
+                div_msg( '', 'Überweisung/Lastschrift Lieferant ' . fc_link( 'lieferantenkonto', array(
+                            'lieferanten_id' => $lieferanten_id , 'class' => 'href', 'text' => $lieferanten_name ) ) );
+              } else {
+                div_msg( 'warn', 'fehlerhafte Buchung' );
+              }
+            }
+          } else {
+            div_msg( 'warn', 'unvollständige oder fehlerhafte Buchung' );
+          }
+        open_td( 'number bottom', '', price_view( $row['betrag'] ) );
+        open_td( '', 'bottom', fc_link( 'edit_buchung', "buchung_id={$row['id']}" ) );
+    }
+
+      open_tr('summe');
+        open_td( 'right', "colspan='4'", 'Saldo:');
+        open_td( 'number', '', price_view( $saldo ) );
+        open_td();
+    close_table();
+
   $ungebuchte_einzahlungen = sql_ungebuchte_einzahlungen();
-  if( $editable and $ungebuchte_einzahlungen and $auszug_jahr and $auszug_nr ) {
+  if( $editable and $ungebuchte_einzahlungen ) {
     open_td( 'floatright' );
       ?> <h4>ungebuchte Einzahlungen:</h4> <?php
 
@@ -166,127 +289,7 @@ open_table('layout hfill' );
         }
       close_table();
   }
-
 close_table();
-
 bigskip();
-
-
-if( ! $auszug_jahr or ! $auszug_nr )
-  return;
-
-////////////////////////////////
-// anzeige eines kontoauszugs:
-//
-
-$kontoname = sql_kontoname($konto_id);
-echo "<h3>$kontoname - Auszug $auszug_jahr / $auszug_nr</h3>";
-
-
-if( $editable ) {
-  open_fieldset( 'small_form', '', 'Transaktion eintragen', 'off' );
-    alternatives_radio( array(
-      'gruppe_bank_form' => "Einzahlung / Auszahlung Gruppe"
-    , 'lieferant_bank_form' => "Überweisung / Lastschrift Lieferant"
-    , 'bank_bank_form' => "Überweisung auf ein anderes Konto der FC"
-    , 'sonderausgabe_bank_form' => "Überweisung/Abbuchung Sonderausgabe"
-    , 'anfangsguthaben_bank_form' => "Anfangskontostand erfassen"
-    ) );
-
-    open_div( 'nodisplay', "id='gruppe_bank_form'" );
-      formular_buchung_gruppe_bank();
-    close_div();
-
-    open_div( 'nodisplay', "id='lieferant_bank_form'" );
-      formular_buchung_lieferant_bank();
-    close_div();
-
-    open_div( 'nodisplay', "id='bank_bank_form'" );
-      formular_buchung_bank_bank();
-    close_div();
-
-    open_div( 'nodisplay', "id='sonderausgabe_bank_form'" );
-      formular_buchung_bank_sonderausgabe();
-    close_div();
-
-    open_div( 'nodisplay', "id='anfangsguthaben_bank_form'" );
-      formular_buchung_bank_anfangsguthaben();
-    close_div();
-
-  close_fieldset();
-  medskip();
-}
-
-$startsaldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr-1 );
-$saldo = sql_bankkonto_saldo( $konto_id, $auszug_jahr, $auszug_nr );
-
-open_table('list');
-    open_th('','','Posten');
-    open_th('','','Valuta');
-    open_th('','','Buchung');
-    open_th('','','Kommentar');
-    open_th('','','Betrag');
-    open_th('','','Aktionen');
-  open_tr('summe');
-    open_td( 'right', "colspan='4'", 'Startsaldo:');
-    open_td( 'number', '', price_view( $startsaldo ) );
-    open_td();
-
-$n=0;
-foreach( sql_kontoauszug( $konto_id, $auszug_jahr, $auszug_nr ) as $row ) {
-  $n++;
-  $kommentar = $row['kommentar'];
-  $konterbuchung_id = $row['konterbuchung_id'];
-
-  open_tr();
-    open_td( 'number', '', $n );
-    open_td( 'number', '', $row['valuta_trad'] );
-    open_td( 'number', '', $row['buchungsdatum_trad']."<div class='small'>{$row['dienst_name']}</div>" );
-    open_td();
-      echo $kommentar;
-
-      if( $konterbuchung_id ) {
-        $konterbuchung = sql_get_transaction( $konterbuchung_id );
-        if( $konterbuchung_id > 0 ) {
-          $k_konto_id = $konterbuchung['konto_id'];
-          $k_auszug_jahr = $konterbuchung['kontoauszug_jahr'];
-          $k_auszug_nr = $konterbuchung['kontoauszug_nr'];
-          open_div( '', '', 'Gegenbuchung: ' . fc_link( 'kontoauszug', array(
-              'konto_id' => $k_konto_id, 'auszug_jahr' => $k_auszug_jahr, 'auszug_nr' => $k_auszug_nr
-            , 'text' => "{$konterbuchung['kontoname']}, Auszug $k_auszug_jahr / $k_auszug_nr", 'class' => 'href'
-          ) ) );
-        } else {
-          $gruppen_id = $konterbuchung['gruppen_id'];
-          $lieferanten_id=$konterbuchung['lieferanten_id'];
-          if( $gruppen_id ) {
-            if( $gruppen_id == sql_muell_id() ) {
-              $typ = $konterbuchung['transaktionstyp'];
-              div_msg( '', fc_link( 'verlust_details', array(
-                           'detail' => $typ, 'class' => 'href', 'text' => transaktion_typ_string( $typ ) ) ) );
-            } else {
-              $gruppen_name = sql_gruppenname( $gruppen_id );
-              div_msg( '', 'Überweisung Gruppe '. fc_link( 'gruppenkonto', array(
-                         'gruppen_id' => $gruppen_id , 'class' => 'href', 'text' => $gruppen_name ) ) );
-            }
-          } elseif ( $lieferanten_id ) {
-            $lieferanten_name = sql_lieferant_name( $lieferanten_id );
-            div_msg( '', 'Überweisung/Lastschrift Lieferant ' . fc_link( 'lieferantenkonto', array(
-                         'lieferanten_id' => $lieferanten_id , 'class' => 'href', 'text' => $lieferanten_name ) ) );
-          } else {
-            div_msg( 'warn', 'fehlerhafte Buchung' );
-          }
-        }
-      } else {
-        div_msg( 'warn', 'unvollständige oder fehlerhafte Buchung' );
-      }
-    open_td( 'number bottom', '', price_view( $row['betrag'] ) );
-    open_td( '', 'bottom', fc_link( 'edit_buchung', "buchung_id={$row['id']}" ) );
-}
-
-  open_tr('summe');
-    open_td( 'right', "colspan='4'", 'Saldo:');
-    open_td( 'number', '', price_view( $saldo ) );
-    open_td();
-close_table();
 
 ?>
