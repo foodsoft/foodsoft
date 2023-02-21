@@ -1572,12 +1572,13 @@ function distribution_tabellenkopf( $status, Distribution_Druck $druck = Distrib
     }
   open_tr('legende');
     if( $status >= STATUS_LIEFERANT ) {
-      if( $druck !== Distribution_Druck::Nein )
+      if( $druck !== Distribution_Druck::Nein ) {
         open_th(''
                 , 'colspan="'.($druck->value+2).'"');
         open_div('small', '', '&check;: wie erwartet');
         open_div('small', '', '&empty;: nichts');
         open_div('small', '', 'sonst: Menge');
+      }
     }
   close_tr();
 }

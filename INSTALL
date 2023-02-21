@@ -10,11 +10,11 @@ Installation der Foodosoft:
     enthaelt eine (etwas paranoide) Beispielkonfiguration eines solchen
     virtuellen Servers fuer den Apache Webserver.
     Mit einer simpleren default-Konfiguration sollte es notfalls auch klappen;
-    php muss der Server natuerlich unterstuetzen
-    - Stellt sicher, dass in php.ini (z.B. /etc/php7/apache2/php.ini) der Wert
+    php muss der Server natuerlich unterstuetzen, mindestens Version 8.1
+    - Stellt sicher, dass in php.ini (z.B. /etc/php8/apache2/php.ini) der Wert
       upload_max_filesize groß genug ist für Eure Kataloge, z.B.
         upload_max_filesize = 16M
-      und dass bei langen Produktlisten genug Variablen benutzt werden dürfen, 
+      und dass bei langen Produktlisten genug Variablen benutzt werden dürfen,
       z.B.:
         max_input_vars = 1500
 
@@ -60,7 +60,7 @@ Installation der Foodosoft:
       http://euer.server.name/foodsoft/setup.php
     aufrufen.
 
-(e) setup.php 
+(e) setup.php
     - testet die Verbindung zur Datenbank und
     - schlaegt die Korrekturen vor, um die noetigen Tabellen in der
       Datenbank anzulegen.
@@ -78,7 +78,7 @@ Installation der Foodosoft:
       $allow_setup_from = false
     eintragen.
 
-(i) Wer statt der katalogtypischen Akronyme für Herkunft, Anbauverband und 
+(i) Wer statt der katalogtypischen Akronyme für Herkunft, Anbauverband und
     Hersteller lieber ausgeschriebene Bezeichnungen nutzen will, kann einen
     Grundbestand an Daten aus der Datei catalogue_acronyms.sql in die SQL-
     Datenbank laden. (Sollte man nur ganz am Anfang machen, um eigene Änderungen
@@ -91,7 +91,7 @@ Weitere FoodCoops installieren
 Wenn ihr die Foodsoft fuer mehr als eine FoodCoop auf demselben Server betreiben
 wollt:
 
-- Die erste installiert Ihr wie oben beschrieben; die Datenbankkonfiguration 
+- Die erste installiert Ihr wie oben beschrieben; die Datenbankkonfiguration
   schreibt ihr in die apache-Konfigurationdatei (siehe apache.sample.conf).
   Wir nehmen mal an, dass das schon geklappt hat.
 
