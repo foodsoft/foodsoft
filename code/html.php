@@ -514,10 +514,11 @@ function option_radio( $fieldname, $flags_on, $flags_off, $text, $title = false 
 //  - every value is either a button label, or a pair of label and title for the button
 //
 function alternatives_radio( $items ) {
-  $id = new_html_id();
+  $radio_group_id = new_html_id();
   open_ul('plain');
   $keys = array_keys( $items );
   foreach( $items as $item => $value ) {
+    $radio_option_id = new_html_id();
     open_li();
     $title = '';
     if( is_array( $value ) ) {
@@ -526,11 +527,27 @@ function alternatives_radio( $items ) {
     } else {
       $text = $value;
     }
-    echo "<input type='radio' class='radiooption' name='radio_$id' $title onclick=\"";
-    foreach( $keys as $key )
-      echo "document.getElementById('$key').style.display='". ( $key == $item ? 'block' : 'none' ) ."'; ";
-    echo "\">$text";
+    echo <<<HTML
+    <input type='radio' class='radiooption' id='radio_$radio_option_id' name='radio_$radio_group_id' value='$item' $title onclick='radio_{$radio_group_id}_clicked(this);'>
+    <label for='radio_$radio_option_id'>$text</label>
+HTML;
   }
+  global $js_on_exit;
+  $on_click = <<<JS
+function radio_{$radio_group_id}_clicked(element) {
+JS;
+  foreach( $keys as $key ) {
+    $on_click .= <<<JS
+  \$('$key').style.display = element.value === '$key' ? 'block' : 'none';
+JS;
+  }
+  $on_click .= <<<'JS'
+}
+JS;
+
+  $js_on_exit[] = $on_click;
+  // activate already selected item if present:
+  $js_on_exit[] = "$$('input:checked[name=\\'radio_$radio_group_id\\']')[0]?.click();";
   close_ul();
 }
 
