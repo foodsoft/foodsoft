@@ -1,8 +1,8 @@
 ====== Basarkauf ======
 
 Mit dieser Foodsoft-Funktion können mit einem Smartphone bequem und zuverlässig Produkte aus dem Basar gekauft werden:
-  * Produkte //mit// Barcode, können mit der Kamera gescannt werden (wenn deren Code im Katalog hinterlegt ist).
-  * Produkte //ohne// Barcode, oder für die der Code nicht im Katalog hinterlegt ist, können aus einer Liste mit Suchfunktion gewählt werden; die Suchfunktion erlaubt sogar Spracherkennung. 
+  * Produkte //mit// Barcode können mit der Kamera gescannt werden (wenn deren Code im Katalog hinterlegt ist).
+  * Produkte //ohne// Barcode, oder für die der Code nicht im Katalog hinterlegt ist, können aus einer Liste mit Suchfunktion gewählt werden; die Suchfunktion erlaubt sogar Spracherkennung.
 
 Vorteile 8-):
   * Spart Zeit: Eintragen von Käufen in der Basarliste unnötig.
