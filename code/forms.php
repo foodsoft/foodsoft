@@ -163,6 +163,28 @@ function action_finish_transaction() {
   ) );
 }
 
+function action_save_booking_rules() {
+  global $type, $id, $rules;
+  need_http_var( 'type', 'W' );
+  need_http_var( 'id', 'U' );
+  need_http_var( 'rules', 'R' );
+
+  fail_if_readonly();
+  nur_fuer_dienst(4);
+
+  switch( $type ) {
+    case 'gruppe':
+      return sql_update( 'bestellgruppen', $id, [ 'buchungsregeln' => $rules ] );
+    case 'lieferanty':
+      return sql_update( 'lieferanten', $id, [ 'buchungsregeln' => $rules ] );
+    case 'konto':
+      return sql_update( 'bankkonten', $id, [ 'buchungsregeln' => $rules ] );
+  }
+
+  error( "Unbekannter Typ $type für Buchungsregel!" );
+  return FALSE;
+}
+
 function formular_buchung_gruppe_bank( $notiz_initial = 'Einzahlung' ) {
   open_form( '', 'action=buchung_gruppe_bank' );
     open_fieldset( 'small_form', '', 'Einzahlung / Auszahlung Gruppe' );

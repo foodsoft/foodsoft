@@ -54,6 +54,12 @@ $tables = [
       , 'default' => '0'
       , 'extra' => ''
       ]
+    , 'buchungsregeln' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      ]
     ]
   , 'indices' => [
       'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
@@ -168,6 +174,12 @@ $tables = [
       , 'extra' => ''
       ]
     , 'notiz_gruppe' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
+      , 'extra' => ''
+      ]
+    , 'buchungsregeln' => [
         'type' =>  "text"
       , 'null' => 'NO'
       , 'default' => ''
@@ -937,6 +949,12 @@ $tables = [
         'type' =>  "tinyint(1)"
       , 'null' => 'NO'
       , 'default' => '0'
+      , 'extra' => ''
+      ]
+    , 'buchungsregeln' => [
+        'type' =>  "text"
+      , 'null' => 'NO'
+      , 'default' => ''
       , 'extra' => ''
       ]
     ]

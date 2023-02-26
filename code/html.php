@@ -384,7 +384,6 @@ function close_fieldset() {
 function open_javascript( $js = '' ) {
   echo "\n";
   open_tag( 'script', '', "type='text/javascript'" );
-  echo "\n";
   if( $js ) {
     echo $js ."\n";
     close_javascript();

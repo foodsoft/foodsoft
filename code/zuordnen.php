@@ -1059,6 +1059,10 @@ function query_gruppen( $op, $keys = array(), $using = array(), $orderby = false
         // $selects[] = 'bestellzuordnung.menge as menge';
         // $selects[] = 'bestellzuordnung.art as art';
         break;
+      case 'buchungsregeln':
+        if( $cond )
+          $selects[] = 'buchungsregeln';
+        break;
       case 'where':
         $filters = $cond;
         break;
@@ -5311,6 +5315,15 @@ function update_database( $version ) {
 
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 41 ) );
       logger( 'update_database: update to version 41 successful' );
+    case 41:
+      logger( 'starting update_database: from version 41' );
+
+      doSql( "ALTER TABLE `bankkonten` ADD COLUMN `buchungsregeln` text not null default ''" );
+      doSql( "ALTER TABLE `bestellgruppen` ADD COLUMN `buchungsregeln` text not null default ''" );
+      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `buchungsregeln` text not null default ''" );
+
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 42 ) );
+      logger( 'update_database: update to version 42 successful' );
   }
 }
 
