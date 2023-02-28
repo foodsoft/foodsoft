@@ -392,7 +392,7 @@ open_javascript( toJavaScript( 'var konto', [
 
 $ajax_url = preg_replace( '/&amp;/', '&', fc_link('self', ['download' => 'konto', 'context' => 'action'] ) );
 open_javascript( toJavaScript( 'var ajax', [ 'url' => $ajax_url, 'itan' => get_itan() ] ) );
-open_javascript( toJavaScript( 'var auszug', [ 'jahr' => $auszug_jahr, 'nr' => $auszug_nr ] ) );
+open_javascript( toJavaScript( 'var auszug', [ 'jahr' => (int)$auszug_jahr, 'nr' => (int)$auszug_nr ] ) );
 open_javascript( toJavaScript( 'var gruppen', array_map(
   fn ($gruppe) => [
     'id' => $gruppe['id']
@@ -821,7 +821,7 @@ function formatNote(classified, notePattern) {
   return notePattern
     ?.replaceAll('{kti}', classified.otherName)
     ?.replaceAll('{vwz}', classified.origNote)
-    ?.replaceAll('{nr}', auszug.nr.padStart(2, '0'))
+    ?.replaceAll('{nr}', auszug.nr.toString().padStart(2, '0'))
     ?.replaceAll('{jahr}', auszug.jahr)
     ?? classified.origNote;
 }
