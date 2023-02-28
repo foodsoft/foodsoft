@@ -896,6 +896,7 @@ function setClassificationType(idx, buttonId) {
     delete classification.id;
     delete classification.note;
     bookingCell.classList.add('alert');
+    $(ui.confirmIbanId).style.display = 'none';
   }
   if (chosenType === Types.Gruppe) {
     const select = document.createElement('select');
@@ -913,8 +914,8 @@ function setClassificationType(idx, buttonId) {
       }
       const matchingUnbooked = getMatchingUnbooked(classification);
       $(ui.groupFoundMatchId).textContent = matchingUnbookedText(matchingUnbooked);
-      if (!classification.exception)
-        $(ui.confirmIbanId).style.display = 'block';
+      let canMakeRule = !bookingCell.classList.contains('alert') && !classification.exception;
+      $(ui.confirmIbanId).style.display = canMakeRule ? 'block' : 'none';
     });
     addOption(select, '', 'Bitte wählen');
     gruppen.each(group => {
@@ -938,8 +939,8 @@ function setClassificationType(idx, buttonId) {
         classification[Tags.Id] = e.target.value;
         bookingCell.classList.remove('alert');
       }
-      if (!classification.exception)
-        $(ui.confirmIbanId).style.display = 'block';
+      let canMakeRule = !bookingCell.classList.contains('alert') && !classification.exception;
+      $(ui.confirmIbanId).style.display = canMakeRule ? 'block' : 'none';
     });
     addOption(select, '', 'Bitte wählen');
     lieferantys.each(lieferanty => {
@@ -959,8 +960,8 @@ function setClassificationType(idx, buttonId) {
       classification[Tags.Type] = Types.Sonderausgabe;
       classification[Tags.Note] = e.target.value;
       $(ui.specialNoteOutputId).textContent = formatNote(classification, e.target.value);
-      if (!classification.exception)
-        $(ui.confirmIbanId).style.display = 'block';
+      let canMakeRule = !bookingCell.classList.contains('alert') && !classification.exception;
+      $(ui.confirmIbanId).style.display = canMakeRule ? 'block' : 'none';
     });
     const output = document.createElement('div');
     output.id = ui.specialNoteOutputId ?? makeId();
