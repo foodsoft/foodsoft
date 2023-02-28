@@ -19,20 +19,31 @@ get_http_var('blz','H',$row);
 get_http_var('kontonr','H',$row);
 get_http_var('url','H',$row);
 get_http_var('kommentar','H',$row);
+get_http_var('buchungsregeln','R',$row);
 
 get_http_var( 'action', 'w', '' );
 $editable or $action = '';
 if( $action == 'save' ) {
+  if( $buchungsregeln ) {
+    $buchungsregeln_decoded = json_decode( $buchungsregeln );
+    if( json_last_error() !== JSON_ERROR_NONE )
+      $problems .= "<div class='warn'>Buchungsregeln müssen ein gültiger JSON-Ausdruck sein!</div>";
+    else
+      $buchungsregeln = json_encode( $buchungsregeln_decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+  }
+
   $values = array(
     'name' => $name
   , 'blz' => $blz
   , 'kontonr' => $kontonr
   , 'url' => $url
   , 'kommentar' => $kommentar
+  , 'buchungsregeln' => $buchungsregeln
   );
-  if( ! $name ) {
+
+  if( ! $name )
     $problems .= "<div class='warn'>Kein Name eingegeben!</div>";
-  } else {
+  if ( ! $problems ) {
     if( $konto_id ) {
       if( sql_update( 'bankkonten', $konto_id, $values ) ) {
         $msg .= "<div class='ok'>&Auml;nderungen gespeichert</div>";
@@ -50,6 +61,10 @@ if( $action == 'save' ) {
   }
 }
 
+$buchungsregeln_decoded = json_decode( $buchungsregeln );
+if( json_last_error() === JSON_ERROR_NONE )
+  $buchungsregeln = json_encode( $buchungsregeln_decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . "\n";
+
 open_form( '', 'action=save' );
   open_fieldset( 'small_form', '', ( $konto_id ? 'Stammdaten Bankkonto' : 'Neues Bankkonto' ) );
     echo $msg . $problems;
@@ -59,6 +74,7 @@ open_form( '', 'action=save' );
       form_row_text( 'Kontonummer:', ( $editable ? 'kontonr' : false ), 50, $kontonr );
       form_row_text( 'Webadresse:', ( $editable ? 'url' : false ), 50, $url );
       form_row_text( 'Kommentar:', ( $editable ? 'kommentar' : false ), 50, $kommentar );
+      form_row_code( 'Buchungsregeln:', ( $editable ? 'buchungsregeln' : false ), 60, 10, $buchungsregeln );
       open_tr();
         open_td( 'right', "colspan='2'" );
           if( $konto_id > 0 )

@@ -132,6 +132,15 @@ function string_view( $text, $length = 20, $fieldname = false, $attr = '', $edit
     return "<span class='string $extra_class' $id>$text</span>";
 }
 
+function code_view( $code, $cols = 40, $rows = 10, $fieldname = false, $attr = '', $edit_if_fieldname = true, $extra_class = '' ) {
+  global $input_event_handlers;
+  $id = $fieldname ? "id='$fieldname'" : '';
+  $readonly = !($fieldname && $edit_if_fieldname) ? 'readonly' : '';
+  return "<textarea class='code $extra_class' cols='$cols' rows='$rows' spellcheck='false' $readonly name='$fieldname' $id $attr $input_event_handlers>"
+  . htmlspecialchars( $code, ENT_QUOTES, 'UTF-8' )
+  . "</textarea>";
+}
+
 function flag_view( $flag, $fieldname = false, $attr = '', $edit_if_fieldname = true, $extra_class = '' ) {
   global $input_event_handlers;
   $id = $fieldname ? "id='$fieldname'" : '';

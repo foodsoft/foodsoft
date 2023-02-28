@@ -477,6 +477,10 @@ const fixedClassifier = [
   {
     orig: Tags.Orig
   },
+];
+
+// suitable for GLS-CSV-Export
+const defaultAccountClassifier = [
   {
     column: 1,
     header: '^IBAN Auftrag',
@@ -528,14 +532,19 @@ function prepare(classifier, data) {
   const header = data[0];
   let result = [...classifier]
   result.forEach(c => {
-    if (c.column !== undefined && (c.column < 0 || c.column >= header.length)) {
-      c.column = undefined;
-      return;
+    if (c.column !== undefined) {
+      if (typeof c.column !== 'number')
+        throw new Error('column: Benötige Ganzzahl als Argument!', { cause: c });
+      if (c.column < 0 || c.column >= header.length) {
+        throw new Error(`column: Spalte ${c.column} außerhalb [0, ${header.length - 1}]!`, { cause: c });
+      }
     }
     if (c.header !== undefined) {
+      if (typeof c.header !== 'string')
+        throw new Error('header: Benötige Zeichenkette mit Regex als Argument!', { cause: c });
       if (c.column !== undefined) {
         if (!header[c.column]?.match(c.header)) {
-          c.column = undefined;
+          throw new Error(`column: Spalte ${c.column} passt nicht zu Regex "${c.header}"!`, { cause: c });
           return;
         }
       } else {
@@ -545,6 +554,8 @@ function prepare(classifier, data) {
             throw $break;
           }
         });
+        if (c.column === undefined)
+          throw new Error(`header: Keine Spalte passt zu Regex "${c.header}"!`, { cause: c });
       }
     }
   });
@@ -574,6 +585,8 @@ function classify(classifier, data, lineIndex, classified) {
     else
       return;
     if (c.match !== undefined) {
+      if (typeof c.match !== 'string')
+        throw new Error('match: Benötige Zeichenkette mit Regex als Argument!', { cause: c });
       if (!value.match(c.match))
         return;
       result[Tags.MatchIndex] = i;
@@ -581,13 +594,21 @@ function classify(classifier, data, lineIndex, classified) {
     if (c.store !== undefined) {
       c.store.each(s => {
         const [ tag, value ] = s;
+        if (typeof tag !== 'string')
+          throw new Error('store: Benötige Zeichenkette als Tag!', { cause: c });
         result[tag] = value;
       });
     }
     if (c.parse !== undefined) {
+      if (typeof c.parse !== 'string')
+          throw new Error('parse: Benötige Zeichenkette als Argument!', { cause: c });
+      if (typeof ParserFunctions[c.parse] !== 'function')
+          throw new Error(`parse: Unbekannte Funktion "${c.parse}"!`, { cause: c });
       value = ParserFunctions[c.parse](value);
     }
     if (c.tag !== undefined) {
+      if (typeof c.tag !== 'string')
+          throw new Error('tag: Benötige Zeichenkette als Argument!', { cause: c });
       result[c.tag] = value;
     }
   });
@@ -794,6 +815,8 @@ function setCurrentClassification(idx) {
   const ui = classifierUis[idx];
   if (!classification || !ui)
     return;
+  if (classification.type === undefined)
+    return;
   if (classification.type === Types.Gruppe) {
     $(ui.groupTransactionId).click();
     const select = $(ui.groupSelectId);
@@ -815,6 +838,7 @@ function setCurrentClassification(idx) {
     input.dispatchEvent(new Event('input'));
     return;
   }
+  error(`Unbekannter Typ "${classification.type}"`, classification);
 }
 
 function formatNote(classified, notePattern) {
@@ -953,10 +977,13 @@ let classifiedReversed = false;
 
 function buildClassifier() {
   classifier.splice(0, Infinity, ...fixedClassifier);
-  if (konto.regeln?.length)
-    classifier.push(...konto.regeln.map((r, i) => Object.assign({...r}, {
-      source: { type: 'Konto', index: i }
-    })));
+  if (!konto.regeln?.length) {
+    konto.regeln = defaultAccountClassifier;
+    storeRules('konto', konto.id, konto.regeln);
+  }
+  classifier.push(...konto.regeln.map((r, i) => Object.assign({...r}, {
+    source: { type: 'Konto', index: i }
+  })));
   gruppen.filter(g => g.regeln?.length).each(g => {
     classifier.push(...g.regeln.map((r, i) => setClassifierAction(i, {...r}, Types.Gruppe, g.id)));
   });
@@ -990,17 +1017,26 @@ function importAccountSheetPreview(reset = true) {
     skipEmptyLines: true,
     complete: function(results) {
       buildClassifier();
-      let prepared = prepare(classifier, results.data);
+      try {
+        let prepared = prepare(classifier, results.data);
 
-      if (classifiedReversed) {
-        classified.reverse();
-        classifiedReversed = false;
+        if (classifiedReversed) {
+          classified.reverse();
+          classifiedReversed = false;
+        }
+
+        for (let i = 1; i < results.data.length; ++i)
+        {
+          classify(prepared, results.data, i, classified);
+        }
+      }
+      catch (e) {
+        error(e.message, e.cause);
+        $('kontoauszug').style.display = 'block';
+        $('import').style.display = 'none';
+        return;
       }
 
-      for (let i = 1; i < results.data.length; ++i)
-      {
-        classify(prepared, results.data, i, classified);
-      }
       $('kontoauszug').style.display = 'none';
       $('import').style.display = 'block';
       const importBody = $('import_body');
@@ -1008,6 +1044,8 @@ function importAccountSheetPreview(reset = true) {
       classifiedReversed = classified.at(0)?.valuta > classified.at(-1)?.valuta;
       if (classifiedReversed)
         classified.reverse();
+
+      let hasError = false;
       classified.each((c, i) => {
         if (c.sourceAccount !== konto.nr) {
           alert(`Importierte Daten sind für anderes Konto: ${c.sourceAccount}`);
@@ -1041,6 +1079,10 @@ function importAccountSheetPreview(reset = true) {
             booking.textContent = lieferanty.name;
           } else if (c.type === Types.Sonderausgabe) {
             booking.textContent = `Sonderausgabe: ${formatNote(c, c.note)}`;
+          } else {
+            booking.classList.add('warn');
+            booking.textContent = `Fehlerhafter Buchungstyp: ${c.type}`;
+            hasError = true;
           }
           booking.insert(edit_button);
           booking.insert(drop_button);
@@ -1052,7 +1094,10 @@ function importAccountSheetPreview(reset = true) {
           setCurrentClassification(i);
         }
       });
-      $('execImportButton').classList.remove('disabled');
+      if (hasError)
+        $('execImportButton').classList.add('disabled');
+      else
+        $('execImportButton').classList.remove('disabled');
     }
   });
 }

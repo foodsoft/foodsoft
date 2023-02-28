@@ -99,6 +99,12 @@ function form_row_text( $label = 'Notiz:', $fieldname = 'notiz', $size = 60, $in
     open_td( 'kbd' ); echo string_view( $initial, $size, $fieldname );
 }
 
+function form_row_code( $label, $fieldname, $cols = 60, $rows = 10, $initial = '' ) {
+  open_tr();
+    open_td( 'label', '', $label );
+    open_td( 'kbd' ); echo code_view( $initial, $cols, $rows, $fieldname );
+}
+
 function form_row_checkbox( $label, $fieldname, $initial = false ) {
   open_tr();
     open_td( 'label', '', $label );
