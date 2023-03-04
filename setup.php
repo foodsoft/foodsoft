@@ -821,16 +821,8 @@ function check_6() {
     $group_id = $_POST['group_id'];
     $group_name = $_POST['group_name'];
     $password = $_POST['group_password'];
-    $urandom_handle = fopen( '/dev/urandom', 'r' );
-    $bytes = 4;
-    $salt = '';
-    while( $bytes > 0 ) {
-      $c = fgetc( $urandom_handle );
-      $salt .= sprintf( '%02x', ord($c) );
-      $bytes--;
-    }
     $changes[] = "INSERT INTO bestellgruppen ( id, name, aktiv, passwort, salt )
-                  VALUES ( $group_id, '$group_name', 1, '". crypt( $password, $salt) ."' , '$salt' )";
+                  VALUES ( $group_id, '$group_name', 1, '". password_hash( $password, PASSWORD_DEFAULT ) ."' , '' )";
   }
   if( $changes )
     return false;
