@@ -826,7 +826,7 @@ function check_password( $gruppen_id, $gruppen_pwd ) {
     $row = sql_gruppe( $gruppen_id );
     if( ! $row['aktiv'] )
       return false;
-    if( $row['passwort'] == crypt($gruppen_pwd,$row['salt']) )
+    if( password_verify( $gruppen_pwd, $row['passwort'] ) )
       return $row;
   }
   return false;
@@ -836,10 +836,9 @@ function set_password( $gruppen_id, $gruppen_pwd ) {
   global $login_gruppen_id;
   if ( $gruppen_pwd != '' && $gruppen_id != '' ) {
     ( $gruppen_id == $login_gruppen_id ) or nur_fuer_dienst(5);
-    $salt = random_hex_string( 4 );
     return sql_update( 'bestellgruppen', $gruppen_id, array(
-      'salt' => $salt
-    , 'passwort' => crypt( $gruppen_pwd, $salt )  // TODO: this is not yet very good...
+      'salt' => '' // not used anymore
+    , 'passwort' => password_hash( $gruppen_pwd, PASSWORD_DEFAULT )
     ) );
   }
 }
