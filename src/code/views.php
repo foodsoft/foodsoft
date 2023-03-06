@@ -677,6 +677,7 @@ function pick_group_text() {
   $fieldcount = 0;
   $gesamtwert = 0;
   $output = '';
+  $rowspan = 1;
   foreach( $basar as $basar_row ) {
     list( $kan_verteilmult, $kan_verteileinheit ) = kanonische_einheit( $basar_row['verteileinheit'] );
     $menge = $basar_row['basarmenge'];
