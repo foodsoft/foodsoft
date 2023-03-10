@@ -1619,7 +1619,9 @@ function distribution_produktdaten( $status, $bestell_id, $produkt_id, Distribut
       close_div();
 
   if( $druck !== Distribution_Druck::Nein ) {
-      open_td('', 'colspan="'.($druck->value + 2).'"', flag_view(false) . 'fertig verteilt' );
+      open_td('', 'colspan="'.($druck->value + 2).'"');
+      open_div('', '', flag_view(false) . 'fertig verteilt');
+      open_div('', '', flag_view(false) . 'alles wie erwartet ' );
     open_tr();
       open_th('bottom', '', '&check;' );
       open_th('bottom', '', '&empty;');
