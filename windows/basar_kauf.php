@@ -82,7 +82,7 @@ $ajax_url = preg_replace( '/&amp;/', '&', fc_link('self', ['download' => 'basar_
 open_javascript( toJavaScript( 'var ajax', [ 'url' => $ajax_url, 'itan' => get_itan() ] ) );
 
 $verfuegbar_nach_ean = [];
-$verfuegbar_ohne_ean = [];
+$verfuegbar_alle = [];
 
 foreach( sql_basar( [ 'lieferanty' => true, 'inventur' => $nur_inventur ] ) as $produkt ) {
   global $mysqlheute;
@@ -104,7 +104,7 @@ foreach( sql_basar( [ 'lieferanty' => true, 'inventur' => $nur_inventur ] ) as $
   , 'lieferanty' => $produkt['lieferanty']
   , 'lieferdatum' => $produkt['lieferung']
   , 'produkt_id' => $produkt['produkt_id']
-  , 'ean' => $produkt['ean_einzeln']
+  , 'ean' => $ean
   ];
   if( $nur_inventur ) {
     $produkt_daten['inventur_menge'] = $produkt['inventur_menge'];
@@ -113,17 +113,15 @@ foreach( sql_basar( [ 'lieferanty' => true, 'inventur' => $nur_inventur ] ) as $
   }
   if( $ean ) {
     $verfuegbar_nach_ean[$ean][] = $produkt_daten or $verfuegbar_nach_ean[$ean] = [ $produkt_daten ];
-    if( ! $nur_inventur )
-      continue;
   }
-  $verfuegbar_ohne_ean[$produkt['produkt_id']][] = $produkt_daten
-    or $verfuegbar_ohne_ean[$produkt['produkt_id']] = [ $produkt_daten ];
+  $verfuegbar_alle[$produkt['produkt_id']][] = $produkt_daten
+    or $verfuegbar_alle[$produkt['produkt_id']] = [ $produkt_daten ];
 }
 open_javascript( toJavaScript( 'var onlyInventory', $nur_inventur ) );
 open_javascript( toJavaScript( 'var availableByEan', $verfuegbar_nach_ean ) );
 
 // sortiere die Lieferungen jedes Produkts absteigend nach Datum
-foreach( $verfuegbar_ohne_ean as &$lieferungen ) {
+foreach( $verfuegbar_alle as &$lieferungen ) {
   usort( $lieferungen, function( $a, $b ) {
     // absteigend nach Lieferdatum, dann aufsteigend alphabetisch (selten)
     return -($a['lieferdatum']  <=> $b['lieferdatum'])
@@ -132,13 +130,13 @@ foreach( $verfuegbar_ohne_ean as &$lieferungen ) {
 }
 
 // sortiere Produkte nach absteigend nach jüngster Lieferung und Namen
-usort( $verfuegbar_ohne_ean, function( $a, $b ) {
+usort( $verfuegbar_alle, function( $a, $b ) {
   // absteigend nach Lieferdatum, dann aufsteigend alphabetisch
   return -($a[0]['lieferdatum']  <=> $b[0]['lieferdatum'])
         ?: $a[0]['produkt_name'] <=> $b[0]['produkt_name'];
 } );
 
-open_javascript( toJavaScript( 'var availableWithoutEan', $verfuegbar_ohne_ean ) );
+open_javascript( toJavaScript( 'var allAvailable', $verfuegbar_alle ) );
 
 open_div( '', 'id="top"', '' );
 open_div( 'tab', 'id="scan-product"' );
@@ -147,8 +145,6 @@ open_div( 'tab', 'id="scan-product"' );
     open_tag( 'video', '', '', '' );
   close_div();
   open_div( 'max10 hcenter' );
-    open_tag( 'p', 'medskip', '',
-      $nur_inventur ? 'Alle Produkte im Basar:' : 'Produkte ohne Barcode:');
     open_span( '', 'style="display:flex; align-items:center;"' );
       echo 'Suche:&nbsp;' . string_view('', 20, 'search', 'style="flex:2;" autocomplete=off', true, '') . "&nbsp;";
       open_div( 'touch_only touch_button notranslate material-symbols-rounded'
@@ -158,6 +154,10 @@ open_div( 'tab', 'id="scan-product"' );
       , 'id="button_search_speech" style="background-color:rgb(15,33,139);"'
       , 'mic' );
     close_span();
+    open_tag( 'p', 'medskip', 'id="products-list-title"',
+      $nur_inventur ? 'Alle Produkte im Basar:' : 'Produkte ohne Barcode:');
+    open_tag( 'p', 'medskip', 'id="products-search-results-title" style="display:none"',
+      'Suchergebnisse:');
     open_div( 'max10 medskip', 'id="products-without-ean-list"', '' );
     open_table( 'max10 list hfill', 'id="no-products-label"' );
       open_tr();
@@ -362,6 +362,8 @@ var dom_restmenge;
 var dom_bonliste;
 var dom_bonliste_kopf;
 var dom_search;
+var dom_products_list_title;
+var dom_products_search_results_title;
 var dom_products_without_ean;
 
 var scannerOffView = false;
@@ -379,6 +381,8 @@ function evaluateDom() {
   dom_restmenge = $('restmenge');
   dom_bonliste = $('bonliste');
   dom_search = $('search');
+  dom_products_list_title = $('products-list-title');
+  dom_products_search_results_title = $('products-search-results-title');
   dom_products_without_ean = $('products-without-ean-list');
 
   tab_ids = $$('div.tab').map( tab => tab.id );
@@ -516,7 +520,7 @@ function initProductsWithoutEan() {
 
   var words = [];
 
-  availableWithoutEan.forEach((product, index) => {
+  allAvailable.forEach((product, index) => {
     let latestDelivery = product[0];
     var templateData = {
       id: `{type: "product", index: ${index}}`
@@ -692,16 +696,33 @@ function search() {
 
   tableRows = dom_products_without_ean.childElements()[0].childElements();
   let searchStrings = dom_search.value.split( /\s/ );
+
+  const showAll = searchStrings.every( s => s === '' );
+
+  if( showAll ) {
+    dom_products_list_title.show();
+    dom_products_search_results_title.hide();
+  } else {
+    dom_products_list_title.hide();
+    dom_products_search_results_title.show();
+  }
+
   searchStrings = searchStrings.map( s =>
     canonify(s.trim())
       .replace( /[sen]$/, '' ) // vermutliche Mehrzahl weg
   );
 
   let count = 0;
-  availableWithoutEan.forEach( function( product, index ) {
-    let target = canonify(product[0].produkt_name);
-    // and-search
-    if( searchStrings.every( searchString => target.includes( searchString ) ) ) {
+  allAvailable.forEach( function( product, index ) {
+    let visible;
+    if( showAll )
+      visible = onlyInventory || product[0].ean === null;
+    else {
+      let target = canonify(product[0].produkt_name);
+      // and-search
+      visible = searchStrings.every( searchString => target.includes( searchString ) );
+    }
+    if( visible ) {
       tableRows[index].show();
       ++count;
     } else
@@ -717,7 +738,7 @@ function search() {
 function offerDeliveries( id ) {
   let deliveries = id.type === 'ean'
     ? availableByEan[id.ean]
-    : availableWithoutEan[id.index];
+    : allAvailable[id.index];
 
   if ( deliveries.length == 1 ) {
     pickDelivery(id, 0);
@@ -760,13 +781,13 @@ function openEnterAmount() {
 function getChosenProduct() {
   if( currentProduct.id.type === 'ean' )
     return availableByEan[currentProduct.id.ean][currentProduct.index];
-  return availableWithoutEan[currentProduct.id.index][currentProduct.index];
+  return allAvailable[currentProduct.id.index][currentProduct.index];
 }
 
 function pickDelivery( id, index ) {
   let chosenProduct = id.type === 'ean'
     ? availableByEan[id.ean][index]
-    : availableWithoutEan[id.index][index];
+    : allAvailable[id.index][index];
   currentProduct = { id: id, index: index, ...chosenProduct };
   if( onlyInventory )
     openCheckRemaining();
@@ -818,7 +839,7 @@ function checkRemainingSuccess(json) {
     chosenProduct.inventur_gruppen_id = json.gruppen_id;
     let mirrorProduct;
     if( currentProduct.id.type === 'ean' )
-      mirrorProduct = (availableWithoutEan
+      mirrorProduct = (allAvailable
         .find( p => p[0].produkt_id === currentProduct.produkt_id )
         ?? [])
         .find( p => p.bestell_id === currentProduct.bestell_id );
