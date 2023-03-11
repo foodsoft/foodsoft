@@ -158,7 +158,7 @@ open_div( 'tab', 'id="scan-product"' );
       $nur_inventur ? 'Alle Produkte im Basar:' : 'Produkte ohne Barcode:');
     open_tag( 'p', 'medskip', 'id="products-search-results-title" style="display:none"',
       'Suchergebnisse:');
-    open_div( 'max10 medskip', 'id="products-without-ean-list"', '' );
+    open_div( 'max10 medskip', 'id="products-list"', '' );
     open_table( 'max10 list hfill', 'id="no-products-label"' );
       open_tr();
         open_td( 'large', '', 'Keine Produkte' );
@@ -364,7 +364,7 @@ var dom_bonliste_kopf;
 var dom_search;
 var dom_products_list_title;
 var dom_products_search_results_title;
-var dom_products_without_ean;
+var dom_products_list;
 
 var scannerOffView = false;
 var documentHidden = false;
@@ -383,7 +383,7 @@ function evaluateDom() {
   dom_search = $('search');
   dom_products_list_title = $('products-list-title');
   dom_products_search_results_title = $('products-search-results-title');
-  dom_products_without_ean = $('products-without-ean-list');
+  dom_products_list = $('products-list');
 
   tab_ids = $$('div.tab').map( tab => tab.id );
 }
@@ -398,7 +398,7 @@ function tab( id, dom_focus = dom_top ) {
     window.scrollTo( 0, 0 );
 }
 
-var pickProductWithoutEanTemplate = new Template(`
+var productListTemplate = new Template(`
 <tr>
   <td style="vertical-align:middle">
     <div class="touch_button notranslate material-symbols-rounded"
@@ -512,7 +512,7 @@ function initBasarkaufbon() {
   basarkaufbon.forEach(displayBon);
 }
 
-function initProductsWithoutEan() {
+function initProductsList() {
   let dom_button_search_speech = $('button_search_speech');
   dom_button_search_speech.hide();
 
@@ -543,9 +543,9 @@ function initProductsWithoutEan() {
       , '' )
     };
     words.push(...latestDelivery.produkt_name.split(/\s/));
-    list.insert(pickProductWithoutEanTemplate.evaluate(templateData));
+    list.insert(productListTemplate.evaluate(templateData));
   });
-  $('products-without-ean-list').update(list);
+  $('products-list').update(list);
 
   search();
 
@@ -618,7 +618,7 @@ function initProductsWithoutEan() {
 
   speechRecognition.onspeechend = function( event ) {
     speechRecognition.stop();
-    tab( 'scan-product', dom_products_without_ean );
+    tab( 'scan-product', dom_products_list );
   };
 
   speechRecognition.onnomatch = function( event ) {
@@ -694,7 +694,7 @@ function search() {
       .toLowerCase();
   }
 
-  tableRows = dom_products_without_ean.childElements()[0].childElements();
+  tableRows = dom_products_list.childElements()[0].childElements();
   let searchStrings = dom_search.value.split( /\s/ );
 
   const showAll = searchStrings.every( s => s === '' );
@@ -864,7 +864,7 @@ function checkRemainingSuccess(json) {
   }
 
   if( onlyInventory || currentProduct.id.type !== 'ean' )
-    initProductsWithoutEan();
+    initProductsList();
 
   tab( 'success' );
   window.setTimeout(resumeScanning, 1500);
@@ -872,7 +872,8 @@ function checkRemainingSuccess(json) {
 
 var CodeScanner = {
   RunState: {
-    Stopped: 0
+    UnInit: -1
+  , Stopped: 0
   , Running: 1
   , Paused: 2
   },
@@ -884,13 +885,14 @@ var CodeScanner = {
       this.resume();
       return;
     }
-    this.runState = this.RunState.Running;
 
     var self = this;
     Quagga.init(this.state, function(err) {
       if (err) {
-          return self.handleError(err);
+        self.runState = self.RunState.UnInit;
+        return self.handleError(err);
       }
+      self.runState = self.RunState.Running;
       //Quagga.registerResultCollector(resultCollector);
       //App.attachListeners();
       self.checkCapabilities();
@@ -902,6 +904,8 @@ var CodeScanner = {
   },
   checkCapabilities: function() {
     var track = Quagga.CameraAccess.getActiveTrack();
+    if( ! track )
+      return;
     var capabilities = {};
     if (typeof track.getCapabilities === 'function') {
         capabilities = track.getCapabilities();
@@ -913,6 +917,8 @@ var CodeScanner = {
     track.applyConstraints( {advanced:[{zoom: 4}]} );
   },
   resume: function() {
+    if( this.runState === this.RunState.UnInit )
+      return;
     if( this.runState === this.RunState.Stopped ) {
       this.start();
       return;
@@ -930,12 +936,14 @@ var CodeScanner = {
     Quagga.pause();
   },
   stop: function() {
+    if( this.runState === this.RunState.UnInit )
+      return;
     if( this.runState === this.RunState.Stopped )
       return;
     this.runState = this.RunState.Stopped;
     Quagga.stop();
   },
-  runState: 0 /* RunState.Stopped */,
+  runState: -1 /* RunState.UnInit */,
   state: {
     inputStream: {
       type : "LiveStream",
@@ -1008,7 +1016,7 @@ function handleVisibilityChange() {
 function onDomReady() {
   evaluateDom();
   initBasarkaufbon();
-  initProductsWithoutEan();
+  initProductsList();
 
   if (visibilityApi)
     document.observe(visibilityApi.visibilityChange, handleVisibilityChange);
@@ -1089,7 +1097,7 @@ function onDomReady() {
 
   $('button_check-remaining_skip').observe( 'click', () => {
     if( !onlyInventory && currentProduct.id.type !== 'ean' )
-      initProductsWithoutEan();
+      initProductsList();
     if( onlyInventory ) {
       resumeScanning();
       return;
