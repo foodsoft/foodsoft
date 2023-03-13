@@ -107,13 +107,13 @@ function form_row_text( $label = 'Notiz:', $fieldname = 'notiz', $size = 60, $in
 //
 //////////////////////////////////////////////////////////////////
 
-function form_finish_transaction( $transaction_id ) {
+function form_finish_transaction( $transaction_id, $valuta ) {
   global $input_event_handlers;
   open_form( '', "action=finish_transaction,transaction_id=$transaction_id" );
     open_table('layout');
       form_row_konto();
       form_row_kontoauszug();
-      form_row_date( 'Valuta:', 'valuta' );
+      form_row_date( 'Valuta:', 'valuta', $valuta );
       open_tr();
         open_td( 'right', "colspan='2'" );
         echo "Best&auml;tigen: <input type='checkbox' name='confirm' value='yes' $input_event_handlers>";

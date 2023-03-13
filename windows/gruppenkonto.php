@@ -272,7 +272,7 @@ open_table('list');
           if( $meinkonto ) {
             div_msg( 'alert', 'noch nich verbucht' );
           } else {
-            form_finish_transaction( $konto_row['id'] );
+            form_finish_transaction( $konto_row['id'], $konto_row['valuta'] );
           }
         }
         if( $konto_row['type'] == TRANSAKTION_TYP_PFANDSALDO ) {

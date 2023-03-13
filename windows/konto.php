@@ -157,7 +157,7 @@ open_table('layout hfill' );
             open_td( 'number', '', price_view( $trans['summe'] ) );
             open_td();
               if( $editable ) {
-                form_finish_transaction( $trans['id'] );
+                form_finish_transaction( $trans['id'], $trans['valuta'] );
                 echo "<hr>";
                 open_div( 'right', '', fc_action( array( 'title' => 'diese ungebuchte Gutschrift stornieren', 'text' => 'löschen'
                                                        , 'class' => 'button drop', 'confirm' => 'Gutschrift wirklich löschen?' )
