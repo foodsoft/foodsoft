@@ -1,5 +1,5 @@
-//  das  javascript der foodsoft  
-// copyright Fc Schinke09 2006 
+//  das  javascript der foodsoft
+// copyright Fc Schinke09 2006
 
 
 
@@ -10,7 +10,7 @@ function checkAll( form_id ) {
       if (o[i].type == 'checkbox')
         o[i].checked = 1;
     }
-  }	
+  }
   on_change( form_id );
   // if( s = document.getElementById('checkall_'+form_id) )
   //   s.className = 'button inactive';
@@ -25,7 +25,7 @@ function uncheckAll( form_id ) {
       if (o[i].type == 'checkbox')
         o[i].checked = 0;
     }
-  }	
+  }
   on_change( form_id );
   // if( s = document.getElementById('uncheckall_'+form_id) )
   //   s.className = 'button inactive';
@@ -115,7 +115,7 @@ function updateWindowHeight() {
   var footbar = $('footbar');
   var footbarHeight = footbar.offsetHeight;
   var windowHeight = document.viewport.getHeight();
-  
+
   scroller.setPageHeight((1-overlap) * (windowHeight - footbarHeight - spaceForScrollbar));
 }
 
@@ -144,15 +144,15 @@ function installTextFieldChangeHandler(element, handler, captureEnter) {
   element.on('change', function() {handler(false);} );
   if (captureEnter)
     element.on(
-        'keypress', 
+        'keypress',
         function(event) {handleTextFieldKeyPress(event, handler);});
 }
 
 // experimenteller code - funktioniert noch nicht richtig...
-// 
+//
 // var child_windows = new Array();
 // var child_counter = 0;
-// 
+//
 // function window_open( url, name, options, focus ) {
 //   var w, i;
 //   w = window.open( url, name, options );
@@ -165,8 +165,8 @@ function installTextFieldChangeHandler(element, handler, captureEnter) {
 //   child_windows[ child_counter++ ] = w;
 //   return w;
 // }
-//   
-// 
+//
+//
 // function notify_down() {
 //   var m;
 //   m = document.forms['update_form'].message.value;
@@ -176,7 +176,7 @@ function installTextFieldChangeHandler(element, handler, captureEnter) {
 //       child_windows[i].notify_down();
 //   }
 // }
-// 
+//
 // function notify_up() {
 //   var m;
 //   m = document.forms['update_form'].message.value;
@@ -210,20 +210,20 @@ var Scroller = Class.create({
   },
   handleKey: function(event, what) {
     // capture only page up / down
-    if (event.keyCode !== Event.KEY_PAGEUP 
+    if (event.keyCode !== Event.KEY_PAGEUP
         && event.keyCode !== Event.KEY_PAGEDOWN
         || event.altKey || event.ctrlKey || event.shiftKey) {
       return;
     }
-    
+
     // check target, only want top-level scrolls
     if (this.isInNestedScrollview(event.target)) {
       return;
     }
 
     event.stop();
-    
-    if (this.mKeyCode === event.keyCode 
+
+    if (this.mKeyCode === event.keyCode
         && this.mKeyState === Scroller.DOWN
         && what === Scroller.PRESS) {
       // discard first press after down:
@@ -232,10 +232,10 @@ var Scroller = Class.create({
       this.mKeyState = what;
       return;
     }
-    
+
     this.mKeyState = what;
     this.mKeyCode = event.keyCode;
-    
+
     if (what === Scroller.UP) {
       return;
     }
@@ -286,7 +286,7 @@ window.scroller = new Scroller();
 
 var MagicCalculator = Class.create(
 {
-  initialize: function(orderId, productId, distMult, endPrice) 
+  initialize: function(orderId, productId, distMult, endPrice)
   {
     this.mOrderId = orderId;
     this.mProductId = productId;
@@ -304,7 +304,7 @@ var MagicCalculator = Class.create(
     this.mUiEnabled = false;
     this.mNotInteger = false;
   },
-  addGroupField: function(id) 
+  addGroupField: function(id)
   {
     this.mGroupFields.push(id);
   },
@@ -324,7 +324,7 @@ var MagicCalculator = Class.create(
       return Math.round(resultFloat*1000)/1000;
     }
     return resultInt;
-  }, 
+  },
   fetchValues: function()
   {
     this.mNotInteger = false;
@@ -359,9 +359,9 @@ var MagicCalculator = Class.create(
     if (isNaN(this.mBazaarTarget)) {
       return;
     }
-    
+
     var fixPointFactor = (this.mNotInteger) ? 1000 : 1;
-    
+
     var groupsSum = 0;
     this.mGroupValues.each(function(x) {groupsSum += x});
     var groupsTarget = this.mTotal - this.mBazaarTarget - this.mTrashValue;
@@ -370,13 +370,13 @@ var MagicCalculator = Class.create(
     var groupValuesExact = this.mGroupValues.collect(function(x) {
       return x * ratio;
     });
-    this.mResultGroupValues = groupValuesExact.collect(function(x) { 
-      var newX = Math.round(x*fixPointFactor) / fixPointFactor; 
+    this.mResultGroupValues = groupValuesExact.collect(function(x) {
+      var newX = Math.round(x*fixPointFactor) / fixPointFactor;
       groupsSum += newX;
-      return newX; 
+      return newX;
     });
-    
-    
+
+
     // in case of decimals, do the rounding on 1e-3, scale up, do it in integer, then scale down
     this.mBazaarValue = Math.round((this.mTotal - this.mTrashValue - groupsSum) * fixPointFactor);
     this.mBazaarTarget = Math.round(this.mBazaarTarget * fixPointFactor);
@@ -394,7 +394,7 @@ var MagicCalculator = Class.create(
           continue;
         }
         var badness = Math.abs(
-            (this.mResultGroupValues[i] + (roundingDistribution[i] + direction)/fixPointFactor - groupValuesExact[i]) 
+            (this.mResultGroupValues[i] + (roundingDistribution[i] + direction)/fixPointFactor - groupValuesExact[i])
                 / groupValuesExact[i]);
         if (i == 0) {
           minBadness = badness;
@@ -408,7 +408,7 @@ var MagicCalculator = Class.create(
       roundingDistribution[iMinBadness] += direction;
       this.mBazaarValue -= direction;
     }
-    
+
     for (var i = 0; i < this.mGroupValues.length; ++i) {
       this.mResultGroupValues[i] += roundingDistribution[i] / fixPointFactor;
     }
@@ -487,9 +487,9 @@ var SearchableSelect = Class.create({
     this.mListEntries = [];
     this.mVisibleEntries = [];
     this.mCaseSensitive = false;
-    
+
     installTextFieldChangeHandler(
-        this.mSearchInput, 
+        this.mSearchInput,
         function() {self.filterList();});
     this.mSelectElement.on('change', function() {self.emitSelection();});
   },
@@ -504,7 +504,7 @@ var SearchableSelect = Class.create({
   setEntries: function(entries) {
     var self = this;
     this.mListEntries = entries.collect(function(entry) {
-      return { 
+      return {
         data: entry,
         option: document.createElement('option')
       };
@@ -607,7 +607,7 @@ var SearchableSelect = Class.create({
     this.mVisibleEntries.each(function(entry) {
       self.mSelectElement.appendChild(entry.option);
       if (currentMemo === entry.option.memo) {
-        self.mSelectElement.selectedIndex 
+        self.mSelectElement.selectedIndex
             = self.mSelectElement.options.length - 1;
         self.emitSelection();
       }
@@ -615,8 +615,8 @@ var SearchableSelect = Class.create({
   },
   currentMemo: function() {
     var selectedIndex = this.mSelectElement.selectedIndex;
-    return selectedIndex < 0 
-        ? null 
+    return selectedIndex < 0
+        ? null
         : this.mSelectElement.options[selectedIndex].memo;
   },
   emitSelection: function() {
@@ -626,4 +626,18 @@ var SearchableSelect = Class.create({
 
 function disableAutocomplete(element) {
   element.setAttribute('autocomplete', 'off');
+}
+
+function extra_confirm(prompt, requiredConfirmation) {
+  requiredConfirmation = requiredConfirmation.trim();
+  const confirmation = window.prompt(prompt + `\nZur Bestätigung bitte "${requiredConfirmation}" eingeben:`)?.trim();
+  if( confirmation === null )
+    return false;
+  const result = confirmation.toLocaleUpperCase() === requiredConfirmation.toLocaleUpperCase();
+  if( !result )
+    if( confirmation === '' )
+      window.alert(`Nicht bestätigt! Bestätigung "${requiredConfirmation.toLocaleUpperCase()}" fehlte.`);
+    else
+      window.alert(`Nicht bestätigt! "${confirmation.toLocaleUpperCase()}" ist nicht "${requiredConfirmation.toLocaleUpperCase()}".`);
+  return result;
 }
