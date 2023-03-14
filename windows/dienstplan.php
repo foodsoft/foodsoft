@@ -18,6 +18,7 @@ if( $action ) {
   $action = $parts[0];
   if( count( $parts ) > 1 ) {
     $id = sprintf( '%u', $parts[1] );
+    $tausch_id = sprintf( '%u', $parts[2] ?? 0 );
   } else {
     $id = 0;
   }
@@ -79,11 +80,11 @@ switch( $action ) {
     $abgesprochen = $message;
     $dienst = sql_dienst( $id );
     if( $dienst["status"]=="Offen" || $abgesprochen ) {
-      sql_dienst_akzeptieren( $id, $abgesprochen );
+      sql_dienst_akzeptieren( $id, 0, $abgesprochen );
     } else {
       open_div( 'warn' );
       ?> Dies müsste mit der andern Gruppe abgesprochen sein oder die Gruppe ist nach mehreren
-         Versuchen (Telefon und Email) nicht erreichbar 
+         Versuchen (Telefon und Email) nicht erreichbar
       <?php
       echo fc_action( 'class=button,text=Klar', sprintf( 'action=uebernehmen_%u,message=1', $id ) );
       close_div();
@@ -98,30 +99,38 @@ switch( $action ) {
     need( $id );
     $dienst = sql_dienst( $id );
     need( ! $dienst['soon'] );
-    get_http_var( 'tausch_id', 'U', false );
+    if( ! $tausch_id )
+      get_http_var( 'tausch_id', 'U', false );
     if( ! $tausch_id ){
       $tauschmoeglichkeiten = sql_dienste_tauschmoeglichkeiten( $id );
+      $tauschmoeglichkeiten_set = array_reduce( $tauschmoeglichkeiten, function( $carry, $d ) {
+         $carry[$d['id']] = true;
+         return $carry;
+      }, [] );
       if( ! $tauschmoeglichkeiten ) {
         sql_dienst_wird_offen( $id );
         open_div( 'warn', '', 'Keine Tauschmöglichkeit: Dienst ist jetzt offen!' );
+        $action = '';
       } else {
-        open_div( 'warn' );
-          open_form( '', sprintf( 'action=abtauschen_%u', $id ) );
-            open_div( 'warn' );
-              echo 'Bitte Ausweichdatum auswählen: ';
-              open_select( 'tausch_id' );
-                echo "<option value=''>(bitte auswaehlen)</option>";
-                foreach( $tauschmoeglichkeiten as $t ) {
-                  echo "<option value={$t['id']}>{$t['lieferdatum']}</option>";
-                }
-              close_select();
-              submission_button( 'Dieses Datum geht' );
-            close_div();
-          close_form();
-        close_div();
+        open_div( 'warn', '', 'Bitte unten Tauschmöglichkeit auswählen!' );
+        // open_div( 'warn' );
+        //   open_form( '', sprintf( 'action=abtauschen_%u', $id ) );
+        //     open_div( 'warn' );
+        //       echo 'Bitte Ausweichdatum auswählen: ';
+        //       open_select( 'tausch_id' );
+        //         echo "<option value=''>(bitte auswaehlen)</option>";
+        //         foreach( $tauschmoeglichkeiten as $t ) {
+        //           echo "<option value={$t['id']}>{$t['lieferdatum']}</option>";
+        //         }
+        //       close_select();
+        //       submission_button( 'Dieses Datum geht' );
+        //     close_div();
+        //   close_form();
+        // close_div();
       }
     } else {
       sql_dienst_abtauschen( $id, $tausch_id );
+      $action = '';
     }
     break;
   case 'akzeptieren':
@@ -261,7 +270,13 @@ open_table( 'list' );
             open_tr();
             open_td();
               // echo "{$dienst['id']} , {$dienst['soon']}";
-              dienstplan_eintrag_view( $dienst['id'] );
+              if( $action === 'abtauschen' ) {
+                if( $tauschmoeglichkeiten_set[$dienst['id']] ?? false )
+                  dienstplan_eintrag_view( $dienst['id'], true, $id );
+                else
+                  dienstplan_eintrag_view( $dienst['id'], false, $id );
+              } else
+                dienstplan_eintrag_view( $dienst['id'] );
               smallskip();
             $dienst = next( $dienste );
           }

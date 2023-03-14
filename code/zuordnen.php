@@ -377,6 +377,7 @@ function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
   $filter = "
         ( dienste.dienst = '{$dienst['dienst']}' )
     AND ( dienste.id != $dienst_id )
+    AND ( dienste.gruppen_id != {$dienst['gruppen_id']} )
     AND ( NOT dienste.geleistet )
     AND ( dienste.lieferdatum >= curdate() )
     AND ( dienste.lieferdatum != '{$dienst['lieferdatum']}' )
@@ -389,7 +390,7 @@ function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
 /**
  *  Dienst Akzeptieren (oder auch bestaetigen)
  */
-function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false, $status_neu = 'Akzeptiert' ) {
+function sql_dienst_akzeptieren( $dienst_id, $mitglied_id = 0, $abgesprochen = false, $status_neu = 'Akzeptiert' ) {
   global $login_gruppen_id;
 
   $dienst = sql_dienst( $dienst_id );
@@ -406,19 +407,18 @@ function sql_dienst_akzeptieren( $dienst_id, $abgesprochen = false, $status_neu 
     default:
       error( "sql_dienst_akzeptieren(): falscher Status!" );
   }
-  sql_update( 'dienste', $dienst_id, array( 'status' => $status_neu ) );
+  $updates = [ 'status' => $status_neu, 'gruppen_id' => $login_gruppen_id ];
   if( $dienst['gruppen_id'] != $login_gruppen_id ) {
-    $mitglieder = sql_gruppe_mitglieder( $login_gruppen_id );
-    if( count( $mitglieder ) == 1 ) {
-      $mitglied = current( $mitglieder );
-      $m_id = $mitglied['gruppenmitglieder_id'];
-    } else {
-      $m_id = 0;
+    if( ! $mitglied_id ) {
+      $mitglieder = sql_gruppe_mitglieder( $login_gruppen_id );
+      if( count( $mitglieder ) == 1 ) {
+        $mitglied = current( $mitglieder );
+        $mitglied_id = $mitglied['gruppenmitglieder_id'];
+      }
     }
-    sql_update( 'dienste', $dienst_id, array(
-      'gruppen_id' => $login_gruppen_id, 'gruppenmitglieder_id' => $m_id
-    ) );
+    $updates['gruppenmitglieder_id'] = $mitglied_id;
   }
+  sql_update( 'dienste', $dienst_id, $updates );
 }
 
 /**
@@ -448,12 +448,13 @@ function sql_dienst_abtauschen( $dienst_id, $tausch_id ) {
   $ausweichdienste = sql_dienste_tauschmoeglichkeiten( $dienst_id );
   foreach( $ausweichdienste as $h ) {
     if( $h['id'] == $tausch_id ) {
-      sql_dienst_akzeptieren( $h['id'] );
-      return sql_update( 'dienste', $dienst_id, array(
+      sql_dienst_akzeptieren( $h['id'], $dienst['gruppenmitglieder_id'] );
+      sql_update( 'dienste', $dienst_id, array(
         'gruppen_id' => $h['gruppen_id']
       , 'gruppenmitglieder_id' => $h['gruppenmitglieder_id']
       , 'status' => $h['status']
       ) );
+      return;
     }
   }
   error( "Diensttausch fehlgeschlagen: kein gueltiger Ausweichdienst gewaehlt" );
