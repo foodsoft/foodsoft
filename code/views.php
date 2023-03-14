@@ -267,12 +267,10 @@ function dienst_view3($row){
   close_form();
 }
 
-
-
 /**
  *  Zeigt einen Dienst und die möglichen Aktionen
  */
-function dienstplan_eintrag_view( $dienst_id ) {
+function dienstplan_eintrag_view( $dienst_id, $show_buttons = true, $tausch_id = false ) {
   global $login_gruppen_id, $readonly;
 
   $dienst = sql_dienst( $dienst_id );
@@ -283,9 +281,15 @@ function dienstplan_eintrag_view( $dienst_id ) {
   $historic = $dienst['historic'];
   $geleistet = $dienst['geleistet'];
 
-  $show_buttons = ! ( $readonly || $geleistet || hat_dienst(5) || $historic );
+  $show_buttons = $show_buttons && ! ( $readonly || $geleistet || hat_dienst(5) || $historic );
+  $swap_only = $show_buttons && $tausch_id;
   $dienst_view_editable = ( ! $readonly and ! $geleistet and $dienst['editable'] );
-  $geleistet_button = ( $over and ! $readonly and ! $geleistet );
+  // $geleistet_button = ( $over and ! $readonly and ! $geleistet );
+
+  $gruppen_nr = sql_gruppennummer( $dienst['gruppen_id'] );
+
+  if( $tausch_id )
+    $tausch_dienst = sql_dienst( $tausch_id );
 
   if( hat_dienst(5) ) {
     if( $soon ) {
@@ -317,10 +321,17 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "right $class" );
         // smallskip();
         if( $show_buttons ) {
-          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
-                        . 'confirm=Diesen offenen Dienst ZUSÄTZLICH &uuml;bernehmen?,'
-                        . 'extra_confirm=JA'
-                         , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
+          if( $swap_only )
+            echo fc_action( 'update,class=button,text=hierher tauschen,'
+                          . 'confirm=Diesen offenen Dienst zum Tausch bestätigen?\n'
+                          . "Alter Termin: {$tausch_dienst['lieferdatum']}\\n"
+                          . "Neuer Termin: {$dienst['lieferdatum']}"
+                          , sprintf( 'action=abtauschen_%u_%u,message=1', $tausch_id, $dienst_id ) );
+          else
+            echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
+                          . 'confirm=Diesen offenen Dienst ZUSÄTZLICH &uuml;bernehmen?,'
+                          . 'extra_confirm=JA'
+                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
           smallskip();
         break;
@@ -352,12 +363,20 @@ function dienstplan_eintrag_view( $dienst_id ) {
           open_td( "right $class" );
           // smallskip();
           if( $show_buttons ) {
-            echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
-                          . 'confirm=Dieser Dienst ist für Gruppe '.sql_gruppennummer($dienst['gruppen_id']).' vorgeschlagen. '
-                          . 'Das wäre ein ZUSÄTZLICHER Dienst. --- WIRKLICH übernehmen?\n'
-                          . 'Oder lieber über &quot;geht nicht&quot; tauschen?,'
-                          . 'extra_confirm=WIRKLICH'
-                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
+            if( $swap_only )
+              echo fc_action( 'update,class=button,text=hierher tauschen,'
+                            . 'confirm=Diesen Dienst zum Tausch bestätigen?\n'
+                            . "Alter Termin: {$tausch_dienst['lieferdatum']}\\n"
+                            . "Neuer Termin: {$dienst['lieferdatum']}\\n"
+                            . "Tausch mit {$dienst['vorname']} ($gruppen_nr)"
+                              , sprintf( 'action=abtauschen_%u_%u,message=1', $tausch_id, $dienst_id ) );
+            else
+              echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
+              . "confirm=Dieser Dienst ist für Gruppe $gruppen_nr vorgeschlagen. "
+              . 'Das wäre ein ZUSÄTZLICHER Dienst. --- WIRKLICH übernehmen?\n'
+              . 'Oder lieber über &quot;geht nicht&quot; tauschen?,'
+              . 'extra_confirm=WIRKLICH'
+              , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
           }
         }
         break;
@@ -375,7 +394,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
         // smallskip();
         if( $show_buttons and ( $login_gruppen_id != $dienst['gruppen_id'] ) ) {
           echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
-                        . 'confirm=Bereits akzeptierten Dienst von Gruppe '.sql_gruppennummer($dienst['gruppen_id']).' ZUSÄTZLICH &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?,'
+                        . "confirm=Bereits akzeptierten Dienst von Gruppe $gruppen_nr ZUSÄTZLICH &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?,"
                         . 'extra_confirm=JA'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
@@ -388,7 +407,7 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "right $class" );
         if( $show_buttons and ( $login_gruppen_id != $dienst['gruppen_id'] ) and ( ! $dienst['over'] ) ) {
           echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
-                        . 'confirm=Diesen bereits BESTAETIGTEN Dienst von Gruppe '.sql_gruppennummer($dienst['gruppen_id']).' ZUSÄTZLICH &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?,'
+                        . "confirm=Diesen bereits BESTAETIGTEN Dienst von Gruppe $gruppen_nr ZUSÄTZLICH &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?,"
                         . 'extra_confirm=JA'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
@@ -398,7 +417,9 @@ function dienstplan_eintrag_view( $dienst_id ) {
         //                 , sprintf( 'action=wirdOffen_%u', $dienst_id ) );
         // }
         break;
-    }
+    } // switch( $dienst['status'] )
+    if( $dienst_id === $tausch_id )
+      html_button('ursprünglicher Dienst', 'disabled' );
     // if( $geleistet_button ) {
     //   if( hat_dienst(5) or ( $dienst['gruppen_id'] == $login_gruppen_id ) ) {
     //     open_tr
@@ -505,7 +526,7 @@ function dienst_liste( $gruppen_id, $rueckbestaetigen_lassen = 0 ) {
     get_http_var( 'action', 'w', '' );
     get_http_var( 'dienst_id', 'U', 0 );
     if( ( $action == 'dienstBestaetigen' ) and ( $dienst_id > 0 ) ) {
-      sql_dienst_akzeptieren( $dienst_id, false, 'Bestaetigt' );
+      sql_dienst_akzeptieren( $dienst_id, 0, false, 'Bestaetigt' );
     } else if ( $action == 'muteReconfirmation' ) {
       sql_dienst_mute_reconfirmation( $session_id );
       $reconfirmation_muted = TRUE;
@@ -2484,9 +2505,9 @@ function catalogue_acronym_view( $editable ) {
       if ($editable) {
         medskip();
         open_div();
-          html_button('Neu', 'addAcronym();');
-          html_button('Zurücksetzen', 'resetEditData();');
-          html_button('Löschen', 'deleteAcronym();');
+          html_button('Neu', '', 'addAcronym();');
+          html_button('Zurücksetzen', '', 'resetEditData();');
+          html_button('Löschen', '', 'deleteAcronym();');
         close_div();
       }
     close_fieldset();

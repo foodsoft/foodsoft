@@ -411,8 +411,8 @@ function floating_submission_button() {
   close_tag('span');
 }
 
-function html_button( $text, $js = '', $attrib = '' ) {
-  echo "<a href='javascript:$js' class='button' $attrib title='$text'>$text</a>";
+function html_button( $text, $class = '', $js = '', $attrib = '' ) {
+  echo "<a href='javascript:$js' class='button $class' $attrib title='$text'>$text</a>";
 }
 
 function submission_button( $text = '', $active = true, $confirm = '' ) {
