@@ -35,7 +35,7 @@ $small_window_options = array(
 // these parameters will never be transmitted via GET or POST; rather, they determine
 // how the link itself will look and behave:
 //
-$pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 'anchor', 'url', 'context', 'enctype' );
+$pseudo_parameters = array( 'img', 'attr', 'title', 'text', 'class', 'confirm', 'extra_confirm', 'anchor', 'url', 'context', 'enctype' );
 
 //
 // internal functions (not supposed to be called by consumers):
@@ -529,7 +529,10 @@ function fc_link( $window = '', $parameters = array(), $options = array() ) {
 
   $confirm = '';
   if( isset( $parameters['confirm'] ) )
-    $confirm = "if( confirm( '{$parameters['confirm']}' ) ) ";
+    if( isset( $parameters['extra_confirm'] ) )
+      $confirm = "if( extra_confirm( '{$parameters['confirm']}', '{$parameters['extra_confirm']}' ) ) ";
+    else
+      $confirm = "if( confirm( '{$parameters['confirm']}' ) ) ";
 
   $window_id = adefault( $parameters, 'window_id', '' );
   $js_window_name = $window_id;
@@ -609,7 +612,10 @@ function fc_action( $get_parameters = array(), $post_parameters = array(), $opti
   $context = adefault( $get_parameters, 'context', 'a' );
 
   if( ( $confirm = adefault( $get_parameters, 'confirm', '' ) ) )
-    $confirm = " if( confirm( '$confirm' ) ) ";
+    if( ( $extra_confirm = adefault( $get_parameters, 'extra_confirm', '' ) ) )
+      $confirm = " if( extra_confirm( '$confirm', '$extra_confirm' ) ) ";
+    else
+      $confirm = " if( confirm( '$confirm' ) ) ";
 
   if( isset( $get_parameters['update'] ) ) {
     $action = adefault( $post_parameters, 'action', '' );
