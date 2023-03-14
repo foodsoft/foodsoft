@@ -317,7 +317,9 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "right $class" );
         // smallskip();
         if( $show_buttons ) {
-          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Diesen offenen Dienst &uuml;bernehmen?'
+          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
+                        . 'confirm=Diesen offenen Dienst ZUSÄTZLICH &uuml;bernehmen?,'
+                        . 'extra_confirm=JA'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
           smallskip();
@@ -350,7 +352,11 @@ function dienstplan_eintrag_view( $dienst_id ) {
           open_td( "right $class" );
           // smallskip();
           if( $show_buttons ) {
-            echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Dieser Dienst ist fuer andere Gruppe vorgeschlagen --- &uuml;bernehmen?'
+            echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
+                          . 'confirm=Dieser Dienst ist für Gruppe '.sql_gruppennummer($dienst['gruppen_id']).' vorgeschlagen. '
+                          . 'Das wäre ein ZUSÄTZLICHER Dienst. --- WIRKLICH übernehmen?\n'
+                          . 'Oder lieber über &quot;geht nicht&quot; tauschen?,'
+                          . 'extra_confirm=WIRKLICH'
                           , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
           }
         }
@@ -368,7 +374,9 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "right $class" );
         // smallskip();
         if( $show_buttons and ( $login_gruppen_id != $dienst['gruppen_id'] ) ) {
-          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Bereits akzeptierten Dienst von andere Gruppe &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?'
+          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
+                        . 'confirm=Bereits akzeptierten Dienst von Gruppe '.sql_gruppennummer($dienst['gruppen_id']).' ZUSÄTZLICH &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?,'
+                        . 'extra_confirm=JA'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
         // if( $show_buttons and ( $login_gruppen_id == $dienst['gruppen_id'] ) ) {
@@ -379,7 +387,9 @@ function dienstplan_eintrag_view( $dienst_id ) {
         open_td( "left $class", '', 'bestaetigt' );
         open_td( "right $class" );
         if( $show_buttons and ( $login_gruppen_id != $dienst['gruppen_id'] ) and ( ! $dienst['over'] ) ) {
-          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,confirm=Diesen bereits BESTAETIGTEN Dienst von andere Gruppe &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?'
+          echo fc_action( 'update,class=button smalll,text=&uuml;bernehmen,'
+                        . 'confirm=Diesen bereits BESTAETIGTEN Dienst von Gruppe '.sql_gruppennummer($dienst['gruppen_id']).' ZUSÄTZLICH &uuml;bernehmen: ist das mit der anderen Gruppe abgesprochen?,'
+                        . 'extra_confirm=JA'
                          , sprintf( 'action=uebernehmen_%u,message=1', $dienst_id ) );
         }
         // smallskip();
