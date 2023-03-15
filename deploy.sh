@@ -80,7 +80,7 @@ chmod 644 img/question_small.png
 chmod 644 img/reload_black.gif
 chmod 644 index.php
 chmod 644 js/Acronyms.js
-chmod 644 js/foodsoft.js
+chmod 644 js/foodsoft-1.js
 chmod 644 js/lib/prototype.js
 chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
