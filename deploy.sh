@@ -39,6 +39,14 @@ chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
 chmod 755 deploy.sh
+chmod 644 doc/zuteilung-negativ-toleranz.svg
+chmod 644 dokuwiki-data/media/foodsoft/basarkauf_barcode.png
+chmod 644 dokuwiki-data/media/foodsoft/basarkauf_inventur_kreuz.png
+chmod 644 dokuwiki-data/media/foodsoft/basarkauf_kauf_kreuz.png
+chmod 644 dokuwiki-data/media/foodsoft/basarkauf_loeschen.png
+chmod 644 dokuwiki-data/media/foodsoft/basarkauf_mikrofon.png
+chmod 644 dokuwiki-data/media/foodsoft/basarkauf_warenkorb.png
+chmod 644 dokuwiki-data/pages/foodsoft/basar_kauf.txt
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/README
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/auth/authentication.php
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/lang/en/lang.php
@@ -80,7 +88,10 @@ chmod 644 img/question_small.png
 chmod 644 img/reload_black.gif
 chmod 644 index.php
 chmod 644 js/Acronyms.js
-chmod 644 js/foodsoft.js
+chmod 644 js/foodsoft-1.js
+chmod 644 js/lib/papaparse.js
+chmod 644 js/lib/papaparse.js-LICENSE
+chmod 644 js/lib/papaparse.min.js
 chmod 644 js/lib/prototype.js
 chmod 644 js/lib/quagga.js
 chmod 644 js/lib/quagga.js-LICENSE
@@ -89,6 +100,7 @@ chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
 chmod 644 links_und_parameter
 chmod 755 setup.php
+chmod 644 sql/export_buchungsregeln.sql
 chmod 644 sql/mwst.sql
 chmod 644 structure.php
 chmod 644 templates/bestellschein.tex

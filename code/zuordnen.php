@@ -381,6 +381,12 @@ function sql_dienste_tauschmoeglichkeiten( $dienst_id ) {
     AND ( NOT dienste.geleistet )
     AND ( dienste.lieferdatum >= curdate() )
     AND ( dienste.lieferdatum != '{$dienst['lieferdatum']}' )
+    AND ( {$dienst['gruppenmitglieder_id']} = 0
+          OR dienste.gruppenmitglieder_id = 0
+          OR NOT EXISTS( SELECT 1 FROM dienste AS other
+            WHERE other.id != dienste.id
+            AND other.lieferdatum = dienste.lieferdatum
+            AND other.gruppenmitglieder_id = {$dienst['gruppenmitglieder_id']} ) )
   ";
   $r = sql_dienste( $filter . " AND ( dienste.status in ( 'Offen', 'Vorgeschlagen' ) ) " );
   return $r;
