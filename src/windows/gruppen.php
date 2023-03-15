@@ -108,12 +108,16 @@ open_table('list');
   if( hat_dienst(5) ) {
     open_th( '', 'title="Letzte Anmeldung der Gruppe in der Foodsoft"', 'letztes login' );
     open_th( '', 'title="Lieferdatum der letzten Bestellung, an der sich die Gruppe beteiligte"', 'letzte Bestellung' );
+    open_th( '', 'title="Letzter von der Gruppe geleisteter Dienst"', 'letzter Dienst' );
   }
   open_th( '','','Aktionen' );
 
   $summe = 0;
   $mitglieder_summe = 0;
   $gruppen = sql_gruppen( $optionen & GRUPPEN_OPT_INAKTIV ? array() : array( 'aktiv' => 1 ) );
+  if ( hat_dienst(5) ) {
+    $freigestellte_gruppen = sql_freigestellte_gruppen();
+  }
   foreach( $gruppen as $gruppe ) {
     $id = $gruppe['id'];
     if( in_array( $id, $specialgroups ) )
@@ -157,6 +161,14 @@ open_table('list');
           ) ) );
         else
           open_td( '', '', '(nie)' );
+        $letzter_dienst = sql_letzter_gruppen_dienst( $id );
+        if ($letzter_dienst) {
+          # adjust formatting if a certain threshold is crossed
+          open_td('', '', $letzter_dienst['lieferdatum'] );
+        } else {
+          $ist_freigestellt = $freigestellte_gruppen ? in_array($id, $freigestellte_gruppen) : FALSE;
+          open_td('', '', $ist_freigestellt ? '(freigestellt)' : '(nie)');
+        }
       }
 
       open_td();

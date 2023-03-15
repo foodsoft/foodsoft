@@ -430,6 +430,22 @@ function select_dienste( $filter = 'true' ) {
   ";
 }
 
+function sql_letzter_gruppen_dienst( $gruppen_id ) {
+  return sql_select_single_row(
+    "SELECT * FROM dienste WHERE dienste.gruppen_id = $gruppen_id ORDER BY lieferdatum DESC LIMIT 1",
+    true,
+  );
+}
+
+/* Returns true if any of the group members is exempt from doing jobs */
+function sql_freigestellte_gruppen() {
+  return array_column(mysql2array( doSql(
+    "SELECT DISTINCT(`gruppen_id`) FROM gruppenmitglieder WHERE gruppenmitglieder.id = ANY (SELECT id FROM gruppenmitglieder WHERE diensteinteilung = 'freigestellt')",
+    LEVEL_ALL,
+    "error while getting groups exempt from regular jobs"
+  )), "gruppen_id", );
+}
+
 function sql_dienste( $filter = 'true', $orderby = 'lieferdatum ASC, dienst DESC' ) {
   return mysql2array( doSql(
     select_dienste( $filter ) . " ORDER BY $orderby "
@@ -562,7 +578,6 @@ function sql_dienst_person_aendern( $dienst_id, $person_id ) {
 }
 
 function sql_dienst_gruppe_aendern( $dienst_id, $gruppen_id ) {
-  global $login_gruppen_id;
   $dienst = sql_dienst( $dienst_id );
   if( $gruppen_id == $dienst['gruppen_id'] )
     return;
