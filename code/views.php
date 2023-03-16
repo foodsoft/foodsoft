@@ -704,7 +704,7 @@ function pick_group_text() {
              "<th title='Aufschlag der FC in Prozent'>Aufschlag</th>
               <th colspan='2' title='mit MWSt und ggf. Pfand und Aufschlag der FC'>Endpreis</th>"
            : "<th colspan='2' title='mit MWSt und ggf. Pfand'>V-Preis</th>" ) ."
-    <th colspan='2'>Inventur</th>"
+    <th colspan='3'>Inventur</th>"
   , ( $editAmounts ? "<th colspan='2'>Zuteilung</th>" : "" )
   );
   if( $have_aufschlag )
@@ -773,12 +773,14 @@ function pick_group_text() {
           <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>
           " . ( is_null($basar_row['inventur_menge'] )
                 ? "<td class='mult'></td>
-                   <td class='unit'></td>"
+                   <td class='unit'></td>
+                   <td></td>"
                 : (function() use ($basar_row, $kan_verteileinheit, $kan_verteilmult) {
                     $tooltip = $basar_row['inventur_zeitpunkt'] . ' (Gruppe ' . $basar_row['inventur_gruppen_id'] % 1000 . ')';
                     return "
-          <td title='$tooltip' class='mult'>" . $basar_row['inventur_menge'] * $kan_verteilmult . "</td>
-          <td title='$tooltip' class='unit'>$kan_verteileinheit</td>";
+          <td title='$tooltip' class='mult small'>" . $basar_row['inventur_menge'] * $kan_verteilmult . "</td>
+          <td title='$tooltip' class='unit small'>$kan_verteileinheit</td>
+          <td title='$tooltip' class='small'>" . explode(' ', $basar_row['inventur_zeitpunkt'])[0] . "</td>";
                 })() ) . "
           "
     , ( $editAmounts ?
@@ -811,7 +813,7 @@ function pick_group_text() {
     echo preg_replace('/&rowspan&/', $rowspan, $output, 1);
 
   open_tr('summe');
-    open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
+    open_td( 'right', $editAmounts ? "colspan='13'" : "colspan='11'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
     open_td( '', $have_aufschlag ? "colspan='5'" : "colspan='4'" );
 
