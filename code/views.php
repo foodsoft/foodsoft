@@ -1626,34 +1626,40 @@ function distribution_tabellenkopf( $status, Distribution_Druck $druck = Distrib
 function distribution_produktdaten( $status, $bestell_id, $produkt_id, Distribution_Druck $druck = Distribution_Druck::Nein ) {
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   open_tr();
-    open_th( '', ($status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'").($druck !== Distribution_Druck::Nein ? ' rowspan="2"' : ''));
-      open_div( '', "style='font-size:1.2em; margin:5px;'" );
-        echo fc_link( 'produktpreise', array(
-         'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
+    open_th( '', ($status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'").($druck === Distribution_Druck::Menge ? ' rowspan="2"' : ''));
+      open_div('', 'style="position:relative; margin:1ex; border:3px solid; border-radius:5px; float:left; width:10mm; height:10mm;"');
+        open_span('hfill small', 'style="font-weight:normal; position:absolute; bottom:0; left:0;"', 'fertig');
       close_div();
-      if ( $produkt['notiz'] ) {
-        open_div('small');
-          echo "Notiz: ", $produkt['notiz'];
+      open_div();
+        open_div( '', "style='font-size:1.2em; margin:5px;'" );
+          echo fc_link( 'produktpreise', array(
+          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
         close_div();
-      }
-      open_div('small');
-        printf( 'Gruppe %s', $produkt['produktgruppen_name'] );
-        if( $produkt['artikelnummer'] ) {
-          printf( '/ A-Nr: %s ', $produkt['artikelnummer'] );
+        if ( $produkt['notiz'] ) {
+          open_div('small');
+            echo "Notiz: ", $produkt['notiz'];
+          close_div();
         }
-        printf( "/  Netto: %.2lf/%s / Endpreis: %.2lf/%s"
-          , $produkt['nettopreis']
-          , $produkt['verteileinheit']
-          , $produkt['endpreis']
-          , $produkt['verteileinheit']
-        );
+        open_div('small');
+          printf( 'Gruppe %s', $produkt['produktgruppen_name'] );
+          if( $produkt['artikelnummer'] ) {
+            printf( '/ A-Nr: %s ', $produkt['artikelnummer'] );
+          }
+          printf( "/  Netto: %.2lf/%s / Endpreis: %.2lf/%s"
+            , $produkt['nettopreis']
+            , $produkt['verteileinheit']
+            , $produkt['endpreis']
+            , $produkt['verteileinheit']
+          );
+        close_div();
       close_div();
 
-  if( $druck !== Distribution_Druck::Nein ) {
-      open_td('', 'colspan="'.($druck->value + 2).'"');
-      open_div('', '', flag_view(false) . 'fertig verteilt');
-      open_div('', '', flag_view(false) . 'alles wie erwartet ' );
+  if( $druck === Distribution_Druck::Menge ) {
+      open_td('bottom', 'colspan="'.($druck->value + 2).'"');
+      open_div('oneline', '', flag_view(false) . 'alles wie erwartet ' );
     open_tr();
+  }
+  if( $druck !== Distribution_Druck::Nein ) {
       open_th('bottom', '', '&check;' );
       open_th('bottom', '', '&empty;');
       open_th('bottom', 'style="min-width:4em"', 'Menge');
