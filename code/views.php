@@ -644,7 +644,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
 
   if( $editAmounts ) {
     $form_id = open_form( '', 'action=basarzuteilung' );
-    $cols=17;
+    $cols=18;
 
     open_javascript();
 ?>
@@ -672,7 +672,7 @@ function pick_group_text() {
 <?php
     close_javascript();
   } else {
-    $cols=15;
+    $cols=16;
   }
 
   $basar = sql_basar( [ 'bestell_id' => $bestell_id, 'inventur' => true ], $order );
