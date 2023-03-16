@@ -236,8 +236,8 @@ setWikiHelpTopic( ':' );
 
 open_div( 'kommentar', '', $motd );
 
-open_javascript();
 ?>
+<script>
 function pick_login_dropdown() {
   var source = $('login_gruppen_id');
   var text = $('login_gruppen_id_text');
@@ -259,8 +259,8 @@ function pick_login_text() {
   }
   dropdown.value = group_id;
 }
+</script>
 <?php
-close_javascript();
 
 // we need $foodsoftdir in form action to allow login from DokuWiki:
 //
@@ -326,23 +326,24 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
   close_fieldset();
   $login_form_id = "form_$form_id";
 close_form();
-
-open_javascript( "
+?>
+<script>
   function set_dienstform() {
-    const selected = \$('dienst').value;
+    const selected = $('dienst').value;
     const display = selected != 0
       ? { dienst: 'block', nodienst: 'none'  }
       : { dienst: 'none' , nodienst: 'block' };
-    \$('dienstform').style.display = display.dienst;
-    \$('nodienstform').style.display = display.nodienst;
+    $('dienstform').style.display = display.dienst;
+    $('nodienstform').style.display = display.nodienst;
     const theme = selected != 0
       ? 'dienst'
       : 'normal';
     document.documentElement.setAttribute('data-theme', theme);
   }
-  \$('$login_form_id').onsubmit = pick_login_text;
+  $('$login_form_id').onsubmit = pick_login_text;
   document.observe('dom:loaded', pick_login_text);
-" );
+</script>
+<?php
 
 function optionen_dienste() {
   global $dienstinfos, $login_dienst;

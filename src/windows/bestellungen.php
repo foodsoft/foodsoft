@@ -487,10 +487,8 @@ foreach( $bestellungen as $bestellung ) {
   }
 }
 close_table();
-
-
-open_javascript();
   ?>
+  <script>
     var abrechnung_id = 0;
 
     function kombinieren( id2 ) {
@@ -508,7 +506,4 @@ open_javascript();
         post_action( 'nop', 0 );
       }
     }
-  <?php
-close_javascript();
-
-?>
+  </script>

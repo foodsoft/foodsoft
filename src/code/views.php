@@ -593,9 +593,8 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   if( $editAmounts ) {
     $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=15;
-
-    open_javascript();
 ?>
+<script>
 function pick_group_dropdown() {
   var source = $('gruppen_id');
   var text = $('gruppen_id_text');
@@ -617,8 +616,8 @@ function pick_group_text() {
   }
   dropdown.value = group_id;
 }
+</script>
 <?php
-    close_javascript();
   } else {
     $cols=13;
   }
@@ -2353,10 +2352,9 @@ function catalogue_acronym_view( $editable ) {
     /* ?><textarea name='changes' id='changes' rows=10 cols=80></textarea> <?php */
   close_form();
 
-  ?><script src='<?php echo $foodsoftdir; ?>/js/Acronyms.js'></script><?php
-  open_javascript();
   ?>
-
+  <script src='<?php echo $foodsoftdir; ?>/js/Acronyms.js'></script>
+  <script>
   var acronyms;
   var changes;
 
@@ -2551,9 +2549,8 @@ function catalogue_acronym_view( $editable ) {
   installTextFieldChangeHandler($('edit'), onFieldChange);
   $('form_'+updateFormIndex).on('form:afterReset', reset);
 
+  </script>
   <?php
-  close_javascript();
-
   return $update_form;
 }
 
