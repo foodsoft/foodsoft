@@ -2715,7 +2715,12 @@ inventur AS (
 SQL;
 
   return <<<SQL
-WITH zugeordnet AS (
+WITH geliefert AS (
+  SELECT gesamtbestellung_id, produkt_id, liefermenge AS menge FROM bestellvorschlaege
+    JOIN gesamtbestellungen ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id
+   WHERE $where
+)
+, zugeordnet AS (
   SELECT gruppenbestellungen.gesamtbestellung_id, bestellzuordnung.produkt_id, IFNULL(SUM(bestellzuordnung.menge), 0) AS menge
     FROM bestellzuordnung
     JOIN gruppenbestellungen
@@ -2726,18 +2731,13 @@ WITH zugeordnet AS (
      AND $where
    GROUP BY gesamtbestellungen.id, bestellzuordnung.produkt_id
 )
-, geliefert AS (
-  SELECT gesamtbestellung_id, produkt_id, liefermenge AS menge FROM bestellvorschlaege
-  JOIN gesamtbestellungen ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id
-  WHERE $where
-)
 , basarmenge AS (
-  SELECT geliefert.gesamtbestellung_id, geliefert.produkt_id, geliefert.menge - IFNULL(zugeordnet.menge, 0) AS menge
-  FROM geliefert
+     SELECT geliefert.gesamtbestellung_id, geliefert.produkt_id, geliefert.menge - IFNULL(zugeordnet.menge, 0) AS menge
+       FROM geliefert
   LEFT JOIN zugeordnet
-    ON zugeordnet.gesamtbestellung_id = geliefert.gesamtbestellung_id
-    AND zugeordnet.produkt_id = geliefert.produkt_id
-  having menge <> 0
+         ON zugeordnet.gesamtbestellung_id = geliefert.gesamtbestellung_id
+        AND zugeordnet.produkt_id = geliefert.produkt_id
+     HAVING menge <> 0
 )
 
 SQL . ($with_inventur ? ', ' . $inventur_cte : '') . <<<'SQL'
@@ -2781,12 +2781,12 @@ JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
 SQL : '') . <<<'SQL'
 LEFT JOIN lieferantenkatalog
   ON lieferantenkatalog.lieferanten_id = produkte.lieferanten_id
-  AND lieferantenkatalog.artikelnummer = produkte.artikelnummer
+ AND lieferantenkatalog.artikelnummer = produkte.artikelnummer
 
 SQL . ($with_inventur ? <<<'SQL'
 LEFT JOIN neueste_inventur
   ON neueste_inventur.bestell_id = basarmenge.gesamtbestellung_id
-  AND neueste_inventur.produkt_id = basarmenge.produkt_id
+ AND neueste_inventur.produkt_id = basarmenge.produkt_id
 
 SQL : '' );
 }
