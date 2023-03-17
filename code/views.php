@@ -813,9 +813,9 @@ function pick_group_text() {
     echo preg_replace('/&rowspan&/', $rowspan, $output, 1);
 
   open_tr('summe');
-    open_td( 'right', $editAmounts ? "colspan='13'" : "colspan='11'", 'Summe:' );
+    open_td( 'right', $editAmounts ? "colspan='12'" : "colspan='10'", 'Summe:' );
     open_td( 'number', '', price_view( $gesamtwert ) );
-    open_td( '', $have_aufschlag ? "colspan='5'" : "colspan='4'" );
+    open_td( '', $have_aufschlag ? "colspan='6'" : "colspan='5'" );
 
   if( $editAmounts ) {
     open_tr();
