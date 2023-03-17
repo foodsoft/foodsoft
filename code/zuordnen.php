@@ -2674,70 +2674,121 @@ function select_basar( $keys = [] ) {
     }
   }
 
+  $where = "gesamtbestellungen.rechnungsstatus >= " . STATUS_LIEFERANT
+         . " AND gesamtbestellungen.rechnungsstatus < " . STATUS_ABGERECHNET; // todo: change to 'ABGESCHLOSSEN'
+
   if( $bestell_id ) {
-    $where = "WHERE gesamtbestellungen.id = $bestell_id";
-  } else {
-    $where = "WHERE gesamtbestellungen.rechnungsstatus < ".STATUS_ABGERECHNET; // todo: change to 'ABGESCHLOSSEN'
+    $where .= " AND gesamtbestellungen.id = $bestell_id";
   }
 
-  return ($with_inventur ?
-   "WITH inventur AS (
-      SELECT bestellzuordnung.produkt_id
-           , bestellzuordnung.menge
-           , bestellzuordnung.zeitpunkt
-           , gruppenbestellungen.bestellgruppen_id as gruppen_id
-           , gruppenbestellungen.gesamtbestellung_id as bestell_id
-        FROM bestellzuordnung
-        JOIN gruppenbestellungen
-          ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-        JOIN gesamtbestellungen
-          ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
-        WHERE bestellzuordnung.art = " . BESTELLZUORDNUNG_ART_INVENTUR . "
-          AND gesamtbestellungen.rechnungsstatus < " . STATUS_ABGESCHLOSSEN . "
-    )"
-    : "") .
-   "SELECT produkte.name as produkt_name
-         , gesamtbestellungen.name as bestellung_name
-         , gesamtbestellungen.lieferung as lieferung
-         , gesamtbestellungen.id as gesamtbestellung_id
-         , gesamtbestellungen.aufschlag_prozent as aufschlag_prozent
-         , produktpreise.lieferpreis
-         , produktpreise.mwst
-         , produktpreise.pfand
-         , produktpreise.lv_faktor
-         , produktpreise.verteileinheit
-         , produktpreise.liefereinheit
-         , bestellvorschlaege.produkt_id
-         , bestellvorschlaege.produktpreise_id
-         , bestellvorschlaege.liefermenge
-         , (" .select_basarmenge( 'gesamtbestellungen.id', 'produkte.id' ). ") AS basarmenge
-         , lieferantenkatalog.ean_einzeln "
-         . ($with_lieferanty ? ", lieferanten.name as lieferanty " : "")
-         . ($with_inventur ? ", inventur.menge as inventur_menge
-         , inventur.zeitpunkt as inventur_zeitpunkt
-         , inventur.gruppen_id as inventur_gruppen_id "
-           : "") .
-   "FROM (" .select_gesamtbestellungen_schuldverhaeltnis(). ") AS gesamtbestellungen
-    JOIN bestellvorschlaege ON ( bestellvorschlaege.gesamtbestellung_id = gesamtbestellungen.id )
-    JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
-    JOIN produktpreise ON ( bestellvorschlaege.produktpreise_id = produktpreise.id ) "
-    . ($with_lieferanty ? "JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id " : "") .
-   "LEFT JOIN lieferantenkatalog ON ( lieferantenkatalog.lieferanten_id = produkte.lieferanten_id AND lieferantenkatalog.artikelnummer = produkte.artikelnummer ) "
-    . ($with_inventur ?
-   "LEFT JOIN inventur
-          ON (inventur.bestell_id = gesamtbestellungen.id
-            AND inventur.produkt_id = bestellvorschlaege.produkt_id
-            AND NOT EXISTS (
-              SELECT 1 FROM inventur AS i1
-              WHERE i1.bestell_id = inventur.bestell_id
-              AND i1.produkt_id = inventur.produkt_id
-              AND i1.zeitpunkt > inventur.zeitpunkt
-            )
-          )"
-    : "") ."
-    $where
-    HAVING ( basarmenge <> 0 )
-  ";
+  function id( $data ) {
+    return $data;
+  }
+
+  $eval = "id";
+
+  $inventur_cte = <<<SQL
+inventur AS (
+  SELECT bestellzuordnung.produkt_id
+       , bestellzuordnung.menge
+       , bestellzuordnung.zeitpunkt
+       , gruppenbestellungen.bestellgruppen_id AS gruppen_id
+       , gruppenbestellungen.gesamtbestellung_id AS bestell_id
+    FROM bestellzuordnung
+    JOIN gruppenbestellungen
+      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+    JOIN gesamtbestellungen
+      ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
+   WHERE bestellzuordnung.art = {$eval(BESTELLZUORDNUNG_ART_INVENTUR)}
+     AND $where
+)
+, neueste_inventur AS (
+  SELECT * from inventur
+  WHERE NOT EXISTS (
+    SELECT 1 FROM inventur AS i1
+    WHERE i1.bestell_id = inventur.bestell_id
+    AND i1.produkt_id = inventur.produkt_id
+    AND i1.zeitpunkt > inventur.zeitpunkt
+  )
+)
+
+SQL;
+
+  return <<<SQL
+WITH zugeordnet AS (
+  SELECT gruppenbestellungen.gesamtbestellung_id, bestellzuordnung.produkt_id, IFNULL(SUM(bestellzuordnung.menge), 0) AS menge
+    FROM bestellzuordnung
+    JOIN gruppenbestellungen
+      ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+    JOIN gesamtbestellungen
+      ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
+   WHERE bestellzuordnung.art BETWEEN 30 AND 39
+     AND $where
+   GROUP BY gesamtbestellungen.id, bestellzuordnung.produkt_id
+)
+, geliefert AS (
+  SELECT gesamtbestellung_id, produkt_id, liefermenge AS menge FROM bestellvorschlaege
+  JOIN gesamtbestellungen ON gesamtbestellungen.id = bestellvorschlaege.gesamtbestellung_id
+  WHERE $where
+)
+, basarmenge AS (
+  SELECT geliefert.gesamtbestellung_id, geliefert.produkt_id, geliefert.menge - IFNULL(zugeordnet.menge, 0) AS menge
+  FROM geliefert
+  LEFT JOIN zugeordnet
+    ON zugeordnet.gesamtbestellung_id = geliefert.gesamtbestellung_id
+    AND zugeordnet.produkt_id = geliefert.produkt_id
+  having menge <> 0
+)
+
+SQL . ($with_inventur ? ', ' . $inventur_cte : '') . <<<'SQL'
+SELECT produkte.name AS produkt_name
+     , gesamtbestellungen.name AS bestellung_name
+     , gesamtbestellungen.lieferung AS lieferung
+     , gesamtbestellungen.id AS gesamtbestellung_id
+     , gesamtbestellungen.aufschlag_prozent AS aufschlag_prozent
+     , produktpreise.lieferpreis
+     , produktpreise.mwst
+     , produktpreise.pfand
+     , produktpreise.lv_faktor
+     , produktpreise.verteileinheit
+     , produktpreise.liefereinheit
+     , bestellvorschlaege.produkt_id
+     , bestellvorschlaege.produktpreise_id
+     , bestellvorschlaege.liefermenge
+     , basarmenge.menge AS basarmenge
+     , lieferantenkatalog.ean_einzeln
+
+SQL . ($with_lieferanty ? <<<'SQL'
+     , lieferanten.name AS lieferanty
+
+SQL : '') . ($with_inventur ? <<<'SQL'
+     , neueste_inventur.menge AS inventur_menge
+     , neueste_inventur.zeitpunkt AS inventur_zeitpunkt
+     , neueste_inventur.gruppen_id AS inventur_gruppen_id
+
+SQL : '') . <<<'SQL'
+FROM basarmenge
+JOIN gesamtbestellungen ON gesamtbestellungen.id = basarmenge.gesamtbestellung_id
+JOIN bestellvorschlaege
+        ON bestellvorschlaege.gesamtbestellung_id = basarmenge.gesamtbestellung_id
+        AND bestellvorschlaege.produkt_id = basarmenge.produkt_id
+JOIN produktpreise ON produktpreise.id = bestellvorschlaege.produktpreise_id
+JOIN produkte ON produkte.id = bestellvorschlaege.produkt_id
+
+SQL . ($with_lieferanty ? <<<'SQL'
+JOIN lieferanten ON lieferanten.id = produkte.lieferanten_id
+
+SQL : '') . <<<'SQL'
+LEFT JOIN lieferantenkatalog
+  ON lieferantenkatalog.lieferanten_id = produkte.lieferanten_id
+  AND lieferantenkatalog.artikelnummer = produkte.artikelnummer
+
+SQL . ($with_inventur ? <<<'SQL'
+LEFT JOIN neueste_inventur
+  ON neueste_inventur.bestell_id = basarmenge.gesamtbestellung_id
+  AND neueste_inventur.produkt_id = basarmenge.produkt_id
+
+SQL : '' );
 }
 
 function sql_basar( $keys = [], $order='produktname' ) {
