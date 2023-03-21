@@ -168,7 +168,7 @@ $leitvariable = array(
   , 'comment' => 'Bitte den vorgeschlagenen Wert &uuml;bernehmen und nicht manuell &auml;ndern: diese Variable wird bei Upgrades automatisch hochgesetzt!'
   , 'local' => false
   , 'runtime_editable' => 0
-  , 'cols' => '3'
+  , 'cols' => '5'
   )
 );
 //
