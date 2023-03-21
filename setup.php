@@ -216,6 +216,7 @@ function check_3() {
       <tr>
         <th>mysqli_connect():</th>
     <?php
+    mysqli_report(MYSQLI_REPORT_OFF); // benutze pre-8.1-Fehlerbehandlung
     $db = mysqli_connect($db_server,$db_user,$db_pwd);
     if( $db ) {
       ?> <td class='ok'>Verbindung zum MySQL Server OK </td></tr> <?php

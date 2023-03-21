@@ -542,8 +542,9 @@ $tables = [
       ]
     ]
   , 'indices' => [
-      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+      'PRIMARY'         => [ 'unique' => 1, 'collist' => 'id' ]
     , 'rechnungsstatus' => [ 'unique' => 0, 'collist' => 'rechnungsstatus' ]
+    , 'abrechnung_id'   => [ 'unique' => 0, 'collist' => 'abrechnung_id' ]
     ]
   ]
 , 'gruppen_transaktion' => [

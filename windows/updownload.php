@@ -7,7 +7,7 @@ need( $exportDB );
 setWikiHelpTopic( 'foodsoft:updownload' );
 
 $path = array_merge(
-  split( ':', getenv("PATH") )
+  explode( ':', getenv("PATH") )
 , array( '/usr/local/bin', '/usr/local/sbin', '/usr/bin', '/usr/sbin', '/bin', '/sbin'
          , '/opt/lampp/bin', '/opt/lampp/mysql/bin' )
 );
@@ -72,25 +72,23 @@ function umount_usb() {
   system( "/bin/umount /usb" );
 }
 
-  
+
 function datenbank_sperren() {
   global $db_handle;
-  if( mysqli_query( $db_handle, 'UPDATE leitvariable SET value="1" WHERE name="readonly"' ) ) {
-    return true;
-  } else {
+  doSql( 'UPDATE leitvariable SET value="1" WHERE name="readonly"' );
+  $result = sql_select_single_field( 'SELECT value FROM leitvariable WHERE name="readonly"', 'value' ) == 1;
+  if( ! $result )
     echo "<div class='warn'>Sperrung der Datenbank fehlgeschlagen!</div>";
-  }
-  return false;
+  return $result;
 }
 
 function datenbank_freigeben() {
   global $db_handle;
-  if( mysqli_query( $db_handle, 'UPDATE leitvariable SET value="0" WHERE name="readonly"' ) ) {
-    return true;
-  } else {
+  doSql( 'UPDATE leitvariable SET value="0" WHERE name="readonly"' );
+  $result = sql_select_single_field( 'SELECT value FROM leitvariable WHERE name="readonly"', 'value' ) == 0;
+  if( ! $result )
     echo "<div class='warn'>Freigabe fehlgeschlagen!</div>";
-  }
-  return false;
+  return $result;
 }
 
 if( $action == 'release' ) {
@@ -108,7 +106,7 @@ if( $action == 'lock' ) {
 
 // if( $action == 'upload' ) {
 //   global $usb_device;
-// 
+//
 //   if( $usb_device ) {
 //     need_http_var( 'filename', 'R' );
 //     mount_usb();
@@ -134,17 +132,17 @@ if( $action == 'lock' ) {
 //   need( $s == $size, "Hochladen fehlgeschlagen: falsche Dateigroesse: $s statt $size" );
 //   $m = hash( 'md5', $sql );
 //   need( $m == $md5, "Hochladen fehlgeschlagen: falsche Pruefsumme: $m statt $md5" );
-// 
+//
 //   file_put_contents( "/tmp/upload.sql", $input );
 //   $command = "$mysql -h $db_server -u $db_user -p$db_pwd $db_name --default-character-set=utf8 < /tmp/upload.sql";
 //   system( $command, $result );
 //   logger( "upload: size: $size, md5: $md5" );
-// 
+//
 //   div_msg( 'ok', "Datenbank hochgeladen! <a href='index.php?login=silentlogout'>Bitte neu anmelden...</a></div>" );
 //   datenbank_freigeben();
-// 
+//
 //   return;
-// 
+//
 // }
 
 if( $action == 'download' ) {

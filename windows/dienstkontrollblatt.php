@@ -38,7 +38,7 @@ if( ( $action == 'abmelden' ) && ( $login_dienst >= 0 ) )  {
   return;
 }
 
-$result = mysqli_query( $db_handle, "SELECT id FROM dienstkontrollblatt ORDER BY id DESC LIMIT 5" );
+$result = doSql( 'SELECT id FROM dienstkontrollblatt ORDER BY id DESC LIMIT 5' );
 $row = mysqli_fetch_array( $result );
 if( ! $row )
   error( "konnte dienstkontrollblatt nicht lesen" );

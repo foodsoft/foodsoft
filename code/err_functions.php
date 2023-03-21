@@ -113,4 +113,8 @@ function fail_if_readonly() {
   return true;
 }
 
+set_exception_handler(function ($e) {
+  error( 'Unerwarteter Ausnahmefall: '.$e->getMessage() );
+});
+
 ?>
