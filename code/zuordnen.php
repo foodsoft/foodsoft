@@ -25,9 +25,10 @@ function doSql( $sql, $debug_level = LEVEL_IMPORTANT, $error_text = "Datenbankfe
   if($debug_level <= $_SESSION['LEVEL_CURRENT']) {
     open_div( 'alert', '', htmlspecialchars( $sql, ENT_QUOTES, 'UTF-8' ) );
   }
-  $result = mysqli_query($db_handle, $sql);
-  if( ! $result ) {
-    error( $error_text. "\n  query: $sql\n  MySQL-error: " . mysqli_error($db_handle) );
+  try {
+    $result = mysqli_query($db_handle, $sql);
+  } catch( Exception $e ) {
+    error( $error_text. "\n  query: $sql\n  MySQL-error: " . $e->getMessage() );
   }
   return $result;
 }
