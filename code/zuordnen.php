@@ -1952,11 +1952,14 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
 function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrechnung_id, bestellende DESC, name' ) {
   return mysql2array( doSql( "
     SELECT gesamtbestellungen.*
-         , dayofweek( lieferung ) as lieferdatum_dayofweek
-         , DATE_FORMAT( lieferung, '%d.%m.%Y') AS lieferdatum_trad
-         , lieferanten.name as lieferantenname FROM gesamtbestellungen
+         , dayofweek( gesamtbestellungen.lieferung ) as lieferdatum_dayofweek
+         , DATE_FORMAT( gesamtbestellungen.lieferung, '%d.%m.%Y') AS lieferdatum_trad
+         , lieferanten.name as lieferantenname
+         , ( SELECT GROUP_CONCAT( combined.id ) FROM gesamtbestellungen AS combined WHERE combined.abrechnung_id = gesamtbestellungen.abrechnung_id ) AS abrechnung_set
+    FROM gesamtbestellungen
     JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
-    WHERE $filter ORDER BY $orderby
+    WHERE $filter
+    ORDER BY $orderby
   " ) );
 }
 
@@ -5219,6 +5222,18 @@ function update_database( $version ) {
       doSql( "ALTER TABLE produktpreise MODIFY COLUMN `zeitstart` datetime NOT NULL" );
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 40 ) );
       logger( 'update_database: update to version 40 successful' );
+    case 40:
+      logger( 'starting update_database: from version 40' );
+
+      doSql( "ALTER TABLE `gesamtbestellungen` ADD INDEX `abrechnung_id` ( `abrechnung_id` )" );
+
+      // 41, 42 benutzt auf Branch guteluise
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 43 ) );
+      logger( 'update_database: update to version 43 successful' );
+    case 43:
+      break;
+    default:
+      error( "update_database: no update path known from version $version" );
   }
 }
 
