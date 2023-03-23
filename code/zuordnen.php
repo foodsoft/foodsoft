@@ -2651,7 +2651,18 @@ function sql_basarmenge( $bestell_id, $produkt_id ) {
   return sql_select_single_field( select_basarmenge( $bestell_id, $produkt_id ), 'menge' );
 }
 
-
+/**
+ * Identität: Gibt den übergebenen Wert zurück
+ *
+ * Verwendung, um beliebige Ausdrücke in einem String zu substituieren:
+ * ```
+ *    $eval = 'identity';
+ *    echo "Wert: { $eval( 5 + 7 ) }";
+ * ```
+ */
+function identity( $x ) {
+  return $x;
+}
 
 /**
  * select_basar:
@@ -2685,11 +2696,7 @@ function select_basar( $keys = [] ) {
     $where .= " AND gesamtbestellungen.id = $bestell_id";
   }
 
-  function id( $data ) {
-    return $data;
-  }
-
-  $eval = "id";
+  $eval = "identity";
 
   $inventur_cte = <<<SQL
 inventur AS (
