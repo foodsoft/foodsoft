@@ -1629,9 +1629,11 @@ function distribution_produktdaten( $status, $bestell_id, $produkt_id, Distribut
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   open_tr();
     open_th( '', ($status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'").($druck === Distribution_Druck::Menge ? ' rowspan="2"' : ''));
-      open_div('', 'style="position:relative; margin:1ex; border:3px solid; border-radius:5px; float:left; width:10mm; height:10mm;"');
-        open_span('hfill small', 'style="font-weight:normal; position:absolute; bottom:0; left:0;"', 'fertig');
-      close_div();
+      if( $druck !== Distribution_Druck::Nein ) {
+        open_div('', 'style="position:relative; margin:1ex; border:3px solid; border-radius:5px; float:left; width:10mm; height:10mm;"');
+          open_span('hfill small', 'style="font-weight:normal; position:absolute; bottom:0; left:0;"', 'fertig');
+        close_div();
+      }
       open_div();
         open_div( '', "style='font-size:1.2em; margin:5px;'" );
           echo fc_link( 'produktpreise', array(
