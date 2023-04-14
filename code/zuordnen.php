@@ -58,7 +58,7 @@ function cond2filter( $key, $cond ) {
 }
 
 function get_sql_filter( $filters = false ) {
-  if( !$filters )
+  if( is_bool($filters) )
     return "TRUE";
 
   if( is_string($filters) ) {
