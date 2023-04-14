@@ -5376,18 +5376,12 @@ function update_database( $version ) {
       logger( 'update_database: update to version 40 successful' );
     case 40:
       logger( 'starting update_database: from version 40' );
-
-      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `distribution_druck_preisspalte` tinyint(1) not null default 0" );
-
+      patch_database_41();
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 41 ) );
       logger( 'update_database: update to version 41 successful' );
     case 41:
       logger( 'starting update_database: from version 41' );
-
-      doSql( "ALTER TABLE `bankkonten` ADD COLUMN `buchungsregeln` text not null default ''" );
-      doSql( "ALTER TABLE `bestellgruppen` ADD COLUMN `buchungsregeln` text not null default ''" );
-      doSql( "ALTER TABLE `lieferanten` ADD COLUMN `buchungsregeln` text not null default ''" );
-
+      patch_database_42();
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 42 ) );
       logger( 'update_database: update to version 42 successful' );
     case 42:
@@ -5399,11 +5393,29 @@ function update_database( $version ) {
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10000 ) );
       // basiert auf stable-43
       logger( 'update_database: update to version 10000 successful' );
+      goto schema_10000;
+    case 43:
+      logger( 'starting update_database: from version 43' );
+      patch_database_41();
+      patch_database_42();
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 10000 ) );
+      logger( 'update_database: update to version 10000 successful' );
     case 10000:
+      schema_10000:
       break;
     default:
       error( "update_database: no update path known from version $version" );
   }
+}
+
+function patch_database_41() {
+  doSql( "ALTER TABLE `lieferanten` ADD COLUMN `distribution_druck_preisspalte` tinyint(1) not null default 0" );
+}
+
+function patch_database_42() {
+  doSql( "ALTER TABLE `bankkonten` ADD COLUMN `buchungsregeln` text not null default ''" );
+  doSql( "ALTER TABLE `bestellgruppen` ADD COLUMN `buchungsregeln` text not null default ''" );
+  doSql( "ALTER TABLE `lieferanten` ADD COLUMN `buchungsregeln` text not null default ''" );
 }
 
 function wikiLink( $topic, $text, $head = false ) {
