@@ -1218,7 +1218,7 @@ function check_new_group_nr( $newNummer, & $problems ){
  * Sockelbetrag entsprechend
  */
 function sql_delete_group_member( $gruppenmitglieder_id ) {
-  global $problems, $msg, $mysqlheute;
+  global $problems, $msg, $mysqlheute, $db_handle;
 
   need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
 
@@ -1300,7 +1300,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
  * Vorname, Name, Mail, Telefon und Diensteinteilung des Neumitgliedes
  */
 function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDiensteinteilung){
-  global $problems, $msg, $sockelbetrag_mitglied, $sockelbetrag_gruppe, $muell_id, $mysqlheute;
+  global $problems, $msg, $sockelbetrag_mitglied, $sockelbetrag_gruppe, $muell_id, $mysqlheute, $db_handle;
   need( isset( $sockelbetrag_mitglied ), "leitvariable sockelbetrag_mitglied nicht gesetzt!" );
   need( isset( $sockelbetrag_gruppe ), "leitvariable sockelbetrag_gruppe nicht gesetzt!" );
 
