@@ -646,31 +646,55 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=18;
 
-    open_javascript();
-?>
-function pick_group_dropdown() {
-  var source = $('gruppen_id');
-  var text = $('gruppen_id_text');
+    open_javascript(<<<JS
+      document.observe('dom:loaded', function() {
+        let form = $('form_{$form_id}');
+        if (!form) return;
+        form.observe('formdata', function(event) {
+          let formData = event.formData;
+          let fieldCount = formData.get('fieldcount');
+          let compactFieldCount = 0;
+          for (let i = 0; i < fieldCount; ++i) {
+            let produkt = formData.get('produkt' + i);
+            let bestellung = formData.get('bestellung' + i);
+            let menge = formData.get('menge' + i);
+            formData.delete('produkt' + i);
+            formData.delete('bestellung' + i);
+            formData.delete('menge' + i);
+            if (!menge) continue;
+            formData.set('produkt' + compactFieldCount, produkt);
+            formData.set('bestellung' + compactFieldCount, bestellung);
+            formData.set('menge' + compactFieldCount, menge);
+            ++compactFieldCount;
+          }
+          formData.set('fieldcount', compactFieldCount);
+        });
+      });
+      JS);
 
-  text.value = source.value % 1000;
-}
+    open_javascript(<<<'JS'
+      function pick_group_dropdown() {
+        var source = $('gruppen_id');
+        var text = $('gruppen_id_text');
 
-function pick_group_text() {
-  var source = $('gruppen_id_text');
-  var dropdown = $('gruppen_id');
+        text.value = source.value % 1000;
+      }
 
-  var options = dropdown.options;
-  var group_id = 0;
-  for (var i = 0; i < options.length; ++i) {
-    if (options.item(i).value % 1000 == source.value) {
-      group_id = options.item(i).value;
-      break;
-    }
-  }
-  dropdown.value = group_id;
-}
-<?php
-    close_javascript();
+      function pick_group_text() {
+        var source = $('gruppen_id_text');
+        var dropdown = $('gruppen_id');
+
+        var options = dropdown.options;
+        var group_id = 0;
+        for (var i = 0; i < options.length; ++i) {
+          if (options.item(i).value % 1000 == source.value) {
+            group_id = options.item(i).value;
+            break;
+          }
+        }
+        dropdown.value = group_id;
+      }
+      JS);
   } else {
     $cols=16;
   }
@@ -829,7 +853,7 @@ function pick_group_text() {
         qquad();
         submission_button('Zuteilen');
     close_table();
-    open_javascript("\$('form_$form_id').onsubmit = pick_login_text;");
+    open_javascript("\$('form_$form_id').onsubmit = pick_group_text;");
     close_form();
   } else {
     close_table();
