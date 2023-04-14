@@ -628,6 +628,31 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=15;
 
+    open_javascript(<<<JS
+      document.observe('dom:loaded', function() {
+        let form = $('form_{$form_id}');
+        if (!form) return;
+        form.observe('formdata', function(event) {
+          let formData = event.formData;
+          let fieldCount = formData.get('fieldcount');
+          let compactFieldCount = 0;
+          for (let i = 0; i < fieldCount; ++i) {
+            let produkt = formData.get('produkt' + i);
+            let bestellung = formData.get('bestellung' + i);
+            let menge = formData.get('menge' + i);
+            formData.delete('produkt' + i);
+            formData.delete('bestellung' + i);
+            formData.delete('menge' + i);
+            if (!menge) continue;
+            formData.set('produkt' + compactFieldCount, produkt);
+            formData.set('bestellung' + compactFieldCount, bestellung);
+            formData.set('menge' + compactFieldCount, menge);
+            ++compactFieldCount;
+          }
+          formData.set('fieldcount', compactFieldCount);
+        });
+      });
+      JS);
 
     open_javascript(<<<'JS'
       function pick_group_dropdown() {
