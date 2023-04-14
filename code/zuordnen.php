@@ -3330,8 +3330,6 @@ function transaktion_typ_string( $typ ) {
       return 'Pfandsaldo nach Abschluss';
     case TRANSAKTION_TYP_STORNO:
       return 'Storno';
-    case TRANSAKTION_TYP_SONSTIGES:
-      return 'Sonstiges (sollte nicht mehr vorkommen!)';
   }
   return "FEHLER: undefinierter Typ: $typ";
 }
