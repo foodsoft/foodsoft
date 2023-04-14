@@ -58,7 +58,7 @@ function cond2filter( $key, $cond ) {
 }
 
 function get_sql_filter( $filters = false ) {
-  if( !$filters )
+  if( is_bool($filters) )
     return "TRUE";
 
   if( is_string($filters) ) {
@@ -1234,7 +1234,7 @@ function check_new_group_nr( $newNummer, & $problems ){
  * Sockelbetrag entsprechend
  */
 function sql_delete_group_member( $gruppenmitglieder_id ) {
-  global $problems, $msg, $mysqlheute;
+  global $problems, $msg, $mysqlheute, $db_handle;
 
   need( hat_dienst(5), "Nur Dienst 5 darf Personen löschen");
 
@@ -1316,7 +1316,7 @@ function sql_delete_group_member( $gruppenmitglieder_id ) {
  * Vorname, Name, Mail, Telefon und Diensteinteilung des Neumitgliedes
  */
 function sql_insert_group_member($gruppen_id, $newVorname, $newName, $newMail, $newTelefon, $newDiensteinteilung){
-  global $problems, $msg, $sockelbetrag_mitglied, $sockelbetrag_gruppe, $muell_id, $mysqlheute;
+  global $problems, $msg, $sockelbetrag_mitglied, $sockelbetrag_gruppe, $muell_id, $mysqlheute, $db_handle;
   need( isset( $sockelbetrag_mitglied ), "leitvariable sockelbetrag_mitglied nicht gesetzt!" );
   need( isset( $sockelbetrag_gruppe ), "leitvariable sockelbetrag_gruppe nicht gesetzt!" );
 
@@ -3477,8 +3477,6 @@ function transaktion_typ_string( $typ ) {
       return 'Pfandsaldo nach Abschluss';
     case TRANSAKTION_TYP_STORNO:
       return 'Storno';
-    case TRANSAKTION_TYP_SONSTIGES:
-      return 'Sonstiges (sollte nicht mehr vorkommen!)';
   }
   return "FEHLER: undefinierter Typ: $typ";
 }
