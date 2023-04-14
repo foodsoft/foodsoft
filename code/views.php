@@ -628,31 +628,30 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     $form_id = open_form( '', 'action=basarzuteilung' );
     $cols=15;
 
-    open_javascript();
-?>
-function pick_group_dropdown() {
-  var source = $('gruppen_id');
-  var text = $('gruppen_id_text');
 
-  text.value = source.value % 1000;
-}
+    open_javascript(<<<'JS'
+      function pick_group_dropdown() {
+        var source = $('gruppen_id');
+        var text = $('gruppen_id_text');
 
-function pick_group_text() {
-  var source = $('gruppen_id_text');
-  var dropdown = $('gruppen_id');
+        text.value = source.value % 1000;
+      }
 
-  var options = dropdown.options;
-  var group_id = 0;
-  for (var i = 0; i < options.length; ++i) {
-    if (options.item(i).value % 1000 == source.value) {
-      group_id = options.item(i).value;
-      break;
-    }
-  }
-  dropdown.value = group_id;
-}
-<?php
-    close_javascript();
+      function pick_group_text() {
+        var source = $('gruppen_id_text');
+        var dropdown = $('gruppen_id');
+
+        var options = dropdown.options;
+        var group_id = 0;
+        for (var i = 0; i < options.length; ++i) {
+          if (options.item(i).value % 1000 == source.value) {
+            group_id = options.item(i).value;
+            break;
+          }
+        }
+        dropdown.value = group_id;
+      }
+      JS);
   } else {
     $cols=13;
   }
