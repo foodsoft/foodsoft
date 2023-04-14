@@ -800,7 +800,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
         qquad();
         submission_button('Zuteilen');
     close_table();
-    open_javascript("\$('form_$form_id').onsubmit = pick_login_text;");
+    open_javascript("\$('form_$form_id').onsubmit = pick_group_text;");
     close_form();
   } else {
     close_table();
