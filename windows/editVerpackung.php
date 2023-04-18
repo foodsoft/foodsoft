@@ -38,6 +38,7 @@ if( $action == 'save' ) {
   if( ! $name ) $problems .= "<div class='warn'>Die neue Verpackung muss eine Bezeichnung haben!</div>";
 
   // Wenn keine Fehler, dann einfügen...
+  global $db_handle;
   if( ! $problems ) {
     if( $verpackung_id ) {
       if( sql_update( 'pfandverpackungen', $verpackung_id, $values ) ) {
