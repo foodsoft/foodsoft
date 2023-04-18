@@ -56,6 +56,8 @@ function logout() {
 }
 
 init_login();
+global $login;
+
 $problems = '';
 
 $telefon ='';

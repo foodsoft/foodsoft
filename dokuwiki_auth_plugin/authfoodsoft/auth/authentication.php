@@ -36,7 +36,7 @@ class auth_plugin_authfoodsoft_authentication extends DokuWiki_Auth_Plugin {
 
         global $from_dokuwiki;
 
-        if( $_REQUEST['do'] == 'login' ) {
+        if( $_REQUEST['do'] ?? '' === 'login' ) {
           $dir = getcwd();
           chdir( FOODSOFT_PATH );
           $from_dokuwiki = true;
@@ -45,7 +45,7 @@ class auth_plugin_authfoodsoft_authentication extends DokuWiki_Auth_Plugin {
           chdir( $dir );
           $_REQUEST['do'] = 'show';
         }
-        if( $_REQUEST['do'] == 'logout' ) {
+        if( $_REQUEST['do'] ?? '' === 'logout' ) {
           unset( $_COOKIE['foodsoftkeks'] );
           setcookie( 'foodsoftkeks', '0', time() - 60, '/' );
           $_REQUEST['do'] = 'show';

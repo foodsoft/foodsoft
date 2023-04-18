@@ -2890,6 +2890,7 @@ function unlisted_products_view( array $gesamtbestellung, string $action, bool $
   , 'not_in_order' => $gesamtbestellung['id']
   , 'lieferanten_id' => $gesamtbestellung['lieferanten_id']  ));
 
+  $json_list = [];
   foreach ($unlisted_products as $p) {
     $json = array();
     $json['id'] = $p['produkt_id'];
