@@ -1,6 +1,6 @@
 <?php
 
-// db version 40
+// db version 10000
 
 $tables = [
   'bankkonten' => [
@@ -542,9 +542,9 @@ $tables = [
       ]
     ]
   , 'indices' => [
-      'PRIMARY'         => [ 'unique' => 1, 'collist' => 'id' ]
+      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
     , 'rechnungsstatus' => [ 'unique' => 0, 'collist' => 'rechnungsstatus' ]
-    , 'abrechnung_id'   => [ 'unique' => 0, 'collist' => 'abrechnung_id' ]
+    , 'abrechnung_id' => [ 'unique' => 0, 'collist' => 'abrechnung_id' ]
     ]
   ]
 , 'gruppen_transaktion' => [
