@@ -1,6 +1,6 @@
 <?php
 
-// db version 10000
+// db version 20000
 
 $tables = [
   'bankkonten' => [
@@ -685,7 +685,7 @@ $tables = [
       , 'extra' => ''
       ]
     , 'diensteinteilung' => [
-        'type' =>  "enum('1/2','3','4','5','freigestellt')"
+        'type' =>  "enum('1/2','3','4','5','6','freigestellt')"
       , 'null' => 'NO'
       , 'default' => 'freigestellt'
       , 'extra' => ''

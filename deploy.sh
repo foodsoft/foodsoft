@@ -18,6 +18,14 @@ echo "<a href='http://github.com/foodsoft/foodsoft/commits/$COMMIT_FULL'>$BRANCH
 
 chmod 644 .gitattributes
 chmod 644 .gitignore
+chmod 644 Docker/Dockerfile
+chmod 644 Docker/Readme.md
+chmod 755 Docker/build_image.sh
+chmod 644 Docker/config.php
+chmod 755 Docker/init_db.sh
+chmod 644 Docker/inital_db.sql
+chmod 755 Docker/run_image.sh
+chmod 644 Docker/var.sh
 chmod 644 GITHOOKS
 chmod 644 INSTALL
 chmod 644 README.md
@@ -99,6 +107,8 @@ chmod 644 js/lib/quagga.min.js
 chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
 chmod 644 links_und_parameter
+chmod 644 scripts/.htaccess
+chmod 644 scripts/print_dienst_mail.php
 chmod 755 setup.php
 chmod 644 sql/export_buchungsregeln.sql
 chmod 644 sql/mwst.sql
@@ -110,6 +120,7 @@ chmod 644 windows/abschluss.php
 chmod 644 windows/artikelsuche.php
 chmod 644 windows/basar.php
 chmod 644 windows/basar_kauf.php
+chmod 644 windows/basardruck.php
 chmod 644 windows/bestellen.php
 chmod 644 windows/bestellen.php.neu
 chmod 644 windows/bestellfax.php

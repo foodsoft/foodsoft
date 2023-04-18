@@ -5418,6 +5418,13 @@ function update_database( $version ) {
       logger( 'update_database: update to version 10000 successful' );
     case 10000:
       schema_10000:
+      logger( 'starting update_database: from version 10000' );
+      doSql( "ALTER TABLE `gruppenmitglieder` CHANGE `diensteinteilung` `diensteinteilung` ENUM('1/2','3','4','5','6','freigestellt') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'freigestellt'" );
+      doSql( "ALTER TABLE `dienste` CHANGE `dienst` `dienst` ENUM('1/2','3','4','5','6','freigestellt') CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL" );
+      // spezifischer Versionsraum ab 20000 für nahrungskette:
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 20000 ) );
+      logger( 'update_database: update to version 20000 successful' );
+    case 20000:
       break;
     default:
       error( "update_database: no update path known from version $version" );
