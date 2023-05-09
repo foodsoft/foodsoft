@@ -711,6 +711,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
   foreach( $basar as $b ) {
     if( $b['aufschlag_prozent'] > 0 ) {
       $have_aufschlag = true;
+      break;
     }
   }
 
@@ -2271,6 +2272,7 @@ function auswahl_bestellung( $bestell_id = 0 ) {
   foreach( $laufende_bestellungen as $b ) {
     if( $b['aufschlag_prozent'] > 0 ) {
       $have_aufschlag = true;
+      break;
     }
   }
   open_table( 'list', "style='width:600px;'" );

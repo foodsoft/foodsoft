@@ -3517,8 +3517,9 @@ function select_bestellungen_soll_gruppen( $art, $using = array() ) {
       $query = 'waren';
       break;
     case OPTION_AUFSCHLAG_SOLL:
+      $muell_id = sql_muell_id();
       $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor )
-                 * ( gesamtbestellungen.aufschlag_prozent / 100.0 ) )";
+                 * ( if (gruppenbestellungen.bestellgruppen_id = $muell_id, 0, gesamtbestellungen.aufschlag_prozent / 100.0) ) )";
       $query = 'waren';
       break;
     case OPTION_WAREN_BRUTTO_SOLL:
