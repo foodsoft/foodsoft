@@ -13,11 +13,8 @@ $editable = ( hat_dienst(4) and ! $readonly );
 
 get_http_var( 'detail', 'w', 0, true );
 
-$muell_id = sql_muell_id();
-
-
 function verlust_bestellungen( $detail = false ) {
-  global $muell_id;
+  $muell_id = sql_muell_id();
   if( $detail ) {
     ?> <h2>Differenzen aus Bestellungen:</h2> <?php
     open_table( 'list', "width='98%'" );
@@ -82,7 +79,6 @@ function verlust_bestellungen( $detail = false ) {
 }
 
 function verlust_aufschlag( $detail = false ) {
-  global $muell_id;
   if( $detail ) {
     ?> <h2>Aufschlaege auf Bestellungen:</h2> <?php
     open_table( 'list', "width='98%'" );
