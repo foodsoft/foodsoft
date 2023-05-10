@@ -387,9 +387,18 @@ var MagicCalculator = Class.create(
       // bazaar rest from rounding
       // direction +1: need to distribute more to groups
       var direction = (this.mBazaarValue - this.mBazaarTarget > 0) ? 1 : -1;
+
+      const shuffleArray /* Fisher-Yates */ = array => {
+        for (let i = array.length - 1; i > 0; --i) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
       var minBadness;
       var iMinBadness = 0;
-      for (var i = 0; i < this.mGroupValues.length; ++i) {
+      for (const i of shuffleArray([...this.mGroupValues.keys()])) {
         if (this.mGroupValues[i] == 0) {
           // do not involve new groups
           continue;
@@ -397,7 +406,7 @@ var MagicCalculator = Class.create(
         var badness = Math.abs(
             (this.mResultGroupValues[i] + (roundingDistribution[i] + direction)/fixPointFactor - groupValuesExact[i])
                 / groupValuesExact[i]);
-        if (i == 0) {
+        if (minBadness === undefined) {
           minBadness = badness;
           continue;
         }
