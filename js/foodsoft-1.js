@@ -286,11 +286,12 @@ window.scroller = new Scroller();
 
 var MagicCalculator = Class.create(
 {
-  initialize: function(orderId, productId, distMult, endPrice)
+  initialize: function(orderId, productId, distMult, vPrice, endPrice)
   {
     this.mOrderId = orderId;
     this.mProductId = productId;
     this.mDistMult = distMult;
+    this.mVPrice = vPrice;
     this.mEndPrice = endPrice;
     this.mGroupFields = new Array();
     this.mGroupValues = new Array();
@@ -447,19 +448,19 @@ var MagicCalculator = Class.create(
     this.calculate();
     this.displayResult();
   },
-  calcPrice: function(amount) {
-    return this.mEndPrice * amount / this.mDistMult;
+  calcPrice: function(price, amount) {
+    return price * amount / this.mDistMult;
   },
   formatPrice: function(price) {
     return price.toFixed(2);
   },
   recalcAndShowPrices: function() {
-    $('preis_' + this.mOrderId + '_' + this.mProductId).textContent = this.formatPrice(this.calcPrice(this.mTotal));
+    $('preis_' + this.mOrderId + '_' + this.mProductId).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mTotal));
     for (var i = 0; i < this.mGroupFields.length; ++i) {
-      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mGroupValues[i]));
+      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mEndPrice, this.mGroupValues[i]));
     }
-    $('preis_' + this.mTrashField).textContent = this.formatPrice(this.calcPrice(this.mTrashValue));
-    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mBazaarValue));
+    $('preis_' + this.mTrashField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mTrashValue));
+    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mBazaarValue));
   },
   handleChangedDistribution: function() {
     this.fetchValues();
