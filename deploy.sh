@@ -38,7 +38,7 @@ chmod 644 code/zuordnen.php
 chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
-chmod 755 deploy.sh
+chmod 744 deploy.sh
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/README
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/auth/authentication.php
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/lang/en/lang.php
@@ -80,7 +80,7 @@ chmod 644 img/question_small.png
 chmod 644 img/reload_black.gif
 chmod 644 index.php
 chmod 644 js/Acronyms.js
-chmod 644 js/foodsoft-1.js
+chmod 644 js/foodsoft-2.js
 chmod 644 js/lib/prototype.js
 chmod 644 js/tooltip.js
 chmod 644 leitvariable.php
