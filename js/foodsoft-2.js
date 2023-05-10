@@ -286,11 +286,12 @@ window.scroller = new Scroller();
 
 var MagicCalculator = Class.create(
 {
-  initialize: function(orderId, productId, distMult, endPrice)
+  initialize: function(orderId, productId, distMult, vPrice, endPrice)
   {
     this.mOrderId = orderId;
     this.mProductId = productId;
     this.mDistMult = distMult;
+    this.mVPrice = vPrice;
     this.mEndPrice = endPrice;
     this.mGroupFields = new Array();
     this.mGroupValues = new Array();
@@ -386,9 +387,18 @@ var MagicCalculator = Class.create(
       // bazaar rest from rounding
       // direction +1: need to distribute more to groups
       var direction = (this.mBazaarValue - this.mBazaarTarget > 0) ? 1 : -1;
+
+      const shuffleArray /* Fisher-Yates */ = array => {
+        for (let i = array.length - 1; i > 0; --i) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
       var minBadness;
       var iMinBadness = 0;
-      for (var i = 0; i < this.mGroupValues.length; ++i) {
+      for (const i of shuffleArray([...this.mGroupValues.keys()])) {
         if (this.mGroupValues[i] == 0) {
           // do not involve new groups
           continue;
@@ -396,7 +406,7 @@ var MagicCalculator = Class.create(
         var badness = Math.abs(
             (this.mResultGroupValues[i] + (roundingDistribution[i] + direction)/fixPointFactor - groupValuesExact[i])
                 / groupValuesExact[i]);
-        if (i == 0) {
+        if (minBadness === undefined) {
           minBadness = badness;
           continue;
         }
@@ -447,19 +457,19 @@ var MagicCalculator = Class.create(
     this.calculate();
     this.displayResult();
   },
-  calcPrice: function(amount) {
-    return this.mEndPrice * amount / this.mDistMult;
+  calcPrice: function(price, amount) {
+    return price * amount / this.mDistMult;
   },
   formatPrice: function(price) {
     return price.toFixed(2);
   },
   recalcAndShowPrices: function() {
-    $('preis_' + this.mOrderId + '_' + this.mProductId).textContent = this.formatPrice(this.calcPrice(this.mTotal));
+    $('preis_' + this.mOrderId + '_' + this.mProductId).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mTotal));
     for (var i = 0; i < this.mGroupFields.length; ++i) {
-      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mGroupValues[i]));
+      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mEndPrice, this.mGroupValues[i]));
     }
-    $('preis_' + this.mTrashField).textContent = this.formatPrice(this.calcPrice(this.mTrashValue));
-    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mBazaarValue));
+    $('preis_' + this.mTrashField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mTrashValue));
+    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mBazaarValue));
   },
   handleChangedDistribution: function() {
     this.fetchValues();
