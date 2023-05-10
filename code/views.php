@@ -775,7 +775,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
                , 'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
             ) ) . "</td>
 
-          <td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
+          <td class='number'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
             . ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' ) ."
           <td class='mult'>" .sprintf( "%.2lf", $preis ). "</td>
           <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>"
