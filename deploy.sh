@@ -46,7 +46,7 @@ chmod 644 code/zuordnen.php
 chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
-chmod 755 deploy.sh
+chmod 744 deploy.sh
 chmod 644 doc/zuteilung-negativ-toleranz.svg
 chmod 644 dokuwiki-data/media/foodsoft/basarkauf_barcode.png
 chmod 644 dokuwiki-data/media/foodsoft/basarkauf_inventur_kreuz.png
@@ -96,7 +96,7 @@ chmod 644 img/question_small.png
 chmod 644 img/reload_black.gif
 chmod 644 index.php
 chmod 644 js/Acronyms.js
-chmod 644 js/foodsoft-1.js
+chmod 644 js/foodsoft-2.js
 chmod 644 js/lib/papaparse.js
 chmod 644 js/lib/papaparse.js-LICENSE
 chmod 644 js/lib/papaparse.min.js

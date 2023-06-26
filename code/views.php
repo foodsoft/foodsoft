@@ -792,7 +792,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
                , 'bestell_id' => $basar_row['gesamtbestellung_id'], 'produkt_id' => $basar_row['produkt_id']
             ) ) . "</td>
 
-          <td class='number' style='padding:0pt 1ex 0pt 1ex;'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
+          <td class='number'><b>" . sprintf( "%8.2lf", $wert ) . "</b></td>"
             . ( $have_aufschlag ? "<td class='center'>".sprintf( "%.2lf%%", $basar_row['aufschlag_prozent'] )."</td>" : '' ) ."
           <td class='mult'>" .sprintf( "%.2lf", $preis ). "</td>
           <td class='unit'>/ $kan_verteilmult $kan_verteileinheit</td>
@@ -922,7 +922,7 @@ function bestellschein_view(
   $bestellung = sql_bestellung( $bestell_id );
 
   $status = $bestellung['rechnungsstatus'];
-  $aufschlag_prozent = $bestellung['aufschlag_prozent'];
+  $aufschlag_prozent = $gruppen_id === $muell_id ? 0 : $bestellung['aufschlag_prozent'];
 
   $warnung_vorlaeufig = "";
   if( $gruppen_id and ( $status == STATUS_BESTELLEN ) ) {
@@ -1033,6 +1033,12 @@ function bestellschein_view(
         $option_nichtgefuellt = false;
       }
     }
+  }
+
+  if( $aufschlag_prozent === 0 )
+  {
+    if( $spalten & PR_COL_ENDSUMME ) // habe keine Endsumme, zeige V-Summe
+      $spalten |= PR_COL_VSUMME;
   }
 
   if( $select_columns ) {
@@ -1630,7 +1636,7 @@ function distribution_tabellenkopf( $status, Distribution_Druck $druck = Distrib
               , 'colspan="2" rowspan="2"'
                   , 'zugeteilt');
       open_th('bottom'
-              , "title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag' rowspan='2'"
+              , "title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag (nur bei Gruppen)' rowspan='2'"
                   , 'Gesamtpreis');
       if( $druck !== Distribution_Druck::Nein )
         open_th(''
@@ -1710,11 +1716,12 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   $verteilmult = $produkt['kan_verteilmult'];
   $verteileinheit = $produkt['kan_verteileinheit'];
+  $vpreis = $produkt['vpreis'];
   $endpreis = $produkt['endpreis'];
   $liefermenge = $produkt['liefermenge'] * $verteilmult;
 
   $magicCalculator = "window.magicCalculator_{$bestell_id}_{$produkt_id}";
-  $js_on_exit[] = "$magicCalculator = new MagicCalculator($bestell_id, $produkt_id, $verteilmult, $endpreis);";
+  $js_on_exit[] = "$magicCalculator = new MagicCalculator($bestell_id, $produkt_id, $verteilmult, $vpreis, $endpreis);";
   $js_on_exit[] = "\$('form_$form_id').observe('form:afterReset', function(event) { $magicCalculator.handleChangedDistribution(); });";
 
   $magic_style = "magic_{$bestell_id}_{$produkt_id}";
@@ -1731,7 +1738,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_th('', "colspan='3'", 'Liefermenge:' );
       open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
       open_td('unit','',$verteileinheit );
-      open_td('number','', price_view( $endpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
+      open_td('number','', price_view( $vpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
       if( $druck !== Distribution_Druck::Nein ) {
         open_td( '', '', flag_view(false) );
         open_td( '', '', flag_view(false) );
@@ -1810,7 +1817,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td('', "colspan='3'", "M&uuml;ll:" );
       open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), true, true, '', $verteilmult ) );
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $endpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
+      open_td( 'number', '', price_view( $vpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
       if( $druck !== Distribution_Druck::Nein ) {
         open_td( '', '', '' );
         open_td( '', '', flag_view(false) );
@@ -1838,7 +1845,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_span('', "id='menge_{$bestell_id}_{$produkt_id}_{$basar_id}'", $basar_verteilmenge );
       close_td();
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $endpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+      open_td( 'number', '', price_view( $vpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
       if( $druck !== Distribution_Druck::Nein ) {
         open_td( '', '', flag_view(false) );
         open_td( '', '', flag_view(false) );
