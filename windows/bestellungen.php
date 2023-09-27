@@ -136,6 +136,14 @@ $bestellungen_by_id = array_reduce( $bestellungen, function ( $index, $b ) {
   return $index;
 }, []);
 
+$basar = sql_basar();
+$basar_wert_nach_id = [];
+
+foreach( $basar as $r ) {
+  $basar_wert =& $basar_wert_nach_id[$r['gesamtbestellung_id']];
+  $basar_wert += $r['basarmenge'] * $r['bruttopreis'];
+}
+
 $already_shown = [];
 
 $abrechnung_id = -1;
@@ -270,11 +278,17 @@ foreach( $bestellungen as $bestellung ) {
         open_div( 'left small oneline', '',  $row['bestellstart'] );
         open_div( 'right small oneline', '', "- ".$row['bestellende'] );
       open_td( '', '', $row['lieferung'] );
-      open_td();
-        if( $rechnungsstatus == STATUS_ABGERECHNET ) {
-          open_div( '', '', price_view( sql_bestellung_rechnungssumme( $combined_id ) ) );
-          open_div( 'small', '', sql_dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id ) );
+        if( $rechnungsstatus >= STATUS_ABGERECHNET ) {
+          open_td();
+            open_div( '', '', price_view( sql_bestellung_rechnungssumme( $combined_id ) ) );
+            open_div( 'small', '', sql_dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id ) );
+        } else if( $rechnungsstatus >= STATUS_LIEFERANT ) {
+          $basar_wert = $basar_wert_nach_id[$combined_id] ?? 0;
+          open_td( $basar_wert > 0.05 ? 'alert' : 'ok' );
+            open_div( '', '', price_view( $basar_wert ) );
+            open_div( 'small', '', 'Basar' );
         } else {
+          open_td();
           echo '-';
         }
       open_td();
