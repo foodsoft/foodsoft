@@ -284,7 +284,7 @@ foreach( $bestellungen as $bestellung ) {
             open_div( 'small', '', sql_dienstkontrollblatt_name( $abrechnung_dienstkontrollblatt_id ) );
         } else if( $rechnungsstatus >= STATUS_LIEFERANT ) {
           $basar_wert = $basar_wert_nach_id[$combined_id] ?? 0;
-          open_td( $basar_wert > 0.05 ? 'alert' : 'ok' );
+          open_td( abs( $basar_wert ) > 0.05 ? 'alert' : 'ok' );
             open_div( '', '', price_view( $basar_wert ) );
             open_div( 'small', '', 'Basar' );
         } else {
