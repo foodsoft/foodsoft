@@ -1,9 +1,11 @@
-<h1>Gruppenverwaltung...</h1>
 <?PHP
 
 assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( 'foodsoft:gruppen' );
+
+$heading = hat_dienst(5) ? "Gruppenverwaltung" : "Gruppenübersicht";
+echo "<h1>{$heading}</h1>";
 
 $problems="";
 $msg="";
@@ -103,8 +105,8 @@ medskip();
 open_table('list');
   open_th( '','','Nr' );
   open_th( '','','Gruppenname' );
+  open_th( '', 'colspan="5"', 'Mitglieder' );
   open_th( '','','Kontostand' );
-  open_th( '','','Mitgliederzahl' );
   if( hat_dienst(5) ) {
     open_th( '', 'title="Letzte Anmeldung der Gruppe in der Foodsoft"', 'letztes login' );
     open_th( '', 'title="Lieferdatum der letzten Bestellung, an der sich die Gruppe beteiligte"', 'letzte Bestellung' );
@@ -118,10 +120,14 @@ open_table('list');
   if ( hat_dienst(5) ) {
     $freigestellte_gruppen = sql_freigestellte_gruppen();
   }
+
   foreach( $gruppen as $gruppe ) {
     $id = $gruppe['id'];
+  
     if( in_array( $id, $specialgroups ) )
       continue;
+  
+    // Filter anwenden
     if( hat_dienst(5) || ( $login_gruppen_id == $id ) ) {
       $kontostand = sprintf( '%10.2lf', kontostand( $gruppe['id'] ) );
       if( $optionen & GRUPPEN_OPT_SCHULDEN )
@@ -136,93 +142,149 @@ open_table('list');
           continue;
       $summe += $kontostand;
     }
+    
     $nr = $gruppe['gruppennummer'];
     $mitglieder_summe += $gruppe['mitgliederzahl'];
+    $mitglieder = sql_gruppe_mitglieder( $id );
+    $anzahl_gruppen_mitglieder = count($mitglieder);
 
-    open_tr();
-      open_td( '', '', $nr );
-      open_td( '', '', $gruppe['name'] );
-      open_td( 'number' );
+    foreach ($mitglieder as $index => $m){
+
+      $mitglieder_info = [
+        "{$m['name']}, {$m['vorname']}",
+        "{$m['telefon']}",
+        "{$m['email']}",
+        "Dienst: {$m['diensteinteilung']}",
+        "{$m['slogan']}",
+      ];
+
+      if ( $index > 0 ) {
+        open_tr();
+          open_td('', '', $mitglieder_info[0]);
+          open_td('', '', $mitglieder_info[1]);
+          open_td('', '', $mitglieder_info[2]);
+          open_td('', '', $mitglieder_info[3]);
+          open_td('', '', $mitglieder_info[4]);
+        continue;
+      }
+
+      open_tr();
+
+      open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $nr );
+      open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $gruppe['name'] );
+      
+      // Spalte: Mitglieder
+      open_td('', '', $mitglieder_info[0]);
+      open_td('', '', $mitglieder_info[1]);
+      open_td('', '', $mitglieder_info[2]);
+      open_td('', '', $mitglieder_info[3]);
+      open_td('', '', $mitglieder_info[4]);
+
+      // Spalte: Kontostand
+      open_td( 'number', "rowspan='{$anzahl_gruppen_mitglieder}'" );
       if( hat_dienst(5) || ( $login_gruppen_id == $id ) ) {
         echo price_view( $kontostand );
-      }
-      open_td( 'number', '', $gruppe['mitgliederzahl'] );
+      }      
+    
+      // Spalte: Datum letzter Login
       if( hat_dienst(5) ) {
         $letztes_login = sql_gruppe_letztes_login( $id );
-        if( $letztes_login )
-          open_td( '', '', $letztes_login['time_stamp'] );
-        else
-          open_td( '', '', '(nie)' );
+        $login_ts = $letztes_login ? $letztes_login['time_stamp'] : '(nie)';
+        open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $login_ts );
+      }
+      
+      // Spalte: Datum letzte Bestellung
+      if( hat_dienst(5) ) {
         $letzte_bestellung = sql_gruppe_letzte_bestellung( $id );
-        if( $letzte_bestellung )
-          open_td( '', '', fc_link( 'bestellschein', array(
+        if( $letzte_bestellung ) {
+          open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", fc_link( 'bestellschein', array(
             'bestell_id' => $letzte_bestellung['id']
           , 'text' => $letzte_bestellung['lieferdatum']
           ) ) );
-        else
-          open_td( '', '', '(nie)' );
-        $letzter_dienst = sql_letzter_gruppen_dienst( $id );
-        if ($letzter_dienst) {
-          # adjust formatting if a certain threshold is crossed
-          open_td('', '', $letzter_dienst['lieferdatum'] );
         } else {
-          $ist_freigestellt = $freigestellte_gruppen ? in_array($id, $freigestellte_gruppen) : FALSE;
-          open_td('', '', $ist_freigestellt ? '(freigestellt)' : '(nie)');
+          open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", '(nie)' );
         }
       }
 
-      open_td();
+      // Spalte: letzter Dienst
+      if ( hat_dienst(5) ) {
+        $letzter_dienst = sql_letzter_gruppen_dienst( $id );
+        $ld_value = $letzter_dienst
+          ? $letzter_dienst["lieferdatum"]
+          : (
+            $ist_freigestellt ? '(freigestellt)' : '(nie)'
+          );
 
+        # adjust formatting if a certain threshold is crossed
+        open_td('', "rowspan='{$anzahl_gruppen_mitglieder}'", $ld_value );
+      }
+
+      // Spalte: Aktionen
+      open_td('', "rowspan='{$anzahl_gruppen_mitglieder}'");
       if( $gruppe['aktiv'] ) {
         echo fc_link( 'gruppenmitglieder', "gruppen_id=$id,title=Mitglieder,text=" );
+
         if( hat_dienst(5) ) {
           echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,text=" );
         } elseif( $login_gruppen_id == $id ) {
           echo fc_link( 'gruppenkonto', "gruppen_id=$id,title=Kontoblatt,meinkonto=1,text=" );
         }
+
         if( hat_dienst(5) || ( $login_gruppen_id == $id ) ) {
-          if( isset($offene_einzahlungen) ) {
+          if( count($offene_einzahlungen) ) {
             open_table('list');
-                open_th( '', "colspan='3'", 'ungebuchte Einzahlungen: ' . count($offene_einzahlungen) );
-              foreach( $offene_einzahlungen as $trans ) {
+              open_th( '', "colspan='3'", 'ungebuchte Einzahlungen: ' . count($offene_einzahlungen) );
+
+            foreach ( $offene_einzahlungen as $trans ) {
                 open_tr();
                   open_td( 'left', '', $trans['eingabedatum_trad'] );
                   open_td( 'number', '', price_view( $trans['summe'] ) );
                   open_td( '', '', fc_action( array( 'class' => 'drop', 'title' => 'Löschen?', 'confirm' => 'Gutschrift wirklich löschen?' )
-                                            , array( 'action' => 'cancel_payment', 'transaction_id' => $trans['id'] ) ) );
-              }
+                                              , array( 'action' => 'cancel_payment', 'transaction_id' => $trans['id'] ) ) );
+            }
             close_table();
           }
         }
+
         // löschen nur wenn
         // - kontostand 0
         // - mitgliederzahl 0 (wegen rueckbuchung sockelbetrag!)
         // - bestellungen, an denen sich die gruppe beteiligt hat, sind abgeschlossen
-        if(    hat_dienst(5)
-            && ( abs($kontostand) < 0.005 )
-            && ( ! sql_gruppe_offene_bestellungen( $gruppe['id'] ) )
-            && ( $gruppe['mitgliederzahl'] == 0 )
-            && ( ! in_array( $id, $specialgroups ) )
+        if( hat_dienst(5)
+          && ( abs($kontostand) < 0.005 )
+          && ( ! sql_gruppe_offene_bestellungen( $gruppe['id'] ) )
+          && ( $gruppe['mitgliederzahl'] == 0 )
+          && ( ! in_array( $id, $specialgroups ) )
         ) {
-          echo fc_action( array( 'class' => 'drop', 'title' => 'Gruppe löschen?', 'text' => ''
-                               , 'confirm' => 'Soll die Gruppe wirklich GELÖSCHT werden?' )
-                        , array( 'action' => 'delete', 'gruppen_id' => $gruppe['id'] ) );
+          echo fc_action(
+            array(
+              'class' => 'drop',
+              'title' => 'Gruppe löschen?',
+              'text' => '',
+              'confirm' => 'Soll die Gruppe wirklich GELÖSCHT werden?'
+            ),
+            array(
+              'action' => 'delete',
+              'gruppen_id' => $gruppe['id']
+            )
+          );
         }
       } else {
         ?>(inaktiv)<?php
       }
-
-    if( $show_member_details ) {
-      if( $gruppe['notiz_gruppe'] ) {
-        open_tr();
-          open_td();
-          open_td( '', "colspan='5'", $gruppe['notiz_gruppe'] );
+    
+      if( $show_member_details ) {
+        if( $gruppe['notiz_gruppe'] ) {
+          open_tr();
+            open_td();
+            open_td( '', "colspan='5'", $gruppe['notiz_gruppe'] );
+        }
+          open_tr();
+            open_td();
+            open_td( '', "colspan='5'" );
+              membertable_view( $id, FALSE, FALSE, FALSE );
       }
-      open_tr();
-        open_td();
-        open_td( '', "colspan='5'" );
-          membertable_view( $id, FALSE, FALSE, FALSE );
-    }
+    }  
   }
 
   if( hat_dienst(5) ) {
