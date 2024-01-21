@@ -9,18 +9,10 @@ setWindowSubtitle( 'Gruppenmitglieder' );
 need_http_var('gruppen_id','u', 1);
 $gruppe = sql_gruppe( $gruppen_id );
 
-$edit_names = FALSE;
-$edit_dienst_einteilung = FALSE;
-$edit_pwd = FALSE;
-if( ( $login_gruppen_id == $gruppen_id ) and ! $readonly ) {
-  $edit_names = TRUE;
-  $edit_pwd = TRUE;
-}
-if( hat_dienst(5) and ! $readonly ) {
-  $edit_names = TRUE;
-  $edit_dienst_einteilung=TRUE;
-  $edit_pwd = TRUE;
-}
+# Berechtigung zu bearbeiten
+$edit_names = !$readonly && ($login_gruppen_id == $gruppen_id || hat_dienst(5) );
+$edit_pwd = $edit_names;
+$edit_dienst_einteilung = !$readonly && hat_dienst(5);
 
 $pwmsg = '';
 $avatar_msg = '';
