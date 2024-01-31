@@ -102,7 +102,7 @@ echo "$problems $msg";
 
 medskip();
 
-open_table('list');
+open_table('list greywhite', '');
   open_th( '','','Nr' );
   open_th( '','','Gruppenname' );
   open_th( '', 'colspan="5"', 'Mitglieder' );
