@@ -147,6 +147,8 @@ open_table('list greywhite', '');
     $mitglieder_summe += $gruppe['mitgliederzahl'];
     $mitglieder = sql_gruppe_mitglieder( $id );
     $anzahl_gruppen_mitglieder = count($mitglieder);
+    // hebe eigene Gruppe in der Liste hervor
+    $rowstyle = ( $id == $login_gruppen_id ) ? "style='font-weight: bold'" : "";
 
     foreach ($mitglieder as $index => $m){
 
@@ -159,7 +161,7 @@ open_table('list greywhite', '');
       ];
 
       if ( $index > 0 ) {
-        open_tr();
+        open_tr('', $rowstyle);
           open_td('', '', $mitglieder_info[0]);
           open_td('', '', $mitglieder_info[1]);
           open_td('', '', $mitglieder_info[2]);
@@ -168,7 +170,7 @@ open_table('list greywhite', '');
         continue;
       }
 
-      open_tr();
+      open_tr('', $rowstyle);
 
       open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $nr );
       open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $gruppe['name'] );
