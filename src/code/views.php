@@ -2150,7 +2150,7 @@ function memberform_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE) {
           open_td( 'hfill', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
         if ($editable) {
           open_tr();
-            open_td( '', '', 'Slogan: ' );
+            open_td( '', '', 'kümmert sich um: ' );
             open_td( 'hfill', '', string_view( $row['slogan'], 80, $editable ? "slogan_$id" : false ) );
           open_tr();
             open_td( '', '', 'URL: ' );
