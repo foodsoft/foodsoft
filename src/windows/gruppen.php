@@ -143,7 +143,7 @@ open_table('list greywhite', '');
       $summe += $kontostand;
     }
     
-    $nr = $gruppe['gruppennummer'];
+    $nr = sprintf('%02d', $gruppe['gruppennummer']);
     $mitglieder_summe += $gruppe['mitgliederzahl'];
     $mitglieder = sql_gruppe_mitglieder( $id );
     $anzahl_gruppen_mitglieder = count($mitglieder);
