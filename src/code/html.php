@@ -39,8 +39,10 @@ function new_html_id() {
 function open_tag( $tag, $class = '', $attr = '', $payload = null ) {
   global $open_tags;
   if( $class )
-    $class = "class='$class'";
-  echo "<$tag $class $attr>\n";
+    $class = " class='{$class}' ";
+  if( $attr )
+    $attr = " {$attr}";
+  echo "<{$tag}{$class}{$attr}>\n";
   $n = count( $open_tags );
   $open_tags[$n+1] = $tag;
   if (!is_null($payload)) {

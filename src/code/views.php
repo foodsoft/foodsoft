@@ -471,9 +471,16 @@ function dienst_view( $dienst_id, $editable = false ) {
                    , array( 'gruppen_id' => $gruppen_id, 'img' => false, 'class' => 'href'
                           , 'text' => "Mitglied: {$dienst['vorname']}" ) );
       } else {
+        $title = implode("\n", array_map(
+          function($m) {
+            return "{$m['vorname']} -- Email: {$m['email']} | Telefon: {$m['telefon']}";
+          },
+          $mitglieder
+        ));
         echo fc_link( 'gruppenmitglieder'
                    , array( 'gruppen_id' => $gruppen_id, 'img' => false, 'class' => 'href'
-                          , 'text' => "G {$gruppe['gruppennummer']}: {$dienst['vorname']}" ) );
+                          , 'text' => "G {$gruppe['gruppennummer']}: {$dienst['vorname']}"
+                          , 'title' => $title ) );
       }
     } else if( $gruppen_id ) {
       if( ! $edit_gruppe ) {
@@ -2150,7 +2157,7 @@ function memberform_view( $gruppen_id, $editable = FALSE, $super_edit = FALSE) {
           open_td( 'hfill', '', string_view( $row['telefon'], 12, $editable ? "telefon_$id" : false ) );
         if ($editable) {
           open_tr();
-            open_td( '', '', 'Slogan: ' );
+            open_td( '', '', 'kümmert sich um: ' );
             open_td( 'hfill', '', string_view( $row['slogan'], 80, $editable ? "slogan_$id" : false ) );
           open_tr();
             open_td( '', '', 'URL: ' );
