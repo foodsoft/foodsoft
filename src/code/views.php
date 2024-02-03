@@ -471,9 +471,16 @@ function dienst_view( $dienst_id, $editable = false ) {
                    , array( 'gruppen_id' => $gruppen_id, 'img' => false, 'class' => 'href'
                           , 'text' => "Mitglied: {$dienst['vorname']}" ) );
       } else {
+        $title = implode("\n", array_map(
+          function($m) {
+            return "{$m['vorname']} -- Email: {$m['email']} | Telefon: {$m['telefon']}";
+          },
+          $mitglieder
+        ));
         echo fc_link( 'gruppenmitglieder'
                    , array( 'gruppen_id' => $gruppen_id, 'img' => false, 'class' => 'href'
-                          , 'text' => "G {$gruppe['gruppennummer']}: {$dienst['vorname']}" ) );
+                          , 'text' => "G {$gruppe['gruppennummer']}: {$dienst['vorname']}"
+                          , 'title' => $title ) );
       }
     } else if( $gruppen_id ) {
       if( ! $edit_gruppe ) {
