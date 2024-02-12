@@ -24,12 +24,11 @@ chmod 644 README.md
 chmod 644 ToDo.txt
 chmod 644 apache.sample.conf
 chmod 644 db/mwst.sql
-chmod 700 deploy.sh
+chmod 755 deploy.sh
 chmod 644 dev/.env.sample
 chmod 644 dev/db/config/foodsoft.cnf
 chmod 644 dev/docker-compose.yml
-chmod 644 dev/web/Containerfile.php7
-chmod 644 dev/web/Containerfile.php8
+chmod 644 dev/web/Containerfile
 chmod 644 dev/web/assets/foodsoft.conf
 chmod 644 dev/web/assets/start-web.sh
 chmod 644 docs/files_und_skripte

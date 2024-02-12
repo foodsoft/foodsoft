@@ -1,14 +1,13 @@
 version: "3.2"
 
 services:
-  # we run php8 and php7 in parallel until the migration to PHP8 iS finished
 
-  web_php8:
+  web:
     build:
       context: ./..
-      dockerfile: dev/web/Containerfile.php8
+      dockerfile: dev/web/Containerfile
       args:
-        PHP8_VERSION: ${PHP8_VERSION}
+        PHP_VERSION: ${PHP_VERSION:-latest}
     environment:
       EXT_UID: ${UID}
       EXT_GID: ${GID}
@@ -22,29 +21,7 @@ services:
     volumes:
       - ../src:/src:ro
       - ./web/assets/foodsoft.conf:/etc/apache2/sites-available/foodsoft.conf
-    container_name: foodsoft-php8
-    command: /opt/bin/start-web.sh
-
-  web_php7:
-    build:
-      context: ./..
-      dockerfile: dev/web/Containerfile.php7
-      args:
-        PHP7_VERSION: ${PHP7_VERSION}
-    environment:
-      EXT_UID: ${UID}
-      EXT_GID: ${GID}
-      EXT_USER: ${USER}
-    depends_on:
-      - db
-    networks:
-      - backend
-    ports:
-      - "8007:80"
-    volumes:
-      - ../src:/src:ro
-      - ./web/assets/foodsoft.conf:/etc/apache2/sites-available/foodsoft.conf
-    container_name: foodsoft-php7
+    container_name: ${CONTAINER_PREFIX}php
     command: /opt/bin/start-web.sh
 
   db:
@@ -62,12 +39,12 @@ services:
       MYSQL_DATABASE: "${DB_NAME}"
       MYSQL_USER: "${DB_USERNAME}"
       MYSQL_PASSWORD: "${DB_PASSWORD}"
-    container_name: mariadb
+    container_name: ${CONTAINER_PREFIX}mariadb
 
   dokuwiki:
     # https://hub.docker.com/r/linuxserver/dokuwiki
-    image: ghcr.io/linuxserver/dokuwiki
-    container_name: dokuwiki
+    image: ghcr.io/linuxserver/dokuwiki:${DOKUWIKI_VERSION:-latest}
+    container_name: ${CONTAINER_PREFIX}dokuwiki
     environment:
       PUID: 1000
       PGID: 1000
@@ -82,13 +59,13 @@ services:
     restart: unless-stopped
 
   adminer:
-    image: adminer
+    image: adminer:${ADMINER_VERSION:-latest}
     ports:
       - 8080:8080
     networks:
       - backend
     restart: always
-    container_name: adminer
+    container_name: ${CONTAINER_PREFIX}adminer
 
 networks:
   backend:
