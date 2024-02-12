@@ -1,5 +1,5 @@
-ARG PHP7_VERSION
-FROM php:${PHP7_VERSION}-apache
+ARG PHP_VERSION
+FROM php:${PHP_VERSION}-apache
 
 ARG DEBIAN_FRONTEND=noninteractive
 
