@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 //
 // abrechnung.php:
 //
@@ -154,9 +170,9 @@ foreach( ( $gesamt_abrechnung ? $bestell_id_set : array( $bestell_id ) ) as $b_i
   $pfand_voll_brutto_soll += $lieferanten_soll['pfand_voll_brutto_soll'];
   $pfand_leer_netto_soll += $lieferanten_soll['pfand_leer_netto_soll'];
   $pfand_leer_brutto_soll += $lieferanten_soll['pfand_leer_brutto_soll'];
-  $warenwert_verteilt_brutto -= sql_verteilt_brutto_soll( $b_id ); 
-  $warenwert_muell_brutto -= sql_muell_brutto_soll( $b_id ); 
-  $warenwert_basar_brutto += basar_wert_brutto( $b_id ); 
+  $warenwert_verteilt_brutto -= sql_verteilt_brutto_soll( $b_id );
+  $warenwert_muell_brutto -= sql_muell_brutto_soll( $b_id );
+  $warenwert_basar_brutto += basar_wert_brutto( $b_id );
   $aufschlag_soll += sql_aufschlag_soll( $b_id );
   $gruppenpfand = current( sql_gruppenpfand( $lieferant_id, $b_id, "gesamtbestellungen.id" ) );
   $gruppenpfand_voll_brutto_soll += $gruppenpfand['pfand_voll_brutto_soll'];
