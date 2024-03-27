@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 // fcck.php: konsistenzcheck fuer Datenbanken, entfernt verwaiste Eintraege, etc...
 //
@@ -32,12 +48,12 @@ global $db_handle;
   while( $row = mysqli_fetch_array( $bestellungen ) ) {
     $n1 = sql_select_single_field( "SELECT count(*) as count FROM bestellvorschlaege WHERE gesamtbestellung_id = $id", 'count' );
     $n2 = sql_select_single_field( "SELECT count(*) as count FROM gruppenbestellungen WHERE gesamtbestellung_id = $id", 'count' );
-    if( 
-    
+    if(
 
-  
-  
-  
+
+
+
+
   $bestell_id = false;
   if( get_http_var('bestell_id') ) {
     $self = "$self&bestell_id=$bestell_id";
@@ -76,7 +92,7 @@ global $db_handle;
     exit( $print_on_exit );
   }
 
-  $bestellungen = mysqli_query( $db_handle, 
+  $bestellungen = mysqli_query( $db_handle,
     "SELECT * FROM gesamtbestellungen WHERE id='$bestell_id' ORDER BY bestellende DESC,name"
   ) or error ( __LINE__, __FILE__, "Suche nach Bestellung" );
   $bestellung = mysqli_fetch_array( $bestellungen )
@@ -124,14 +140,14 @@ global $db_handle;
     echo "</table><hr>";
     exit( $print_on_exit );
   }
-    
+
   $vorschlaege = mysqli_query( $db_handle,
     "SELECT * FROM bestellvorschlaege
      WHERE gesamtbestellung_id='$bestell_id' AND produkt_id='$produkt_id' "
   ) or error ( __LINE__, __FILE__, "Suche in bestellvorschlaegen fehlgeschlagen" );
   $vorschlag = mysqli_fetch_array( $vorschlaege )
     or error ( __LINE__, __FILE__, "Bestellvorschlag nicht gefunden" );
-  
+
   $produkte = mysqli_query( $db_handle,
     "SELECT * FROM produkte WHERE id='{$vorschlag['produkt_id']}'"
   ) or error ( __LINE__, __FILE__, "Suche nach Produkt fehlgeschlagen" );

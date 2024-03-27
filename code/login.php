@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 //
 // login.php
 //
@@ -107,7 +123,7 @@ if( isset( $_COOKIE['foodsoftkeks'] ) && ( strlen( $_COOKIE['foodsoftkeks'] ) > 
 //
 get_http_var( 'login', 'w', '' );
 switch( $login ) {
-  case 'login': 
+  case 'login':
     get_http_var( 'login_gruppen_id', 'u' )
       or $problems .= "<div class='warn'>FEHLER: keine Gruppe ausgewaehlt</div>";
     get_http_var( 'passwort','R' )
@@ -139,7 +155,7 @@ switch( $login ) {
     if ( ( ! $problems ) && ( $dienst > 0 ) ) {
       $login_dienst = $dienst;
       $dienstkontrollblatt_id = dienstkontrollblatt_eintrag(
-        false, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz 
+        false, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz
       );
     } else {
       $dienstkontrollblatt_id = 0;
@@ -148,7 +164,7 @@ switch( $login ) {
     if( ! $problems ) {
       // alles ok: neue session erzeugen:
       $cookie = random_hex_string( 5 );
-      $session_id = sql_insert( 'sessions', array( 
+      $session_id = sql_insert( 'sessions', array(
         'cookie' => $cookie
       , 'login_gruppen_id' => $login_gruppen_id
       , 'dienst' => $login_dienst
@@ -169,7 +185,7 @@ switch( $login ) {
       need_http_var('telefon','H');
       need_http_var('notiz','H');
       dienstkontrollblatt_eintrag(
-        $dienstkontrollblatt_id, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz 
+        $dienstkontrollblatt_id, $login_gruppen_id, $login_dienst, $coopie_name, $telefon, $notiz
       );
     }
     logout();
@@ -195,14 +211,14 @@ open_javascript();
 function pick_login_dropdown() {
   var source = $('login_gruppen_id');
   var text = $('login_gruppen_id_text');
-  
+
   text.value = source.value % 1000;
 }
 
 function pick_login_text() {
   var source = $('login_gruppen_id_text');
   var dropdown = $('login_gruppen_id');
-  
+
   var options = dropdown.options;
   var group_id = 0;
   for (var i = 0; i < options.length; ++i) {
@@ -225,9 +241,9 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
     open_div( 'kommentar', "style='padding:1em;'", 'Anmeldung für die Foodsoft und fürs Doku-Wiki der Foodsoft:' );
     open_div( 'newfield', '', "
       <label> ". ( $FC_acronym == 'LS' ? 'Kunde:' : 'Gruppe:' ) ."</label>
-      <input type='text' size='4' name='login_gruppen_id_text' id='login_gruppen_id_text' value='' 
+      <input type='text' size='4' name='login_gruppen_id_text' id='login_gruppen_id_text' value=''
           onkeyup='pick_login_text();'>
-      <select size='1' name='login_gruppen_id' id='login_gruppen_id' 
+      <select size='1' name='login_gruppen_id' id='login_gruppen_id'
           onchange='pick_login_dropdown();'>
         ". optionen_gruppen() ."
       </select>
@@ -273,7 +289,7 @@ open_form( "url=$foodsoftdir/index.php", 'login=login' );
     open_div( '', "id='dienstform' style='display:" . ( $login_dienst ? 'block' : 'none' ) .";'" );
       open_div( 'kommentar', '', "
         Wenn Du Dich f&uuml;r " . ( $FC_acronym == 'LS' ? 'eine Aktion' : 'einen Dienst' ) . " anmeldest,
-        kannst Du zus&auml;tzliche Funktionen der Foodsoft nutzen; au&szlig;rdem wirst Du 
+        kannst Du zus&auml;tzliche Funktionen der Foodsoft nutzen; au&szlig;rdem wirst Du
         automatisch ins " . ( $FC_acronym == 'LS' ? 'Kontrollblatt' : 'Dienstkontrollblatt' ) . " eingetragen:
       " );
       open_fieldset( 'small_form', '', ( $FC_acronym == 'LS' ? 'Kontrollblatt' : 'Dienstkontrollblatt' ) );

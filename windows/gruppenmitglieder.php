@@ -1,5 +1,21 @@
-<?PHP
-  
+<?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 assert( $angemeldet ) or exit();
 // $_SESSION['LEVEL_CURRENT'] = LEVEL_IMPORTANT;
 
@@ -157,7 +173,7 @@ if( hat_dienst(5) and ! $readonly ) {
         form_row_text( 'Name:', 'newName', 20 );
         form_row_text( 'Email:', 'newMail', 24 );
         form_row_text( 'Telefon:', 'newTelefon', 20 );
-        open_tr(); open_td( 'label', '', 'Diensteinteilung:'); open_td( 'kbd', '', dienst_selector('') ); 
+        open_tr(); open_td( 'label', '', 'Diensteinteilung:'); open_td( 'kbd', '', dienst_selector('') );
         open_tr(); open_td( 'right', "colspan='2'" ); submission_button();
       close_table();
     close_form();

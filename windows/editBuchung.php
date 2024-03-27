@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 assert( $angemeldet ) or exit();
 
@@ -17,7 +33,7 @@ if( get_http_var( 'transaktion_id', 'U', NULL, true ) )
 else
   need_http_var( 'buchung_id','U', true );
 
-$buchung = sql_get_transaction( $buchung_id ); 
+$buchung = sql_get_transaction( $buchung_id );
 $k_id = $buchung['konterbuchung_id'];
 if( ! $k_id ) {
   div_msg( 'kommentar', "
@@ -27,7 +43,7 @@ if( ! $k_id ) {
   return;
 }
 
-$k_buchung = sql_get_transaction( $k_id ); 
+$k_buchung = sql_get_transaction( $k_id );
 
 // waehle eine (hoffentlich) leicht verstaendliche / kanonische reihenfolge der beiden Buchungen:
 //
