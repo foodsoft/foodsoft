@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 // how to connect to the MySQL database:
 //
@@ -19,7 +35,7 @@ $foodsoftbase = getenv( 'foodsoftbase' );    // path relative to DocumentRoot: h
 // $db_server = "127.0.0.1";
 // $db_name   = "INSERT_NAME_OF_DATABASE";
 // $db_user   = "INSERT_NAME_OF_DATABASE_USER";
-// $db_pwd    = "INSERT_PASSWORD"; 
+// $db_pwd    = "INSERT_PASSWORD";
 // $foodsoftbase = "/foodsoft";
 
 // $allow_setup_from = '141.89.116.*'; // allow to run setup.php from these IPs

@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 global $open_tags      /* keep track of open tags */
      , $print_on_exit  /* print this just before </body> */
@@ -318,9 +334,9 @@ function open_form( $get_parameters = array(), $post_parameters = array() ) {
   return $form_id;
 }
 
-// hidden_input(): 
+// hidden_input():
 // - register parameter $name, value $val to be inserted as a hidden input field
-//   just before </form> 
+//   just before </form>
 // - thus, this function can be called anywhere in the html structure, not just
 //   where <input> is allowed
 // - $attr can be used to set e.g. an id='foo' to modify the value from javascript
@@ -625,9 +641,9 @@ function close_option_menu_row() {
 
 /**
  * Generate event handler attributes for handling changes and capturing ENTER key
- * 
+ *
  * @author Tilman Vogel
- * 
+ *
  * @param[in]   handler
  *              JS code to execute on field change or ENTER
  * @param[in]   capture_enter
@@ -644,9 +660,9 @@ function textfield_on_change_handler( $handler, $capture_enter = true ) {
 
 /**
  * Send a PHP array as a JavaScript object via JSON
- * 
+ *
  * @author Tilman Vogel
- * 
+ *
  * @param[in]   name
  *              name of the JavaScript variable, must contain "var " if desired
  * @param[in]   value

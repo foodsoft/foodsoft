@@ -1,4 +1,20 @@
 <?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 assert( $angemeldet ) or exit();
 
@@ -189,7 +205,7 @@ foreach( $bestellungen as $bestellung ) {
           $actions[] = fc_link( 'edit_bestellung', "bestell_id=$combined_id,text=Stammdaten &auml;ndern..." );
         }
         break;
-  
+
       case STATUS_LIEFERANT:
         $views[] = fc_link( 'bestellschein', "class=href,bestell_id=$combined_id,text=Bestellschein" );
         if( $login_dienst > 0 )
@@ -211,7 +227,7 @@ foreach( $bestellungen as $bestellung ) {
           $actions[] = fc_action( "title=Bestellung löschen,class=drop,text=löschen,confirm=Bestellung wirklich loeschen?"
                                 , "action=delete,delete_id=$combined_id" );
         break;
-  
+
       case STATUS_VERTEILT:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$combined_id,text=Lieferschein" );
         if( $login_dienst > 0 ) {
@@ -233,28 +249,28 @@ foreach( $bestellungen as $bestellung ) {
           }
         }
         break;
-  
+
       case STATUS_ABGERECHNET:
         $views[] = fc_link( 'lieferschein', "class=href,bestell_id=$combined_id,text=Lieferschein" );
         if( $login_dienst > 0 )
           $views[] = fc_link( 'verteilliste', "class=href,bestell_id=$combined_id" );
-  
+
         $views[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,bestell_id=$combined_id,text=Abrechnung" );
-  
+
         if( $n == $abrechnung_set_count ) {
           if( $abrechnung_set_count > 1 ) {
             $combs[] = fc_link( 'gesamtlieferschein', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Lieferschein" );
             $combs[] = fc_link( 'abrechnung', "class=href,abrechnung_id=$abrechnung_id,text=Gesamt-Abrechnung" );
           }
         }
-  
+
         break;
-  
+
       case STATUS_ARCHIVIERT:
       default:
         break;
     }
-  
+
     open_tr('',"id='row$combined_id'" );
       open_td();
         open_div( '','', $row['name'] );
@@ -289,13 +305,13 @@ foreach( $bestellungen as $bestellung ) {
           if( $actions ) {
             open_ul('plain');
               foreach( $actions as $action )
-                open_li( '', '',  $action ); 
+                open_li( '', '',  $action );
             close_ul();
           } else {
             echo '-';
           }
       }
-  
+
       if( hat_dienst(4) ) {
         open_td( ( ( $n == 1 ) ? '' : 'notop ' ) . ( ( $n == $abrechnung_set_count ) ? '' : ' nobottom' ) );
         if( $combs ) {

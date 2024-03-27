@@ -20,6 +20,7 @@ chmod 644 .gitattributes
 chmod 644 .gitignore
 chmod 644 GITHOOKS
 chmod 644 INSTALL
+chmod 644 LICENSE.md
 chmod 644 README.md
 chmod 644 ToDo.txt
 chmod 755 antixls.modif
@@ -38,7 +39,7 @@ chmod 644 code/zuordnen.php
 chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
-chmod 744 deploy.sh
+chmod 755 deploy.sh
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/README
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/auth/authentication.php
 chmod 644 dokuwiki_auth_plugin/authfoodsoft/lang/en/lang.php

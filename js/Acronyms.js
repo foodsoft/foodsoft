@@ -1,3 +1,18 @@
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 var Acronym = Class.create({
   initialize: function(id, context, acronym, definition, comment, url) {
@@ -22,11 +37,11 @@ var Acronym = Class.create({
   },
   setFrom: function(other) {
     this.set(
-        other.id, 
-        other.context, 
-        other.acronym, 
-        other.definition, 
-        other.comment, 
+        other.id,
+        other.context,
+        other.acronym,
+        other.definition,
+        other.comment,
         other.url);
   },
   isEqual: function(other) {
@@ -48,11 +63,11 @@ var Acronym = Class.create({
     return changes.isChanged(this);
   },
   isDeleted: function() {
-    return typeof this.id === 'string' 
+    return typeof this.id === 'string'
         && this.id.indexOf('delete') === 0;
   },
   isNew: function() {
-    return typeof this.id === 'string' 
+    return typeof this.id === 'string'
         && this.id.indexOf('new') === 0;
   },
   markDeleted: function() {
@@ -66,18 +81,18 @@ var Acronym = Class.create({
 
 Acronym.fromParameters = function(parameters) {
   return new Acronym(
-      parameters.id, 
-      parameters.context, 
-      parameters.acronym, 
-      parameters.definition, 
-      parameters.comment, 
+      parameters.id,
+      parameters.context,
+      parameters.acronym,
+      parameters.definition,
+      parameters.comment,
       parameters.url);
 }
 
 Acronym.makeNew = function() {
-  Acronym.makeNew.counter = Acronym.makeNew.counter === undefined 
+  Acronym.makeNew.counter = Acronym.makeNew.counter === undefined
       ? 0 : Acronym.makeNew.counter + 1;
-    
+
     return new Acronym(
       'new-' + Acronym.makeNew.counter,
       '',

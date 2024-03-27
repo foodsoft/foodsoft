@@ -1,8 +1,26 @@
 /*
+  foodsoft: Order system for Food-Coops
+  Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as
+  published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/*
  *
  *   general defaults:
  *
-*/
+ */
 
 html, body {
   height: 100%;
@@ -119,7 +137,7 @@ table.layout tr td, table table.layout tr td, table table table.layout tr td {
    *    lot here - but they forgot even that essential thing in that kludge
    *    called HTML. Probably they wanted to take over the "last language without
    *    a preprocessing facility" award from BASIC).
-   *    (Timo, who still can't get how aboute one decade after the introduction 
+   *    (Timo, who still can't get how aboute one decade after the introduction
    *    of an excellent typesetting/markup language combo (TeX/LaTeX) something as
    *    crippled as HTML/CSS could be seriously suggested, and even win the
    *    competition)
@@ -646,7 +664,7 @@ a, a:visited, .href, .href:visited {
 }
 a:hover, .href:hover {
   text-decoration: underline;
-} 
+}
 a + a , .link + .link {
   margin-left:1ex;
 }
@@ -655,7 +673,7 @@ a + a , .link + .link {
     color:#000000 !important;
   }
 }
-    
+
 
 .bigbutton, .bigbutton:visited {
   width:200px;
@@ -870,7 +888,7 @@ p.li {
 div#Zusatz {
 font-size: 0.9em;
 float: right; width: 30em;
-margin-left:  1em; 
+margin-left:  1em;
 padding: 1em;
 border-style:solid;
 border-color:#FF0000;

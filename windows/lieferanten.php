@@ -1,13 +1,30 @@
+<?php
+// foodsoft: Order system for Food-Coops
+// Copyright (C) 2024  Tilman Vogel <tilman.vogel@web.de>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+?>
 <h1>Lieferanten&uuml;bersicht...</h1>
 
-<?PHP
+<?php
 
 assert( $angemeldet ) or exit();
 
 setWikiHelpTopic( 'foodsoft:lieferanten' );
 
 $editable = ( hat_dienst(4,5) and ! $readonly );
- 
+
 // ggf. Aktionen durchführen (z.B. Lieferant löschen...)
 get_http_var('action','w','');
 $editable or $action = '';
