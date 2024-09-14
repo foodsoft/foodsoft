@@ -149,16 +149,32 @@ open_table('list greywhite', '');
     $anzahl_gruppen_mitglieder = count($mitglieder);
     // hebe eigene Gruppe in der Liste hervor
     $rowstyle = ( $id == $login_gruppen_id ) ? "style='font-weight: bold'" : "";
+ 
+    if ($anzahl_gruppen_mitglieder === 0) {
+      $mitglieder[] = array();
+    }
 
     foreach ($mitglieder as $index => $m){
 
-      $mitglieder_info = [
-        "{$m['name']}, {$m['vorname']}",
-        "{$m['telefon']}",
-        "{$m['email']}",
-        "Dienst: {$m['diensteinteilung']}",
-        "{$m['slogan']}",
-      ];
+      if (count($m) === 0) {
+        $mitglieder_info = [
+          "keine Mitglieder",
+      	  "",
+      	  "",
+      	  "",
+      	  "",
+        ];
+        $rowspan = 1;
+      } else {
+        $mitglieder_info = [
+          "{$m['name']}, {$m['vorname']}",
+          "{$m['telefon']}",
+          "{$m['email']}",
+          "Dienst: {$m['diensteinteilung']}",
+          "{$m['slogan']}",
+        ];
+        $rowspan = $anzahl_gruppen_mitglieder;
+      }
 
       if ( $index > 0 ) {
         open_tr('', $rowstyle);
@@ -172,8 +188,8 @@ open_table('list greywhite', '');
 
       open_tr('', $rowstyle);
 
-      open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $nr );
-      open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $gruppe['name'] );
+      open_td( '', "rowspan='{$rowspan}'", $nr );
+      open_td( '', "rowspan='{$rowspan}'", $gruppe['name'] );
       
       // Spalte: Mitglieder
       open_td('', '', $mitglieder_info[0]);
@@ -183,7 +199,7 @@ open_table('list greywhite', '');
       open_td('', '', $mitglieder_info[4]);
 
       // Spalte: Kontostand
-      open_td( 'number', "rowspan='{$anzahl_gruppen_mitglieder}'" );
+      open_td( 'number', "rowspan='{$rowspan}'" );
       if( hat_dienst(5) || ( $login_gruppen_id == $id ) ) {
         echo price_view( $kontostand );
       }      
@@ -192,19 +208,19 @@ open_table('list greywhite', '');
       if( hat_dienst(5) ) {
         $letztes_login = sql_gruppe_letztes_login( $id );
         $login_ts = $letztes_login ? $letztes_login['time_stamp'] : '(nie)';
-        open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", $login_ts );
+        open_td( '', "rowspan='{$rowspan}'", $login_ts );
       }
       
       // Spalte: Datum letzte Bestellung
       if( hat_dienst(5) ) {
         $letzte_bestellung = sql_gruppe_letzte_bestellung( $id );
         if( $letzte_bestellung ) {
-          open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", fc_link( 'bestellschein', array(
+          open_td( '', "rowspan='{$rowspan}'", fc_link( 'bestellschein', array(
             'bestell_id' => $letzte_bestellung['id']
           , 'text' => $letzte_bestellung['lieferdatum']
           ) ) );
         } else {
-          open_td( '', "rowspan='{$anzahl_gruppen_mitglieder}'", '(nie)' );
+          open_td( '', "rowspan='{$rowspan}'", '(nie)' );
         }
       }
 
@@ -218,11 +234,11 @@ open_table('list greywhite', '');
           );
 
         # adjust formatting if a certain threshold is crossed
-        open_td('', "rowspan='{$anzahl_gruppen_mitglieder}'", $ld_value );
+        open_td('', "rowspan='{$rowspan}'", $ld_value );
       }
 
       // Spalte: Aktionen
-      open_td('', "rowspan='{$anzahl_gruppen_mitglieder}'");
+      open_td('', "rowspan='{$rowspan}'");
       if( $gruppe['aktiv'] ) {
         echo fc_link( 'gruppenmitglieder', "gruppen_id=$id,title=Mitglieder,text=" );
 

@@ -114,7 +114,7 @@ chmod 644 src/windows/editProdukt.php
 chmod 644 src/windows/editProduktgruppe.php
 chmod 644 src/windows/editVerpackung.php
 chmod 644 src/windows/gesamtlieferschein.php
-chmod 644 src/windows/gruppen.php
+chmod 664 src/windows/gruppen.php
 chmod 644 src/windows/gruppenkonto.php
 chmod 644 src/windows/gruppenmitglieder.php
 chmod 644 src/windows/gruppenpfand.php
