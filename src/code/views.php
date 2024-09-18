@@ -817,14 +817,14 @@ define( 'PR_FAXOPTIONS'
  * after delivery delivered amounts.
  */
 function bestellschein_view(
-    $bestell_id,
-    $editAmounts = FALSE,           // make order amounts editable
-    $editPrice = FALSE,             // make prices editable
-    $spalten = 0xfffff,             // table columns to be dsiplayed
-    $gruppen_id = false,            // if set to int: display group order for this group id, if false: display total order
-    $select_columns = false,        // display menu for choosing table columns
-    $select_nichtgeliefert = false  // display products that were not delivered
-  ) {
+  $bestell_id,
+  $editAmounts = FALSE,           // make order amounts editable
+  $editPrice = FALSE,             // make prices editable
+  $spalten = 0xfffff,             // table columns to be dsiplayed
+  $gruppen_id = false,            // if set to int: display group order for this group id, if false: display total order
+  $select_columns = false,        // display menu for choosing table columns
+  $select_nichtgeliefert = false  // display products that were not delivered
+) {
   global $input_event_handlers;
 
   $basar_id = sql_basar_id();
@@ -895,12 +895,12 @@ function bestellschein_view(
 
   if( $gruppen_id ) {
     $col[PR_COL_BESTELLMENGE] = array(
-     'title' => "von der Gruppe bestellte Mengen: fest/Toleranz",
-     'header' => "bestellt<br>fest/Toleranz", 'cols' => 2
+    'title' => "von der Gruppe bestellte Mengen: fest/Toleranz",
+    'header' => "bestellt<br>fest/Toleranz", 'cols' => 2
     );
     $col[PR_COL_BESTELLGEBINDE] = array(
-     'title' => "von der Gruppe bestellte Gebinde: fest / maximal",
-     'header' => "bestellt Gebinde<br>fest/maximal</th>", 'cols' => 2
+    'title' => "von der Gruppe bestellte Gebinde: fest / maximal",
+    'header' => "bestellt Gebinde<br>fest/maximal</th>", 'cols' => 2
     );
     if( $status != STATUS_BESTELLEN ) {
       if( $gruppen_id == $basar_id ) {
@@ -916,9 +916,9 @@ function bestellschein_view(
     $option_nichtgefuellt = false;
   } else {
     $col[PR_COL_BESTELLMENGE] = array(
-     'title' => "von Konsumenten bestellte Mengen: fest/Toleranz/Basar",
-     'header' => "bestellt<br>fest/Toleranz/Basar",
-     'cols' => ( $status == STATUS_BESTELLEN ? 3 : 2 )
+    'title' => "von Konsumenten bestellte Mengen: fest/Toleranz/Basar",
+    'header' => "bestellt<br>fest/Toleranz/Basar",
+    'cols' => ( $status == STATUS_BESTELLEN ? 3 : 2 )
     );
     if( $status == STATUS_BESTELLEN ) {
       $col[PR_COL_BESTELLGEBINDE] = array(
@@ -983,7 +983,7 @@ function bestellschein_view(
         open_td( '', '', 'Spalten ausblenden:' );
         open_td( '', '', "<select id='select_drop_cols'
           onchange=\"drop_col('" . fc_link( '', array( 'context' => 'action', 'spalten' => NULL ) ) . "',$spalten);\"
-           ><option selected>(bitte wählen)</option>$opts_drop</select></td>
+          ><option selected>(bitte wählen)</option>$opts_drop</select></td>
         " );
       close_option_menu_row();
     }
@@ -1032,9 +1032,10 @@ function bestellschein_view(
     }
     switch( $status ) {
       case STATUS_BESTELLEN:
-      case STATUS_LIEFERANT:
         $nichtgeliefert_header = 'Nicht bestellte Produkte';
-      break;
+      case STATUS_LIEFERANT:
+        $nichtgeliefert_header = 'Nicht bestellte oder zugeteilte Produkte';
+        break;
       case STATUS_VERTEILT:
       default:
         $nichtgeliefert_header = ( $gruppen_id ?
@@ -1139,6 +1140,11 @@ function bestellschein_view(
         }
       }
 
+      // hide rows with "zero" assigned amount in group view
+      if ( $gruppen_id && $liefermenge < 0.5 && !($spalten & PR_ROWS_NICHTGELIEFERT) ) {
+        continue;
+      }
+
       open_tr();
         if( $spalten & PR_COL_NAME )
           open_td( 'left', '', $produkte_row['produkt_name'] );
@@ -1235,7 +1241,7 @@ function bestellschein_view(
               open_td( '', "style='border-left-style:none;border-right-style:none;'" );
                 //Checkbox für fehlende Lieferung. Löscht auch gleich Einträge in der Verteiltabelle
                 ?> <input  title='Wurde nicht geliefert' type='checkbox' name='nichtGeliefert[]' value='<?php echo $produkt_id; ?>'
-                     <?php echo $input_event_handlers; ?> > <?php
+                    <?php echo $input_event_handlers; ?> > <?php
             }
             open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
           }
@@ -1274,14 +1280,14 @@ function bestellschein_view(
     open_option_menu_row();
       open_td( '', "colspan='2'" );
         option_checkbox( 'spalten', PR_ROWS_NICHTGELIEFERT, "$nichtgeliefert_header zeigen"
-                       , "$nichtgeliefert_header vorhanden; diese auch anzeigen?" );
+                      , "$nichtgeliefert_header vorhanden; diese auch anzeigen?" );
     close_option_menu_row();
   }
   if( $option_nichtgefuellt && $haben_nichtgefuellt ) {
     open_option_menu_row();
       open_td( '', "colspan='2'" );
         option_checkbox( 'spalten', PR_ROWS_NICHTGEFUELLT, "nicht-volle Gebinde zeigen"
-                       , 'nicht gefuellte Gebinde vorhanden; diese auch anzeigen?' );
+                      , 'nicht gefuellte Gebinde vorhanden; diese auch anzeigen?' );
     close_option_menu_row();
   }
 }
