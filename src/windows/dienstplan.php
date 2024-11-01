@@ -214,8 +214,25 @@ if( hat_dienst(5) ) {
   close_div();
 }
 
+get_http_var('since', 'U', -1);
+if ( $since === -1 ) {
+  // show last year by default
+  $one_year_ago = (new DateTime())->modify('-1 years')->getTimestamp(); 
+  $since = $one_year_ago;
+}
+$sinceDate = (new DateTime())->setTimestamp($since)->format("Y-m-d");
 
-?> <h1>Dienstliste</h1> <?php
+$title_addition = "";
+$filter_since_period = "true";
+$order = "lieferdatum ASC, dienst DESC";
+
+if ( $options & OPTION_SHOW_HISTORY ) {
+  $title_addition = " (seit {$sinceDate})";
+  $filter_since_period = "`lieferdatum` > FROM_UNIXTIME({$since})";
+  $order = "lieferdatum DESC, dienst DESC";
+}
+
+?> <h1>Dienstliste<?php echo $title_addition ?></h1> <?php
 
 open_div( 'kommentar' );
   // open_span( '', '',
@@ -246,7 +263,7 @@ open_table( 'list' );
     open_th( '', "title='{$desc}'", $content );
   }
 
-  $dienste = sql_dienste();
+  $dienste = sql_dienste($filter_since_period, $order);
 
   $currentDate = "initial";
   $dienst = current( $dienste );
@@ -313,4 +330,17 @@ open_table( 'list' );
   }
 close_table();
 
+medskip();
+
+open_div( 'center' );
+  open_tag("button", "button", "id='loadMoreButton'", "⇩⇩⇩ Mehr laden... ⇩⇩⇩");
+close_div();
+
 ?>
+<script>
+    document.getElementById('loadMoreButton').addEventListener(
+      'click',
+      // move the limit roughly 6m back in time (-15768576s)
+      (event) => { loadMore('since', <?php echo $since ?>, -15768576); }
+    );
+</script>

@@ -2102,6 +2102,20 @@ function sql_bestellung( $bestell_id ) {
   return current($r);
 }
 
+/**
+ * Returns the timestamp of the oldest order that is not yet cleared
+ */
+function sql_bestellung_oldest_unfinished_timestamp() {
+  return sql_select_single_field(
+    "
+    SELECT UNIX_TIMESTAMP(`lieferung`) AS unfinished
+    FROM gesamtbestellungen
+    WHERE `rechnungsstatus` < " . STATUS_ABGERECHNET . " 
+    ORDER BY `lieferung` ASC
+    LIMIT 1
+    ", 'unfinished');
+}
+
 
 /* function select_gesamtbestellungen_schuldverhaeltnis():
  *  liefert gesamtbestellungen, für die bereits ein verbindlicher vertrag besteht
@@ -4647,6 +4661,7 @@ $foodsoft_get_vars = array(
   'prev_id' => 'u',
   'produkt_id' => 'u',
   'ro' => 'u',
+  'since' => 'U',
   'spalten' => 'u',
   'state' => 'u',
   'transaktion_id' => 'u',
