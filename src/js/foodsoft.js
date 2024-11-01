@@ -634,3 +634,20 @@ var SearchableSelect = Class.create({
 function disableAutocomplete(element) {
   element.setAttribute('autocomplete', 'off');
 }
+
+/**
+ * Modify the value of query parameter 'parameter' by setting it to
+ * the current value (or the default value) plus delta.
+ * Finally, the page is reloaded.
+ * 
+ * @param {string} parameter 
+ * @param {number} defaultValue
+ * @param {number} delta 
+ */
+function loadMore(parameter, defaultValue, delta) {
+  const url = new URL(window.location.href);
+  const currentValue = parseInt(url.searchParams.get(parameter)) || defaultValue;
+  // increment is roughly 1y
+  url.searchParams.set(parameter, currentValue + delta);
+  window.location.href = url.toString();
+}

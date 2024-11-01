@@ -2,6 +2,16 @@
 
 assert( $angemeldet ) or exit();
 
+// 'since' sets the lower boundary of the time period displayed (upper boundary is NOW) as Unix epoch timestamp
+get_http_var('since', 'U', -1);
+if ( $since === -1 ) {
+  // show last 2 years by default, or the datetime of the last unfinished order (if older)
+  $oldest_unfinished = sql_bestellung_oldest_unfinished_timestamp();
+  $two_years_ago = (new DateTime())->modify('-2 years')->getTimestamp(); 
+  $since = min($oldest_unfinished, $two_years_ago);
+}
+$sinceDate = (new DateTime())->setTimestamp($since)->format("Y-m-d");
+
 get_http_var( 'orderby', 'w', 'status', true );
 switch( $orderby ) {
   case 'name':
@@ -132,7 +142,7 @@ switch( $action ) {
 }
 
 
-echo "<h1 class='bigskip'>Liste aller Bestellungen</h1>";
+echo "<h1 class='bigskip'>Liste aller Bestellungen (seit {$sinceDate})</h1>";
 
 open_table( 'list hfill' );
   open_th();
@@ -151,8 +161,8 @@ open_table( 'list hfill' );
   if( hat_dienst(4) )
     open_th('','','Abrechnung');
 
-// $bestellungen = sql_bestellungen( 'true', 'rechnungsstatus, abrechnung_id DESC' );
-$bestellungen = sql_bestellungen( 'true', $order );
+$selected_since_condition = "`lieferung` > FROM_UNIXTIME({$since})";
+$bestellungen = sql_bestellungen( $selected_since_condition, $order );
 $abrechnung_id = -1;
 foreach( $bestellungen as $bestellung ) {
   $abrechnung_id = $bestellung['abrechnung_id'];
@@ -487,8 +497,22 @@ foreach( $bestellungen as $bestellung ) {
   }
 }
 close_table();
-  ?>
+
+medskip();
+
+open_div( 'center' );
+  open_tag("button", "button", "id='loadMoreButton'", "⇩⇩⇩ Mehr laden... ⇩⇩⇩");
+close_div();
+
+?>
+
   <script>
+    document.getElementById('loadMoreButton').addEventListener(
+      'click',
+      // move the limit roughly 1y back in time (-31536000s)
+      (event) => { loadMore('since', <?php echo $since ?>, -31536000); }
+    );
+
     var abrechnung_id = 0;
 
     function kombinieren( id2 ) {
