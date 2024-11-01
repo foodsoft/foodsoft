@@ -51,7 +51,7 @@ chmod 644 src/code/katalogsuche.php
 chmod 644 src/code/login.php
 chmod 644 src/code/views.php
 chmod 644 src/code/zuordnen.php
-chmod 644 src/css/foodsoft.css
+chmod 664 src/css/foodsoft.css
 chmod 644 src/css/modified.gif
 chmod 644 src/css/readonly.gif
 chmod 644 src/dump.php
@@ -101,7 +101,7 @@ chmod 644 src/windows/basar.php
 chmod 644 src/windows/bestellen.php
 chmod 644 src/windows/bestellfax.php
 chmod 644 src/windows/bestellschein.php
-chmod 644 src/windows/bestellungen.php
+chmod 664 src/windows/bestellungen.php
 chmod 644 src/windows/bilanz.php
 chmod 644 src/windows/catalogue_acronyms.php
 chmod 644 src/windows/dienstkontrollblatt.php
@@ -115,7 +115,7 @@ chmod 644 src/windows/editProduktgruppe.php
 chmod 644 src/windows/editVerpackung.php
 chmod 644 src/windows/gesamtlieferschein.php
 chmod 644 src/windows/gruppen.php
-chmod 644 src/windows/gruppenkonto.php
+chmod 664 src/windows/gruppenkonto.php
 chmod 644 src/windows/gruppenmitglieder.php
 chmod 644 src/windows/gruppenpfand.php
 chmod 644 src/windows/head.php

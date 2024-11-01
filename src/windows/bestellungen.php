@@ -184,6 +184,13 @@ foreach( $bestellungen as $bestellung ) {
     $combs = array();
 
     $rechnungsstatus = $row['rechnungsstatus'];
+    $row_css_class = [
+      STATUS_BESTELLEN =>   'orderstatus_ordering',
+      STATUS_LIEFERANT =>   'orderstatus_ordered',
+      STATUS_VERTEILT =>    'orderstatus_distributed',
+      STATUS_ABGERECHNET => '',
+      STATUS_ARCHIVIERT =>  '',
+    ][$rechnungsstatus];
     $abrechnung_dienstkontrollblatt_id = $row['abrechnung_dienstkontrollblatt_id'];
 
     switch( $rechnungsstatus ) {
@@ -441,7 +448,7 @@ foreach( $bestellungen as $bestellung ) {
         break;
     }
   
-    open_tr('',"id='row$bestell_id'" );
+    open_tr($row_css_class, "id='row$bestell_id'" );
       open_td();
         open_div( '','', $row['name'] );
         open_div( 'small','', $row['lieferantenname'] );
