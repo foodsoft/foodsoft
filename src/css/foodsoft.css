@@ -650,7 +650,17 @@ table.greywhite tr.even td {
 }
 
 /* highlight orders that are not cleared yet */
-tr.tobecleared td {
+tr.orderstatus_ordering td {
+  background-color:rgb(147, 249, 113);
+}
+tr.orderstatus_ordered td {
+  background-color:rgb(240, 249, 113);
+}
+tr.orderstatus_distributed td {
+  background-color: var(--warn-bg-color);
+}
+
+tr.orderstatus_tobecleared td {
   background-color: var(--warn-bg-color);
 }
 
