@@ -215,7 +215,7 @@ open_table('list');
       
       /* TODO: use status < 40 as indicator for uncleared orders and adjust display style! */
       $status = (int) $vert_row['gesamtbestellung_status'];
-      $not_cleared_yet = $status < 40;
+      $not_cleared_yet = $status < STATUS_ABGERECHNET;
       $row_css_class = $not_cleared_yet ? 'tobecleared' : '';
       open_tr(
         $row_css_class,
