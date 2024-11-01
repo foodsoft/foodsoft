@@ -38,6 +38,8 @@ if(
   exit();
 }
 
+mysqli_set_charset($db_handle, 'utf8');
+
 // die restliche konfiguration können wir aus der leitvariablen-tabelle lesen
 // (skripte können dann persistente variable einfach speichern, ändern, und
 //  an slave (im keller) übertragen)
