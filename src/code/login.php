@@ -162,9 +162,6 @@ switch( $login ) {
 
     if( $dienst != 0 ) {
       get_http_var( 'coopie_name', 'H', '' );
-      if( ! $coopie_name || ( strlen( $coopie_name ) < 2 ) ) {
-        $errors[] = "kein Name angegeben";
-      }
       get_http_var( 'telefon', 'H', '' );
       get_http_var( 'notiz', 'H', '' );
     }
