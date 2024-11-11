@@ -340,7 +340,7 @@ close_form();
       : 'normal';
     document.documentElement.setAttribute('data-theme', theme);
   }
-  $('$login_form_id').onsubmit = pick_login_text;
+  $('<?php echo $login_form_id ?>').onsubmit = pick_login_text;
   document.observe('dom:loaded', pick_login_text);
 </script>
 <?php
