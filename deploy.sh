@@ -94,6 +94,9 @@ chmod 644 js/lib/papaparse.js
 chmod 644 js/lib/papaparse.js-LICENSE
 chmod 644 js/lib/papaparse.min.js
 chmod 644 js/lib/prototype.js
+chmod 644 js/lib/qrcode.js
+chmod 644 js/lib/qrcode.js-LICENSE
+chmod 644 js/lib/qrcode.min.js
 chmod 644 js/lib/quagga.js
 chmod 644 js/lib/quagga.js-LICENSE
 chmod 644 js/lib/quagga.min.js

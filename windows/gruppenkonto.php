@@ -27,6 +27,11 @@ if( ( ! hat_dienst(4,5) ) and ( $gruppen_id == $login_gruppen_id ) ) {
 
 if( $meinkonto ) {
   setWikiHelpTopic( 'foodsoft:MeinKonto' );
+
+  ?>
+    <script type="text/javascript" src='<?php echo $foodsoftdir; ?>/js/lib/qrcode.min.js'></script>
+  <?php
+
   $gruppen_id = $login_gruppen_id;
   $self_fields['gruppen_id'] = $gruppen_id;
   $gruppen_name = sql_gruppenname( $gruppen_id );
@@ -42,6 +47,30 @@ if( $meinkonto ) {
       close_form();
     close_fieldset();
     medskip();
+
+    open_fieldset( 'small_form', '', 'Überweisung per QR-Code', 'off' );
+      open_table('layout');
+        $amount_id = new_html_id();
+        $qr_code_id = new_html_id();
+        global $input_event_handlers;
+        $input_event_handlers = "onkeyup='makeQrCode(\"$amount_id\", \"$qr_code_id\")'";
+        form_row_betrag( 'Ich möchte heute ', id: $amount_id ); echo ' Euro fuer unsere Gruppe '. gruppe_view( $login_gruppen_id ). ' überweisen!';
+        $input_event_handlers = '';
+        open_tr();
+          open_td( '', "colspan='2'" );
+            open_div( 'nodisplay', "id='$qr_code_id.div'");
+              echo 'Klar, kein Problem! Einfach den QR-Code mit der Banking-App scannen:';
+              medskip();
+              open_div( '', "id='$qr_code_id'", '');
+              medskip();
+              open_form( '', "action=einzahlung" );
+                hidden_input( 'betrag', '', "id='$amount_id.form'" );
+                echo 'Überweisung ist gemacht? Dann:'; submission_button( 'Hier klicken!' );
+              close_form();
+            close_div();
+      close_table();
+  close_fieldset();
+  medskip();
 
     open_div('alert', "style='padding:1ex 0ex 1ex 0ex;'" );
       open_fieldset( 'small_form', '', 'Spende an die Foodcoop', 'off' );
@@ -314,5 +343,55 @@ open_table('list');
     open_td( 'solidright number', '', price_view( $summe ) );
 
 close_table();
+
+if ( $meinkonto ) {
+  $konten = sql_konten();
+  $kontonr = '';
+  if (count($konten) > 0) {
+    $kontonr = preg_replace('/\s+/', '', $konten[0]['kontonr']);
+  }
+
+  open_javascript( toJavaScript( 'const foodcoop_name', $foodcoop_name ) );
+  open_javascript( toJavaScript( 'const kontonr', $kontonr ) );
+  open_javascript( toJavascript( 'const gruppen_name', $gruppen_name ) );
+  open_javascript( toJavascript( 'const gruppen_nr', sql_gruppennummer( $gruppen_id ) ) );
+
+  open_javascript(<<<'JS'
+var qrCode = null;
+function makeQrCode( amountId, qrCodeId ) {
+  const text = `BCD
+002
+1
+SCT
+
+Food-Coop ${foodcoop_name}
+${kontonr}
+EUR${Number($(amountId).value).toFixed(2)}
+DEPT
+
+Einzahlung Gruppe ${gruppen_nr} ${gruppen_name}
+`;
+
+  if (!qrCode) {
+    qrCode = new QRCode( qrCodeId, {
+      text,
+      width: 256,
+      height: 256,
+      colorDark : "#000000",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.M,
+      useUtf8Bom: false
+    });
+    $(`${qrCodeId}.div`).style.display = 'block';
+  }
+  else {
+    qrCode.clear();
+    qrCode.makeCode( text );
+  }
+
+  $(`${amountId}.form`).value = $(amountId).value;
+}
+JS);
+}
 
 ?>
