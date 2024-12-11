@@ -107,11 +107,16 @@ function int_view( $num, $fieldname = false, $size = 6, $transmit = true, $edit_
     return "<span class='int number' $id>$num</span>";
 }
 
-function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $decimals = 2 ) {
+function price_view( $price, $fieldname = false, $transmit = true, $edit_if_fieldname = true, $decimals = 2, $id = NULL ) {
   global $input_event_handlers;
   $price = price2string( $price, $decimals );
   $transmit = $transmit ? "name='$fieldname'" : '';
-  $id = $fieldname ? "id='$fieldname'" : '';
+  if( is_null( $id ) ) {
+    $id = $fieldname;
+  }
+  if( $id ) {
+    $id = "id='$id'";
+  }
   if( $fieldname && $edit_if_fieldname )
     return "<input type='text' class='price number' size='8' placeholder='0.00' $transmit $id value='$price' $input_event_handlers>";
   else
