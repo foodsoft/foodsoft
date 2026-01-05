@@ -347,12 +347,15 @@ close_table();
 if ( $meinkonto ) {
   $konten = sql_konten();
   $kontonr = '';
+  $kontoinhaber = '';
   if (count($konten) > 0) {
     $kontonr = preg_replace('/\s+/', '', $konten[0]['kontonr']);
+    $kontoinhaber = $konten[0]['name'];
   }
 
   open_javascript( toJavaScript( 'const foodcoop_name', $foodcoop_name ) );
   open_javascript( toJavaScript( 'const kontonr', $kontonr ) );
+  open_javascript( toJavaScript( 'const kontoinhaber', $kontoinhaber ) );
   open_javascript( toJavascript( 'const gruppen_name', $gruppen_name ) );
   open_javascript( toJavascript( 'const gruppen_nr', sql_gruppennummer( $gruppen_id ) ) );
 
@@ -364,7 +367,7 @@ function makeQrCode( amountId, qrCodeId ) {
 1
 SCT
 
-Food-Coop ${foodcoop_name}
+${kontoinhaber}
 ${kontonr}
 EUR${Number($(amountId).value).toFixed(2)}
 DEPT
