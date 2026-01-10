@@ -159,6 +159,7 @@ foreach( $basar as $r ) {
   $basar_wert =& $basar_wert_nach_id[$r['gesamtbestellung_id']];
   $basar_wert += $r['basarmenge'] * $r['bruttopreis'];
 }
+unset( $basar_wert );
 
 $already_shown = [];
 
