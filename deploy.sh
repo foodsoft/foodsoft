@@ -13,7 +13,7 @@ BRANCH=`git branch | sed -e '/^[^*]/d' -e 's/^\* \(.*\)/\1/'`
 COMMIT=`git rev-parse --short HEAD`
 COMMIT_FULL=`git rev-parse HEAD`
 DIRTY=""
-wd_clean || DIRTY='-dirty'
+# wd_clean || DIRTY='-dirty'
 echo "<a href='http://github.com/foodsoft/foodsoft/commits/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
 
 chmod 644 .gitattributes
