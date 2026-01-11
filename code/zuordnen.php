@@ -1899,7 +1899,7 @@ function rechnung_status_string( $state ) {
 }
 
 function sql_abrechnung_set( $abrechnung_id ) {
-  $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id" );
+  $result = doSql( "SELECT id FROM gesamtbestellungen WHERE abrechnung_id = $abrechnung_id ORDER BY lieferung" );
   $r = array();
   while( $row = mysqli_fetch_array( $result ) ) {
     $r[] = $row['id'];
@@ -2004,7 +2004,7 @@ function sql_bestellungen( $filter = 'true', $orderby = 'rechnungsstatus, abrech
          , dayofweek( gesamtbestellungen.lieferung ) as lieferdatum_dayofweek
          , DATE_FORMAT( gesamtbestellungen.lieferung, '%d.%m.%Y') AS lieferdatum_trad
          , lieferanten.name as lieferantenname
-         , ( SELECT GROUP_CONCAT( combined.id ) FROM gesamtbestellungen AS combined WHERE combined.abrechnung_id = gesamtbestellungen.abrechnung_id ) AS abrechnung_set
+         , ( SELECT GROUP_CONCAT( combined.id ) FROM gesamtbestellungen AS combined WHERE combined.abrechnung_id = gesamtbestellungen.abrechnung_id ORDER BY lieferung ) AS abrechnung_set
     FROM gesamtbestellungen
     JOIN lieferanten on lieferanten.id = gesamtbestellungen.lieferanten_id
     WHERE $filter

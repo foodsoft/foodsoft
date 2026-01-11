@@ -170,8 +170,7 @@ foreach( $bestellungen as $bestellung ) {
     continue;
   $abrechnung_id = $bestellung['abrechnung_id'];
   if( hat_dienst(4) && $abrechnung_id ) {
-    $abrechnung_set = explode( ',', $bestellung['abrechnung_set'] );
-    usort( $abrechnung_set, fn( $a, $b ) => $bestellungen_by_id[$b]['lieferung'] <=> $bestellungen_by_id[$a]['lieferung'] );
+    $abrechnung_set = array_reverse( explode( ',', $bestellung['abrechnung_set'] ) );
     if( $abrechnung_set[0] != $bestellung_id )
       continue;
   } else {
