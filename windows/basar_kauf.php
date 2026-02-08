@@ -74,7 +74,7 @@ if( $nur_inventur )
   setWikiHelpTopic( 'foodsoft:basar_inventur' );
 
 ?>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"></link>
+<link rel="stylesheet" href='<?php echo $foodsoftdir; ?>/fonts/material-symbols.css'></link>
 <script type="text/javascript" src='<?php echo $foodsoftdir; ?>/js/lib/quagga.min.js'></script>
 <?php
 
@@ -140,7 +140,14 @@ open_javascript( toJavaScript( 'var allAvailable', $verfuegbar_alle ) );
 
 open_div( '', 'id="top"', '' );
 open_div( 'tab', 'id="scan-product"' );
-  open_tag( 'p', 'max10 hcenter', '', 'Produkt scannen:');
+  open_div( 'max10 hcenter' );
+    open_tag( 'a', 'max10 hcenter floatright', 'href="#bonliste"' );
+      open_div( 'touch_button notranslate material-symbols-rounded'
+          , 'id="button_receipt" style="background-color:rgba(252, 219, 169, 1); color:rgba(0, 0, 0, 1);"'
+          , 'receipt_long' );
+    close_tag( 'a' );
+    open_tag( 'p', 'max10 hcenter', '', 'Produkt scannen:' );
+  close_div();
   open_div( 'scanner', 'id="scanner-viewport"' );
     open_tag( 'video', '', '', '' );
   close_div();
@@ -315,9 +322,9 @@ open_div( 'tab max10', 'id="success"' );
   open_div( $nur_inventur ? 'thanks_icon' : 'success_icon', '', '');
 close_div();
 
-open_tag ( 'hr', '', '', '' );
+open_tag( 'hr', '', '', '' );
 
-open_table ( 'list max10 hcenter', 'id="bonliste"' );
+open_table( 'list max10 hcenter', 'id="bonliste"' );
 close_table();
 
 open_javascript(<<<'JS'
@@ -825,7 +832,13 @@ function buySuccess(json) {
   basarkaufbon.push(bon);
   saveBasarkaufbon();
 
-  openCheckRemaining();
+  const withInventory = false;
+  if (withInventory)
+    openCheckRemaining();
+  else {
+    tab( 'success' );
+    window.setTimeout(resumeScanning, 1500);
+  }
 }
 
 function checkRemainingSuccess(json) {
@@ -914,7 +927,7 @@ var CodeScanner = {
     // this.applySettingsVisibility('zoom', capabilities.zoom);
     // this.applySettingsVisibility('torch', capabilities.torch);
     track.applyConstraints( {advanced:[{focusMode: 'continuous'}]} );
-    track.applyConstraints( {advanced:[{zoom: 4}]} );
+    track.applyConstraints( {advanced:[{zoom: 2}]} );
   },
   resume: function() {
     if( this.runState === this.RunState.UnInit )

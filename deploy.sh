@@ -55,6 +55,9 @@ chmod 644 dokuwiki_auth_plugin/authfoodsoft/plugin.info.txt
 chmod 644 dump.php
 chmod 644 fcck.php
 chmod 644 files_und_skripte
+chmod 644 fonts/Material-Symbols-LICENSE
+chmod 644 fonts/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].woff2
+chmod 644 fonts/material-symbols.css
 chmod 644 foodsoft.class.php
 chmod 755 git-hooks/post-checkout
 chmod 755 git-hooks/post-commit
