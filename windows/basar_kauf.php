@@ -74,6 +74,12 @@ if( $nur_inventur )
   setWikiHelpTopic( 'foodsoft:basar_inventur' );
 
 ?>
+<link
+  rel="preload"
+  href='<?php echo $foodsoftdir; ?>/fonts/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].woff2'
+  as="font"
+  type="font/woff2"
+  crossorigin></link>
 <link rel="stylesheet" href='<?php echo $foodsoftdir; ?>/fonts/material-symbols.css'></link>
 <script type="text/javascript" src='<?php echo $foodsoftdir; ?>/js/lib/quagga.min.js'></script>
 <?php
