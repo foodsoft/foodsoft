@@ -16,7 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-// db version 40
+// db version 44
 
 $tables = [
   'bankkonten' => [
@@ -1338,6 +1338,36 @@ $tables = [
         'type' =>  "decimal(12,6)"
       , 'null' => 'NO'
       , 'default' => '1.000000'
+      , 'extra' => ''
+      ]
+    , 'verband' => [
+        'type' =>  "text"
+      , 'null' => 'YES'
+      , 'default' => 'null'
+      , 'extra' => ''
+      ]
+    , 'herkunft' => [
+        'type' =>  "text"
+      , 'null' => 'YES'
+      , 'default' => 'null'
+      , 'extra' => ''
+      ]
+    , 'hersteller' => [
+        'type' =>  "text"
+      , 'null' => 'YES'
+      , 'default' => 'null'
+      , 'extra' => ''
+      ]
+    , 'bemerkung' => [
+        'type' =>  "text"
+      , 'null' => 'YES'
+      , 'default' => 'null'
+      , 'extra' => ''
+      ]
+    , 'ean_einzeln' => [
+        'type' =>  "varchar(15)"
+      , 'null' => 'YES'
+      , 'default' => 'null'
       , 'extra' => ''
       ]
     ]

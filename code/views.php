@@ -2015,6 +2015,11 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_th( '', "title='Pfand je V-Einheit'", 'Pfand' );
       open_th( '', "title='Gebindegröße'", 'Gebindegröße' );
       open_th( '', "title='Endpreis je V-Einheit' colspan='2'", 'V-Preis / V-Einheit' );
+      open_th( '', "title='Herkunft'", 'Hrk');
+      open_th( '', "title='Verband'", 'Vbd');
+      open_th( '', "title='Hersteller'", 'Hst');
+      open_th( '', "title='EAN (einzeln)'", 'EAN (einzeln)');
+      open_th( '', "title='Bemerkung'", 'Bemerkung');
 
   foreach( sql_produktpreise( $produkt_id, false, true ) as $pr1 ) {
     $references = references_produktpreis( $pr1['id'] );
@@ -2063,6 +2068,11 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
       open_td( 'mult', '', price_view( $pr1['vpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
+      open_td( 'center', '', $pr1['herkunft']);
+      open_td( 'center', '', $pr1['verband']);
+      open_td( 'center', '', $pr1['hersteller']);
+      open_td( 'center', '', ean_view($pr1['ean_einzeln']).ean_links($pr1['ean_einzeln']));
+      open_td( 'center', '', $pr1['bemerkung']);
   }
   close_table();
   close_div();

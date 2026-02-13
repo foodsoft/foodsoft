@@ -1576,11 +1576,12 @@ function alias_columns( array &$result, string $table, string $alias, array $col
  */
 function unalias_columns( array $row, string $alias ) : array {
   $prefix = $alias . '.';
+  $prefix_length = strlen($prefix);
   $result = array();
   foreach ( $row as $key => $val )
   {
-    if (substr($key, 0, strlen($prefix)) == $prefix) {
-      $result[substr($key, strlen($prefix))] = $val;
+    if (str_starts_with($key, $prefix)) {
+      $result[substr($key, $prefix_length)] = $val;
     }
   }
 
@@ -1669,21 +1670,36 @@ function query_produkte( $op, $keys = array(), $using = array(), $orderby = fals
                   . 'AND lieferantenkatalog.artikelnummer = produkte.artikelnummer)'
             , 'hersteller_acro' => 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
                   . 'ON (hersteller_acro.context = "hst" '
-                  . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)'
+                  . ($have_price
+                     ? 'AND hersteller_acro.acronym = COALESCE(produktpreise.hersteller, lieferantenkatalog.hersteller) COLLATE utf8mb3_unicode_ci)'
+                     : 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)')
             , 'verband_acro' => 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
                   . 'ON (verband_acro.context = "vbd" '
-                  . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)'
+                  . ($have_price
+                     ? 'AND verband_acro.acronym = COALESCE(produktpreise.verband, lieferantenkatalog.verband) COLLATE utf8mb3_unicode_ci)'
+                     : 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)')
             , 'herkunft_acro' => 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
                   . 'ON (herkunft_acro.context = "hrk" '
-                  . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)'
+                  . ($have_price
+                     ? 'AND herkunft_acro.acronym = COALESCE(produktpreise.herkunft, lieferantenkatalog.herkunft) COLLATE utf8mb3_unicode_ci)'
+                     : 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)')
           ] ) );
-          alias_columns($selects, 'lieferantenkatalog', 'katalog', array(
-              'ean_einzeln'
-            , 'bemerkung'
-            , 'hersteller'
-            , 'verband'
-            , 'herkunft'
-          ));
+          if ($have_price) {
+            $selects[] = 'COALESCE(produktpreise.ean_einzeln, lieferantenkatalog.ean_einzeln) AS `katalog.ean_einzeln`';
+            $selects[] = 'COALESCE(produktpreise.bemerkung, lieferantenkatalog.bemerkung) AS `katalog.bemerkung`';
+            $selects[] = 'COALESCE(produktpreise.hersteller, lieferantenkatalog.hersteller) AS `katalog.hersteller`';
+            $selects[] = 'COALESCE(produktpreise.verband, lieferantenkatalog.verband) AS `katalog.verband`';
+            $selects[] = 'COALESCE(produktpreise.herkunft, lieferantenkatalog.herkunft) AS `katalog.herkunft`';
+          }
+          else {
+            alias_columns($selects, 'lieferantenkatalog', 'katalog', array(
+                'ean_einzeln'
+              , 'bemerkung'
+              , 'hersteller'
+              , 'verband'
+              , 'herkunft'
+            ));
+          }
           $acronym_fields = [ 'definition', 'url', 'comment' ];
           alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
           alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
@@ -2257,15 +2273,15 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
     $joins['hersteller_acro']
       = 'LEFT OUTER JOIN catalogue_acronyms as hersteller_acro '
       . 'ON (hersteller_acro.context = "hst" '
-      . 'AND hersteller_acro.acronym = lieferantenkatalog.hersteller COLLATE utf8mb3_unicode_ci)';
+      . 'AND hersteller_acro.acronym = COALESCE(produktpreise.hersteller, lieferantenkatalog.hersteller) COLLATE utf8mb3_unicode_ci)';
     $joins['verband_acro']
       = 'LEFT OUTER JOIN catalogue_acronyms as verband_acro '
       . 'ON (verband_acro.context = "vbd" '
-      . 'AND verband_acro.acronym = lieferantenkatalog.verband COLLATE utf8mb3_unicode_ci)';
+      . 'AND verband_acro.acronym = COALESCE(produktpreise.verband, lieferantenkatalog.verband) COLLATE utf8mb3_unicode_ci)';
     $joins['herkunft_acro']
       = 'LEFT OUTER JOIN catalogue_acronyms as herkunft_acro '
       . 'ON (herkunft_acro.context = "hrk" '
-      . 'AND herkunft_acro.acronym = lieferantenkatalog.herkunft COLLATE utf8mb3_unicode_ci)';
+      . 'AND herkunft_acro.acronym = COALESCE(produktpreise.herkunft, lieferantenkatalog.herkunft) COLLATE utf8mb3_unicode_ci)';
   }
 
   need($bestell_id = $keys['bestell_id']);
@@ -2354,13 +2370,11 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $selects[] = 'produkte.id as produkt_id';
   $selects[] = 'produkte.notiz as notiz';
   if( $mit_katalog ) {
-    alias_columns($selects, 'lieferantenkatalog', 'katalog', array(
-      'ean_einzeln'
-    , 'bemerkung'
-    , 'hersteller'
-    , 'verband'
-    , 'herkunft'
-    ));
+    $selects[] = 'COALESCE(produktpreise.ean_einzeln, lieferantenkatalog.ean_einzeln) AS `katalog.ean_einzeln`';
+    $selects[] = 'COALESCE(produktpreise.bemerkung, lieferantenkatalog.bemerkung) AS `katalog.bemerkung`';
+    $selects[] = 'COALESCE(produktpreise.hersteller, lieferantenkatalog.hersteller) AS `katalog.hersteller`';
+    $selects[] = 'COALESCE(produktpreise.verband, lieferantenkatalog.verband) AS `katalog.verband`';
+    $selects[] = 'COALESCE(produktpreise.herkunft, lieferantenkatalog.herkunft) AS `katalog.herkunft`';
     $acronym_fields = [ 'definition', 'url', 'comment' ];
     alias_columns($selects, 'hersteller_acro', 'katalog.hst', $acronym_fields);
     alias_columns($selects, 'verband_acro', 'katalog.vbd', $acronym_fields);
@@ -4291,7 +4305,7 @@ function sql_produktpreise_konsistenztest( $lieferanten_id = false, $produkt_id 
  */
 function sql_insert_produktpreis (
   $produkt_id, $lieferpreis, $start, $bestellnummer, $gebindegroesse
-, $mwst, $pfand, $liefereinheit, $verteileinheit, $lv_faktor
+, $mwst, $pfand, $liefereinheit, $verteileinheit, $lv_faktor, $herkunft, $verband, $hersteller, $ean_einzeln, $bemerkung
 ) {
   need( $lieferpreis > 0, "kein gueltiger Lieferpreis" );
   need( $gebindegroesse >= 1, "keine gueltige Gebindegroesse" );
@@ -4341,6 +4355,11 @@ function sql_insert_produktpreis (
   , 'liefereinheit' => $liefereinheit
   , 'verteileinheit' => $verteileinheit
   , 'lv_faktor' => $lv_faktor
+  , 'herkunft' => $herkunft
+  , 'verband' => $verband
+  , 'hersteller' => $hersteller
+  , 'ean_einzeln' => $ean_einzeln
+  , 'bemerkung' => $bemerkung
   ) );
 }
 
@@ -4748,6 +4767,15 @@ function self_field( $name, $default = NULL ) {
     return $self_fields[$name];
   else
     return $default;
+}
+
+function patch_database_44() {
+  // Katalogdaten im Preiseintrag speichern, insbesondere für die Zuordnung von EANs von Ersatzprodukten nötig
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `verband` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `herkunft` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `hersteller` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `bemerkung` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `ean_einzeln` varchar(15) null default null" );
 }
 
 /**
@@ -5246,7 +5274,14 @@ function update_database( $version ) {
       // 41, 42 benutzt auf Branch guteluise
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 43 ) );
       logger( 'update_database: update to version 43 successful' );
+    // ab jetzt branchspezifische Versionen: 1xxxx guteluise, 2xxxx nahrungskette
     case 43:
+      logger( 'starting update_database: from version 43' );
+      patch_database_44();
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 44 ) );
+      logger( 'update_database: update to version 44 successful' );
+      break;
+    case 44:
       break;
     default:
       error( "update_database: no update path known from version $version" );

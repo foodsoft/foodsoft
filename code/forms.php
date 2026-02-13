@@ -799,8 +799,8 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
   if( ! isset( $vorschlag['bestellnummer'] ) )
     $vorschlag['bestellnummer'] = $preis_id ? $produkt['bestellnummer'] : '';
 
-  if( ! isset( $vorschlag['notiz'] ) )
-    $vorschlag['notiz'] = $produkt['notiz'];  // braucht _keinen_ gueltigen preiseintrag!
+  if( ! isset( $vorschlag['bemerkung'] ) )
+    $vorschlag['bemerkung'] = $preis_id ? $produkt['bemerkung'] : '';
 
   // restliche felder automatisch berechnen:
   //
@@ -811,8 +811,21 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
     open_table('layout');
       form_row_text( 'Produkt:', false, 1, "{$produkt['name']} von {$produkt['lieferant_name']}" );
 
-      tr_title( 'Notiz: zum Beispiel aktuelle Herkunft, Verband oder Lieferant' );
-      form_row_text( 'Notiz:', 'notiz', 42, $vorschlag['notiz'] );
+      form_row_text( 'Herkunft:', 'herkunft', 4, $vorschlag['herkunft'] );
+        ?>
+        <label class='qquad'>Verband:</label>
+           <input type='text' size='4' class='string' name='verband' id='verband'
+            value='<?php echo $vorschlag['verband']; ?>' title='Verband'>
+        <label class='qquad'>Hersteller:</label>
+           <input type='text' size='4' class='string' name='hersteller' id='hersteller'
+            value='<?php echo $vorschlag['hersteller']; ?>' title='Hersteller'>
+        <label class='qquad'>EAN (einzeln):</label>
+           <input type='text' size='15' class='string' name='ean_einzeln' id='ean_einzeln'
+            value='<?php echo $vorschlag['ean_einzeln']; ?>' title='EAN (einzeln)'>
+        <?php
+
+      tr_title( 'Bemerkung: aktuelle Zusatzinfos' );
+      form_row_text( 'Bemerkung:', 'bemerkung', 42, $vorschlag['bemerkung'] );
 
       form_row_text( 'Bestell-Nr:', 'bestellnummer', 8, $vorschlag['bestellnummer'] );
         ?>
@@ -1027,7 +1040,7 @@ function formular_produktpreis( $produkt_id, $vorschlag = array() ) {
 function action_form_produktpreis() {
   global $name, $verteilmult, $verteileinheit, $liefermult, $liefereinheit
        , $gebindegroesse, $mwst, $pfand, $lieferpreis, $bestellnummer, $lv_faktor
-       , $day, $month, $year, $notiz, $produkt_id;
+       , $day, $month, $year, $bemerkung, $produkt_id, $herkunft, $verband, $hersteller, $ean_einzeln;
 
   $unit_pattern = '/^[a-zA-ZÄäÖöÜüß]+$/';
 
@@ -1050,25 +1063,20 @@ function action_form_produktpreis() {
   need_http_var('day','u');
   need_http_var('month','u');
   need_http_var('year','u');
-  need_http_var('notiz','H');
+  need_http_var('herkunft','H');
+  need_http_var('verband','H');
+  need_http_var('hersteller','H');
+  need_http_var('ean_einzeln','H');
+  need_http_var('bemerkung','H');
 
   $gebindegroesse *= $lv_faktor;
   // kludge alert: rundungsfehler korrigieren (gebindegroesse muss ganzzahlig und >= 1 sein!)
   // (eigentlich brauchen wir Q-arithnetik fuer den lv_faktor)
   $gebindegroesse = floor( $gebindegroesse + 0.02 );
 
-  $produkt = sql_produkt( $produkt_id );
-
-  // if( "$name" and ( "$name" != $produkt['name'] ) ) {
-  //  sql_update( 'produkte', $produkt_id, array( 'name' => $name ) );
-  // }
-  if( "$notiz" != $produkt['notiz'] ) {
-    sql_update( 'produkte', $produkt_id, array( 'notiz' => $notiz ) );
-  }
-
   return sql_insert_produktpreis(
     $produkt_id, $lieferpreis, "$year-$month-$day", $bestellnummer, $gebindegroesse, $mwst, $pfand
-  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit", $lv_faktor
+  , "$liefermult $liefereinheit", "$verteilmult $verteileinheit", $lv_faktor, $herkunft, $verband, $hersteller, $ean_einzeln, $bemerkung
   );
 }
 
