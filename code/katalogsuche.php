@@ -295,6 +295,12 @@ function katalogabgleich(
   $preiseintrag_neu['lieferpreis'] = $katalog_netto;
   $preiseintrag_neu['pfand'] = $katalog_pfand;
   $preiseintrag_neu['bestellnummer'] = $katalog_bestellnummer;
+  $preiseintrag_neu['ean_einzeln'] = $katalog_ean;
+  $preiseintrag_neu['herkunft'] = $katalog_herkunft;
+  $preiseintrag_neu['verband'] = $katalog_verband;
+  $preiseintrag_neu['hersteller'] = $katalog_hersteller;
+  $preiseintrag_neu['bemerkung'] = $katalog_bemerkung;
+
   if( $have_mwst ) {
     $preiseintrag_neu['mwst'] = $katalog_mwst;
   }
@@ -509,6 +515,9 @@ function update_preis( $produkt_id ) {
       , $preiseintrag_neu['mwst'], $preiseintrag_neu['pfand']
       , $preiseintrag_neu['liefereinheit'], $preiseintrag_neu['verteileinheit']
       , $preiseintrag_neu['lv_faktor']
+      , $preiseintrag_neu['herkunft'], $preiseintrag_neu['verband'], $preiseintrag_neu['hersteller']
+      , $preiseintrag_neu['ean_einzeln']
+      , $preiseintrag_neu['bemerkung']
       );
   }
   return -1;

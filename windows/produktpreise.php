@@ -28,6 +28,7 @@ $editable = ( hat_dienst(4) and ! $readonly );
 
 need_http_var('produkt_id','u',true);
 get_http_var('bestell_id','u',0,true);  // optional: waehle preiseintrag fuer diese bestellung!
+get_http_var('detail', 'w', 0, true);
 
 $produkt = sql_produkt( $produkt_id );
 $lieferanten_id = $produkt['lieferanten_id'];
@@ -58,6 +59,10 @@ switch( $action ) {
       $zeitende = "'$year-$month-$day 23:59:59'";
     }
     sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "$zeitende" ), false );
+    break;
+  case 'zeitende_loeschen':
+    need_http_var('preis_id','u');
+    sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "NULL" ), false );
     break;
   case 'artikelnummer_setzen':
     need_http_var( 'anummer', 'H' );
@@ -118,7 +123,7 @@ open_fieldset( 'big_form', ''
 //
 
 preishistorie_view( $produkt_id, $bestell_id, $editable );
-bestellhistorie_view( $produkt_id, $bestell_id );
+bestellhistorie_view( $produkt_id, $bestell_id, $detail == 'bestellhistorie' );
 
 ///////////////////////////
 // Artikeldaten aus foodsoft-Datenbank anzeigen:
