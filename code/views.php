@@ -2119,7 +2119,13 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_th( '', "title='Pfand je V-Einheit'", 'Pfand' );
       open_th( '', "title='Gebindegröße'", 'Gebindegröße' );
       open_th( '', "title='Endpreis je V-Einheit' colspan='2'", 'V-Preis / V-Einheit' );
+      open_th( '', "title='Herkunft'", 'Hrk');
+      open_th( '', "title='Verband'", 'Vbd');
+      open_th( '', "title='Hersteller'", 'Hst');
+      open_th( '', "title='EAN (einzeln)'", 'EAN (einzeln)');
+      open_th( '', "title='Bemerkung'", 'Bemerkung');
 
+  $first = true;
   foreach( sql_produktpreise( $produkt_id, false, true ) as $pr1 ) {
     $references = references_produktpreis( $pr1['id'] );
     open_tr();
@@ -2149,6 +2155,11 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_td( 'center', '', $pr1['datum_start'] );
       open_td( 'center' );
         if( $pr1['zeitende'] ) {
+          if ($first && $editable) {
+            echo fc_action( array( 'class' => 'button', 'text' => 'Öffnen'
+                                 , 'title' => "Preisintervall wieder öffnen" )
+                          , array( 'action' => 'zeitende_loeschen', 'preis_id' => $pr1['id'] ) );
+          }
           echo "{$pr1['datum_ende']}";
         } else {
           if( $editable ) {
@@ -2167,6 +2178,12 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_td( 'center oneline', '', gebindegroesse_view( $pr1 ) );
       open_td( 'mult', '', price_view( $pr1['vpreis'] ) );
       open_td( 'unit', '', "/ {$pr1['kan_verteilmult']} {$pr1['kan_verteileinheit']}" );
+      open_td( 'center', '', $pr1['herkunft']);
+      open_td( 'center', '', $pr1['verband']);
+      open_td( 'center', '', $pr1['hersteller']);
+      open_td( 'center', '', ean_view($pr1['ean_einzeln']).ean_links($pr1['ean_einzeln']));
+      open_td( 'center', '', $pr1['bemerkung']);
+    $first = false;
   }
   close_table();
   close_div();
@@ -2183,13 +2200,12 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
  * @param[in] $bestell_id,
  *            optional: markiere Bestellung, aus der die Ansicht heraus aufgerufen wurde
  */
-function bestellhistorie_view( $produkt_id, $bestell_id = 0 ) {
+function bestellhistorie_view( $produkt_id, $bestell_id = 0, $initial = false ) {
   global $mysqljetzt;
   need( $produkt_id );
 
   $legend = "Bestell-Historie";
-  $initial = 'off';
-  open_fieldset( 'big_form', '', $legend, $initial );
+  open_fieldset( 'big_form', '', $legend, $initial ? 'on' : 'off' );
   open_div( 'order_history' );
     open_table( 'list hfill' );
       if( $bestell_id ) {
@@ -2208,7 +2224,8 @@ function bestellhistorie_view( $produkt_id, $bestell_id = 0 ) {
         open_td( 'center', "style='padding:1ex 1em 1ex 1em;'" );
         open_tag( 'input', '', "type='checkbox' ".($row['bestellung_id'] == $bestell_id ? 'checked' : '').' disabled', '');
       }
-      open_td( 'center', '', $row['preis_id'] );
+      open_td( 'center' );
+        echo fc_link( '', [ 'class' => 'href', 'text' => $row['preis_id'], 'bestell_id' => $row['bestellung_id'], 'detail' => 'bestellhistorie' ] );
       open_td( 'oneline' );
         echo fc_link( 'lieferschein', array(
           'class' => 'href', 'text' => $row['bestellung_name'], 'bestell_id' => $row['bestellung_id']
