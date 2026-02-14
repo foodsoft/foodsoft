@@ -2096,13 +2096,12 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
  * @param[in] $bestell_id,
  *            optional: markiere Bestellung, aus der die Ansicht heraus aufgerufen wurde
  */
-function bestellhistorie_view( $produkt_id, $bestell_id = 0 ) {
+function bestellhistorie_view( $produkt_id, $bestell_id = 0, $initial = false ) {
   global $mysqljetzt;
   need( $produkt_id );
 
   $legend = "Bestell-Historie";
-  $initial = 'off';
-  open_fieldset( 'big_form', '', $legend, $initial );
+  open_fieldset( 'big_form', '', $legend, $initial ? 'on' : 'off' );
   open_div( 'order_history' );
     open_table( 'list hfill' );
       if( $bestell_id ) {
@@ -2121,7 +2120,8 @@ function bestellhistorie_view( $produkt_id, $bestell_id = 0 ) {
         open_td( 'center', "style='padding:1ex 1em 1ex 1em;'" );
         open_tag( 'input', '', "type='checkbox' ".($row['bestellung_id'] == $bestell_id ? 'checked' : '').' disabled', '');
       }
-      open_td( 'center', '', $row['preis_id'] );
+      open_td( 'center' );
+        echo fc_link( '', [ 'class' => 'href', 'text' => $row['preis_id'], 'bestell_id' => $row['bestellung_id'], 'detail' => 'bestellhistorie' ] );
       open_td( 'oneline' );
         echo fc_link( 'lieferschein', array(
           'class' => 'href', 'text' => $row['bestellung_name'], 'bestell_id' => $row['bestellung_id']
