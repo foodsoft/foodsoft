@@ -2797,7 +2797,7 @@ SELECT produkte.name AS produkt_name
      , bestellvorschlaege.produktpreise_id
      , bestellvorschlaege.liefermenge
      , basarmenge.menge AS basarmenge
-     , NULLIF(lieferantenkatalog.ean_einzeln, '') as ean_einzeln
+     , COALESCE(produktpreise.ean_einzeln, NULLIF(lieferantenkatalog.ean_einzeln, '')) as ean_einzeln
 
 SQL . ($with_lieferanty ? <<<'SQL'
      , lieferanten.name AS lieferanty
