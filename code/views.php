@@ -2021,6 +2021,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_th( '', "title='EAN (einzeln)'", 'EAN (einzeln)');
       open_th( '', "title='Bemerkung'", 'Bemerkung');
 
+  $first = true;
   foreach( sql_produktpreise( $produkt_id, false, true ) as $pr1 ) {
     $references = references_produktpreis( $pr1['id'] );
     open_tr();
@@ -2050,6 +2051,11 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_td( 'center', '', $pr1['datum_start'] );
       open_td( 'center' );
         if( $pr1['zeitende'] ) {
+          if ($first && $editable) {
+            echo fc_action( array( 'class' => 'button', 'text' => 'Öffnen'
+                                 , 'title' => "Preisintervall wieder öffnen" )
+                          , array( 'action' => 'zeitende_loeschen', 'preis_id' => $pr1['id'] ) );
+          }
           echo "{$pr1['datum_ende']}";
         } else {
           if( $editable ) {
@@ -2073,6 +2079,7 @@ function preishistorie_view( $produkt_id, $bestell_id = 0, $editable = false ) {
       open_td( 'center', '', $pr1['hersteller']);
       open_td( 'center', '', ean_view($pr1['ean_einzeln']).ean_links($pr1['ean_einzeln']));
       open_td( 'center', '', $pr1['bemerkung']);
+    $first = false;
   }
   close_table();
   close_div();

@@ -59,6 +59,10 @@ switch( $action ) {
     }
     sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "$zeitende" ), false );
     break;
+  case 'zeitende_loeschen':
+    need_http_var('preis_id','u');
+    sql_update( 'produktpreise', $preis_id, array( 'zeitende' => "NULL" ), false );
+    break;
   case 'artikelnummer_setzen':
     need_http_var( 'anummer', 'H' );
     sql_update( 'produkte', $produkt_id, array( 'artikelnummer' => $anummer ) );
