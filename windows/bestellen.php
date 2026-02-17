@@ -300,14 +300,9 @@ if( ! $readonly ) {
           document.getElementById('g_'+produkt).className = '';
         }
       }
-      gwidth = document.getElementById('g_'+produkt).offsetWidth;
       toleranzmax = Math.min( gebindegroesse[produkt] - 1, toleranzmenge );
-      if( gwidth > 40 ) {
-        nw = Math.floor( gwidth * ( ( festmenge + toleranzmax ) / gebindegroesse[produkt] - gebinde ) );
-        document.getElementById('gi_'+produkt).style.width = ( nw + 'px' );
-        document.getElementById('gi_'+produkt).style.marginRight = ((-nw) + 'px');
-        document.getElementById('g_'+produkt).style.offsetWidth = gwidth;
-      }
+      let aktuelles_gebinde = ( ( festmenge + toleranzmax ) / gebindegroesse[produkt] - gebinde );
+      document.getElementById('gi_'+produkt).style.width = ( 100 * aktuelles_gebinde + '%' );
 
       // anzeige gruppe aktualisieren:
       //
