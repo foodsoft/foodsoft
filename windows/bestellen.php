@@ -199,6 +199,19 @@ if( ! $readonly ) {
       zuteilung_berechnen( produkt, true );
     }
 
+    // Round to at least the given number of significant digits:
+    //    0.01555 ->    0.016
+    //    0.1555  ->    0.16
+    //    1.555   ->    1.6
+    //   15.55    ->   16
+    //  155.5     ->  156
+    // 1555       -> 1555
+    function roundAmount(value, minSignificantDigits = 2) {
+      if (value == 0) return value;
+      let shift = Math.pow(10, Math.max(0, -Math.floor(Math.log10(Math.abs(value))) + (minSignificantDigits-1)))
+      return Math.round(value * shift) / shift
+    }
+
     function zuteilung_berechnen( produkt, init ) {
       var festmenge, toleranzmenge, gebinde, bestellmenge, restmenge, zuteilung_fest, t_min;
       var menge, quote, zuteilung_toleranz, kosten_neu, reminder, konto_rest, kontostand_neu;
@@ -269,11 +282,11 @@ if( ! $readonly ) {
       // anzeige gesamt aktualisieren:
       //
       if( festmenge )
-        s = festmenge * verteilmult[produkt];
+        s = roundAmount(festmenge * verteilmult[produkt]);
       else
         s = '0';
       if( toleranzmenge > 0 )
-        s = s + ' ... ' + (festmenge + toleranzmenge) * verteilmult[produkt];
+        s = s + ' ... ' + roundAmount((festmenge + toleranzmenge) * verteilmult[produkt]);
       document.getElementById('gv_'+produkt).firstChild.nodeValue = s;
 
       if( gebinde > 0 ) {
@@ -298,13 +311,13 @@ if( ! $readonly ) {
 
       // anzeige gruppe aktualisieren:
       //
-      s = fest[produkt] * verteilmult[produkt];
+      s = roundAmount(fest[produkt] * verteilmult[produkt]);
       var toleranzNode = document.getElementById('t_'+produkt);
 
       // also show when tolerance changed for marking change by color
       if( toleranz[produkt] > 0 || toleranz_alt[produkt] != toleranz[produkt] ) {
         s = s + ' ... ';
-        toleranzNode.firstChild.nodeValue = ( fest[produkt] + toleranz[produkt] ) * verteilmult[produkt];
+        toleranzNode.firstChild.nodeValue = roundAmount(( fest[produkt] + toleranz[produkt] ) * verteilmult[produkt]);
       } else {
         toleranzNode.firstChild.nodeValue = ' ';
       }
@@ -328,7 +341,7 @@ if( ! $readonly ) {
       <?php if( ! hat_dienst(4) ) { ?>
       zuteilung = zuteilung_fest + zuteilung_toleranz;
       if( zuteilung > 0 ) {
-        document.getElementById('z_'+produkt).firstChild.nodeValue = zuteilung * verteilmult[produkt];
+        document.getElementById('z_'+produkt).firstChild.nodeValue = roundAmount(zuteilung * verteilmult[produkt]);
         document.getElementById('zt_'+produkt).className = 'center highlight';
       } else {
         document.getElementById('z_'+produkt).firstChild.nodeValue = '0';
@@ -638,7 +651,7 @@ foreach( $produkte as $produkt ) {
         open_td( "mult $class" );
         echo fc_link( 'produktdetails', array( 'produkt_id' => $n, 'bestell_id' => $bestell_id
                                           , 'text' => sprintf( '%.2lf', $preis ), 'class' => 'href' ) );
-        open_td( "unit $class", '', "/ {$produkt['verteileinheit']}" );
+        open_td( "unit $class", '', "/ {$produkt['verteileinheit_anzeige']}" );
 
       open_tr();
       if( $lv_faktor != 1 ) {
@@ -725,7 +738,7 @@ foreach( $produkte as $produkt ) {
     open_div( 'oneline center' );
        // gebinde:
         open_span( 'mult', "id='gg_$n'", sprintf( '%u', $zuteilungen['gebinde'] ) );
-        open_span( 'unit', '', "* (" . $produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige'] . " {$produkt['kan_verteileinheit_anzeige']})" );
+        open_span( 'unit', '', "* (" . roundAmount($produkt['gebindegroesse'] * $produkt['kan_verteilmult_anzeige']) . " {$produkt['kan_verteileinheit_anzeige']})" );
     close_div();
 
   if( hat_dienst(4) ) {
