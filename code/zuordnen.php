@@ -2458,8 +2458,18 @@ function sql_bestellung_produkte( array $keys, $orderby = '' ) {
   return $r;
 }
 
-
-
+// Round to at least the given number of significant digits:
+//    0.01555 ->    0.016
+//    0.1555  ->    0.16
+//    1.555   ->    1.6
+//   15.55    ->   16
+//  155.5     ->  156
+// 1555       -> 1555
+function roundAmount($value, $minSignificantDigits = 2) {
+  if ($value == 0) return $value;
+  $shift = pow(10, max(0, -floor(log10(abs($value))) + ($minSignificantDigits-1)));
+  return round($value * $shift) / $shift;
+}
 
 /*  preisdaten setzen:
  *  berechnet und setzt einige weitere nuetzliche eintraege einer 'produktpreise'-Zeile:
@@ -4620,8 +4630,7 @@ function optionen_einheiten( $selected ) {
 }
 
 function mult2string( $mult ) {
-  $mult = preg_replace( '/0*$/', '', sprintf( '%.3lf', $mult ) );
-  return preg_replace( '/\.$/', '', $mult );
+  return (string) roundAmount($mult);
 }
 
 function price2string( $price, $decimals = 2 ) {
