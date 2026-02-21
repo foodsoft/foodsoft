@@ -1047,6 +1047,8 @@ div.touch_button {
 }
 
 div.touch_button_text {
+  -webkit-user-select: none; /* Safari */
+  user-select: none;
   font-size: large;
   font-weight: bold;
   border-radius: 10px;
