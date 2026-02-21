@@ -1028,10 +1028,37 @@ div.touch_button {
   color: white;
   background-color: #4040a0;
   /*padding: 15px 32px;*/
+  box-sizing: border-box;
   width: 15vw;
   max-width: 2cm;
   aspect-ratio: 1/1;
   margin: 2px;
+  text-align: center;
+  vertical-align: middle;
+  text-decoration: none;
+  display : inline-flex;
+  align-items : center;
+  justify-content: center;
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 48;
+}
+
+div.touch_button_text {
+  font-size: large;
+  font-weight: bold;
+  border-radius: 10px;
+  color: white;
+  background-color: #4040a0;
+  /*padding: 15px 32px;*/
+  box-sizing: border-box;
+  height: 15vw;
+  min-width: 15vw;
+  max-height: 2cm;
+  margin: 2px;
+  padding: 1ex;
   text-align: center;
   vertical-align: middle;
   text-decoration: none;
@@ -1076,7 +1103,18 @@ div.error_icon::after {
 }
 
 div.success_icon::after {
-  content: "\1F60B";
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  color: rgba(23, 102, 15, 1);
+  content: "done_outline";
 }
 
 div.thanks_icon::after {

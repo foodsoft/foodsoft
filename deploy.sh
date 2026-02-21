@@ -39,7 +39,7 @@ chmod 644 code/zuordnen.php
 chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
-chmod 700 deploy.sh
+chmod 755 deploy.sh
 chmod 644 doc/zuteilung-negativ-toleranz.svg
 chmod 644 dokuwiki-data/media/foodsoft/basarkauf_barcode.png
 chmod 644 dokuwiki-data/media/foodsoft/basarkauf_inventur_kreuz.png
