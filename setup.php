@@ -26,7 +26,7 @@
 <head>
   <title>Foodsoft - Setup Tool</title>
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8' >
-  <link rel='stylesheet' type='text/css' href='css/foodsoft.css'>
+  <link rel='stylesheet' type='text/css' href='css/foodsoft-2.css'>
 </head>
 <body>
 <h1>Foodsoft --- Setup Tool</h1>

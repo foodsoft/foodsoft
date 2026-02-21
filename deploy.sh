@@ -44,6 +44,7 @@ chmod 644 code/katalogsuche.php
 chmod 644 code/login.php
 chmod 644 code/views.php
 chmod 644 code/zuordnen.php
+chmod 777 css/foodsoft-2.css
 chmod 644 css/foodsoft.css
 chmod 644 css/modified.gif
 chmod 644 css/readonly.gif
