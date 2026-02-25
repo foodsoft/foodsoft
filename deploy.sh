@@ -26,6 +26,7 @@ chmod 644 ToDo.txt
 chmod 755 antixls.modif
 chmod 644 apache.sample.conf
 chmod 644 catalogue_acronyms.sql
+chmod 644 code/benchmarking.php
 chmod 644 code/common.php
 chmod 644 code/config.php
 chmod 644 code/err_functions.php

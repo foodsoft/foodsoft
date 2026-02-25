@@ -3399,78 +3399,94 @@ define( 'OPTION_EXTRA_BRUTTO_SOLL', 20 );   /* sonstiges: Rabatte, Versandkosten
  *   pfandbewegungen (auch rueckgabe der betreffenden woche!)
  *   - $using ist array von tabellen, die aus dem uebergeordneten query benutzt werden sollen;
  *     auswirkungen haben: 'gesamtbestellungen', 'bestellgruppen'
- *   - $art ist eine der optionen oben; SOLL immer aus sicht der FC
+ *   - $options ist eine Liste der optionen oben, die Abgefragt werden; SOLL immer aus sicht der FC
+ *     $options darf auch ein skalarer Wert sein (wie früher)
 */
-function select_bestellungen_soll_gruppen( $art, $using = array() ) {
-  switch( $art ) {
-    case OPTION_VPREIS_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge *
-                   ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
-                                           * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
-      $query = 'waren';
-      break;
-    case OPTION_AUFSCHLAG_SOLL:
-      $muell_id = sql_muell_id();
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor )
-                 * ( if (gruppenbestellungen.bestellgruppen_id = $muell_id, 0, gesamtbestellungen.aufschlag_prozent / 100.0) ) )";
-      $query = 'waren';
-      break;
-    case OPTION_WAREN_BRUTTO_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor * ( 1.0 + produktpreise.mwst / 100.0 ) ) )";
-      $query = 'waren';
-      break;
-    case OPTION_WAREN_NETTO_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) )";
-      $query = 'waren';
-      break;
-    case OPTION_PFAND_VOLL_BRUTTO_SOLL:
-      $expr = "( -1.0 * bestellzuordnung.menge * produktpreise.pfand )";
-      $query = 'waren';
-      break;
-    case OPTION_PFAND_LEER_BRUTTO_SOLL:
-      $expr = "( gruppenpfand.anzahl_leer * gruppenpfand.pfand_wert )";
-      $query = 'pfand';
-      break;
-    case OPTION_PFAND_LEER_ANZAHL:
-      $expr = "( gruppenpfand.anzahl_leer )";
-      $query = 'pfand';
-      break;
-    default:
-      error( "select_bestellungen_soll_gruppen: bitte Funktionsaufruf anpassen!" );
-  }
-  switch( $query ) {
-    case 'waren':
-      return "
-        SELECT IFNULL( sum( $expr ), 0.0 )
-        FROM bestellzuordnung
-        JOIN gruppenbestellungen
-          ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
-        JOIN bestellvorschlaege
-          ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
-             AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
-        JOIN produktpreise
-          ON produktpreise.id = bestellvorschlaege.produktpreise_id
-      " . need_joins( $using, array(
-          'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
-                                   ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id'
-        ) ) . "
-        WHERE (bestellzuordnung.art=".BESTELLZUORDNUNG_ART_ZUTEILUNG.") " . use_filters( $using, array(
+function select_bestellungen_soll_gruppen( $options, $using = array() ) {
+  if (!is_array($using)) $using = [ $using ];
+  if (!is_array($options)) $options = [ $options ];
+
+  $muell_id = sql_muell_id();
+  $expressions = [
+    OPTION_VPREIS_SOLL => [
+      'waren',
+      '( -1.0 * bestellzuordnung.menge
+              * ( produktpreise.pfand + produktpreise.lieferpreis / produktpreise.lv_faktor
+                  * ( 1.0 + produktpreise.mwst / 100.0 ) ) )'],
+    OPTION_AUFSCHLAG_SOLL => [
+      'waren',
+      "( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor )
+              * ( if (gruppenbestellungen.bestellgruppen_id = $muell_id,
+                      0,
+                      gesamtbestellungen.aufschlag_prozent / 100.0) ) )"],
+    OPTION_WAREN_BRUTTO_SOLL => [
+      'waren',
+      '( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor * ( 1.0 + produktpreise.mwst / 100.0 ) ) )'
+    ],
+    OPTION_WAREN_NETTO_SOLL => [
+      'waren',
+      '( -1.0 * bestellzuordnung.menge * ( produktpreise.lieferpreis / produktpreise.lv_faktor ) )'
+    ],
+    OPTION_PFAND_VOLL_BRUTTO_SOLL => [
+      'waren',
+      '( -1.0 * bestellzuordnung.menge * produktpreise.pfand )'
+    ],
+    OPTION_PFAND_LEER_BRUTTO_SOLL => [
+      'pfand',
+      '( gruppenpfand.anzahl_leer * gruppenpfand.pfand_wert )'
+    ],
+    OPTION_PFAND_LEER_ANZAHL => [
+      'pfand',
+      '( gruppenpfand.anzahl_leer )'
+    ]
+  ];
+
+  $join_gesamtbestellungen = function($on_column) use ($using) {
+    return need_joins( $using, array(
+        'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ") as gesamtbestellungen
+                                  ON gesamtbestellungen.id = $on_column" ) );
+  };
+
+  $selectors = [
+    'waren' => 'FROM bestellzuordnung
+      JOIN gruppenbestellungen
+        ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
+      JOIN bestellvorschlaege
+        ON (bestellvorschlaege.produkt_id = bestellzuordnung.produkt_id)
+            AND ( bestellvorschlaege.gesamtbestellung_id = gruppenbestellungen.gesamtbestellung_id )
+      JOIN produktpreise
+        ON produktpreise.id = bestellvorschlaege.produktpreise_id
+    ' . $join_gesamtbestellungen('gruppenbestellungen.gesamtbestellung_id') . '
+      WHERE (bestellzuordnung.art='.BESTELLZUORDNUNG_ART_ZUTEILUNG.') '
+      . use_filters($using, [
           'bestellgruppen' => 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id'
         , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'
-        ) );
-    case 'pfand':
-      return "
-        SELECT IFNULL( sum( $expr ), 0.0 )
-        FROM gruppenpfand
-        " . need_joins( $using, array(
-            'gesamtbestellungen' => '(' .select_gesamtbestellungen_schuldverhaeltnis(). ') as gesamtbestellungen
-                                     ON gesamtbestellungen.id = gruppenpfand.bestell_id'
-          ) ) . "
-        WHERE 1 " . use_filters( $using, array(
-          'bestellgruppen' => 'gruppenpfand.gruppen_id = bestellgruppen.id'
-        , 'gesamtbestellungen' => 'gruppenpfand.bestell_id = gesamtbestellungen.id'
-        ) );
+        ])
+  , 'pfand' => 'FROM gruppenpfand
+      ' . $join_gesamtbestellungen('gruppenpfand.bestell_id') . '
+      WHERE 1 '
+      . use_filters($using, [
+        'bestellgruppen' => 'gruppenpfand.gruppen_id = bestellgruppen.id'
+      , 'gesamtbestellungen' => 'gruppenpfand.bestell_id = gesamtbestellungen.id'
+      ])
+  ];
+
+  $expressions_by_type = [];
+  foreach($options as $option) {
+    if (is_null($expression = $expressions[$option] ?? null)) {
+      error("Unknown option $option!");
+    }
+    $expressions_by_type[$expression[0]][] = $expression[1];
   }
+
+  $parts = [];
+  foreach($expressions_by_type as $type => $expressions) {
+    $parts[] = '(SELECT '
+      . implode("\n + ", array_map(fn($e) => "IFNULL( sum( $e ), 0.0 )", $expressions))
+      . "\n" .$selectors[$type]. ')';
+  }
+
+  return 'SELECT '. implode(' + ', $parts);
 }
 
 /* select_bestellungen_soll_lieferanten:
@@ -3589,10 +3605,7 @@ function select_waren_soll_gruppen( $using = array() ) {
 }
 
 function select_pfand_soll_gruppen( $using = array() ) {
-  return " SELECT (
-      (" .select_bestellungen_soll_gruppen( OPTION_PFAND_LEER_BRUTTO_SOLL, $using ). ")
-    + (" .select_bestellungen_soll_gruppen( OPTION_PFAND_VOLL_BRUTTO_SOLL, $using ). ")
-    ) ";
+  return select_bestellungen_soll_gruppen( [OPTION_PFAND_LEER_BRUTTO_SOLL, OPTION_PFAND_VOLL_BRUTTO_SOLL], $using);
 }
 
 function select_aufschlag_soll_gruppen( $using = array() ) {
@@ -3625,9 +3638,11 @@ function select_soll_lieferanten( $using = array() ) {
 
 function select_soll_gruppen( $using = array() ) {
   return " SELECT (
-      (" .select_waren_soll_gruppen( $using ). ")
-    + (" .select_pfand_soll_gruppen( $using ). ")
-    + (" .select_aufschlag_soll_gruppen( $using ). ")
+      (" .select_bestellungen_soll_gruppen([
+        OPTION_WAREN_BRUTTO_SOLL,
+        OPTION_AUFSCHLAG_SOLL,
+        OPTION_PFAND_LEER_BRUTTO_SOLL,
+        OPTION_PFAND_VOLL_BRUTTO_SOLL], $using ). ")
     + (" .select_transaktionen_soll_gruppen( $using ). ")
   ) ";
 }
@@ -3742,26 +3757,14 @@ function sql_verbindlichkeiten_lieferanten() {
   " ) );
 }
 
-function forderungen_gruppen_summe() {
-  return sql_select_single_field( "
-    SELECT ifnull( -sum( table_soll.soll ), 0.0 ) as forderungen
-    FROM (
+function forderungen_verbindlichkeiten_gruppen_summe() {
+  doSql( "
+    CREATE TEMPORARY TABLE saldo
       SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
-      FROM (" .select_gruppen( array( 'aktiv' => 'true' ) ). ") AS bestellgruppen
-      HAVING ( soll < 0 )
-    ) AS table_soll
-  ", 'forderungen' );
-}
-
-function verbindlichkeiten_gruppen_summe() {
-  return sql_select_single_field( "
-    SELECT ifnull( sum( table_soll.soll ), 0.0 ) as verbindlichkeiten
-    FROM (
-      SELECT (" .select_soll_gruppen('bestellgruppen'). ") AS soll
-      FROM (" .select_gruppen( array( 'aktiv' => 'true' ) ). ") AS bestellgruppen
-      HAVING ( soll > 0 )
-    ) AS table_soll
-  ", 'verbindlichkeiten' );
+      FROM (" .select_gruppen( array( 'aktiv' => 'true' ) ). ") AS bestellgruppen" );
+  $result = sql_select_single_row( "SELECT -SUM(LEAST(soll, 0)) forderungen, SUM(GREATEST(soll, 0)) verbindlichkeiten FROM saldo");
+  doSql( "DROP TEMPORARY TABLE saldo" );
+  return $result;
 }
 
 function sql_bestellungen_soll_gruppe( $gruppen_id, $bestell_id = 0 ) {
@@ -4778,17 +4781,15 @@ function self_field( $name, $default = NULL ) {
     return $default;
 }
 
-function patch_database_44() {
-  // Katalogdaten im Preiseintrag speichern, insbesondere für die Zuordnung von EANs von Ersatzprodukten nötig
-  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `verband` text null default null" );
-  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `herkunft` text null default null" );
-  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `hersteller` text null default null" );
-  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `bemerkung` text null default null" );
-  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `ean_einzeln` varchar(15) null default null" );
-}
-
 /**
+ * Migrationsstrategie bei x Branches (momentan stable, guteluise, nahrungskette):
+ * - auf den jeweiligen Base-Branches alle dortigen Patches machen
+ * - erst dann einen kumulativen Patch um auf den Ziel-Branch zu migrieren
+ * Dadurch stimmen die Migrationen mit den Migrationen der Base-Branches möglichst weit überein
+ * und man muss nur einen kumulativen Patch pflegen.
  *
+ * Alternative wäre: So bald wie möglich auf den Ziel-Branch patchen und die dortige Migration
+ * weiter nutzen. Nachteil: Man muss viele unterschiedliche kumulative Patches pflegen.
  */
 function update_database( $version ) {
   switch( $version ) {
@@ -5277,24 +5278,49 @@ function update_database( $version ) {
       logger( 'update_database: update to version 40 successful' );
     case 40:
       logger( 'starting update_database: from version 40' );
-
-      doSql( "ALTER TABLE `gesamtbestellungen` ADD INDEX `abrechnung_id` ( `abrechnung_id` )" );
-
-      // 41, 42 benutzt auf Branch guteluise
+    // 41, 42 benutzt auf Branch guteluise
+    // ab jetzt branchspezifische Versionen: 1xxxx guteluise, 2xxxx nahrungskette
+      patch_database_43();
+    schema_43:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 43 ) );
       logger( 'update_database: update to version 43 successful' );
-    // ab jetzt branchspezifische Versionen: 1xxxx guteluise, 2xxxx nahrungskette
     case 43:
       logger( 'starting update_database: from version 43' );
       patch_database_44();
+    schema_44:
       sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 44 ) );
       logger( 'update_database: update to version 44 successful' );
-      break;
     case 44:
+      logger( 'starting update_database: from version 44' );
+      patch_database_45();
+    schema_45:
+      sql_update( 'leitvariable', array( 'name' => 'database_version' ), array( 'value' => 45 ) );
+      logger( 'update_database: update to version 45 successful' );
+    case 45:
       break;
     default:
       error( "update_database: no update path known from version $version" );
   }
+}
+
+function patch_database_43() {
+  doSql( "ALTER TABLE `gesamtbestellungen` ADD INDEX `abrechnung_id` ( `abrechnung_id` )" );
+}
+
+function patch_database_44() {
+  // Katalogdaten im Preiseintrag speichern, insbesondere für die Zuordnung von EANs von Ersatzprodukten nötig
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `verband` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `herkunft` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `hersteller` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `bemerkung` text null default null" );
+  doSql( "ALTER TABLE `produktpreise` ADD COLUMN `ean_einzeln` varchar(15) null default null" );
+}
+
+function patch_database_45() {
+  // Mehr Indizes für Performance (Gruppenkonto, Bilanz)
+  doSql( "CREATE INDEX bestellung_art ON bestellzuordnung (gruppenbestellung_id, art);" );
+  doSql( "CREATE INDEX verpackung ON lieferantenpfand (verpackung_id);" );
+  doSql( "CREATE INDEX lieferant ON gesamtbestellungen (lieferanten_id);" );
 }
 
 function wikiLink( $topic, $text, $head = false ) {

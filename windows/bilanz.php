@@ -24,6 +24,7 @@ assert( $angemeldet ) or exit();
 setWikiHelpTopic( 'foodsoft:Bilanz' );
 
 ?> <h1>Bilanz </h1> <?php
+benchmarkTimestamp(__LINE__);
 
 $gruppen_einzahlungen_ungebucht = sql_ungebuchte_einzahlungen_summe();
 
@@ -44,6 +45,10 @@ function posten( $name, $wert ) {
   $seitensumme += $wert;
 }
 
+benchmarkTimestamp(__LINE__);
+$forderungen_verblindlichkeiten_gruppen = forderungen_verbindlichkeiten_gruppen_summe();
+benchmarkTimestamp(__LINE__);
+
 open_table( 'layout hfill' );
   ?> <colgroup><col width='*'><col width='*'></colgroup> <?php
   open_th( '', "style='padding:4px;'", 'Aktiva' ); open_th( '', "style='padding:4px;'", 'Passiva' );
@@ -56,9 +61,10 @@ open_table( 'layout hfill' );
       smallskip();
       open_table( 'inner hfill' );
         $seitensumme = 0;
-
+        benchmarkTimestamp(__LINE__);
         rubrik( "Bankguthaben" );
           $kontosalden = sql_bankkonto_salden();
+        benchmarkTimestamp(__LINE__);
           while( $konto = mysqli_fetch_array( $kontosalden ) ) {
             posten(
               fc_link( 'kontoauszug', array( 'konto_id' => $konto['konto_id'], 'class' => 'href', 'text' => "Konto {$konto['kontoname']}" ) )
@@ -68,11 +74,16 @@ open_table( 'layout hfill' );
           posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_UNGEBUCHT.",text=Ungebuchte Einzahlungen" ), $gruppen_einzahlungen_ungebucht );
 
         rubrik( "Umlaufvermögen" );
+          benchmarkTimestamp(__LINE__);
           posten( fc_link( 'basar', "class=href,text=Warenbestand Basar" ), basar_wert_brutto() );
+          benchmarkTimestamp(__LINE__);
           posten( fc_link( 'pfandzettel', "class=href,text=Bestand Pfandverpackungen" ), lieferantenpfandkontostand() );
+          benchmarkTimestamp(__LINE__); // SLOW 0.59
 
         rubrik( "Forderungen" );
-          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), forderungen_gruppen_summe() );
+          benchmarkTimestamp(__LINE__);
+          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_SCHULDEN.",text=Forderungen an Gruppen" ), $forderungen_verblindlichkeiten_gruppen['forderungen'] );
+          benchmarkTimestamp(__LINE__); // SLOW 2.24
 
         $aktiva = $seitensumme;
 
@@ -88,16 +99,22 @@ open_table( 'layout hfill' );
         $seitensumme = 0;
 
         rubrik( "Einlagen der Gruppen" );
+          benchmarkTimestamp(__LINE__);
           posten( fc_link( 'verlust_details', array( 'detail' => TRANSAKTION_TYP_SOCKEL, 'text' => "Sockeleinlagen", 'class' => 'href' ) ), sockeleinlagen() );
-          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), verbindlichkeiten_gruppen_summe() );
+          benchmarkTimestamp(__LINE__);
+          posten( fc_link( 'gruppen', "class=href,optionen=".GRUPPEN_OPT_GUTHABEN.",text=Kontoguthaben" ), $forderungen_verblindlichkeiten_gruppen['verbindlichkeiten'] );
+          benchmarkTimestamp(__LINE__); // SLOW 2.3
           posten( fc_link( 'gruppenpfand', "class=href,optionen=".PFAND_OPT_GRUPPEN_INAKTIV.",text=Pfandverpackungen" ), -pfandkontostand() );
+          benchmarkTimestamp(__LINE__); // SLOW 0.74
 
         rubrik( "Verbindlichkeiten" );
+          benchmarkTimestamp(__LINE__);
           foreach( sql_verbindlichkeiten_lieferanten() as $vkeit ) {
             posten( fc_link( 'lieferantenkonto', array( 'class' => 'href', 'lieferanten_id' => $vkeit['lieferanten_id'], 'text' => $vkeit['name'] ) )
             , $vkeit['soll']
             );
           }
+        benchmarkTimestamp(__LINE__);
 
         $passiva = $seitensumme;
 
@@ -105,9 +122,11 @@ open_table( 'layout hfill' );
         $passiva += $bilanzverlust;
 
         rubrik( "Bilanzausgleich" );
+          benchmarkTimestamp(__LINE__);
           posten( fc_link( 'verluste', "class=href,text=". ( ( $bilanzverlust > 0 ) ? "Bilanzüberschuss" : "Bilanzverlust" ) )
           , $bilanzverlust
           );
+          benchmarkTimestamp(__LINE__);
 
       close_table();
       medskip();
@@ -117,5 +136,7 @@ open_table( 'layout hfill' );
     open_th( '', '', price_view( $passiva ) );
 
 close_table();
+benchmarkTimestamp();
+showBenchmark();
 
 ?>
