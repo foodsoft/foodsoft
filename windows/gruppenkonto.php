@@ -211,7 +211,7 @@ if (isset($_GET['start_pos'])) $start_pos = $_GET['start_pos']; else $start_pos 
 $size          = 2000;
 
 $aufschlag_anzeigen = ( sql_bestellungen( 'aufschlag_prozent > 0' ) ? true : false );
-
+benchmarkTimestamp();
 $cols = 9;
 open_table('list');
   open_tr( 'groupofrows_top' );
@@ -247,8 +247,11 @@ open_table('list');
     open_td( 'number solidright', '', price_view( $kontostand ) );
 
   $konto_result = sql_transactions( $gruppen_id, 0 );
+  benchmarkTimestamp(__LINE__);
 
   $vert_result = sql_bestellungen_soll_gruppe( $gruppen_id );
+  benchmarkTimestamp(__LINE__);
+
   $summe = $kontostand;
   $pfandsumme = $pfandkontostand;
   $konto_row = current($konto_result);
@@ -396,5 +399,6 @@ Einzahlung Gruppe ${gruppen_nr} ${gruppen_name}
 }
 JS);
 }
-
+benchmarkTimestamp(__LINE__);
+showBenchmark();
 ?>

@@ -16,7 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-// db version 10001
+// db version 10002
 
 $tables = [
   'bankkonten' => [
@@ -284,6 +284,7 @@ $tables = [
     , 'secondary' => [ 'unique' => 0, 'collist' => 'art, produkt_id, gruppenbestellung_id' ]
     , 'nochnindex' => [ 'unique' => 0, 'collist' => 'produkt_id, gruppenbestellung_id' ]
     , 'undnocheiner' => [ 'unique' => 0, 'collist' => 'art, gruppenbestellung_id' ]
+    , 'bestellung_art' => [ 'unique' => 0, 'collist' => 'gruppenbestellung_id, art' ]
     ]
   ]
 , 'catalogue_acronyms' => [
@@ -558,9 +559,10 @@ $tables = [
       ]
     ]
   , 'indices' => [
-      'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
+      'PRIMARY'         => [ 'unique' => 1, 'collist' => 'id' ]
     , 'rechnungsstatus' => [ 'unique' => 0, 'collist' => 'rechnungsstatus' ]
-    , 'abrechnung_id' => [ 'unique' => 0, 'collist' => 'abrechnung_id' ]
+    , 'abrechnung_id'   => [ 'unique' => 0, 'collist' => 'abrechnung_id' ]
+    , 'lieferant'       => [ 'unique' => 0, 'collist' => 'lieferanten_id' ]
     ]
   ]
 , 'gruppen_transaktion' => [
@@ -1139,6 +1141,7 @@ $tables = [
   , 'indices' => [
       'PRIMARY' => [ 'unique' => 1, 'collist' => 'id' ]
     , 'secondary' => [ 'unique' => 1, 'collist' => 'bestell_id, verpackung_id' ]
+    , 'verpackung' => [ 'unique' => 0, 'collist' => 'verpackung_id' ]
     ]
   ]
 , 'logbook' => [
