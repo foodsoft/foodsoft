@@ -107,6 +107,7 @@ require_once('code/inlinks.php');
 require_once('code/zuordnen.php');
 require_once('code/forms.php');
 require_once('code/katalogsuche.php');
+require_once('code/benchmarking.php');
 
 update_database($database_version);
 
