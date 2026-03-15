@@ -1298,7 +1298,7 @@ function bestellschein_view(
 
           } else {               // Gesamtansicht: 4 spalten, Liefer-Einheit benutzen:
             open_td( 'mult' );
-              $m = mult2string( $liefermenge_scaled );
+              $m = roundAmount($liefermenge_scaled, 4);
               if( $editAmounts ) {
                 printf( "
                   <input name='liefermenge$produkt_id' class='right' type='text' size='6' value='%s'
