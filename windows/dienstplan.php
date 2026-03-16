@@ -244,9 +244,10 @@ close_div();
 
 medskip();
 open_table( 'menu', "id='option_menu_table'" );
-  open_th( '', "colspan='2'", 'Anzeigeoptionen' );
-  open_td();
-    option_checkbox( 'options', OPTION_SHOW_HISTORY, " historische Dienste anzeigen" );
+    open_th( '', '', 'Anzeigeoptionen' );
+  open_tr();
+    open_td();
+      option_checkbox( 'options', OPTION_SHOW_HISTORY, " historische Dienste anzeigen" );
 close_table();
 medskip();
 
