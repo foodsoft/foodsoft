@@ -70,7 +70,7 @@ function update_distribution( $bestell_id, $produkt_id ) {
     $verteilmult = $produkt['kan_verteilmult'];
     $verteileinheit = $produkt['kan_verteileinheit'];
     $preis = $produkt['endpreis'];
-    $liefermenge = $produkt['liefermenge'] * $verteilmult;
+    $liefermenge = checkvalue(sprintf('%d', $produkt['liefermenge'] * $verteilmult), 'f');
 
     $feldname = "liefermenge_{$bestell_id}_{$produkt_id}";
     global $$feldname;
@@ -92,25 +92,36 @@ function update_distribution( $bestell_id, $produkt_id ) {
           ] )
         , true );
       if( $mengen ) {
-        $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
-        $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
+        // $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
+        // $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
         if( $gruppen_id == sql_muell_id() ) {
           $verteilmenge = $mengen['muellmenge'] * $verteilmult;
+          $basarmenge = 0;
         } else {
           $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+          $basarmenge = $mengen['basarmenge'] * $verteilmult;
         }
       } else {
-        $toleranzmenge = 0;
-        $festmenge = 0;
+        // $toleranzmenge = 0;
+        // $festmenge = 0;
         $verteilmenge = 0;
+        $basarmenge = 0;
       }
-      $feldname = "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}";
-      global $$feldname;
-      if( get_http_var( $feldname, 'f' ) ) {
-        $menge_form = $$feldname;
+      $verteil_feldname = "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}";
+      if( get_http_var( $verteil_feldname, 'f' ) ) {
+        global $$verteil_feldname;
+        $menge_form = $$verteil_feldname;
         // echo "[$feldname, $menge_form, $verteilmenge]<br>";
         if( $verteilmenge != $menge_form ) {
           sql_change_verteilmenge( $bestell_id, $produkt_id, $gruppen_id, $menge_form / $verteilmult );
+        }
+      }
+      $basar_feldname = "basarmenge_{$bestell_id}_{$produkt_id}_{$gruppen_id}";
+      if (get_http_var($basar_feldname, 'f')) {
+        global $$basar_feldname;
+        $menge_form = $$basar_feldname;
+        if ($basarmenge != $menge_form) {
+          sql_basar2group($gruppen_id, $produkt_id, $bestell_id, $menge_form - $basarmenge);
         }
       }
     }

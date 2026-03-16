@@ -20,6 +20,7 @@ assert($angemeldet) or exit();
 $editable = ! $readonly;
 
 get_http_var( 'meinkonto', 'u', 0, true );
+get_http_var( 'optionen', 'u', 0, true );
 get_http_var( 'gruppen_id', 'u', 0, true );
 if( ( ! hat_dienst(4,5) ) and ( $gruppen_id == $login_gruppen_id ) ) {
   $meinkonto = 1;
@@ -141,22 +142,6 @@ if( $meinkonto ) {
     }
   }
 
-  open_table( 'menu' );
-      open_th( '', "colspan='2'", 'Optionen' );
-    open_tr();
-      open_td('', '', 'Gruppe:' );
-      open_td();
-        open_select( 'gruppen_id', 'autoreload' );
-          echo optionen_gruppen( $gruppen_id );
-        close_select();
-  close_table();
-  medskip();
-
-  if( ! $gruppen_id )
-    return;
-
-  $gruppen_name = sql_gruppenname( $gruppen_id );
-
   if( ! $readonly ) {
     open_fieldset( 'small_form', '', 'Transaktionen', 'off' );
 
@@ -200,152 +185,32 @@ if( $meinkonto ) {
   }
 }
 
-$kontostand = kontostand($gruppen_id);
-$pfandkontostand = pfandkontostand($gruppen_id);
-
-
-// wieviele Kontenbewegungen werden ab wo angezeigt...
-if (isset($_GET['start_pos'])) $start_pos = $_GET['start_pos']; else $start_pos = 0;
-//Funktioniert erstmal mit der Mischung aus Automatischer Berechung und manuellen Einträgen nicht
-//FIXME: vielleicht ggf. start/enddatum waehlbar machen? oder immer ganze jahre?
-$size          = 2000;
-
-$aufschlag_anzeigen = ( sql_bestellungen( 'aufschlag_prozent > 0' ) ? true : false );
-benchmarkTimestamp();
-$cols = 9;
-open_table('list');
-  open_tr( 'groupofrows_top' );
-    open_th( '', '', 'Typ' );
-    open_th( '', '', 'Valuta' );
-    open_th( '', '', 'Buchung' );
-    open_th( 'solidright', '', 'Informationen' );
-    open_th( 'center solidright', "colspan='3'", 'Pfand' );
-    open_th( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : '' ), 'Waren' );
-    open_th( 'solidright', '', 'Buchung' );
-    open_th( 'solidright', '', 'Kontostand' );
-  open_tr( 'groupofrows_bottom' );
-    open_th();
-    open_th();
-    open_th();
-    open_th( 'solidright' );
-    open_th( '', '', 'Kauf' );
-    open_th( '', '', 'Rückgabe' );
-    open_th( 'solidright', '', 'Konto' );
-    if( $aufschlag_anzeigen ) {
-      open_th( '', '', 'Wert' );
-      open_th( 'solidright', '', 'Aufschlag' );
-      $cols++;
-    } else {
-      open_th( 'solidright', '', 'Wert' );
-    }
-    open_th();
-    open_th( 'solidright' );
-  open_tr( 'summe' );
-    open_td( 'left solidright', "colspan='6'", 'Kontostand:' );
-    open_td( 'number solidright', '', price_view( $pfandkontostand ) );
-    open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='3'" : "colspan='2'" ) );
-    open_td( 'number solidright', '', price_view( $kontostand ) );
-
-  $konto_result = sql_transactions( $gruppen_id, 0 );
-  benchmarkTimestamp(__LINE__);
-
-  $vert_result = sql_bestellungen_soll_gruppe( $gruppen_id );
-  benchmarkTimestamp(__LINE__);
-
-  $summe = $kontostand;
-  $pfandsumme = $pfandkontostand;
-  $konto_row = current($konto_result);
-  $vert_row = current($vert_result);
-  while( $vert_row or $konto_row ) {
-    open_tr();
-
-    //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
-    if( ( $vert_row ? $vert_row['valuta_kan'] : '0' ) > ( $konto_row ? $konto_row['valuta_kan'] : '0' ) ) {
-
-      $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
-      $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
-      $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
-      $waren_soll = $vert_row['waren_brutto_soll'];
-      $aufschlag_soll = $vert_row['aufschlag_soll'];
-      $soll = $pfand_soll + $waren_soll + $aufschlag_soll;
-      $have_pfand = false;
-
-      open_td('bold', '', 'Bestellung' );
-      open_td('', '', $vert_row['valuta_trad'] );
-      open_td('', '', $vert_row['lieferdatum_trad'] );
-      open_td('solidright', '', 'Bestellung '. fc_link( 'lieferschein', array(
-        'class' => 'href', 'text' => $vert_row['name'], 'title' => 'zum Lieferschein...'
-      , 'bestell_id' => $vert_row['gesamtbestellung_id'] , 'gruppen_id' => $gruppen_id
-      , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME )
-      ) ) );
-      open_td( 'number' );
-        if( abs( $pfand_voll_soll ) > 0.005 ) {
-          echo price_view( $pfand_voll_soll );
-          $have_pfand = true;
-        }
-      open_td( 'number' );
-        if( abs( $pfand_leer_soll ) > 0.005 ) {
-          echo price_view( $pfand_leer_soll );
-          $have_pfand = true;
-        }
-      open_td( 'number solidright', '', $have_pfand ? price_view( $pfandsumme ) : '' );
-      open_td( 'number', '', price_view( $waren_soll ) );
-      if( $aufschlag_anzeigen ) {
-        open_td( 'number', '', price_view( $aufschlag_soll ) );
-      }
-      open_td( 'solidleft solidright number bold', '', price_view( $soll ) );
-      open_td( 'solidright number', '', price_view( $summe ) );
-
-      $summe -= $soll;
-      $pfandsumme -= $pfand_soll;
-      $vert_row = next($vert_result);
-
-    } else {
-
-      $k_id = $konto_row['konterbuchung_id'];
-      open_td( 'bold' );
-        if( $k_id >= 0 ) {
-          $text = ( $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung' );
-        } else {
-          $text = 'Verrechnung';
-        }
-        echo $k_id ? fc_link( 'edit_buchung', "class=href,transaktion_id={$konto_row['id']},text=$text" ) : $text;
-      open_td('', '', $konto_row['valuta_trad'] );
-       open_td( '', '', $konto_row['date'] ."<div class='small'>{$konto_row['dienst_name']}</div>" );
-      open_td( 'solidright' );
-        open_div( '', '', $konto_row['notiz'] );
-        if( $k_id ) {
-          buchung_kurzinfo( $k_id );
-        } else {
-          if( $meinkonto ) {
-            div_msg( 'alert', 'noch nich verbucht' );
-          } else {
-            form_finish_transaction( $konto_row['id'], $konto_row['valuta'] );
-          }
-        }
-        if( $konto_row['type'] == TRANSAKTION_TYP_PFANDSALDO ) {
-          open_td( 'solidright', "colspan='2'" );
-          $pfand_soll = $konto_row['summe'];
-          open_td( 'solidright', '', price_view( $pfand_summe ) );
-          $pfand_summe -= $pfand_soll;
-          open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : "colspan='1'" ) );
-        } else {
-          open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='5'" : "colspan='4'" ) );
-        }
-        open_td( 'number bold solidright', '', price_view( $konto_row['summe'] ) );
-        open_td( 'number solidright', '', price_view( $summe ) );
-
-      $summe -= $konto_row['summe'];
-      $konto_row = next($konto_result);
-    }
-  }
-  open_tr( 'summe' );
-    open_td( 'left solidright', "colspan='6'", 'Startsaldo:' );
-    open_td( 'number solidright', '', price_view( $pfandsumme ) );
-    open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='3'" : "colspan='2'" ) );
-    open_td( 'solidright number', '', price_view( $summe ) );
-
+open_table( 'menu' );
+    open_th( '', 'colspan="2"', 'Optionen' );
+  open_tr();
+    open_td( '', 'colspan="2"');
+      option_checkbox( 'optionen', GRUPPENKONTO_OPT_BASAR, 'Basarkäufe zeigen');
+if (! $meinkonto) {
+  open_tr();
+    open_td('', '', 'Gruppe:' );
+    open_td();
+      open_select( 'gruppen_id', 'autoreload' );
+        echo optionen_gruppen(
+            $gruppen_id
+          , [ 'aktiv' => 'true' ]
+          , $optionen & GRUPPENKONTO_OPT_BASAR ? 'Alle' : false);
+      close_select();
+}
 close_table();
+medskip();
+
+if(! $optionen & GRUPPENKONTO_OPT_BASAR && ! $gruppen_id )
+  return;
+
+if ($optionen & GRUPPENKONTO_OPT_BASAR)
+  basarbuchungen_view($gruppen_id);
+else
+  gruppenkonto_view($gruppen_id, $meinkonto);
 
 if ( $meinkonto ) {
   $konten = sql_konten();

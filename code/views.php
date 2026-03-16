@@ -265,6 +265,252 @@ function lieferant_view( $lieferant_id, $fieldname = '', $option_0 = '' ) {
   }
 }
 
+function gruppenkonto_view($gruppen_id, $meinkonto) {
+  $kontostand = kontostand($gruppen_id);
+  $pfandkontostand = pfandkontostand($gruppen_id);
+
+  $aufschlag_anzeigen = ( sql_bestellungen( 'aufschlag_prozent > 0' ) ? true : false );
+  benchmarkTimestamp();
+  $cols = 9;
+  open_table('list');
+    open_tr( 'groupofrows_top' );
+      open_th( '', '', 'Typ' );
+      open_th( '', '', 'Valuta' );
+      open_th( '', '', 'Buchung' );
+      open_th( 'solidright', '', 'Informationen' );
+      open_th( 'center solidright', "colspan='3'", 'Pfand' );
+      open_th( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : '' ), 'Waren' );
+      open_th( 'solidright', '', 'Buchung' );
+      open_th( 'solidright', '', 'Kontostand' );
+    open_tr( 'groupofrows_bottom' );
+      open_th();
+      open_th();
+      open_th();
+      open_th( 'solidright' );
+      open_th( '', '', 'Kauf' );
+      open_th( '', '', 'Rückgabe' );
+      open_th( 'solidright', '', 'Konto' );
+      if( $aufschlag_anzeigen ) {
+        open_th( '', '', 'Wert' );
+        open_th( 'solidright', '', 'Aufschlag' );
+        $cols++;
+      } else {
+        open_th( 'solidright', '', 'Wert' );
+      }
+      open_th();
+      open_th( 'solidright' );
+    open_tr( 'summe' );
+      open_td( 'left solidright', "colspan='6'", 'Kontostand:' );
+      open_td( 'number solidright', '', price_view( $pfandkontostand ) );
+      open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='3'" : "colspan='2'" ) );
+      open_td( 'number solidright', '', price_view( $kontostand ) );
+
+    $konto_result = sql_transactions( $gruppen_id, 0 );
+    benchmarkTimestamp(__LINE__);
+
+    $vert_result = sql_bestellungen_soll_gruppe( $gruppen_id );
+    benchmarkTimestamp(__LINE__);
+
+    $summe = $kontostand;
+    $pfandsumme = $pfandkontostand;
+    $konto_row = current($konto_result);
+    $vert_row = current($vert_result);
+    while( $vert_row or $konto_row ) {
+      open_tr();
+
+      //Mische Einträge aus Kontobewegungen und Verteilzuordnung zusammen
+      if( ( $vert_row ? $vert_row['valuta_kan'] : '0' ) > ( $konto_row ? $konto_row['valuta_kan'] : '0' ) ) {
+
+        $pfand_leer_soll = $vert_row['pfand_leer_brutto_soll'];
+        $pfand_voll_soll = $vert_row['pfand_voll_brutto_soll'];
+        $pfand_soll = $pfand_leer_soll + $pfand_voll_soll;
+        $waren_soll = $vert_row['waren_brutto_soll'];
+        $aufschlag_soll = $vert_row['aufschlag_soll'];
+        $soll = $pfand_soll + $waren_soll + $aufschlag_soll;
+        $have_pfand = false;
+
+        open_td('bold', '', 'Bestellung' );
+        open_td('', '', $vert_row['valuta_trad'] );
+        open_td('', '', $vert_row['lieferdatum_trad'] );
+        open_td('solidright', '', 'Bestellung '. fc_link( 'lieferschein', array(
+          'class' => 'href', 'text' => $vert_row['name'], 'title' => 'zum Lieferschein...'
+        , 'bestell_id' => $vert_row['gesamtbestellung_id'] , 'gruppen_id' => $gruppen_id
+        , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_BASARMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME )
+        ) ) );
+        open_td( 'number' );
+          if( abs( $pfand_voll_soll ) > 0.005 ) {
+            echo price_view( $pfand_voll_soll );
+            $have_pfand = true;
+          }
+        open_td( 'number' );
+          if( abs( $pfand_leer_soll ) > 0.005 ) {
+            echo price_view( $pfand_leer_soll );
+            $have_pfand = true;
+          }
+        open_td( 'number solidright', '', $have_pfand ? price_view( $pfandsumme ) : '' );
+        open_td( 'number', '', price_view( $waren_soll ) );
+        if( $aufschlag_anzeigen ) {
+          open_td( 'number', '', price_view( $aufschlag_soll ) );
+        }
+        open_td( 'solidleft solidright number bold', '', price_view( $soll ) );
+        open_td( 'solidright number', '', price_view( $summe ) );
+
+        $summe -= $soll;
+        $pfandsumme -= $pfand_soll;
+        $vert_row = next($vert_result);
+
+      } else {
+
+        $k_id = $konto_row['konterbuchung_id'];
+        open_td( 'bold' );
+          if( $k_id >= 0 ) {
+            $text = ( $konto_row['summe'] > 0 ? 'Einzahlung' : 'Auszahlung' );
+          } else {
+            $text = 'Verrechnung';
+          }
+          echo $k_id ? fc_link( 'edit_buchung', "class=href,transaktion_id={$konto_row['id']},text=$text" ) : $text;
+        open_td('', '', $konto_row['valuta_trad'] );
+        open_td( '', '', $konto_row['date'] ."<div class='small'>{$konto_row['dienst_name']}</div>" );
+        open_td( 'solidright' );
+          open_div( '', '', $konto_row['notiz'] );
+          if( $k_id ) {
+            buchung_kurzinfo( $k_id );
+          } else {
+            if( $meinkonto ) {
+              div_msg( 'alert', 'noch nich verbucht' );
+            } else {
+              form_finish_transaction( $konto_row['id'], $konto_row['valuta'] );
+            }
+          }
+          if( $konto_row['type'] == TRANSAKTION_TYP_PFANDSALDO ) {
+            open_td( 'solidright', "colspan='2'" );
+            $pfand_soll = $konto_row['summe'];
+            open_td( 'solidright', '', price_view( $pfand_summe ) );
+            $pfand_summe -= $pfand_soll;
+            open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : "colspan='1'" ) );
+          } else {
+            open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='5'" : "colspan='4'" ) );
+          }
+          open_td( 'number bold solidright', '', price_view( $konto_row['summe'] ) );
+          open_td( 'number solidright', '', price_view( $summe ) );
+
+        $summe -= $konto_row['summe'];
+        $konto_row = next($konto_result);
+      }
+    }
+    open_tr( 'summe' );
+      open_td( 'left solidright', "colspan='6'", 'Startsaldo:' );
+      open_td( 'number solidright', '', price_view( $pfandsumme ) );
+      open_td( 'solidright', ( $aufschlag_anzeigen ? "colspan='3'" : "colspan='2'" ) );
+      open_td( 'solidright number', '', price_view( $summe ) );
+
+  close_table();
+}
+
+function basarbuchungen_view($gruppen_id) {
+  $aufschlag_anzeigen = ( sql_bestellungen( 'aufschlag_prozent > 0' ) ? true : false );
+  benchmarkTimestamp();
+  $dienst_4 = hat_dienst(4);
+  $menge_cols = $dienst_4 ? 3 : 2;
+  open_table('list');
+    open_tr( 'groupofrows_top' );
+      open_th( '', '', 'Typ' );
+      open_th( '', '', 'Valuta' );
+      open_th( '', '', 'Buchung' );
+  if (!$gruppen_id)
+      open_th( '', '', 'Gruppe' );
+      open_th( 'solidright', '', 'Produkt' );
+      open_th( 'solidright', "colspan='$menge_cols'", 'Menge' );
+      open_th( '', 'colspan="2"', 'L-Preis' );
+      open_th( 'solidright', 'colspan="2"', 'Endpreis' );
+      open_th( 'center solidright', '', 'Pfand' );
+      open_th( 'solidright', ( $aufschlag_anzeigen ? "colspan='2'" : '' ), 'Waren' );
+      open_th( 'solidright', '', 'Buchung' );
+    open_tr( 'groupofrows_bottom' );
+      open_th();
+      open_th();
+      open_th();
+  if (!$gruppen_id)
+      open_th( '', '', '' );
+      open_th( 'solidright', '', 'Bestellung' );
+      open_th( 'solidright', "colspan='$menge_cols'", '');
+      open_th( '', 'colspan="2"', '');
+      open_th( 'solidright', 'colspan="2"', '');
+      open_th( 'solidright', '', '' );
+      if( $aufschlag_anzeigen ) {
+        open_th( '', '', 'Wert' );
+        open_th( 'solidright', '', 'Aufschlag' );
+      } else {
+        open_th( 'solidright', '', 'Wert' );
+      }
+      open_th( 'solidright' );
+
+    benchmarkTimestamp(__LINE__);
+    $keys = [
+      'min_status' => STATUS_VERTEILT,
+      'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR,
+    ];
+    if ($gruppen_id)
+      $keys['gruppen_id'] = $gruppen_id;
+    $vert_result = sql_bestellung_produkte($keys, 'bestellzuordnung.zeitpunkt DESC', 'bestellzuordnung.id');
+    benchmarkTimestamp(__LINE__);
+
+    foreach( $vert_result as $vert_row ) {
+      open_tr();
+
+      $pfand_voll_soll = - $vert_row['pfand'] * $vert_row['basarmenge'];
+      $pfand_soll = $pfand_voll_soll;
+      $waren_soll = - $vert_row['bruttopreis'] * $vert_row['basarmenge'];
+      $aufschlag_soll = - $vert_row['preisaufschlag'] * $vert_row['basarmenge'];
+      $soll = $pfand_soll + $waren_soll + $aufschlag_soll;
+
+      $bestell_id = $vert_row['gesamtbestellung_id'];
+      $produkt_id = $vert_row['produkt_id'];
+      $row_gruppen_id = $gruppen_id ?: $vert_row['gruppen_id'];
+      if (!$gruppen_id)
+        $gruppen_name = sql_gruppenname($row_gruppen_id);
+
+      open_td('bold', '', 'Basarkauf' );
+      open_td('', '', $vert_row['valuta_trad'] );
+      open_td('', '', $vert_row['zeitpunkt_trad'] );
+      if (!$gruppen_id)
+        open_td('', '', fc_link( 'gruppenkonto', array(
+                                'gruppen_id' => $row_gruppen_id , 'class' => 'href', 'text' => $gruppen_name ) ) );
+      open_td('solidright', '',
+          $vert_row['produkt_name']
+        . '<br>'. fc_link( 'lieferschein', array(
+            'class' => 'href', 'text' => $vert_row['gesamtbestellung_name'], 'title' => 'zum Lieferschein...'
+          , 'bestell_id' => $bestell_id , 'gruppen_id' => $row_gruppen_id
+          , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_BASARMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME )
+      ) ) );
+      open_td( 'mult', '', sprintf( '%d', $vert_row['basarmenge'] * $vert_row['kan_verteilmult_anzeige'] ) );
+      open_td( 'unit noright', '', $vert_row['kan_verteileinheit_anzeige'] );
+      if ($dienst_4)
+        open_td('noleft', '', fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ));
+      open_td( 'mult solidleft', '', fc_link( 'produktdetails',
+        "class=href,bestell_id=$bestell_id,produkt_id=$produkt_id,text=".sprintf( "%.2lf", $vert_row['nettolieferpreis'] ) ) );
+      open_td( 'unit' );
+        echo "/ {$vert_row['liefereinheit_anzeige']}";
+        if( $vert_row['kan_liefereinheit'] != $vert_row['kan_verteileinheit'] ) {
+          $m = $vert_row['lv_faktor'] * $vert_row['kan_verteilmult'];
+          echo " (".mult2string($m)." ".$vert_row['kan_verteileinheit'].")";
+        }
+      close_td();
+      open_td( 'mult', '', price_view( $vert_row['endpreis'] ) );
+      open_td( 'unit solidright', '', "/ {$vert_row['verteileinheit_anzeige']}" );
+      open_td( 'number solidright' );
+        if( abs( $pfand_voll_soll ) > 0.005 ) {
+          echo price_view( $pfand_voll_soll );
+        }
+      open_td( 'number', '', price_view( $waren_soll ) );
+      if( $aufschlag_anzeigen ) {
+        open_td( 'number', '', price_view( $aufschlag_soll ) );
+      }
+      open_td( 'solidleft solidright number bold', '', price_view( $soll ) );
+    }
+  close_table();
+}
+
 /**
  *  Zeigt einen Dienst um in mit einem Dienstkontrollblatt-Eintrag zu
  *  verknüpfen (Als Abschluss sozusagen).
@@ -770,8 +1016,7 @@ function basar_view( $bestell_id = 0, $order = 'produktname', $editAmounts = fal
     $preis = $basar_row['vpreis'] + $basar_row['preisaufschlag'];
 
     // umrechnen, z.B. Brokkoli von: x * (500g) nach (x * 500) g:
-    $menge *= $kan_verteilmult;
-    $rechnungsstatus = sql_bestellung_status( $basar_row['gesamtbestellung_id'] );
+    $menge = roundAmount($menge * $kan_verteilmult);
 
     $row = array(
       "<td>{$basar_row['produkt_name']}</td>"
@@ -877,19 +1122,21 @@ define( 'PR_COL_BESTELLMENGE', 0x200 );   // bestellte menge (1)
 define( 'PR_COL_BESTELLGEBINDE', 0x400 ); // bestellte Gebinde (1)
 define( 'PR_COL_LIEFERMENGE', 0x800 );    // gelieferte Menge (1,2)
 define( 'PR_COL_LIEFERGEBINDE', 0x1000 ); // gelieferte Gebinde(1,2)
-define( 'PR_COL_NETTOSUMME', 0x2000 );    // Gesamtpreis Netto (1,3)
-define( 'PR_COL_BRUTTOSUMME', 0x4000 );   // Gesamtpreis Brutto ohne Pfand (1,3)
-define( 'PR_COL_VSUMME', 0x8000 );      // V-Summe: brutto mit Pfand (1,3)
-define( 'PR_COL_ENDSUMME', 0x10000 );   // Endsumme: V-summe mit aufschlag (1,3)
+define( 'PR_COL_BASARMENGE', 0x2000 );    // über Basar gekaufte Menge (1)
+define( 'PR_COL_NETTOSUMME', 0x4000 );    // Gesamtpreis Netto (1,3)
+define( 'PR_COL_BRUTTOSUMME', 0x8000 );   // Gesamtpreis Brutto ohne Pfand (1,3)
+define( 'PR_COL_VSUMME', 0x10000 );      // V-Summe: brutto mit Pfand (1,3)
+define( 'PR_COL_ENDSUMME', 0x20000 );   // Endsumme: V-summe mit aufschlag (1,3)
+define( 'PR_COL_END', PR_COL_ENDSUMME );
 //
 // (1) mit $gruppen_id: Anzeige nur fuer diese gruppe
 // (2) nur moeglich ab STATUS_LIEFERANT
 // (3) bei STATUS_BESTELLEN: berechnet aus Bestellmenge, sonst aus Liefermenge
 //
-define( 'PR_ROWS_NICHTGELIEFERT', 0x20000 ); // nicht gelieferte Produkte auch anzeigen
-define( 'PR_ROWS_NICHTGEFUELLT', 0x40000 ); // nicht gefuellte gebinde auch anzeigen?
+define( 'PR_ROWS_NICHTGELIEFERT', 0x40000 ); // nicht gelieferte Produkte auch anzeigen
+define( 'PR_ROWS_NICHTGEFUELLT', 0x80000 ); // nicht gefuellte gebinde auch anzeigen?
 
-define( 'PR_FAXANSICHT', 0x80000 ); // faxansicht: mehr eingabefelder / link .pdf download
+define( 'PR_FAXANSICHT', 0x100000 ); // faxansicht: mehr eingabefelder / link .pdf download
 
 // FAXOPTIONS: optionen, die in der faxansicht verfuegbar sind:
 //
@@ -991,6 +1238,12 @@ function bestellschein_view(
         );
       }
     }
+    if ($status >= STATUS_VERTEILT && $gruppen_id !== $basar_id && $gruppen_id !== $muell_id)
+      $col[PR_COL_BASARMENGE] = [
+        'title' => "vom Basar gekaufte Menge",
+        'header' => "Basarkäufe",
+        'cols' => 2
+      ];
     $option_nichtgefuellt = false;
   } else {
     $col[PR_COL_BESTELLMENGE] = array(
@@ -1038,7 +1291,7 @@ function bestellschein_view(
   if( $select_columns ) {
     $opts_insert="";
     $opts_drop="";
-    for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
+    for( $n=1 ; $n <= PR_COL_END; $n *= 2 ) {
       if( array_key_exists( $n, $col ) ) {
         $c = $col[$n];
         if( $spalten & $n ) {
@@ -1084,7 +1337,7 @@ function bestellschein_view(
       open_th('', "title='Zeilennummer'", '#');
       $cols = 1;
       $cols_vor_summe = 1;
-      for( $n=1 ; $n <= PR_COL_ENDSUMME; $n *= 2 ) {
+      for( $n=1 ; $n <= PR_COL_END; $n *= 2 ) {
         if( $spalten & $n ) {
           if( array_key_exists( $n, $col ) ) {
             $c = $col[$n];
@@ -1135,6 +1388,12 @@ function bestellschein_view(
     $haben_nichtgefuellt = false;
 
     $zeile = 1;
+
+    // Gruppenmenge: Wenn  nur eine der beiden Spalten "Zuteilung" oder "Basarkäufe" gewählt ist, verwende nur die betreffende
+    // Menge für Preisberechnungen. Ansonsten verwende beide zusammen.
+    $gruppenmenge = $spalten & (PR_COL_LIEFERMENGE | PR_COL_BASARMENGE);
+    if (!$gruppenmenge) $gruppenmenge = PR_COL_LIEFERMENGE | PR_COL_BASARMENGE;
+
     foreach( $produkte as $produkte_row ) {
       $produkt_id = $produkte_row['produkt_id'];
 
@@ -1192,11 +1451,15 @@ function bestellschein_view(
             if( $gruppen_id == $muell_id ) {
               $liefermenge = $produkte_row['muellmenge'];
             } else if ( $gruppen_id == $basar_id ) {
-              $liefermenge = sql_basarmenge( $bestell_id, $produkt_id );
+              $liefermenge = sql_basar_verteilmenge( $bestell_id, $produkt_id );
               if( $liefermenge < 0.5 )
                 continue 2;
             } else {
-              $liefermenge = $produkte_row['verteilmenge'];
+              $liefermenge = 0;
+              if ($gruppenmenge & PR_COL_LIEFERMENGE)
+                $liefermenge += $produkte_row['verteilmenge'];
+              if ($gruppenmenge & PR_COL_BASARMENGE)
+                $liefermenge += $produkte_row['basarmenge'];
             }
           } else {
             $liefermenge = $produkte_row['liefermenge'];
@@ -1292,10 +1555,12 @@ function bestellschein_view(
         }
 
         if( $spalten & PR_COL_LIEFERMENGE ) {
-          if( $gruppen_id ) {    // Gruppenansicht: 2 spalten, V-Einheit benutzen:
+          if ($gruppen_id == $basar_id || $gruppen_id == $muell_id) {
             open_td( 'mult', '', sprintf( '%d', $liefermenge * $kan_verteilmult ) );
             open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
-
+          } else if( $gruppen_id ) {    // Gruppenansicht: 2 spalten, V-Einheit benutzen:
+            open_td( 'mult', '', sprintf( '%d', $produkte_row['verteilmenge'] * $kan_verteilmult ) );
+            open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
           } else {               // Gesamtansicht: 4 spalten, Liefer-Einheit benutzen:
             open_td( 'mult' );
               $m = roundAmount($liefermenge_scaled, 4);
@@ -1317,6 +1582,13 @@ function bestellschein_view(
                      <?php echo $input_event_handlers; ?> > <?php
             }
             open_td( '', "style='border-left-style:none;'", fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ) );
+          }
+        }
+
+        if ($spalten & PR_COL_BASARMENGE) {
+          if ($gruppen_id) {
+            open_td( 'mult', '', sprintf( '%d', $produkte_row['basarmenge'] * $kan_verteilmult ) );
+            open_td( 'unit', '', $produkte_row['kan_verteileinheit'] );
           }
         }
 
@@ -1614,11 +1886,14 @@ function select_products_not_in_list( $bestell_id ) {
 
 function distribution_tabellenkopf( $status ) {
   open_tr('legende');
-    open_th(''       ,''           ,'Gruppe');
+    open_th('', '', 'Gruppe');
     open_th('oneline','colspan="2"','bestellt (Toleranz)');
     if( $status >= STATUS_LIEFERANT ) {
-      open_th(''       ,'colspan="2"','geliefert');
-      open_th(''       ,"title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag (nur bei Gruppen)'",'Gesamtpreis');
+      open_th('' ,'colspan="2"', 'zugeteilt');
+      if ($status >= STATUS_VERTEILT) {
+        open_th('bottom', 'colspan="2" rowspan="2"', 'Basarkäufe');
+      }
+      open_th('', "title='Endpreis: mit MWSt. und ggf. Pfand und FC-Aufschlag (nur bei Gruppen)'", 'Gesamtpreis');
     }
   close_tr();
 }
@@ -1626,27 +1901,29 @@ function distribution_tabellenkopf( $status ) {
 function distribution_produktdaten( $status, $bestell_id, $produkt_id ) {
   $produkt = sql_produkt( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) );
   open_tr();
-    open_th( '', $status < STATUS_LIEFERANT ? "colspan='3'" : "colspan='6'" );
-      open_div( '', "style='font-size:1.2em; margin:5px;'" );
-        echo fc_link( 'produktpreise', array(
-         'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
-      close_div();
-      if ( $produkt['notiz'] ) {
-        open_div('small');
-          echo "Notiz: ", $produkt['notiz'];
+    open_th( '', $status < STATUS_LIEFERANT ? "colspan='3'" : ($status >= STATUS_VERTEILT ? "colspan='8'" : "colspan='6'"));
+      open_div();
+        open_div( '', "style='font-size:1.2em; margin:5px;'" );
+          echo fc_link( 'produktpreise', array(
+          'text' => $produkt['name'], 'class' => 'href', 'produkt_id' => $produkt_id ) );
         close_div();
-      }
-      open_div('small');
-        printf( 'Gruppe %s', $produkt['produktgruppen_name'] );
-        if( $produkt['artikelnummer'] ) {
-          printf( '/ A-Nr: %s ', $produkt['artikelnummer'] );
+        if ( $produkt['notiz'] ) {
+          open_div('small');
+            echo "Notiz: ", $produkt['notiz'];
+          close_div();
         }
-        printf( "/  Netto: %.2lf/%s / Endpreis: %.2lf/%s"
-          , $produkt['nettopreis']
-          , $produkt['verteileinheit']
-          , $produkt['endpreis']
-          , $produkt['verteileinheit']
-        );
+        open_div('small');
+          printf( 'Gruppe %s', $produkt['produktgruppen_name'] );
+          if( $produkt['artikelnummer'] ) {
+            printf( '/ A-Nr: %s ', $produkt['artikelnummer'] );
+          }
+          printf( "/  Netto: %.2lf/%s / Endpreis: %.2lf/%s"
+            , $produkt['nettopreis']
+            , $produkt['verteileinheit']
+            , $produkt['endpreis']
+            , $produkt['verteileinheit']
+          );
+        close_div();
       close_div();
   close_tr();
 }
@@ -1656,6 +1933,9 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   global $input_event_handlers;
   global $form_id;
 
+  $mit_basarspalte = $status >= STATUS_VERTEILT;
+
+  $skip_basar_column = $mit_basarspalte ? function() { open_td('', 'colspan="2"', ''); } : function() {};
 
   $form_event_handlers = $input_event_handlers;
 
@@ -1684,6 +1964,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_th('', "colspan='3'", 'Liefermenge:' );
       open_td('mult','',int_view( $liefermenge, ( $editable ? "liefermenge_{$bestell_id}_{$produkt_id}" : false ) ) );
       open_td('unit','',$verteileinheit );
+      $skip_basar_column();
       open_td('number','', price_view( $vpreis * $liefermenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}" : false), false, false) );
       if ($editable) {
         open_td("right $magic_style", "colspan='2' id='magic_{$bestell_id}_{$produkt_id}_apply'",
@@ -1696,7 +1977,8 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
   $muell_id = sql_muell_id();
   $basar_festmenge = 0;
   $basar_toleranzmenge = 0;
-  $basar_verteilmenge = sql_basarmenge( $bestell_id, $produkt_id ) * $verteilmult;
+  $basar_verteilmenge = sql_basar_verteilmenge( $bestell_id, $produkt_id ) * $verteilmult;
+  $basar_restmenge = $basar_verteilmenge;
   $muellmenge = 0;
 
   foreach( sql_gruppen( array( 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id ) ) as $gruppe ) {
@@ -1712,10 +1994,12 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       $toleranzmenge = $mengen['toleranzbestellmenge'] * $verteilmult;
       $festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $toleranzmenge;
       $verteilmenge = $mengen['verteilmenge'] * $verteilmult;
+      $basarmenge = $mengen['basarmenge'] * $verteilmult;
     } else {
       $toleranzmenge = 0;
       $festmenge = 0;
       $verteilmenge = 0;
+      $basarmenge = 0;
     }
     switch( $gruppen_id ) {
       case $muell_id:
@@ -1726,6 +2010,9 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
         $basar_festmenge = $mengen['gesamtbestellmenge'] * $verteilmult - $basar_toleranzmenge;
         continue 2;
     }
+    if (!$mit_basarspalte && $festmenge < 0.005 && $toleranzmenge < 0.005 && $verteilmenge < 0.005)
+      continue;
+    $basar_restmenge -= $basarmenge;
     open_tr();
       open_td( '', '', "{$gruppe['gruppennummer']} {$gruppe['name']}" );
       open_td( 'mult', '', mult_view($festmenge) . " (".mult_view($toleranzmenge) .")" );
@@ -1733,7 +2020,13 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       if( $status >= STATUS_LIEFERANT ) {
         open_td( 'mult', '', mult_view( $verteilmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ) ) );
         open_td( 'unit', '', $verteileinheit );
-        open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
+        if ($mit_basarspalte) {
+          open_td( 'mult', '', mult_view( $basarmenge, ( $editable ? "basarmenge_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), true, true, 'tabindex="-1"', $verteilmult ) );
+          open_td( 'unit', '', $verteileinheit );
+          open_td( 'number', '', price_view( $endpreis * ($verteilmenge + $basarmenge) / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
+        } else {
+          open_td( 'number', '', price_view( $endpreis * $verteilmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$gruppen_id}" : false ), false, false ) );
+        }
         if ($editable) {
           open_td( "mult $magic_style", '', mult_view( $verteilmenge, "magic_{$bestell_id}_{$produkt_id}_{$gruppen_id}", false, false ) );
           open_td( "unit $magic_style", '', $verteileinheit );
@@ -1748,6 +2041,7 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_td('', "colspan='3'", "M&uuml;ll:" );
       open_td( 'mult', '', mult_view( $muellmenge, ( $editable ? "menge_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ) ) );
       open_td( 'unit', '', $verteileinheit );
+      $skip_basar_column();
       open_td( 'number', '', price_view( $vpreis * $muellmenge / $verteilmult, ( $editable ? "preis_{$bestell_id}_{$produkt_id}_{$muell_id}" : false ), false, false ) );
       if ($editable) {
         open_td( "mult $magic_style", '', mult_view( $muellmenge, "magic_{$bestell_id}_{$produkt_id}_{$muell_id}", false, false ) );
@@ -1769,7 +2063,13 @@ function distribution_view( $status, $bestell_id, $produkt_id, $editable = false
       open_span('', "id='menge_{$bestell_id}_{$produkt_id}_{$basar_id}'", $basar_verteilmenge );
       close_td();
       open_td( 'unit', '', $verteileinheit );
-      open_td( 'number', '', price_view( $vpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+      if ($mit_basarspalte) {
+        open_td( 'mult', '', mult_view( $basar_restmenge, ( $editable ? "basarmenge_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false, '', $verteilmult ) );
+        open_td( 'unit', '', $verteileinheit );
+        open_td( 'number', '', price_view( $vpreis * $basar_restmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+      } else {
+        open_td( 'number', '', price_view( $vpreis * $basar_verteilmenge / $verteilmult, ($editable ? "preis_{$bestell_id}_{$produkt_id}_{$basar_id}" : false ), false, false) );
+      }
       if ($editable) {
         $input_event_handlers = textfield_on_change_handler("$magicCalculator.updateUi();");
         open_td( "mult $magic_style" );
