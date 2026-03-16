@@ -94,7 +94,7 @@ chmod 644 img/question_small.png
 chmod 644 img/reload_black.gif
 chmod 644 index.php
 chmod 644 js/Acronyms.js
-chmod 644 js/foodsoft-2.js
+chmod 644 js/foodsoft-3.js
 chmod 644 js/lib/papaparse.js
 chmod 644 js/lib/papaparse.js-LICENSE
 chmod 644 js/lib/papaparse.min.js

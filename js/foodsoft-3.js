@@ -309,11 +309,13 @@ var MagicCalculator = Class.create(
     this.mEndPrice = endPrice;
     this.mGroupFields = new Array();
     this.mGroupValues = new Array();
+    this.mGroupBazaarValues = new Array();
     this.mResultGroupValues = new Array();
     this.mTrashField = '';
     this.mTrashValue = 0;
     this.mBazaarField = '';
     this.mBazaarValue = 0;
+    this.mBazaarRestValue = 0;
     this.mBazaarTarget = 0;
     this.mTotal = 0;
     this.mUiEnabled = false;
@@ -348,6 +350,7 @@ var MagicCalculator = Class.create(
     for (var i = 0; i < this.mGroupFields.length; ++i)
     {
       this.mGroupValues[i] = this.parseValue($('menge_' + this.mGroupFields[i]).value);
+      this.mGroupBazaarValues[i] = this.parseValue($('basarmenge_' + this.mGroupFields[i]).value);
     }
     this.mResultGroupValues = this.mGroupValues;
     this.mTrashValue = this.parseValue($('menge_' + this.mTrashField).value);
@@ -361,6 +364,11 @@ var MagicCalculator = Class.create(
       this.mBazaarValue -= this.mGroupValues[i];
     }
     this.mBazaarValue -= this.mTrashValue;
+    this.mBazaarRestValue = this.mBazaarValue;
+    for (var i = 0; i < this.mGroupValues.length; ++i)
+    {
+      this.mBazaarRestValue -= this.mGroupBazaarValues[i];
+    }
   },
   formatNumber: function(number, precision) {
     var string = number.toFixed(precision);
@@ -368,6 +376,7 @@ var MagicCalculator = Class.create(
   },
   publishCurrentBazaar: function() {
     $('menge_' + this.mBazaarField).textContent = this.formatNumber(this.mBazaarValue, 3);
+    $('basarmenge_' + this.mBazaarField).textContent = this.formatNumber(this.mBazaarRestValue, 3);
   },
   calculate: function()
   {
@@ -480,10 +489,10 @@ var MagicCalculator = Class.create(
   recalcAndShowPrices: function() {
     $('preis_' + this.mOrderId + '_' + this.mProductId).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mTotal));
     for (var i = 0; i < this.mGroupFields.length; ++i) {
-      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mEndPrice, this.mGroupValues[i]));
+      $('preis_' + this.mGroupFields[i]).textContent = this.formatPrice(this.calcPrice(this.mEndPrice, this.mGroupValues[i] + this.mGroupBazaarValues[i]));
     }
     $('preis_' + this.mTrashField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mTrashValue));
-    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mBazaarValue));
+    $('preis_' + this.mBazaarField).textContent = this.formatPrice(this.calcPrice(this.mVPrice, this.mBazaarRestValue));
   },
   handleChangedDistribution: function() {
     this.fetchValues();

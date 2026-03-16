@@ -148,7 +148,7 @@ switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_LIEFERANT:
     $editable = FALSE;
     if( $gruppen_id ) {
-      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_VSUMME );
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_BASARMENGE | PR_COL_VSUMME );
     } else {
       $default_spalten
         |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_LIEFERGEBINDE | PR_COL_NETTOSUMME | PR_ROWS_NICHTGEFUELLT );
@@ -160,7 +160,7 @@ switch( $status ){    // anzeigedetails abhaengig vom Status auswaehlen
   case STATUS_ABGERECHNET:
     if( $gruppen_id ) {
       $editable = FALSE;
-      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_ENDSUMME );
+      $default_spalten |= ( PR_COL_BESTELLMENGE | PR_COL_LIEFERMENGE | PR_COL_BASARMENGE | PR_COL_ENDSUMME );
     } else {
       // ggf. liefermengen aendern lassen:
       $editable = (!$readonly) && ( hat_dienst(1,3,4) && ( $status == STATUS_VERTEILT ) );

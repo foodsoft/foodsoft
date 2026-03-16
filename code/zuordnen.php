@@ -1442,6 +1442,11 @@ define( 'GRUPPEN_OPT_GUTHABEN', 4 );
 define( 'GRUPPEN_OPT_UNGEBUCHT', 8 );
 define( 'GRUPPEN_OPT_DETAIL', 16 );
 
+// optionsflags fuer anzeige in gruppenkonto.php
+// (hier definiert, um bei aufruf aus anderem fenster optionen setzen zu koennen):
+//
+define( 'GRUPPENKONTO_OPT_BASAR', 1 );
+
 
 ////////////////////////////////////
 //
@@ -1992,6 +1997,9 @@ function sql_change_bestellung_status( $bestell_id, $state ) {
       // befriedigender waere, vormerkungen erst bei lieferung zu loeschen - das kann aber
       // eventuell _nach_ erstellung der naechsten bestellvorlage sein; wir muessen also
       // schon hier loeschen:
+      // TODO: neuer Zuteilungs-Typ, der Zuteilung aufgrund einer Vormerkung repräsentiert, so dass bei
+      // Ausfall der Lieferung (insgesamt oder für das jeweilige Produkt) die Vormerkung wiederhergestellt
+      // werden kann.
       vormerkungenLoeschen( $bestell_id );
     }
   }
@@ -2131,6 +2139,7 @@ define( 'BESTELLZUORDNUNG_ART_VORMERKUNG_TOLERANZ', 11 );
 define( 'BESTELLZUORDNUNG_ART_FESTBESTELLUNG', 20 );
 define( 'BESTELLZUORDNUNG_ART_TOLERANZBESTELLUNG', 21 );
 define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG', 30 );
+define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 31 );
 define( 'BESTELLZUORDNUNG_ART_INVENTUR', 40 );
 
 define( 'BESTELLZUORDNUNG_ART_VORMERKUNGEN', 'BETWEEN 10 AND 19' );
@@ -2139,8 +2148,6 @@ define( 'BESTELLZUORDNUNG_ART_ZUTEILUNGEN', 'BETWEEN 30 AND 39' );
 
 define( 'BESTELLZUORDNUNG_ART_ANY', 'BETWEEN 1 AND 99' );
 
-// todo: basarzuteilungen unterscheiden:
-// define( 'BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR', 31 );
 
 
 function query_bestellzuordnungen( $op, $keys = array(), $using = array(), $orderby = false ) {
@@ -2259,7 +2266,7 @@ function sql_bestellzuordnung_menge( $keys = array() ) {
 //                   Gruppen ermittelt werden sollen (optional), sonst false
 // - 'produkt_id' => ID des Produkts (optional), sonst alle Produkte
 // - 'katalog'    => Flag, ob Katalog-Daten mit abgefragt werden sollen (optional), sonst false
-function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
+function select_bestellung_produkte( $keys = array(), $orderby = '', $groupby = 'produkte.id' ) {
   $basar_id = sql_basar_id();
   $muell_id = sql_muell_id();
 
@@ -2301,12 +2308,17 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
       . 'AND herkunft_acro.acronym = COALESCE(produktpreise.herkunft, lieferantenkatalog.herkunft) COLLATE utf8mb3_unicode_ci)';
   }
 
-  need($bestell_id = $keys['bestell_id']);
+  need(($bestell_id = $keys['bestell_id']) || ($min_status = $keys['min_status']));
 
   foreach( $keys as $key => $value ) {
     switch( $key ) {
       case 'bestell_id':
-        $filters['gesamtbestellungen.id'] = $value;
+        if ($value)
+          $filters['gesamtbestellungen.id'] = $value;
+        break;
+      case 'min_status':
+        if ($value)
+          $filters['gesamtbestellungen.rechnungsstatus'] = ">= $value";
         break;
       case 'gruppen_id':
         if (!$brauche_alle_gruppen && $value)
@@ -2316,10 +2328,13 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
         if ($value)
           $filters['produkte.id'] = $value;
         break;
+      case 'art':
+        if ($value)
+          $filters['bestellzuordnung.art'] = $value;
     }
   }
 
-  $state = sql_bestellung_status( $bestell_id );
+  $state = $bestell_id ? sql_bestellung_status( $bestell_id ) : $min_status;
 
   // zur information, vor allem im "vorlaeufigen Bestellschein", auch Bestellmengen berechnen:
   $gesamtbestellmenge_expr = "ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_BESTELLUNGEN."), bestellzuordnung.menge, 0 ) ), 0 )";
@@ -2337,7 +2352,11 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   ";
   if( $gruppen_id != $basar_id ) {
     $verteilmenge_expr = "
-     ifnull( sum( IF( (bestellzuordnung.art ".BESTELLZUORDNUNG_ART_ZUTEILUNGEN.") and (gruppenbestellungen.bestellgruppen_id != $muell_id)
+     ifnull( sum( IF( (bestellzuordnung.art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG.") and (gruppenbestellungen.bestellgruppen_id != $muell_id)
+                      , bestellzuordnung.menge, 0 ) ), 0 )
+    ";
+    $basarmenge_expr = "
+     ifnull( sum( IF( (bestellzuordnung.art = ".BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR.") and (gruppenbestellungen.bestellgruppen_id != $muell_id)
                       , bestellzuordnung.menge, 0 ) ), 0 )
     ";
     $muellmenge_expr = "
@@ -2347,6 +2366,7 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   } else {
     // funktioniert nicht fuer basar (als Warnungen: Werte nicht benutzen!
     $verteilmenge_expr = 999999;
+    $basarmenge_expr = 999999;
     $muellmenge_expr = 999999;
   }
 
@@ -2373,7 +2393,7 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
             $firstorder_expr = $muellmenge_expr;
             break;
           default:
-            $firstorder_expr = $verteilmenge_expr;
+            $firstorder_expr = $verteilmenge_expr . ' + ' . $basarmenge_expr;
             break;
         }
       else
@@ -2415,7 +2435,19 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   $selects[] = "( $festbestellmenge_expr ) as festbestellmenge";
   $selects[] = "( $basarbestellmenge_expr ) as basarbestellmenge";
   $selects[] = "( $toleranzbestellmenge_expr ) as toleranzbestellmenge";
+  if (!$gruppen_id && !$gesamt) {
+    $selects[] = 'gruppenbestellungen.bestellgruppen_id as gruppen_id';
+  }
+  if (!$bestell_id) {
+    $selects[] = 'bestellzuordnung.zeitpunkt as zeitpunkt';
+    $selects[] = 'DATE_FORMAT(bestellzuordnung.zeitpunkt, \'%d.%m.%Y %H:%i:%S\') as zeitpunkt_trad';
+    $selects[] = 'gesamtbestellungen.id as gesamtbestellung_id';
+    $selects[] = 'gesamtbestellungen.name as gesamtbestellung_name';
+    $selects[] = 'gesamtbestellungen.bestellende as valute';
+    $selects[] = 'DATE_FORMAT( gesamtbestellungen.bestellende, \'%d.%m.%Y\') AS valuta_trad';
+  }
   $selects[] = "( $verteilmenge_expr ) as verteilmenge";
+  $selects[] = "( $basarmenge_expr ) as basarmenge";
   $selects[] = "( $muellmenge_expr ) as muellmenge";
   if( $mit_gruppenspalten ) {
     $gruppen_keys = [ 'gruppenbestellungen.bestellgruppen_id' => $gruppen_id ];
@@ -2431,11 +2463,11 @@ function select_bestellung_produkte( $keys = array(), $orderby = '' ) {
   }
   $selects[] = "IF( abs($firstorder_expr) > 0, 0, 1 ) as menge_ist_null";
 
-  return get_sql_query('SELECT', 'bestellvorschlaege', $selects, $joins, $filters, $orderby, 'produkte.id');
+  return get_sql_query('SELECT', 'bestellvorschlaege', $selects, $joins, $filters, $orderby, $groupby);
 }
 
-function sql_bestellung_produkte( array $keys, $orderby = '' ) {
-  $result = doSql( select_bestellung_produkte( $keys, $orderby ), LEVEL_KEY );
+function sql_bestellung_produkte( array $keys, $orderby = '', $groupby = 'produkte.id' ) {
+  $result = doSql( select_bestellung_produkte( $keys, $orderby, $groupby ), LEVEL_KEY );
   $r = mysql2array( $result );
   foreach( $r as $key => $val )
     $r[ $key ] = preisdatenSetzen( $val );
@@ -2652,7 +2684,7 @@ function select_liefermenge( $bestell_id, $produkt_id ) {
   return select_query( 'bestellvorschlaege', 'liefermenge', '', array( "gesamtbestellung_id = $bestell_id", "produkt_id = $produkt_id" ) );
 }
 
-function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
+function select_abnahmemenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
   $keys = array( 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNGEN, 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id );
   if( $gruppen_id ) {
     $keys['gruppen_id'] = $gruppen_id;
@@ -2662,11 +2694,30 @@ function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
   return select_bestellzuordnung_menge( $keys );
 }
 
+function select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
+  $keys = array( 'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG, 'bestell_id' => $bestell_id, 'produkt_id' => $produkt_id );
+  if( $gruppen_id ) {
+    $keys['gruppen_id'] = $gruppen_id;
+  } else {
+    $keys['gruppen_id'] = ( '!= ' . sql_muell_id() );
+  }
+  return select_bestellzuordnung_menge( $keys );
+}
+
 function select_muellmenge( $bestell_id, $produkt_id ) {
-  return select_verteilmenge( $bestell_id, $produkt_id, sql_muell_id() );
+  return select_abnahmemenge( $bestell_id, $produkt_id, sql_muell_id() );
 }
 
 function select_basarmenge( $bestell_id, $produkt_id ) {
+  return "( SELECT (
+               (". select_liefermenge( $bestell_id, $produkt_id ). ")
+             - (" .select_abnahmemenge( $bestell_id, $produkt_id ). ")
+             - (" .select_muellmenge( $bestell_id, $produkt_id ). ")
+         ) AS menge )";
+}
+
+// Achtung: Basarmenge nach Verteilung vor Basarkäufen!
+function select_basar_verteilmenge( $bestell_id, $produkt_id ) {
   return "( SELECT (
                (". select_liefermenge( $bestell_id, $produkt_id ). ")
              - (" .select_verteilmenge( $bestell_id, $produkt_id ). ")
@@ -2674,21 +2725,21 @@ function select_basarmenge( $bestell_id, $produkt_id ) {
          ) AS menge )";
 }
 
-
 function sql_liefermenge( $bestell_id, $produkt_id ) {
   return sql_select_single_field( select_liefermenge( $bestell_id, $produkt_id ), 'menge' );
 }
 
-function sql_verteilmenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
-  return sql_select_single_field( select_verteilmenge( $bestell_id, $produkt_id, $gruppen_id ), 'menge' );
+function sql_abnahmemenge( $bestell_id, $produkt_id, $gruppen_id = 0 ) {
+  return sql_select_single_field( select_abnahmemenge( $bestell_id, $produkt_id, $gruppen_id ), 'menge' );
 }
 
 function sql_muellmenge( $bestell_id, $produkt_id ) {
   return sql_select_single_field( select_muellmenge( $bestell_id, $produkt_id ), 'menge' );
 }
 
-function sql_basarmenge( $bestell_id, $produkt_id ) {
-  return sql_select_single_field( select_basarmenge( $bestell_id, $produkt_id ), 'menge' );
+// Achtung: Basarmenge nach Verteilung vor Basarkäufen!
+function sql_basar_verteilmenge( $bestell_id, $produkt_id ) {
+  return sql_select_single_field( select_basar_verteilmenge( $bestell_id, $produkt_id ), 'menge' );
 }
 
 /**
@@ -2764,7 +2815,7 @@ inventur AS (
 )
 
 SQL;
-
+  $zuteilungen = BESTELLZUORDNUNG_ART_ZUTEILUNGEN;
   return <<<SQL
 WITH geliefert AS (
   SELECT gesamtbestellung_id, produkt_id, liefermenge AS menge FROM bestellvorschlaege
@@ -2778,7 +2829,7 @@ WITH geliefert AS (
       ON gruppenbestellungen.id = bestellzuordnung.gruppenbestellung_id
     JOIN gesamtbestellungen
       ON gesamtbestellungen.id = gruppenbestellungen.gesamtbestellung_id
-   WHERE bestellzuordnung.art BETWEEN 30 AND 39
+   WHERE bestellzuordnung.art $zuteilungen
      AND $where
    GROUP BY gesamtbestellungen.id, bestellzuordnung.produkt_id
 )
@@ -3085,12 +3136,14 @@ function sql_change_verteilmenge( $bestell_id, $produkt_id, $gruppen_id, $menge 
 function sql_basar2group( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
   need( sql_bestellung_status( $bestell_id ) < STATUS_ABGESCHLOSSEN, "Aenderung nicht mehr moeglich: Bestellung ist abgeschlossen!" );
   $gruppenbestellung_id = sql_insert_gruppenbestellung( $gruppen_id, $bestell_id );
-  return doSql(
+  $result = doSql(
     " INSERT INTO bestellzuordnung (produkt_id, gruppenbestellung_id, menge, art)
-      VALUES ( '$produkt_id', '$gruppenbestellung_id','$menge', ".BESTELLZUORDNUNG_ART_ZUTEILUNG." )
+      VALUES ( '$produkt_id', '$gruppenbestellung_id','$menge', ".BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR." )
       ON DUPLICATE KEY UPDATE menge = menge + $menge " // passiert nie, weil unique key ist id
   , LEVEL_IMPORTANT, "Konnte Basarkauf nicht eintragen"
   );
+  logger("basar2group: $bestell_id, $produkt_id, $gruppen_id, $menge");
+  return $result;
 }
 
 function sql_basarinventur( $gruppen_id, $produkt_id, $bestell_id, $menge ) {
@@ -3604,7 +3657,7 @@ function select_bestellungen_soll_gruppen( $options, $using = array() ) {
       JOIN produktpreise
         ON produktpreise.id = bestellvorschlaege.produktpreise_id
     ' . $join_gesamtbestellungen('gruppenbestellungen.gesamtbestellung_id') . '
-      WHERE (bestellzuordnung.art='.BESTELLZUORDNUNG_ART_ZUTEILUNG.') '
+      WHERE (bestellzuordnung.art '.BESTELLZUORDNUNG_ART_ZUTEILUNGEN.') '
       . use_filters($using, [
           'bestellgruppen' => 'gruppenbestellungen.bestellgruppen_id = bestellgruppen.id'
         , 'gesamtbestellungen' => 'gruppenbestellungen.gesamtbestellung_id = gesamtbestellungen.id'

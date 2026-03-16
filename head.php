@@ -37,7 +37,7 @@ open_tag( 'head' );
   <link rel='stylesheet' type='text/css' href='<?php echo $foodsoftbase; ?>/css/foodsoft-2.css'>
   <link rel='icon' type='image/vnd.microsoft.icon' href='<?php echo $foodsoftbase; ?>/img/favicon.ico'>
   <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/lib/prototype.js' language='javascript'></script>
-  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft-2.js' language='javascript'></script>
+  <script type='text/javascript' src='<?php echo $foodsoftdir; ?>/js/foodsoft-3.js' language='javascript'></script>
 <?php
 close_tag( 'head' );
 open_tag( 'body' );
