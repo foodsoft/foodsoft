@@ -465,7 +465,7 @@ function basarbuchungen_view($gruppen_id) {
 
     benchmarkTimestamp(__LINE__);
     $keys = [
-      'min_status' => STATUS_VERTEILT,
+      'min_status' => STATUS_LIEFERANT,
       'art' => BESTELLZUORDNUNG_ART_ZUTEILUNG_BASAR,
     ];
     if ($gruppen_id)
