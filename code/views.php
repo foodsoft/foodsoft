@@ -501,7 +501,7 @@ function basarbuchungen_view($gruppen_id) {
           , 'bestell_id' => $bestell_id , 'gruppen_id' => $row_gruppen_id
           , 'spalten' => ( PR_COL_NAME | PR_COL_BESTELLMENGE | PR_COL_VPREIS | PR_COL_ENDPREIS | PR_COL_LIEFERMENGE | PR_COL_BASARMENGE | PR_COL_VSUMME | PR_COL_ENDSUMME )
       ) ) );
-      open_td( 'mult', '', sprintf( '%d', $vert_row['basarmenge'] * $vert_row['kan_verteilmult_anzeige'] ) );
+      open_td( 'mult', '', roundAmount( $vert_row['basarmenge'] * $vert_row['kan_verteilmult_anzeige'] ) );
       open_td( 'unit noright', '', $vert_row['kan_verteileinheit_anzeige'] );
       if ($dienst_4)
         open_td('noleft', '', fc_link( 'produktverteilung', "class=question,text=,bestell_id=$bestell_id,produkt_id=$produkt_id" ));
