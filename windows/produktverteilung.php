@@ -122,8 +122,9 @@ function update_distribution( $bestell_id, $produkt_id ) {
       if (get_http_var($basar_feldname, 'f')) {
         global $$basar_feldname;
         $menge_form = $$basar_feldname;
+        // Alte Basarbuchungen bleiben erhalten, buche Differenz:
         if ($basarmenge != $menge_form) {
-          sql_basar2group($gruppen_id, $produkt_id, $bestell_id, $menge_form - $basarmenge);
+          sql_basar2group($gruppen_id, $produkt_id, $bestell_id, ($menge_form - $basarmenge) / $verteilmult);
         }
       }
     }
